@@ -135,7 +135,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: Act
   }
 };
 
-const handleTriggerUpdates = (
+export const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
   actionClasses: ActionClass[]

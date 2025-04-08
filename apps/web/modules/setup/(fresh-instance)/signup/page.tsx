@@ -18,6 +18,7 @@ import {
   SAML_PRODUCT,
   SAML_TENANT,
   TERMS_URL,
+  TURNSTILE_SITE_KEY,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -59,6 +60,7 @@ export const SignupPage = async () => {
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
         samlTenant={SAML_TENANT}
         samlProduct={SAML_PRODUCT}
+        turnstileSiteKey={TURNSTILE_SITE_KEY}
       />
     </div>
   );

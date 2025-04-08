@@ -9,14 +9,14 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getContacts = reactCache(
-  (environmentId: string): Promise<TContact[]> =>
+  (environmentIds: string[]): Promise<TContact[]> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId]);
+        validateInputs([environmentIds, ZId.array()]);
 
         try {
           const contacts = await prisma.contact.findMany({
-            where: { environmentId },
+            where: { environmentId: { in: environmentIds } },
           });
 
           return contacts;
@@ -28,9 +28,9 @@ export const getContacts = reactCache(
           throw error;
         }
       },
-      [`getContacts-management-api-${environmentId}`],
+      environmentIds.map((id) => `getContacts-management-api-${id}`),
       {
-        tags: [contactCache.tag.byEnvironmentId(environmentId)],
+        tags: environmentIds.map((id) => contactCache.tag.byEnvironmentId(id)),
       }
     )()
 );

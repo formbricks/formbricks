@@ -33,12 +33,16 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "mock-webapp-url",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-azure-llm-resource-name",
-  AI_AZURE_LLM_API_KEY: "mock-azure-llm-api-key",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-azure-embeddings-resource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-azure-embeddings-deployment-id",
+  AI_AZURE_LLM_RESSOURCE_NAME: "mock-ai-azure-llm-ressource-name",
+  AI_AZURE_LLM_API_KEY: "mock-ai",
+  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-ai-azure-llm-deployment-id",
+  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-ai-azure-embeddings-ressource-name",
+  AI_AZURE_EMBEDDINGS_API_KEY: "mock-ai-azure-embeddings-api-key",
+  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-ai-azure-embeddings-deployment-id",
+}));
+
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
 }));
 
 vi.mock("@/tolgee/server", () => ({

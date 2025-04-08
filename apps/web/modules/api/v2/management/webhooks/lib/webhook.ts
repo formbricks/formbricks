@@ -9,16 +9,18 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getWebhooks = async (
-  environmentId: string,
+  environmentIds: string[],
   params: TGetWebhooksFilter
 ): Promise<Result<ApiResponseWithMeta<Webhook[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getWebhooksQuery(environmentIds, params);
+
     const [webhooks, count] = await prisma.$transaction([
       prisma.webhook.findMany({
-        ...getWebhooksQuery(environmentId, params),
+        ...query,
       }),
       prisma.webhook.count({
-        where: getWebhooksQuery(environmentId, params).where,
+        where: query.where,
       }),
     ]);
 

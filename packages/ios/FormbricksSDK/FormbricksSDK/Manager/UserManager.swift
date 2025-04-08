@@ -3,7 +3,12 @@ import Foundation
 /// Store and manage user state and sync with the server when needed.
 final class UserManager {
     static let shared = UserManager()
-    private init() { }
+    private init() {
+        /* 
+         This empty initializer prevents external instantiation of the UserManager class.
+         The class serves as a namespace for the user state, so instance creation is not needed and should be restricted.
+        */
+    }
     
     private static let userIdKey = "userIdKey"
     private static let contactIdKey = "contactIdKey"
