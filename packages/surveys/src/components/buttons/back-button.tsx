@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
-  readonly onClick: () => void;
-  readonly backButtonLabel?: string;
-  readonly tabIndex?: number;
+  onClick: () => void;
+  backButtonLabel?: string;
+  tabIndex?: number;
 }
 
 export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: BackButtonProps) {

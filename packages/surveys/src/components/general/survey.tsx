@@ -70,7 +70,7 @@ export function Survey({
   action,
   singleUseId,
   singleUseResponseId,
-}: Readonly<SurveyContainerProps>) {
+}: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
   if (appUrl && environmentId) {
