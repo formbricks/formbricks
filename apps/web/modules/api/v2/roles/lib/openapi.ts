@@ -22,12 +22,6 @@ export const getRolesEndpoint: ZodOpenApiOperationObject = {
 
 export const rolePaths: ZodOpenApiPathsObject = {
   "/roles": {
-    servers: [
-      {
-        url: "https://app.formbricks.com/api/v2",
-        description: "Formbricks Cloud",
-      },
-    ],
     get: getRolesEndpoint,
   },
 };

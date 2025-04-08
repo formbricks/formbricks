@@ -21,12 +21,6 @@ export const getMeEndpoint: ZodOpenApiOperationObject = {
 
 export const mePaths: ZodOpenApiPathsObject = {
   "/me": {
-    servers: [
-      {
-        url: "https://app.formbricks.com/api/v2",
-        description: "Formbricks Cloud",
-      },
-    ],
     get: getMeEndpoint,
   },
 };

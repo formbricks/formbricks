@@ -7,7 +7,7 @@ export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
   summary: "Get personalized survey link for a contact",
   description: "Retrieves a personalized link for a specific survey.",
   requestParams: {
-    query: ZContactLinkParams,
+    path: ZContactLinkParams,
   },
   tags: ["Management API > Surveys"],
   responses: {

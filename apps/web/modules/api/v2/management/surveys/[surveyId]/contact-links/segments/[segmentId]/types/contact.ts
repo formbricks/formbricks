@@ -2,8 +2,20 @@ import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 
 export const ZContactLinksBySegmentParams = z.object({
-  surveyId: z.string().cuid2().describe("The ID of the survey"),
-  segmentId: z.string().cuid2().describe("The ID of the segment"),
+  surveyId: z
+    .string()
+    .cuid2()
+    .openapi({
+      description: "The ID of the survey",
+      param: { name: "surveyId", in: "path" },
+    }),
+  segmentId: z
+    .string()
+    .cuid2()
+    .openapi({
+      description: "The ID of the segment",
+      param: { name: "segmentId", in: "path" },
+    }),
 });
 
 export const ZContactLinksBySegmentQuery = ZGetFilter.pick({

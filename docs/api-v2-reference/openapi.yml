@@ -4,7 +4,7 @@ info:
   description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api/v2/management
+  - url: https://app.formbricks.com/api/v2
     description: Formbricks Cloud
 tags:
   - name: Roles
@@ -534,9 +534,6 @@ paths:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks API Server
   /roles:
-    servers:
-      - url: https://app.formbricks.com/api/v2
-        description: Formbricks Cloud
     get:
       operationId: getRoles
       summary: Get roles
@@ -564,9 +561,6 @@ paths:
                         - type: string
                           const: billing
   /me:
-    servers:
-      - url: https://app.formbricks.com/api/v2
-        description: Formbricks Cloud
     get:
       operationId: me
       summary: Me
@@ -628,6 +622,9 @@ paths:
                         - projectId
                         - projectName
   /responses:
+    servers: &a6
+      - url: https://app.formbricks.com/api/v2/management
+        description: Formbricks Cloud
     get:
       operationId: getResponses
       summary: Get responses
@@ -657,7 +654,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: &a6
+            enum: &a7
               - createdAt
               - updatedAt
             default: createdAt
@@ -667,7 +664,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: &a7
+            enum: &a8
               - asc
               - desc
             default: desc
@@ -1064,6 +1061,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /responses/{id}:
+    servers: *a6
     get:
       operationId: getResponse
       summary: Get a response
@@ -1529,6 +1527,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /contacts/bulk:
+    servers: *a6
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
@@ -1628,7 +1627,8 @@ paths:
                       - skippedContacts
                 required:
                   - data
-  /surveys/{id}/contact-links/contacts/{contactId}/:
+  /surveys/{surveyId}/contact-links/contacts/{contactId}/:
+    servers: *a6
     get:
       operationId: getPersonalizedSurveyLink
       summary: Get personalized survey link for a contact
@@ -1636,14 +1636,14 @@ paths:
       tags:
         - Management API > Surveys
       parameters:
-        - in: query
+        - in: path
           name: surveyId
           description: The ID of the survey
           schema:
             type: string
             description: The ID of the survey
           required: true
-        - in: query
+        - in: path
           name: contactId
           description: The ID of the contact
           schema:
@@ -1662,6 +1662,7 @@ paths:
                     type: string
                     format: uri
   /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    servers: *a6
     get:
       operationId: getContactLinksBySegment
       summary: Get survey links for contacts in a segment
@@ -1762,6 +1763,7 @@ paths:
                         offset:
                           type: number
   /webhooks:
+    servers: *a6
     get:
       operationId: getWebhooks
       summary: Get webhooks
@@ -1791,7 +1793,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -1799,7 +1801,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -1855,7 +1857,7 @@ paths:
                           description: The URL of the webhook
                         source:
                           type: string
-                          enum: &a8
+                          enum: &a9
                             - user
                             - zapier
                             - make
@@ -1868,7 +1870,7 @@ paths:
                           type: array
                           items:
                             type: string
-                            enum: &a9
+                            enum: &a10
                               - responseFinished
                               - responseCreated
                               - responseUpdated
@@ -1912,7 +1914,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -1921,7 +1923,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -1965,7 +1967,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -1974,7 +1976,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -1982,6 +1984,7 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /webhooks/{id}:
+    servers: *a6
     get:
       operationId: getWebhook
       summary: Get a webhook
@@ -2025,7 +2028,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2034,7 +2037,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2073,7 +2076,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2082,7 +2085,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2126,7 +2129,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2135,7 +2138,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2185,7 +2188,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2194,7 +2197,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2202,7 +2205,7 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /{organizationId}/teams:
-    servers: &a10
+    servers: &a11
       - url: https://app.formbricks.com/api/v2/organizations
         description: Formbricks Cloud
     get:
@@ -2240,7 +2243,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -2248,7 +2251,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -2357,7 +2360,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/teams/{id}:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getTeam
       summary: Get a team
@@ -2508,7 +2511,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/project-teams:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getProjectTeams
       summary: Get project teams
@@ -2544,7 +2547,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -2552,7 +2555,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -2805,7 +2808,7 @@ paths:
                       - manage
                     description: Level of access granted to the project
   /{organizationId}/users:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getUsers
       summary: Get users
@@ -2842,7 +2845,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -2850,7 +2853,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -2919,7 +2922,7 @@ paths:
                           example: example@example.com
                         role:
                           type: string
-                          enum: &a11
+                          enum: &a12
                             - owner
                             - manager
                             - member
@@ -2930,7 +2933,7 @@ paths:
                           items:
                             type: string
                           description: The list of teams the user is a member of
-                          example: &a12
+                          example: &a13
                             - team1
                             - team2
                   meta:
@@ -2982,7 +2985,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -2990,7 +2993,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - name
                 - email
@@ -3036,7 +3039,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3044,7 +3047,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
     patch:
       operationId: updateUser
       summary: Update a user
@@ -3083,7 +3086,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3091,7 +3094,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - email
       responses:
@@ -3135,7 +3138,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3143,7 +3146,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
 components:
   securitySchemes:
     apiKeyAuth:
@@ -3918,13 +3921,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a13
+                  enum: &a14
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a13
+                  enum: *a14
               required:
                 - linkSurveys
                 - appSurveys
@@ -4072,7 +4075,7 @@ components:
           description: The URL of the webhook
         source:
           type: string
-          enum: *a8
+          enum: *a9
           description: The source of the webhook
         environmentId:
           type: string
@@ -4081,7 +4084,7 @@ components:
           type: array
           items:
             type: string
-            enum: *a9
+            enum: *a10
           description: The triggers of the webhook
         surveyIds:
           type: array
@@ -4191,7 +4194,7 @@ components:
           example: example@example.com
         role:
           type: string
-          enum: *a11
+          enum: *a12
           description: The role of the user in the organization
           example: member
         teams:
@@ -4199,7 +4202,7 @@ components:
           items:
             type: string
           description: The list of teams the user is a member of
-          example: *a12
+          example: *a13
       required:
         - id
         - createdAt
