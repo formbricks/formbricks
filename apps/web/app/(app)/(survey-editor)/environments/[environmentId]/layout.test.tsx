@@ -79,10 +79,10 @@ describe("SurveyEditorEnvironmentLayout", () => {
     ).rejects.toThrow("common.environment_not_found");
   });
 
-  it("calls redirect when user is null", async () => {
+  it("calls redirect when session is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
-      session: { user: { id: "user1" } } as Session,
+      session: undefined as unknown as Session,
       user: undefined as unknown as TUser,
       organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
     });
@@ -96,5 +96,25 @@ describe("SurveyEditorEnvironmentLayout", () => {
         children: <div>Content</div>,
       })
     ).rejects.toThrow("Redirect called");
+  });
+
+  it("throws error if user is null", async () => {
+    vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
+      t: ((key: string) => key) as any,
+      session: { user: { id: "user1" } } as Session,
+      user: undefined as unknown as TUser,
+      organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
+    });
+
+    vi.mocked(redirect).mockImplementationOnce(() => {
+      throw new Error("Redirect called");
+    });
+
+    await expect(
+      SurveyEditorEnvironmentLayout({
+        params: Promise.resolve({ environmentId: "env1" }),
+        children: <div>Content</div>,
+      })
+    ).rejects.toThrow("common.user_not_found");
   });
 });

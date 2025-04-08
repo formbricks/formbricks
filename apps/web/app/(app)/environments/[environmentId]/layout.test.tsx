@@ -79,7 +79,7 @@ describe("EnvLayout", () => {
 
   it("throws error if project is not found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
-      t: (key: string) => key,
+      t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,
       user: { id: "user1", email: "user1@example.com" } as TUser,
       organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
@@ -99,7 +99,7 @@ describe("EnvLayout", () => {
 
   it("throws error if membership is not found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
-      t: (key: string) => key,
+      t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,
       user: { id: "user1", email: "user1@example.com" } as TUser,
       organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
@@ -115,10 +115,10 @@ describe("EnvLayout", () => {
     ).rejects.toThrow("common.membership_not_found");
   });
 
-  it("calls redirect when user is null", async () => {
+  it("calls redirect when session is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
-      t: (key: string) => key,
-      session: { user: { id: "user1" } } as Session,
+      t: ((key: string) => key) as any,
+      session: undefined as unknown as Session,
       user: undefined as unknown as TUser,
       organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
     });
@@ -132,5 +132,25 @@ describe("EnvLayout", () => {
         children: <div>Content</div>,
       })
     ).rejects.toThrow("Redirect called");
+  });
+
+  it("throws error if user is null", async () => {
+    vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
+      t: ((key: string) => key) as any,
+      session: { user: { id: "user1" } } as Session,
+      user: undefined as unknown as TUser,
+      organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
+    });
+
+    vi.mocked(redirect).mockImplementationOnce(() => {
+      throw new Error("Redirect called");
+    });
+
+    await expect(
+      EnvLayout({
+        params: Promise.resolve({ environmentId: "env1" }),
+        children: <div>Content</div>,
+      })
+    ).rejects.toThrow("common.user_not_found");
   });
 });
