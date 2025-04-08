@@ -1,20 +1,13 @@
-import "@testing-library/jest-dom/vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
-import { getServerSession } from "next-auth";
+import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
+import { cleanup, render, screen } from "@testing-library/react";
+import { Session } from "next-auth";
 import { redirect } from "next/navigation";
-import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import SurveyEditorEnvironmentLayout from "./layout";
-
-// mock all dependencies
 
 vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -42,153 +35,105 @@ vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_ENABLED: true,
 }));
 
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
+// Mock sub-components to render identifiable elements
+vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
+  ResponseFilterProvider: ({ children }: any) => <div data-testid="ResponseFilterProvider">{children}</div>,
 }));
-vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
+vi.mock("@/modules/ui/components/toaster-client", () => ({
+  ToasterClient: () => <div data-testid="ToasterClient" />,
 }));
-vi.mock("@formbricks/lib/environment/auth", () => ({
-  hasUserEnvironmentAccess: vi.fn(),
+vi.mock("@/app/(app)/components/FormbricksClient", () => ({
+  FormbricksClient: ({ userId, email }: any) => (
+    <div data-testid="FormbricksClient">
+      {userId}-{email}
+    </div>
+  ),
+}));
+vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
+  DevEnvironmentBanner: ({ environment }: any) => (
+    <div data-testid="DevEnvironmentBanner">{environment.id}</div>
+  ),
+}));
+vi.mock("@/app/(app)/environments/[environmentId]/components/PosthogIdentify", () => ({
+  PosthogIdentify: ({ organizationId }: any) => <div data-testid="PosthogIdentify">{organizationId}</div>,
+}));
+
+// Mocks for dependencies
+vi.mock("@/modules/environments/lib/utils", () => ({
+  environmentIdLayoutChecks: vi.fn(),
 }));
 vi.mock("@formbricks/lib/environment/service", () => ({
   getEnvironment: vi.fn(),
 }));
-vi.mock("@formbricks/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: vi.fn(),
+vi.mock("@formbricks/lib/project/service", () => ({
+  getProjectByEnvironmentId: vi.fn(),
 }));
-vi.mock("@formbricks/lib/user/service", () => ({
-  getUser: vi.fn(),
+vi.mock("@formbricks/lib/membership/service", () => ({
+  getMembershipByUserIdOrganizationId: vi.fn(),
 }));
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(() => {
-    return (key: string) => key; // trivial translator returning the key
-  }),
-}));
-
-// mock child components rendered by the layout:
-vi.mock("@/app/(app)/components/FormbricksClient", () => ({
-  FormbricksClient: () => <div data-testid="formbricks-client" />,
-}));
-vi.mock("@/app/(app)/environments/[environmentId]/components/PosthogIdentify", () => ({
-  PosthogIdentify: () => <div data-testid="posthog-identify" />,
-}));
-vi.mock("@/modules/ui/components/toaster-client", () => ({
-  ToasterClient: () => <div data-testid="mock-toaster" />,
-}));
-vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
-  DevEnvironmentBanner: ({ environment }: { environment: TEnvironment }) => (
-    <div data-testid="dev-environment-banner">{environment?.id || "no-env"}</div>
-  ),
-}));
-vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
-  ResponseFilterProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="mock-response-filter-provider">{children}</div>
-  ),
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
 }));
 
 describe("SurveyEditorEnvironmentLayout", () => {
-  beforeEach(() => {
+  afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
   });
 
-  it("redirects to /auth/login if there is no session", async () => {
-    // Mock no session
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
-
-    const layoutElement = await SurveyEditorEnvironmentLayout({
-      params: { environmentId: "env-123" },
-      children: <div data-testid="child-content">Hello!</div>,
+  it("renders successfully when all dependencies return valid data", async () => {
+    vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
+      t: ((key: string) => key) as any, // mock translation function does not need to be implemented
+      session: { user: { id: "user1" } } as Session,
+      user: { id: "user1", email: "user1@example.com" } as TUser,
+      organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
     });
+    vi.mocked(getEnvironment).mockResolvedValueOnce({ id: "env1" } as TEnvironment);
+    // For SurveyEditorLayout, project and membership are not used
+    const result = await SurveyEditorEnvironmentLayout({
+      params: Promise.resolve({ environmentId: "env1" }),
+      children: <div data-testid="child">Survey Editor Content</div>,
+    });
+    render(result);
 
-    expect(redirect).toHaveBeenCalledWith("/auth/login");
-    // No JSX is returned after redirect
-    expect(layoutElement).toBeUndefined();
+    expect(screen.getByTestId("ResponseFilterProvider")).toBeDefined();
+    expect(screen.getByTestId("PosthogIdentify")).toHaveTextContent("org1");
+    expect(screen.getByTestId("FormbricksClient")).toHaveTextContent("user1-user1@example.com");
+    expect(screen.getByTestId("ToasterClient")).toBeDefined();
+    expect(screen.getByTestId("DevEnvironmentBanner")).toHaveTextContent("env1");
+    expect(screen.getByTestId("child")).toHaveTextContent("Survey Editor Content");
   });
 
-  it("throws error if user does not exist in DB", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
-    vi.mocked(getUser).mockResolvedValueOnce(null); // user not found
-
-    await expect(
-      SurveyEditorEnvironmentLayout({
-        params: { environmentId: "env-123" },
-        children: <div data-testid="child-content">Hello!</div>,
-      })
-    ).rejects.toThrow("common.user_not_found");
-  });
-
-  it("throws AuthorizationError if user does not have environment access", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
-    vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123", email: "test@example.com" } as TUser);
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(false);
-
-    await expect(
-      SurveyEditorEnvironmentLayout({
-        params: { environmentId: "env-123" },
-        children: <div>Child</div>,
-      })
-    ).rejects.toThrow(AuthorizationError);
-  });
-
-  it("throws if no organization is found", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
-    vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(true);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-
-    await expect(
-      SurveyEditorEnvironmentLayout({
-        params: { environmentId: "env-123" },
-        children: <div data-testid="child-content">Hello from children!</div>,
-      })
-    ).rejects.toThrow("common.organization_not_found");
-  });
-
-  it("throws if no environment is found", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
-    vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(true);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce({ id: "org-999" } as TOrganization);
+  it("throws error if environment is not found", async () => {
+    vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
+      t: (key: string) => key,
+      session: { user: { id: "user1" } } as Session,
+      user: { id: "user1", email: "user1@example.com" } as TUser,
+      organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
+    });
     vi.mocked(getEnvironment).mockResolvedValueOnce(null);
-
     await expect(
       SurveyEditorEnvironmentLayout({
-        params: { environmentId: "env-123" },
-        children: <div>Child</div>,
+        params: Promise.resolve({ environmentId: "env1" }),
+        children: <div>Content</div>,
       })
     ).rejects.toThrow("common.environment_not_found");
   });
 
-  it("renders environment layout if everything is valid", async () => {
-    // Provide all valid data
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
-    vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123", email: "test@example.com" } as TUser);
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(true);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce({ id: "org-999" } as TOrganization);
-    vi.mocked(getEnvironment).mockResolvedValueOnce({
-      id: "env-123",
-      name: "My Test Environment",
-    } as unknown as TEnvironment);
-
-    // Because it's an async server component, we typically wrap in act(...)
-    let layoutElement: React.ReactNode;
-
-    await act(async () => {
-      layoutElement = await SurveyEditorEnvironmentLayout({
-        params: { environmentId: "env-123" },
-        children: <div data-testid="child-content">Hello from children!</div>,
-      });
-      render(layoutElement);
+  it("calls redirect when user is null", async () => {
+    vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
+      t: (key: string) => key,
+      session: { user: { id: "user1" } } as Session,
+      user: undefined as unknown as TUser,
+      organization: { id: "org1", name: "Org1", billing: {} } as TOrganization,
     });
-
-    // Now confirm we got the child plus all the mocked sub-components
-    expect(screen.getByTestId("child-content")).toHaveTextContent("Hello from children!");
-    expect(screen.getByTestId("posthog-identify")).toBeInTheDocument();
-    expect(screen.getByTestId("formbricks-client")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-toaster")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-response-filter-provider")).toBeInTheDocument();
-    expect(screen.getByTestId("dev-environment-banner")).toHaveTextContent("env-123");
+    vi.mocked(redirect).mockImplementationOnce(() => {
+      throw new Error("Redirect called");
+    });
+    await expect(
+      SurveyEditorEnvironmentLayout({
+        params: Promise.resolve({ environmentId: "env1" }),
+        children: <div>Content</div>,
+      })
+    ).rejects.toThrow("Redirect called");
   });
 });
