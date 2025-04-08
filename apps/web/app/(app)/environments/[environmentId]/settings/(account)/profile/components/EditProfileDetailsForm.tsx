@@ -61,20 +61,18 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
     if (!user.email) return;
 
     setIsResettingPassword(true);
-    try {
-      const resetPasswordResponse = await forgotPasswordAction({ email: user.email });
-      if (resetPasswordResponse?.data) {
-        toast.success(t("auth.forgot-password.email-sent.heading"));
-      } else {
-        const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
-        toast.error(errorMessage);
-      }
-    } catch (error) {
-      const errorMessage = getFormattedErrorMessage(error);
+
+    const resetPasswordResponse = await forgotPasswordAction({ email: user.email });
+
+    if (!resetPasswordResponse?.data) {
+      const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
       toast.error(errorMessage);
-    } finally {
-      setIsResettingPassword(false);
+      return;
     }
+
+    toast.success(t("auth.forgot-password.email-sent.heading"));
+
+    setIsResettingPassword(false);
   };
 
   return (
