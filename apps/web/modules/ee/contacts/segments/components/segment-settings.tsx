@@ -85,9 +85,9 @@ export function SegmentSettings({
         },
       });
 
-      const errorMessage = getFormattedErrorMessage(data);
+      if (!data?.data) {
+        const errorMessage = getFormattedErrorMessage(data);
 
-      if (errorMessage) {
         toast.error(errorMessage);
         setIsUpdatingSegment(false);
         return;
