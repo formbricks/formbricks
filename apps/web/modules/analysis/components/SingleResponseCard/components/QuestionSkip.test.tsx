@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { QuestionSkip } from "./QuestionSkip";
 
@@ -11,12 +12,14 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
 }));
 
 vi.mock("@/modules/i18n/utils", () => ({
-  getLocalizedValue: vi.fn((value, locale) => value),
+  getLocalizedValue: vi.fn((value, _) => value),
 }));
 
 // Mock recall utils
-vi.mock("@/modules/lib/utils/recall", () => ({
-  parseRecallInfo: vi.fn((headline, responseData) => `parsed: ${headline}`),
+vi.mock("@formbricks/lib/utils/recall", () => ({
+  parseRecallInfo: vi.fn((headline, _) => {
+    return `parsed: ${headline}`;
+  }),
 }));
 
 const dummyQuestions = [
@@ -58,6 +61,9 @@ describe("QuestionSkip", () => {
   });
 
   it("renders skipped branch with tooltip and parsed headlines", () => {
+    vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline1");
+    vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline2");
+
     render(
       <QuestionSkip
         skippedQuestions={["f1", "f2"]}
@@ -74,6 +80,9 @@ describe("QuestionSkip", () => {
   });
 
   it("renders aborted branch with closed message and parsed headlines", () => {
+    vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline1");
+    vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline2");
+
     render(
       <QuestionSkip
         skippedQuestions={["f1", "f2"]}

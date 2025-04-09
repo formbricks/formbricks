@@ -69,20 +69,19 @@ export const QuestionSkip = ({
                 )}
               </div>
               <div className="ml-6 flex flex-col">
-                {skippedQuestions &&
-                  skippedQuestions.map((questionId) => {
-                    return (
-                      <p className="my-2" key={questionId}>
-                        {parseRecallInfo(
-                          getLocalizedValue(
-                            questions.find((question) => question.id === questionId)!.headline,
-                            "default"
-                          ),
-                          responseData
-                        )}
-                      </p>
-                    );
-                  })}
+                {skippedQuestions?.map((questionId) => {
+                  return (
+                    <p className="my-2" key={questionId}>
+                      {parseRecallInfo(
+                        getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "default"
+                        ),
+                        responseData
+                      )}
+                    </p>
+                  );
+                })}
               </div>
             </div>
           )}

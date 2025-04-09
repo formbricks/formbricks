@@ -55,6 +55,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   switch (questionType) {
     case TSurveyQuestionTypeEnum.Rating:
       if (typeof responseData === "number") {
+        console.log("Returning Ratingresponse for number - responseData", responseData);
+
         return (
           <RatingResponse
             scale={question.scale}
@@ -100,7 +102,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               return (
                 <p
                   key={rowValueInSelectedLanguage}
-                  className="ph-no-capture my-1 font-normal capitalize text-slate-700">
+                  className="ph-no-capture my-1 font-normal text-slate-700 capitalize">
                   {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
                 </p>
               );
