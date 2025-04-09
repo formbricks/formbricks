@@ -48,7 +48,7 @@ export const updateSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner"],
+          roles: ["owner", "manager"],
         },
       ],
     });

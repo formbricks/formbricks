@@ -20,7 +20,7 @@ export const getMembershipByUserIdOrganizationIdAction = async (environmentId: s
 export const getMembershipRole = async (userId: string, organizationId: string) => {
   const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
   if (!membership) {
-    throw new AuthorizationError("Not authorized membership");
+    throw new AuthorizationError("Not authorized");
   }
 
   return membership.role;

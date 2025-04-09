@@ -50,5 +50,5 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
     }
   }
 
-  throw new AuthorizationError(`Not authorized checkAuthorizationUpdated ${role} ${JSON.stringify(access)}`);
+  throw new AuthorizationError("Not authorized");
 };
