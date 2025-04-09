@@ -53,7 +53,7 @@ const document = createDocument({
   },
   servers: [
     {
-      url: `${env.WEBAPP_URL}/api/v2/`,
+      url: `https://app.formbricks.com/api/v2/`,
       description: "Formbricks Cloud",
     },
   ],
