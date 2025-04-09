@@ -46,7 +46,7 @@
     "@preact/preset-vite": "2.9.3",
     "@testing-library/preact": "3.2.4",
     "@types/react": "19.0.1",
-    "autoprefixer": "10.4.20",
+    "autoprefixer": "10.4.21",
     "concurrently": "9.1.0",
     "isomorphic-dompurify": "2.19.0",
     "postcss": "8.5.3",
