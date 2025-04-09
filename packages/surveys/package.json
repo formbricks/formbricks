@@ -33,7 +33,9 @@
     "go": "vite build --watch --mode dev",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
-    "clean": "rimraf .turbo node_modules dist"
+    "clean": "rimraf .turbo node_modules dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@calcom/embed-snippet": "1.3.1",
@@ -42,6 +44,7 @@
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "2.9.3",
+    "@testing-library/preact": "3.2.4",
     "@types/react": "19.0.1",
     "autoprefixer": "10.4.20",
     "concurrently": "9.1.0",

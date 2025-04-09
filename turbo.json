@@ -286,6 +286,9 @@
     },
     "test": {
       "outputs": []
+    },
+    "test:coverage": {
+      "outputs": []
     }
   },
   "ui": "stream"
