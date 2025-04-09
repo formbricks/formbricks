@@ -115,12 +115,18 @@ describe("checkForRecursiveSegmentFilter", () => {
       filters: [
         {
           operator: "and",
-          resource: {
-            root: {
-              type: "segment",
-              segmentId: originalSegmentId, // This creates the recursive reference back to the original segment
+          resource: [
+            {
+              id: "group-1",
+              connector: null,
+              resource: {
+                root: {
+                  type: "segment",
+                  segmentId: originalSegmentId, // This creates the recursive reference back to the original segment
+                },
+              },
             },
-          },
+          ],
         },
       ],
     } as any);
