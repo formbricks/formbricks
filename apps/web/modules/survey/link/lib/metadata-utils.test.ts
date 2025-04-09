@@ -1,7 +1,7 @@
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, SURVEY_URL } from "@formbricks/lib/constants";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import {
@@ -171,7 +171,7 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(SURVEY_URL),
+        metadataBase: new URL(SURVEY_URL || ""),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",

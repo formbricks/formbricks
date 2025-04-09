@@ -74,7 +74,7 @@ export const ProjectSettings = ({
         if (channel === "app" || channel === "website") {
           router.push(`/environments/${productionEnvironment?.id}/connect`);
         } else if (channel === "link") {
-          router.push(`/environments/${productionEnvironment?.id}/surveys`);
+          router.push(`/environments/${productionEnvironment?.id}/engagements`);
         } else if (projectMode === "cx") {
           router.push(`/environments/${productionEnvironment?.id}/xm-templates`);
         }

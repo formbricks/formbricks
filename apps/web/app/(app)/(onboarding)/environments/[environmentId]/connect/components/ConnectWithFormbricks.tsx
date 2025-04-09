@@ -26,7 +26,7 @@ export const ConnectWithFormbricks = ({
   const { t } = useTranslate();
   const router = useRouter();
   const handleFinishOnboarding = async () => {
-    router.push(`/environments/${environment.id}/surveys`);
+    router.push(`/environments/${environment.id}/engagements`);
   };
 
   useEffect(() => {

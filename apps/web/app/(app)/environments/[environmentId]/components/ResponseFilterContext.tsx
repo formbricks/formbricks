@@ -3,8 +3,8 @@
 import {
   QuestionOption,
   QuestionOptions,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/components/QuestionsComboBox";
+import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
 import React, { createContext, useCallback, useContext, useState } from "react";
 

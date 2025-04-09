@@ -10,10 +10,10 @@ import "../modules/ui/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Formbricks",
-    default: "Formbricks",
+    template: "%s | EngageHQ",
+    default: "EngageHQ",
   },
-  description: "Open-Source Survey Suite",
+  description: "Open-Source Onchain Engagement Suite",
 };
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {

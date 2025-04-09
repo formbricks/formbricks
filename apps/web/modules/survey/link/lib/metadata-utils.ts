@@ -50,10 +50,10 @@ export const getBasicSurveyMetadata = async (surveyId: string) => {
 
   // Add product name in title if it's Formbricks cloud
   if (IS_FORMBRICKS_CLOUD) {
-    title = `${title} | Formbricks`;
+    title = `${title} | EngageHQ`;
   } else if (project) {
     // Since project name is not available in the returned type, we'll just use a generic name
-    title = `${title} | Survey`;
+    title = `${title} | EngageHQ`;
   }
 
   return {

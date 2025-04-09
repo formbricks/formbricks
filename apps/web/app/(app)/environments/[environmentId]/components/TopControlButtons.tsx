@@ -54,7 +54,7 @@ export const TopControlButtons = ({ environment, membershipRole }: TopControlBut
             size="icon"
             className="h-fit w-fit p-1"
             onClick={() => {
-              router.push(`/environments/${environment.id}/surveys/templates`);
+              router.push(`/environments/${environment.id}/engagements/templates`);
             }}>
             <PlusIcon />
           </Button>

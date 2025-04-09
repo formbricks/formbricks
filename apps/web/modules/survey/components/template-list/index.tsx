@@ -66,7 +66,7 @@ export const TemplateList = ({
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
+      router.push(`/environments/${environmentId}/engagements/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);

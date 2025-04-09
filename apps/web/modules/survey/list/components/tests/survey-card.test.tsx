@@ -53,7 +53,7 @@ describe("SurveyCard", () => {
     );
     // Draft survey => link should point to edit
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", `/environments/${environmentId}/surveys/${dummySurvey.id}/edit`);
+    expect(link).toHaveAttribute("href", `/environments/${environmentId}/engagements/${dummySurvey.id}/edit`);
   });
 
   it("displays no clickable link when readOnly and survey is draft", () => {
@@ -85,6 +85,9 @@ describe("SurveyCard", () => {
     );
     // For non-draft => link to summary
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", `/environments/${environmentId}/surveys/${dummySurvey.id}/summary`);
+    expect(link).toHaveAttribute(
+      "href",
+      `/environments/${environmentId}/engagements/${dummySurvey.id}/summary`
+    );
   });
 });

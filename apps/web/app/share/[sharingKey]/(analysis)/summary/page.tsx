@@ -1,5 +1,5 @@
-import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
+import { SummaryPage } from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";

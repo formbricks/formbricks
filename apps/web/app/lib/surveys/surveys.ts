@@ -7,8 +7,8 @@ import {
   OptionsType,
   QuestionOption,
   QuestionOptions,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/components/QuestionsComboBox";
+import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/components/ResponseFilter";
 import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,

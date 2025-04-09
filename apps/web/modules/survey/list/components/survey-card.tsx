@@ -51,8 +51,8 @@ export const SurveyCard = ({
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"
-      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
-      : `/environments/${environmentId}/surveys/${survey.id}/summary`;
+      ? `/environments/${environmentId}/engagements/${survey.id}/edit`
+      : `/environments/${environmentId}/engagements/${survey.id}/summary`;
   }, [survey.status, survey.id, environmentId]);
 
   const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;

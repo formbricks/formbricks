@@ -16,7 +16,7 @@ import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {
-  title: "Your Surveys",
+  title: "Your Engagements",
 };
 
 interface SurveyTemplateProps {
@@ -57,7 +57,7 @@ export const SurveysPage = async ({
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" asChild>
-        <Link href={`/environments/${environment.id}/surveys/templates`}>
+        <Link href={`/environments/${environment.id}/engagements/templates`}>
           {t("environments.surveys.new_survey")}
           <PlusIcon />
         </Link>

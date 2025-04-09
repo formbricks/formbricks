@@ -1,6 +1,6 @@
 "use client";
 
-import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
+import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/engagements/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";

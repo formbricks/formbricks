@@ -140,7 +140,7 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                    href={`/environments/${environmentId}/engagements/${survey.id}/edit`}>
                     <SquarePenIcon className="mr-2 h-4 w-4" />
                     {t("common.edit")}
                   </Link>

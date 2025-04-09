@@ -132,9 +132,9 @@ export const MainNavigation = ({
         ? [
             {
               name: t("common.surveys"),
-              href: `/environments/${environment.id}/surveys`,
+              href: `/environments/${environment.id}/engagements`,
               icon: MessageCircle,
-              isActive: pathname?.includes("/surveys"),
+              isActive: pathname?.includes("/engagements"),
               isHidden: false,
             },
             // {

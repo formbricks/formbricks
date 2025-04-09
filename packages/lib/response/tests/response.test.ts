@@ -19,7 +19,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { getSurveySummary } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { getSurveySummary } from "../../../../apps/web/app/(app)/environments/[environmentId]/engagements/[surveyId]/(analysis)/summary/lib/surveySummary";
 import {
   mockContactAttributeKey,
   mockOrganizationOutput,
