@@ -839,7 +839,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
       await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
       await page.locator("input[type=file]").setInputFiles({
         name: "file.txt",
