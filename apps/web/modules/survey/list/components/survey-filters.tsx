@@ -57,7 +57,7 @@ const getSortOptions = (t: TFnType): TSortOption[] => [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProjectChannel,
+  // currentProjectChannel,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
@@ -66,10 +66,10 @@ export const SurveyFilters = ({
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 
-  const typeOptions: TFilterOption[] = [
-    { label: t("common.link"), value: "link" },
-    { label: t("common.app"), value: "app" },
-  ];
+  // const typeOptions: TFilterOption[] = [
+  //   { label: t("common.link"), value: "link" },
+  //   { label: t("common.app"), value: "app" },
+  // ];
 
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
@@ -101,15 +101,15 @@ export const SurveyFilters = ({
     }
   };
 
-  const handleTypeChange = (value: string) => {
-    if (value === "link" || value === "app") {
-      if (type.includes(value)) {
-        setSurveyFilters((prev) => ({ ...prev, type: prev.type.filter((v) => v !== value) }));
-      } else {
-        setSurveyFilters((prev) => ({ ...prev, type: [...prev.type, value] }));
-      }
-    }
-  };
+  // const handleTypeChange = (value: string) => {
+  //   if (value === "link" || value === "app") {
+  //     if (type.includes(value)) {
+  //       setSurveyFilters((prev) => ({ ...prev, type: prev.type.filter((v) => v !== value) }));
+  //     } else {
+  //       setSurveyFilters((prev) => ({ ...prev, type: [...prev.type, value] }));
+  //     }
+  //   }
+  // };
 
   const handleSortChange = (option: TSortOption) => {
     setSurveyFilters((prev) => ({ ...prev, sortBy: option.value }));
@@ -146,7 +146,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProjectChannel !== "link" && (
+        {/* {currentProjectChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}
@@ -158,7 +158,7 @@ export const SurveyFilters = ({
               toggleDropdown={toggleDropdown}
             />
           </div>
-        )}
+        )} */}
 
         {(createdBy.length > 0 || status.length > 0 || type.length > 0) && (
           <Button

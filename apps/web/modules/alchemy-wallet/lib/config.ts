@@ -32,6 +32,10 @@ export const alchemyConfig = createConfig(
     ssr: true,
     enablePopupOauth: true,
     storage: cookieStorage,
+    sessionConfig: {
+      expirationTimeMs: 24 * 60 * 60 * 1000,
+    },
+
     // policyId: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || ""
     // sessionConfig: {
     //     expirationTimeMs: 1000 * 60 * 60, // 60 minutes (default is 15 min)

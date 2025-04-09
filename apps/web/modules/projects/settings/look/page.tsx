@@ -8,7 +8,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { cn } from "@formbricks/lib/cn";
 import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
-import { EditPlacementForm } from "./components/edit-placement-form";
+// import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 
 export const ProjectLookSettingsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
@@ -45,11 +45,11 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         description={t("environments.project.look.logo_settings_description")}>
         <EditLogo project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
-      <SettingsCard
+      {/* <SettingsCard
         title={t("environments.project.look.app_survey_placement")}
         description={t("environments.project.look.app_survey_placement_settings_description")}>
         <EditPlacementForm project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
-      </SettingsCard>
+      </SettingsCard> */}
     </PageContentWrapper>
   );
 };

@@ -34,13 +34,13 @@ export const ProjectConfigNavigation = ({
       href: `/environments/${environmentId}/project/look`,
       current: pathname?.includes("/look"),
     },
-    {
-      id: "languages",
-      label: t("common.survey_languages"),
-      icon: <LanguagesIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/languages`,
-      current: pathname?.includes("/languages"),
-    },
+    // {
+    //   id: "languages",
+    //   label: t("common.survey_languages"),
+    //   icon: <LanguagesIcon className="h-5 w-5" />,
+    //   href: `/environments/${environmentId}/project/languages`,
+    //   current: pathname?.includes("/languages"),
+    // },
     {
       id: "tags",
       label: t("common.tags"),
@@ -48,27 +48,27 @@ export const ProjectConfigNavigation = ({
       href: `/environments/${environmentId}/project/tags`,
       current: pathname?.includes("/tags"),
     },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      icon: <KeyIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/api-keys`,
-      current: pathname?.includes("/api-keys"),
-    },
-    {
-      id: "app-connection",
-      label: t("common.website_and_app_connection"),
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/app-connection`,
-      current: pathname?.includes("/app-connection"),
-    },
-    {
-      id: "teams",
-      label: t("common.team_access"),
-      icon: <UsersIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/teams`,
-      current: pathname?.includes("/teams"),
-    },
+    // {
+    //   id: "api-keys",
+    //   label: t("common.api_keys"),
+    //   icon: <KeyIcon className="h-5 w-5" />,
+    //   href: `/environments/${environmentId}/project/api-keys`,
+    //   current: pathname?.includes("/api-keys"),
+    // },
+    // {
+    //   id: "app-connection",
+    //   label: t("common.website_and_app_connection"),
+    //   icon: <ListChecksIcon className="h-5 w-5" />,
+    //   href: `/environments/${environmentId}/project/app-connection`,
+    //   current: pathname?.includes("/app-connection"),
+    // },
+    // {
+    //   id: "teams",
+    //   label: t("common.team_access"),
+    //   icon: <UsersIcon className="h-5 w-5" />,
+    //   href: `/environments/${environmentId}/project/teams`,
+    //   current: pathname?.includes("/teams"),
+    // },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;

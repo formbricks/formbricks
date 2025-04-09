@@ -282,7 +282,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    maxAge: 3600,
+    maxAge: 24 * 3600,
   },
   callbacks: {
     async jwt({ token }) {
