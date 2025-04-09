@@ -7,8 +7,8 @@ import { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storag
 
 // Simple API client using fetch
 export class ApiClient {
-  private appUrl: string;
-  private environmentId: string;
+  readonly appUrl: string;
+  readonly environmentId: string;
 
   constructor({ appUrl, environmentId }: { appUrl: string; environmentId: string }) {
     this.appUrl = appUrl;

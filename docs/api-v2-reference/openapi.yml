@@ -624,7 +624,7 @@ paths:
   /responses:
     servers: &a6
       - url: https://app.formbricks.com/api/v2/management
-        description: Formbricks Cloud
+        description: Formbricks Management API
     get:
       operationId: getResponses
       summary: Get responses
@@ -2207,7 +2207,7 @@ paths:
   /{organizationId}/teams:
     servers: &a11
       - url: https://app.formbricks.com/api/v2/organizations
-        description: Formbricks Cloud
+        description: Formbricks Organizations API
     get:
       operationId: getTeams
       summary: Get teams
