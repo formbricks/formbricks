@@ -12,6 +12,7 @@ public enum SuccessAction: Codable {
 
 /// Formbricks SDK delegate protocol. It contains the main methods to interact with the SDK.
 public protocol FormbricksDelegate: AnyObject {
+    func onResponseCreated()
     func onSurveyStarted()
     func onSurveyFinished()
     func onSurveyClosed()
@@ -185,7 +186,7 @@ public protocol FormbricksDelegate: AnyObject {
      Formbricks.track("button_clicked")
      ```
      */
-    @objc public static func track(_ action: String) {
+    @objc public static func track(_ action: String, hiddenFields: [String: Any]? = nil) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
             delegate?.onError(error)
@@ -195,7 +196,7 @@ public protocol FormbricksDelegate: AnyObject {
         
         Formbricks.isInternetAvailabile { available in
             if available {
-                SurveyManager.shared.track(action)
+                SurveyManager.shared.track(action, hiddenFields: hiddenFields)
             } else {
                 Formbricks.logger.warning(FormbricksSDKError.init(type: .networkError).message)
             }

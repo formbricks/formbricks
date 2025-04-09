@@ -46,7 +46,7 @@ final class SurveyManager {
     
     /// Checks if there are any surveys to display, based in the track action, and if so, displays the first one.
     /// Handles the display percentage and the delay of the survey.
-    func track(_ action: String) {
+    func track(_ action: String, hiddenFields: [String: Any]? = nil) {
         guard !isShowingSurvey else { return }
         let actionClasses = environmentResponse?.data.data.actionClasses ?? []
         let codeActionClasses = actionClasses.filter { $0.type == "code" }
@@ -68,7 +68,7 @@ final class SurveyManager {
             let timeout = firstSurveyWithActionClass?.delay ?? 0
             DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) { [weak self] in
                 guard let self = self else { return }
-                self.showSurvey(withId: surveyId)
+                self.showSurvey(withId: surveyId, hiddenFields: hiddenFields)
                 Formbricks.delegate?.onSuccess(.onFoundSurvey)
             }
         } else {
@@ -144,9 +144,9 @@ private extension SurveyManager {
     /// Presents the survey window with the given id. It is called when a survey is triggered.
     /// The survey is displayed based on the `FormbricksView`.
     /// The view controller is presented over the current context.
-    func showSurvey(withId id: String) {
+    func showSurvey(withId id: String, hiddenFields: [String: Any]? = nil) {
         if let environmentResponse = environmentResponse {
-            PresentSurveyManager.shared.present(environmentResponse: environmentResponse, id: id)
+            PresentSurveyManager.shared.present(environmentResponse: environmentResponse, id: id, hiddenFields: hiddenFields)
         }
         
     }

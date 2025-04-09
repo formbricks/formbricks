@@ -9,7 +9,6 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                                      delegateQueue: nil)
     private let request: Request
     private let completion: ((ResultType<Request.Response>) -> Void)?
-    private let maxRetryCount = 3
     
     init(request: Request, completion: ((ResultType<Request.Response>) -> Void)?) {
         self.request = request
@@ -17,10 +16,10 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
     }
     
     override func main() {
-        performRequest(retryCount: 0)
+        performRequest()
     }
     
-    private func performRequest(retryCount: Int) {
+    private func performRequest() {
         guard let apiURL = request.baseURL, var baseUrlComponents = URLComponents(string: apiURL) else {
             completion?(.failure(FormbricksSDKError(type: .sdkIsNotInitialized)))
             return
@@ -136,13 +135,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                         responseLogMessage.append("\nError: \(error.localizedDescription)")
                         Formbricks.logger.error(responseLogMessage)
                         
-                        if retryCount < self.maxRetryCount {
-                            DispatchQueue.global().asyncAfter(deadline: .now() + 3) {
-                                self.performRequest(retryCount: retryCount + 1)
-                            }
-                        } else {
-                            self.completion?(.failure(error))
-                        }
+                        self.completion?(.failure(error))
                     } else if let data = data, let apiError = try? self.request.decoder.decode(FormbricksAPIError.self, from: data) {
                         Formbricks.logger.error("\(responseLogMessage)\n\(apiError.getDetailedErrorMessage())")
                         self.completion?(.failure(apiError))
@@ -156,14 +149,8 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                 let error = FormbricksAPIClientError(type: .invalidResponse)
                 Formbricks.logger.error("ERROR \(error.message)")
                 
-                if retryCount < self.maxRetryCount {
-                    DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
-                        self.performRequest(retryCount: retryCount + 1)
-                    }
-                } else {
-                    Formbricks.delegate?.onError(error)
-                    self.completion?(.failure(error))
-                }
+                Formbricks.delegate?.onError(error)
+                self.completion?(.failure(error))
             }
         }.resume()
     }

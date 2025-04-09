@@ -14,11 +14,11 @@ final class PresentSurveyManager {
     private weak var viewController: UIViewController?
     
     /// Present the webview
-    func present(environmentResponse: EnvironmentResponse, id: String) {
+    func present(environmentResponse: EnvironmentResponse, id: String, hiddenFields: [String: Any]? = nil) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             if let topVC = self.topViewControllerInVeryWindow() {
-                let view = FormbricksView(viewModel: FormbricksViewModel(environmentResponse: environmentResponse, surveyId: id))
+                let view = FormbricksView(viewModel: FormbricksViewModel(environmentResponse: environmentResponse, surveyId: id, hiddenFields: hiddenFields))
                 let vc = UIHostingController(rootView: view)
                 vc.modalPresentationStyle = .overCurrentContext
                 vc.view.backgroundColor = UIColor.clear//UIColor.gray.withAlphaComponent(0.6)
@@ -53,7 +53,7 @@ final class PresentSurveyManager {
     
     /// Dismiss the webview
     func dismissView() {
-        viewController?.dismiss(animated: true)
+        viewController?.dismiss(animated: false)
     }
 }
 
