@@ -1,9 +1,10 @@
-const colors = require("tailwindcss/colors");
-import { withAccountKitUi, createColorSet } from "@account-kit/react/tailwind";
+import { createColorSet, withAccountKitUi } from "@account-kit/react/tailwind";
 import forms from "@tailwindcss/forms";
 import typography from "@tailwindcss/typography";
 
- const config = {
+const colors = require("tailwindcss/colors");
+
+const config = {
   content: [
     // app content
     "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
@@ -39,13 +40,13 @@ import typography from "@tailwindcss/typography";
       },
       colors: {
         brand: {
-          DEFAULT: "#00E6CA",
-          light: "#00E6CA",
-          dark: "#00C4B8",
+          DEFAULT: "#38B5DB",
+          light: "#38B5DB",
+          dark: "#38B5DB",
         },
-        focus: "var(--formbricks-focus, #1982fc)",
+        focus: "var(--formbricks-focus, #38B5DB)",
         // error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
-        brandnew: "var(--formbricks-brand, #038178)",
+        brandnew: "var(--formbricks-brand, #38B5DB)",
         primary: {
           DEFAULT: "#0f172a",
           foreground: "#fefefe",
@@ -164,6 +165,6 @@ const accountKitConfig = {
   colors: {
     "btn-primary": createColorSet("#00c4b8", "#00e6ca"),
     "fg-accent-brand": createColorSet("#00c4b8", "#00e6ca"),
-  }
-}
+  },
+};
 export default withAccountKitUi(config, accountKitConfig);

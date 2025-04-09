@@ -4,7 +4,7 @@
 
 :root {
   /* Brand Colors */
-  --formbricks-brand: #038178;
+  --formbricks-brand: #38B5DB;
 
   /* Fill Colors */
   --formbricks-fill-primary: #fefefe;
@@ -28,7 +28,7 @@
 
 .dark {
   /* Brand Colors */
-  --formbricks-brand: #038178;
+  --formbricks-brand: #38B5DB;
 
   /* Fill Colors */
   --formbricks-fill-primary: #0f172a;
