@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 jobs:
   validate-docker-build:
     name: Validate Docker Build
