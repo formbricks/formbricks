@@ -89,9 +89,7 @@ export const AddApiKeyModal = ({
   };
 
   // Initialize with one permission by default
-  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>(() =>
-    getInitialPermissions()
-  );
+  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -189,10 +187,6 @@ export const AddApiKeyModal = ({
   const isSubmitDisabled = () => {
     // Check if label is empty or only whitespace
     if (!apiKeyLabel?.trim()) {
-      return true;
-    }
-    // Check if there are any valid permissions
-    if (Object.keys(selectedPermissions).length === 0) {
       return true;
     }
     return false;
@@ -335,15 +329,8 @@ export const AddApiKeyModal = ({
                         <button
                           type="button"
                           className="p-2"
-                          onClick={() => removePermission(permissionIndex)}
-                          disabled={Object.keys(selectedPermissions).length <= 1}>
-                          <Trash2Icon
-                            className={`h-5 w-5 ${
-                              Object.keys(selectedPermissions).length <= 1
-                                ? "text-slate-300"
-                                : "text-slate-500 hover:text-red-500"
-                            }`}
-                          />
+                          onClick={() => removePermission(permissionIndex)}>
+                          <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                         </button>
                       </div>
                     );

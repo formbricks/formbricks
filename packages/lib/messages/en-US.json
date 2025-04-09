@@ -785,6 +785,7 @@
         "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
         "duplicate_access": "Duplicate project access not allowed",
         "no_api_keys_yet": "You don't have any API keys yet",
+        "no_env_permissions_found": "No environment permissions found",
         "organization_access": "Organization Access",
         "permissions": "Permissions",
         "project_access": "Project Access",

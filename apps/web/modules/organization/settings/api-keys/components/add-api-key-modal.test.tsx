@@ -1,4 +1,3 @@
-import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -123,6 +122,9 @@ describe("AddApiKeyModal", () => {
   it("handles permission changes", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
+
     // Open project dropdown for the first permission row
     const projectDropdowns = screen.getAllByRole("button", { name: /Project 1/i });
     await userEvent.click(projectDropdowns[0]);
@@ -145,13 +147,13 @@ describe("AddApiKeyModal", () => {
 
     // Verify new permission row is added
     const deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
-    expect(deleteButtons).toHaveLength(2);
+    expect(deleteButtons).toHaveLength(1);
 
     // Remove the new permission
-    await userEvent.click(deleteButtons[1]);
+    await userEvent.click(deleteButtons[0]);
 
-    // Check that only the original permission row remains
-    expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
+    // Check that no permission rows are left
+    expect(screen.getAllByRole("button", { name: "" })).toHaveLength(0);
   });
 
   it("submits form with correct data", async () => {
@@ -169,12 +171,7 @@ describe("AddApiKeyModal", () => {
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       label: "Test API Key",
-      environmentPermissions: [
-        {
-          environmentId: "env1",
-          permission: ApiKeyPermission.read,
-        },
-      ],
+      environmentPermissions: [],
       organizationAccess: {
         accessControl: {
           read: false,
@@ -203,12 +200,7 @@ describe("AddApiKeyModal", () => {
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       label: "Test API Key",
-      environmentPermissions: [
-        {
-          environmentId: "env1",
-          permission: ApiKeyPermission.read,
-        },
-      ],
+      environmentPermissions: [],
       organizationAccess: {
         accessControl: {
           read: true,

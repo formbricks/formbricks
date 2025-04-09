@@ -785,6 +785,7 @@
         "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
         "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Ainda não tem nenhuma chave API",
+        "no_env_permissions_found": "Nenhuma permissão de ambiente encontrada",
         "organization_access": "Acesso à Organização",
         "permissions": "Permissões",
         "project_access": "Acesso ao Projeto",

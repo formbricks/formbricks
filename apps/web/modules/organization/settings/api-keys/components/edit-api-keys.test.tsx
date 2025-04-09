@@ -220,7 +220,7 @@ describe("EditAPIKeys", () => {
       organizationId: "org1",
       apiKeyData: {
         label: "New Key",
-        environmentPermissions: [{ environmentId: "env1", permission: ApiKeyPermission.read }],
+        environmentPermissions: [],
         organizationAccess: {
           accessControl: { read: true, write: false },
         },
