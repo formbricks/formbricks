@@ -15,7 +15,6 @@ const config = (): UserConfig => {
     build: {
       emptyOutDir: false,
       minify: "terser",
-      sourcemap: true,
       rollupOptions: {
         external: [
           "react",

@@ -2,6 +2,7 @@
 
 import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -15,7 +16,7 @@ import { Modal } from "@/modules/ui/components/modal";
 import { Switch } from "@/modules/ui/components/switch";
 import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangleIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -389,11 +390,9 @@ export const AddApiKeyModal = ({
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
-                <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
-                <p>{t("environments.project.api_keys.api_key_security_warning")}</p>
-              </div>
+              <Alert variant="warning">
+                <AlertTitle>{t("environments.project.api_keys.api_key_security_warning")}</AlertTitle>
+              </Alert>
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
