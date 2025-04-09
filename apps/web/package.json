@@ -134,7 +134,7 @@
     "stripe": "16.7.0",
     "tailwind-merge": "3.1.0",
     "tailwindcss": "3.4.16",
-    "ua-parser-js": "2.0.0",
+    "ua-parser-js": "2.0.3",
     "uuid": "11.1.0",
     "webpack": "5.97.1",
     "xlsx": "0.18.5",
