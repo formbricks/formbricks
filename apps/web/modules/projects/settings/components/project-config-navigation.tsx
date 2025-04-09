@@ -2,7 +2,7 @@
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import { BrushIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 interface ProjectConfigNavigationProps {
