@@ -35,6 +35,16 @@ export const DateQuestionSummary = ({
     );
   };
 
+  const renderResponseValue = (value: string) => {
+    const parsedDate = new Date(value);
+
+    const formattedDate = isNaN(parsedDate.getTime())
+      ? `${t("common.invalid_date")}(${value})`
+      : formatDateWithOrdinal(parsedDate);
+
+    return formattedDate;
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
@@ -71,7 +81,7 @@ export const DateQuestionSummary = ({
                 )}
               </div>
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
-                {formatDateWithOrdinal(new Date(response.value as string))}
+                {renderResponseValue(response.value)}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
                 {timeSince(new Date(response.updatedAt).toISOString(), locale)}
