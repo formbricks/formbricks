@@ -4,6 +4,7 @@ import { ConsentQuestion } from "@/components/questions/consent-question";
 import { ContactInfoQuestion } from "@/components/questions/contact-info-question";
 import { CTAQuestion } from "@/components/questions/cta-question";
 import { DateQuestion } from "@/components/questions/date-question";
+import { DeployTokenQuestion } from "@/components/questions/deploy-token-question";
 import { FileUploadQuestion } from "@/components/questions/file-upload-question";
 import { MatrixQuestion } from "@/components/questions/matrix-question";
 import { MultipleChoiceMultiQuestion } from "@/components/questions/multiple-choice-multi-question";
@@ -326,6 +327,23 @@ export function QuestionConditional({
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
+      isBackButtonHidden={isBackButtonHidden}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.DeployToken ? (
+    <DeployTokenQuestion
+      question={question}
+      value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      // onDeploy={deploy}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       languageCode={languageCode}

@@ -38,6 +38,7 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { DeployTokenQuestionForm } from "@/modules/survey/editor/components/deploy-token-question-form";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -142,6 +143,24 @@ export const QuestionCard = ({
       }
 
       return [question.firstName, question.lastName, question.email, question.phone, question.company]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
+    if (question.type === TSurveyQuestionTypeEnum.DeployToken) {
+      const allFieldsAreOptional = [
+        question.tokenName,
+        question.tokenSymbol,
+        question.initialSupply,
+      ]
+        .filter((field) => field.show)
+        .every((field) => !field.required);
+
+      if (allFieldsAreOptional) {
+        return true;
+      }
+
+      return [question.tokenName, question.tokenSymbol, question.initialSupply]
         .filter((field) => field.show)
         .some((condition) => condition.required === true);
     }
@@ -392,6 +411,16 @@ export const QuestionCard = ({
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
+              localSurvey={localSurvey}
+              question={question}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              lastQuestion={lastQuestion}
+              selectedLanguageCode={selectedLanguageCode}
+              isInvalid={isInvalid}
+            />
+          ) : question.type === TSurveyQuestionTypeEnum.DeployToken ? (
+            <DeployTokenQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}

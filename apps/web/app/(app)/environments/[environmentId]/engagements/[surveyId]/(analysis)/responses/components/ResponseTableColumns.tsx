@@ -54,6 +54,19 @@ const getContactInfoFieldLabel = (field: string, t: TFnType) => {
   }
 };
 
+const getDeployTokenFieldLabel = (field: string, t: TFnType) => {
+  switch (field) {
+    case "tokenName":
+      return t("environments.surveys.responses.first_name");
+    case "tokenSymbol":
+      return t("environments.surveys.responses.last_name");
+    case "initialSupply":
+      return t("environments.surveys.responses.email");
+    default:
+      break;
+  }
+};
+
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
@@ -126,6 +139,30 @@ const getQuestionColumnsData = (
           },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[contactInfoField];
+            if (typeof responseValue === "string") {
+              return <p className="text-slate-900">{responseValue}</p>;
+            }
+          },
+        };
+      });
+    
+    case "deployToken":
+      const deployTokenFields = ["tokenName", "tokenSymbol", "initialSupply"];
+      return deployTokenFields.map((deployTokenField) => {
+        return {
+          accessorKey: deployTokenField,
+          header: () => {
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 overflow-hidden">
+                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["deployToken"]}</span>
+                  <span className="truncate">{getDeployTokenFieldLabel(deployTokenField, t)}</span>
+                </div>
+              </div>
+            );
+          },
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[deployTokenField];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
             }

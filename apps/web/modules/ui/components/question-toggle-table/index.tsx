@@ -8,10 +8,11 @@ import {
   TSurvey,
   TSurveyAddressQuestion,
   TSurveyContactInfoQuestion,
+  TSurveyDeployTokenQuestion,
 } from "@formbricks/types/surveys/types";
 
 interface QuestionToggleTableProps {
-  type: "address" | "contact";
+  type: "address" | "contact" | "token";
   fields: {
     required: boolean;
     show: boolean;
@@ -24,7 +25,7 @@ interface QuestionToggleTableProps {
   isInvalid: boolean;
   updateQuestion: (
     questionIdx: number,
-    updatedAttributes: Partial<TSurveyContactInfoQuestion | TSurveyAddressQuestion>
+    updatedAttributes: Partial<TSurveyContactInfoQuestion | TSurveyAddressQuestion | TSurveyDeployTokenQuestion>
   ) => void;
   selectedLanguageCode: string;
 }
@@ -70,9 +71,18 @@ export const QuestionToggleTable = ({
       <thead>
         <tr className="text-left text-slate-800">
           <th className="w-1/4 text-sm font-semibold">
-            {type === "address"
-              ? t("environments.surveys.edit.address_fields")
-              : t("environments.surveys.edit.contact_fields")}
+          {
+            (() => {
+              switch (type) {
+                case "address":
+                  return t("environments.surveys.edit.address_fields");
+                case "token":
+                    return t("environments.surveys.edit.token_fields");
+                default:
+                  return t("environments.surveys.edit.contact_fields");
+              }
+            })()
+          }
           </th>
           <th className="w-1/6 text-sm font-semibold">{t("common.show")}</th>
           <th className="w-1/6 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>

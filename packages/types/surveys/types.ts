@@ -704,16 +704,16 @@ export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
 
 export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.DeployToken),
-  firstName: ZToggleInputConfig,
-  lastName: ZToggleInputConfig,
-  email: ZToggleInputConfig,
-  phone: ZToggleInputConfig,
-  company: ZToggleInputConfig,
+  tokenName: ZToggleInputConfig,
+  tokenSymbol: ZToggleInputConfig,
+  initialSupply: ZToggleInputConfig,
 });
 
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
+
+export type TSurveyDeployTokenQuestion = z.infer<typeof ZSurveyDeployTokenQuestion>;
 
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
@@ -2686,8 +2686,8 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
 export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
 
 export const ZSurveyQuestionSummaryDeployToken = z.object({
-  type: z.literal("contactInfo"),
-  question: ZSurveyContactInfoQuestion,
+  type: z.literal("deployToken"),
+  question: ZSurveyDeployTokenQuestion,
   responseCount: z.number(),
   samples: z.array(
     z.object({

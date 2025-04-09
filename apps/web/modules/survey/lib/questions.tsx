@@ -30,6 +30,7 @@ import {
   TSurveyConsentQuestion,
   TSurveyContactInfoQuestion,
   TSurveyDateQuestion,
+  TSurveyDeployTokenQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
@@ -297,15 +298,11 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
     preset: {
       headline: { default: "" },
       tokenName: { show: true, required: true, placeholder: { default: "Token Name" } },
-      tokenSymbol: { show: true, required: true, placeholder: { default: "Token Name" } },
-      buttonLabel: { default: t("templates.deploy") },
+      tokenSymbol: { show: true, required: true, placeholder: { default: "Token Symbol" } },
+      initialSupply: { show: true, required: true, placeholder: { default: "Initial Supply"} },
+      buttonLabel: { default: t("templates.next") },
       backButtonLabel: { default: t("templates.back") },
-      // tokenName: { show: true, required: true, placeholder: { default: "SampleToken" } },
-      // tokenSymbol: { show: true, required: true, placeholder: { default: "TKN" } },
-      // initialSupply: { show: true, required: true, placeholder: { default: 1_000_000_000 } },
-      // buttonLabel: { default: t("templates.deploy") },
-      // backButtonLabel: { default: t("templates.back") },
-    } as Partial<TSurveyContactInfoQuestion>,
+    } as Partial<TSurveyDeployTokenQuestion>,
   },
 ];
 
