@@ -134,7 +134,7 @@ object SurveyManager {
      * Checks if there are any surveys to display, based in the track action, and if so, displays the first one.
      * Handles the display percentage and the delay of the survey.
      */
-    fun track(action: String) {
+    fun track(action: String, hiddenFields: Map<String, Any>? = null) {
         val actionClasses = environmentDataHolder?.data?.data?.actionClasses ?: listOf()
         val codeActionClasses = actionClasses.filter { it.type == "code" }
         val actionClass = codeActionClasses.firstOrNull { it.key == action }
@@ -155,7 +155,7 @@ object SurveyManager {
                 stopDisplayTimer()
                 displayTimer.schedule(object : TimerTask() {
                     override fun run() {
-                        Formbricks.showSurvey(it)
+                        Formbricks.showSurvey(it, hiddenFields = hiddenFields)
                     }
 
                 }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))

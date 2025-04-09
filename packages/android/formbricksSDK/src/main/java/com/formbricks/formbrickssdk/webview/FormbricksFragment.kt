@@ -43,7 +43,7 @@ import java.util.Timer
 import java.util.TimerTask
 
 
-class FormbricksFragment : BottomSheetDialogFragment() {
+class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomSheetDialogFragment() {
 
     private lateinit var binding: FragmentFormbricksBinding
     private lateinit var surveyId: String
@@ -224,7 +224,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
             it.addJavascriptInterface(webAppInterface, WebAppInterface.INTERFACE_NAME)
         }
 
-        viewModel.loadHtml(surveyId)
+        viewModel.loadHtml(surveyId = surveyId, hiddenFields = hiddenFields)
     }
 
     private fun getFileName(uri: Uri): String? {
@@ -262,8 +262,12 @@ class FormbricksFragment : BottomSheetDialogFragment() {
     companion object {
         private val TAG: String by lazy { FormbricksFragment::class.java.simpleName }
 
-        fun show(childFragmentManager: FragmentManager, surveyId: String) {
-            val fragment = FormbricksFragment()
+        fun show(
+            childFragmentManager: FragmentManager,
+            surveyId: String,
+            hiddenFields: Map<String, Any>? = null
+        ) {
+            val fragment = FormbricksFragment(hiddenFields)
             fragment.surveyId = surveyId
             fragment.show(childFragmentManager, TAG)
         }

@@ -6,9 +6,9 @@ final class FormbricksViewModel: ObservableObject {
     @Published var htmlString: String?
     let surveyId: String
     
-    init(environmentResponse: EnvironmentResponse, surveyId: String) {
+    init(environmentResponse: EnvironmentResponse, surveyId: String, hiddenFields: [String: Any]? = nil) {
         self.surveyId = surveyId
-        if let webviewDataJson = WebViewData(environmentResponse: environmentResponse, surveyId: surveyId).getJsonString() {
+        if let webviewDataJson = WebViewData(environmentResponse: environmentResponse, surveyId: surveyId, hiddenFields: hiddenFields).getJsonString() {
             htmlString = htmlTemplate.replacingOccurrences(of: "{{WEBVIEW_DATA}}", with: webviewDataJson)
         }
     }
@@ -88,7 +88,7 @@ private extension FormbricksViewModel {
 private class WebViewData {
     var data: [String: Any] = [:]
     
-    init(environmentResponse: EnvironmentResponse, surveyId: String) {
+    init(environmentResponse: EnvironmentResponse, surveyId: String, hiddenFields: [String: Any]? = nil) {
         data["survey"] = environmentResponse.getSurveyJson(forSurveyId: surveyId)
         data["isBrandingEnabled"] = true
         data["languageCode"] = Formbricks.language
@@ -96,6 +96,10 @@ private class WebViewData {
         data["environmentId"] = Formbricks.environmentId
         data["contactId"] = UserManager.shared.contactId
         data["isWebEnvironment"] = false
+        
+        if let hiddenFields = hiddenFields, !hiddenFields.isEmpty {
+            data["hiddenFieldsRecord"] = hiddenFields
+        }
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false

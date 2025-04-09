@@ -110,21 +110,21 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
                 /// Happens when the user submits an answer.
             case .onResponseCreated:
                 SurveyManager.shared.postResponse(surveyId: surveyId)
-
+                Formbricks.delegate?.onResponseCreated()
                 /// Happens when a survey is shown.
             case .onDisplayCreated:
-                Formbricks.delegate?.onSurveyStarted()
                 SurveyManager.shared.onNewDisplay(surveyId: surveyId)
+                Formbricks.delegate?.onSurveyStarted()
             
             /// Happens when the user closes the survey view with the close button.
             case .onClose:
-                Formbricks.delegate?.onSurveyClosed()
                 SurveyManager.shared.dismissSurveyWebView()
+                Formbricks.delegate?.onSurveyClosed()
                 
             /// Happens when the survey view is finished  by the user submitting the last question.
             case .onFinished:
-                Formbricks.delegate?.onSurveyFinished()
                 SurveyManager.shared.delayedDismiss()
+                Formbricks.delegate?.onSurveyFinished()
             
             /// Happens when the survey wants to open an external link in the default browser.
             case .onOpenExternalURL:
