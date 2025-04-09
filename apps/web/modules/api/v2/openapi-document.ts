@@ -25,7 +25,6 @@ import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZUser } from "@formbricks/database/zod/users";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
-import { env } from "@formbricks/lib/env";
 
 extendZodWithOpenApi(z);
 
