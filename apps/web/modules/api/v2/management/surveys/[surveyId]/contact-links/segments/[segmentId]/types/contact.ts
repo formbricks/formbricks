@@ -1,5 +1,8 @@
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
+
+extendZodWithOpenApi(z);
 
 export const ZContactLinksBySegmentParams = z.object({
   surveyId: z

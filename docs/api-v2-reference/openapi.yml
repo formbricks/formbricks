@@ -1634,7 +1634,7 @@ paths:
       summary: Get personalized survey link for a contact
       description: Retrieves a personalized link for a specific survey.
       tags:
-        - Management API > Surveys
+        - Management API > Surveys > Contact Links
       parameters:
         - in: path
           name: surveyId
@@ -1658,9 +1658,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  surveyUrl:
-                    type: string
-                    format: uri
+                  data:
+                    type: object
+                    properties:
+                      surveyUrl:
+                        type: string
+                        format: uri
+                    required:
+                      - surveyUrl
   /surveys/{surveyId}/contact-links/segments/{segmentId}:
     servers: *a6
     get:
