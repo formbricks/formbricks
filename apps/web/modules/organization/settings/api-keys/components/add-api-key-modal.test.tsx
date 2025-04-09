@@ -145,15 +145,17 @@ describe("AddApiKeyModal", () => {
     const addButton = screen.getByRole("button", { name: /add_permission/i });
     await userEvent.click(addButton);
 
+    await userEvent.click(addButton);
+
     // Verify new permission row is added
     const deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
-    expect(deleteButtons).toHaveLength(1);
+    expect(deleteButtons).toHaveLength(2);
 
     // Remove the new permission
-    await userEvent.click(deleteButtons[0]);
+    await userEvent.click(deleteButtons[1]);
 
-    // Check that no permission rows are left
-    expect(screen.getAllByRole("button", { name: "" })).toHaveLength(0);
+    // Check that only the original permission row remains
+    expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
   });
 
   it("submits form with correct data", async () => {
