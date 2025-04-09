@@ -48,9 +48,6 @@ runs:
       run: pnpm install --config.platform=linux --config.architecture=x64
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-        TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     - name: create .env
       run: cp .env.example .env
