@@ -64,6 +64,3 @@ runs:
         pnpm build --filter=@formbricks/web...
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        TURBO_TOKEN: ${{ inputs.turbo_token }}
-        TURBO_TEAM: ${{ inputs.turbo_team }}
