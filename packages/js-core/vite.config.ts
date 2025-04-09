@@ -20,7 +20,6 @@ const config = () => {
       },
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
       minify: "terser",
-      sourcemap: true,
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricks",
