@@ -26,12 +26,12 @@ export const OrganizationSettingsNavbar = ({
       current: pathname?.includes("/general"),
       hidden: false,
     },
-    // {
-    //   id: "teams",
-    //   label: t("common.teams"),
-    //   href: `/environments/${environmentId}/settings/teams`,
-    //   current: pathname?.includes("/teams"),
-    // },
+    {
+      id: "teams",
+      label: t("common.teams"),
+      href: `/environments/${environmentId}/settings/teams`,
+      current: pathname?.includes("/teams"),
+    },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
