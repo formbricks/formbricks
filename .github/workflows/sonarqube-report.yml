@@ -96,8 +96,22 @@ jobs:
       - name: Run tests with coverage
         if: ${{ github.event_name != 'workflow_run' }}
         run: |
+          # Verify repository integrity before running tests
+          git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${{ github.sha }}
+          git checkout --progress --force ${{ github.sha }}
+
+          # Verify that only expected files exist in the test directory
+          echo "Verifying test directory integrity..."
+          UNEXPECTED_FILES=$(find apps/web -type f -not -path "*/node_modules/*" -not -path "*/\.*" -not -path "*/coverage/*" | grep -v -E '\.tsx?$|\.jsx?$|package\.json|tsconfig\.json|\.html$|\.css$|\.svg$')
+          if [ -n "$UNEXPECTED_FILES" ]; then
+            echo "Warning: Unexpected files detected in apps/web directory:"
+            echo "$UNEXPECTED_FILES"
+            exit 1
+          fi
+
+          # Run tests in a more restricted environment
           cd apps/web
-          pnpm test:coverage
+          NODE_OPTIONS="--max-old-space-size=4096 --max-http-header-size=8192" pnpm test:coverage
           cd ../../
           # The Vitest coverage config is in your vite.config.mts
 
