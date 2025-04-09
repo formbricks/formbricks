@@ -1,5 +1,5 @@
 import { wrapThrowsAsync } from "@/lib/common/utils";
-import { ApiResponse, ApiSuccessResponse } from "@/types/api";
+import { ApiResponse, ApiSuccessResponse, CreateOrUpdateUserResponse } from "@/types/api";
 import { TEnvironmentState } from "@/types/config";
 import { ApiErrorResponse, Result, err, ok } from "@/types/error";
 
@@ -22,8 +22,13 @@ export const makeRequest = async <T>(
     body,
   });
 
-  // TODO: Only return api error response relevant keys
-  if (!res.ok) return err(res.error as unknown as ApiErrorResponse);
+  if (!res.ok) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: "Something went wrong",
+    });
+  }
 
   const response = res.data;
   const json = (await response.json()) as ApiResponse;
@@ -63,26 +68,10 @@ export class ApiClient {
     this.isDebug = isDebug;
   }
 
-  async createOrUpdateUser(userUpdateInput: { userId: string; attributes?: Record<string, string> }): Promise<
-    Result<
-      {
-        state: {
-          expiresAt: Date | null;
-          data: {
-            userId: string | null;
-            contactId: string | null;
-            segments: string[];
-            displays: { surveyId: string; createdAt: Date }[];
-            responses: string[];
-            lastDisplayAt: Date | null;
-            language?: string;
-          };
-        };
-        messages?: string[];
-      },
-      ApiErrorResponse
-    >
-  > {
+  async createOrUpdateUser(userUpdateInput: {
+    userId: string;
+    attributes?: Record<string, string>;
+  }): Promise<Result<CreateOrUpdateUserResponse, ApiErrorResponse>> {
     // transform all attributes to string if attributes are present into a new attributes copy
     const attributes: Record<string, string> = {};
     for (const key in userUpdateInput.attributes) {
