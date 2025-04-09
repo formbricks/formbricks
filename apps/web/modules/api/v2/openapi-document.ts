@@ -2,6 +2,7 @@ import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-at
 import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
+import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import { mePaths } from "@/modules/api/v2/me/lib/openapi";
@@ -43,6 +44,7 @@ const document = createDocument({
     ...contactAttributePaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
+    ...surveyContactLinksBySegmentPaths,
     ...webhookPaths,
     ...teamPaths,
     ...projectTeamPaths,
@@ -82,6 +84,10 @@ const document = createDocument({
     {
       name: "Management API > Surveys",
       description: "Operations for managing surveys.",
+    },
+    {
+      name: "Management API > Surveys > Contact Links",
+      description: "Operations for generating personalized survey links for contacts.",
     },
     {
       name: "Management API > Webhooks",
