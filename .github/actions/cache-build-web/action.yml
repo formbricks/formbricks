@@ -8,14 +8,6 @@ on:
         required: false
         default: "0"
 
-inputs:
-  turbo_token:
-    description: "Turborepo token"
-    required: false
-  turbo_team:
-    description: "Turborepo team"
-    required: false
-
 runs:
   using: "composite"
   steps:
