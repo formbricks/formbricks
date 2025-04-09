@@ -139,7 +139,7 @@
     "webpack": "5.99.5",
     "xlsx": "0.18.5",
     "zod": "3.24.1",
-    "zod-openapi": "4.2.4"
+    "zod-openapi": "4.2.5"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
