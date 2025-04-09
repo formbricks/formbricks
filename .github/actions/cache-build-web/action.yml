@@ -8,6 +8,14 @@ on:
         required: false
         default: "0"
 
+inputs:
+  turbo_token:
+    description: "Turborepo token"
+    required: false
+  turbo_team:
+    description: "Turborepo team"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -64,3 +72,6 @@ runs:
         pnpm build --filter=@formbricks/web...
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        TURBO_TOKEN: ${{ inputs.turbo_token }}
+        TURBO_TEAM: ${{ inputs.turbo_team }}
