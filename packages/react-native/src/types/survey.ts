@@ -54,4 +54,5 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   action?: string;
   singleUseId?: string;
   singleUseResponseId?: string;
+  isWebEnvironment?: boolean;
 }
