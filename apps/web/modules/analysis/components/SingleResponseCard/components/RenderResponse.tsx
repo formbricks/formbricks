@@ -55,8 +55,6 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   switch (questionType) {
     case TSurveyQuestionTypeEnum.Rating:
       if (typeof responseData === "number") {
-        console.log("Returning Ratingresponse for number - responseData", responseData);
-
         return (
           <RatingResponse
             scale={question.scale}

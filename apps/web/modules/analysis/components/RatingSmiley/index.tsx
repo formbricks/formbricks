@@ -43,7 +43,7 @@ const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean,
     <TiredFace className={active ? activeColor : inactiveColor} data-testid="TiredFace" />,
     <WearyFace className={active ? activeColor : inactiveColor} data-testid="WearyFace" />,
     <PerseveringFace className={active ? activeColor : inactiveColor} data-testid="PerseveringFace" />,
-    <FrowningFace className={active ? activeColor : inactiveColor} data-testid="Frowningface" />,
+    <FrowningFace className={active ? activeColor : inactiveColor} data-testid="FrowningFace" />,
     <ConfusedFace className={active ? activeColor : inactiveColor} data-testid="ConfusedFace" />,
     <NeutralFace className={active ? activeColor : inactiveColor} data-testid="NeutralFace" />,
     <SlightlySmilingFace

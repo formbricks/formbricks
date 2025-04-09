@@ -66,6 +66,19 @@ vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn((error: any) => error.message),
 }));
 
+vi.mock("./components/LanguageDropdown", () => {
+  const React = require("react");
+  return {
+    LanguageDropdown: (props: { setLanguage: (lang: string) => void }) => {
+      // Call setLanguage("fr-FR") when the component mounts to simulate a language change.
+      React.useEffect(() => {
+        props.setLanguage("fr-FR");
+      }, [props.setLanguage]);
+      return <div>Mocked LanguageDropdown</div>;
+    },
+  };
+});
+
 describe("ShareSurveyLink", () => {
   beforeEach(() => {
     Object.assign(navigator, {
@@ -102,19 +115,6 @@ describe("ShareSurveyLink", () => {
 
   it("appends language query when language is changed from default", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
-
-    vi.mock("./components/LanguageDropdown", () => {
-      const React = require("react");
-      return {
-        LanguageDropdown: (props: { setLanguage: (lang: string) => void }) => {
-          // Call setLanguage("fr-FR") when the component mounts to simulate a language change.
-          React.useEffect(() => {
-            props.setLanguage("fr-FR");
-          }, [props.setLanguage]);
-          return <div>Mocked LanguageDropdown</div>;
-        },
-      };
-    });
 
     const setSurveyUrl = vi.fn();
     const DummyWrapper = () => (
@@ -222,6 +222,26 @@ describe("ShareSurveyLink", () => {
     await waitFor(() => {
       expect(generateSingleUseIdAction).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("environments.surveys.new_single_use_link_generated");
+    });
+  });
+
+  it("handles error when generating single-use link fails", async () => {
+    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: undefined });
+    vi.mocked(getFormattedErrorMessage).mockReturnValue("Failed to generate link");
+
+    const setSurveyUrl = vi.fn();
+    render(
+      <ShareSurveyLink
+        survey={dummySurvey}
+        surveyDomain={dummySurveyDomain}
+        surveyUrl=""
+        setSurveyUrl={setSurveyUrl}
+        locale={dummyLocale}
+      />
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Failed to generate link");
     });
   });
 });
