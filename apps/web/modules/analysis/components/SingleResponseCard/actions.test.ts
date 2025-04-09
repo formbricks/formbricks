@@ -9,7 +9,7 @@ import {
   getProjectIdFromResponseNoteId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import {
   createResponseNote,

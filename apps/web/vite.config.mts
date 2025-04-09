@@ -56,6 +56,10 @@ export default defineConfig({
         "modules/ee/contacts/segments/lib/**/*.ts",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
+        "modules/account/**/*.tsx",
+        "modules/account/**/*.tsx",
+        "modules/analysis/**/*.tsx",
+        "modules/analysis/**/*.ts",
       ],
       exclude: [
         "**/.next/**",

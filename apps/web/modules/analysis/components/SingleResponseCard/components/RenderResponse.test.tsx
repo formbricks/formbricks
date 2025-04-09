@@ -90,7 +90,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders RatingResponse for 'Rating' question with number", () => {
-    const question = { ...defaultQuestion, type: "Rating", scale: 5, range: [1, 5] };
+    const question = { ...defaultQuestion, type: "rating", scale: 5, range: [1, 5] };
     render(
       <RenderResponse responseData={4} question={question} survey={defaultSurvey} language={dummyLanguage} />
     );
@@ -98,7 +98,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders formatted date for 'Date' question", () => {
-    const question = { ...defaultQuestion, type: "Date" };
+    const question = { ...defaultQuestion, type: "date" };
     const dateStr = new Date("2023-01-01T12:00:00Z").toISOString();
     render(
       <RenderResponse
@@ -112,7 +112,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders PictureSelectionResponse for 'PictureSelection' question", () => {
-    const question = { ...defaultQuestion, type: "PictureSelection", choices: ["a", "b"] };
+    const question = { ...defaultQuestion, type: "pictureSelection", choices: ["a", "b"] };
     render(
       <RenderResponse
         responseData={["choice1", "choice2"]}
@@ -127,7 +127,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders FileUploadResponse for 'FileUpload' question", () => {
-    const question = { ...defaultQuestion, type: "FileUpload" };
+    const question = { ...defaultQuestion, type: "fileUpload" };
     render(
       <RenderResponse
         responseData={["file1", "file2"]}
@@ -140,7 +140,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders Matrix response", () => {
-    const question = { id: "q1", type: "Matrix", rows: ["row1", "row2"] } as any;
+    const question = { id: "q1", type: "matrix", rows: ["row1", "row2"] } as any;
     // getLocalizedValue returns the row value itself
     const responseData = { row1: "answer1", row2: "answer2" };
     render(
@@ -156,7 +156,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ArrayResponse for 'Address' question", () => {
-    const question = { ...defaultQuestion, type: "Address" };
+    const question = { ...defaultQuestion, type: "address" };
     render(
       <RenderResponse
         responseData={["addr1", "addr2"]}
@@ -169,7 +169,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ResponseBadges for 'Cal' question (string)", () => {
-    const question = { ...defaultQuestion, type: "Cal" };
+    const question = { ...defaultQuestion, type: "cal" };
     render(
       <RenderResponse
         responseData={"value"}
@@ -178,11 +178,11 @@ describe("RenderResponse", () => {
         language={dummyLanguage}
       />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("VALUE"); // because of capitalizeFirstLetter in component logic
+    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Value");
   });
 
   it("renders ResponseBadges for 'Consent' question (number)", () => {
-    const question = { ...defaultQuestion, type: "Consent" };
+    const question = { ...defaultQuestion, type: "consent" };
     render(
       <RenderResponse responseData={5} question={question} survey={defaultSurvey} language={dummyLanguage} />
     );
@@ -190,7 +190,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ResponseBadges for 'CTA' question (string)", () => {
-    const question = { ...defaultQuestion, type: "CTA" };
+    const question = { ...defaultQuestion, type: "cta" };
     render(
       <RenderResponse
         responseData={"click"}
@@ -203,7 +203,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ResponseBadges for 'MultipleChoiceSingle' question (string)", () => {
-    const question = { ...defaultQuestion, type: "MultipleChoiceSingle" };
+    const question = { ...defaultQuestion, type: "multipleChoiceSingle" };
     render(
       <RenderResponse
         responseData={"option1"}
@@ -216,7 +216,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ResponseBadges for 'MultipleChoiceMulti' question (array)", () => {
-    const question = { ...defaultQuestion, type: "MultipleChoiceMulti" };
+    const question = { ...defaultQuestion, type: "multipleChoiceMulti" };
     render(
       <RenderResponse
         responseData={["opt1", "opt2"]}
@@ -229,7 +229,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders ResponseBadges for 'NPS' question (number)", () => {
-    const question = { ...defaultQuestion, type: "NPS" };
+    const question = { ...defaultQuestion, type: "nps" };
     render(
       <RenderResponse responseData={9} question={question} survey={defaultSurvey} language={dummyLanguage} />
     );
@@ -237,7 +237,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders RankingRespone for 'Ranking' question", () => {
-    const question = { ...defaultQuestion, type: "Ranking" };
+    const question = { ...defaultQuestion, type: "ranking" };
     render(
       <RenderResponse
         responseData={["first", "second"]}
@@ -250,7 +250,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders default branch for unknown question type with string", () => {
-    const question = { ...defaultQuestion, type: "Unknown" };
+    const question = { ...defaultQuestion, type: "unknown" };
     render(
       <RenderResponse
         responseData={"some text"}
@@ -263,7 +263,7 @@ describe("RenderResponse", () => {
   });
 
   it("renders default branch for unknown question type with array", () => {
-    const question = { ...defaultQuestion, type: "Unknown" };
+    const question = { ...defaultQuestion, type: "unknown" };
     render(
       <RenderResponse
         responseData={["a", "b"]}
@@ -272,6 +272,6 @@ describe("RenderResponse", () => {
         language={dummyLanguage}
       />
     );
-    expect(screen.getByText("a,b")).toBeInTheDocument();
+    expect(screen.getByText("a, b")).toBeInTheDocument();
   });
 });
