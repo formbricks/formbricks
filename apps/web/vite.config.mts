@@ -1,7 +1,7 @@
 // vitest.config.ts
+import react from "@vitejs/plugin-react";
 import { PluginOption, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -60,6 +60,7 @@ export default defineConfig({
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/ee/contacts/segments/lib/**/*.ts",
+        "modules/ee/contacts/segments/components/segment-settings.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
       ],

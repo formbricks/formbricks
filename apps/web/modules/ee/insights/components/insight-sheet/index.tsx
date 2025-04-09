@@ -151,8 +151,8 @@ export const InsightSheet = ({
         <div className="flex flex-1 flex-col gap-y-2 overflow-auto">
           {deferredDocuments.map((document, index) => (
             <Card key={`${document.id}-${index}`} className="transition-opacity duration-200">
-              <CardContent className="p-4 text-sm">
-                <Markdown className="whitespace-pre-wrap">{document.text}</Markdown>
+              <CardContent className="whitespace-pre-wrap p-4 text-sm">
+                <Markdown>{document.text}</Markdown>
               </CardContent>
               <CardFooter className="flex justify-between rounded-bl-xl rounded-br-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
