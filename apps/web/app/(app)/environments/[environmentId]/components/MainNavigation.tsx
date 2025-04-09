@@ -2,7 +2,7 @@
 
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
-import FBLogo from "@/images/formbricks-wordmark.svg";
+import FBLogo from "@/images/logo.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
