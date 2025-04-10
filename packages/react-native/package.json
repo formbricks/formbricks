@@ -45,7 +45,6 @@
     "zod": "3.24.1"
   },
   "devDependencies": {
-    "@formbricks/api": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@types/react": "18.3.1",
     "@vitest/coverage-v8": "3.1.1",
