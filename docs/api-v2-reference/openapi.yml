@@ -4,7 +4,7 @@ info:
   description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api/v2/management
+  - url: https://app.formbricks.com/api/v2/
     description: Formbricks Cloud
 tags:
   - name: Roles
@@ -21,6 +21,8 @@ tags:
     description: Operations for managing contact attributes keys.
   - name: Management API > Surveys
     description: Operations for managing surveys.
+  - name: Management API > Surveys > Contact Links
+    description: Operations for generating personalized survey links for contacts.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
   - name: Organizations API > Teams
@@ -620,6 +622,9 @@ paths:
                         - projectId
                         - projectName
   /responses:
+    servers: &a6
+      - url: https://app.formbricks.com/api/v2/management
+        description: Formbricks Management API
     get:
       operationId: getResponses
       summary: Get responses
@@ -629,41 +634,53 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
-          schema:
-            type: string
-            enum: &a6
-              - createdAt
-              - updatedAt
-            default: createdAt
-        - in: query
-          name: order
+          description: Sort by field
           schema:
             type: string
             enum: &a7
+              - createdAt
+              - updatedAt
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: &a8
               - asc
               - desc
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: surveyId
           schema:
@@ -1044,6 +1061,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /responses/{id}:
+    servers: *a6
     get:
       operationId: getResponse
       summary: Get a response
@@ -1509,6 +1527,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /contacts/bulk:
+    servers: *a6
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
@@ -1609,6 +1628,7 @@ paths:
                 required:
                   - data
   /contacts:
+    servers: *a6
     get:
       operationId: getContacts
       summary: Get contacts
@@ -1683,6 +1703,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
   /contacts/{id}:
+    servers: *a6
     get:
       operationId: getContact
       summary: Get a contact
@@ -1748,6 +1769,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
   /contact-attributes:
+    servers: *a6
     get:
       operationId: getContactAttributes
       summary: Get contact attributes
@@ -1838,6 +1860,7 @@ paths:
         "201":
           description: Contact attribute created successfully.
   /contact-attributes/{id}:
+    servers: *a6
     get:
       operationId: getContactAttribute
       summary: Get a contact attribute
@@ -1903,6 +1926,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
+    servers: *a6
     get:
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
@@ -2010,6 +2034,7 @@ paths:
         "201":
           description: Contact attribute key created successfully.
   /contact-attribute-keys/{id}:
+    servers: *a6
     get:
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
@@ -2075,6 +2100,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
   /surveys:
+    servers: *a6
     get:
       operationId: getSurveys
       summary: Get surveys
@@ -2166,6 +2192,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
   /surveys/{id}:
+    servers: *a6
     get:
       operationId: getSurvey
       summary: Get a survey
@@ -2233,7 +2260,109 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/survey"
+  /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    servers: *a6
+    get:
+      operationId: getContactLinksBySegment
+      summary: Get survey links for contacts in a segment
+      description: Generates personalized survey links for contacts in a segment.
+      tags:
+        - Management API > Surveys > Contact Links
+      parameters:
+        - in: path
+          name: surveyId
+          description: The ID of the survey
+          schema:
+            type: string
+            description: The ID of the survey
+          required: true
+        - in: path
+          name: segmentId
+          description: The ID of the segment
+          schema:
+            type: string
+            description: The ID of the segment
+          required: true
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: expirationDays
+          description: Number of days until the generated JWT expires. If not provided,
+            there is no expiration.
+          schema:
+            type:
+              - number
+              - "null"
+            minimum: 1
+            maximum: 365
+            default: null
+            description: Number of days until the generated JWT expires. If not provided,
+              there is no expiration.
+        - in: query
+          name: attributeKeys
+          schema:
+            type: string
+            description: Comma-separated list of contact attribute keys to include in the
+              response. You can have max 20 keys. If not provided, no attributes
+              will be included.
+      responses:
+        "200":
+          description: Contact links generated successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          contactId:
+                            type: string
+                            description: The ID of the contact
+                          surveyUrl:
+                            type: string
+                            format: uri
+                            description: Personalized survey link
+                          expiresAt:
+                            type:
+                              - string
+                              - "null"
+                            description: The date and time the link expires, null if no expiration
+                          attributes:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: The attributes of the contact
+                    meta:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
   /webhooks:
+    servers: *a6
     get:
       operationId: getWebhooks
       summary: Get webhooks
@@ -2243,37 +2372,49 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
-          schema:
-            type: string
-            enum: *a6
-            default: createdAt
-        - in: query
-          name: order
+          description: Sort by field
           schema:
             type: string
             enum: *a7
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a8
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: surveyIds
           schema:
@@ -2315,7 +2456,7 @@ paths:
                           description: The URL of the webhook
                         source:
                           type: string
-                          enum: &a8
+                          enum: &a9
                             - user
                             - zapier
                             - make
@@ -2328,7 +2469,7 @@ paths:
                           type: array
                           items:
                             type: string
-                            enum: &a9
+                            enum: &a10
                               - responseFinished
                               - responseCreated
                               - responseUpdated
@@ -2372,7 +2513,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2381,7 +2522,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2425,7 +2566,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2434,7 +2575,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2442,6 +2583,7 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /webhooks/{id}:
+    servers: *a6
     get:
       operationId: getWebhook
       summary: Get a webhook
@@ -2485,7 +2627,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2494,7 +2636,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2533,7 +2675,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2542,7 +2684,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2586,7 +2728,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2595,7 +2737,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2645,7 +2787,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2654,7 +2796,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2662,9 +2804,9 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /{organizationId}/teams:
-    servers: &a10
+    servers: &a11
       - url: https://app.formbricks.com/api/v2/organizations
-        description: Formbricks Cloud
+        description: Formbricks Organizations API
     get:
       operationId: getTeams
       summary: Get teams
@@ -2680,37 +2822,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
-          schema:
-            type: string
-            enum: *a6
-            default: createdAt
-        - in: query
-          name: order
+          description: Sort by field
           schema:
             type: string
             enum: *a7
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a8
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
       responses:
         "200":
           description: Teams retrieved successfully.
@@ -2805,7 +2959,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/teams/{id}:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getTeam
       summary: Get a team
@@ -2956,7 +3110,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/project-teams:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getProjectTeams
       summary: Get project teams
@@ -2972,37 +3126,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
-          schema:
-            type: string
-            enum: *a6
-            default: createdAt
-        - in: query
-          name: order
+          description: Sort by field
           schema:
             type: string
             enum: *a7
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a8
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: teamId
           schema:
@@ -3241,7 +3407,7 @@ paths:
                       - manage
                     description: Level of access granted to the project
   /{organizationId}/users:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getUsers
       summary: Get users
@@ -3258,37 +3424,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
-          schema:
-            type: string
-            enum: *a6
-            default: createdAt
-        - in: query
-          name: order
+          description: Sort by field
           schema:
             type: string
             enum: *a7
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a8
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: id
           schema:
@@ -3343,7 +3521,7 @@ paths:
                           example: example@example.com
                         role:
                           type: string
-                          enum: &a11
+                          enum: &a12
                             - owner
                             - manager
                             - member
@@ -3354,7 +3532,7 @@ paths:
                           items:
                             type: string
                           description: The list of teams the user is a member of
-                          example: &a12
+                          example: &a13
                             - team1
                             - team2
                   meta:
@@ -3406,7 +3584,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3414,7 +3592,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - name
                 - email
@@ -3460,7 +3638,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3468,7 +3646,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
     patch:
       operationId: updateUser
       summary: Update a user
@@ -3507,7 +3685,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3515,7 +3693,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - email
       responses:
@@ -3559,7 +3737,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3567,7 +3745,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
 components:
   securitySchemes:
     apiKeyAuth:
@@ -4039,7 +4217,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a14 []
+          default: &a15 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -4107,7 +4285,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a15
+          enum: &a16
             - displayOnce
             - displayMultiple
             - displaySome
@@ -4342,13 +4520,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a13
+                  enum: &a14
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a13
+                  enum: *a14
               required:
                 - linkSurveys
                 - appSurveys
@@ -4496,7 +4674,7 @@ components:
           description: The URL of the webhook
         source:
           type: string
-          enum: *a8
+          enum: *a9
           description: The source of the webhook
         environmentId:
           type: string
@@ -4505,7 +4683,7 @@ components:
           type: array
           items:
             type: string
-            enum: *a9
+            enum: *a10
           description: The triggers of the webhook
         surveyIds:
           type: array
@@ -4615,7 +4793,7 @@ components:
           example: example@example.com
         role:
           type: string
-          enum: *a11
+          enum: *a12
           description: The role of the user in the organization
           example: member
         teams:
@@ -4623,7 +4801,7 @@ components:
           items:
             type: string
           description: The list of teams the user is a member of
-          example: *a12
+          example: *a13
       required:
         - id
         - createdAt
@@ -4778,7 +4956,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a14
+          default: *a15
           description: The endings of the survey
         thankYouCard:
           type:
@@ -4844,7 +5022,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a15
+          enum: *a16
           description: Display options for the survey
         recontactDays:
           type:
@@ -5104,10 +5282,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a13
+                  enum: *a14
                 appSurveys:
                   type: string
-                  enum: *a13
+                  enum: *a14
               required:
                 - linkSurveys
                 - appSurveys

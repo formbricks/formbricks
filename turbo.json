@@ -10,6 +10,10 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build"]
     },
@@ -130,6 +134,8 @@
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",
+        "FORMBRICKS_API_HOST",
+        "FORMBRICKS_ENVIRONMENT_ID",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -155,9 +161,6 @@
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
-        "NEXT_PUBLIC_FORMBRICKS_API_HOST",
-        "NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID",
-        "NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID",
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
@@ -282,6 +285,9 @@
       "persistent": true
     },
     "test": {
+      "outputs": []
+    },
+    "test:coverage": {
       "outputs": []
     }
   },
