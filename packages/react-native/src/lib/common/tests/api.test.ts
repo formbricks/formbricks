@@ -62,14 +62,18 @@ describe("api.ts", () => {
     });
 
     test("handles network error", async () => {
-      const mockError = new Error("Network error");
+      const mockError = {
+        code: "network_error",
+        message: "Something went wrong",
+        status: 500,
+      };
       mockFetch.mockRejectedValue(mockError);
 
       const result = await makeRequest<{ test: string }>("https://example.com", "/api/test", "GET");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe(mockError);
+        expect(result.error.code).toBe(mockError.code);
       }
     });
 
