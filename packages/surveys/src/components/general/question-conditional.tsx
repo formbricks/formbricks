@@ -343,7 +343,6 @@ export function QuestionConditional({
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
-      // onDeploy={deploy}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       languageCode={languageCode}

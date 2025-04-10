@@ -1,4 +1,5 @@
 import { alchemyConfig, AlchemyWalletProvider } from "@/modules/alchemy-wallet";
+import { WalletEventBridge } from "@/modules/alchemy-wallet/hooks/wallet-event-bridge";
 import { cookieToInitialState } from "@account-kit/core";
 import { Viewport } from "next";
 import { headers as nextHeaders } from "next/headers";
@@ -18,6 +19,7 @@ export const LinkSurveyLayout = async ({ children }) => {
     return (
       <>
         <AlchemyWalletProvider initialState={alchemyInitialState}>
+          <WalletEventBridge/>
           <div className="h-dvh">{children}</div>;
         </AlchemyWalletProvider>
       </>
