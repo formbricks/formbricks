@@ -80,7 +80,7 @@ export const DateQuestionSummary = ({
                   </div>
                 )}
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
+              <div className="ph-no-capture col-span-2 pl-6 font-semibold whitespace-pre-wrap">
                 {renderResponseValue(response.value)}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
