@@ -236,7 +236,7 @@
     "membership_not_found": "Membership not found",
     "metadata": "Metadata",
     "minimum": "Minimum",
-    "mobile_overlay_text": "Formbricks is not available for devices with smaller resolutions.",
+    "mobile_overlay_text": "EngageHQ is not available for devices with smaller resolutions.",
     "move_down": "Move down",
     "move_up": "Move up",
     "multiple_languages": "Multiple languages",
@@ -415,11 +415,11 @@
     "accept": "Accept",
     "click_or_drag_to_upload_files": "Click or drag to upload files.",
     "email_customization_preview_email_heading": "Hey {userName}",
-    "email_customization_preview_email_subject": "Formbricks Email Customization Preview",
+    "email_customization_preview_email_subject": "EngageHQ Email Customization Preview",
     "email_customization_preview_email_text": "This is an email preview to show you which logo will be rendered in the emails.",
     "email_footer_text_1": "Have a great day!",
     "email_footer_text_2": "The Formbricks Team",
-    "email_template_text_1": "This email was sent via Formbricks.",
+    "email_template_text_1": "This email was sent via EngageHQ.",
     "embed_survey_preview_email_didnt_request": "Didn't request this?",
     "embed_survey_preview_email_environment_id": "Environment ID",
     "embed_survey_preview_email_fight_spam": "Help us fight spam and forward this mail to hola@formbricks.com",
@@ -430,7 +430,7 @@
     "forgot_password_email_did_not_request": "If you didn't request this, please ignore this email.",
     "forgot_password_email_heading": "Change password",
     "forgot_password_email_link_valid_for_24_hours": "The link is valid for 24 hours.",
-    "forgot_password_email_subject": "Reset your Formbricks password",
+    "forgot_password_email_subject": "Reset your EngageHQ password",
     "forgot_password_email_text": "You have requested a link to change your password. You can do this by clicking the link below:",
     "imprint": "Imprint",
     "invite_accepted_email_heading": "Hey",
@@ -1840,41 +1840,41 @@
     },
     "wallet": {
       "_": "Wallet",
-      "balance_card": {
-        "wallet_address": "Wallet Address",
-        "external_link": "External link",
-        "balance": "Balance",
-        "pending_rewards": "Pending Rewards",
-        "balance_unavailable": "Balance Unavailable"
-      },
-      "button": {
-        "loading": "Loading...",
-        "success": "Success!",
-        "logged_in_as": "You're logged in as {email}.",
-        "logout": "Log out",
-        "login": "Login"
-      },
       "address": {
         "copy": {
           "button": "Copy Address",
-          "success": "Successfully copied address!",
-          "error": "Failed to copy, address not found!"
+          "error": "Failed to copy, address not found!",
+          "success": "Successfully copied address!"
         }
       },
-      "modal": {
-        "send_funds": "Send Funds"
+      "balance_card": {
+        "balance": "Balance",
+        "balance_unavailable": "Balance Unavailable",
+        "external_link": "External link",
+        "pending_rewards": "Pending Rewards",
+        "wallet_address": "Wallet Address"
+      },
+      "button": {
+        "loading": "Loading...",
+        "logged_in_as": "You're logged in as {email}.",
+        "login": "Login",
+        "logout": "Log out",
+        "success": "Success!"
       },
       "form": {
-        "recipient_address": "Recipient Address",
         "amount_usdc": "Amount (USDC)",
         "error": {
           "address_required": "Address is required",
-          "invalid_eth_address": "Invalid Ethereum address",
           "amount_required": "Amount is required",
-          "min_amount": "Amount must be at least 0.01",
+          "invalid_eth_address": "Invalid Ethereum address",
           "max_amount": "Amount cannot exceed 1,000,000",
+          "min_amount": "Amount must be at least 0.01",
           "positive_amount": "Amount must be greater than zero"
-        }
+        },
+        "recipient_address": "Recipient Address"
+      },
+      "modal": {
+        "send_funds": "Send Funds"
       }
     },
     "xm-templates": {

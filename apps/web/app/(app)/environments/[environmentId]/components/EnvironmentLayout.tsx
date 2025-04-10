@@ -4,7 +4,6 @@ import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-ba
 import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
@@ -54,9 +53,6 @@ export const EnvironmentLayout = async ({
     throw new Error(t("environments.projects_environments_organizations_not_found"));
   }
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const membershipRole = currentUserMembership?.role;
-
   const isMultiOrgEnabled = false;
 
   const organizationProjectsLimit = 10;
@@ -74,15 +70,10 @@ export const EnvironmentLayout = async ({
           projects={projects}
           organizationProjectsLimit={organizationProjectsLimit}
           user={user}
-          membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
-          <TopControlBar
-            environment={environment}
-            environments={environments}
-            membershipRole={membershipRole}
-          />
+          <TopControlBar environment={environment} environments={environments} />
           <div className="mt-14">{children}</div>
         </div>
       </div>

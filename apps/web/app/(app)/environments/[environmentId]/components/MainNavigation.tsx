@@ -42,10 +42,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
@@ -57,7 +55,6 @@ interface NavigationProps {
   organization: TOrganization;
   projects: TProject[];
   isMultiOrgEnabled: boolean;
-  membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   hasAccess: boolean;
 }
@@ -69,7 +66,6 @@ export const MainNavigation = ({
   user,
   projects,
   isMultiOrgEnabled,
-  membershipRole,
   hasAccess,
 }: NavigationProps) => {
   const { logout } = useLogout({});
@@ -84,7 +80,6 @@ export const MainNavigation = ({
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const project = projects.find((project) => project.id === environment.projectId);
-  const { isBilling } = getAccessFlags(membershipRole);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -184,7 +179,7 @@ export const MainNavigation = ({
       : []),
   ];
 
-  const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
+  const mainNavigationLink = `/environments/${environment.id}/engagements"}`;
 
   return (
     <>
@@ -224,25 +219,22 @@ export const MainNavigation = ({
               </Button>
             </div>
 
-            {/* Main Nav Switch */}
-            {!isBilling && (
-              <ul>
-                {mainNavigation.map(
-                  (item) =>
-                    !item.isHidden && (
-                      <NavigationLink
-                        key={item.name}
-                        href={item.href}
-                        isActive={item.isActive}
-                        isCollapsed={isCollapsed}
-                        isTextVisible={isTextVisible}
-                        linkText={item.name}>
-                        <item.icon strokeWidth={1.5} />
-                      </NavigationLink>
-                    )
-                )}
-              </ul>
-            )}
+            <ul>
+              {mainNavigation.map(
+                (item) =>
+                  !item.isHidden && (
+                    <NavigationLink
+                      key={item.name}
+                      href={item.href}
+                      isActive={item.isActive}
+                      isCollapsed={isCollapsed}
+                      isTextVisible={isTextVisible}
+                      linkText={item.name}>
+                      <item.icon strokeWidth={1.5} />
+                    </NavigationLink>
+                  )
+              )}
+            </ul>
           </div>
 
           <div>
