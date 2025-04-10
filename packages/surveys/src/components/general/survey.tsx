@@ -70,6 +70,7 @@ export function Survey({
   action,
   singleUseId,
   singleUseResponseId,
+  isWebEnvironment = true,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -454,7 +455,7 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            url: window.location.href,
+            ...(isWebEnvironment && { url: window.location.href }),
             action,
           },
           variables: responseUpdate.variables,
@@ -473,13 +474,14 @@ export function Survey({
       isPreviewMode,
       surveyState,
       responseQueue,
+      onResponse,
+      onResponseCreated,
       contactId,
       userId,
       survey,
+      isWebEnvironment,
       action,
       hiddenFieldsRecord,
-      onResponseCreated,
-      onResponse,
     ]
   );
 

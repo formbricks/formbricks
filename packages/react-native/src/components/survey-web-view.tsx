@@ -114,6 +114,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             clickOutside: surveyPlacement === "center" ? clickOutside : true,
             darkOverlay,
             getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
+            isWebEnvironment: false,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
