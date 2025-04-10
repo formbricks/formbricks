@@ -1,13 +1,15 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
+    "@formbricks/database#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/database#setup": {
-      "cache": false,
-      "dependsOn": ["db:up"],
-      "persistent": true
+      "dependsOn": ["db:up"]
     },
     "@formbricks/demo#go": {
       "cache": false,
@@ -34,7 +36,7 @@
       "dependsOn": ["@formbricks/js-core#build"]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": ["^build", "@formbricks/database#db:setup"],
+      "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
@@ -49,7 +51,7 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
-      "dependsOn": ["^build", "@formbricks/database#db:setup"],
+      "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/react-native#go": {
