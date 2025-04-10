@@ -16,14 +16,14 @@
     "@react-native-async-storage/async-storage": "2.1.0",
     "expo": "52.0.28",
     "expo-status-bar": "2.0.1",
-    "react": "18.3.1",
+    "react": "19.1.0",
     "react-dom": "18.3.1",
     "react-native": "0.76.6",
     "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "7.26.0",
-    "@types/react": "18.3.18",
+    "@types/react": "19.1.0",
     "typescript": "5.7.2"
   },
   "private": true
