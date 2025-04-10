@@ -1,6 +1,6 @@
 "use client";
 
-import IconButton from "@/modules/alchemy-wallet/components/common/IconButton";
+import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
 import { formatAddress } from "@/modules/alchemy-wallet/lib/utils/format";
 import { useUser } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";

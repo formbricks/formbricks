@@ -2,14 +2,14 @@
 
 import WalletAddress from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-address";
 import WalletBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-balance";
-import IconButton from "@/modules/alchemy-wallet/components/common/IconButton";
+import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { EyeIcon, EyeOffIcon, SquareArrowOutUpRightIcon } from "lucide-react";
 import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { useDeployERC20 } from "../../hooks/useDeployERC20";
-import SendModal from "@/modules/alchemy-wallet/components/common/SendModal";
+import { useDeployERC20 } from "@/modules/alchemy-wallet/hooks/useDeployERC20";
+import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
 import { useSmartAccountClient } from "@account-kit/react";
 
 export function WalletBalanceCard({ className = "" }: { className?: string }): React.JSX.Element {
