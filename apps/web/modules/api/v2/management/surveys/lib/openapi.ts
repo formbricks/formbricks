@@ -1,3 +1,4 @@
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteSurveyEndpoint,
   getSurveyEndpoint,
@@ -56,10 +57,12 @@ export const createSurveyEndpoint: ZodOpenApiOperationObject = {
 
 export const surveyPaths: ZodOpenApiPathsObject = {
   "/surveys": {
+    servers: managementServer,
     get: getSurveysEndpoint,
     post: createSurveyEndpoint,
   },
   "/surveys/{id}": {
+    servers: managementServer,
     get: getSurveyEndpoint,
     put: updateSurveyEndpoint,
     delete: deleteSurveyEndpoint,
