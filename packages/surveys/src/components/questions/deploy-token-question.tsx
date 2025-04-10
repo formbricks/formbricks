@@ -11,12 +11,10 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-
 interface DeployTokenQuestionProps {
   question: TSurveyDeployTokenQuestion;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
-  // onDeploy: () => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
@@ -34,7 +32,6 @@ export function DeployTokenQuestion({
   question,
   value,
   onChange,
-  // onDeploy,
   onSubmit,
   onBack,
   isFirstQuestion,
@@ -106,6 +103,19 @@ export function DeployTokenQuestion({
     [question.id, autoFocusEnabled, currentQuestionId]
   );
 
+  const triggerDeploy = (tokenName: string, tokenSymbol: string, initialSupply: number) => {
+    const deployEvent = new CustomEvent("deployWalletAction", {
+      detail: { tokenName, tokenSymbol, initialSupply },
+    });
+  
+    window.dispatchEvent(deployEvent);
+  };
+
+  const getFieldValueById = (id: string) => {
+    const index = fields.findIndex((f) => f.id === id);
+    return fields[index]?.show ? safeValue[index] : "";
+  };
+
   return (
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
@@ -176,12 +186,18 @@ export function DeployTokenQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {/* <button
-          onClick={() => onDeploy()}
+        <button
+          onClick={() => {
+            const tokenName = getFieldValueById("tokenName");
+            const tokenSymbol = getFieldValueById("tokenSymbol");
+            const initialSupply = Number(getFieldValueById("initialSupply"));
+        
+            triggerDeploy(tokenName, tokenSymbol, initialSupply);
+          }}
           className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
         >
           Deploy
-        </button> */}
+        </button>
         {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
