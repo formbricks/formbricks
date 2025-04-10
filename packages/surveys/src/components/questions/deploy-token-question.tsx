@@ -11,6 +11,8 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { useDeployERC20 } from "@formbricks/web3";
+
 interface DeployTokenQuestionProps {
   question: TSurveyDeployTokenQuestion;
   value?: string[];
@@ -46,6 +48,7 @@ export function DeployTokenQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
+  const { deploy } = useDeployERC20();
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
   const safeValue = useMemo(() => {
@@ -102,14 +105,6 @@ export function DeployTokenQuestion({
     },
     [question.id, autoFocusEnabled, currentQuestionId]
   );
-
-  const triggerDeploy = (tokenName: string, tokenSymbol: string, initialSupply: number) => {
-    const deployEvent = new CustomEvent("deployWalletAction", {
-      detail: { tokenName, tokenSymbol, initialSupply },
-    });
-  
-    window.dispatchEvent(deployEvent);
-  };
 
   const getFieldValueById = (id: string) => {
     const index = fields.findIndex((f) => f.id === id);
@@ -190,12 +185,11 @@ export function DeployTokenQuestion({
           onClick={() => {
             const tokenName = getFieldValueById("tokenName");
             const tokenSymbol = getFieldValueById("tokenSymbol");
-            const initialSupply = Number(getFieldValueById("initialSupply"));
-        
-            triggerDeploy(tokenName, tokenSymbol, initialSupply);
+            const initialSupply = getFieldValueById("initialSupply");
+
+            deploy(tokenName, tokenSymbol, initialSupply);
           }}
-          className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
-        >
+          className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
           Deploy
         </button>
         {!isFirstQuestion && !isBackButtonHidden && (
