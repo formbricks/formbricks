@@ -132,6 +132,7 @@ class FormbricksViewModel : ViewModel() {
         jsonObject.addProperty("languageCode", Formbricks.language)
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
         jsonObject.addProperty("contactId", UserManager.contactId)
+        jsonObject.addProperty("isWebEnvironment", false)
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false
