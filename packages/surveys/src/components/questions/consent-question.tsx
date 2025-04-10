@@ -6,7 +6,7 @@ import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useState } from "preact/hooks";
+import { useCallback, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 

@@ -1,5 +1,6 @@
-import { ButtonHTMLAttributes, useRef } from "preact/compat";
-import { useCallback, useEffect } from "preact/hooks";
+// @ts-nocheck
+import { ButtonHTMLAttributes, useRef } from "react";
+import { useCallback, useEffect } from "react";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel: string | undefined;

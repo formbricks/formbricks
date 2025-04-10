@@ -8,7 +8,7 @@ import { getMonthName, getOrdinalDate } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-date-picker";
 import { DatePickerProps } from "react-date-picker";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";

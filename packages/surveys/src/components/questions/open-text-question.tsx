@@ -7,7 +7,7 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { type RefObject } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -115,8 +115,8 @@ export function OpenTextQuestion({
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={
                   question.inputType === "text"
                     ? question.charLimit?.max
                     : question.inputType === "phone"
@@ -143,8 +143,8 @@ export function OpenTextQuestion({
                 }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={question.inputType === "text" ? question.charLimit?.max : undefined}
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
               />
             )}
             {question.inputType === "text" && question.charLimit?.max !== undefined && (

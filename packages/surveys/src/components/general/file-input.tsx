@@ -3,8 +3,7 @@ import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getMimeType } from "@/lib/utils";
 import { isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import { type JSXInternal } from "preact/src/jsx";
+import React, { useEffect, useMemo, useState } from "react";
 import { type TAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -234,14 +233,14 @@ export function FileInput({
     }
   };
 
-  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     // @ts-expect-error -- TS does not recognize dataTransfer
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -249,7 +248,7 @@ export function FileInput({
     await handleFileSelection(e.dataTransfer.files);
   };
 
-  const handleDeleteFile = (index: number, event: JSXInternal.TargetedMouseEvent<SVGSVGElement>) => {
+  const handleDeleteFile = (index: number, event: React.DragEvent) => {
     event.stopPropagation();
     setSelectedFiles((prevFiles) => {
       const newFiles = [...prevFiles];

@@ -1,4 +1,3 @@
-import preact from "@preact/preset-vite";
 import { resolve } from "path";
 import { defineConfig, loadEnv } from "vite";
 import dts from "vite-plugin-dts";
@@ -28,7 +27,6 @@ const config = ({ mode }) => {
       },
     },
     plugins: [
-      preact(),
       dts({ rollupTypes: true }),
       tsconfigPaths(),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),

@@ -1,4 +1,4 @@
-import { MutableRef, useEffect } from "preact/hooks";
+import { MutableRef, useEffect } from "react";
 
 // Improved version of https://usehooks.com/useOnClickOutside/
 export const useClickOutside = (
