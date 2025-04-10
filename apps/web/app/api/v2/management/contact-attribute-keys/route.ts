@@ -1,3 +1,3 @@
-import { GET } from "@/modules/api/v2/management/contact-attribute-keys/route";
+import { GET, POST } from "@/modules/api/v2/management/contact-attribute-keys/route";
 
-export { GET };
+export { GET, POST };

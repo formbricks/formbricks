@@ -1,8 +1,14 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getContactAttributeKeys } from "@/modules/api/v2/management/contact-attribute-keys/lib/contact-attribute-key";
-import { ZGetContactAttributeKeysFilter } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import {
+  createContactAttributeKey,
+  getContactAttributeKeys,
+} from "@/modules/api/v2/management/contact-attribute-keys/lib/contact-attribute-key";
+import {
+  ZContactAttributeKeyInput,
+  ZGetContactAttributeKeysFilter,
+} from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 
@@ -45,46 +51,37 @@ export const GET = async (request: NextRequest) =>
     },
   });
 
-// export const POST = async (request: Request) =>
-//   authenticatedApiClient({
-//     request,
-//     schemas: {
-//       body: ZResponseInput,
-//     },
-//     handler: async ({ authentication, parsedInput }) => {
-//       const { body } = parsedInput;
+export const POST = async (request: NextRequest) =>
+  authenticatedApiClient({
+    request,
+    schemas: {
+      body: ZContactAttributeKeyInput,
+    },
+    handler: async ({ authentication, parsedInput }) => {
+      const { body } = parsedInput;
 
-//       if (!body) {
-//         return handleApiError(request, {
-//           type: "bad_request",
-//           details: [{ field: "body", issue: "missing" }],
-//         });
-//       }
+      if (!body) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "body", issue: "missing" }],
+        });
+      }
 
-//       const environmentIdResult = await getEnvironmentId(body.surveyId, false);
+      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
+        return handleApiError(request, {
+          type: "forbidden",
+          details: [
+            { field: "environmentId", issue: "does not have permission to create contact attribute key" },
+          ],
+        });
+      }
 
-//       if (!environmentIdResult.ok) {
-//         return handleApiError(request, environmentIdResult.error);
-//       }
+      const createContactAttributeKeyResult = await createContactAttributeKey(body);
 
-//       const environmentId = environmentIdResult.data;
+      if (!createContactAttributeKeyResult.ok) {
+        return handleApiError(request, createContactAttributeKeyResult.error);
+      }
 
-//       if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-//         return handleApiError(request, {
-//           type: "unauthorized",
-//         });
-//       }
-
-//       // if there is a createdAt but no updatedAt, set updatedAt to createdAt
-//       if (body.createdAt && !body.updatedAt) {
-//         body.updatedAt = body.createdAt;
-//       }
-
-//       const createResponseResult = await createResponse(environmentId, body);
-//       if (!createResponseResult.ok) {
-//         return handleApiError(request, createResponseResult.error);
-//       }
-
-//       return responses.successResponse({ data: createResponseResult.data });
-//     },
-//   });
+      return responses.successResponse(createContactAttributeKeyResult);
+    },
+  });

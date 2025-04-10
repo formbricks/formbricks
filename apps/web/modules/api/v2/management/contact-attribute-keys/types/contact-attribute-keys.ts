@@ -27,7 +27,6 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
-  type: true,
   environmentId: true,
 }).openapi({
   ref: "contactAttributeKeyInput",

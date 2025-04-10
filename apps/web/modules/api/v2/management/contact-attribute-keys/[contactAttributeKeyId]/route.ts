@@ -83,6 +83,13 @@ export const PUT = async (
         });
       }
 
+      if (res.data.isUnique) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "contactAttributeKey", issue: "cannot update unique contact attribute key" }],
+        });
+      }
+
       const updatedContactAttributeKey = await updateContactAttributeKey(params.contactAttributeKeyId, body);
 
       if (!updatedContactAttributeKey.ok) {
@@ -123,6 +130,13 @@ export const DELETE = async (
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "environment", issue: "unauthorized" }],
+        });
+      }
+
+      if (res.data.isUnique) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "contactAttributeKey", issue: "cannot delete unique contact attribute key" }],
         });
       }
 
