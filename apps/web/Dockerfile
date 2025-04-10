@@ -86,8 +86,8 @@ RUN apk add --no-cache curl \
 WORKDIR /home/nextjs
 
 # Ensure no write permissions are assigned to the copied resources
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
-RUN chmod -R 755 ./
+COPY --from=installer /app/apps/web/.next/standalone ./
+RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .
 RUN chmod 644 ./next.config.mjs
@@ -95,17 +95,17 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
-RUN chmod -R 755 ./apps/web/.next/static
+COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
+RUN --chown=nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
-RUN chmod -R 755 ./apps/web/public
+COPY --from=installer /app/apps/web/public ./apps/web/public
+RUN --chown=nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
-RUN chmod 644 ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
+RUN --chown=nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-RUN chmod 644 ./packages/database/package.json
+COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
+RUN --chown=nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
 
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 RUN chmod -R 755 ./packages/database/migration
