@@ -1,15 +1,13 @@
+import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 
-export const ZGetContactAttributeKeysFilter = z
-  .object({
-    limit: z.coerce.number().positive().min(1).max(100).optional().default(10),
-    skip: z.coerce.number().nonnegative().optional().default(0),
-    sortBy: z.enum(["createdAt", "updatedAt"]).optional().default("createdAt"),
-    order: z.enum(["asc", "desc"]).optional().default("desc"),
-    startDate: z.coerce.date().optional(),
-    endDate: z.coerce.date().optional(),
-  })
+extendZodWithOpenApi(z);
+
+export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({
+  environmentId: z.string().cuid2().optional().describe("The environment ID to filter by"),
+})
   .refine(
     (data) => {
       if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -20,7 +18,10 @@ export const ZGetContactAttributeKeysFilter = z
     {
       message: "startDate must be before endDate",
     }
-  );
+  )
+  .describe("Filter for retrieving contact attribute keys");
+
+export type TGetContactAttributeKeysFilter = z.infer<typeof ZGetContactAttributeKeysFilter>;
 
 export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
