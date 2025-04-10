@@ -1,7 +1,5 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
-import { AlchemyWalletProvider, alchemyConfig } from "@/modules/alchemy-wallet";
-import { WalletEventBridge } from "@/modules/alchemy-wallet/hooks/wallet-event-bridge";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-client";
@@ -12,6 +10,7 @@ import { headers as nextHeaders } from "next/headers";
 import { Suspense } from "react";
 import { IS_POSTHOG_CONFIGURED, POSTHOG_API_HOST, POSTHOG_API_KEY } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
+import { AlchemyWalletProvider, alchemyConfig } from "@formbricks/web3";
 
 const AppLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
@@ -34,10 +33,7 @@ const AppLayout = async ({ children }) => {
           {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
           <IntercomClientWrapper user={user} />
           <ToasterClient />
-          <AlchemyWalletProvider initialState={alchemyInitialState}>
-            <WalletEventBridge/>
-            {children}
-          </AlchemyWalletProvider>
+          <AlchemyWalletProvider initialState={alchemyInitialState}>{children}</AlchemyWalletProvider>
         </>
       </PHProvider>
     </>

@@ -33,6 +33,7 @@
     "@formbricks/logger": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@formbricks/web3": "workspace:*",
     "@hookform/resolvers": "3.9.1",
     "@intercom/messenger-js-sdk": "0.0.14",
     "@json2csv/node": "7.0.6",

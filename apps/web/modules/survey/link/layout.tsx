@@ -1,8 +1,7 @@
-import { alchemyConfig, AlchemyWalletProvider } from "@/modules/alchemy-wallet";
-import { WalletEventBridge } from "@/modules/alchemy-wallet/hooks/wallet-event-bridge";
 import { cookieToInitialState } from "@account-kit/core";
 import { Viewport } from "next";
 import { headers as nextHeaders } from "next/headers";
+import { AlchemyWalletProvider, alchemyConfig } from "@formbricks/web3";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -14,15 +13,14 @@ export const viewport: Viewport = {
 
 export const LinkSurveyLayout = async ({ children }) => {
   const headers = await nextHeaders();
-    const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
-  
-    return (
-      <>
-        <AlchemyWalletProvider initialState={alchemyInitialState}>
-          <WalletEventBridge/>
-          <div className="h-dvh">{children}</div>;
-        </AlchemyWalletProvider>
-      </>
-    );
-  return 
+  const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
+
+  return (
+    <>
+      <AlchemyWalletProvider initialState={alchemyInitialState}>
+        <div className="h-dvh">{children}</div>;
+      </AlchemyWalletProvider>
+    </>
+  );
+  return;
 };
