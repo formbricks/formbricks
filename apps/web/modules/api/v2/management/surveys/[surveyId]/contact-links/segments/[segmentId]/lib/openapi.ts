@@ -21,7 +21,7 @@ export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
       description: "Contact links generated successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZContactLinkResponse))),
+          schema: responseWithMetaSchema(makePartialSchema(ZContactLinkResponse)),
         },
       },
     },

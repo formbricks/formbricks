@@ -1732,41 +1732,39 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          contactId:
-                            type: string
-                            description: The ID of the contact
-                          surveyUrl:
-                            type: string
-                            format: uri
-                            description: Personalized survey link
-                          expiresAt:
-                            type:
-                              - string
-                              - "null"
-                            description: The date and time the link expires, null if no expiration
-                          attributes:
-                            type: object
-                            additionalProperties:
-                              type: string
-                            description: The attributes of the contact
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        contactId:
+                          type: string
+                          description: The ID of the contact
+                        surveyUrl:
+                          type: string
+                          format: uri
+                          description: Personalized survey link
+                        expiresAt:
+                          type:
+                            - string
+                            - "null"
+                          description: The date and time the link expires, null if no expiration
+                        attributes:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: The attributes of the contact
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
   /webhooks:
     servers: *a6
     get:
