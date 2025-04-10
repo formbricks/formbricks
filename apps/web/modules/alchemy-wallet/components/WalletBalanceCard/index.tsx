@@ -70,7 +70,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }): R
         </Button>
       </div>
 
-      <Button onClick={deploy}>Deploy</Button>
+      <Button onClick={() => deploy("Token", "TKN", "1000000000000000000000000000")}>Deploy</Button>
     </div>
   );
 }
