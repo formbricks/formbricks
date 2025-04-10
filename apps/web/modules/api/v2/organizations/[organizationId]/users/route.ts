@@ -79,7 +79,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, createUserResult.error);
       }
 
-      return responses.successResponse({ data: createUserResult.data });
+      return responses.createdResponse({ data: createUserResult.data });
     },
   });
 

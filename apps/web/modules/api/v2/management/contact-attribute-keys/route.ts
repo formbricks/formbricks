@@ -82,6 +82,6 @@ export const POST = async (request: NextRequest) =>
         return handleApiError(request, createContactAttributeKeyResult.error);
       }
 
-      return responses.successResponse(createContactAttributeKeyResult);
+      return responses.createdResponse(createContactAttributeKeyResult);
     },
   });
