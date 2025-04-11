@@ -481,6 +481,7 @@
     "powered_by_formbricks": "Unterstützt von Formbricks",
     "privacy_policy": "Datenschutzerklärung",
     "reject": "Ablehnen",
+    "render_email_response_value_file_upload_response_link_not_included": "Link zur hochgeladenen Datei ist aus Datenschutzgründen nicht enthalten",
     "response_finished_email_subject": "Eine Antwort für {surveyName} wurde abgeschlossen ✅",
     "response_finished_email_subject_with_email": "{personEmail} hat deine Umfrage {surveyName} abgeschlossen ✅",
     "schedule_your_meeting": "Termin planen",

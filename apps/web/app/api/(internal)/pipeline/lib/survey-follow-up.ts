@@ -15,6 +15,7 @@ type FollowUpResult = {
 const evaluateFollowUp = async (
   followUpId: string,
   followUpAction: TSurveyFollowUpAction,
+  survey: TSurvey,
   response: TResponse,
   organization: TOrganization
 ): Promise<void> => {
@@ -27,7 +28,16 @@ const evaluateFollowUp = async (
   const parsedEmailTo = z.string().email().safeParse(to);
   if (parsedEmailTo.success) {
     // 'to' is a valid email address, send email directly
-    await sendFollowUpEmail(body, subject, parsedEmailTo.data, replyTo, logoUrl);
+    await sendFollowUpEmail({
+      html: body,
+      subject,
+      to: parsedEmailTo.data,
+      replyTo,
+      survey,
+      response,
+      attachResponseData: properties.attachResponseData,
+      logoUrl,
+    });
     return;
   }
 
@@ -41,7 +51,16 @@ const evaluateFollowUp = async (
     const parsedResult = z.string().email().safeParse(toValueFromResponse);
     if (parsedResult.data) {
       // send email to this email address
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
+      await sendFollowUpEmail({
+        html: body,
+        subject,
+        to: parsedResult.data,
+        replyTo,
+        logoUrl,
+        survey,
+        response,
+        attachResponseData: properties.attachResponseData,
+      });
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -52,7 +71,16 @@ const evaluateFollowUp = async (
     }
     const parsedResult = z.string().email().safeParse(emailAddress);
     if (parsedResult.data) {
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
+      await sendFollowUpEmail({
+        html: body,
+        subject,
+        to: parsedResult.data,
+        replyTo,
+        logoUrl,
+        survey,
+        response,
+        attachResponseData: properties.attachResponseData,
+      });
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -80,7 +108,7 @@ export const sendSurveyFollowUps = async (
       }
     }
 
-    return evaluateFollowUp(followUp.id, followUp.action, response, organization)
+    return evaluateFollowUp(followUp.id, followUp.action, survey, response, organization)
       .then(() => ({
         followUpId: followUp.id,
         status: "success" as const,
@@ -93,8 +121,6 @@ export const sendSurveyFollowUps = async (
   });
 
   const followUpResults = await Promise.all(followUpPromises);
-
-  console.log(followUpResults);
 
   // Log all errors
   const errors = followUpResults

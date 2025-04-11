@@ -1,5 +1,6 @@
 import { getTranslate } from "@/tolgee/server";
 import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
@@ -15,13 +16,20 @@ import { EmailTemplate } from "../../components/email-template";
 
 export const renderEmailResponseValue = async (
   response: string | string[],
-  questionType: TSurveyQuestionType
+  questionType: TSurveyQuestionType,
+  t: TFnType,
+  overrideFileUploadResponse = false
 ): Promise<React.JSX.Element> => {
   switch (questionType) {
     case TSurveyQuestionTypeEnum.FileUpload:
       return (
         <Container>
-          {Array.isArray(response) &&
+          {overrideFileUploadResponse ? (
+            <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
+              {t("emails.render_email_response_value_file_upload_response_link_not_included")}
+            </Text>
+          ) : (
+            Array.isArray(response) &&
             response.map((responseItem) => (
               <Link
                 className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-sm"
@@ -30,7 +38,8 @@ export const renderEmailResponseValue = async (
                 <FileIcon />
                 <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(responseItem)}</Text>
               </Link>
-            ))}
+            ))
+          )}
         </Container>
       );
 
@@ -67,7 +76,7 @@ export const renderEmailResponseValue = async (
       );
 
     default:
-      return <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{response}</Text>;
+      return <Text className="mt-0 font-bold break-words whitespace-pre-wrap">{response}</Text>;
   }
 };
 
@@ -109,7 +118,7 @@ export async function ResponseFinishedEmail({
                 <Row key={question.question}>
                   <Column className="w-full">
                     <Text className="mb-2 font-medium">{question.question}</Text>
-                    {renderEmailResponseValue(question.response, question.type)}
+                    {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
                 </Row>
               );
@@ -128,7 +137,7 @@ export async function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -146,7 +155,7 @@ export async function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 font-medium">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>

@@ -481,6 +481,7 @@
     "powered_by_formbricks": "Propulsé par Formbricks",
     "privacy_policy": "Politique de confidentialité",
     "reject": "Rejeter",
+    "render_email_response_value_file_upload_response_link_not_included": "Le lien vers le fichier téléchargé n'est pas inclus pour des raisons de confidentialité des données",
     "response_finished_email_subject": "Une réponse pour {surveyName} a été complétée ✅",
     "response_finished_email_subject_with_email": "{personEmail} vient de compléter votre enquête {surveyName} ✅",
     "schedule_your_meeting": "Planifier votre rendez-vous",

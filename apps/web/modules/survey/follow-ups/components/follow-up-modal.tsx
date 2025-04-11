@@ -340,6 +340,7 @@ export const FollowUpModal = ({
         replyTo: defaultValues?.replyTo ?? [userEmail],
         subject: defaultValues?.subject ?? "Thanks for your answers!",
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
+        attachResponseData: defaultValues?.attachResponseData ?? false,
       });
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);

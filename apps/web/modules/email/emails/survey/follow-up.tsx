@@ -1,18 +1,43 @@
+import { renderEmailResponseValue } from "@/modules/email/emails/survey/response-finished-email";
 import { getTranslate } from "@/tolgee/server";
-import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import {
+  Body,
+  Column,
+  Container,
+  Html,
+  Img,
+  Link,
+  Row,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
 import React from "react";
 import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
+import { getQuestionResponseMapping } from "@formbricks/lib/responses";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  readonly html: string;
-  readonly logoUrl?: string;
+  html: string;
+  logoUrl?: string;
+  attachResponseData: boolean;
+  survey: TSurvey;
+  response: TResponse;
 }
 
-export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Promise<React.JSX.Element> {
+export async function FollowUpEmail({
+  html,
+  logoUrl,
+  attachResponseData,
+  survey,
+  response,
+}: FollowUpEmailProps): Promise<React.JSX.Element> {
+  const questions = attachResponseData ? getQuestionResponseMapping(survey, response) : [];
   const t = await getTranslate();
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
@@ -44,6 +69,18 @@ export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Prom
                 }),
               }}
             />
+
+            {questions.map((question) => {
+              if (!question.response) return;
+              return (
+                <Row key={question.question}>
+                  <Column className="w-full">
+                    <Text className="mb-2 font-medium">{question.question}</Text>
+                    {renderEmailResponseValue(question.response, question.type, t, true)}
+                  </Column>
+                </Row>
+              );
+            })}
           </Container>
 
           <Section className="mt-4 text-center text-sm">
