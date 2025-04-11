@@ -23,9 +23,17 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
+const MAX_STRING_LENGTH = 2000;
+
 const extractParts = (text: string): string[] => {
   const parts: string[] = [];
   let i = 0;
+
+  if (text.length > MAX_STRING_LENGTH) {
+    // If the text is unexpectedly too long, return it as a single part
+    parts.push(text);
+    return parts;
+  }
 
   while (i < text.length) {
     const start = text.indexOf("/", i);
