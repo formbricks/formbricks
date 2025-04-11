@@ -59,7 +59,26 @@ export const RatingQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
                 label={t("common.description")}
+                locale={locale}
+              />
+            </div>
+          </div>
+        )}
+
+        {question.tooltip !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
+                id="tooltip"
+                value={question.tooltip}
+                label={t("environments.surveys.edit.tooltip")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -75,7 +94,7 @@ export const RatingQuestionForm = ({
           <Button
             size="sm"
             variant="secondary"
-            className="mt-3"
+            className="mr-3 mt-3"
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
@@ -86,8 +105,22 @@ export const RatingQuestionForm = ({
             {t("environments.surveys.edit.add_description")}
           </Button>
         )}
+        {question.tooltip === undefined && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-4"
+            type="button"
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                tooltip: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_tooltip")}
+          </Button>
+        )}
       </div>
-
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
           <Label htmlFor="subheader">{t("environments.surveys.edit.scale")}</Label>

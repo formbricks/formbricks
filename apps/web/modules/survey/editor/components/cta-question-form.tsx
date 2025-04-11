@@ -2,12 +2,15 @@
 
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
 import { type JSX, useState } from "react";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -44,6 +47,8 @@ export const CTAQuestionForm = ({
   ];
   const [firstRender, setFirstRender] = useState(true);
   const [parent] = useAutoAnimate();
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+
   return (
     <form ref={parent}>
       <QuestionFormInput
@@ -58,6 +63,41 @@ export const CTAQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
       />
+      <div>
+        {question.tooltip === undefined && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-4"
+            type="button"
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                tooltip: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_tooltip")}
+          </Button>
+        )}
+        {question.tooltip !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
+                id="tooltip"
+                value={question.tooltip}
+                label={t("environments.surveys.edit.tooltip")}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mt-3">
         <Label htmlFor="subheader">{t("common.description")}</Label>

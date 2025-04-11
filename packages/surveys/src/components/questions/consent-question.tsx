@@ -75,6 +75,7 @@ export function ConsentQuestion({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            tooltipContent={getLocalizedValue(question.tooltip, languageCode)}
           />
           <HtmlBody
             htmlString={getLocalizedValue(question.html, languageCode) || ""}
