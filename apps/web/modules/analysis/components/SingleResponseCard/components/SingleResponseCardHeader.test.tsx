@@ -28,7 +28,7 @@ vi.mock("@/modules/lib/time", () => ({
   timeSince: vi.fn(() => "5 minutes ago"),
 }));
 vi.mock("@/modules/lib/utils/contact", () => ({
-  getContactIdentifier: vi.fn((contact, attributes) => contact.name || "Unknown"),
+  getContactIdentifier: vi.fn((contact, attributes) => attributes?.email || contact?.userId || ""),
 }));
 vi.mock("../util", () => ({
   isSubmissionTimeMoreThan5Minutes: vi.fn(),

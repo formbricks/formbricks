@@ -13,7 +13,7 @@ import {
   WearyFace,
 } from "./Smileys";
 
-const checkSvg = (componentName: string, Component: React.FC<React.SVGProps<SVGElement>>) => {
+const checkSvg = (Component: React.FC<React.SVGProps<SVGElement>>) => {
   const { container } = render(<Component />);
   const svg = container.querySelector("svg");
   expect(svg).toBeTruthy();
@@ -28,33 +28,33 @@ describe("Smileys", () => {
   });
 
   it("renders TiredFace", () => {
-    checkSvg("TiredFace", TiredFace);
+    checkSvg(TiredFace);
   });
   it("renders WearyFace", () => {
-    checkSvg("WearyFace", WearyFace);
+    checkSvg(WearyFace);
   });
   it("renders PerseveringFace", () => {
-    checkSvg("PerseveringFace", PerseveringFace);
+    checkSvg(PerseveringFace);
   });
   it("renders FrowningFace", () => {
-    checkSvg("FrowningFace", FrowningFace);
+    checkSvg(FrowningFace);
   });
   it("renders ConfusedFace", () => {
-    checkSvg("ConfusedFace", ConfusedFace);
+    checkSvg(ConfusedFace);
   });
   it("renders NeutralFace", () => {
-    checkSvg("NeutralFace", NeutralFace);
+    checkSvg(NeutralFace);
   });
   it("renders SlightlySmilingFace", () => {
-    checkSvg("SlightlySmilingFace", SlightlySmilingFace);
+    checkSvg(SlightlySmilingFace);
   });
   it("renders SmilingFaceWithSmilingEyes", () => {
-    checkSvg("SmilingFaceWithSmilingEyes", SmilingFaceWithSmilingEyes);
+    checkSvg(SmilingFaceWithSmilingEyes);
   });
   it("renders GrinningFaceWithSmilingEyes", () => {
-    checkSvg("GrinningFaceWithSmilingEyes", GrinningFaceWithSmilingEyes);
+    checkSvg(GrinningFaceWithSmilingEyes);
   });
   it("renders GrinningSquintingFace", () => {
-    checkSvg("GrinningSquintingFace", GrinningSquintingFace);
+    checkSvg(GrinningSquintingFace);
   });
 });
