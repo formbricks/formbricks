@@ -1746,6 +1746,8 @@
         "failed_to_copy_link": "無法複製連結",
         "filter_added_successfully": "篩選器已成功新增",
         "filter_updated_successfully": "篩選器已成功更新",
+        "filtered_responses_csv": "篩選回應 (CSV)",
+        "filtered_responses_excel": "篩選回應 (Excel)",
         "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",
         "go_to_setup_checklist": "前往設定檢查清單 \uD83D\uDC49",
         "hide_embed_code": "隱藏嵌入程式碼",

@@ -1746,6 +1746,8 @@
         "failed_to_copy_link": "Failed to copy link",
         "filter_added_successfully": "Filter added successfully",
         "filter_updated_successfully": "Filter updated successfully",
+        "filtered_responses_csv": "Filtered responses (CSV)",
+        "filtered_responses_excel": "Filtered responses (Excel)",
         "formbricks_email_survey_preview": "Formbricks Email Survey Preview",
         "go_to_setup_checklist": "Go to Setup Checklist \uD83D\uDC49",
         "hide_embed_code": "Hide embed code",

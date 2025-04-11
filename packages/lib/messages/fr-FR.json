@@ -1746,6 +1746,8 @@
         "failed_to_copy_link": "Échec de la copie du lien",
         "filter_added_successfully": "Filtre ajouté avec succès",
         "filter_updated_successfully": "Filtre mis à jour avec succès",
+        "filtered_responses_csv": "Réponses filtrées (CSV)",
+        "filtered_responses_excel": "Réponses filtrées (Excel)",
         "formbricks_email_survey_preview": "Aperçu de l'enquête par e-mail Formbricks",
         "go_to_setup_checklist": "Allez à la liste de contrôle de configuration \uD83D\uDC49",
         "hide_embed_code": "Cacher le code d'intégration",
