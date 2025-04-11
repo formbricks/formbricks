@@ -1,9 +1,10 @@
+// import {
+//   deleteSurveyEndpoint,
+//   getSurveyEndpoint,
+//   updateSurveyEndpoint,
+// } from "@/modules/api/v2/management/surveys/[surveyId]/lib/openapi";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
-import {
-  deleteSurveyEndpoint,
-  getSurveyEndpoint,
-  updateSurveyEndpoint,
-} from "@/modules/api/v2/management/surveys/[surveyId]/lib/openapi";
+import { getPersonalizedSurveyLink } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/openapi";
 import { ZGetSurveysFilter, ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
@@ -56,15 +57,19 @@ export const createSurveyEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const surveyPaths: ZodOpenApiPathsObject = {
-  "/surveys": {
+  // "/surveys": {
+  //   servers: managementServer,
+  //   get: getSurveysEndpoint,
+  //   post: createSurveyEndpoint,
+  // },
+  // "/surveys/{id}": {
+  //   servers: managementServer,
+  //   get: getSurveyEndpoint,
+  //   put: updateSurveyEndpoint,
+  //   delete: deleteSurveyEndpoint,
+  // },
+  "/surveys/{surveyId}/contact-links/contacts/{contactId}/": {
     servers: managementServer,
-    get: getSurveysEndpoint,
-    post: createSurveyEndpoint,
-  },
-  "/surveys/{id}": {
-    servers: managementServer,
-    get: getSurveyEndpoint,
-    put: updateSurveyEndpoint,
-    delete: deleteSurveyEndpoint,
+    get: getPersonalizedSurveyLink,
   },
 };

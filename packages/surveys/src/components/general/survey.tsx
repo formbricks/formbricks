@@ -612,6 +612,7 @@ export function Survey({
               responseData={responseData}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
+              isPreviewMode={isPreviewMode}
             />
           );
         }

@@ -1,5 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+
+extendZodWithOpenApi(z);
 
 export const ZGetSurveysFilter = z
   .object({
