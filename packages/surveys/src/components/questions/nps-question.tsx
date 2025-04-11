@@ -62,9 +62,9 @@ export function NPSQuestion({
   };
 
   const getNPSOptionColor = (idx: number) => {
-    if (idx > 8) return "fb-bg-emerald-100";
-    if (idx > 6) return "fb-bg-orange-100";
-    return "fb-bg-rose-100";
+    if (idx > 8) return "bg-emerald-100";
+    if (idx > 6) return "bg-orange-100";
+    return "bg-rose-100";
   };
 
   return (
@@ -90,10 +90,10 @@ export function NPSQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-my-4">
+          <div className="my-4">
             <fieldset>
-              <legend className="fb-sr-only">Options</legend>
-              <div className="fb-flex">
+              <legend className="sr-only">Options</legend>
+              <div className="flex">
                 {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
                   return (
                     <label
@@ -115,18 +115,14 @@ export function NPSQuestion({
                       }}
                       className={cn(
                         value === number
-                          ? "fb-border-border-highlight fb-bg-accent-selected-bg fb-z-10 fb-border"
-                          : "fb-border-border",
-                        "fb-text-heading first:fb-rounded-l-custom last:fb-rounded-r-custom focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm last:fb-border-r focus:fb-border-2 focus:fb-outline-none",
-                        question.isColorCodingEnabled
-                          ? "fb-h-[46px] fb-leading-[3.5em]"
-                          : "fb-h fb-leading-10",
-                        hoveredNumber === number ? "fb-bg-accent-bg" : ""
+                          ? "border-border-highlight bg-accent-selected-bg z-10 border"
+                          : "border-border",
+                        "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer overflow-hidden border-b border-l border-t text-center text-sm last:border-r focus:border-2 focus:outline-none",
+                        question.isColorCodingEnabled ? "h-[46px] leading-[3.5em]" : "h leading-10",
+                        hoveredNumber === number ? "bg-accent-bg" : ""
                       )}>
                       {question.isColorCodingEnabled ? (
-                        <div
-                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
-                        />
+                        <div className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(idx)}`} />
                       ) : null}
                       <input
                         type="radio"
@@ -134,7 +130,7 @@ export function NPSQuestion({
                         name="nps"
                         value={number}
                         checked={value === number}
-                        className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+                        className="absolute left-0 h-full w-full cursor-pointer opacity-0"
                         onClick={() => {
                           handleClick(number);
                         }}
@@ -146,7 +142,7 @@ export function NPSQuestion({
                   );
                 })}
               </div>
-              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
+              <div className="text-subheading mt-2 flex justify-between space-x-8 px-1.5 text-xs leading-6">
                 <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
                 <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
@@ -154,7 +150,7 @@ export function NPSQuestion({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         {question.required ? (
           <div></div>
         ) : (

@@ -17,7 +17,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
 
   return (
     <SurveyContainer
-      mode={props.mode ?? "modal"}
+      mode={props.mode ?? "inline"}
       placement={props.placement}
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}

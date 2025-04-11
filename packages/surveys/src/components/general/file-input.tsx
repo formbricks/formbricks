@@ -275,7 +275,7 @@ export function FileInput({
   }, [allowedFileExtensions]);
 
   return (
-    <div className="fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
+    <div className="items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
       <div ref={parent}>
         {fileUrls?.map((fileUrl, index) => {
           const fileName = getOriginalFileNameFromUrl(fileUrl);
@@ -284,19 +284,19 @@ export function FileInput({
               key={index}
               aria-label={`You've successfully uploaded the file ${fileName}`}
               tabIndex={0}
-              className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
-              <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
+              className="bg-input-bg-selected border-border relative m-2 rounded-md border">
+              <div className="absolute right-0 top-0 m-2">
                 <button
                   type="button"
                   aria-label={`Delete file ${fileName}`}
-                  className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
+                  className="bg-survey-bg flex h-5 w-5 cursor-pointer items-center justify-center rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 26 26"
                     strokeWidth={1}
                     stroke="currentColor"
-                    className="fb-text-heading fb-h-5"
+                    className="text-heading h-5"
                     onClick={(e) => {
                       handleDeleteFile(index, e);
                     }}>
@@ -304,7 +304,7 @@ export function FileInput({
                   </svg>
                 </button>
               </div>
-              <div className="fb-flex fb-flex-col fb-items-center fb-justify-center fb-p-2">
+              <div className="flex flex-col items-center justify-center p-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -315,12 +315,12 @@ export function FileInput({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="fb-text-heading fb-h-6"
+                  className="text-heading h-6"
                   aria-hidden="true">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
-                <p className="fb-text-heading fb-mt-1 fb-w-full fb-overflow-hidden fb-overflow-ellipsis fb-whitespace-nowrap fb-px-2 fb-text-center fb-text-sm">
+                <p className="text-heading mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm">
                   {fileName}
                 </p>
               </div>
@@ -331,8 +331,8 @@ export function FileInput({
 
       <div>
         {isUploading ? (
-          <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
-            <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
+          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
+            <label htmlFor={uniqueHtmlFor} className="text-subheading text-sm font-medium">
               Uploading...
             </label>
           </div>
@@ -341,7 +341,7 @@ export function FileInput({
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
             <div
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              className="focus:outline-brand flex w-full flex-col items-center justify-center py-6 hover:cursor-pointer"
               role="button"
               aria-label="Upload files by clicking or dragging them here"
               tabIndex={0}
@@ -357,7 +357,7 @@ export function FileInput({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="fb-text-placeholder fb-h-6"
+                className="text-placeholder h-6"
                 aria-hidden="true">
                 <path
                   strokeLinecap="round"
@@ -366,7 +366,7 @@ export function FileInput({
                 />
               </svg>
               <label
-                className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
+                className="text-placeholder mt-2 text-sm dark:text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
                 Click or drag to upload files.
               </label>
@@ -375,7 +375,7 @@ export function FileInput({
                 id={uniqueHtmlFor}
                 name={uniqueHtmlFor}
                 accept={mimeTypeForAllowedFileExtensions}
-                className="fb-hidden"
+                className="hidden"
                 onChange={async (e) => {
                   const inputElement = e.target as HTMLInputElement;
                   if (inputElement.files) {

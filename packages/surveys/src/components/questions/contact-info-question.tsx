@@ -115,7 +115,7 @@ export function ContactInfoQuestion({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+    <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -131,7 +131,7 @@ export function ContactInfoQuestion({
             questionId={question.id}
           />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          <div className="mt-4 flex w-full flex-col space-y-2">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {
@@ -158,7 +158,7 @@ export function ContactInfoQuestion({
 
               return (
                 field.show && (
-                  <div className="fb-space-y-1">
+                  <div className="space-y-1">
                     <Label text={isFieldRequired() ? `${field.label}*` : field.label} />
                     <Input
                       ref={index === 0 ? contactInfoRef : null}
@@ -180,7 +180,7 @@ export function ContactInfoQuestion({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

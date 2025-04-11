@@ -80,7 +80,7 @@ export function OpenTextQuestion({
         setTtc(updatedttc);
         onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="fb-w-full">
+      className="w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -95,7 +95,7 @@ export function OpenTextQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-mt-4">
+          <div className="mt-4">
             {question.longAnswer === false ? (
               <input
                 ref={inputRef as RefObject<HTMLInputElement>}
@@ -112,7 +112,7 @@ export function OpenTextQuestion({
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
                 }}
-                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
+                className="border-border placeholder:text-placeholder text-subheading focus:border-brand bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
                 pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
                 minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
@@ -141,7 +141,7 @@ export function OpenTextQuestion({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
-                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
+                className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-brand rounded-custom block w-full border p-2 shadow-sm focus:ring-0 sm:text-sm"
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
                 minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
                 maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
@@ -149,14 +149,14 @@ export function OpenTextQuestion({
             )}
             {question.inputType === "text" && question.charLimit?.max !== undefined && (
               <span
-                className={`fb-text-xs ${currentLength >= question.charLimit?.max ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
+                className={`text-xs ${currentLength >= question.charLimit?.max ? "font-semibold text-red-500" : "text-neutral-400"}`}>
                 {currentLength}/{question.charLimit?.max}
               </span>
             )}
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

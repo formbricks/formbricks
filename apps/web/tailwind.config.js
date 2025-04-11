@@ -12,6 +12,7 @@ const config = {
     "./modules/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
     "./modules/ui/components/**/*.{ts,tsx}",
+    "../../packages/surveys/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -37,6 +38,9 @@ const config = {
         "card-md": "0px 1px 25px -10px rgba(30,41,59,0.30)",
         "card-lg": "0px 2px 51px -19px rgba(30,41,59,0.40)",
         "card-xl": "0px 20px 25px -5px rgba(0, 0, 0, 0.10), 0px 10px 10px -5px rgba(0, 0, 0, 0.04)",
+      },
+      borderRadius: {
+        custom: "var(--border-radius)",
       },
       colors: {
         brand: {
@@ -91,6 +95,34 @@ const config = {
           background: colors.red[50],
           "background-muted": colors.red[100],
         },
+        brand: "var(--brand-color)",
+        "on-brand": "var(--brand-text-color)",
+        border: "var(--border-color)",
+        "border-highlight": "var(--border-color-highlight)",
+        focus: "var(--focus-color)",
+        heading: "var(--heading-color)",
+        subheading: "var(--subheading-color)",
+        placeholder: "var(--placeholder-color)",
+        "info-text": "var(--info-text-color)",
+        signature: "var(--signature-text-color)",
+        "branding-text": "var(--branding-text-color)",
+        "survey-bg": "var(--survey-background-color)",
+        "survey-border": "var(--survey-border-color)",
+        "survey-shadow": "var(--survey-shadow-color)",
+        "accent-bg": "var(--accent-background-color)",
+        "accent-selected-bg": "var(--accent-background-color-selected)",
+        "input-bg": "var(--input-background-color)",
+        "input-bg-selected": "var(--input-background-color-selected)",
+        placeholder: "var(--placeholder-color)",
+        shadow: "var(--shadow-color)",
+        "rating-fill": "var(--rating-fill)",
+        "rating-focus": "var(--rating-hover)",
+        "rating-selected": "var(--rating-selected)",
+        "back-button-border": "var(--back-btn-border)",
+        "submit-button-border": "var(--submit-btn-border)",
+        "close-button": "var(--close-btn-color)",
+        "close-button-focus": "var(--close-btn-hover-color)",
+        "calendar-tile": "var(--calendar-tile-color)",
       },
       keyframes: {
         fadeIn: {

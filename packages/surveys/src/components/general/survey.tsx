@@ -648,22 +648,19 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
-            cardArrangement === "simple" ? "fb-survey-shadow" : "",
-            offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
+            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-all duration-1000 ease-in-out",
+            cardArrangement === "simple" ? "survey-shadow" : "",
+            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
           )}>
-          <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
+          <div className="flex h-6 justify-end pr-2 pt-2">
             {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
           </div>
           <div
             ref={contentRef}
-            className={cn(
-              loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-              fullSizeCards ? "" : "fb-my-auto"
-            )}>
+            className={cn(loadingElement ? "animate-pulse opacity-60" : "", fullSizeCards ? "" : "my-auto")}>
             {content()}
           </div>
-          <div className="fb-space-y-4">
+          <div className="space-y-4">
             {isBrandingEnabled ? <FormbricksBranding /> : null}
             {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>

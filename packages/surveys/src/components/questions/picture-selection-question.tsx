@@ -97,7 +97,7 @@ export function PictureSelectionQuestion({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
-      className="fb-w-full">
+      className="w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -112,10 +112,10 @@ export function PictureSelectionQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-mt-4">
+          <div className="mt-4">
             <fieldset>
-              <legend className="fb-sr-only">Options</legend>
-              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-4">
+              <legend className="sr-only">Options</legend>
+              <div className="bg-survey-bg relative grid grid-cols-2 gap-4">
                 {questionChoices.map((choice) => (
                   <label
                     key={choice.id}
@@ -133,16 +133,16 @@ export function PictureSelectionQuestion({
                       handleChange(choice.id);
                     }}
                     className={cn(
-                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand focus:fb-border-4 group/image",
+                      "rounded-custom focus:border-brand group/image relative aspect-[4/3] max-h-[50vh] min-h-[7rem] w-full cursor-pointer overflow-hidden border focus:border-4 focus:outline-none",
                       Array.isArray(value) && value.includes(choice.id)
-                        ? "fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-sm"
+                        ? "border-brand text-brand z-10 border-4 shadow-sm"
                         : ""
                     )}>
                     <img
                       src={choice.imageUrl}
                       id={choice.id}
                       alt={getOriginalFileNameFromUrl(choice.imageUrl)}
-                      className="fb-h-full fb-w-full fb-object-cover"
+                      className="h-full w-full object-cover"
                     />
                     <a
                       tabIndex={-1}
@@ -153,7 +153,7 @@ export function PictureSelectionQuestion({
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
-                      className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
+                      className="absolute bottom-2 right-2 flex items-center gap-2 whitespace-nowrap rounded-md bg-slate-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -179,8 +179,8 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "border-border rounded-custom pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 border",
+                          value.includes(choice.id) ? "border-brand text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -192,8 +192,8 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
+                          value.includes(choice.id) ? "border-brand text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -205,7 +205,7 @@ export function PictureSelectionQuestion({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

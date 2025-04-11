@@ -133,3 +133,54 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   -webkit-appearance: none;
 }
+
+
+:root {
+  --brand-default: #64748b;
+  --slate-50: rgb(248, 250, 252);
+  --slate-100: rgb(241 245 249);
+  --slate-200: rgb(226 232 240);
+  --slate-300: rgb(203, 213, 225);
+  --slate-400: rgb(148 163 184);
+  --slate-500: rgb(100 116 139);
+  --slate-600: rgb(71 85 105);
+  --slate-700: rgb(51 65 85);
+  --slate-800: rgb(30 41 59);
+  --slate-900: rgb(15 23 42);
+  --gray-100: rgb(243 244 246);
+  --gray-200: rgb(229 231 235);
+  --yellow-100: rgb(254 249 195);
+  --yellow-300: rgb(253 224 71);
+  --yellow-500: rgb(234 179 8);
+
+  /* Default Light Theme, you can override everything by changing these values */
+  --brand-color: var(--brand-default);
+  --brand-text-color: black;
+  --border-color: var(--slate-300);
+  --border-color-highlight: var(--slate-500);
+  --focus-color: var(--slate-500);
+  --heading-color: var(--slate-900);
+  --subheading-color: var(--slate-700);
+  --placeholder-color: var(--slate-300);
+  --info-text-color: var(--slate-500);
+  --signature-text-color: var(--slate-500);
+  --branding-text-color: var(--slate-500);
+  --survey-background-color: white;
+  --survey-border-color: var(--slate-50);
+  --survey-shadow-color: rgba(0, 0, 0, 0.4);
+  --accent-background-color: var(--slate-200);
+  --accent-background-color-selected: var(--slate-100);
+  --input-background-color: var(--slate-50);
+  --input-background-color-selected: var(--slate-200);
+  --placeholder-color: var(--slate-400);
+  --shadow-color: var(--slate-300);
+  --rating-fill: var(--yellow-100);
+  --rating-hover: var(--yellow-500);
+  --back-btn-border: transparent;
+  --submit-btn-border: transparent;
+  --rating-selected: black;
+  --close-btn-color: var(--slate-500);
+  --close-btn-color-hover: var(--slate-700);
+  --calendar-tile-color: var(--slate-50);
+  --border-radius: 8px;
+}

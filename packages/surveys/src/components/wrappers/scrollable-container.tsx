@@ -40,9 +40,9 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
   }, [children]);
 
   return (
-    <div className="fb-relative">
+    <div className="relative">
       {!isAtTop && (
-        <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-6 fb-bg-gradient-to-b fb-to-transparent" />
+        <div className="from-survey-bg absolute left-0 right-2 top-0 z-10 h-6 bg-gradient-to-b to-transparent" />
       )}
       <div
         ref={containerRef}
@@ -50,11 +50,11 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
+        className={cn("bg-survey-bg overflow-auto px-4 pb-4")}>
         {children}
       </div>
       {!isAtBottom && (
-        <div className="fb-from-survey-bg fb-absolute -fb-bottom-2 fb-left-0 fb-right-2 fb-h-8 fb-bg-gradient-to-t fb-to-transparent" />
+        <div className="from-survey-bg absolute -bottom-2 left-0 right-2 h-8 bg-gradient-to-t to-transparent" />
       )}
     </div>
   );

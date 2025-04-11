@@ -18,12 +18,12 @@ export function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   }, [htmlString]);
 
   if (!htmlString) return null;
-  if (safeHtml === `<p class="fb-editor-paragraph"><br></p>`) return null;
+  if (safeHtml === `<p class="editor-paragraph"><br></p>`) return null;
 
   return (
     <label
       htmlFor={questionId}
-      className={cn("fb-htmlbody fb-break-words")} // styles are in global.css
+      className={cn("htmlbody break-words")} // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}
       dir="auto"
     />

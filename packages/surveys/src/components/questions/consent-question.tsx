@@ -80,7 +80,7 @@ export function ConsentQuestion({
             htmlString={getLocalizedValue(question.html, languageCode) || ""}
             questionId={question.id}
           />
-          <div className="fb-bg-survey-bg fb-sticky -fb-bottom-2 fb-z-10 fb-w-full fb-px-1 fb-py-1">
+          <div className="bg-survey-bg sticky -bottom-2 z-10 w-full px-1 py-1">
             <label
               ref={consentRef}
               dir="auto"
@@ -94,7 +94,7 @@ export function ConsentQuestion({
                   document.getElementById(`${question.id}-label`)?.focus();
                 }
               }}
-              className="fb-border-border fb-bg-input-bg fb-text-heading hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected focus:fb-ring-brand fb-rounded-custom fb-relative fb-z-10 fb-my-2 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-border fb-p-4 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+              className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 my-2 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
               <input
                 tabIndex={-1}
                 type="checkbox"
@@ -109,11 +109,11 @@ export function ConsentQuestion({
                   }
                 }}
                 checked={value === "accepted"}
-                className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                 aria-labelledby={`${question.id}-label`}
                 required={question.required}
               />
-              <span id={`${question.id}-label`} className="fb-ml-3 fb-mr-3 fb-font-medium">
+              <span id={`${question.id}-label`} className="ml-3 mr-3 font-medium">
                 {getLocalizedValue(question.label, languageCode)}
               </span>
             </label>
@@ -121,7 +121,7 @@ export function ConsentQuestion({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

@@ -62,11 +62,11 @@ export function AutoCloseWrapper({
   }, [survey.autoClose]);
 
   return (
-    <div className="fb-h-full fb-w-full">
+    <div className="h-full w-full">
       {survey.autoClose && showAutoCloseProgressBar ? (
         <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
       ) : null}
-      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="fb-h-full fb-w-full">
+      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="h-full w-full">
         {children}
       </div>
     </div>

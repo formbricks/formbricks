@@ -42,21 +42,21 @@ export function EndingCard({
     ) : null;
 
   const checkmark = (
-    <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
+    <div className="text-brand flex flex-col items-center justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        className="fb-h-24 fb-w-24">
+        className="h-24 w-24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]" />
+      <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]" />
     </div>
   );
 
@@ -109,7 +109,7 @@ export function EndingCard({
 
   return (
     <ScrollableContainer>
-      <div className="fb-text-center">
+      <div className="text-center">
         {isResponseSendingFinished ? (
           <>
             {endingCard.type === "endScreen" && (media ?? checkmark)}
@@ -140,7 +140,7 @@ export function EndingCard({
                 questionId="EndingCard"
               />
               {endingCard.type === "endScreen" && endingCard.buttonLabel ? (
-                <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
                   <SubmitButton
                     buttonLabel={replaceRecallInfo(
                       getLocalizedValue(endingCard.buttonLabel, languageCode),
@@ -157,10 +157,10 @@ export function EndingCard({
           </>
         ) : (
           <>
-            <div className="fb-my-3">
+            <div className="my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="fb-text-brand">Sending responses...</h1>
+            <h1 className="text-brand">Sending responses...</h1>
           </>
         )}
       </div>

@@ -35,7 +35,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Helper function to append the variable if it's not undefined
   const appendCssVariable = (variableName: string, value?: string) => {
     if (value !== undefined) {
-      cssVariables += `--fb-${variableName}: ${value};\n`;
+      cssVariables += `--${variableName}: ${value};\n`;
     }
   };
 

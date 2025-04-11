@@ -146,7 +146,7 @@ export function DateQuestion({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
-      className="fb-w-full">
+      className="w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -161,13 +161,13 @@ export function DateQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div id="error-message" className="fb-text-red-600" aria-live="assertive">
+          <div id="error-message" className="text-red-600" aria-live="assertive">
             <span>{errorMessage}</span>
           </div>
           <div
-            className={cn("fb-mt-4 fb-w-full", errorMessage && "fb-rounded-lg fb-border-2 fb-border-red-500")}
+            className={cn("mt-4 w-full", errorMessage && "rounded-lg border-2 border-red-500")}
             id="date-picker-root">
-            <div className="fb-relative">
+            <div className="relative">
               {!datePickerOpen && (
                 <button
                   onClick={() => {
@@ -179,14 +179,14 @@ export function DateQuestion({
                   }}
                   aria-label={selectedDate ? `You have selected ${formattedDate}` : "Select a date"}
                   aria-describedby={errorMessage ? "error-message" : undefined}
-                  className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
-                  <div className="fb-flex fb-items-center fb-gap-2">
+                  className="focus:outline-brand bg-input-bg hover:bg-input-bg-selected border-border text-heading rounded-custom relative flex h-[12dvh] w-full cursor-pointer appearance-none items-center justify-center border text-left text-base font-normal">
+                  <div className="flex items-center gap-2">
                     {selectedDate ? (
-                      <div className="fb-flex fb-items-center fb-gap-2">
+                      <div className="flex items-center gap-2">
                         <CalendarCheckIcon /> <span>{formattedDate}</span>
                       </div>
                     ) : (
-                      <div className="fb-flex fb-items-center fb-gap-2">
+                      <div className="flex items-center gap-2">
                         <CalendarIcon /> <span>Select a date</span>
                       </div>
                     )}
@@ -221,20 +221,20 @@ export function DateQuestion({
                 monthPlaceholder="MM"
                 yearPlaceholder="YYYY"
                 format={question.format ?? "M-d-y"}
-                className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
+                className={`dp-input-root rounded-custom wrapper-hide ${!datePickerOpen ? "" : "h-[46dvh] sm:h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
                 calendarProps={{
                   className:
-                    "calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
+                    "calendar-root !bg-input-bg border border-border rounded-custom p-3 h-[46dvh] sm:h-[33dvh] overflow-auto",
                   tileClassName: ({ date }: { date: Date }) => {
                     const baseClass =
-                      "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+                      "hover:bg-input-bg-selected rounded-custom h-9 p-0 mt-1 font-normal aria-selected:opacity-100 focus:ring-2 focus:bg-slate-200";
                     // today's date class
                     if (
                       date.getDate() === new Date().getDate() &&
                       date.getMonth() === new Date().getMonth() &&
                       date.getFullYear() === new Date().getFullYear()
                     ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
+                      return `${baseClass} !bg-brand !border-border-highlight !text-calendar-tile focus:ring-2 focus:bg-slate-200`;
                     }
                     // active date class
                     if (
@@ -243,10 +243,10 @@ export function DateQuestion({
                       date.getMonth() === selectedDate.getMonth() &&
                       date.getFullYear() === selectedDate.getFullYear()
                     ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
+                      return `${baseClass} !bg-brand !border-border-highlight !text-calendar-tile`;
                     }
 
-                    return `${baseClass} !fb-text-heading`;
+                    return `${baseClass} !text-heading`;
                   },
                   formatShortWeekday: (_: any, date: Date) => {
                     return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
@@ -269,7 +269,7 @@ export function DateQuestion({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           isLastQuestion={isLastQuestion}

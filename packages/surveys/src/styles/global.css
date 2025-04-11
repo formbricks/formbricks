@@ -19,7 +19,7 @@
 }
 
 #fbjs *::-webkit-scrollbar-thumb {
-  background-color: var(--fb-brand-color);
+  background-color: var(--brand-color);
   border: none;
   border-radius: 10px;
 }
@@ -27,23 +27,23 @@
 /* Firefox */
 #fbjs * {
   scrollbar-width: thin;
-  scrollbar-color: var(--fb-brand-color) transparent;
+  scrollbar-color: var(--brand-color) transparent;
 }
 
 /* this is for styling the HtmlBody component */
-.fb-htmlbody {
-  @apply fb-block fb-text-sm fb-font-normal fb-leading-6;
+.htmlbody {
+  @apply block text-sm font-normal leading-6;
   /* need to use !important because in packages/ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
-  color: var(--fb-subheading-color) !important;
+  color: var(--subheading-color) !important;
 }
 
 /* without this, it wont override the color */
-p.fb-editor-paragraph {
+p.editor-paragraph {
   overflow-wrap: break-word;
 }
 
-.fb-survey-shadow {
-  box-shadow: 0px 0px 90px -40px var(--fb-survey-shadow-color);
+.survey-shadow {
+  box-shadow: 0px 0px 90px -40px var(--survey-shadow-color);
 }
 
 /* theming */
@@ -66,35 +66,35 @@ p.fb-editor-paragraph {
   --yellow-500: rgb(234 179 8);
 
   /* Default Light Theme, you can override everything by changing these values */
-  --fb-brand-color: var(--brand-default);
-  --fb-brand-text-color: black;
-  --fb-border-color: var(--slate-300);
-  --fb-border-color-highlight: var(--slate-500);
-  --fb-focus-color: var(--slate-500);
-  --fb-heading-color: var(--slate-900);
-  --fb-subheading-color: var(--slate-700);
-  --fb-placeholder-color: var(--slate-300);
-  --fb-info-text-color: var(--slate-500);
-  --fb-signature-text-color: var(--slate-500);
-  --fb-branding-text-color: var(--slate-500);
-  --fb-survey-background-color: white;
-  --fb-survey-border-color: var(--slate-50);
-  --fb-survey-shadow-color: rgba(0, 0, 0, 0.4);
-  --fb-accent-background-color: var(--slate-200);
-  --fb-accent-background-color-selected: var(--slate-100);
-  --fb-input-background-color: var(--slate-50);
-  --fb-input-background-color-selected: var(--slate-200);
-  --fb-placeholder-color: var(--slate-400);
-  --fb-shadow-color: var(--slate-300);
-  --fb-rating-fill: var(--yellow-100);
-  --fb-rating-hover: var(--yellow-500);
-  --fb-back-btn-border: transparent;
-  --fb-submit-btn-border: transparent;
-  --fb-rating-selected: black;
-  --fb-close-btn-color: var(--slate-500);
-  --fb-close-btn-color-hover: var(--slate-700);
-  --fb-calendar-tile-color: var(--slate-50);
-  --fb-border-radius: 8px;
+  --brand-color: var(--brand-default);
+  --brand-text-color: black;
+  --border-color: var(--slate-300);
+  --border-color-highlight: var(--slate-500);
+  --focus-color: var(--slate-500);
+  --heading-color: var(--slate-900);
+  --subheading-color: var(--slate-700);
+  --placeholder-color: var(--slate-300);
+  --info-text-color: var(--slate-500);
+  --signature-text-color: var(--slate-500);
+  --branding-text-color: var(--slate-500);
+  --survey-background-color: white;
+  --survey-border-color: var(--slate-50);
+  --survey-shadow-color: rgba(0, 0, 0, 0.4);
+  --accent-background-color: var(--slate-200);
+  --accent-background-color-selected: var(--slate-100);
+  --input-background-color: var(--slate-50);
+  --input-background-color-selected: var(--slate-200);
+  --placeholder-color: var(--slate-400);
+  --shadow-color: var(--slate-300);
+  --rating-fill: var(--yellow-100);
+  --rating-hover: var(--yellow-500);
+  --back-btn-border: transparent;
+  --submit-btn-border: transparent;
+  --rating-selected: black;
+  --close-btn-color: var(--slate-500);
+  --close-btn-color-hover: var(--slate-700);
+  --calendar-tile-color: var(--slate-50);
+  --border-radius: 8px;
 }
 
 @keyframes shrink-width-to-zero {
@@ -107,7 +107,7 @@ p.fb-editor-paragraph {
   }
 }
 
-.fb-no-scrollbar {
+.no-scrollbar {
   -ms-overflow-style: none !important;
   /* Internet Explorer 10+ */
   scrollbar-width: thin !important;

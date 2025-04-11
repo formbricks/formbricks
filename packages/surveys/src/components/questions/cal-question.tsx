@@ -69,7 +69,7 @@ export function CalQuestion({
         onChange({ [question.id]: value });
         onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="fb-w-full">
+      className="w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -84,11 +84,11 @@ export function CalQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
+          {errorMessage ? <span className="text-red-500">{errorMessage}</span> : null}
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         {!question.required && (
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

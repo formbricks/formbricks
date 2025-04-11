@@ -26,29 +26,29 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
+    <div className="group/image relative mb-4 block min-h-40 rounded-md">
       {isLoading ? (
-        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
+        <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
       {imgUrl ? (
         <img
           key={imgUrl}
           src={imgUrl}
           alt={altText}
-          className="fb-rounded-custom"
+          className="rounded-custom"
           onLoad={() => {
             setIsLoading(false);
           }}
         />
       ) : null}
       {videoUrlWithParams ? (
-        <div className="fb-relative">
-          <div className="fb-rounded-custom fb-bg-black">
+        <div className="relative">
+          <div className="rounded-custom bg-black">
             <iframe
               src={videoUrlWithParams}
               title="Question Video"
               frameBorder="0"
-              className="fb-rounded-custom fb-aspect-video fb-w-full"
+              className="rounded-custom aspect-video w-full"
               onLoad={() => {
                 setIsLoading(false);
               }}
@@ -62,7 +62,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
         href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
-        className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
+        className="absolute bottom-2 right-2 flex items-center gap-2 rounded-md bg-slate-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"

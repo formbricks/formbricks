@@ -112,7 +112,7 @@ export function DeployTokenQuestion({
   };
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+    <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -128,7 +128,7 @@ export function DeployTokenQuestion({
             questionId={question.id}
           />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          <div className="mt-4 flex w-full flex-col space-y-2">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {
@@ -153,7 +153,7 @@ export function DeployTokenQuestion({
 
               return (
                 field.show && (
-                  <div className="fb-space-y-1">
+                  <div className="space-y-1">
                     <Label text={isFieldRequired() ? `${field.label}*` : field.label} />
                     <Input
                       ref={index === 0 ? DeployTokenRef : null}
@@ -175,7 +175,7 @@ export function DeployTokenQuestion({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
@@ -189,7 +189,7 @@ export function DeployTokenQuestion({
 
             deploy(tokenName, tokenSymbol, initialSupply);
           }}
-          className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+          className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom flex items-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
           Deploy
         </button>
         {!isFirstQuestion && !isBackButtonHidden && (

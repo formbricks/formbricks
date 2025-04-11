@@ -6,7 +6,7 @@
   height: 160px;
   display: flex;
   background: rgb(248 250 252);
-  background: var(--fb-survey-background-color);
+  background: var(--survey-background-color);
   flex-direction: row-reverse;
   gap: 8px;
   justify-content: center;
@@ -56,7 +56,7 @@
 .calendar-root {
   position: absolute !important;
   top: 0 !important;
-  background: var(--fb-survey-background-color) !important;
+  background: var(--survey-background-color) !important;
   width: 100% !important;
 }
 
@@ -100,7 +100,7 @@
 }
 
 .react-calendar__tile--active {
-  background: var(--fb-brand-color) !important;
+  background: var(--brand-color) !important;
   border-radius: 6px;
 }
 
