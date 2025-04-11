@@ -1,6 +1,6 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { describe, expect, it, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,6 +13,13 @@ vi.mock("@/modules/survey/list/actions", () => ({
 
 vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn(() => "Formatted error"),
+}));
+
+// Mock toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+  },
 }));
 
 describe("useSingleUseId", () => {
@@ -40,17 +47,20 @@ describe("useSingleUseId", () => {
       initialProps: mockSurvey,
     });
 
-    // Wait for the effect to run
-    await new Promise((r) => setTimeout(r, 0));
+    // Wait for the state to update after the async operation
+    await waitFor(() => {
+      expect(result.current.singleUseId).toBe("mockSingleUseId");
+    });
 
     expect(generateSingleUseIdAction).toHaveBeenCalledWith({
       surveyId: "survey123",
       isEncrypted: true,
     });
-    expect(result.current.singleUseId).toBe("mockSingleUseId");
 
     // Re-render with the same props to ensure it doesn't break
-    rerender(mockSurvey);
+    act(() => {
+      rerender(mockSurvey);
+    });
 
     // The singleUseId remains the same unless we explicitly refresh
     expect(result.current.singleUseId).toBe("mockSingleUseId");
@@ -66,10 +76,11 @@ describe("useSingleUseId", () => {
 
     const { result } = renderHook(() => useSingleUseId(disabledSurvey));
 
-    await new Promise((r) => setTimeout(r, 0));
+    await waitFor(() => {
+      expect(result.current.singleUseId).toBeUndefined();
+    });
 
     expect(generateSingleUseIdAction).not.toHaveBeenCalled();
-    expect(result.current.singleUseId).toBeUndefined();
   });
 
   it("should show toast error if the API call fails", async () => {
@@ -77,11 +88,12 @@ describe("useSingleUseId", () => {
 
     const { result } = renderHook(() => useSingleUseId(mockSurvey));
 
-    await new Promise((r) => setTimeout(r, 0));
+    await waitFor(() => {
+      expect(result.current.singleUseId).toBeUndefined();
+    });
 
     expect(getFormattedErrorMessage).toHaveBeenCalledWith({ serverError: "Something went wrong" });
     expect(toast.error).toHaveBeenCalledWith("Formatted error");
-    expect(result.current.singleUseId).toBeUndefined();
   });
 
   it("should refreshSingleUseId on demand", async () => {
@@ -90,9 +102,10 @@ describe("useSingleUseId", () => {
 
     // Wait for initial value to be set
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      await waitFor(() => {
+        expect(result.current.singleUseId).toBe("initialId");
+      });
     });
-    expect(result.current.singleUseId).toBe("initialId");
 
     vi.mocked(generateSingleUseIdAction).mockResolvedValueOnce({ data: "refreshedId" });
 
