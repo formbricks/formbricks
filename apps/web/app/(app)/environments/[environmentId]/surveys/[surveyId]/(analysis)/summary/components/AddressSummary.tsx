@@ -20,7 +20,7 @@ interface AddressSummaryProps {
 export const AddressSummary = ({ questionSummary, environmentId, survey, locale }: AddressSummaryProps) => {
   const { t } = useTranslate();
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

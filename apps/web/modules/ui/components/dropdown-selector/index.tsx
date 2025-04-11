@@ -35,7 +35,7 @@ export const DropdownSelector = ({
             <button
               disabled={disabled ? disabled : false}
               type="button"
-              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
+              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
               <span className="flex w-4/5 flex-1">
                 <span className="w-full truncate text-left">
                   {selectedItem ? selectedItem.name || placeholder || label : `${placeholder || label}`}
@@ -50,14 +50,14 @@ export const DropdownSelector = ({
           {!disabled && (
             <DropdownMenuPortal>
               <DropdownMenuContent
-                className="z-50 max-h-64 min-w-[220px] max-w-96 overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
+                className="z-50 max-h-64 max-w-96 min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
                 {items
                   .sort((a, b) => a.name?.localeCompare(b.name))
                   .map((item) => (
                     <DropdownMenuItem
                       key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
                       onSelect={() => setSelectedItem(item)}>
                       {item.name}
                     </DropdownMenuItem>

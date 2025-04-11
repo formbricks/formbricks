@@ -265,7 +265,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-none"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-hidden"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />
@@ -332,7 +332,7 @@ export const MainNavigation = ({
                 <DropdownMenuTrigger
                   asChild
                   id="userDropdownTrigger"
-                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-hidden">
                   <div
                     tabIndex={0}
                     className={cn(

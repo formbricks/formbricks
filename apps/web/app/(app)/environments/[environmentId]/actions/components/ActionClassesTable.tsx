@@ -36,7 +36,7 @@ export const ActionClassesTable = ({
 
   return (
     <>
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
         {TableHeading}
         <div id="actionClassesWrapper" className="flex flex-col">
           {actionClasses.length > 0 ? (

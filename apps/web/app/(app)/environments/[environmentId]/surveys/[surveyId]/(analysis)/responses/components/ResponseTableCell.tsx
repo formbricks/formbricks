@@ -36,7 +36,7 @@ export const ResponseTableCell = ({
   // Conditional rendering of maximize icon
   const renderMaximizeIcon = cell.column.id === "createdAt" && (
     <div
-      className="hidden flex-shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 hover:border-slate-300 group-hover:flex"
+      className="hidden shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 group-hover:flex hover:border-slate-300"
       onClick={handleCellClick}>
       <Maximize2Icon className="h-4 w-4" />
     </div>

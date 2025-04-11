@@ -84,7 +84,7 @@ export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
           value={value}
           onChange={(date) => onDateChange(date as Date)}
           minDate={new Date()}
-          className="!border-0"
+          className="border-0!"
           tileClassName={({ date }: { date: Date }) => {
             const baseClass =
               "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";

@@ -49,7 +49,7 @@ export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
   };
 
   return (
-    <Card className="mx-auto w-full bg-gradient-to-tr from-slate-100 to-slate-200">
+    <Card className="mx-auto w-full bg-linear-to-tr from-slate-100 to-slate-200">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Formbricks AI</CardTitle>
         <CardDescription>{t("environments.surveys.edit.formbricks_ai_description")}</CardDescription>
@@ -69,7 +69,7 @@ export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
       </CardContent>
       <CardFooter>
         <Button
-          className="w-full shadow-sm"
+          className="w-full shadow-xs"
           type="submit"
           onClick={handleSubmit}
           variant="secondary"

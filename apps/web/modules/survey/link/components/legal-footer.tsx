@@ -20,7 +20,7 @@ export const LegalFooter = ({
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
 
   return (
-    <div className="absolute bottom-0 z-[1500] h-10 w-full" role="contentinfo">
+    <div className="absolute bottom-0 z-1500 h-10 w-full" role="contentinfo">
       <div className="mx-auto flex h-full max-w-2xl items-center justify-center p-2 text-center text-xs text-slate-500">
         {IMPRINT_URL && (
           <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>

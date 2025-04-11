@@ -23,7 +23,7 @@ export const ColumnSettingsDropdown = <T,>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="py-2 focus:outline-none">
+        <button className="py-2 focus:outline-hidden">
           <EllipsisVerticalIcon name="three-dots" className="h-4 w-4" />{" "}
         </button>
       </DropdownMenuTrigger>

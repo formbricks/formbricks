@@ -389,8 +389,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               onOpenChange={(value) => {
                 value && handleDatePickerClose();
               }}>
-              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
+              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-hidden">
+                <div className="h-auto min-w-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                   <div className="hidden w-full items-center justify-between sm:flex">
                     <span className="text-sm text-slate-700">{t("common.download")}</span>
                     <ArrowDownToLineIcon className="ml-2 h-4 w-4" />

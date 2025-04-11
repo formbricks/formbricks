@@ -39,9 +39,9 @@ export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSu
     },
   ];
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (
             <div

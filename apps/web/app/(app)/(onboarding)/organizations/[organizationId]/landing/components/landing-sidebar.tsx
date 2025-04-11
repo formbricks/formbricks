@@ -80,7 +80,7 @@ export const LandingSidebar = ({
           <DropdownMenuTrigger
             asChild
             id="userDropdownTrigger"
-            className="w-full rounded-br-xl border-t py-4 pl-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+            className="w-full rounded-br-xl border-t py-4 pl-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-hidden">
             <div tabIndex={0} className={cn("flex cursor-pointer flex-row items-center space-x-3")}>
               <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
               <>
