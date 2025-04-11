@@ -1,14 +1,9 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
-    "@formbricks/api#build": {
+    "@formbricks/database#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
-    },
-    "@formbricks/api#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/api#build"],
-      "persistent": true
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build"]
@@ -40,17 +35,14 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
-
+    "@formbricks/js-core#build": {
+      "dependsOn": ["^build", "@formbricks/database#build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/js-core#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
-    },
-    "@formbricks/js-core#lint": {
-      "dependsOn": ["@formbricks/api#build"]
-    },
-    "@formbricks/js-core#test": {
-      "dependsOn": ["@formbricks/api#build"]
     },
     "@formbricks/lib#lint": {
       "dependsOn": ["@formbricks/logger#build"]
@@ -59,19 +51,13 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/react-native#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build"],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
-    },
-    "@formbricks/react-native#lint": {
-      "dependsOn": ["@formbricks/api#build"]
-    },
-    "@formbricks/react-native#test": {
-      "dependsOn": ["@formbricks/api#build"]
     },
     "@formbricks/surveys#build": {
       "dependsOn": ["^build"],
@@ -129,6 +115,8 @@
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",
+        "FORMBRICKS_API_HOST",
+        "FORMBRICKS_ENVIRONMENT_ID",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -154,15 +142,11 @@
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
-        "NEXT_PUBLIC_FORMBRICKS_API_HOST",
-        "NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID",
-        "NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID",
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
-        "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
         "OPENTELEMETRY_LISTENER_URL",
         "NEXT_RUNTIME",
         "NEXTAUTH_SECRET",
@@ -208,6 +192,7 @@
         "SURVEY_URL",
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
+        "TURNSTILE_SITE_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -281,6 +266,9 @@
       "persistent": true
     },
     "test": {
+      "outputs": []
+    },
+    "test:coverage": {
       "outputs": []
     }
   },
