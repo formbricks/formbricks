@@ -18,6 +18,7 @@ interface FollowUpItemProps {
   selectedLanguageCode: string;
   mailFrom: string;
   userEmail: string;
+  teamMemberEmails: string[];
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
@@ -28,6 +29,7 @@ export const FollowUpItem = ({
   mailFrom,
   selectedLanguageCode,
   userEmail,
+  teamMemberEmails,
   setLocalSurvey,
   locale,
 }: FollowUpItemProps) => {
@@ -43,7 +45,13 @@ export const FollowUpItem = ({
     const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
     const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
 
-    if (!matchedQuestion && !matchedHiddenField) return true;
+    const updatedEmails = teamMemberEmails.includes(userEmail)
+      ? teamMemberEmails
+      : [...teamMemberEmails, userEmail];
+
+    const matchedEmail = updatedEmails.find((email) => email === to);
+
+    if (!matchedQuestion && !matchedHiddenField && !matchedEmail) return true;
 
     if (matchedQuestion) {
       if (
@@ -63,7 +71,13 @@ export const FollowUpItem = ({
     }
 
     return false;
-  }, [followUp.action.properties, localSurvey.hiddenFields?.fieldIds, localSurvey.questions]);
+  }, [
+    followUp.action.properties,
+    localSurvey.hiddenFields?.fieldIds,
+    localSurvey.questions,
+    teamMemberEmails,
+    userEmail,
+  ]);
 
   const isEndingInvalid = useMemo(() => {
     return followUp.trigger.type === "endings" && !followUp.trigger.properties?.endingIds?.length;
@@ -105,7 +119,7 @@ export const FollowUpItem = ({
           </div>
         </div>
 
-        <div className="absolute right-4 top-4">
+        <div className="absolute top-4 right-4">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"
@@ -138,6 +152,7 @@ export const FollowUpItem = ({
           replyTo: followUp.action.properties.replyTo,
         }}
         mode="edit"
+        teamMemberEmails={teamMemberEmails}
         userEmail={userEmail}
         locale={locale}
       />

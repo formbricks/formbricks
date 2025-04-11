@@ -43,6 +43,7 @@ interface SurveyEditorProps {
   projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
+  teamMemberEmails: string[];
 }
 
 export const SurveyEditor = ({
@@ -67,6 +68,7 @@ export const SurveyEditor = ({
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
+  teamMemberEmails,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -230,6 +232,7 @@ export const SurveyEditor = ({
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               userEmail={userEmail}
+              teamMemberEmails={teamMemberEmails}
               locale={locale}
             />
           )}

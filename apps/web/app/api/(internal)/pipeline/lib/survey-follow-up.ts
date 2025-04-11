@@ -22,6 +22,16 @@ const evaluateFollowUp = async (
   const { to, subject, body, replyTo } = properties;
   const toValueFromResponse = response.data[to];
   const logoUrl = organization.whitelabel?.logoUrl || "";
+
+  // Check if 'to' is a direct email address (team member or user email)
+  const parsedEmailTo = z.string().email().safeParse(to);
+  if (parsedEmailTo.success) {
+    // 'to' is a valid email address, send email directly
+    await sendFollowUpEmail(body, subject, parsedEmailTo.data, replyTo, logoUrl);
+    return;
+  }
+
+  // If not a direct email, check if it's a question ID or hidden field ID
   if (!toValueFromResponse) {
     throw new Error(`"To" value not found in response data for followup: ${followUpId}`);
   }
@@ -83,6 +93,8 @@ export const sendSurveyFollowUps = async (
   });
 
   const followUpResults = await Promise.all(followUpPromises);
+
+  console.log(followUpResults);
 
   // Log all errors
   const errors = followUpResults

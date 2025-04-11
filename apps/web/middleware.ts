@@ -42,7 +42,7 @@ const enforceHttps = (request: NextRequest): Response | null => {
       details: [
         {
           field: "",
-          issue: "Only HTTPS connections are allowed on the management and contacts bulk endpoints.",
+          issue: "Only HTTPS connections are allowed on the management endpoints.",
         },
       ],
     };

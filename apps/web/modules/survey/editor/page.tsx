@@ -3,10 +3,11 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
+import { getTeamMemberEmails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
+import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
@@ -37,20 +38,21 @@ export const SurveyEditorPage = async (props) => {
     await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
-  const [survey, project, actionClasses, contactAttributeKeys, responseCount, segments] = await Promise.all([
-    getSurvey(params.surveyId),
-    getProjectByEnvironmentId(params.environmentId),
-    getActionClasses(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
-    getResponseCountBySurveyId(params.surveyId),
-    getSegments(params.environmentId),
-  ]);
+  const [survey, projectWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
+    await Promise.all([
+      getSurvey(params.surveyId),
+      getProjectWithTeamIdsByEnvironmentId(params.environmentId),
+      getActionClasses(params.environmentId),
+      getContactAttributeKeys(params.environmentId),
+      getResponseCountBySurveyId(params.surveyId),
+      getSegments(params.environmentId),
+    ]);
 
-  if (!project) {
+  if (!projectWithTeamIds) {
     throw new Error(t("common.project_not_found"));
   }
 
-  const organizationBilling = await getOrganizationBilling(project.organizationId);
+  const organizationBilling = await getOrganizationBilling(projectWithTeamIds.organizationId);
   if (!organizationBilling) {
     throw new Error(t("common.organization_not_found"));
   }
@@ -63,15 +65,16 @@ export const SurveyEditorPage = async (props) => {
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
 
   const userEmail = await getUserEmail(session.user.id);
+  const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
 
-  const projectLanguages = await getProjectLanguages(project.id);
+  const teamMemberEmails = await getTeamMemberEmails(projectWithTeamIds.teamIds);
 
   if (
     !survey ||
     !environment ||
     !actionClasses ||
     !contactAttributeKeys ||
-    !project ||
+    !projectWithTeamIds ||
     !userEmail ||
     isSurveyCreationDeletionDisabled
   ) {
@@ -83,7 +86,7 @@ export const SurveyEditorPage = async (props) => {
   return (
     <SurveyEditor
       survey={survey}
-      project={project}
+      project={projectWithTeamIds}
       environment={environment}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
@@ -103,6 +106,7 @@ export const SurveyEditorPage = async (props) => {
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
       userEmail={userEmail}
+      teamMemberEmails={teamMemberEmails}
     />
   );
 };

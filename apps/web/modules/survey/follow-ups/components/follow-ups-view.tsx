@@ -17,6 +17,7 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
+  teamMemberEmails: string[];
   locale: TUserLocale;
 }
 
@@ -27,6 +28,7 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   userEmail,
+  teamMemberEmails,
   locale,
 }: FollowUpsViewProps) => {
   const { t } = useTranslate();
@@ -110,6 +112,7 @@ export const FollowUpsView = ({
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               userEmail={userEmail}
+              teamMemberEmails={teamMemberEmails}
               locale={locale}
             />
           );
@@ -124,6 +127,7 @@ export const FollowUpsView = ({
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         userEmail={userEmail}
+        teamMemberEmails={teamMemberEmails}
         locale={locale}
       />
     </div>

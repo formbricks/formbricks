@@ -34,7 +34,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import DOMpurify from "isomorphic-dompurify";
-import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  EyeOffIcon,
+  HandshakeIcon,
+  MailIcon,
+  TriangleAlertIcon,
+  UserIcon,
+  ZapIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -53,12 +61,13 @@ interface AddFollowUpModalProps {
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
   userEmail: string;
+  teamMemberEmails: string[];
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
 
 type EmailSendToOption = {
-  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField";
+  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "email";
   label: string;
   id: string;
 };
@@ -72,6 +81,7 @@ export const FollowUpModal = ({
   defaultValues,
   mode = "create",
   userEmail,
+  teamMemberEmails,
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
@@ -104,6 +114,10 @@ export const FollowUpModal = ({
         ? { fieldIds: localSurvey.hiddenFields.fieldIds }
         : { fieldIds: [] };
 
+    const updatedTeamMembers = teamMemberEmails.includes(userEmail)
+      ? teamMemberEmails
+      : [...teamMemberEmails, userEmail];
+
     return [
       ...openTextAndContactQuestions.map((question) => ({
         label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
@@ -121,8 +135,14 @@ export const FollowUpModal = ({
         id: fieldId,
         type: "hiddenField" as EmailSendToOption["type"],
       })),
+
+      ...updatedTeamMembers.map((email) => ({
+        label: email,
+        id: email,
+        type: "email" as EmailSendToOption["type"],
+      })),
     ];
-  }, [localSurvey, selectedLanguageCode]);
+  }, [localSurvey, selectedLanguageCode, teamMemberEmails, userEmail]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
@@ -580,7 +600,19 @@ export const FollowUpModal = ({
                                       {emailSendToOptions.map((option) => {
                                         return (
                                           <SelectItem key={option.id} value={option.id}>
-                                            {option.type !== "hiddenField" ? (
+                                            {option.type === "hiddenField" ? (
+                                              <div className="flex items-center space-x-2">
+                                                <EyeOffIcon className="h-4 w-4" />
+                                                <span>{option.label}</span>
+                                              </div>
+                                            ) : option.type === "email" ? (
+                                              <div className="flex items-center space-x-2">
+                                                <UserIcon className="h-4 w-4" />
+                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                  {option.label}
+                                                </span>
+                                              </div>
+                                            ) : (
                                               <div className="flex items-center space-x-2">
                                                 <div className="h-4 w-4">
                                                   {
@@ -594,11 +626,6 @@ export const FollowUpModal = ({
                                                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                                                   {option.label}
                                                 </span>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center space-x-2">
-                                                <EyeOffIcon className="h-4 w-4" />
-                                                <span>{option.label}</span>
                                               </div>
                                             )}
                                           </SelectItem>
@@ -751,7 +778,7 @@ export const FollowUpModal = ({
             </div>
           </div>
 
-          <div className="absolute bottom-0 right-0 z-20 h-12 w-full bg-white p-2">
+          <div className="absolute right-0 bottom-0 z-20 h-12 w-full bg-white p-2">
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"
