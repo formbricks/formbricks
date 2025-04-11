@@ -25,7 +25,7 @@ export const renderEmailResponseValue = async (
       return (
         <Container>
           {overrideFileUploadResponse ? (
-            <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
+            <Text className="mt-0 font-bold break-words whitespace-pre-wrap italic">
               {t("emails.render_email_response_value_file_upload_response_link_not_included")}
             </Text>
           ) : (
