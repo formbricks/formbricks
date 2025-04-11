@@ -95,6 +95,7 @@ private class WebViewData {
         data["appUrl"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
         data["contactId"] = UserManager.shared.contactId
+        data["isWebEnvironment"] = false
         
         if let hiddenFields = hiddenFields, !hiddenFields.isEmpty {
             data["hiddenFieldsRecord"] = hiddenFields
