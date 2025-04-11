@@ -165,6 +165,9 @@ describe("AddApiKeyModal", () => {
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
     await userEvent.type(labelInput, "Test API Key");
 
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
+
     // Click submit
     const submitButton = screen.getByRole("button", {
       name: "environments.project.api_keys.add_api_key",
@@ -173,7 +176,12 @@ describe("AddApiKeyModal", () => {
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       label: "Test API Key",
-      environmentPermissions: [],
+      environmentPermissions: [
+        {
+          environmentId: "env1",
+          permission: "read",
+        },
+      ],
       organizationAccess: {
         accessControl: {
           read: false,
@@ -212,7 +220,7 @@ describe("AddApiKeyModal", () => {
     });
   });
 
-  it("disables submit button when label is empty", async () => {
+  it("disables submit button when label is empty and there are not environment permissions", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
     const submitButton = screen.getByRole("button", {
       name: "environments.project.api_keys.add_api_key",
@@ -221,6 +229,9 @@ describe("AddApiKeyModal", () => {
 
     // Initially disabled
     expect(submitButton).toBeDisabled();
+
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
 
     // After typing, it should be enabled
     await userEvent.type(labelInput, "Test");
