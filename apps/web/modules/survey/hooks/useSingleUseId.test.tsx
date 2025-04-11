@@ -97,23 +97,37 @@ describe("useSingleUseId", () => {
   });
 
   it("should refreshSingleUseId on demand", async () => {
+    // Set up the initial mock response
     vi.mocked(generateSingleUseIdAction).mockResolvedValueOnce({ data: "initialId" });
+
     const { result } = renderHook(() => useSingleUseId(mockSurvey));
 
-    // Wait for initial value to be set
-    await act(async () => {
-      await waitFor(() => {
-        expect(result.current.singleUseId).toBe("initialId");
-      });
+    // We need to wait for the initial async effect to complete
+    // This ensures the hook has time to update state with the first mock value
+    await waitFor(() => {
+      expect(generateSingleUseIdAction).toHaveBeenCalledTimes(1);
     });
 
+    // Reset the mock and set up the next response for refreshSingleUseId call
+    vi.mocked(generateSingleUseIdAction).mockClear();
     vi.mocked(generateSingleUseIdAction).mockResolvedValueOnce({ data: "refreshedId" });
 
+    // Call refreshSingleUseId and wait for it to complete
+    let refreshedValue;
     await act(async () => {
-      const val = await result.current.refreshSingleUseId();
-      expect(val).toBe("refreshedId");
+      refreshedValue = await result.current.refreshSingleUseId();
     });
 
+    // Verify the return value from refreshSingleUseId
+    expect(refreshedValue).toBe("refreshedId");
+
+    // Verify the state was updated
     expect(result.current.singleUseId).toBe("refreshedId");
+
+    // Verify the API was called with correct parameters
+    expect(generateSingleUseIdAction).toHaveBeenCalledWith({
+      surveyId: "survey123",
+      isEncrypted: true,
+    });
   });
 });
