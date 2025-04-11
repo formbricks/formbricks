@@ -67,10 +67,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Date:
       if (typeof responseData === "string") {
-        const formattedDateString = formatDateWithOrdinal(new Date(responseData));
-        return (
-          <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDateString}</p>
-        );
+        const parsedDate = new Date(responseData);
+
+        const formattedDate = isNaN(parsedDate.getTime()) ? responseData : formatDateWithOrdinal(parsedDate);
+
+        return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
       }
       break;
     case TSurveyQuestionTypeEnum.PictureSelection:

@@ -1,7 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
-import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
 
 const rl = readline.createInterface({
