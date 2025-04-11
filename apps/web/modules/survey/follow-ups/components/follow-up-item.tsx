@@ -150,6 +150,7 @@ export const FollowUpItem = ({
           body: followUp.action.properties.body,
           emailTo: followUp.action.properties.to,
           replyTo: followUp.action.properties.replyTo,
+          attachResponseData: followUp.action.properties.attachResponseData,
         }}
         mode="edit"
         teamMemberEmails={teamMemberEmails}

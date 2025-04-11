@@ -1420,6 +1420,8 @@
         "follow_ups_item_issue_detected_tag": "Issue detected",
         "follow_ups_item_response_tag": "Any response",
         "follow_ups_item_send_email_tag": "Send email",
+        "follow_ups_modal_action_attach_response_data_description": "Add the data of the survey response to the follow-up",
+        "follow_ups_modal_action_attach_response_data_label": "Attach response data",
         "follow_ups_modal_action_body_label": "Body",
         "follow_ups_modal_action_body_placeholder": "Body of the email",
         "follow_ups_modal_action_email_content": "Email content",

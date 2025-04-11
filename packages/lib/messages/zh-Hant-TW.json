@@ -1420,6 +1420,8 @@
         "follow_ups_item_issue_detected_tag": "偵測到問題",
         "follow_ups_item_response_tag": "任何回應",
         "follow_ups_item_send_email_tag": "發送電子郵件",
+        "follow_ups_modal_action_attach_response_data_description": "將調查回應的數據添加到後續",
+        "follow_ups_modal_action_attach_response_data_label": "附加 response data",
         "follow_ups_modal_action_body_label": "內文",
         "follow_ups_modal_action_body_placeholder": "電子郵件內文",
         "follow_ups_modal_action_email_content": "電子郵件內容",

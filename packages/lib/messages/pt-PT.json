@@ -1420,6 +1420,8 @@
         "follow_ups_item_issue_detected_tag": "Problema detetado",
         "follow_ups_item_response_tag": "Qualquer resposta",
         "follow_ups_item_send_email_tag": "Enviar email",
+        "follow_ups_modal_action_attach_response_data_description": "Adicionar os dados da resposta do inquérito ao acompanhamento",
+        "follow_ups_modal_action_attach_response_data_label": "Anexar dados de resposta",
         "follow_ups_modal_action_body_label": "Corpo",
         "follow_ups_modal_action_body_placeholder": "Corpo do email",
         "follow_ups_modal_action_email_content": "Conteúdo do email",

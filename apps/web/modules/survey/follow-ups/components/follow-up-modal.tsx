@@ -153,6 +153,7 @@ export const FollowUpModal = ({
       replyTo: defaultValues?.replyTo ?? [userEmail],
       subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
       body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
+      attachResponseData: defaultValues?.attachResponseData ?? false,
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
@@ -237,6 +238,7 @@ export const FollowUpModal = ({
             replyTo: data.replyTo,
             subject: data.subject,
             body: sanitizedBody,
+            attachResponseData: data.attachResponseData,
           },
         },
       };
@@ -283,6 +285,7 @@ export const FollowUpModal = ({
           replyTo: data.replyTo,
           subject: data.subject,
           body: sanitizedBody,
+          attachResponseData: data.attachResponseData,
         },
       },
     };
@@ -339,7 +342,7 @@ export const FollowUpModal = ({
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       });
     }
-  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);
+  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
 
   const handleModalClose = () => {
     form.reset();
@@ -401,7 +404,6 @@ export const FollowUpModal = ({
               </div>
 
               {/* Trigger */}
-
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                   <div className="rounded-full border border-slate-300 bg-white p-1">
@@ -524,13 +526,13 @@ export const FollowUpModal = ({
                   ) : null}
                 </div>
               </div>
+
               {/* Arrow */}
               <div className="flex items-center justify-center">
                 <ArrowDownIcon className="h-4 w-4 text-slate-500" />
               </div>
 
               {/* Action */}
-
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                   <div className="rounded-full border border-slate-300 bg-white p-1">
@@ -768,6 +770,38 @@ export const FollowUpModal = ({
                                 <span className="text-sm text-red-500">{formErrors.body.message}</span>
                               </div>
                             ) : null}
+                          </div>
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="attachResponseData"
+                    render={({ field }) => {
+                      return (
+                        <FormItem>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="attachResponseData"
+                                checked={field.value}
+                                defaultChecked={defaultValues?.attachResponseData ?? false}
+                                onCheckedChange={(checked) => field.onChange(checked)}
+                              />
+                              <FormLabel htmlFor="attachResponseData" className="font-medium">
+                                {t(
+                                  "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                                )}
+                              </FormLabel>
+                            </div>
+
+                            <FormDescription className="text-sm text-slate-500">
+                              {t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
+                              )}
+                            </FormDescription>
                           </div>
                         </FormItem>
                       );
