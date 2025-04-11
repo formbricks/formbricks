@@ -12,7 +12,7 @@
     "lint": "next lint",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
-    "generate-api-specs": "tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml",
+    "generate-api-specs": "dotenv -e ../../.env tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml",
     "merge-client-endpoints": "tsx ./scripts/merge-client-endpoints.ts",
     "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
@@ -23,7 +23,6 @@
     "@dnd-kit/modifiers": "9.0.0",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
-    "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/js-core": "workspace:*",

@@ -1,5 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
+
+extendZodWithOpenApi(z);
 
 export const ZGetContactAttributeKeysFilter = z
   .object({
