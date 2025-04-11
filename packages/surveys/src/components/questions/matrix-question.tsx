@@ -1,16 +1,16 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { getShuffledRowIndices } from "@/lib/utils";
-import { type JSX } from "preact";
+import { FormEvent } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
+import { getShuffledRowIndices } from "../../lib/utils";
+import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { QuestionMedia } from "../general/question-media";
+import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -89,7 +89,7 @@ export function MatrixQuestion({
   );
 
   const handleSubmit = useCallback(
-    (e: JSX.TargetedEvent<HTMLFormElement>) => {
+    (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
       setTtc(updatedTtc);

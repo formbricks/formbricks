@@ -1,14 +1,14 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { HtmlBody } from "@/components/general/html-body";
-import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
+import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { HtmlBody } from "../general/html-body";
+import { QuestionMedia } from "../general/question-media";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;

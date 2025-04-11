@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JSX } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "../../lib/utils";
 import { StackedCard } from "./stacked-card";
 
 // offset = 0 -> Current question card

@@ -1,4 +1,3 @@
-import { getLocalizedValue } from "@/lib/i18n";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
@@ -10,6 +9,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "./i18n";
 
 const getVariableValue = (
   variables: TSurveyVariable[],

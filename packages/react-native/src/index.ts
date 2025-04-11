@@ -1,4 +1,4 @@
-import { Formbricks } from "@/components/formbricks";
+import { Formbricks } from "./components/formbricks";
 import { CommandQueue } from "@/lib/common/command-queue";
 import { Logger } from "@/lib/common/logger";
 import * as Actions from "@/lib/survey/action";

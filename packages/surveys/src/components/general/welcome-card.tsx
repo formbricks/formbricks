@@ -1,12 +1,12 @@
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { replaceRecallInfo } from "@/lib/recall";
-import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { type TI18nString } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { replaceRecallInfo } from "../../lib/recall";
+import { calculateElementIdx } from "../../lib/utils";
+import { SubmitButton } from "../buttons/submit-button";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 import { Headline } from "./headline";
 import { HtmlBody } from "./html-body";
 

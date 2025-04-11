@@ -1,20 +1,20 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useCallback, useMemo, useState } from "react";
+import { FormEvent, useCallback, useMemo, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyQuestionChoice,
   TSurveyQuestionId,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
+import { cn, getShuffledChoicesIds } from "../../lib/utils";
+import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { QuestionMedia } from "../general/question-media";
+import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
@@ -110,7 +110,7 @@ export function RankingQuestion({
     [localValue]
   );
 
-  const handleSubmit = (e: Event) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const hasIncompleteRanking =

@@ -1,8 +1,8 @@
-import { Progress } from "@/components/general/progress";
-import { calculateElementIdx } from "@/lib/utils";
 import { useCallback, useMemo } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { calculateElementIdx } from "../../lib/utils";
+import { Progress } from "../general/progress";
 
 interface ProgressBarProps {
   survey: TJsEnvironmentStateSurvey;

@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
 import DOMPurify from "isomorphic-dompurify";
 import { useEffect, useState } from "react";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { cn } from "../../lib/utils";
 
 interface HtmlBodyProps {
   htmlString?: string;

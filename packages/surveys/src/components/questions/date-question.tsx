@@ -1,19 +1,19 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getMonthName, getOrdinalDate } from "@/lib/date-time";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-date-picker";
 import { DatePickerProps } from "react-date-picker";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getMonthName, getOrdinalDate } from "../../lib/date-time";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
+import { cn } from "../../lib/utils";
 import "../../styles/date-picker.css";
+import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { QuestionMedia } from "../general/question-media";
+import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
@@ -195,7 +195,7 @@ export function DateQuestion({
               )}
 
               <DatePicker
-                key={datePickerOpen}
+                key={datePickerOpen ? "yes" : "no"}
                 value={selectedDate}
                 isOpen={datePickerOpen}
                 onChange={(value) => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-import { SurveyWebView } from "@/components/survey-web-view";
+import { SurveyWebView } from "./survey-web-view";
 import { Logger } from "@/lib/common/logger";
 import { setup } from "@/lib/common/setup";
 import { SurveyStore } from "@/lib/survey/store";

@@ -1,20 +1,3 @@
-import { AddressQuestion } from "@/components/questions/address-question";
-import { CalQuestion } from "@/components/questions/cal-question";
-import { ConsentQuestion } from "@/components/questions/consent-question";
-import { ContactInfoQuestion } from "@/components/questions/contact-info-question";
-import { CTAQuestion } from "@/components/questions/cta-question";
-import { DateQuestion } from "@/components/questions/date-question";
-import { DeployTokenQuestion } from "@/components/questions/deploy-token-question";
-import { FileUploadQuestion } from "@/components/questions/file-upload-question";
-import { MatrixQuestion } from "@/components/questions/matrix-question";
-import { MultipleChoiceMultiQuestion } from "@/components/questions/multiple-choice-multi-question";
-import { MultipleChoiceSingleQuestion } from "@/components/questions/multiple-choice-single-question";
-import { NPSQuestion } from "@/components/questions/nps-question";
-import { OpenTextQuestion } from "@/components/questions/open-text-question";
-import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
-import { RankingQuestion } from "@/components/questions/ranking-question";
-import { RatingQuestion } from "@/components/questions/rating-question";
-import { getLocalizedValue } from "@/lib/i18n";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -24,6 +7,23 @@ import {
   type TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { AddressQuestion } from "../questions/address-question";
+import { CalQuestion } from "../questions/cal-question";
+import { ConsentQuestion } from "../questions/consent-question";
+import { ContactInfoQuestion } from "../questions/contact-info-question";
+import { CTAQuestion } from "../questions/cta-question";
+import { DateQuestion } from "../questions/date-question";
+import { DeployTokenQuestion } from "../questions/deploy-token-question";
+import { FileUploadQuestion } from "../questions/file-upload-question";
+import { MatrixQuestion } from "../questions/matrix-question";
+import { MultipleChoiceMultiQuestion } from "../questions/multiple-choice-multi-question";
+import { MultipleChoiceSingleQuestion } from "../questions/multiple-choice-single-question";
+import { NPSQuestion } from "../questions/nps-question";
+import { OpenTextQuestion } from "../questions/open-text-question";
+import { PictureSelectionQuestion } from "../questions/picture-selection-question";
+import { RankingQuestion } from "../questions/ranking-question";
+import { RatingQuestion } from "../questions/rating-question";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

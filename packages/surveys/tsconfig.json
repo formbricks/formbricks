@@ -4,11 +4,7 @@
     "baseUrl": ".",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "jsx": "react-jsx"
   },
   "extends": "@formbricks/config-typescript/js-library.json",
   "include": ["src", "../types/surveys.d.ts"]

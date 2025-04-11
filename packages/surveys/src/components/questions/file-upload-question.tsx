@@ -1,17 +1,17 @@
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
 import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
 import { FileInput } from "../general/file-input";
+import { Headline } from "../general/headline";
+import { QuestionMedia } from "../general/question-media";
 import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;

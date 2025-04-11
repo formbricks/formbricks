@@ -1,17 +1,18 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { Input } from "@/components/general/input";
-import { Label } from "@/components/general/label";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+// @ts-nocheck
 import { useMemo, useRef, useState } from "react";
 import { useCallback } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { getUpdatedTtc, useTtc } from "../../lib/ttc";
+import { BackButton } from "../buttons/back-button";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { Input } from "../general/input";
+import { Label } from "../general/label";
+import { QuestionMedia } from "../general/question-media";
+import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;

@@ -1,15 +1,15 @@
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { LoadingSpinner } from "@/components/general/loading-spinner";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../../lib/i18n";
+import { replaceRecallInfo } from "../../lib/recall";
+import { SubmitButton } from "../buttons/submit-button";
+import { Headline } from "../general/headline";
+import { LoadingSpinner } from "../general/loading-spinner";
+import { QuestionMedia } from "../general/question-media";
+import { Subheader } from "../general/subheader";
+import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface EndingCardProps {
   survey: TJsEnvironmentStateSurvey;

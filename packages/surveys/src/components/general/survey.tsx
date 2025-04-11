@@ -1,18 +1,3 @@
-import { EndingCard } from "@/components/general/ending-card";
-import { FormbricksBranding } from "@/components/general/formbricks-branding";
-import { ProgressBar } from "@/components/general/progress-bar";
-import { QuestionConditional } from "@/components/general/question-conditional";
-import { ResponseErrorComponent } from "@/components/general/response-error-component";
-import { SurveyCloseButton } from "@/components/general/survey-close-button";
-import { WelcomeCard } from "@/components/general/welcome-card";
-import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
-import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
-import { ApiClient } from "@/lib/api-client";
-import { evaluateLogic, performActions } from "@/lib/logic";
-import { parseRecallInformation } from "@/lib/recall";
-import { ResponseQueue } from "@/lib/response-queue";
-import { SurveyState } from "@/lib/survey-state";
-import { cn, getDefaultLanguageCode } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type JSX, useCallback } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -26,6 +11,21 @@ import type {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { ApiClient } from "../../lib/api-client";
+import { evaluateLogic, performActions } from "../../lib/logic";
+import { parseRecallInformation } from "../../lib/recall";
+import { ResponseQueue } from "../../lib/response-queue";
+import { SurveyState } from "../../lib/survey-state";
+import { cn, getDefaultLanguageCode } from "../../lib/utils";
+import { AutoCloseWrapper } from "../wrappers/auto-close-wrapper";
+import { StackedCardsContainer } from "../wrappers/stacked-cards-container";
+import { EndingCard } from "./ending-card";
+import { FormbricksBranding } from "./formbricks-branding";
+import { ProgressBar } from "./progress-bar";
+import { QuestionConditional } from "./question-conditional";
+import { ResponseErrorComponent } from "./response-error-component";
+import { SurveyCloseButton } from "./survey-close-button";
+import { WelcomeCard } from "./welcome-card";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;

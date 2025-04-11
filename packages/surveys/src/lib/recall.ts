@@ -1,7 +1,7 @@
-import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
-import { getLocalizedValue } from "@/lib/i18n";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { formatDateWithOrdinal, isValidDateString } from "./date-time";
+import { getLocalizedValue } from "./i18n";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 const extractId = (text: string): string | null => {

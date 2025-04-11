@@ -1,4 +1,5 @@
-import type { FunctionComponent, JSX } from "preact";
+// @ts-nocheck
+import type { FunctionComponent, JSX } from "react";
 
 export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (

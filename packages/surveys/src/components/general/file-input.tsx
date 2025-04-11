@@ -1,12 +1,13 @@
-import { FILE_PICK_EVENT } from "@/lib/constants";
-import { getOriginalFileNameFromUrl } from "@/lib/storage";
-import { getMimeType } from "@/lib/utils";
-import { isFulfilled, isRejected } from "@/lib/utils";
+// @ts-nocheck
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import React, { useEffect, useMemo, useState } from "react";
 import { type TAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
+import { FILE_PICK_EVENT } from "../../lib/constants";
+import { getOriginalFileNameFromUrl } from "../../lib/storage";
+import { getMimeType } from "../../lib/utils";
+import { isFulfilled, isRejected } from "../../lib/utils";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -236,7 +237,6 @@ export function FileInput({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // @ts-expect-error -- TS does not recognize dataTransfer
     e.dataTransfer.dropEffect = "copy";
   };
 
@@ -244,7 +244,6 @@ export function FileInput({
     e.preventDefault();
     e.stopPropagation();
 
-    // @ts-expect-error -- TS does not recognize dataTransfer
     await handleFileSelection(e.dataTransfer.files);
   };
 

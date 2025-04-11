@@ -1,5 +1,10 @@
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 import { useState } from "react";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  convertToEmbedUrl,
+} from "../../lib/video-upload";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string => {
@@ -53,7 +58,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
                 setIsLoading(false);
               }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"
+              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
         </div>
