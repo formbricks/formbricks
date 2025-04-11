@@ -41,13 +41,10 @@ export const ShareSurveyLink = ({
         isEncrypted: survey.singleUse.isEncrypted,
       });
 
-      console.log("singleUseIdResponse", singleUseIdResponse);
-
       if (singleUseIdResponse?.data) {
         queryParams.push(`suId=${singleUseIdResponse.data}`);
       } else {
         const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
-        console.log(errorMessage);
         toast.error(errorMessage);
       }
     }
