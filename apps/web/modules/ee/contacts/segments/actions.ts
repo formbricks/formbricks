@@ -12,6 +12,7 @@ import {
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
   createSegment,
@@ -120,6 +121,8 @@ export const updateSegmentAction = authenticatedActionClient
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
         throw new Error(errMsg);
       }
+
+      await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
     }
 
     return await updateSegment(parsedInput.segmentId, parsedInput.data);

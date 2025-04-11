@@ -18,11 +18,11 @@ const delay = (ms: number): Promise<void> => {
 };
 
 export class ResponseQueue {
-  private queue: TResponseUpdate[] = [];
-  private config: QueueConfig;
+  readonly queue: TResponseUpdate[] = [];
+  readonly config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
-  private api: ApiClient;
+  readonly api: ApiClient;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;

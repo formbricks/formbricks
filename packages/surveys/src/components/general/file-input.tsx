@@ -1,7 +1,6 @@
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
-import { getMimeType } from "@/lib/utils";
-import { isFulfilled, isRejected } from "@/lib/utils";
+import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
@@ -31,7 +30,7 @@ export function FileInput({
   maxSizeInMB,
   allowMultipleFiles,
   htmlFor = "",
-}: FileInputProps) {
+}: Readonly<FileInputProps>) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
@@ -341,17 +340,11 @@ export function FileInput({
 
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
-            <div
+            <button
+              type="button"
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              role="button"
               aria-label="Upload files by clicking or dragging them here"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  document.getElementById(uniqueHtmlFor)?.click();
-                }
-              }}>
+              onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -389,7 +382,7 @@ export function FileInput({
                 data-accept-multiple={allowMultipleFiles}
                 data-accept-extensions={mimeTypeForAllowedFileExtensions}
               />
-            </div>
+            </button>
           ) : null}
         </label>
       </div>

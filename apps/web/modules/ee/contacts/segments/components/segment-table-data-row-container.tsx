@@ -28,6 +28,8 @@ export const SegmentTableDataRowContainer = async ({
     ? surveys.filter((survey) => ["draft", "paused"].includes(survey.status)).map((survey) => survey.name)
     : [];
 
+  const filteredSegments = segments.filter((segment) => segment.id !== currentSegment.id);
+
   return (
     <SegmentTableDataRow
       currentSegment={{
@@ -35,7 +37,7 @@ export const SegmentTableDataRowContainer = async ({
         activeSurveys,
         inactiveSurveys,
       }}
-      segments={segments}
+      segments={filteredSegments}
       contactAttributeKeys={contactAttributeKeys}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}

@@ -1,9 +1,9 @@
-import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockAttributes, mockUserId1, mockUserId2 } from "@/lib/user/tests/__mocks__/update-queue.mock";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { sendUpdates } from "@/lib/user/update";
 import { UpdateQueue } from "@/lib/user/update-queue";
+import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("@/lib/common/config", () => ({

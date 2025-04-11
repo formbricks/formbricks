@@ -142,6 +142,8 @@ class FormbricksViewModel : ViewModel() {
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
         jsonObject.addProperty("contactId", UserManager.contactId)
         hiddenFields?.let { jsonObject.add("hiddenFieldsRecord", Gson().toJsonTree(it)) }
+        jsonObject.addProperty("isWebEnvironment", false)
+
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false
         if (hasCustomStyling && enabled) {

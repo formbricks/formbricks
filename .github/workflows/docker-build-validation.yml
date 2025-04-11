@@ -1,0 +1,167 @@
+name: Docker Build Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  validate-docker-build:
+    name: Validate Docker Build
+    runs-on: ubuntu-latest
+
+    # Add PostgreSQL service container
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: formbricks
+        ports:
+          - 5432:5432
+        # Health check to ensure PostgreSQL is ready before using it
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: false
+          load: true
+          tags: formbricks-test:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+
+      - name: Verify PostgreSQL Connection
+        run: |
+          echo "Verifying PostgreSQL connection..."
+          # Install PostgreSQL client to test connection
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+
+          # Test connection using psql
+          PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL"
+
+          # Show network configuration
+          echo "Network configuration:"
+          ip addr show
+          netstat -tulpn | grep 5432 || echo "No process listening on port 5432"
+
+      - name: Test Docker Image with Health Check
+        shell: bash
+        run: |
+          echo "🧪 Testing if the Docker image starts correctly..."
+
+          # Add extra docker run args to support host.docker.internal on Linux
+          DOCKER_RUN_ARGS="--add-host=host.docker.internal:host-gateway"
+
+          # Start the container with host.docker.internal pointing to the host
+          docker run --name formbricks-test \
+            $DOCKER_RUN_ARGS \
+            -p 3000:3000 \
+            -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
+            -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
+            -d formbricks-test:${{ github.sha }}
+
+          # Give it more time to start up
+          echo "Waiting 45 seconds for application to start..."
+          sleep 45
+
+          # Check if the container is running
+          if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test)" != "true" ]; then
+            echo "❌ Container failed to start properly!"
+            docker logs formbricks-test
+            exit 1
+          else
+            echo "✅ Container started successfully!"
+          fi
+
+          # Try connecting to PostgreSQL from inside the container
+          echo "Testing PostgreSQL connection from inside container..."
+          docker exec formbricks-test sh -c 'apt-get update && apt-get install -y postgresql-client && PGPASSWORD=test psql -h host.docker.internal -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL from container"'
+
+          # Try to access the health endpoint
+          echo "🏥 Testing /health endpoint..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          HEALTH_CHECK_SUCCESS=false
+
+          set +e  # Disable exit on error to allow for retries
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Attempt $RETRY_COUNT of $MAX_RETRIES..."
+            
+            # Show container logs before each attempt to help debugging
+            if [ $RETRY_COUNT -gt 1 ]; then
+              echo "📋 Current container logs:"
+              docker logs --tail 20 formbricks-test
+            fi
+            
+            # Get detailed curl output for debugging
+            HTTP_OUTPUT=$(curl -v -s -m 30 http://localhost:3000/health 2>&1)
+            CURL_EXIT_CODE=$?
+            
+            echo "Curl exit code: $CURL_EXIT_CODE"
+            echo "Curl output: $HTTP_OUTPUT"
+            
+            if [ $CURL_EXIT_CODE -eq 0 ]; then
+              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+")
+              echo "Status code detected: $STATUS_CODE"
+              
+              if [ "$STATUS_CODE" = "200" ]; then
+                echo "✅ Health check successful!"
+                HEALTH_CHECK_SUCCESS=true
+                break
+              else
+                echo "❌ Health check returned non-200 status code: $STATUS_CODE"
+              fi
+            else
+              echo "❌ Curl command failed with exit code: $CURL_EXIT_CODE"
+            fi
+            
+            echo "Waiting 15 seconds before next attempt..."
+            sleep 15
+          done
+
+          # Show full container logs for debugging
+          echo "📋 Full container logs:"
+          docker logs formbricks-test
+
+          # Clean up the container
+          echo "🧹 Cleaning up..."
+          docker rm -f formbricks-test
+
+          # Exit with failure if health check did not succeed
+          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
+            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+          echo "✨ Docker validation complete - all checks passed!"

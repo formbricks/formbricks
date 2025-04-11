@@ -15,7 +15,6 @@ const config = (): UserConfig => {
     build: {
       emptyOutDir: false,
       minify: "terser",
-      sourcemap: true,
       rollupOptions: {
         external: [
           "react",
@@ -32,7 +31,7 @@ const config = (): UserConfig => {
         fileName: "index",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/api", "@formbricks/types"] })],
+    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/types"] })],
     test: {
       setupFiles: ["./vitest.setup.ts"],
       coverage: {

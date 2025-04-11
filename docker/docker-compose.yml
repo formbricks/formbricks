@@ -78,6 +78,10 @@ x-environment: &environment
     # Set the below to your Survey Domain(default is WEBAPP_URL)
     # SURVEY_URL:
 
+    # Configure Formbricks usage within Formbricks.
+    #FORMBRICKS_API_HOST:
+    #FORMBRICKS_ENVIRONMENT_ID:
+
     ################################################### OPTIONAL (STORAGE) ###################################################
 
     # Set the below to set a custom Upload Directory

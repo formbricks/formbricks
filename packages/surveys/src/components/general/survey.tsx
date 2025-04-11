@@ -70,6 +70,7 @@ export function Survey({
   action,
   singleUseId,
   singleUseResponseId,
+  isWebEnvironment = true,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -454,7 +455,7 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            url: window.location.href,
+            ...(isWebEnvironment && { url: window.location.href }),
             action,
           },
           variables: responseUpdate.variables,
@@ -473,20 +474,21 @@ export function Survey({
       isPreviewMode,
       surveyState,
       responseQueue,
+      onResponse,
+      onResponseCreated,
       contactId,
       userId,
       survey,
+      isWebEnvironment,
       action,
       hiddenFieldsRecord,
-      onResponseCreated,
-      onResponse,
     ]
   );
 
   useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
-      window.parent.postMessage("formbricksSurveyCompleted", "*");
+      window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
       onFinished?.();
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
@@ -610,6 +612,7 @@ export function Survey({
               responseData={responseData}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
+              isPreviewMode={isPreviewMode}
             />
           );
         }

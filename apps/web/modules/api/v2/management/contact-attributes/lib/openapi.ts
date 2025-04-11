@@ -7,6 +7,7 @@ import {
   ZContactAttributeInput,
   ZGetContactAttributesFilter,
 } from "@/modules/api/v2/management/contact-attributes/types/contact-attributes";
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZContactAttribute } from "@formbricks/types/contact-attribute";
@@ -54,10 +55,12 @@ export const createContactAttributeEndpoint: ZodOpenApiOperationObject = {
 
 export const contactAttributePaths: ZodOpenApiPathsObject = {
   "/contact-attributes": {
+    servers: managementServer,
     get: getContactAttributesEndpoint,
     post: createContactAttributeEndpoint,
   },
   "/contact-attributes/{id}": {
+    servers: managementServer,
     get: getContactAttributeEndpoint,
     put: updateContactAttributeEndpoint,
     delete: deleteContactAttributeEndpoint,

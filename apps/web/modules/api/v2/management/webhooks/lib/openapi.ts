@@ -1,3 +1,4 @@
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteWebhookEndpoint,
   getWebhookEndpoint,
@@ -56,10 +57,12 @@ export const createWebhookEndpoint: ZodOpenApiOperationObject = {
 
 export const webhookPaths: ZodOpenApiPathsObject = {
   "/webhooks": {
+    servers: managementServer,
     get: getWebhooksEndpoint,
     post: createWebhookEndpoint,
   },
   "/webhooks/{id}": {
+    servers: managementServer,
     get: getWebhookEndpoint,
     put: updateWebhookEndpoint,
     delete: deleteWebhookEndpoint,

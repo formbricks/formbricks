@@ -13,8 +13,7 @@ interface TwoFactorProps {
       totpCode?: string | undefined;
       backupCode?: string | undefined;
     },
-    any,
-    undefined
+    any
   >;
 }
 

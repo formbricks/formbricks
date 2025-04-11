@@ -5,20 +5,14 @@ import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getContact } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/contacts";
 import { getResponse } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/response";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/surveys";
+import {
+  TContactLinkParams,
+  ZContactLinkParams,
+} from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 
-const ZContactLinkParams = z.object({
-  surveyId: ZId,
-  contactId: ZId,
-});
-
-export const GET = async (
-  request: Request,
-  props: { params: Promise<{ surveyId: string; contactId: string }> }
-) =>
+export const GET = async (request: Request, props: { params: Promise<TContactLinkParams> }) =>
   authenticatedApiClient({
     request,
     externalParams: props.params,

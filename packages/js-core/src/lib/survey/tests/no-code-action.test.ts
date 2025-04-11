@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method -- mock functions are unbound */
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { handleUrlFilters } from "@/lib/common/utils";
@@ -16,6 +15,7 @@ import {
   removeScrollDepthListener,
 } from "@/lib/survey/no-code-action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {

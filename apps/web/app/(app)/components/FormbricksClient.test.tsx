@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import formbricks from "@formbricks/js";
 import { FormbricksClient } from "./FormbricksClient";
 
@@ -7,14 +7,6 @@ import { FormbricksClient } from "./FormbricksClient";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/test-path",
   useSearchParams: () => new URLSearchParams("foo=bar"),
-}));
-
-// Mock the environment variables.
-vi.mock("@formbricks/lib/env", () => ({
-  env: {
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: "env-test",
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: "https://api.test.com",
-  },
 }));
 
 // Mock the flag that enables Formbricks.
@@ -34,17 +26,21 @@ vi.mock("@formbricks/js", () => ({
 }));
 
 describe("FormbricksClient", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("calls setup, setUserId, setEmail and registerRouteChange on mount when enabled", () => {
     const mockSetup = vi.spyOn(formbricks, "setup");
     const mockSetUserId = vi.spyOn(formbricks, "setUserId");
     const mockSetEmail = vi.spyOn(formbricks, "setEmail");
     const mockRegisterRouteChange = vi.spyOn(formbricks, "registerRouteChange");
 
-    render(<FormbricksClient userId="user-123" email="test@example.com" />);
+    render(
+      <FormbricksClient
+        userId="user-123"
+        email="test@example.com"
+        formbricksEnvironmentId="env-test"
+        formbricksApiHost="https://api.test.com"
+        formbricksEnabled={true}
+      />
+    );
 
     // Expect the first effect to call setup and assign the provided user details.
     expect(mockSetup).toHaveBeenCalledWith({
@@ -64,7 +60,15 @@ describe("FormbricksClient", () => {
     const mockSetEmail = vi.spyOn(formbricks, "setEmail");
     const mockRegisterRouteChange = vi.spyOn(formbricks, "registerRouteChange");
 
-    render(<FormbricksClient userId="" email="test@example.com" />);
+    render(
+      <FormbricksClient
+        userId=""
+        email="test@example.com"
+        formbricksEnvironmentId="env-test"
+        formbricksApiHost="https://api.test.com"
+        formbricksEnabled={true}
+      />
+    );
 
     // Since userId is falsy, the first effect should not call setup or assign user details.
     expect(mockSetup).not.toHaveBeenCalled();

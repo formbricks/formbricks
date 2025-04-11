@@ -1,3 +1,4 @@
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
@@ -54,6 +55,7 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
 
 export const bulkContactPaths: ZodOpenApiPathsObject = {
   "/contacts/bulk": {
+    servers: managementServer,
     put: bulkContactEndpoint,
   },
 };

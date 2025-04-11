@@ -14,8 +14,7 @@ interface TwoFactorBackupProps {
       totpCode?: string | undefined;
       backupCode?: string | undefined;
     },
-    any,
-    undefined
+    any
   >;
 }
 

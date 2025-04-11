@@ -1,32 +1,44 @@
 "use client";
 
-import { formbricksEnabled } from "@/app/lib/formbricks";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import formbricks from "@formbricks/js";
-import { env } from "@formbricks/lib/env";
 
-export const FormbricksClient = ({ userId, email }: { userId: string; email: string }) => {
+interface FormbricksClientProps {
+  userId: string;
+  email: string;
+  formbricksEnvironmentId?: string;
+  formbricksApiHost?: string;
+  formbricksEnabled?: boolean;
+}
+
+export const FormbricksClient = ({
+  userId,
+  email,
+  formbricksEnvironmentId,
+  formbricksApiHost,
+  formbricksEnabled,
+}: FormbricksClientProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     if (formbricksEnabled && userId) {
       formbricks.setup({
-        environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
-        appUrl: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
+        environmentId: formbricksEnvironmentId ?? "",
+        appUrl: formbricksApiHost ?? "",
       });
 
       formbricks.setUserId(userId);
       formbricks.setEmail(email);
     }
-  }, [userId, email]);
+  }, [userId, email, formbricksEnvironmentId, formbricksApiHost, formbricksEnabled]);
 
   useEffect(() => {
     if (formbricksEnabled) {
       formbricks.registerRouteChange();
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, formbricksEnabled]);
 
   return null;
 };

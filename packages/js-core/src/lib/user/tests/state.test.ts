@@ -1,6 +1,6 @@
-import { type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "@/lib/user/state";
+import { type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockUserId = "user_123";
 
