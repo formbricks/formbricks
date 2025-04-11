@@ -109,7 +109,7 @@ describe("ViewPermissionModal", () => {
   it("renders the modal with correct title", () => {
     render(<ViewPermissionModal {...defaultProps} />);
     // Check the localized text for the modal's title
-    expect(screen.getByText("environments.project.api_keys.api_key")).toBeInTheDocument();
+    expect(screen.getByText(mockApiKey.label)).toBeInTheDocument();
   });
 
   it("renders all permissions for the API key", () => {
