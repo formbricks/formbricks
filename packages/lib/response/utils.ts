@@ -472,7 +472,13 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
   const questions = survey.questions.map((question, idx) => {
     const headline = getLocalizedValue(question.headline, "default") ?? question.id;
-    return `${idx + 1}. ${headline}`;
+    if (question.type === "matrix") {
+      return question.rows.map((row) => {
+        return `${idx + 1}. ${headline} - ${getLocalizedValue(row, "default")}`;
+      });
+    } else {
+      return [`${idx + 1}. ${headline}`];
+    }
   });
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes =
@@ -487,7 +493,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
 export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponse[],
-  questions: string[],
+  questionsHeadlines: string[][],
   userAttributes: string[],
   hiddenFields: string[]
 ): Record<string, string | number>[] => {
@@ -519,10 +525,26 @@ export const getResponsesJson = (
     });
 
     // survey response data
-    questions.forEach((question, i) => {
-      const questionId = survey?.questions[i].id || "";
-      const answer = response.data[questionId];
-      jsonData[idx][question] = processResponseData(answer);
+    questionsHeadlines.forEach((questionHeadline) => {
+      const questionIndex = parseInt(questionHeadline[0]) - 1;
+      const question = survey?.questions[questionIndex];
+      const answer = response.data[question.id];
+
+      if (question.type === "matrix") {
+        // For matrix questions, we need to handle each row separately
+        questionHeadline.forEach((headline, index) => {
+          if (answer) {
+            const row = question.rows[index];
+            if (row && row.default && answer[row.default] !== undefined) {
+              jsonData[idx][headline] = answer[row.default];
+            } else {
+              jsonData[idx][headline] = "";
+            }
+          }
+        });
+      } else {
+        jsonData[idx][questionHeadline[0]] = processResponseData(answer);
+      }
     });
 
     survey.variables?.forEach((variable) => {
@@ -550,6 +572,7 @@ export const getResponsesJson = (
       jsonData[idx]["Verified Email"] = processResponseData(verifiedEmail);
     }
   });
+  console.log(jsonData);
 
   return jsonData;
 };
