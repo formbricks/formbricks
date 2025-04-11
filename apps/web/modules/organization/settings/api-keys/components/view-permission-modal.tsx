@@ -53,6 +53,11 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
                 <Label>{t("environments.project.api_keys.permissions")}</Label>
                 <div className="space-y-2">
                   {/* Permission rows */}
+                  {apiKey.apiKeyEnvironments?.length === 0 && (
+                    <div className="text-center text-sm">
+                      {t("environments.project.api_keys.no_env_permissions_found")}
+                    </div>
+                  )}
                   {apiKey.apiKeyEnvironments?.map((permission) => {
                     return (
                       <div key={permission.environmentId} className="flex items-center gap-2">

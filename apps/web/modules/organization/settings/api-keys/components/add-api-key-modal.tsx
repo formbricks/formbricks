@@ -89,9 +89,7 @@ export const AddApiKeyModal = ({
   };
 
   // Initialize with one permission by default
-  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>(() =>
-    getInitialPermissions()
-  );
+  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -176,7 +174,7 @@ export const AddApiKeyModal = ({
     });
 
     reset();
-    setSelectedPermissions(getInitialPermissions());
+    setSelectedPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -191,11 +189,16 @@ export const AddApiKeyModal = ({
     if (!apiKeyLabel?.trim()) {
       return true;
     }
-    // Check if there are any valid permissions
-    if (Object.keys(selectedPermissions).length === 0) {
-      return true;
-    }
-    return false;
+
+    // Check if at least one project permission is set or one organization access toggle is ON
+    const hasProjectAccess = Object.keys(selectedPermissions).length > 0;
+
+    const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
+      Object.values(accessGroup).some((value) => value === true)
+    );
+
+    // Disable submit if no access rights are granted
+    return !(hasProjectAccess || hasOrganizationAccess);
   };
 
   const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
@@ -335,15 +338,8 @@ export const AddApiKeyModal = ({
                         <button
                           type="button"
                           className="p-2"
-                          onClick={() => removePermission(permissionIndex)}
-                          disabled={Object.keys(selectedPermissions).length <= 1}>
-                          <Trash2Icon
-                            className={`h-5 w-5 ${
-                              Object.keys(selectedPermissions).length <= 1
-                                ? "text-slate-300"
-                                : "text-slate-500 hover:text-red-500"
-                            }`}
-                          />
+                          onClick={() => removePermission(permissionIndex)}>
+                          <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                         </button>
                       </div>
                     );
