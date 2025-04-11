@@ -6,28 +6,13 @@ export const getContactAttributeKeysQuery = (
   environmentIds: string[],
   params?: TGetContactAttributeKeysFilter
 ): Prisma.ContactAttributeKeyFindManyArgs => {
-  let query = {} satisfies Prisma.ContactAttributeKeyFindManyArgs;
-
-  if (params?.environmentId) {
-    if (!environmentIds.includes(params.environmentId)) {
-      throw new Error("You are not allowed to access this environment");
-    }
-    query = {
-      ...query,
-      where: {
-        environmentId: params.environmentId,
+  let query: Prisma.ContactAttributeKeyFindManyArgs = {
+    where: {
+      environmentId: {
+        in: environmentIds,
       },
-    };
-  } else {
-    query = {
-      ...query,
-      where: {
-        environmentId: {
-          in: environmentIds,
-        },
-      },
-    };
-  }
+    },
+  };
 
   if (!params) return query;
 

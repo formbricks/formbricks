@@ -115,13 +115,13 @@ export const deleteContactAttributeKey = async (
       ) {
         return err({
           type: "not_found",
-          details: [{ field: "ContactAttributeKey", issue: "not found" }],
+          details: [{ field: "contactAttributeKey", issue: "not found" }],
         });
       }
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "ContactAttributeKey", issue: error.message }],
+      details: [{ field: "contactAttributeKey", issue: error.message }],
     });
   }
 };
