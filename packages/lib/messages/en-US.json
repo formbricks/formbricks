@@ -1669,6 +1669,7 @@
       "read_only_user_not_allowed_to_create_survey_warning": "As a Read-Only user you are not allowed to create engagements. Please ask a user with write access to create a engagement or a manager to upgrade your role.",
       "relevance": "Relevance",
       "responses": {
+        "address": "Address",
         "address_line_1": "Address Line 1",
         "address_line_2": "Address Line 2",
         "an_error_occurred_creating_a_new_note": "An error occurred creating a new note",
@@ -1702,6 +1703,7 @@
         "token_name": "Token Name",
         "token_symbol": "Token Symbol",
         "this_response_is_in_progress": "This response is in progress.",
+        "transaction_details": "Transaction Details",
         "zip_post_code": "ZIP / Post code"
       },
       "results_unpublished_successfully": "Results unpublished successfully.",
@@ -1847,6 +1849,7 @@
     },
     "wallet": {
       "_": "Wallet",
+      "login": "Login",
       "address": {
         "copy": {
           "button": "Copy Address",

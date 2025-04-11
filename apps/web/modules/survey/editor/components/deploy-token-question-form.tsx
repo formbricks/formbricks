@@ -9,7 +9,7 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyDeployTokenQuestion } from "@formbricks/types/surveys/types";
-import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
+import { QuestionTable } from "@/modules/ui/components/question-table";
 
 interface DeployTokenQuestionFormProps {
   localSurvey: TSurvey;
@@ -112,7 +112,7 @@ export const DeployTokenQuestionForm = ({
             {t("environments.surveys.edit.add_description")}
           </Button>
         )}
-        <QuestionToggleTable
+        <QuestionTable
           type="token"
           fields={fields}
           localSurvey={localSurvey}

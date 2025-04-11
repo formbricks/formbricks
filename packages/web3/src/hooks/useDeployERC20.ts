@@ -10,7 +10,6 @@ export const useDeployERC20 = () => {
   const deploy = useCallback(
     async (tokenName: string, tokenSymbol: string, initialSupply: string) => {
       if (!signer) return;
-
       const address = await signer.getAddress();
       const factory = await getFactory(provider);
       const input = await factory.deployERC20.populateTransaction(
@@ -21,9 +20,10 @@ export const useDeployERC20 = () => {
       );
       input.from = address;
       input.value = input.value || BigInt(0);
-
+      
       const resp = await sendTransaction(provider, input, signer.signTypedData);
       console.log(resp);
+      return resp;
     },
     [signer, provider]
   );

@@ -16,7 +16,7 @@ export function IconButton({className="", icon, label, loading=false, onClick}:I
   const Icon = icon;
 
   return (
-    <Button aria-label={label} onClick={onClick} loading={loading} variant="ghost" className={cn("text-white hover:text-white hover:bg-white/10 h-6 w-6", className)}>
+    <Button aria-label={label} onClick={onClick} loading={loading} variant="ghost" className={cn("text-gray-400 hover:text-gray-600 hover:bg-white/10 h-6 w-6", className)}>
        <Icon className="h-4 w-4" strokeWidth={2} />
     </Button>
   );

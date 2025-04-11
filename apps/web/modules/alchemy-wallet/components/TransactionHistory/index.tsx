@@ -2,7 +2,11 @@
 
 // import React, { useState } from "react";
 // import { useTranslate } from "@tolgee/react";
+<<<<<<< Updated upstream
 // import { useSmartAccountClient } from "@account-kit/react";
+=======
+import { cn } from "@formbricks/lib/cn";
+>>>>>>> Stashed changes
 import TransactionItem from "@/modules/alchemy-wallet/components/TransactionHistory/components/transaction-item";
 import { useUser } from "@account-kit/react";
 import { TokenTransfer } from "@wonderchain/sdk/dist/blockscout-client";
@@ -15,6 +19,7 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
   const address = user?.address || "";
   // const { t } = useTranslate();
   // const [showBalance, setShowBalance] = useState(true);
+<<<<<<< Updated upstream
   // const { address } = useSmartAccountClient({});
   const blockscoutApi = useBlockscoutApi();
   const [transfers, setTransfers] = useState<TokenTransfer[] | null>(null);
@@ -26,6 +31,8 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
       setTransfers(data.data.items);
     })();
   }, [blockscoutApi, address]);
+=======
+>>>>>>> Stashed changes
 
   if (!transfers?.length) {
     return null;

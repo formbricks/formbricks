@@ -707,6 +707,8 @@ export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
   tokenName: ZToggleInputConfig,
   tokenSymbol: ZToggleInputConfig,
   initialSupply: ZToggleInputConfig,
+  address: ZToggleInputConfig,
+  transactionDetails: ZToggleInputConfig
 });
 
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
