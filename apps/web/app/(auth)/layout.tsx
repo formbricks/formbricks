@@ -6,13 +6,16 @@ import { AlchemyWalletProvider, alchemyConfig } from "@formbricks/web3";
 
 const AppLayout = async ({ children }) => {
   const headers = await nextHeaders();
-  const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
+  const apiKey = process.env.ALCHEMY_API_KEY || "";
+  const alchemyInitialState = cookieToInitialState(alchemyConfig(apiKey), headers.get("cookie") ?? undefined);
 
   return (
     <>
       <NoMobileOverlay />
       <IntercomClientWrapper />
-      <AlchemyWalletProvider initialState={alchemyInitialState}>{children}</AlchemyWalletProvider>
+      <AlchemyWalletProvider initialState={alchemyInitialState} apiKey={apiKey}>
+        {children}
+      </AlchemyWalletProvider>
     </>
   );
 };

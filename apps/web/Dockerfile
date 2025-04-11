@@ -32,11 +32,6 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'else' >> /tmp/read-secrets.sh && \
     echo '  echo "DATABASE_URL secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
     echo 'fi' >> /tmp/read-secrets.sh && \
-    echo 'if [ -f "/run/secrets/next_public_alchemy_api_key" ]; then' >> /tmp/read-secrets.sh && \
-    echo '  export NEXT_PUBLIC_ALCHEMY_API_KEY=$(cat /run/secrets/next_public_alchemy_api_key)' >> /tmp/read-secrets.sh && \
-    echo 'else' >> /tmp/read-secrets.sh && \
-    echo '  echo "NEXT_PUBLIC_ALCHEMY_API_KEY secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
-    echo 'fi' >> /tmp/read-secrets.sh && \
     echo 'if [ -f "/run/secrets/encryption_key" ]; then' >> /tmp/read-secrets.sh && \
     echo '  export ENCRYPTION_KEY=$(cat /run/secrets/encryption_key)' >> /tmp/read-secrets.sh && \
     echo 'else' >> /tmp/read-secrets.sh && \
@@ -72,7 +67,6 @@ RUN pnpm install
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
-    --mount=type=secret,id=next_public_alchemy_api_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version

@@ -1,12 +1,12 @@
 "use client";
 
 import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
-import { formatAddress } from "@/modules/alchemy-wallet/lib/utils/format";
 import { useUser } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import React from "react";
 import toast from "react-hot-toast";
+import { formatAddress } from "@formbricks/web3";
 
 export function WalletAddress(): React.JSX.Element {
   const user = useUser();

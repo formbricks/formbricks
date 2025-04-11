@@ -3,11 +3,7 @@ import { verifyPassword } from "@/modules/auth/lib/utils";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
-import {
-  EMAIL_VERIFICATION_DISABLED,
-  ENCRYPTION_KEY,
-  NEXT_PUBLIC_ALCHEMY_API_KEY,
-} from "@formbricks/lib/constants";
+import { ALCHEMY_API_KEY, EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -60,7 +56,7 @@ export const authOptions: NextAuthOptions = {
             headers: {
               accept: "application/json",
               "content-type": "application/json",
-              Authorization: `Bearer ${NEXT_PUBLIC_ALCHEMY_API_KEY}`,
+              Authorization: `Bearer ${ALCHEMY_API_KEY}`,
             },
             body: JSON.stringify({
               stampedRequest: {

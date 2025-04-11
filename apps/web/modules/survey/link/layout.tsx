@@ -13,11 +13,12 @@ export const viewport: Viewport = {
 
 export const LinkSurveyLayout = async ({ children }) => {
   const headers = await nextHeaders();
-  const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
+  const apiKey = process.env.ALCHEMY_API_KEY || "";
+  const alchemyInitialState = cookieToInitialState(alchemyConfig(apiKey), headers.get("cookie") ?? undefined);
 
   return (
     <>
-      <AlchemyWalletProvider initialState={alchemyInitialState}>
+      <AlchemyWalletProvider initialState={alchemyInitialState} apiKey={apiKey}>
         <div className="h-dvh">{children}</div>;
       </AlchemyWalletProvider>
     </>

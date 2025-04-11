@@ -13,10 +13,11 @@ import { getUser } from "@formbricks/lib/user/service";
 import { AlchemyWalletProvider, alchemyConfig } from "@formbricks/web3";
 
 const AppLayout = async ({ children }) => {
+  const apiKey = process.env.ALCHEMY_API_KEY || "";
   const session = await getServerSession(authOptions);
   const user = session?.user?.id ? await getUser(session.user.id) : null;
   const headers = await nextHeaders();
-  const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
+  const alchemyInitialState = cookieToInitialState(alchemyConfig(apiKey), headers.get("cookie") ?? undefined);
 
   return (
     <>
@@ -33,7 +34,9 @@ const AppLayout = async ({ children }) => {
           {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
           <IntercomClientWrapper user={user} />
           <ToasterClient />
-          <AlchemyWalletProvider initialState={alchemyInitialState}>{children}</AlchemyWalletProvider>
+          <AlchemyWalletProvider initialState={alchemyInitialState} apiKey={apiKey}>
+            {children}
+          </AlchemyWalletProvider>
         </>
       </PHProvider>
     </>

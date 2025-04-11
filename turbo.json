@@ -211,7 +211,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "NEXT_PUBLIC_ALCHEMY_API_KEY"
+        "ALCHEMY_API_KEY"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

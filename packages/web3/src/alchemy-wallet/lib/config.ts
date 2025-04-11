@@ -25,23 +25,24 @@ const uiConfig: AlchemyAccountsUIConfig = {
 };
 
 // Alchemy config
-export const alchemyConfig = createConfig(
-  {
-    transport: alchemy({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || "" }),
-    chain: sepolia,
-    ssr: true,
-    enablePopupOauth: true,
-    storage: cookieStorage,
-    sessionConfig: {
-      expirationTimeMs: 24 * 60 * 60 * 1000,
-    },
+export const alchemyConfig = (apiKey: string) =>
+  createConfig(
+    {
+      transport: alchemy({ apiKey }),
+      chain: sepolia,
+      ssr: true,
+      enablePopupOauth: true,
+      storage: cookieStorage,
+      sessionConfig: {
+        expirationTimeMs: 24 * 60 * 60 * 1000,
+      },
 
-    // policyId: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || ""
-    // sessionConfig: {
-    //     expirationTimeMs: 1000 * 60 * 60, // 60 minutes (default is 15 min)
-    // },
-  },
-  uiConfig
-);
+      // policyId: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || ""
+      // sessionConfig: {
+      //     expirationTimeMs: 1000 * 60 * 60, // 60 minutes (default is 15 min)
+      // },
+    },
+    uiConfig
+  );
 
 export const queryClient = new QueryClient();

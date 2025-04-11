@@ -31,4 +31,3 @@ jobs:
           secrets: |
             "database_url=${{ secrets.DUMMY_DATABASE_URL }}"
             "encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}"
-            "next_public_alchemy_api_key=${{ secrets.NEXT_PUBLIC_ALCHEMY_API_KEY }}"

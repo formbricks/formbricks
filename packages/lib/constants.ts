@@ -265,4 +265,4 @@ export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
-export const NEXT_PUBLIC_ALCHEMY_API_KEY = env.NEXT_PUBLIC_ALCHEMY_API_KEY || "";
+export const ALCHEMY_API_KEY = env.ALCHEMY_API_KEY || "";
