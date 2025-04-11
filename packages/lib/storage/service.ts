@@ -12,6 +12,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
+import type { WithImplicitCoercion } from "node:buffer";
 import path, { join } from "path";
 import { logger } from "@formbricks/logger";
 import { TAccessType } from "@formbricks/types/storage";
