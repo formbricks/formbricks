@@ -40,9 +40,7 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
-              <div className="text-xl font-medium text-slate-700">
-                {t("environments.project.api_keys.api_key")}
-              </div>
+              <div className="text-xl font-medium text-slate-700">{apiKey.label}</div>
             </div>
           </div>
         </div>
