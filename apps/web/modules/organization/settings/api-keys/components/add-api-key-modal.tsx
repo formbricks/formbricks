@@ -174,7 +174,7 @@ export const AddApiKeyModal = ({
     });
 
     reset();
-    setSelectedPermissions(getInitialPermissions());
+    setSelectedPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -189,7 +189,16 @@ export const AddApiKeyModal = ({
     if (!apiKeyLabel?.trim()) {
       return true;
     }
-    return false;
+
+    // Check if at least one project permission is set or one organization access toggle is ON
+    const hasProjectAccess = Object.keys(selectedPermissions).length > 0;
+
+    const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
+      Object.values(accessGroup).some((value) => value === true)
+    );
+
+    // Disable submit if no access rights are granted
+    return !(hasProjectAccess || hasOrganizationAccess);
   };
 
   const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
