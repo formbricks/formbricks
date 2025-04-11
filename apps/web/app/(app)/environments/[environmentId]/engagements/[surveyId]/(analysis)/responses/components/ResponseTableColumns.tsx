@@ -57,11 +57,15 @@ const getContactInfoFieldLabel = (field: string, t: TFnType) => {
 const getDeployTokenFieldLabel = (field: string, t: TFnType) => {
   switch (field) {
     case "tokenName":
-      return t("environments.surveys.responses.first_name");
+      return t("environments.surveys.responses.token_name");
     case "tokenSymbol":
-      return t("environments.surveys.responses.last_name");
+      return t("environments.surveys.responses.token_symbol");
     case "initialSupply":
-      return t("environments.surveys.responses.email");
+      return t("environments.surveys.responses.initial_supply");
+    case "address":
+      return t("environments.surveys.responses.address");
+    case "initialSupply":
+      return t("environments.surveys.responses.transaction_details");
     default:
       break;
   }
@@ -147,7 +151,7 @@ const getQuestionColumnsData = (
       });
     
     case "deployToken":
-      const deployTokenFields = ["tokenName", "tokenSymbol", "initialSupply"];
+      const deployTokenFields = ["tokenName", "tokenSymbol", "initialSupply", "address", "transactionDetails"];
       return deployTokenFields.map((deployTokenField) => {
         return {
           accessorKey: deployTokenField,

@@ -1,6 +1,6 @@
 import { cn } from "@formbricks/lib/cn"
-import { SendIcon } from "lucide-react";
-
+import { ArrowDownLeftIcon } from "lucide-react";
+// , ArrowUpRightIcon, ZapIcon, RefreshCwIcon 
 interface TransactionItemProps {
 
 }
@@ -13,7 +13,7 @@ export function TransactionItem({}:TransactionItemProps) {
             "flex flex-row items-center gap-3 px-2 py-1",
         )}>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-green-600">
-                <SendIcon className="h-4 w-4" strokeWidth={2} />
+                <ArrowDownLeftIcon className="h-4 w-4" strokeWidth={2} />
             </div>
             <div className="flex flex-col gap-1 flex-1">
                 <div className="flex flex-row gap-4 flex-1 justify-between">

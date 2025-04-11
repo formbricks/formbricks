@@ -3,7 +3,6 @@
 // import React, { useState } from "react";
 // import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
-// import { useSmartAccountClient } from "@account-kit/react";
 import TransactionItem from "@/modules/alchemy-wallet/components/TransactionHistory/components/transaction-item";
 
 export function TransactionHistory({className=""}:{
@@ -11,7 +10,6 @@ export function TransactionHistory({className=""}:{
 }): React.JSX.Element {
   // const { t } = useTranslate();
   // const [showBalance, setShowBalance] = useState(true);
-  // const { address } = useSmartAccountClient({});
 
   return (
     <div
