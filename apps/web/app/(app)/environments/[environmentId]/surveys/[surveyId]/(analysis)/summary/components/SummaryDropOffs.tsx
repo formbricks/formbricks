@@ -1,10 +1,10 @@
 "use client";
 
+import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIcon } from "@/modules/survey/lib/questions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { TimerIcon } from "lucide-react";
-import { JSX } from "react";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 
@@ -18,24 +18,6 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const getIcon = (questionType: TSurveyQuestionType) => {
     const Icon = getQuestionIcon(questionType, t);
     return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
-  };
-
-  const formatTextWithSlashes = (text: string): (string | JSX.Element)[] => {
-    const regex = /\/(.*?)\\/g;
-    const parts = text.split(regex);
-
-    return parts.map((part, index) => {
-      // Check if the part was inside slashes
-      if (index % 2 !== 0) {
-        return (
-          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-lg">
-            @{part}
-          </span>
-        );
-      } else {
-        return part;
-      }
-    });
   };
 
   return (
@@ -73,14 +55,16 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                     survey,
                     true,
                     "default"
-                  )["default"]
+                  )["default"],
+                  "@",
+                  ["text-lg"]
                 )}
               </p>
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">
+            <div className="text-center font-semibold whitespace-pre-wrap">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.impressions}</div>
+            <div className="text-center font-semibold whitespace-pre-wrap">{quesDropOff.impressions}</div>
             <div className="pl-6 text-center md:px-6">
               <span className="mr-1.5 font-semibold">{quesDropOff.dropOffCount}</span>
               <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>
