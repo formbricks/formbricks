@@ -15,7 +15,7 @@ export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) 
   const { t } = useTranslate();
   const fieldIds = hiddenFields.fieldIds ?? [];
   return (
-    <div className="mt-6 flex flex-col gap-6">
+    <div data-testid="main-hidden-fields-div" className="mt-6 flex flex-col gap-6">
       {fieldIds.map((field) => {
         if (!responseData[field]) return;
         return (

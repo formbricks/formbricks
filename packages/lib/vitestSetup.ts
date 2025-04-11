@@ -49,13 +49,17 @@ vi.mock("react", async () => {
 
 // mock tolgee useTranslate on components
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => {
-    return {
+vi.mock("@tolgee/react", async () => {
+  const actual = await vi.importActual<typeof import("@tolgee/react")>("@tolgee/react");
+
+  return {
+    ...actual,
+    useTranslate: () => ({
       t: (key: string) => key,
-    };
-  },
-}));
+    }),
+    T: ({ keyName }: { keyName: string }) => keyName, // Simple functional mock
+  };
+});
 
 // mock next/router navigation
 

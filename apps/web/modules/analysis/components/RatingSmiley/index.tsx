@@ -40,16 +40,28 @@ const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean,
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
   const icons = [
-    <TiredFace className={active ? activeColor : inactiveColor} />,
-    <WearyFace className={active ? activeColor : inactiveColor} />,
-    <PerseveringFace className={active ? activeColor : inactiveColor} />,
-    <FrowningFace className={active ? activeColor : inactiveColor} />,
-    <ConfusedFace className={active ? activeColor : inactiveColor} />,
-    <NeutralFace className={active ? activeColor : inactiveColor} />,
-    <SlightlySmilingFace className={active ? activeColor : inactiveColor} />,
-    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
+    <TiredFace className={active ? activeColor : inactiveColor} data-testid="TiredFace" />,
+    <WearyFace className={active ? activeColor : inactiveColor} data-testid="WearyFace" />,
+    <PerseveringFace className={active ? activeColor : inactiveColor} data-testid="PerseveringFace" />,
+    <FrowningFace className={active ? activeColor : inactiveColor} data-testid="FrowningFace" />,
+    <ConfusedFace className={active ? activeColor : inactiveColor} data-testid="ConfusedFace" />,
+    <NeutralFace className={active ? activeColor : inactiveColor} data-testid="NeutralFace" />,
+    <SlightlySmilingFace
+      className={active ? activeColor : inactiveColor}
+      data-testid="SlightlySmilingFace"
+    />,
+    <SmilingFaceWithSmilingEyes
+      className={active ? activeColor : inactiveColor}
+      data-testid="SmilingFaceWithSmilingEyes"
+    />,
+    <GrinningFaceWithSmilingEyes
+      className={active ? activeColor : inactiveColor}
+      data-testid="GrinningFaceWithSmilingEyes"
+    />,
+    <GrinningSquintingFace
+      className={active ? activeColor : inactiveColor}
+      data-testid="GrinningSquintingFace"
+    />,
   ];
 
   return icons[iconIdx];
