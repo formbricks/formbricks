@@ -44,7 +44,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "terser": "5.39.0",
-    "vite": "6.2.5",
+    "vite": "6.2.6",
     "vite-plugin-dts": "4.5.3"
   }
 }
