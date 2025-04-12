@@ -572,7 +572,6 @@ export const getResponsesJson = (
       jsonData[idx]["Verified Email"] = processResponseData(verifiedEmail);
     }
   });
-  console.log(jsonData);
 
   return jsonData;
 };
