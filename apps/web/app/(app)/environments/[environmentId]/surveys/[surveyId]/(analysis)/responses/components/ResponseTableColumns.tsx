@@ -71,7 +71,11 @@ const getQuestionColumnsData = (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
                   <span className="h-4 w-4">{QUESTIONS_ICON_MAP["matrix"]}</span>
-                  <span className="truncate">{getLocalizedValue(matrixRow, "default")}</span>
+                  <span className="truncate">
+                    {getLocalizedValue(question.headline, "default") +
+                      " - " +
+                      getLocalizedValue(matrixRow, "default")}
+                  </span>
                 </div>
               </div>
             );
