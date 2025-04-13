@@ -3,12 +3,15 @@
 // Error components must be Client components
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 
 const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
   const { t } = useTranslate();
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
+  } else {
+    Sentry.captureException(error);
   }
 
   return (

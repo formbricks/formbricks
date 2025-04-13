@@ -787,6 +787,7 @@
         "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Ainda não tem nenhuma chave API",
         "organization_access": "Acesso à Organização",
+        "organization_access_description": "Selecione privilégios de leitura ou escrita para recursos de toda a organização.",
         "permissions": "Permissões",
         "project_access": "Acesso ao Projeto",
         "secret": "Segredo",
