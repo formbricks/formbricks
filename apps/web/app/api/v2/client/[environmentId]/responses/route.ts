@@ -76,7 +76,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     const ipAddress = ip ? ip.split(",")[0] : undefined;
     const ipValidation = ZIP.safeParse(ipAddress);
 
-    if (ipValidation.success) {
+    if (ipValidation.success && !!ipValidation.data) {
       ipValidationData = ipValidation.data;
     } else {
       logger.warn(`Not able to capture IP address for survey: ${responseInputData.surveyId}`);
