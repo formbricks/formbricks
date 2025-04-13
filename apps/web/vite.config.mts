@@ -65,6 +65,10 @@ export default defineConfig({
         "modules/ee/sso/components/**/*.tsx",
         "app/global-error.tsx",
         "app/error.tsx",
+        "modules/account/**/*.tsx",
+        "modules/account/**/*.ts",
+        "modules/analysis/**/*.tsx",
+        "modules/analysis/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
