@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
   onClick: () => void;
-  backButtonLabel: string;
+  backButtonLabel?: string;
   tabIndex?: number;
 }
 
