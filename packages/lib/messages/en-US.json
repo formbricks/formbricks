@@ -1322,6 +1322,8 @@
         "cal_username": "Cal.com username or username/event",
         "calculate": "Calculate",
         "capture_a_new_action_to_trigger_a_survey_on": "Capture a new action to trigger a survey on.",
+        "capture_ip_address_of_respondent": "Capture IP address",
+        "capture_ip_address_of_respondent_description": "Captures and stores IP addresses of respondents as metadata.",
         "capture_new_action": "Capture new action",
         "card_arrangement_for_survey_type_derived": "Card Arrangement for {surveyTypeDerived} Surveys",
         "card_background_color": "Card background color",

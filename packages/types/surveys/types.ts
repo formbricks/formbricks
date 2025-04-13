@@ -869,6 +869,7 @@ export const ZSurvey = z
     isVerifyEmailEnabled: z.boolean(),
     isSingleResponsePerEmailEnabled: z.boolean(),
     isBackButtonHidden: z.boolean(),
+    isCaptureIPAddressEnabled: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),

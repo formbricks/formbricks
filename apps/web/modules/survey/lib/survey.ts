@@ -42,6 +42,7 @@ export const selectSurvey = {
   resultShareKey: true,
   showLanguageSwitch: true,
   isBackButtonHidden: true,
+  isCaptureIPAddressEnabled: true,
   languages: {
     select: {
       default: true,

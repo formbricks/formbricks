@@ -7,11 +7,11 @@ import { UAParser } from "ua-parser-js";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
+import { ZIP, ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseMeta } from "@formbricks/types/responses";
 import { createResponse } from "./lib/response";
-import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
+import { ZResponseInputV2 } from "./types/response";
 
 interface Context {
   params: Promise<{
@@ -64,6 +64,25 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const responseInputData = responseInputValidation.data;
 
+  let ipValidationData: string | undefined = undefined;
+  if (responseInputData.meta?.isCaptureIPAddressEnabled) {
+    const ip =
+      requestHeaders.get("x-forwarded-for") ||
+      requestHeaders.get("x-vercel-forwarded-for") ||
+      requestHeaders.get("CF-Connecting-IP") ||
+      requestHeaders.get("True-Client-IP") ||
+      undefined;
+
+    const ipAddress = ip ? ip.split(",")[0] : undefined;
+    const ipValidation = ZIP.safeParse(ipAddress);
+
+    if (ipValidation.success) {
+      ipValidationData = ipValidation.data;
+    } else {
+      logger.warn(`Not able to capture IP address for survey: ${responseInputData.surveyId}`);
+    }
+  }
+
   if (responseInputData.contactId) {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
@@ -89,7 +108,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   let response: TResponse;
   try {
-    const meta: TResponseInputV2["meta"] = {
+    const meta: TResponseMeta = {
       source: responseInputData?.meta?.source,
       url: responseInputData?.meta?.url,
       userAgent: {
@@ -99,6 +118,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
       },
       country: country,
       action: responseInputData?.meta?.action,
+      ...(responseInputData.meta?.isCaptureIPAddressEnabled &&
+        ipValidationData && { ipAddress: ipValidationData }),
     };
 
     response = await createResponse({
