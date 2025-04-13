@@ -257,5 +257,42 @@ describe("utils", () => {
       // Restore the original method
       logger.withContext = originalWithContext;
     });
+
+    test("log API error details with SENTRY_DSN set", () => {
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      // Set SENTRY_DSN to simulate Sentry being enabled
+      process.env.SENTRY_DSN = "mock-sentry-dsn";
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
+
+      const mockRequest = new Request("http://localhost/api/test");
+      mockRequest.headers.set("x-request-id", "123");
+
+      const error: ApiErrorResponseV2 = {
+        type: "internal_server_error",
+        details: [{ field: "server", issue: "error occurred" }],
+      };
+
+      logApiError(mockRequest, error);
+
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith({
+        correlationId: "123",
+        error,
+      });
+
+      // Verify error was called on the child logger
+      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
+    });
   });
 });

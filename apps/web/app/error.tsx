@@ -6,7 +6,7 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 
-const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
+const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
   const { t } = useTranslate();
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
@@ -27,4 +27,4 @@ const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
   );
 };
 
-export default Error;
+export default ErrorBoundary;
