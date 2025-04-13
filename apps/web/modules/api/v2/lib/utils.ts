@@ -1,5 +1,6 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import * as Sentry from "@sentry/nextjs";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 
@@ -73,7 +74,22 @@ export const logApiRequest = (request: Request, responseStatus: number): void =>
 };
 
 export const logApiError = (request: Request, error: ApiErrorResponseV2): void => {
-  const correlationId = request.headers.get("x-request-id") || "";
+  const correlationId = request.headers.get("x-request-id") ?? "";
+
+  // Send the error to Sentry if the DSN is set and the error type is internal_server_error
+  // This is useful for tracking down issues without overloading Sentry with errors
+  if (process.env.SENTRY_DSN && error.type === "internal_server_error") {
+    const err = new Error(`API V2 error, id: ${correlationId}`);
+
+    Sentry.captureException(err, {
+      extra: {
+        details: error.details,
+        type: error.type,
+        correlationId,
+      },
+    });
+  }
+
   logger
     .withContext({
       correlationId,

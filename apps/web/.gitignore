@@ -51,3 +51,5 @@ uploads/
 
 # SAML Preloaded Connections
 saml-connection/
+# Sentry Config File
+.env.sentry-build-plugin
