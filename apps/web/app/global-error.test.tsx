@@ -11,13 +11,8 @@ describe("GlobalError", () => {
   const dummyError = new Error("Test error");
   const originalEnv = process.env.NODE_ENV;
 
-  beforeEach(() => {
-    cleanup();
-    vi.resetAllMocks();
-  });
   afterEach(() => {
-    (process.env as { [key: string]: string }).NODE_ENV = originalEnv;
-    vi.restoreAllMocks();
+    cleanup();
   });
 
   it("logs error using console.error in development", async () => {

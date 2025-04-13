@@ -1,4 +1,5 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import * as Sentry from "@sentry/nextjs";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { logger } from "@formbricks/logger";
@@ -8,6 +9,10 @@ const mockRequest = new Request("http://localhost");
 
 // Add the request id header
 mockRequest.headers.set("x-request-id", "123");
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
 
 describe("utils", () => {
   describe("handleApiError", () => {
@@ -265,6 +270,9 @@ describe("utils", () => {
         error: errorMock,
       });
 
+      // Mock Sentry's captureException method
+      vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
+
       // Set SENTRY_DSN to simulate Sentry being enabled
       process.env.SENTRY_DSN = "mock-sentry-dsn";
 
@@ -290,6 +298,9 @@ describe("utils", () => {
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Verify Sentry.captureException was called
+      expect(Sentry.captureException).toHaveBeenCalled();
 
       // Restore the original method
       logger.withContext = originalWithContext;
