@@ -55,17 +55,17 @@ export function SurveyContainer({
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
       case "bottomRight":
-        return "sm:fb-bottom-3 sm:fb-right-3";
+        return "fb:sm:bottom-3 fb:sm:right-3";
       case "topRight":
-        return "sm:fb-top-3 sm:fb-right-3 sm:fb-bottom-3";
+        return "fb:sm:top-3 fb:sm:right-3 fb:sm:bottom-3";
       case "topLeft":
-        return "sm:fb-top-3 sm:fb-left-3 sm:fb-bottom-3";
+        return "fb:sm:top-3 fb:sm:left-3 fb:sm:bottom-3";
       case "bottomLeft":
-        return "sm:fb-bottom-3 sm:fb-left-3";
+        return "fb:sm:bottom-3 fb:sm:left-3";
       case "center":
-        return "sm:fb-top-1/2 sm:fb-left-1/2 sm:fb-transform sm:-fb-translate-x-1/2 sm:-fb-translate-y-1/2";
+        return "fb:sm:top-1/2 fb:sm:left-1/2 fb:sm:transform fb:sm:-translate-x-1/2 fb:sm:-translate-y-1/2";
       default:
-        return "sm:fb-bottom-3 sm:fb-right-3";
+        return "fb:sm:bottom-3 fb:sm:right-3";
     }
   };
 
@@ -84,22 +84,22 @@ export function SurveyContainer({
       <div
         aria-live="assertive"
         className={cn(
-          isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
-          isModal && "fb-z-999999 fb-fixed fb-inset-0 fb-flex fb-items-end"
+          isCenter ? "fb:pointer-events-auto" : "fb:pointer-events-none",
+          isModal && "fb:z-999999 fb:fixed fb:inset-0 fb:flex fb:items-end"
         )}>
         <div
           className={cn(
-            "fb-relative fb-h-full fb-w-full",
-            !isCenter ? "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out" : "",
-            isModal && isCenter && darkOverlay ? "fb-bg-slate-700/80" : "",
-            isModal && isCenter && !darkOverlay ? "fb-bg-white/50" : ""
+            "fb:relative fb:h-full fb:w-full",
+            !isCenter ? "fb:bg-none fb:transition-all fb:duration-500 fb:ease-in-out" : "",
+            isModal && isCenter && darkOverlay ? "fb:bg-slate-700/80" : "",
+            isModal && isCenter && !darkOverlay ? "fb:bg-white/50" : ""
           )}>
           <div
             ref={modalRef}
             className={cn(
               getPlacementStyle(placement),
-              show ? "fb-opacity-100" : "fb-opacity-0",
-              "fb-rounded-custom fb-pointer-events-auto fb-absolute fb-bottom-0 fb-h-fit fb-w-full fb-overflow-visible fb-bg-white fb-shadow-lg fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4 sm:fb-max-w-sm"
+              show ? "fb:opacity-100" : "fb:opacity-0",
+              "fb:rounded-custom fb:pointer-events-auto fb:absolute fb:bottom-0 fb:h-fit fb:w-full fb:overflow-visible fb:bg-white fb:shadow-lg fb:transition-all fb:duration-500 fb:ease-in-out fb:sm:m-4 fb:sm:max-w-sm"
             )}>
             <div>{children}</div>
           </div>

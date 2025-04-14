@@ -110,7 +110,7 @@ export function MatrixQuestion({
         <th
           key={index}
           scope="col"
-          className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
+          className="fb:text-heading fb:max-w-40 fb:break-words fb:px-4 fb:py-2 fb:font-normal"
           dir="auto">
           {getLocalizedValue(column, languageCode)}
         </th>
@@ -119,7 +119,7 @@ export function MatrixQuestion({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
+    <form key={question.id} onSubmit={handleSubmit} className="fb:w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -134,11 +134,11 @@ export function MatrixQuestion({
             subheader={getLocalizedValue(question.subheader, languageCode)}
             questionId={question.id}
           />
-          <div className="fb-overflow-x-auto fb-py-4">
-            <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
+          <div className="fb:overflow-x-auto fb:py-4">
+            <table className="fb-no-scrollbar fb:min-w-full fb:table-auto fb:border-collapse fb:text-sm">
               <thead>
                 <tr>
-                  <th className="fb-px-4 fb-py-2" />
+                  <th className="fb:px-4 fb:py-2" />
                   {columnsHeaders}
                 </tr>
               </thead>
@@ -146,10 +146,10 @@ export function MatrixQuestion({
                 {questionRows.map((row, rowIndex) => (
                   <tr
                     key={`row-${rowIndex.toString()}`}
-                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+                    className={rowIndex % 2 === 0 ? "fb:bg-input-bg" : ""}>
                     <th
                       scope="row"
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
+                      className="fb:text-heading fb:rounded-l-custom fb:max-w-40 fb:break-words fb:pr-4 fb:pl-2 fb:py-2 fb:text-left fb:min-w-[20%] fb:font-semibold"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </th>
@@ -157,7 +157,7 @@ export function MatrixQuestion({
                       <td
                         key={`column-${columnIndex.toString()}`}
                         tabIndex={isCurrent ? 0 : -1}
-                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
+                        className={`fb:outline-brand fb:px-4 fb:py-2 fb:text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb:rounded-r-custom" : ""}`}
                         onClick={() => {
                           handleSelect(
                             getLocalizedValue(column, languageCode),
@@ -174,7 +174,7 @@ export function MatrixQuestion({
                           }
                         }}
                         dir="auto">
-                        <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
+                        <div className="fb:flex fb:items-center fb:justify-center fb:p-2">
                           <input
                             dir="auto"
                             type="radio"
@@ -196,7 +196,7 @@ export function MatrixQuestion({
                               column,
                               languageCode
                             )}`}
-                            className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                            className="fb:border-brand fb:text-brand fb:h-5 fb:w-5 fb:border fb:focus:ring-0 fb:focus:ring-offset-0"
                           />
                         </div>
                       </td>
@@ -208,7 +208,7 @@ export function MatrixQuestion({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-between fb:px-6 fb:py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}

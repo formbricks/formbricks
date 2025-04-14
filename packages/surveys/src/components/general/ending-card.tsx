@@ -44,21 +44,21 @@ export function EndingCard({
     ) : null;
 
   const checkmark = (
-    <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
+    <div className="fb:text-brand fb:flex fb:flex-col fb:items-center fb:justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        className="fb-h-24 fb-w-24">
+        className="fb:h-24 fb:w-24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]" />
+      <span className="fb:bg-brand fb:mb-[10px] fb:inline-block fb:h-1 fb:w-16 fb:rounded-[100%]" />
     </div>
   );
 
@@ -111,7 +111,7 @@ export function EndingCard({
 
   return (
     <ScrollableContainer>
-      <div className="fb-text-center">
+      <div className="fb:text-center">
         {isResponseSendingFinished ? (
           <>
             {endingCard.type === "endScreen" && (
@@ -136,7 +136,7 @@ export function EndingCard({
                     questionId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
-                    <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                    <div className="fb:mt-6 fb:flex fb:w-full fb:flex-col fb:items-center fb:justify-center fb:space-y-4">
                       <SubmitButton
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
@@ -164,7 +164,7 @@ export function EndingCard({
                     <Subheader subheader={"They will be redirected immediately"} questionId="EndingCard" />
                   </div>
                 ) : (
-                  <div className="fb-my-3">
+                  <div className="fb:my-3">
                     <LoadingSpinner />
                   </div>
                 )}
@@ -173,10 +173,10 @@ export function EndingCard({
           </>
         ) : (
           <>
-            <div className="fb-my-3">
+            <div className="fb:my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="fb-text-brand">Sending responses...</h1>
+            <h1 className="fb:text-brand">Sending responses...</h1>
           </>
         )}
       </div>

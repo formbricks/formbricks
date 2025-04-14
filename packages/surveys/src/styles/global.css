@@ -1,6 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" prefix(fb);
+
+@config '../../tailwind.config.cjs';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 /* @import "./survey.css"; */
 
@@ -32,7 +50,7 @@
 
 /* this is for styling the HtmlBody component */
 .fb-htmlbody {
-  @apply fb-block fb-text-sm fb-font-normal fb-leading-6;
+  @apply fb:block fb:text-sm fb:font-normal fb:leading-6;
   /* need to use !important because in packages/ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
@@ -46,55 +64,61 @@ p.fb-editor-paragraph {
   box-shadow: 0px 0px 90px -40px var(--fb-survey-shadow-color);
 }
 
-/* theming */
-:root {
-  --brand-default: #64748b;
-  --slate-50: rgb(248, 250, 252);
-  --slate-100: rgb(241 245 249);
-  --slate-200: rgb(226 232 240);
-  --slate-300: rgb(203, 213, 225);
-  --slate-400: rgb(148 163 184);
-  --slate-500: rgb(100 116 139);
-  --slate-600: rgb(71 85 105);
-  --slate-700: rgb(51 65 85);
-  --slate-800: rgb(30 41 59);
-  --slate-900: rgb(15 23 42);
-  --gray-100: rgb(243 244 246);
-  --gray-200: rgb(229 231 235);
-  --yellow-100: rgb(254 249 195);
-  --yellow-300: rgb(253 224 71);
-  --yellow-500: rgb(234 179 8);
+@layer utilities {
+  /* theming */
+  :root {
+    --brand-default: #64748b;
+    --slate-50: rgb(248, 250, 252);
+    --slate-100: rgb(241 245 249);
+    --slate-200: rgb(226 232 240);
+    --slate-300: rgb(203, 213, 225);
+    --slate-400: rgb(148 163 184);
+    --slate-500: rgb(100 116 139);
+    --slate-600: rgb(71 85 105);
+    --slate-700: rgb(51 65 85);
+    --slate-800: rgb(30 41 59);
+    --slate-900: rgb(15 23 42);
+    --gray-100: rgb(243 244 246);
+    --gray-200: rgb(229 231 235);
+    --yellow-100: rgb(254 249 195);
+    --yellow-300: rgb(253 224 71);
+    --yellow-500: rgb(234 179 8);
 
-  /* Default Light Theme, you can override everything by changing these values */
-  --fb-brand-color: var(--brand-default);
-  --fb-brand-text-color: black;
-  --fb-border-color: var(--slate-300);
-  --fb-border-color-highlight: var(--slate-500);
-  --fb-focus-color: var(--slate-500);
-  --fb-heading-color: var(--slate-900);
-  --fb-subheading-color: var(--slate-700);
-  --fb-placeholder-color: var(--slate-300);
-  --fb-info-text-color: var(--slate-500);
-  --fb-signature-text-color: var(--slate-500);
-  --fb-branding-text-color: var(--slate-500);
-  --fb-survey-background-color: white;
-  --fb-survey-border-color: var(--slate-50);
-  --fb-survey-shadow-color: rgba(0, 0, 0, 0.4);
-  --fb-accent-background-color: var(--slate-200);
-  --fb-accent-background-color-selected: var(--slate-100);
-  --fb-input-background-color: var(--slate-50);
-  --fb-input-background-color-selected: var(--slate-200);
-  --fb-placeholder-color: var(--slate-400);
-  --fb-shadow-color: var(--slate-300);
-  --fb-rating-fill: var(--yellow-100);
-  --fb-rating-hover: var(--yellow-500);
-  --fb-back-btn-border: transparent;
-  --fb-submit-btn-border: transparent;
-  --fb-rating-selected: black;
-  --fb-close-btn-color: var(--slate-500);
-  --fb-close-btn-color-hover: var(--slate-700);
-  --fb-calendar-tile-color: var(--slate-50);
-  --fb-border-radius: 8px;
+    /* Default Light Theme, you can override everything by changing these values */
+    --fb-brand-color: var(--brand-default);
+    --fb-brand-text-color: black;
+    --fb-border-color: var(--slate-300);
+    --fb-border-color-highlight: var(--slate-500);
+    --fb-focus-color: var(--slate-500);
+    --fb-heading-color: var(--slate-900);
+    --fb-subheading-color: var(--slate-700);
+    --fb-placeholder-color: var(--slate-300);
+    --fb-info-text-color: var(--slate-500);
+    --fb-signature-text-color: var(--slate-500);
+    --fb-branding-text-color: var(--slate-500);
+    --fb-survey-background-color: white;
+    --fb-survey-border-color: var(--slate-50);
+    --fb-survey-shadow-color: rgba(0, 0, 0, 0.4);
+    --fb-accent-background-color: var(--slate-200);
+    --fb-accent-background-color-selected: var(--slate-100);
+    --fb-input-background-color: var(--slate-50);
+    --fb-input-background-color-selected: var(--slate-200);
+    --fb-placeholder-color: var(--slate-400);
+    --fb-shadow-color: var(--slate-300);
+    --fb-rating-fill: var(--yellow-100);
+    --fb-rating-hover: var(--yellow-500);
+    --fb-back-btn-border: transparent;
+    --fb-submit-btn-border: transparent;
+    --fb-rating-selected: black;
+    --fb-close-btn-color: var(--slate-500);
+    --fb-close-btn-color-hover: var(--slate-700);
+    --fb-calendar-tile-color: var(--slate-50);
+    --fb-border-radius: 8px;
+  }
+}
+
+@theme inline {
+  --color-brand: #00ff00;
 }
 
 @keyframes shrink-width-to-zero {

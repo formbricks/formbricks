@@ -4,12 +4,12 @@ export function FormbricksBranding() {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       tabIndex={-1}
-      className="fb-my-2 fb-flex fb-justify-center"
+      className="fb:my-2 fb:flex fb:justify-center"
       rel="noopener">
-      <p className="fb-text-signature fb-text-xs">
+      <p className="fb:text-signature fb:text-xs">
         Powered by{" "}
         <b>
-          <span className="fb-text-branding-text hover:fb-text-signature">Formbricks</span>
+          <span className="fb:text-branding-text fb:hover:text-signature">Formbricks</span>
         </b>
       </p>
     </a>

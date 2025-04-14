@@ -71,7 +71,7 @@ export function FileUploadQuestion({
           onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
         }
       }}
-      className="fb-w-full">
+      className="fb:w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -106,7 +106,7 @@ export function FileUploadQuestion({
           />
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb:flex fb:flex-row-reverse fb:w-full fb:justify-between fb:px-6 fb:py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

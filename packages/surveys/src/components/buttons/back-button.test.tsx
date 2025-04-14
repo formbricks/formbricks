@@ -51,8 +51,8 @@ describe("BackButton", () => {
     const { getByRole } = render(<BackButton onClick={() => {}} />);
     const button = getByRole("button");
     // Check a few class names to ensure styles are applied
-    expect(button.className).toContain("fb-border-back-button-border");
-    expect(button.className).toContain("fb-text-heading");
-    expect(button.className).toContain("focus:fb-ring-focus");
+    expect(button.className).toContain("fb:border-back-button-border");
+    expect(button.className).toContain("fb:text-heading");
+    expect(button.className).toContain("fb:focus:ring-focus");
   });
 });

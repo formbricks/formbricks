@@ -3,5 +3,5 @@ interface LabelProps {
 }
 
 export function Label({ text }: Readonly<LabelProps>) {
-  return <label className="fb-text-subheading fb-font-normal fb-text-sm">{text}</label>;
+  return <label className="fb:text-subheading fb:font-normal fb:text-sm">{text}</label>;
 }

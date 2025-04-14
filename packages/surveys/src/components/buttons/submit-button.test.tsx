@@ -90,8 +90,8 @@ describe("SubmitButton", () => {
   it("contains the expected class names", () => {
     const { getByRole } = render(<SubmitButton buttonLabel="button" isLastQuestion />);
     const button = getByRole("button");
-    expect(button.className).toContain("fb-bg-brand");
-    expect(button.className).toContain("fb-border-submit-button-border");
-    expect(button.className).toContain("focus:fb-ring-focus");
+    expect(button.className).toContain("fb:bg-brand");
+    expect(button.className).toContain("fb:border-submit-button-border");
+    expect(button.className).toContain("fb:focus:ring-focus");
   });
 });
