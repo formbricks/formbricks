@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
@@ -1720,8 +1721,6 @@
         "copy_link_to_public_results": "Copy link to public results",
         "create_single_use_links": "Create single-use links",
         "create_single_use_links_description": "Accept only one submission per link. Here is how.",
-        "current_selection_csv": "Current selection (CSV)",
-        "current_selection_excel": "Current selection (Excel)",
         "custom_range": "Custom range...",
         "data_prefilling": "Data prefilling",
         "data_prefilling_description": "You want to prefill some fields in the survey? Here is how.",

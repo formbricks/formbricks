@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Controle de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave de API",
         "api_key_copied_to_clipboard": "Chave da API copiada para a área de transferência",
@@ -1720,8 +1721,6 @@
         "copy_link_to_public_results": "Copiar link para resultados públicos",
         "create_single_use_links": "Crie links de uso único",
         "create_single_use_links_description": "Aceite apenas uma submissão por link. Aqui está como.",
-        "current_selection_csv": "Seleção atual (CSV)",
-        "current_selection_excel": "Seleção atual (Excel)",
         "custom_range": "Intervalo personalizado...",
         "data_prefilling": "preenchimento automático de dados",
         "data_prefilling_description": "Quer preencher alguns campos da pesquisa? Aqui está como fazer.",

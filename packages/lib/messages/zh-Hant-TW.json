@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -1720,8 +1721,6 @@
         "copy_link_to_public_results": "複製公開結果的連結",
         "create_single_use_links": "建立單次使用連結",
         "create_single_use_links_description": "每個連結只接受一次提交。以下是如何操作。",
-        "current_selection_csv": "目前選取 (CSV)",
-        "current_selection_excel": "目前選取 (Excel)",
         "custom_range": "自訂範圍...",
         "data_prefilling": "資料預先填寫",
         "data_prefilling_description": "您想要預先填寫問卷中的某些欄位嗎？以下是如何操作。",
