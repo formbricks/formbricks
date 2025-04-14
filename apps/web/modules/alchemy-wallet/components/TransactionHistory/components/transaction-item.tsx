@@ -12,33 +12,7 @@ interface TransactionItemProps {
 
 export function TransactionItem({ transaction }: TransactionItemProps) {
   const token = transaction.token;
-  // export interface TokenTransfer {
-  //     'block_hash': string;
-  //     'from': AddressParam;
-  //     'log_index': number;
-  //     'method'?: string;
-  //     'timestamp'?: string;
-  //     'to': AddressParam;
-  //     'token': TokenInfo;
-  //     'total': TokenTransferTotal;
-  //     'transaction_hash': string;
-  //     'type': string;
-  // }
-  // export type TokenTransferTotal = TotalERC1155 | TotalERC20 | TotalERC721;
-  // export interface TotalERC1155 { // Want to display value and token instance
-  //     'token_id': string;
-  //     'decimals': string;
-  //     'value': string;
-  //     'token_instance'?: NFTInstance;
-  // }
-  // export interface TotalERC20 { // Want to display value
-  //     'decimals': string;
-  //     'value': string;
-  // }
-  // export interface TotalERC721 { // Want to display nft
-  //     'token_id': string;
-  //     'token_instance'?: NFTInstance;
-  // }
+
   return (
     <>
       <div className={cn("flex flex-row items-center gap-3 px-2 py-1")}>
