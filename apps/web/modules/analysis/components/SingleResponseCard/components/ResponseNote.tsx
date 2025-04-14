@@ -4,8 +4,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
-import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
-import { Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { CheckIcon, Maximize2Icon, Minimize2Icon, PencilIcon, PlusIcon } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -228,9 +227,7 @@ export const ResponseNotes = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && noteText) {
                         e.preventDefault();
-                        {
-                          isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
-                        }
+                        isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
                       }
                     }}
                     required></textarea>

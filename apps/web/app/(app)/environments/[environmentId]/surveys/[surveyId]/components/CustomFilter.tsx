@@ -416,14 +416,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "csv");
                   }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.current_selection_csv")}</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                   }}>
                   <p className="text-slate-700">
-                    {t("environments.surveys.summary.current_selection_excel")}
+                    {t("environments.surveys.summary.filtered_responses_excel")}
                   </p>
                 </DropdownMenuItem>
               </DropdownMenuContent>
