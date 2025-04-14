@@ -4,6 +4,7 @@ import {
   Body,
   Column,
   Container,
+  Hr,
   Html,
   Img,
   Link,
@@ -69,6 +70,8 @@ export async function FollowUpEmail({
                 }),
               }}
             />
+
+            {questions.length > 0 ? <Hr /> : null}
 
             {questions.map((question) => {
               if (!question.response) return;
