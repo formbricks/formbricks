@@ -45,7 +45,7 @@
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "2.10.1",
     "@testing-library/preact": "3.2.4",
-    "@types/react": "19.1.0",
+    "@types/react": "19.1.1",
     "autoprefixer": "10.4.21",
     "concurrently": "9.1.2",
     "isomorphic-dompurify": "2.23.0",
