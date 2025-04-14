@@ -1,7 +1,9 @@
+import { useUser } from "@account-kit/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
+import { LoginButton } from "@formbricks/web3/src/alchemy-wallet/components/LoginButton";
 import { getLocalizedValue } from "../../lib/i18n";
 import { getUpdatedTtc, useTtc } from "../../lib/ttc";
 import { BackButton } from "../buttons/back-button";
@@ -12,8 +14,6 @@ import { Label } from "../general/label";
 import { QuestionMedia } from "../general/question-media";
 import { Subheader } from "../general/subheader";
 import { ScrollableContainer } from "../wrappers/scrollable-container";
-import { useUser } from "@account-kit/react";
-import { LoginButton } from "@formbricks/web3/src/alchemy-wallet/components/LoginButton";
 
 interface DeployTokenQuestionProps {
   question: TSurveyDeployTokenQuestion;
@@ -84,15 +84,15 @@ export function DeployTokenQuestion({
     },
   ];
 
-  useEffect(()=> {
-    if(!user || !user.address){
+  useEffect(() => {
+    if (!user || !user.address) {
       return;
     }
     handleChange("address", user.address);
-  },[user, user?.address])
+  }, [user, user?.address]);
 
   const handleChange = (fieldId: string, fieldValue: string) => {
-    console.log("Handle Change",fieldId, fieldValue)
+    console.log("Handle Change", fieldId, fieldValue);
     const newValue = fields.map((field) => {
       if (field.id === fieldId) {
         return fieldValue;
@@ -108,7 +108,7 @@ export function DeployTokenQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    
+
     const txResp = await deployToken();
     const txDetails = JSON.stringify(txResp);
     const finalValue = fields.map((field) => {
@@ -116,7 +116,7 @@ export function DeployTokenQuestion({
       const index = fields.findIndex((f) => f.id === field.id);
       return safeValue[index] || "";
     });
-  
+
     // Update the value
     onChange({ [question.id]: finalValue });
 
@@ -142,13 +142,12 @@ export function DeployTokenQuestion({
     const tokenName = getFieldValueById("tokenName");
     const tokenSymbol = getFieldValueById("tokenSymbol");
     const initialSupply = getFieldValueById("initialSupply");
-    console.log("Fields",fields)
-  
+
     const txResp = await deploy(tokenName, tokenSymbol, initialSupply);
     return txResp;
-  }
+  };
 
-  console.log("Fields", fields, safeValue)
+  console.log("Fields", fields, safeValue);
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       <ScrollableContainer>
@@ -173,14 +172,14 @@ export function DeployTokenQuestion({
                 inputType = "number";
               }
 
-              if (field.id === "transactionDetails"){
+              if (field.id === "transactionDetails") {
                 return;
               }
 
-              if (field.id === "address"){
+              if (field.id === "address") {
                 return (
                   <div key={field.id} className="space-y-1">
-                  <Label text={`${field.label}`} />
+                    <Label text={`${field.label}`} />
                     <Input
                       ref={index === 0 ? DeployTokenRef : null}
                       key={field.id}
@@ -191,26 +190,26 @@ export function DeployTokenQuestion({
                       tabIndex={isCurrent ? 0 : -1}
                       aria-label={field.label}
                     />
-                </div>
-                )
+                  </div>
+                );
               }
 
               return (
-                  <div key={field.id} className="space-y-1">
-                    <Label text={`${field.label}*`} />
-                    <Input
-                      ref={index === 0 ? DeployTokenRef : null}
-                      key={field.id}
-                      required={true}
-                      value={safeValue[index] || ""}
-                      type={inputType}
-                      onChange={(e) => {
-                        handleChange(field.id, e.currentTarget.value);
-                      }}
-                      tabIndex={isCurrent ? 0 : -1}
-                      aria-label={field.label}
-                    />
-                  </div>
+                <div key={field.id} className="space-y-1">
+                  <Label text={`${field.label}*`} />
+                  <Input
+                    ref={index === 0 ? DeployTokenRef : null}
+                    key={field.id}
+                    required={true}
+                    value={safeValue[index] || ""}
+                    type={inputType}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
+                    tabIndex={isCurrent ? 0 : -1}
+                    aria-label={field.label}
+                  />
+                </div>
               );
             })}
           </div>
@@ -218,16 +217,15 @@ export function DeployTokenQuestion({
       </ScrollableContainer>
 
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        { 
-          user && user.address ?
-            <SubmitButton
-              tabIndex={isCurrent ? 0 : -1}
-              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-              isLastQuestion={isLastQuestion}
-            />
-            :
-            <LoginButton />
-        }
+        {user && user.address ? (
+          <SubmitButton
+            tabIndex={isCurrent ? 0 : -1}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+          />
+        ) : (
+          <LoginButton />
+        )}
         {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
