@@ -92,7 +92,6 @@ export function DeployTokenQuestion({
   }, [user, user?.address]);
 
   const handleChange = (fieldId: string, fieldValue: string) => {
-    console.log("Handle Change", fieldId, fieldValue);
     const newValue = fields.map((field) => {
       if (field.id === fieldId) {
         return fieldValue;
@@ -105,6 +104,7 @@ export function DeployTokenQuestion({
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     // @ts-ignore
+    // Check here for token deployed first, if token deploy loading
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
@@ -147,7 +147,6 @@ export function DeployTokenQuestion({
     return txResp;
   };
 
-  console.log("Fields", fields, safeValue);
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       <ScrollableContainer>
