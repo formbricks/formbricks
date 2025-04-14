@@ -1,12 +1,18 @@
-import { TokenTransfer } from "@wonderchain/sdk/dist/blockscout-client";
+import { TokenTransfer, TotalERC20, TotalERC1155 } from "@wonderchain/sdk/dist/blockscout-client";
 import { SendIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
+import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import { formatAddress } from "@formbricks/web3";
+
+export type Transaction = TokenTransfer & { total: TotalERC20 | TotalERC1155 };
 
 interface TransactionItemProps {
-  transfer: TokenTransfer;
+  transaction: Transaction;
 }
 
-export function TransactionItem({ transfer }: TransactionItemProps) {
+export function TransactionItem({ transaction }: TransactionItemProps) {
+  const token = transaction.token;
+
   return (
     <>
       <div className={cn("flex flex-row items-center gap-3 px-2 py-1")}>
@@ -15,16 +21,18 @@ export function TransactionItem({ transfer }: TransactionItemProps) {
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex flex-1 flex-row justify-between gap-4">
-            <p className="text-sm font-semibold">Recieved from 0x3a8d...e92f</p>
-            <span className="text-sm font-normal text-green-600">+25 USDC</span>
+            <p className="text-sm font-semibold">Recieved from {formatAddress(transaction.to.hash)}</p>
+            <span className="text-sm font-normal text-green-600">{`${transaction.total.value} ${token.symbol}`}</span>
           </div>
           <div className="flex flex-1 flex-row justify-between gap-4">
-            <span className="text-xs">Survey Reward</span>
-            <span className="text-xs">Mar 25, 2025 at 05:15 AM</span>
+            <span className="text-xs"></span>
+            <span className="text-xs">
+              {transaction.timestamp ? formatDateWithOrdinal(new Date(transaction.timestamp)) : "N/A"}
+            </span>
           </div>
         </div>
       </div>
-      {JSON.stringify(transfer)}
+      {/* {JSON.stringify(transaction)} */}
     </>
   );
 }

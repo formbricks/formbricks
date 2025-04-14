@@ -1,7 +1,7 @@
 "use client";
 
 import WalletAddress from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-address";
-import WalletBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-balance";
+import WalletEthBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-eth-balance";
 import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
 import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
 import { Button } from "@/modules/ui/components/button";
@@ -39,6 +39,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }): R
         )}
         id={"wallet-balance"}>
         <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+          {/* Wallet Address */}
           <div className="flex flex-col gap-2">
             <div className="flex flex-row items-center justify-between gap-2">
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
@@ -55,6 +56,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }): R
               <WalletAddress />
             </div>
           </div>
+          {/* Eth Balance */}
           <div className="flex flex-col gap-2">
             <div className="flex flex-row items-center justify-between gap-2">
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
@@ -67,13 +69,26 @@ export function WalletBalanceCard({ className = "" }: { className?: string }): R
                 label={t("environments.wallet.balance_card.external_link")}
               />
             </div>
-            <WalletBalance showBalance={showBalance} />
+            <WalletEthBalance showBalance={showBalance} />
           </div>
+          {/* Pending Rewards */}
           <div className="flex flex-col gap-2">
             <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
               {t("environments.wallet.balance_card.pending_rewards")}
             </h3>
             <div className="text-2xl font-bold">0 Wei</div>
+          </div>
+          <div className="col-span-3 flex flex-col gap-2">
+            <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">All Token Balances</h3>
+            {balances &&
+              balances.map((balance) => {
+                const token = balance.token;
+                return (
+                  <div className="text-2xl font-bold" key={balance.token.address}>
+                    {`${balance.value} ${token.symbol}`}
+                  </div>
+                );
+              })}
           </div>
         </div>
         <div className="flex flex-col gap-2">
@@ -85,7 +100,6 @@ export function WalletBalanceCard({ className = "" }: { className?: string }): R
 
         <Button onClick={() => deploy("Token", "TKN", "1000000000000000000000000000")}>Deploy</Button>
       </div>
-      <pre>{JSON.stringify(balances, null, 2)}</pre>
     </>
   );
 }
