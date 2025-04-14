@@ -61,7 +61,7 @@ export const SAML_PRODUCT = "formbricks";
 export const SAML_AUDIENCE = "https://saml.formbricks.com";
 export const SAML_PATH = "/api/auth/saml/callback";
 
-export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
+export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD;
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
@@ -99,9 +99,8 @@ export const INSIGHTS_PER_PAGE = 10;
 export const DOCUMENTS_PER_PAGE = 10;
 export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 
-export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
-export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
-export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
+export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO;
+export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
 export const SLACK_MESSAGE_LIMIT = 2995;
 export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;

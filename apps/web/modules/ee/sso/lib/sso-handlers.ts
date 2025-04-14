@@ -7,20 +7,17 @@ import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
+  getRoleManagementPermission,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
-import {
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
-  DEFAULT_TEAM_ID,
-} from "@formbricks/lib/constants";
+import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
@@ -121,17 +118,19 @@ export const handleSsoCallback = async ({
         userName = `${samlUser.firstName} ${samlUser.lastName}`;
       }
     }
+    // AUTH_SKIP_INVITE_FOR_SSO
+    // AUTH_SSO_DEFAULT_TEAM_ID
 
     // Get multi-org license status
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-    // Reject if no callback URL and no default org in self-hosted environment
-    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID && !isMultiOrgEnabled) {
+    // Reject if auto-provisioning on SSO is disabled and no callback URL(invite link) and no multi-org enabled
+    if (!SKIP_INVITE_FOR_SSO && !callbackUrl && !isMultiOrgEnabled) {
       return false;
     }
 
-    // Additional security checks for self-hosted instances without default org
-    if (!DEFAULT_ORGANIZATION_ID && !isMultiOrgEnabled) {
+    // Additional security checks for self-hosted instances without auto-provisioning and no multi-org enabled
+    if (!SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
       try {
         // Parse and validate the callback URL
         const isValidCallbackUrl = new URL(callbackUrl);
@@ -180,28 +179,23 @@ export const handleSsoCallback = async ({
     createBrevoCustomer({ id: user.id, email: user.email });
 
     // Default organization assignment if env variable is set
-    if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
+    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
       // check if organization exists
-      let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
-      let isNewOrganization = false;
-      if (!organization) {
-        // create organization with id from env
-        organization = await createOrganization({
-          id: DEFAULT_ORGANIZATION_ID,
-          name: userProfile.name + "'s Organization",
-        });
-        isNewOrganization = true;
-      }
-      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "owner";
-      await createMembership(organization.id, userProfile.id, { role: role, accepted: true });
+      const organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
+
+      if (!organization) return true;
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+
+      if (!canDoRoleManagement) return true;
+
+      await createMembership(organization.id, userProfile.id, { role: "member", accepted: true });
       await createAccount({
         ...account,
         userId: userProfile.id,
       });
 
-      if (DEFAULT_TEAM_ID) {
-        await createDefaultTeamMembership(userProfile.id);
-      }
+      await createDefaultTeamMembership(userProfile.id);
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...userProfile.notificationSettings,

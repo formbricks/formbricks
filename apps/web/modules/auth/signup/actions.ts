@@ -14,7 +14,7 @@ import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { UnknownError } from "@formbricks/types/errors";
-import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreateUserAction = z.object({
@@ -23,8 +23,6 @@ const ZCreateUserAction = z.object({
   password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
-  defaultOrganizationId: z.string().optional(),
-  defaultOrganizationRole: ZOrganizationRole.optional(),
   emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
@@ -96,7 +94,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
     let organizationId: string | undefined;
     let role: TOrganizationRole = "owner";
 
-    if (parsedInput.defaultOrganizationId) {
+    if (DEFAULT_TEAM_ID) {
       // Use existing or create organization with specific ID
       let organization = await getOrganization(parsedInput.defaultOrganizationId);
       if (!organization) {

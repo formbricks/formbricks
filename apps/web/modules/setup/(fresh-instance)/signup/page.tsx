@@ -4,8 +4,6 @@ import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -53,8 +51,6 @@ export const SignupPage = async () => {
         oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
-        defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
-        defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
         isSsoEnabled={isSsoEnabled}
         samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

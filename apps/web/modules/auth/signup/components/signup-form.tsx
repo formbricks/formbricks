@@ -45,8 +45,6 @@ interface SignupFormProps {
   userLocale: TUserLocale;
   emailFromSearchParams?: string;
   emailVerificationDisabled: boolean;
-  defaultOrganizationId?: string;
-  defaultOrganizationRole?: TOrganizationRole;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
@@ -68,8 +66,6 @@ export const SignupForm = ({
   userLocale,
   emailFromSearchParams,
   emailVerificationDisabled,
-  defaultOrganizationId,
-  defaultOrganizationRole,
   isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
@@ -116,8 +112,6 @@ export const SignupForm = ({
         userLocale,
         inviteToken: inviteToken || "",
         emailVerificationDisabled,
-        defaultOrganizationId,
-        defaultOrganizationRole,
         turnstileToken,
       });
 

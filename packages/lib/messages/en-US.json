@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",

@@ -5,7 +5,7 @@ import { Prisma, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID } from "@formbricks/lib/constants";
+import { DEFAULT_TEAM_ID } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { projectCache } from "@formbricks/lib/project/cache";
@@ -91,15 +91,14 @@ export const getTeamProjectIds = reactCache(
     )()
 );
 
-const getTeamByTeamIdOrganizationId = reactCache(
-  async (teamId: string, organizationId: string): Promise<Team> =>
+const getTeam = reactCache(
+  async (teamId: string): Promise<Team> =>
     cache(
       async () => {
         try {
           const team = await prisma.team.findUnique({
             where: {
               id: teamId,
-              organizationId: organizationId,
             },
           });
 
@@ -109,13 +108,13 @@ const getTeamByTeamIdOrganizationId = reactCache(
 
           return team;
         } catch (error) {
-          logger.error(error, `Team not found ${teamId} ${organizationId}`);
+          logger.error(error, `Team not found ${teamId}`);
           throw error;
         }
       },
-      [`getTeamByTeamIdOrganizationId-${teamId}-${organizationId}`],
+      [`getTeam-${teamId}`],
       {
-        tags: [teamCache.tag.byId(teamId), teamCache.tag.byOrganizationId(organizationId)],
+        tags: [teamCache.tag.byId(teamId)],
       }
     )()
 );
@@ -123,19 +122,13 @@ const getTeamByTeamIdOrganizationId = reactCache(
 export const createDefaultTeamMembership = async (userId: string) => {
   try {
     const defaultTeamId = DEFAULT_TEAM_ID;
-    const defaultOrganizationId = DEFAULT_ORGANIZATION_ID;
 
     if (!defaultTeamId) {
       logger.error("Default team ID not found");
       return;
     }
 
-    if (!defaultOrganizationId) {
-      logger.error("Default organization ID not found");
-      return;
-    }
-
-    const defaultTeam = await getTeamByTeamIdOrganizationId(defaultTeamId, defaultOrganizationId);
+    const defaultTeam = await getTeam(defaultTeamId);
 
     if (!defaultTeam) {
       logger.error("Default team not found");
