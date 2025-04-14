@@ -69,7 +69,7 @@ private extension FormbricksViewModel {
                 }
 
                 const script = document.createElement("script");
-                script.src = "\(Formbricks.appUrl ?? "http://localhost:3000")/js/surveys.umd.cjs";
+                script.src = "\(FormbricksEnvironment.surveyScriptUrl)";
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
@@ -95,6 +95,7 @@ private class WebViewData {
         data["appUrl"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
         data["contactId"] = UserManager.shared.contactId
+        data["isWebEnvironment"] = false
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false
