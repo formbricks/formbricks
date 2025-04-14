@@ -784,6 +784,7 @@
         "api_key_deleted": "Chave da API deletada",
         "api_key_label": "Rótulo da Chave API",
         "api_key_security_warning": "Por motivos de segurança, a chave da API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
+        "api_key_updated": "Chave de API atualizada",
         "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Você ainda não tem nenhuma chave de API",
         "organization_access": "Acesso à Organização",

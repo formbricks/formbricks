@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
+  TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
   TOrganizationProject,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -16,7 +17,7 @@ import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
-import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
 interface EditAPIKeysProps {
@@ -89,6 +90,38 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
     setIsAddAPIKeyModalOpen(false);
   };
 
+  const handleUpdateAPIKey = async (data: TApiKeyUpdateInput) => {
+    if (!activeKey) return;
+
+    const updateApiKeyResponse = await updateApiKeyAction({
+      apiKeyId: activeKey.id,
+      apiKeyData: data,
+    });
+
+    if (updateApiKeyResponse?.data) {
+      const updatedApiKeys =
+        apiKeysLocal?.map((apiKey) => {
+          if (apiKey.id === activeKey.id) {
+            return {
+              ...apiKey,
+              label: data.label,
+            };
+          }
+          return apiKey;
+        }) || [];
+
+      setApiKeysLocal(updatedApiKeys);
+      toast.success(t("environments.project.api_keys.api_key_updated"));
+      setIsLoading(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateApiKeyResponse);
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
+
+    setViewPermissionsOpen(false);
+  };
+
   const ApiKeyDisplay = ({ apiKey }) => {
     const copyToClipboard = () => {
       navigator.clipboard.writeText(apiKey);
@@ -149,6 +182,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                   }
                 }}
                 tabIndex={0}
+                data-testid="api-key-row"
                 key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
@@ -198,8 +232,10 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         <ViewPermissionModal
           open={viewPermissionsOpen}
           setOpen={setViewPermissionsOpen}
+          onSubmit={handleUpdateAPIKey}
           apiKey={activeKey}
           projects={projects}
+          isUpdating={isLoading}
         />
       )}
       <DeleteDialog
