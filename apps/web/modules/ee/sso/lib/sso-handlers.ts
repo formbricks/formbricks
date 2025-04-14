@@ -2,7 +2,7 @@ import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
-import { createDefaultTeamMembership } from "@/modules/auth/signup/lib/team";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/auth/signup/lib/team";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import {
   getIsMultiOrgEnabled,
@@ -10,7 +10,6 @@ import {
   getRoleManagementPermission,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";

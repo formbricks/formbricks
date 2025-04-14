@@ -1,8 +1,12 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import { getOrganizationByTeamId } from "@/modules/auth/signup/lib/team";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsSamlSsoEnabled,
+  getRoleManagementPermission,
+  getisSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
@@ -35,6 +39,7 @@ vi.mock("@/modules/auth/lib/user", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getisSsoEnabled: vi.fn(),
+  getRoleManagementPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn().mockResolvedValue(true),
 }));
 
@@ -47,7 +52,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@/modules/auth/signup/lib/team", () => ({
-  createTeamMembership: vi.fn(),
+  getOrganizationByTeamId: vi.fn(),
   createDefaultTeamMembership: vi.fn(),
 }));
 
@@ -70,8 +75,7 @@ vi.mock("@formbricks/lib/utils/locale", () => ({
 
 // Mock environment variables
 vi.mock("@formbricks/lib/constants", () => ({
-  DEFAULT_ORGANIZATION_ID: "org-123",
-  DEFAULT_ORGANIZATION_ROLE: "member",
+  SKIP_INVITE_FOR_SSO: 1,
   DEFAULT_TEAM_ID: "team-123",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
@@ -267,11 +271,12 @@ describe("handleSsoCallback", () => {
       expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
     });
 
-    it("should create organization and membership for new user when DEFAULT_ORGANIZATION_ID is set", async () => {
+    it("should create membership for new user when DEFAULT_TEAM_ID is set", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganization).mockResolvedValue(null);
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -280,12 +285,8 @@ describe("handleSsoCallback", () => {
       });
 
       expect(result).toBe(true);
-      expect(createOrganization).toHaveBeenCalledWith({
-        id: "org-123",
-        name: expect.stringContaining("Organization"),
-      });
-      expect(createMembership).toHaveBeenCalledWith("org-123", mockCreatedUser().id, {
-        role: "owner",
+      expect(createMembership).toHaveBeenCalledWith(mockOrganization.id, mockCreatedUser().id, {
+        role: "member",
         accepted: true,
       });
       expect(createAccount).toHaveBeenCalledWith({
@@ -294,27 +295,8 @@ describe("handleSsoCallback", () => {
       });
       expect(updateUser).toHaveBeenCalledWith(mockCreatedUser().id, {
         notificationSettings: expect.objectContaining({
-          unsubscribedOrganizationIds: ["org-123"],
+          unsubscribedOrganizationIds: [mockOrganization.id],
         }),
-      });
-    });
-
-    it("should use existing organization if it exists", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-      vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-
-      const result = await handleSsoCallback({
-        user: mockUser,
-        account: mockAccount,
-        callbackUrl: "http://localhost:3000",
-      });
-
-      expect(result).toBe(true);
-      expect(createOrganization).not.toHaveBeenCalled();
-      expect(createMembership).toHaveBeenCalledWith(mockOrganization.id, mockCreatedUser().id, {
-        role: "member",
-        accepted: true,
       });
     });
   });
@@ -497,12 +479,11 @@ describe("handleSsoCallback", () => {
   });
 
   describe("Organization handling", () => {
-    it("should handle invalid DEFAULT_ORGANIZATION_ID gracefully", async () => {
+    it("should handle invalid DEFAULT_TEAM_ID gracefully", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganization).mockResolvedValue(null);
-      vi.mocked(createOrganization).mockRejectedValue(new Error("Invalid organization ID"));
+      vi.mocked(getOrganizationByTeamId).mockRejectedValue(new Error("Invalid team ID"));
 
       await expect(
         handleSsoCallback({
@@ -510,16 +491,18 @@ describe("handleSsoCallback", () => {
           account: mockAccount,
           callbackUrl: "http://localhost:3000",
         })
-      ).rejects.toThrow("Invalid organization ID");
+      ).rejects.toThrow("Invalid team ID");
 
-      expect(createOrganization).toHaveBeenCalled();
-      expect(createMembership).not.toHaveBeenCalled();
+      expect(getOrganizationByTeamId).toHaveBeenCalled();
+      expect(getRoleManagementPermission).not.toHaveBeenCalled();
     });
 
     it("should handle membership creation failure gracefully", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
       vi.mocked(createMembership).mockRejectedValue(new Error("Failed to create membership"));
 
       await expect(

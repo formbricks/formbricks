@@ -3,18 +3,21 @@
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
-import { createDefaultTeamMembership, createTeamMembership } from "@/modules/auth/signup/lib/team";
+import {
+  createDefaultTeamMembership,
+  createTeamMembership,
+  getOrganizationByTeamId,
+} from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { DEFAULT_TEAM_ID, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
+import { createOrganization } from "@formbricks/lib/organization/service";
 import { UnknownError } from "@formbricks/types/errors";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreateUserAction = z.object({
@@ -91,46 +94,47 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
     await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
     await deleteInvite(invite.id);
   } else {
-    let organizationId: string | undefined;
-    let role: TOrganizationRole = "owner";
-
-    if (DEFAULT_TEAM_ID) {
-      // Use existing or create organization with specific ID
-      let organization = await getOrganization(parsedInput.defaultOrganizationId);
-      if (!organization) {
-        organization = await createOrganization({
-          id: parsedInput.defaultOrganizationId,
-          name: `${user.name}'s Organization`,
-        });
-      } else {
-        role = parsedInput.defaultOrganizationRole || "owner";
-      }
-      organizationId = organization.id;
-    } else {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (isMultiOrgEnabled) {
-        // Create new organization
-        const organization = await createOrganization({ name: `${user.name}'s Organization` });
-        organizationId = organization.id;
-      }
-    }
-
-    if (organizationId) {
-      await createMembership(organizationId, user.id, { role, accepted: true });
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    if (isMultiOrgEnabled) {
+      const organization = await createOrganization({ name: `${user.name}'s Organization` });
+      await createMembership(organization.id, user.id, {
+        role: "owner",
+        accepted: true,
+      });
       await updateUser(user.id, {
         notificationSettings: {
           ...user.notificationSettings,
           alert: { ...user.notificationSettings?.alert },
           weeklySummary: { ...user.notificationSettings?.weeklySummary },
           unsubscribedOrganizationIds: Array.from(
-            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organizationId])
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
           ),
         },
       });
     }
+  }
 
-    if (DEFAULT_TEAM_ID) {
-      await createDefaultTeamMembership(user.id);
+  if (DEFAULT_TEAM_ID) {
+    const organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
+
+    if (organization) {
+      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+
+      if (canDoRoleManagement) {
+        await createMembership(organization.id, user.id, { role: "member", accepted: true });
+        await updateUser(user.id, {
+          notificationSettings: {
+            ...user.notificationSettings,
+            alert: { ...user.notificationSettings?.alert },
+            weeklySummary: { ...user.notificationSettings?.weeklySummary },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+            ),
+          },
+        });
+
+        await createDefaultTeamMembership(user.id);
+      }
     }
   }
 

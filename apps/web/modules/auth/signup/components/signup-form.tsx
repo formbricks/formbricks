@@ -19,7 +19,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
