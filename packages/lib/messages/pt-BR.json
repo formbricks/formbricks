@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Controle de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave de API",
         "api_key_copied_to_clipboard": "Chave da API copiada para a área de transferência",
