@@ -6,7 +6,7 @@
     "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev -p 3000 --turbopack",
     "go": "next dev -p 3000 --turbopack",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
     "build:dev": "next build",
     "start": "next start",
     "lint": "next lint",

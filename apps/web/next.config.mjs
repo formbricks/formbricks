@@ -318,4 +318,4 @@ disableLogger: true,
 
 const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
-export default nextConfig;
+export default exportConfig;
