@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
