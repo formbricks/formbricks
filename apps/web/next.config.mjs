@@ -300,20 +300,20 @@ nextConfig.images.remotePatterns.push({
 });
 
 const sentryOptions = {
-// For all available options, see:
-// https://www.npmjs.com/package/@sentry/webpack-plugin#options
+  // For all available options, see:
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-org: "formbricks",
-project: "formbricks-cloud",
+  org: "formbricks",
+  project: "formbricks-cloud",
 
-// Only print logs for uploading source maps in CI
-silent: true,
+  // Only print logs for uploading source maps in CI
+  silent: true,
 
-// Upload a larger set of source maps for prettier stack traces (increases build time)
-widenClientFileUpload: true,
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: false,
 
-// Automatically tree-shake Sentry logger statements to reduce bundle size
-disableLogger: true,
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
 };
 
 const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
