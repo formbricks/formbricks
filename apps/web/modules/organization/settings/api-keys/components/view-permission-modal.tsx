@@ -95,6 +95,7 @@ export const ViewPermissionModal = ({
                   <Label>{t("environments.project.api_keys.api_key_label")}</Label>
                   <Input
                     placeholder="e.g. GitHub, PostHog, Slack"
+                    data-testid="api-key-label"
                     {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
                   />
                 </div>

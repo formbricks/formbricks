@@ -182,6 +182,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                   }
                 }}
                 tabIndex={0}
+                data-testid="api-key-row"
                 key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">

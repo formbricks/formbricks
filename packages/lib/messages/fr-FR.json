@@ -1722,8 +1722,6 @@
         "copy_link_to_public_results": "Copier le lien vers les résultats publics",
         "create_single_use_links": "Créer des liens à usage unique",
         "create_single_use_links_description": "Acceptez uniquement une soumission par lien. Voici comment.",
-        "current_selection_csv": "Sélection actuelle (CSV)",
-        "current_selection_excel": "Sélection actuelle (Excel)",
         "custom_range": "Plage personnalisée...",
         "data_prefilling": "Préremplissage des données",
         "data_prefilling_description": "Vous souhaitez préremplir certains champs dans l'enquête ? Voici comment faire.",

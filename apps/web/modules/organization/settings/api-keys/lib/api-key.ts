@@ -2,6 +2,7 @@ import "server-only";
 import { apiKeyCache } from "@/lib/cache/api-key";
 import {
   TApiKeyCreateInput,
+  TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -194,7 +195,7 @@ export const createApiKey = async (
   }
 };
 
-export const updateApiKey = async (apiKeyId: string, data: Pick<ApiKey, "label">): Promise<ApiKey | null> => {
+export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): Promise<ApiKey | null> => {
   try {
     const updatedApiKey = await prisma.apiKey.update({
       where: {
