@@ -193,3 +193,29 @@ export const createApiKey = async (
     throw error;
   }
 };
+
+export const updateApiKey = async (apiKeyId: string, data: Pick<ApiKey, "label">): Promise<ApiKey | null> => {
+  try {
+    const updatedApiKey = await prisma.apiKey.update({
+      where: {
+        id: apiKeyId,
+      },
+      data: {
+        label: data.label,
+      },
+    });
+
+    apiKeyCache.revalidate({
+      id: updatedApiKey.id,
+      hashedKey: updatedApiKey.hashedKey,
+      organizationId: updatedApiKey.organizationId,
+    });
+
+    return updatedApiKey;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

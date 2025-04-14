@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
@@ -784,6 +785,7 @@
         "api_key_deleted": "API Key deleted",
         "api_key_label": "API Key Label",
         "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
+        "api_key_updated": "API Key updated",
         "duplicate_access": "Duplicate project access not allowed",
         "no_api_keys_yet": "You don't have any API keys yet",
         "organization_access": "Organization Access",
