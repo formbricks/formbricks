@@ -1,4 +1,4 @@
-import { renderEmailResponseValue } from "@/modules/email/emails/survey/response-finished-email";
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import {
   Body,

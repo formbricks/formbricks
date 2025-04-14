@@ -350,6 +350,12 @@ export const FollowUpModal = ({
     setOpen(false);
   };
 
+  const emailSendToQuestionOptions = emailSendToOptions.filter(
+    (option) => option.type === "openTextQuestion" || option.type === "contactInfoQuestion"
+  );
+  const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
+  const emailSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "email");
+
   return (
     <Modal open={open} setOpen={handleModalClose} noPadding size="md">
       <div className="flex h-full flex-col rounded-lg">
@@ -582,7 +588,7 @@ export const FollowUpModal = ({
                               </div>
                             )}
 
-                            {emailSendToOptions.length > 0 && (
+                            {emailSendToOptions.length > 0 ? (
                               <div className="max-w-80">
                                 <FormControl>
                                   <Select
@@ -600,45 +606,139 @@ export const FollowUpModal = ({
                                     </SelectTrigger>
 
                                     <SelectContent>
-                                      {emailSendToOptions.map((option) => {
-                                        return (
-                                          <SelectItem key={option.id} value={option.id}>
-                                            {option.type === "hiddenField" ? (
-                                              <div className="flex items-center space-x-2">
-                                                <EyeOffIcon className="h-4 w-4" />
-                                                <span>{option.label}</span>
-                                              </div>
-                                            ) : option.type === "email" ? (
-                                              <div className="flex items-center space-x-2">
-                                                <UserIcon className="h-4 w-4" />
-                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                                  {option.label}
-                                                </span>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center space-x-2">
-                                                <div className="h-4 w-4">
-                                                  {
-                                                    QUESTIONS_ICON_MAP[
-                                                      option.type === "openTextQuestion"
-                                                        ? "openText"
-                                                        : "contactInfo"
-                                                    ]
-                                                  }
-                                                </div>
-                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                                  {option.label}
-                                                </span>
-                                              </div>
-                                            )}
-                                          </SelectItem>
-                                        );
-                                      })}
+                                      {emailSendToQuestionOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex items-center space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Questions</p>
+                                          </div>
+
+                                          {emailSendToQuestionOptions.map((option) => {
+                                            return (
+                                              <SelectItem key={option.id} value={option.id}>
+                                                {option.type === "hiddenField" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <EyeOffIcon className="h-4 w-4" />
+                                                    <span>{option.label}</span>
+                                                  </div>
+                                                ) : option.type === "email" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <UserIcon className="h-4 w-4" />
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex items-center space-x-2">
+                                                    <div className="h-4 w-4">
+                                                      {
+                                                        QUESTIONS_ICON_MAP[
+                                                          option.type === "openTextQuestion"
+                                                            ? "openText"
+                                                            : "contactInfo"
+                                                        ]
+                                                      }
+                                                    </div>
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </SelectItem>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : null}
+
+                                      {emailSendToHiddenFieldOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Hidden Fields</p>
+                                          </div>
+
+                                          {emailSendToHiddenFieldOptions.map((option) => {
+                                            return (
+                                              <SelectItem key={option.id} value={option.id}>
+                                                {option.type === "hiddenField" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <EyeOffIcon className="h-4 w-4" />
+                                                    <span>{option.label}</span>
+                                                  </div>
+                                                ) : option.type === "email" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <UserIcon className="h-4 w-4" />
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex items-center space-x-2">
+                                                    <div className="h-4 w-4">
+                                                      {
+                                                        QUESTIONS_ICON_MAP[
+                                                          option.type === "openTextQuestion"
+                                                            ? "openText"
+                                                            : "contactInfo"
+                                                        ]
+                                                      }
+                                                    </div>
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </SelectItem>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : null}
+
+                                      {emailSendToEmailOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Users</p>
+                                          </div>
+
+                                          {emailSendToEmailOptions.map((option) => {
+                                            return (
+                                              <SelectItem key={option.id} value={option.id}>
+                                                {option.type === "hiddenField" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <EyeOffIcon className="h-4 w-4" />
+                                                    <span>{option.label}</span>
+                                                  </div>
+                                                ) : option.type === "email" ? (
+                                                  <div className="flex items-center space-x-2">
+                                                    <UserIcon className="h-4 w-4" />
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex items-center space-x-2">
+                                                    <div className="h-4 w-4">
+                                                      {
+                                                        QUESTIONS_ICON_MAP[
+                                                          option.type === "openTextQuestion"
+                                                            ? "openText"
+                                                            : "contactInfo"
+                                                        ]
+                                                      }
+                                                    </div>
+                                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                      {option.label}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </SelectItem>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : null}
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         );
                       }}
