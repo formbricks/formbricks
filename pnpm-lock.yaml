@@ -396,8 +396,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(next@15.2.3(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
       '@wonderchain/sdk':
-        specifier: 1.0.11
-        version: 1.0.11(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: 1.0.13
+        version: 1.0.13(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)
       ai:
         specifier: 4.1.17
         version: 4.1.17(react@19.0.0)(zod@3.24.1)
@@ -1003,6 +1003,9 @@ importers:
       '@formkit/auto-animate':
         specifier: 0.8.2
         version: 0.8.2
+      '@wonderchain/sdk':
+        specifier: 1.0.13
+        version: 1.0.13(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)
       react-calendar:
         specifier: 5.1.0
         version: 5.1.0(@types/react@19.0.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1098,9 +1101,15 @@ importers:
       '@formkit/auto-animate':
         specifier: 0.8.2
         version: 0.8.2
+      '@types/object-hash':
+        specifier: 3.0.6
+        version: 3.0.6
       '@wonderchain/sdk':
-        specifier: 1.0.11
-        version: 1.0.11(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)
+        specifier: 1.0.13
+        version: 1.0.13(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)
+      object-hash:
+        specifier: 3.0.0
+        version: 3.0.0
       react-calendar:
         specifier: 5.1.0
         version: 5.1.0(@types/react@19.0.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -6550,6 +6559,9 @@ packages:
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
 
+  '@types/object-hash@3.0.6':
+    resolution: {integrity: sha512-fOBV8C1FIu2ELinoILQ+ApxcUKz4ngq+IWUYrxSGjXzzjUALijilampwkMgEtJ+h2njAW3pi853QpzNVCHB73w==}
+
   '@types/papaparse@5.3.15':
     resolution: {integrity: sha512-JHe6vF6x/8Z85nCX4yFdDslN11d+1pr12E526X8WAfhadOeaOTx5AuIkvDKIBopfvlzpzkdMx4YyvSKCM9oqtw==}
 
@@ -7361,8 +7373,8 @@ packages:
   '@wojtekmaj/date-utils@1.5.1':
     resolution: {integrity: sha512-+i7+JmNiE/3c9FKxzWFi2IjRJ+KzZl1QPu6QNrsgaa2MuBgXvUy4gA1TVzf/JMdIIloB76xSKikTWuyYAIVLww==}
 
-  '@wonderchain/sdk@1.0.11':
-    resolution: {integrity: sha512-GQwQozWDVSAGJUrczODIAs6/AhWEMzLp0t93ocP4SF26QxJE0r9d9olyrJVM5ZD00YmDaUNubrw8WgQjJTo7dQ==}
+  '@wonderchain/sdk@1.0.13':
+    resolution: {integrity: sha512-rpIufWr52FXgl8a2W3fKN7IQa7F5rR7Mp3Icn0qVgWOz3G6jPdOLicoSE9mtXHPgzoASg8pfiAFeRFbLyBHiOQ==}
 
   '@xmldom/is-dom-node@1.0.1':
     resolution: {integrity: sha512-CJDxIgE5I0FH+ttq/Fxy6nRpxP70+e2O048EPe85J2use3XKdatVM7dDVvFNjQudd9B49NPoZ+8PG49zj4Er8Q==}
@@ -23971,6 +23983,8 @@ snapshots:
 
   '@types/normalize-package-data@2.4.4': {}
 
+  '@types/object-hash@3.0.6': {}
+
   '@types/papaparse@5.3.15':
     dependencies:
       '@types/node': 22.10.2
@@ -25437,7 +25451,7 @@ snapshots:
 
   '@wojtekmaj/date-utils@1.5.1': {}
 
-  '@wonderchain/sdk@1.0.11(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)':
+  '@wonderchain/sdk@1.0.13(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@openapitools/openapi-generator-cli': 2.18.4(encoding@0.1.13)
       '@typechain/ethers-v6': 0.5.1(ethers@6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.8.2))(typescript@5.8.2)

@@ -116,6 +116,7 @@ export function DeployTokenQuestion({
       const index = fields.findIndex((f) => f.id === field.id);
       return safeValue[index] || "";
     });
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Update the value
     onChange({ [question.id]: finalValue });

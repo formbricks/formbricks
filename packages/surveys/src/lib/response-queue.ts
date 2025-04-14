@@ -1,4 +1,8 @@
-import { TResponseUpdate } from "@formbricks/types/responses";
+import { AlchemySigner } from "@account-kit/core";
+import { getRecorder, sendTransaction } from "@wonderchain/sdk";
+import objectHash from "object-hash";
+import { Provider } from "zksync-ethers";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { ApiClient } from "./api-client";
 import { SurveyState } from "./survey-state";
 
@@ -23,14 +27,21 @@ export class ResponseQueue {
   private surveyState: SurveyState;
   private isRequestInProgress = false;
   private api: ApiClient;
+  private provider: Provider;
+  private signer: AlchemySigner;
+  private response: TResponseData = {};
 
-  constructor(config: QueueConfig, surveyState: SurveyState) {
+  constructor(config: QueueConfig, surveyState: SurveyState, provider: Provider, signer?: AlchemySigner) {
     this.config = config;
     this.surveyState = surveyState;
     this.api = new ApiClient({
       appUrl: config.appUrl,
       environmentId: config.environmentId,
     });
+    this.provider = provider;
+    if (signer) {
+      this.signer = signer;
+    }
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -83,6 +94,35 @@ export class ResponseQueue {
 
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
+      if (!responseUpdate.hiddenFields) {
+        responseUpdate.hiddenFields = {};
+      }
+
+      this.response = {
+        ...this.response,
+        ...responseUpdate.data,
+        ...responseUpdate.hiddenFields,
+      };
+      if (responseUpdate.finished && this.signer) {
+        const recorder = await getRecorder(this.provider);
+        if (recorder) {
+          delete this.response["dataHash"];
+          delete this.response["transactionHash"];
+          console.log("hashing", this.response);
+          const hash = objectHash(this.response);
+          const input = await recorder.record.populateTransaction(hash);
+
+          input.from = await this.signer.getAddress();
+          input.value = BigInt(0);
+
+          const resp = await sendTransaction(this.provider, input, this.signer.signTypedData);
+          if (resp.hash) {
+            responseUpdate.data["dataHash"] = hash;
+            responseUpdate.data["transactionHash"] = resp.hash;
+          }
+        }
+      }
+
       if (this.surveyState.responseId !== null) {
         await this.api.updateResponse({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {

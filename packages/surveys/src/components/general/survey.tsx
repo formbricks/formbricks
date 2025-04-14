@@ -1,3 +1,4 @@
+import { useSigner } from "@account-kit/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type JSX, useCallback } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -11,6 +12,7 @@ import type {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { useProvider } from "@formbricks/web3";
 import { ApiClient } from "../../lib/api-client";
 import { evaluateLogic, performActions } from "../../lib/logic";
 import { parseRecallInformation } from "../../lib/recall";
@@ -71,6 +73,8 @@ export function Survey({
   singleUseResponseId,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
+  const { provider } = useProvider();
+  const signer = useSigner();
 
   if (appUrl && environmentId) {
     apiClient = new ApiClient({
@@ -113,7 +117,9 @@ export function Survey({
             }
           },
         },
-        surveyState
+        surveyState,
+        provider,
+        signer ? signer : undefined
       );
     }
 
