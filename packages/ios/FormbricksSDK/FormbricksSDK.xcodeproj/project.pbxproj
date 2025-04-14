@@ -43,6 +43,7 @@
 				"Extension/UIApplication+Window.swift",
 				Formbricks.swift,
 				Helpers/ConfigBuilder.swift,
+				Helpers/FormbricksEnvironment.swift,
 				Logger/Logger.swift,
 				Manager/PresentSurveyManager.swift,
 				Manager/SurveyManager.swift,

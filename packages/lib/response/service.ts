@@ -390,7 +390,7 @@ export const getResponseDownloadUrl = async (
       "Notes",
       "Tags",
       ...metaDataFields,
-      ...questions,
+      ...questions.flat(),
       ...variables,
       ...hiddenFields,
       ...userAttributes,
