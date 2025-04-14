@@ -12,7 +12,7 @@ type FollowUpResult = {
   error?: string;
 };
 
-const evaluateFollowUp = async (
+export const evaluateFollowUp = async (
   followUpId: string,
   followUpAction: TSurveyFollowUpAction,
   survey: TSurvey,
@@ -91,7 +91,7 @@ export const sendSurveyFollowUps = async (
   survey: TSurvey,
   response: TResponse,
   organization: TOrganization
-) => {
+): Promise<FollowUpResult[]> => {
   const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
     const { trigger } = followUp;
 
@@ -130,4 +130,6 @@ export const sendSurveyFollowUps = async (
   if (errors.length > 0) {
     logger.error(errors, "Follow-up processing errors");
   }
+
+  return followUpResults;
 };
