@@ -10,6 +10,7 @@
         "name": "next"
       }
     ],
+    "skipLibCheck": true,
     "strictNullChecks": true
   },
   "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
