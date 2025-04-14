@@ -44,7 +44,7 @@
   "dependencies": {
     "@account-kit/react": "4.23.1",
     "@formkit/auto-animate": "0.8.2",
-    "@wonderchain/sdk": "1.0.7",
+    "@wonderchain/sdk": "1.0.11",
     "react-calendar": "5.1.0",
     "zksync-ethers": "6.17.0"
   }

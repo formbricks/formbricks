@@ -1,0 +1,35 @@
+{
+  "name": "@formbricks/blockscout-api-client",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "clean": "rimraf src dist",
+    "fetch": "curl -H 'Accept: application/json' https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/refs/heads/main/swagger.yaml > ./swagger.json",
+    "generate": "openapi-generator-cli generate -i ./swagger.json -g typescript-axios -o src --skip-validate-spec",
+    "build": "pnpm clean && pnpm fetch && pnpm generate && tsc"
+  },
+  "main": "dist",
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.13.4"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

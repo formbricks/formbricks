@@ -13,8 +13,12 @@ export const useDeployERC20 = () => {
 
       const address = await signer.getAddress();
       const factory = await getFactory(provider);
-      console.log(factory.deployERC20, address, tokenName, tokenSymbol, initialSupply);
-      const input = await factory.deployERC20.populateTransaction(tokenName, tokenSymbol, initialSupply);
+      const input = await factory.deployERC20.populateTransaction(
+        tokenName,
+        tokenSymbol,
+        initialSupply,
+        address
+      );
       input.from = address;
       input.value = input.value || BigInt(0);
 

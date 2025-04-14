@@ -1,11 +1,12 @@
+import { CONFIG } from "@wonderchain/sdk";
 import { useMemo } from "react";
 import { Provider } from "zksync-ethers";
-
-const rpcUrl = "https://rpc.testnet.wonderchain.org";
+import { useChainId } from "./useChainId";
 
 export const useProvider = () => {
+  const chainId = useChainId();
   const provider = useMemo(() => {
-    return new Provider(rpcUrl);
-  }, []);
+    return new Provider(CONFIG[chainId].URLS.RPC);
+  }, [chainId]);
   return { provider };
 };
