@@ -300,6 +300,8 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
       tokenName: { show: true, required: true, placeholder: { default: "Token Name" } },
       tokenSymbol: { show: true, required: true, placeholder: { default: "Token Symbol" } },
       initialSupply: { show: true, required: true, placeholder: { default: "Initial Supply"} },
+      address: { show: true, required: true, placeholder: { default: "Address"} },
+      transactionDetails: { show: true, required: true, placeholder: { default: "Transaction Details"} },
       buttonLabel: { default: t("templates.next") },
       backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyDeployTokenQuestion>,

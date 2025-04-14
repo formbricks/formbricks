@@ -1,7 +1,9 @@
-import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { useUser } from "@account-kit/react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
+import { LoginButton } from "@formbricks/web3/src/alchemy-wallet/components/LoginButton";
 import { getLocalizedValue } from "../../lib/i18n";
 import { getUpdatedTtc, useTtc } from "../../lib/ttc";
 import { BackButton } from "../buttons/back-button";
@@ -54,6 +56,7 @@ export function DeployTokenQuestion({
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", ""];
   }, [value]);
+  const user = useUser();
 
   const fields = [
     {
@@ -71,7 +74,22 @@ export function DeployTokenQuestion({
       ...question.initialSupply,
       label: question.initialSupply.placeholder[languageCode],
     },
+    {
+      id: "address",
+      label: "Address",
+    },
+    {
+      id: "transactionDetails",
+      label: "Transaction Details",
+    },
   ];
+
+  useEffect(() => {
+    if (!user || !user.address) {
+      return;
+    }
+    handleChange("address", user.address);
+  }, [user, user?.address]);
 
   const handleChange = (fieldId: string, fieldValue: string) => {
     const newValue = fields.map((field) => {
@@ -79,22 +97,30 @@ export function DeployTokenQuestion({
         return fieldValue;
       }
       const existingValue = safeValue[fields.findIndex((f) => f.id === field.id)] || "";
-      return field.show ? existingValue : "";
+      return existingValue;
     });
     onChange({ [question.id]: newValue });
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     // @ts-ignore
+    // Check here for token deployed first, if token deploy loading
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue.length === 5 && safeValue.every((item) => item.trim() === "");
-    if (containsAllEmptyStrings) {
-      onSubmit({ [question.id]: [] }, updatedTtc);
-    } else {
-      onSubmit({ [question.id]: safeValue }, updatedTtc);
-    }
+
+    const txResp = await deployToken();
+    const txDetails = JSON.stringify(txResp);
+    const finalValue = fields.map((field) => {
+      if (field.id === "transactionDetails") return txDetails;
+      const index = fields.findIndex((f) => f.id === field.id);
+      return safeValue[index] || "";
+    });
+
+    // Update the value
+    onChange({ [question.id]: finalValue });
+
+    onSubmit({ [question.id]: finalValue }, updatedTtc);
   };
 
   const DeployTokenRef = useCallback(
@@ -109,7 +135,16 @@ export function DeployTokenQuestion({
 
   const getFieldValueById = (id: string) => {
     const index = fields.findIndex((f) => f.id === id);
-    return fields[index]?.show ? safeValue[index] : "";
+    return safeValue[index];
+  };
+
+  const deployToken = async () => {
+    const tokenName = getFieldValueById("tokenName");
+    const tokenSymbol = getFieldValueById("tokenSymbol");
+    const initialSupply = getFieldValueById("initialSupply");
+
+    const txResp = await deploy(tokenName, tokenSymbol, initialSupply);
+    return txResp;
   };
 
   return (
@@ -131,45 +166,49 @@ export function DeployTokenQuestion({
 
           <div className="mt-4 flex w-full flex-col space-y-2">
             {fields.map((field, index) => {
-              const isFieldRequired = () => {
-                if (field.required) {
-                  return true;
-                }
-
-                // if all fields are optional and the question is required, then the fields should be required
-                if (
-                  fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-                  question.required
-                ) {
-                  return true;
-                }
-
-                return false;
-              };
-
               let inputType = "text";
               if (field.id === "initialSupply") {
                 inputType = "number";
               }
 
-              return (
-                field.show && (
-                  <div className="space-y-1">
-                    <Label text={isFieldRequired() ? `${field.label}*` : field.label} />
+              if (field.id === "transactionDetails") {
+                return;
+              }
+
+              if (field.id === "address") {
+                return (
+                  <div key={field.id} className="space-y-1">
+                    <Label text={`${field.label}`} />
                     <Input
                       ref={index === 0 ? DeployTokenRef : null}
                       key={field.id}
-                      required={isFieldRequired()}
-                      value={safeValue[index] || ""}
+                      required={true}
+                      value={user?.address}
                       type={inputType}
-                      onChange={(e) => {
-                        handleChange(field.id, e.currentTarget.value);
-                      }}
+                      disabled
                       tabIndex={isCurrent ? 0 : -1}
                       aria-label={field.label}
                     />
                   </div>
-                )
+                );
+              }
+
+              return (
+                <div key={field.id} className="space-y-1">
+                  <Label text={`${field.label}*`} />
+                  <Input
+                    ref={index === 0 ? DeployTokenRef : null}
+                    key={field.id}
+                    required={true}
+                    value={safeValue[index] || ""}
+                    type={inputType}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
+                    tabIndex={isCurrent ? 0 : -1}
+                    aria-label={field.label}
+                  />
+                </div>
               );
             })}
           </div>
@@ -177,22 +216,15 @@ export function DeployTokenQuestion({
       </ScrollableContainer>
 
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        <button
-          onClick={() => {
-            const tokenName = getFieldValueById("tokenName");
-            const tokenSymbol = getFieldValueById("tokenSymbol");
-            const initialSupply = getFieldValueById("initialSupply");
-
-            deploy(tokenName, tokenSymbol, initialSupply);
-          }}
-          className="bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom flex items-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
-          Deploy
-        </button>
+        {user && user.address ? (
+          <SubmitButton
+            tabIndex={isCurrent ? 0 : -1}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+          />
+        ) : (
+          <LoginButton />
+        )}
         {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}

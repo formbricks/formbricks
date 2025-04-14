@@ -44,7 +44,7 @@ const formatContactInfoData = (responseValue: TResponseDataValue): Record<string
 };
 
 const formatDeployTokenData = (responseValue: TResponseDataValue): Record<string, string> => {
-  const addressKeys = ["tokenName", "tokenSymbol", "initialSupply"];
+  const addressKeys = ["tokenName", "tokenSymbol", "initialSupply", "address", "transactionDetails"];
   return Array.isArray(responseValue)
     ? responseValue.reduce((acc, curr, index) => {
         acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
