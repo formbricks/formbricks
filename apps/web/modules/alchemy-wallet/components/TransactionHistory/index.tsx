@@ -4,7 +4,6 @@
 // import { useTranslate } from "@tolgee/react";
 // import { useSmartAccountClient } from "@account-kit/react";
 import TransactionItem from "@/modules/alchemy-wallet/components/TransactionHistory/components/transaction-item";
-import { Transaction } from "@/modules/alchemy-wallet/components/TransactionHistory/components/transaction-item";
 import { useUser } from "@account-kit/react";
 import { TokenTransfer } from "@wonderchain/sdk/dist/blockscout-client";
 import { useEffect, useState } from "react";
@@ -16,18 +15,6 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
   const address = user?.address || "";
   const blockscoutApi = useBlockscoutApi();
   const [transfers, setTransfers] = useState<TokenTransfer[] | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[] | null>(null);
-  const filterTransfersByERC20AndERC1155Totals = (transfers: TokenTransfer[]) => {
-    return transfers.filter((t): t is Transaction => {
-      const total = t.total;
-
-      const isERC20 = "decimals" in total && "value" in total && !("token_id" in total);
-
-      const isERC1155 = "token_id" in total && "value" in total && "decimals" in total;
-
-      return isERC20 || isERC1155;
-    });
-  };
 
   useEffect(() => {
     (async () => {
@@ -37,14 +24,7 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
     })();
   }, [blockscoutApi, address]);
 
-  useEffect(() => {
-    if (!transfers) {
-      return;
-    }
-    setTransactions(filterTransfersByERC20AndERC1155Totals(transfers));
-  }, [transfers]);
-
-  if (!transactions?.length) {
+  if (!transfers?.length) {
     return null;
   }
   return (
@@ -54,8 +34,8 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
         className
       )}
       id={"transaction-history"}>
-      {transactions.map((t) => (
-        <TransactionItem transaction={t} key={t.transaction_hash + t.token + t.type + t.from + t.to} />
+      {transfers.map((t) => (
+        <TransactionItem transfer={t} key={t.transaction_hash + t.token + t.type + t.from + t.to} />
       ))}
     </div>
   );

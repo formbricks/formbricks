@@ -1,4 +1,4 @@
-import AvailableSurveys from "@/modules/activity/components/AvailableSurveys";
+import AvailableSurveys from "@/modules/activity/components/Surveys";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";

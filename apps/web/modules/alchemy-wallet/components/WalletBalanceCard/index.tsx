@@ -87,7 +87,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
 
             <TableBody>
               {balances.map((balance) => (
-                <TableRow>
+                <TableRow key={balance.token.address}>
                   <TableCell>{balance.token.name}</TableCell>
                   <TableCell>
                     <Address address={balance.token.address} />{" "}
