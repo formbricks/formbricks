@@ -1,42 +1,15 @@
 "use client";
 
-import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
 import { useUser } from "@account-kit/react";
-import { useTranslate } from "@tolgee/react";
-import { CopyIcon } from "lucide-react";
-import React from "react";
-import toast from "react-hot-toast";
-import { formatAddress } from "@formbricks/web3";
+import Address from "./address";
 
-export function WalletAddress(): React.JSX.Element {
+export function WalletAddress() {
   const user = useUser();
-  const { t } = useTranslate();
-  const handleCopyAddress = () => {
-    if (!user?.address) {
-      toast.error(t("environments.wallet.address.copy.error"));
-      return;
-    }
-    navigator.clipboard.writeText(user.address).then(() => {
-      toast.success(t("environments.wallet.address.copy.success"));
-    });
-  };
+  if (!user?.address) {
+    return null;
+  }
 
-  return (
-    <div className="flex flex-row items-center gap-2">
-      {user?.address ? (
-        <>
-          <span>{formatAddress(user.address)}</span>
-          <IconButton
-            label={t("environments.wallet.address.copy.button")}
-            icon={CopyIcon}
-            onClick={handleCopyAddress}
-          />
-        </>
-      ) : (
-        <span>{formatAddress("0x00000000", 3)}</span>
-      )}
-    </div>
-  );
+  return <Address address={user?.address} />;
 }
 
 export default WalletAddress;

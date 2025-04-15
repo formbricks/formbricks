@@ -1,5 +1,4 @@
 import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
-import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { AlchemyWalletProvider } from "@formbricks/web3";
 
 const AppLayout = async ({ children }) => {
@@ -7,7 +6,6 @@ const AppLayout = async ({ children }) => {
 
   return (
     <>
-      <NoMobileOverlay />
       <IntercomClientWrapper />
       <AlchemyWalletProvider apiKey={apiKey}>{children}</AlchemyWalletProvider>
     </>

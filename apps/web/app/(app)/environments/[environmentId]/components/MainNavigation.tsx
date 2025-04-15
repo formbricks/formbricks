@@ -186,7 +186,7 @@ export const MainNavigation = ({
       : []),
   ];
 
-  const mainNavigationLink = `/environments/${environment.id}/engagements"}`;
+  const mainNavigationLink = `/environments/${environment.id}/engagements`;
 
   return (
     <>
