@@ -44,7 +44,7 @@
     "@types/jsonwebtoken": "9.0.9",
     "@types/mime-types": "2.1.4",
     "@types/ungap__structured-clone": "1.2.0",
-    "dotenv": "16.4.7",
+    "dotenv": "16.5.0",
     "ts-node": "10.9.2",
     "vitest": "3.1.1",
     "vitest-mock-extended": "3.1.0"
