@@ -86,7 +86,7 @@
     "@vercel/og": "0.6.4",
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.1.0",
-    "@wonderchain/sdk": "1.0.13",
+    "@wonderchain/sdk": "1.0.14",
     "ai": "4.1.17",
     "alchemy-sdk": "3.5.6",
     "autoprefixer": "10.4.20",

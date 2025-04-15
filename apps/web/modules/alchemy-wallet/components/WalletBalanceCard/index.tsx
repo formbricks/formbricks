@@ -2,14 +2,11 @@
 
 import WalletAddress from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-address";
 import WalletEthBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-eth-balance";
-import IconButton from "@/modules/alchemy-wallet/components/common/icon-button";
-import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useUser } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
-import { EyeIcon, EyeOffIcon, SquareArrowOutUpRightIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { useBlockscoutApi } from "@formbricks/web3";
@@ -17,7 +14,6 @@ import Address from "./components/address";
 
 export function WalletBalanceCard({ className = "" }: { className?: string }) {
   const { t } = useTranslate();
-  const [showBalance, setShowBalance] = useState(true);
   const user = useUser();
   const address = user?.address || "";
   const blockscoutApi = useBlockscoutApi();
@@ -50,12 +46,6 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
                 {t("environments.wallet.balance_card.wallet_address")}
               </h3>
-              <IconButton
-                className="text-black hover:text-black"
-                icon={SquareArrowOutUpRightIcon}
-                label={t("environments.wallet.balance_card.external_link")}
-                onClick={() => (window.location.href = `https://etherscan.io/address/${address}`)}
-              />
             </div>
             <div className="bg-secondary text-secondary-foreground rounded-md p-2">
               <WalletAddress />
@@ -67,18 +57,9 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
                 {t("environments.wallet.balance_card.balance")}
               </h3>
-              <IconButton
-                className="text-black hover:text-black"
-                icon={!showBalance ? EyeIcon : EyeOffIcon}
-                onClick={() => setShowBalance((prev) => !prev)}
-                label={t("environments.wallet.balance_card.external_link")}
-              />
             </div>
-            <WalletEthBalance showBalance={showBalance} />
+            <WalletEthBalance />
           </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <SendModal />
         </div>
       </div>
       <div
@@ -87,13 +68,15 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
           className
         )}>
         <div className="col-span-3 flex flex-col gap-2">
-          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">All Token Balances</h3>
+          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
+            {t("common.token_balances")}
+          </h3>
           <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
             <TableHeader className="pointer-events-auto">
               <TableRow>
-                <TableHead>Token</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead align="right">Quanity</TableHead>
+                <TableHead>{t("common.token")}</TableHead>
+                <TableHead>{t("common.address")}</TableHead>
+                <TableHead align="right">{t("common.quantity")}</TableHead>
               </TableRow>
             </TableHeader>
 
