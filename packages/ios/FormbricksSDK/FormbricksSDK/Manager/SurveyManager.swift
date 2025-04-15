@@ -3,12 +3,16 @@ import SwiftUI
 /// The SurveyManager is responsible for managing the surveys that are displayed to the user.
 /// Filtering surveys based on the user's segments, responses, and displays.
 final class SurveyManager {
-    static let shared = SurveyManager()
-    private init() {
-        /*
-         This empty initializer prevents external instantiation of the SurveyManager class.
-         The class serves as a namespace for the shared instance, so instance creation is not needed and should be restricted.
-         */
+    private let userManager: UserManager
+    private let presentSurveyManager: PresentSurveyManager
+    
+    private init(userManager: UserManager, presentSurveyManager: PresentSurveyManager) {
+        self.userManager = userManager
+        self.presentSurveyManager = presentSurveyManager
+    }
+    
+    static func create(userManager: UserManager, presentSurveyManager: PresentSurveyManager) -> SurveyManager {
+        return SurveyManager(userManager: userManager, presentSurveyManager: presentSurveyManager)
     }
     
     private static let environmentResponseObjectKey = "environmentResponseObjectKey"
@@ -26,15 +30,15 @@ final class SurveyManager {
         guard let environment = environmentResponse else { return }
         guard let surveys = environment.data.data.surveys else { return }
         
-        let displays = UserManager.shared.displays ?? []
-        let responses = UserManager.shared.responses ?? []
-        let segments = UserManager.shared.segments ?? []
+        let displays = userManager.displays ?? []
+        let responses = userManager.responses ?? []
+        let segments = userManager.segments ?? []
         
         filteredSurveys = filterSurveysBasedOnDisplayType(surveys, displays: displays, responses: responses)
         filteredSurveys = filterSurveysBasedOnRecontactDays(filteredSurveys, defaultRecontactDays: environment.data.data.project.recontactDays)
         
         // If we have a user, we do more filtering
-        if UserManager.shared.userId != nil {
+        if userManager.userId != nil {
             if segments.isEmpty {
                 filteredSurveys = []
                 return
@@ -62,8 +66,8 @@ final class SurveyManager {
         if let surveyId = firstSurveyWithActionClass?.id, shouldDisplay {
             isShowingSurvey = true
             let timeout = firstSurveyWithActionClass?.delay ?? 0
-            DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) {
-                self.showSurvey(withId: surveyId)
+            DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) { [weak self] in
+                self?.showSurvey(withId: surveyId)
             }
         }
     }
@@ -74,7 +78,7 @@ extension SurveyManager {
     /// Checks if the environment state needs to be refreshed based on its `expiresAt` property, and if so, refreshes it, starts the refresh timer, and filters the surveys.
     func refreshEnvironmentIfNeeded(force: Bool = false) {
         if let environmentResponse = environmentResponse, environmentResponse.data.expiresAt.timeIntervalSinceNow > 0, !force {
-            Formbricks.logger.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
+            Formbricks.logger?.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
             filterSurveys()
             return
         }
@@ -88,7 +92,7 @@ extension SurveyManager {
                 self?.filterSurveys()
             case .failure:
                 self?.hasApiError = true
-                Formbricks.logger.error(FormbricksSDKError(type: .unableToRefreshEnvironment).message)
+                Formbricks.logger?.error(FormbricksSDKError(type: .unableToRefreshEnvironment).message)
                 self?.startErrorTimer()
             }
         }
@@ -96,12 +100,12 @@ extension SurveyManager {
     
     /// Posts a survey response to the Formbricks API.
     func postResponse(surveyId: String) {
-        UserManager.shared.onResponse(surveyId: surveyId)
+        userManager.onResponse(surveyId: surveyId)
     }
     
     /// Creates a new display for the survey. It is called when the survey is displayed to the user.
     func onNewDisplay(surveyId: String) {
-        UserManager.shared.onDisplay(surveyId: surveyId)
+        userManager.onDisplay(surveyId: surveyId)
     }
 }
 
@@ -110,13 +114,13 @@ extension SurveyManager {
     /// Dismisses the presented survey window.
     func dismissSurveyWebView() {
         isShowingSurvey = false
-        PresentSurveyManager.shared.dismissView()
+        presentSurveyManager.dismissView()
     }
     
     /// Dismisses the presented survey window after a delay.
     func delayedDismiss() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(Config.Environment.closingTimeoutInSeconds)) {
-            self.dismissSurveyWebView()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(Config.Environment.closingTimeoutInSeconds)) { [weak self] in
+            self?.dismissSurveyWebView()
         }
     }
 }
@@ -127,7 +131,7 @@ private extension SurveyManager {
     /// The view controller is presented over the current context.
     func showSurvey(withId id: String) {
         if let environmentResponse = environmentResponse {
-            PresentSurveyManager.shared.present(environmentResponse: environmentResponse, id: id)
+            presentSurveyManager.present(environmentResponse: environmentResponse, id: id)
         }
         
     }
@@ -149,9 +153,9 @@ private extension SurveyManager {
             return
         }
         
-        DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
-            Formbricks.logger.debug("Refreshing environment state.")
-            self.refreshEnvironmentIfNeeded(force: true)
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout) { [weak self] in
+            Formbricks.logger?.debug("Refreshing environment state.")
+            self?.refreshEnvironmentIfNeeded(force: true)
         }
     }
     
@@ -173,7 +177,7 @@ extension SurveyManager {
                 if let data = UserDefaults.standard.data(forKey: SurveyManager.environmentResponseObjectKey) {
                     return try? JSONDecoder().decode(EnvironmentResponse.self, from: data)
                 } else {
-                    Formbricks.logger.error(FormbricksSDKError(type: .unableToRetrieveEnvironment).message)
+                    Formbricks.logger?.error(FormbricksSDKError(type: .unableToRetrieveEnvironment).message)
                     return nil
                 }
             }
@@ -182,7 +186,7 @@ extension SurveyManager {
                 UserDefaults.standard.set(data, forKey: SurveyManager.environmentResponseObjectKey)
                 backingEnvironmentResponse = newValue
             } else {
-                Formbricks.logger.error(FormbricksSDKError(type: .unableToPersistEnvironment).message)
+                Formbricks.logger?.error(FormbricksSDKError(type: .unableToPersistEnvironment).message)
             }
         }
     }
@@ -214,7 +218,7 @@ private extension SurveyManager {
                 }
                 
             default:
-                Formbricks.logger.error(FormbricksSDKError(type: .invalidDisplayOption).message)
+                Formbricks.logger?.error(FormbricksSDKError(type: .invalidDisplayOption).message)
                 return false
             }
             
@@ -225,7 +229,7 @@ private extension SurveyManager {
     /// Filters the surveys based on the recontact days and the `lastDisplayedAt` date.
     func filterSurveysBasedOnRecontactDays(_ surveys: [Survey], defaultRecontactDays:  Int?) -> [Survey] {
         surveys.filter { survey in
-            guard let lastDisplayedAt = UserManager.shared.lastDisplayedAt else { return true }
+            guard let lastDisplayedAt = userManager.lastDisplayedAt else { return true }
             let recontactDays = survey.recontactDays ?? defaultRecontactDays
             
             if let recontactDays = recontactDays {

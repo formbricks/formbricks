@@ -1,13 +1,11 @@
 import Foundation
 
 /// Store and manage user state and sync with the server when needed.
-final class UserManager {
-    static let shared = UserManager()
-    private init() {
-        /* 
-         This empty initializer prevents external instantiation of the UserManager class.
-         The class serves as a namespace for the user state, so instance creation is not needed and should be restricted.
-        */
+final class UserManager: UserManagerSyncable {
+    weak var surveyManager: SurveyManager?
+    
+    init(surveyManager: SurveyManager? = nil) {
+        self.surveyManager = surveyManager
     }
     
     private static let userIdKey = "userIdKey"
@@ -27,27 +25,44 @@ final class UserManager {
     private var backingResponses: [String]?
     private var backingLastDisplayedAt: Date?
     private var backingExpiresAt: Date?
+    private var updateQueue: UpdateQueue?
     
     internal var syncTimer: Timer?
     
     /// Starts an update queue with the given user id.
     func set(userId: String) {
-        UpdateQueue.current.set(userId: userId)
+        if updateQueue == nil {
+            updateQueue = UpdateQueue(userManager: self)
+        }
+        
+        updateQueue?.set(userId: userId)
     }
     
     /// Starts an update queue with the given attribute.
     func add(attribute: String, forKey key: String) {
-        UpdateQueue.current.add(attribute: attribute, forKey: key)
+        if updateQueue == nil {
+            updateQueue = UpdateQueue(userManager: self)
+        }
+        
+        updateQueue?.add(attribute: attribute, forKey: key)
     }
     
     /// Starts an update queue with the given attributes.
     func set(attributes: [String: String]) {
-        UpdateQueue.current.set(attributes: attributes)
+        if updateQueue == nil {
+            updateQueue = UpdateQueue(userManager: self)
+        }
+        
+        updateQueue?.set(attributes: attributes)
     }
     
     /// Starts an update queue with the given language..
     func set(language: String) {
-        UpdateQueue.current.set(language: language)
+        if updateQueue == nil {
+            updateQueue = UpdateQueue(userManager: self)
+        }
+        
+        updateQueue?.set(language: language)
     }
     
     /// Saves `surveyId` to the `displays` property and the current date to the `lastDisplayedAt` property.
@@ -57,7 +72,7 @@ final class UserManager {
         newDisplays.append(Display(surveyId: surveyId, createdAt: DateFormatter.isoFormatter.string(from: lastDisplayedAt)))
         displays = newDisplays
         self.lastDisplayedAt = lastDisplayedAt
-        SurveyManager.shared.filterSurveys()
+        surveyManager?.filterSurveys()
     }
     
     /// Saves `surveyId` to the `responses` property.
@@ -65,7 +80,7 @@ final class UserManager {
         var newResponses = responses ?? []
         newResponses.append(surveyId)
         responses = newResponses
-        SurveyManager.shared.filterSurveys()
+        surveyManager?.filterSurveys()
     }
     
     /// Syncs the user state with the server if the user id is set and the expiration date has passed.
@@ -92,11 +107,16 @@ final class UserManager {
                 self?.responses = userResponse.data.state?.data?.responses
                 self?.lastDisplayedAt = userResponse.data.state?.data?.lastDisplayAt
                 self?.expiresAt = userResponse.data.state?.expiresAt
-                UpdateQueue.current.reset()
-                SurveyManager.shared.filterSurveys()
+                
+                if self?.updateQueue == nil {
+                    self?.updateQueue = UpdateQueue(userManager: self!)
+                }
+                
+                self?.updateQueue?.reset()
+                self?.surveyManager?.filterSurveys()
                 self?.startSyncTimer()
             case .failure(let error):
-                Formbricks.logger.error(error)
+                Formbricks.logger?.error(error)
             }
         }
     }
@@ -115,7 +135,16 @@ final class UserManager {
         backingResponses = nil
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
-        UpdateQueue.current.reset()
+        updateQueue?.reset()
+    }
+    
+    func cleanupUpdateQueue() {
+        updateQueue?.cleanup()
+        updateQueue = nil  // Release the instance so memory can be reclaimed.
+    }
+    
+    deinit {
+        print("UserManager deinitialized")
     }
 }
 
