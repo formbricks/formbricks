@@ -237,6 +237,7 @@ export function MultipleChoiceSingleQuestion({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
+                        maxlength={250}
                         pattern=".*\S+.*"
                       />
                     ) : null}
