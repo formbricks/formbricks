@@ -788,6 +788,7 @@
         "api_key_updated": "API Key updated",
         "duplicate_access": "Duplicate project access not allowed",
         "no_api_keys_yet": "You don't have any API keys yet",
+        "no_env_permissions_found": "No environment permissions found",
         "organization_access": "Organization Access",
         "permissions": "Permissions",
         "project_access": "Project Access",
