@@ -104,14 +104,12 @@ export const AddApiKeyModal = ({
 
   const addPermission = () => {
     const newIndex = Object.keys(selectedPermissions).length;
-    if (projects.length > 0 && projects[0].environments.length > 0) {
-      const initialPermission = getInitialPermissions()["permission-0"];
-      if (initialPermission) {
-        setSelectedPermissions({
-          ...selectedPermissions,
-          [`permission-${newIndex}`]: initialPermission,
-        });
-      }
+    const initialPermission = getInitialPermissions()["permission-0"];
+    if (initialPermission) {
+      setSelectedPermissions({
+        ...selectedPermissions,
+        [`permission-${newIndex}`]: initialPermission,
+      });
     }
   };
 
@@ -399,7 +397,7 @@ export const AddApiKeyModal = ({
                 onClick={() => {
                   setOpen(false);
                   reset();
-                  setSelectedPermissions(getInitialPermissions());
+                  setSelectedPermissions({});
                 }}>
                 {t("common.cancel")}
               </Button>

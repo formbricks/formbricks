@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Contrôle d'accès",
         "add_api_key": "Ajouter une clé API",
         "api_key": "Clé API",
         "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
@@ -784,6 +785,7 @@
         "api_key_deleted": "Clé API supprimée",
         "api_key_label": "Étiquette de clé API",
         "api_key_security_warning": "Pour des raisons de sécurité, la clé API ne sera affichée qu'une seule fois après sa création. Veuillez la copier immédiatement à votre destination.",
+        "api_key_updated": "Clé API mise à jour",
         "duplicate_access": "L'accès en double au projet n'est pas autorisé",
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
         "no_env_permissions_found": "Aucune autorisation d'environnement trouvée",
@@ -1721,8 +1723,6 @@
         "copy_link_to_public_results": "Copier le lien vers les résultats publics",
         "create_single_use_links": "Créer des liens à usage unique",
         "create_single_use_links_description": "Acceptez uniquement une soumission par lien. Voici comment.",
-        "current_selection_csv": "Sélection actuelle (CSV)",
-        "current_selection_excel": "Sélection actuelle (Excel)",
         "custom_range": "Plage personnalisée...",
         "data_prefilling": "Préremplissage des données",
         "data_prefilling_description": "Vous souhaitez préremplir certains champs dans l'enquête ? Voici comment faire.",
@@ -1747,6 +1747,8 @@
         "failed_to_copy_link": "Échec de la copie du lien",
         "filter_added_successfully": "Filtre ajouté avec succès",
         "filter_updated_successfully": "Filtre mis à jour avec succès",
+        "filtered_responses_csv": "Réponses filtrées (CSV)",
+        "filtered_responses_excel": "Réponses filtrées (Excel)",
         "formbricks_email_survey_preview": "Aperçu de l'enquête par e-mail Formbricks",
         "go_to_setup_checklist": "Allez à la liste de contrôle de configuration \uD83D\uDC49",
         "hide_embed_code": "Cacher le code d'intégration",

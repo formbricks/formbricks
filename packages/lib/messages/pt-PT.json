@@ -777,6 +777,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Controlo de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
@@ -784,6 +785,7 @@
         "api_key_deleted": "Chave API eliminada",
         "api_key_label": "Etiqueta da Chave API",
         "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
+        "api_key_updated": "Chave API atualizada",
         "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Ainda não tem nenhuma chave API",
         "no_env_permissions_found": "Nenhuma permissão de ambiente encontrada",
@@ -1721,8 +1723,6 @@
         "copy_link_to_public_results": "Copiar link para resultados públicos",
         "create_single_use_links": "Criar links de uso único",
         "create_single_use_links_description": "Aceitar apenas uma submissão por link. Aqui está como.",
-        "current_selection_csv": "Seleção atual (CSV)",
-        "current_selection_excel": "Seleção atual (Excel)",
         "custom_range": "Intervalo personalizado...",
         "data_prefilling": "Pré-preenchimento de dados",
         "data_prefilling_description": "Quer pré-preencher alguns campos no inquérito? Aqui está como.",
@@ -1747,6 +1747,8 @@
         "failed_to_copy_link": "Falha ao copiar link",
         "filter_added_successfully": "Filtro adicionado com sucesso",
         "filter_updated_successfully": "Filtro atualizado com sucesso",
+        "filtered_responses_csv": "Respostas filtradas (CSV)",
+        "filtered_responses_excel": "Respostas filtradas (Excel)",
         "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
         "go_to_setup_checklist": "Ir para a Lista de Verificação de Configuração \uD83D\uDC49",
         "hide_embed_code": "Ocultar código de incorporação",
