@@ -62,6 +62,33 @@ describe("renderEmailResponseValue", () => {
       const svgElements = document.querySelectorAll("svg");
       expect(svgElements.length).toBeGreaterThanOrEqual(2);
     });
+
+    it("should render a message when overrideFileUploadResponse is true", async () => {
+      // Arrange
+      const fileUrls = ["https://example.com/uploads/file1.pdf"];
+      const expectedMessage = "emails.render_email_response_value_file_upload_response_link_not_included";
+
+      // Act
+      const result = await renderEmailResponseValue(
+        fileUrls,
+        TSurveyQuestionTypeEnum.FileUpload,
+        mockTranslate as unknown as TFnType,
+        true
+      );
+
+      render(result);
+
+      // Assert
+      // Check that the override message is displayed
+      expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+      expect(screen.getByText(expectedMessage)).toHaveClass(
+        "mt-0",
+        "font-bold",
+        "break-words",
+        "whitespace-pre-wrap",
+        "italic"
+      );
+    });
   });
 
   describe("PictureSelection question type", () => {
@@ -101,6 +128,39 @@ describe("renderEmailResponseValue", () => {
       expect(images[0]).toHaveAttribute("class", "m-2 h-28");
       expect(images[1]).toHaveAttribute("class", "m-2 h-28");
       expect(images[2]).toHaveAttribute("class", "m-2 h-28");
+    });
+  });
+
+  describe("Ranking question type", () => {
+    it("should render ranking responses with proper numbering and styling", async () => {
+      // Arrange
+      const rankingItems = ["First Choice", "Second Choice", "Third Choice"];
+
+      // Act
+      const result = await renderEmailResponseValue(
+        rankingItems,
+        TSurveyQuestionTypeEnum.Ranking,
+        mockTranslate as unknown as TFnType
+      );
+
+      render(result);
+
+      // Assert
+      // Check if we have the correct number of ranking items
+      const rankingElements = document.querySelectorAll(".mb-1");
+      expect(rankingElements).toHaveLength(3);
+
+      // Check if each item has the correct number and styling
+      rankingItems.forEach((item, index) => {
+        const itemElement = screen.getByText(item);
+        expect(itemElement).toBeInTheDocument();
+        expect(itemElement).toHaveClass("rounded", "bg-slate-100", "px-2", "py-1");
+
+        // Check if the ranking number is present
+        const rankNumber = screen.getByText(`#${index + 1}`);
+        expect(rankNumber).toBeInTheDocument();
+        expect(rankNumber).toHaveClass("text-slate-400");
+      });
     });
   });
 
