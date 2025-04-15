@@ -2,14 +2,17 @@
 
 import WalletAddress from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-address";
 import WalletEthBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-eth-balance";
+import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useUser } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
+import { SendIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { useBlockscoutApi } from "@formbricks/web3";
+import SendModal from "../common/send-modal";
 import Address from "./components/address";
 
 export function WalletBalanceCard({ className = "" }: { className?: string }) {
@@ -18,6 +21,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
   const address = user?.address || "";
   const blockscoutApi = useBlockscoutApi();
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
+  const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -77,6 +81,7 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
                 <TableHead>{t("common.token")}</TableHead>
                 <TableHead>{t("common.address")}</TableHead>
                 <TableHead align="right">{t("common.quantity")}</TableHead>
+                <TableHead align="right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -90,10 +95,20 @@ export function WalletBalanceCard({ className = "" }: { className?: string }) {
                   <TableCell align="right">
                     {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
                   </TableCell>
+                  <TableCell align="right">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSelectedBalance(balance)}
+                      className="inline-flex flex-nowrap items-center gap-2">
+                      <SendIcon className="h-4 w-4" strokeWidth={2} />
+                      {t("common.withdraw")}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <SendModal balance={selectedBalance} onClose={() => setSelectedBalance(null)} />
         </div>
       </div>
     </>
