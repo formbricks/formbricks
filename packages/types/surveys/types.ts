@@ -256,6 +256,13 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
+export const ZSurveyRecaptcha = z.object({
+  enabled: z.boolean().default(false),
+  threshold: z.number().min(0).max(1).default(0),
+});
+
+export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
+
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,

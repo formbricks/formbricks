@@ -105,6 +105,10 @@ x-environment: &environment
     # TURNSTILE_SITE_KEY:
     # TURNSTILE_SECRET_KEY:
 
+    # Set the below keys to enable recaptcha V3 for survey responses bot protection(only available in the Enterprise Edition)
+    # RECAPTCHA_SITE_KEY=
+    # RECAPTCHA_SECRET_KEY=
+
     # Set the below from GitHub if you want to enable GitHub OAuth
     # GITHUB_ID:
     # GITHUB_SECRET:
