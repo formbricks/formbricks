@@ -127,7 +127,8 @@ export const FollowUpItem = ({
               onClick={async (e) => {
                 e.stopPropagation();
                 setDeleteFollowUpModalOpen(true);
-              }}>
+              }}
+              aria-label={t("common.delete")}>
               <TrashIcon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
