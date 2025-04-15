@@ -32,7 +32,7 @@ import {
   PanelLeftOpenIcon,
   PlusIcon,
   UserCircleIcon,
-  // UserIcon,
+  UserIcon,
   UsersIcon,
   WalletMinimalIcon,
 } from "lucide-react";
@@ -121,6 +121,13 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/wallet`,
         icon: WalletMinimalIcon,
         isActive: pathname?.includes("/wallet"),
+        isHidden: false,
+      },
+      {
+        name: t("common.activity"),
+        href: `/environments/${environment.id}/activity`,
+        icon: UserIcon,
+        isActive: pathname?.includes("/activity"),
         isHidden: false,
       },
       ...(hasAccess
