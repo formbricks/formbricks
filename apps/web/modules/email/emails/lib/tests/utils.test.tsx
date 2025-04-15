@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { TFnType, TranslationKey } from "@tolgee/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { renderEmailResponseValue } from "../utils";
 
@@ -28,7 +28,7 @@ const mockTranslate = (key: TranslationKey) => key;
 
 describe("renderEmailResponseValue", () => {
   describe("FileUpload question type", () => {
-    it("should render clickable file upload links with file icons and truncated file names when overrideFileUploadResponse is false", async () => {
+    test("renders clickable file upload links with file icons and truncated file names when overrideFileUploadResponse is false", async () => {
       // Arrange
       const fileUrls = [
         "https://example.com/uploads/file1.pdf",
@@ -63,7 +63,7 @@ describe("renderEmailResponseValue", () => {
       expect(svgElements.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("should render a message when overrideFileUploadResponse is true", async () => {
+    test("renders a message when overrideFileUploadResponse is true", async () => {
       // Arrange
       const fileUrls = ["https://example.com/uploads/file1.pdf"];
       const expectedMessage = "emails.render_email_response_value_file_upload_response_link_not_included";
@@ -92,7 +92,7 @@ describe("renderEmailResponseValue", () => {
   });
 
   describe("PictureSelection question type", () => {
-    it("should render images with appropriate alt text and styling", async () => {
+    test("renders images with appropriate alt text and styling", async () => {
       // Arrange
       const imageUrls = [
         "https://example.com/images/sunset.jpg",
@@ -132,7 +132,7 @@ describe("renderEmailResponseValue", () => {
   });
 
   describe("Ranking question type", () => {
-    it("should render ranking responses with proper numbering and styling", async () => {
+    test("renders ranking responses with proper numbering and styling", async () => {
       // Arrange
       const rankingItems = ["First Choice", "Second Choice", "Third Choice"];
 
@@ -165,7 +165,7 @@ describe("renderEmailResponseValue", () => {
   });
 
   describe("handling long text responses", () => {
-    it("should properly format extremely long text responses with line breaks", async () => {
+    test("properly formats extremely long text responses with line breaks", async () => {
       // Arrange
       // Create a very long text response with multiple paragraphs and long words
       const longTextResponse = `This is the first paragraph of a very long response that might be submitted by a user in an open text question. It contains detailed information and feedback.
@@ -204,7 +204,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
   });
 
   describe("Default case (unmatched question type)", () => {
-    it("should render the response as plain text when the question type does not match any specific case", async () => {
+    test("renders the response as plain text when the question type does not match any specific case", async () => {
       // Arrange
       const response = "This is a plain text response";
       // Using a question type that doesn't match any specific case in the switch statement
@@ -228,7 +228,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
       expect(textElement).toHaveClass("mt-0", "font-bold", "break-words", "whitespace-pre-wrap");
     });
 
-    it("should handle array responses in the default case by rendering them as text", async () => {
+    test("handles array responses in the default case by rendering them as text", async () => {
       // Arrange
       const response = ["Item 1", "Item 2", "Item 3"];
       const questionType = "AnotherCustomType" as any;

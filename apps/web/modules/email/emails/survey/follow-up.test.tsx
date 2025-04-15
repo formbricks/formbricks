@@ -2,7 +2,7 @@ import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FollowUpEmail } from "./follow-up";
@@ -67,7 +67,7 @@ describe("FollowUpEmail", () => {
     cleanup();
   });
 
-  it("renders the default logo if no custom logo is provided", async () => {
+  test("renders the default logo if no custom logo is provided", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
       logoUrl: undefined,
@@ -80,7 +80,7 @@ describe("FollowUpEmail", () => {
     expect(logoImage).toHaveAttribute("src", "https://example.com/mock-logo.png");
   });
 
-  it("renders the custom logo if provided", async () => {
+  test("renders the custom logo if provided", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
     });
@@ -92,7 +92,7 @@ describe("FollowUpEmail", () => {
     expect(logoImage).toHaveAttribute("src", "https://example.com/custom-logo.png");
   });
 
-  it("renders the HTML content", async () => {
+  test("renders the HTML content", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
     });
@@ -102,7 +102,7 @@ describe("FollowUpEmail", () => {
     expect(screen.getByText("Test HTML Content")).toBeInTheDocument();
   });
 
-  it("renders the imprint and privacy policy links if provided", async () => {
+  test("renders the imprint and privacy policy links if provided", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
     });
@@ -113,7 +113,7 @@ describe("FollowUpEmail", () => {
     expect(screen.getByText("emails.privacy_policy")).toBeInTheDocument();
   });
 
-  it("renders the imprint address if provided", async () => {
+  test("renders the imprint address if provided", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
     });
@@ -124,7 +124,7 @@ describe("FollowUpEmail", () => {
     expect(screen.getByText("Imprint Address")).toBeInTheDocument();
   });
 
-  it("renders the response data if attachResponseData is true", async () => {
+  test("renders the response data if attachResponseData is true", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
       attachResponseData: true,

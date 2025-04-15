@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FollowUpItem } from "./follow-up-item";
@@ -181,7 +181,7 @@ describe("FollowUpItem", () => {
 
   const setLocalSurvey = vi.fn();
 
-  it("should mark email as invalid if 'to' does not match any valid question, hidden field, or email", () => {
+  test("marks email as invalid if 'to' does not match any valid question, hidden field, or email", () => {
     // Create a follow-up with an invalid 'to' value
     const invalidFollowUp = createMockFollowUp("invalid@example.com");
 
@@ -203,7 +203,7 @@ describe("FollowUpItem", () => {
     expect(warningBadge).toBeInTheDocument();
   });
 
-  it("should not mark email as invalid if 'to' matches a valid question ID", () => {
+  test("does not mark email as invalid if 'to' matches a valid question ID", () => {
     // Create a follow-up with a valid question ID (q1 is an OpenText with email inputType)
     const validFollowUp = createMockFollowUp(mockQuestion1Id);
 
@@ -225,7 +225,7 @@ describe("FollowUpItem", () => {
     expect(warningBadges).not.toBeInTheDocument();
   });
 
-  it("should not mark email as invalid if 'to' matches a valid hidden field ID", () => {
+  test("does not mark email as invalid if 'to' matches a valid hidden field ID", () => {
     // Create a follow-up with a valid hidden field ID
     const validFollowUp = createMockFollowUp("hidden1");
 
@@ -247,7 +247,7 @@ describe("FollowUpItem", () => {
     expect(warningBadges).not.toBeInTheDocument();
   });
 
-  it("should not mark email as invalid if 'to' matches a team member email", () => {
+  test("does not mark email as invalid if 'to' matches a team member email", () => {
     // Create a follow-up with a valid team member email
     const validFollowUp = createMockFollowUp("team1@example.com");
 
@@ -269,7 +269,7 @@ describe("FollowUpItem", () => {
     expect(warningBadges).not.toBeInTheDocument();
   });
 
-  it("should not mark email as invalid if 'to' matches the user email", () => {
+  test("does not mark email as invalid if 'to' matches the user email", () => {
     // Create a follow-up with the user's email
     const validFollowUp = createMockFollowUp(userEmail);
 
@@ -291,7 +291,7 @@ describe("FollowUpItem", () => {
     expect(warningBadges).not.toBeInTheDocument();
   });
 
-  it("should mark email as invalid if 'to' matches a question with incorrect type", () => {
+  test("does mark email as invalid if 'to' matches a question with incorrect type", () => {
     // Create a follow-up with a question ID that is not OpenText with email inputType or ContactInfo
     const invalidFollowUp = createMockFollowUp(mockQuestion2Id); // q2 is OpenText but inputType is text, not email
 
@@ -313,7 +313,7 @@ describe("FollowUpItem", () => {
     expect(warningBadge).toBeInTheDocument();
   });
 
-  it("should open the edit modal when the item is clicked", async () => {
+  test("opens the edit modal when the item is clicked", async () => {
     const user = userEvent.setup();
 
     // Create a follow-up with a valid question ID
@@ -433,7 +433,7 @@ describe("FollowUpItem - Ending Validation", () => {
 
   const setLocalSurvey = vi.fn();
 
-  it("should mark ending as invalid if trigger.type is 'endings' and no endingIds are provided", () => {
+  test("marks ending as invalid if trigger.type is 'endings' and no endingIds are provided", () => {
     // Create a follow-up with trigger type "endings" but no endingIds
     const invalidFollowUp = createMockFollowUp("endings", []);
 
@@ -455,7 +455,7 @@ describe("FollowUpItem - Ending Validation", () => {
     expect(warningBadge).toBeInTheDocument();
   });
 
-  it("should not mark ending as invalid if trigger.type is 'endings' and endingIds are provided", () => {
+  test("does not mark ending as invalid if trigger.type is 'endings' and endingIds are provided", () => {
     // Create a follow-up with trigger type "endings" and valid endingIds
     const validFollowUp = createMockFollowUp("endings", ["ending-1", "ending-2"]);
 
@@ -477,7 +477,7 @@ describe("FollowUpItem - Ending Validation", () => {
     expect(warningBadges).not.toBeInTheDocument();
   });
 
-  it("should not mark ending as invalid if trigger.type is 'response'", () => {
+  test("does not mark ending as invalid if trigger.type is 'response'", () => {
     // Create a follow-up with trigger type "response"
     const responseFollowUp = createMockFollowUp("response");
 
@@ -610,7 +610,7 @@ describe("FollowUpItem - Endings Validation", () => {
 
   const setLocalSurvey = vi.fn();
 
-  it("should display a warning when followUp.trigger.type is 'endings' but endingIds array is empty", () => {
+  test("displays a warning when followUp.trigger.type is 'endings' but endingIds array is empty", () => {
     // Create a follow-up with empty endingIds
     const emptyEndingFollowUp = createEmptyEndingFollowUp();
 
@@ -636,7 +636,7 @@ describe("FollowUpItem - Endings Validation", () => {
     expect(endingTag).toBeInTheDocument();
   });
 
-  it("should not display a warning when followUp.trigger.type is 'endings' and endingIds array is not empty", () => {
+  test("does not display a warning when followUp.trigger.type is 'endings' and endingIds array is not empty", () => {
     // Create a follow-up with valid endingIds
     const validEndingFollowUp = createValidEndingFollowUp();
 
@@ -730,7 +730,7 @@ describe("FollowUpItem - Deletion Tests", () => {
     },
   });
 
-  it("should open delete confirmation modal when delete button is clicked", async () => {
+  test("opens delete confirmation modal when delete button is clicked", async () => {
     const user = userEvent.setup();
     const followUp = createMockFollowUp();
     const setLocalSurvey = vi.fn();
@@ -757,7 +757,7 @@ describe("FollowUpItem - Deletion Tests", () => {
     expect(confirmationModal).toBeInTheDocument();
   });
 
-  it("should mark follow-up as deleted when confirmed in delete modal", async () => {
+  test("marks follow-up as deleted when confirmed in delete modal", async () => {
     const user = userEvent.setup();
     const followUp = createMockFollowUp();
     const setLocalSurvey = vi.fn();
@@ -804,7 +804,7 @@ describe("FollowUpItem - Deletion Tests", () => {
     ]);
   });
 
-  it("should not mark follow-up as deleted when delete is cancelled", async () => {
+  test("does not mark follow-up as deleted when delete is cancelled", async () => {
     const user = userEvent.setup();
     const followUp = createMockFollowUp();
     const setLocalSurvey = vi.fn();
