@@ -151,7 +151,8 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
               onClick={handleResetPassword}
               loading={isResettingPassword}
               disabled={isResettingPassword || !user.email}
-              size="default">
+              size="default"
+              variant="secondary">
               {t("auth.forgot-password.reset_password")}
             </Button>
           </div>
