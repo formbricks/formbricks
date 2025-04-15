@@ -39,7 +39,7 @@ export const ZSurveyFollowUpAction = z.object({
     replyTo: z.array(z.string().email()),
     subject: z.string(),
     body: z.string(),
-    attachResponseData: z.boolean().default(false),
+    attachResponseData: z.boolean(),
   }),
 });
 
