@@ -30,7 +30,13 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().optional(),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
+    FORMBRICKS_API_HOST: z
+      .string()
+      .url()
+      .optional()
+      .or(z.string().refine((str) => str === "")),
+    FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
@@ -102,6 +108,7 @@ export const env = createEnv({
       .optional()
       .or(z.string().refine((str) => str === "")),
     TURNSTILE_SECRET_KEY: z.string().optional(),
+    TURNSTILE_SITE_KEY: z.string().optional(),
     UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
@@ -115,21 +122,6 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
   },
 
-  /*
-   * Environment variables available on the client (and server).
-   *
-   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
-   */
-  client: {
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: z
-      .string()
-      .url()
-      .optional()
-      .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
-    NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
-  },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
    * we need to manually destructure them to make sure all are included in bundle.
@@ -164,6 +156,8 @@ export const env = createEnv({
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
     FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
+    FORMBRICKS_API_HOST: process.env.FORMBRICKS_API_HOST,
+    FORMBRICKS_ENVIRONMENT_ID: process.env.FORMBRICKS_ENVIRONMENT_ID,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
@@ -182,13 +176,9 @@ export const env = createEnv({
     MAIL_FROM: process.env.MAIL_FROM,
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-    NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
     SENTRY_DSN: process.env.SENTRY_DSN,
     POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
     POSTHOG_API_HOST: process.env.POSTHOG_API_HOST,
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
     INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
@@ -226,6 +216,7 @@ export const env = createEnv({
     SURVEY_URL: process.env.SURVEY_URL,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
+    TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
     TERMS_URL: process.env.TERMS_URL,
     UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,

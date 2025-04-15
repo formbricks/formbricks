@@ -2,6 +2,7 @@ import "server-only";
 import { apiKeyCache } from "@/lib/cache/api-key";
 import {
   TApiKeyCreateInput,
+  TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -186,6 +187,32 @@ export const createApiKey = async (
     });
 
     return { ...result, actualKey: key };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): Promise<ApiKey | null> => {
+  try {
+    const updatedApiKey = await prisma.apiKey.update({
+      where: {
+        id: apiKeyId,
+      },
+      data: {
+        label: data.label,
+      },
+    });
+
+    apiKeyCache.revalidate({
+      id: updatedApiKey.id,
+      hashedKey: updatedApiKey.hashedKey,
+      organizationId: updatedApiKey.organizationId,
+    });
+
+    return updatedApiKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

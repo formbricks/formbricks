@@ -1,6 +1,7 @@
 "use client";
 
 import { getDefaultEndingCard } from "@/app/lib/templates";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
@@ -8,8 +9,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import Link from "next/link";
+import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSegment } from "@formbricks/types/segment";
@@ -106,7 +106,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -171,23 +171,25 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                       {localSurvey.type === option.id && option.alert && (
-                        <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
-                          <AlertCircleIcon className="h-5 w-5 text-amber-500" />
-                          <div className="text-amber-800">
-                            <p className="text-xs font-semibold">
-                              {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
-                            </p>
-                            <p className="text-xs font-normal">
-                              <Link
-                                href={`/environments/${environment.id}/project/${option.id}-connection`}
-                                className="underline hover:text-amber-900"
-                                target="_blank">
-                                {t("common.connect_formbricks")}
-                              </Link>{" "}
-                              {t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
-                            </p>
-                          </div>
-                        </div>
+                        <Alert variant="warning" className="mt-2">
+                          <AlertTitle>
+                            {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
+                          </AlertTitle>
+                          <AlertDescription>
+                            {t("common.connect_formbricks") +
+                              " " +
+                              t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
+                          </AlertDescription>
+                          <AlertButton
+                            onClick={() =>
+                              window.open(
+                                `/environments/${environment.id}/project/${option.id}-connection`,
+                                "_blank"
+                              )
+                            }>
+                            {t("common.connect_formbricks")}
+                          </AlertButton>
+                        </Alert>
                       )}
                     </div>
                   </div>
