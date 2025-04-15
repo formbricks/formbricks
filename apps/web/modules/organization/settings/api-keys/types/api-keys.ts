@@ -22,6 +22,14 @@ export const ZApiKeyCreateInput = ZApiKey.required({
 
 export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;
 
+export const ZApiKeyUpdateInput = ZApiKey.required({
+  label: true,
+}).pick({
+  label: true,
+});
+
+export type TApiKeyUpdateInput = z.infer<typeof ZApiKeyUpdateInput>;
+
 export interface TApiKey extends ApiKey {
   apiKey?: string;
 }
