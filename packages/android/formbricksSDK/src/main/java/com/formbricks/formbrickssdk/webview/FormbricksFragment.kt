@@ -48,16 +48,6 @@ class FormbricksFragment : BottomSheetDialogFragment() {
             dismiss()
         }
 
-        override fun onFinished() {
-            closeTimer.schedule(object: TimerTask() {
-                override fun run() {
-                    dismiss()
-                }
-
-            }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
-            )
-        }
-
         override fun onDisplayCreated() {
             SurveyManager.onNewDisplay(surveyId)
         }
@@ -230,7 +220,5 @@ class FormbricksFragment : BottomSheetDialogFragment() {
             fragment.surveyId = surveyId
             fragment.show(childFragmentManager, TAG)
         }
-
-        private const val CLOSING_TIMEOUT_IN_SECONDS = 5L
     }
 }
