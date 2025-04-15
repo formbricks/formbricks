@@ -28,6 +28,7 @@ export default defineConfig({
         "modules/ee/sso/lib/**/*.ts",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
+        "modules/email/emails/lib/*.tsx",
         "modules/environments/lib/**/*.ts",
         "modules/ui/components/post-hog-client/*.tsx",
         "modules/ee/role-management/components/*.tsx",
