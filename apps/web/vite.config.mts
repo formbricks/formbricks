@@ -56,6 +56,7 @@ export default defineConfig({
         "modules/api/v2/management/auth/*.ts",
         "modules/organization/settings/api-keys/components/*.tsx",
         "modules/survey/hooks/*.tsx",
+        "modules/survey/components/question-form-input/index.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
