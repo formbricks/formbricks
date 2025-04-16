@@ -63,7 +63,6 @@ export const logApiRequest = (request: Request, responseStatus: number): void =>
     Object.entries(queryParams).filter(([key]) => !sensitiveParams.includes(key.toLowerCase()))
   );
 
-  // Info: Conveys general, operational messages about system progress and state.
   logger
     .withContext({
       method,
