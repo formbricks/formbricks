@@ -2,6 +2,7 @@
 
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
@@ -54,6 +55,7 @@ export const QuestionSummaryHeader = ({
           </div>
         )}
       </div>
+      <SettingsId title={t("common.question_id")} id={questionSummary.question.id}></SettingsId>
     </div>
   );
 };
