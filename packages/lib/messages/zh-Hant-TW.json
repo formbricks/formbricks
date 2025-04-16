@@ -787,6 +787,7 @@
         "api_key_updated": "API 金鑰已更新",
         "duplicate_access": "不允許重複的 project 存取",
         "no_api_keys_yet": "您還沒有任何 API 金鑰",
+        "no_env_permissions_found": "找不到環境權限",
         "organization_access": "組織 Access",
         "permissions": "權限",
         "project_access": "專案存取",
