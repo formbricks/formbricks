@@ -301,6 +301,7 @@
     "projects": "Projects",
     "projects_limit_reached": "Projects limit reached",
     "quantity": "Quantity",
+    "quest": "Quest",
     "question": "Question",
     "question_id": "Question ID",
     "questions": "Questions",
@@ -352,6 +353,7 @@
     "styling": "Styling",
     "submit": "Submit",
     "summary": "Summary",
+    "survey": "Survey",
     "survey_completed": "Engagement completed.",
     "survey_id": "Engagement ID",
     "survey_languages": "Engagement Languages",
@@ -392,6 +394,7 @@
     "user": "User",
     "user_id": "User ID",
     "user_not_found": "User not found",
+    "value": "Value",
     "variable": "Variable",
     "variables": "Variables",
     "verified_email": "Verified Email",
@@ -1890,7 +1893,8 @@
           "min_amount": "Amount must be at least 0.01",
           "positive_amount": "Amount must be greater than zero"
         },
-        "recipient_address": "Recipient Address"
+        "recipient_address": "Recipient Address",
+        "token_address": "Token Address"
       },
       "login": "Login",
       "modal": {

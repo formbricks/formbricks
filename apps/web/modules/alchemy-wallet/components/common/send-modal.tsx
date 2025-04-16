@@ -10,16 +10,19 @@ import { ArrowRightIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 type FormValues = {
+  tokenAddress: string;
   address: string;
   amount: number;
 };
 
 type Props = {
+  address?: string;
+  // balances: TokenBalance[] | null;
   balance: TokenBalance | null;
   onClose: () => void;
 };
 
-export function SendModal({ balance, onClose }: Props) {
+export function SendModal({ address, balance, onClose }: Props) {
   const { t } = useTranslate();
   const {
     register,
@@ -41,6 +44,27 @@ export function SendModal({ balance, onClose }: Props) {
             </div>
           </div>
           <form onSubmit={handleSubmit(submitSend)} className="flex flex-col gap-6 pt-6">
+            <div className="flex w-full flex-col gap-2 rounded-lg">
+              {/* Dropdown here */}
+              Dropdown
+            </div>
+            <div className="flex w-full flex-col gap-2 rounded-lg">
+              <Label>{t("environments.wallet.form.token_address")}</Label>
+              <Input
+                autoFocus
+                type="text"
+                value={balance?.token.address}
+                disabled
+                placeholder={"0x..."}
+                {...register("tokenAddress", {
+                  required: t("environments.wallet.form.error.address_required"),
+                  pattern: {
+                    value: /^0x[a-fA-F0-9]{40}$/,
+                    message: t("environments.wallet.form.error.invalid_eth_address"),
+                  },
+                })}
+              />
+            </div>
             <div className="flex w-full flex-col gap-2 rounded-lg">
               <Label>{t("environments.wallet.form.recipient_address")}</Label>
               <Input

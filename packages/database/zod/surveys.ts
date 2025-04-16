@@ -43,6 +43,9 @@ const ZSurveyBase = z.object({
   name: z.string().openapi({
     description: "The name of the survey",
   }),
+  description: z.string().openapi({
+    description: "The description of the survey",
+  }),
   redirectUrl: z.string().url().nullable().openapi({
     description: "The URL to redirect to after the survey is completed",
   }),

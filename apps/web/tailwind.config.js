@@ -12,7 +12,7 @@ const config = {
     "./modules/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
     "./modules/ui/components/**/*.{ts,tsx}",
-    "../../packages/surveys/**/*.{js,ts,jsx,tsx}",
+    // "../../packages/surveys/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {

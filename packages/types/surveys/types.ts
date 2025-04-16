@@ -708,7 +708,7 @@ export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
   tokenSymbol: ZToggleInputConfig,
   initialSupply: ZToggleInputConfig,
   address: ZToggleInputConfig,
-  transactionDetails: ZToggleInputConfig
+  transactionDetails: ZToggleInputConfig,
 });
 
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
@@ -819,6 +819,7 @@ export const ZSurvey = z
     createdAt: z.date(),
     updatedAt: z.date(),
     name: z.string(),
+    description: z.string(),
     type: ZSurveyType,
     environmentId: z.string(),
     createdBy: z.string().nullable(),
@@ -1485,6 +1486,11 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.ContactInfo:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.DeployToken:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
@@ -2319,7 +2325,7 @@ const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLog
     ];
   });
 
-  return [...logicIssues.flat(), ...(logicFallbackIssue ? logicFallbackIssue : [])];
+  return [...logicIssues.flat(), ...(logicFallbackIssue ?? [])];
 };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.

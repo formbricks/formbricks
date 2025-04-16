@@ -21,11 +21,13 @@ export function CompletedSurveys({ className = "" }: { className?: string }): Re
     })();
   }, []);
 
+  console.log(completedSurveys);
+
   return (
     <div className={cn("", className)}>
       {completedSurveys &&
         completedSurveys.map((survey) => {
-          return <SurveyCard key={survey.id} survey={survey} />;
+          return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </div>
   );

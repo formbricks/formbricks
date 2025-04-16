@@ -20,12 +20,12 @@ export function AvailableSurveys({ className = "" }: { className?: string }): Re
       }
     })();
   }, []);
-
+  console.log(availableSurveys);
   return (
     <div className={cn("", className)}>
       {availableSurveys &&
         availableSurveys.map((survey) => {
-          return <SurveyCard key={survey.id} survey={survey} />;
+          return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </div>
   );
