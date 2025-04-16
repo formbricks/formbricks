@@ -9,7 +9,6 @@ vi.mock("@sentry/nextjs", () => ({
 
 describe("GlobalError", () => {
   const dummyError = new Error("Test error");
-  const originalEnv = process.env.NODE_ENV;
 
   afterEach(() => {
     cleanup();
