@@ -98,7 +98,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
       message: "File uploaded successfully",
     });
   } catch (err) {
-    logger.error("Error uploading file", err);
+    logger.error(err, "Error uploading file");
     if (err.name === "FileTooLargeError") {
       return responses.badRequestResponse(err.message);
     }
