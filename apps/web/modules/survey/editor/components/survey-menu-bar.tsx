@@ -41,6 +41,7 @@ interface SurveyMenuBarProps {
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
+  setIsCautionDialogOpen?: (open: boolean) => void;
 }
 
 export const SurveyMenuBar = ({
@@ -56,6 +57,7 @@ export const SurveyMenuBar = ({
   selectedLanguageCode,
   isCxMode,
   locale,
+  setIsCautionDialogOpen,
 }: SurveyMenuBarProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -64,7 +66,6 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -402,22 +403,6 @@ export const SurveyMenuBar = ({
           }}
           onConfirm={() => handleSaveAndGoBack()}
         />
-        <CustomDialog
-          open={isCautionDialogOpen}
-          setOpen={setIsCautionDialogOpen}
-          title={t("environments.surveys.edit.caution_edit_published_survey")}
-          okBtnText={t("common.close")}
-          okBtnVariant="default"
-          onOk={async () => setIsCautionDialogOpen(false)}>
-          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-          <ul className="mt-3 list-disc space-y-0.5 pl-5">
-            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-          </ul>
-        </CustomDialog>
       </div>
     </>
   );
