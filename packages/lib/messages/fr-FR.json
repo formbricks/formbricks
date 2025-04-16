@@ -787,6 +787,7 @@
         "api_key_updated": "Clé API mise à jour",
         "duplicate_access": "L'accès en double au projet n'est pas autorisé",
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
+        "no_env_permissions_found": "Aucune autorisation d'environnement trouvée",
         "organization_access": "Accès à l'organisation",
         "organization_access_description": "Sélectionnez les privilèges de lecture ou d'écriture pour les ressources de l'organisation.",
         "permissions": "Permissions",

@@ -3,16 +3,18 @@
 // Error components must be Client components
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-import * as Sentry from "@sentry/nextjs";
+// import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 
-const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
+// const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
+
+const ErrorBoundary = ({ reset }: { reset: () => void }) => {
   const { t } = useTranslate();
-  if (process.env.NODE_ENV === "development") {
-    console.error(error.message);
-  } else {
-    Sentry.captureException(error);
-  }
+  // if (process.env.NODE_ENV === "development") {
+  //   console.error(error.message);
+  // } else {
+  //   Sentry.captureException(error);
+  // }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">

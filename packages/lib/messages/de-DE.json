@@ -787,6 +787,7 @@
         "api_key_updated": "API-Schlüssel aktualisiert",
         "duplicate_access": "Doppelter Projektzugriff nicht erlaubt",
         "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
+        "no_env_permissions_found": "Keine Umgebungsberechtigungen gefunden",
         "organization_access": "Organisationszugang",
         "organization_access_description": "Wähle Lese- oder Schreibrechte für organisationsweite Ressourcen aus.",
         "permissions": "Berechtigungen",

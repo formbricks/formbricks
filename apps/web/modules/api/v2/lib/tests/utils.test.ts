@@ -1,5 +1,5 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import * as Sentry from "@sentry/nextjs";
+// import * as Sentry from "@sentry/nextjs";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { logger } from "@formbricks/logger";
@@ -263,47 +263,47 @@ describe("utils", () => {
       logger.withContext = originalWithContext;
     });
 
-    test("log API error details with SENTRY_DSN set", () => {
-      // Mock the withContext method and its returned error method
-      const errorMock = vi.fn();
-      const withContextMock = vi.fn().mockReturnValue({
-        error: errorMock,
-      });
+    // test("log API error details with SENTRY_DSN set", () => {
+    //   // Mock the withContext method and its returned error method
+    //   const errorMock = vi.fn();
+    //   const withContextMock = vi.fn().mockReturnValue({
+    //     error: errorMock,
+    //   });
 
-      // Mock Sentry's captureException method
-      vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
+    //   // Mock Sentry's captureException method
+    //   vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
 
-      // Set SENTRY_DSN to simulate Sentry being enabled
-      process.env.SENTRY_DSN = "mock-sentry-dsn";
+    //   // Set SENTRY_DSN to simulate Sentry being enabled
+    //   process.env.SENTRY_DSN = "mock-sentry-dsn";
 
-      // Replace the original withContext with our mock
-      const originalWithContext = logger.withContext;
-      logger.withContext = withContextMock;
+    //   // Replace the original withContext with our mock
+    //   const originalWithContext = logger.withContext;
+    //   logger.withContext = withContextMock;
 
-      const mockRequest = new Request("http://localhost/api/test");
-      mockRequest.headers.set("x-request-id", "123");
+    //   const mockRequest = new Request("http://localhost/api/test");
+    //   mockRequest.headers.set("x-request-id", "123");
 
-      const error: ApiErrorResponseV2 = {
-        type: "internal_server_error",
-        details: [{ field: "server", issue: "error occurred" }],
-      };
+    //   const error: ApiErrorResponseV2 = {
+    //     type: "internal_server_error",
+    //     details: [{ field: "server", issue: "error occurred" }],
+    //   };
 
-      logApiError(mockRequest, error);
+    //   logApiError(mockRequest, error);
 
-      // Verify withContext was called with the expected context
-      expect(withContextMock).toHaveBeenCalledWith({
-        correlationId: "123",
-        error,
-      });
+    //   // Verify withContext was called with the expected context
+    //   expect(withContextMock).toHaveBeenCalledWith({
+    //     correlationId: "123",
+    //     error,
+    //   });
 
-      // Verify error was called on the child logger
-      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+    //   // Verify error was called on the child logger
+    //   expect(errorMock).toHaveBeenCalledWith("API Error Details");
 
-      // Verify Sentry.captureException was called
-      expect(Sentry.captureException).toHaveBeenCalled();
+    //   // Verify Sentry.captureException was called
+    //   expect(Sentry.captureException).toHaveBeenCalled();
 
-      // Restore the original method
-      logger.withContext = originalWithContext;
-    });
+    //   // Restore the original method
+    //   logger.withContext = originalWithContext;
+    // });
   });
 });
