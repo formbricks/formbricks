@@ -55,14 +55,11 @@ const enforceHttps = (request: NextRequest): Response | null => {
 const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   const token = await getToken({ req: request as any });
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
-    const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
+    const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(loginUrl);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
-  if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
-    return NextResponse.json({ error: "Invalid callback URL" }, { status: 400 });
-  }
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
