@@ -261,6 +261,13 @@ export const QuestionFormInput = ({
 
   const [animationParent] = useAutoAnimate();
 
+  const renderRemoveDescriptionButton = useMemo(() => {
+    if (id !== "subheader") return false;
+    return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endingCard?.type, id, question?.subheader]);
+
   return (
     <div className="w-full">
       {label && (
@@ -395,31 +402,26 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {id === "subheader" &&
-                          ((question && question.subheader !== undefined) ||
-                            (endingCard &&
-                              endingCard.type === "endScreen" &&
-                              endingCard.subheader !== undefined)) && (
-                            <TooltipRenderer
-                              tooltipContent={t("environments.surveys.edit.remove_description")}>
-                              <Button
-                                variant="secondary"
-                                size="icon"
-                                aria-label="Remove description"
-                                className="ml-2"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  if (updateQuestion) {
-                                    updateQuestion(questionIdx, { subheader: undefined });
-                                  }
-                                  if (updateSurvey) {
-                                    updateSurvey({ subheader: undefined });
-                                  }
-                                }}>
-                                <TrashIcon />
-                              </Button>
-                            </TooltipRenderer>
-                          )}
+                        {renderRemoveDescriptionButton ? (
+                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              aria-label="Remove description"
+                              className="ml-2"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (updateQuestion) {
+                                  updateQuestion(questionIdx, { subheader: undefined });
+                                }
+                                if (updateSurvey) {
+                                  updateSurvey({ subheader: undefined });
+                                }
+                              }}>
+                              <TrashIcon />
+                            </Button>
+                          </TooltipRenderer>
+                        ) : null}
                       </>
                     </div>
                   </div>
