@@ -2,7 +2,7 @@ import { Authenticator } from "@otplib/core";
 import type { AuthenticatorOptions } from "@otplib/core/authenticator";
 import { createDigest, createRandomBytes } from "@otplib/plugin-crypto";
 import { keyDecoder, keyEncoder } from "@otplib/plugin-thirty-two";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { totpAuthenticatorCheck } from "./totp";
 
 vi.mock("@otplib/core");
@@ -14,7 +14,7 @@ describe("totpAuthenticatorCheck", () => {
   const secret = "JBSWY3DPEHPK3PXP";
   const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
 
-  it("should check a TOTP token with a base32-encoded secret", () => {
+  test("should check a TOTP token with a base32-encoded secret", () => {
     const checkMock = vi.fn().mockReturnValue(true);
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: checkMock,
@@ -33,7 +33,7 @@ describe("totpAuthenticatorCheck", () => {
     expect(result).toBe(true);
   });
 
-  it("should use default window if none is provided", () => {
+  test("should use default window if none is provided", () => {
     const checkMock = vi.fn().mockReturnValue(true);
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: checkMock,
@@ -52,7 +52,7 @@ describe("totpAuthenticatorCheck", () => {
     expect(result).toBe(true);
   });
 
-  it("should throw an error for invalid token format", () => {
+  test("should throw an error for invalid token format", () => {
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: () => {
         throw new Error("Invalid token format");
@@ -64,7 +64,7 @@ describe("totpAuthenticatorCheck", () => {
     }).toThrow("Invalid token format");
   });
 
-  it("should throw an error for invalid secret format", () => {
+  test("should throw an error for invalid secret format", () => {
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: () => {
         throw new Error("Invalid secret format");
@@ -76,7 +76,7 @@ describe("totpAuthenticatorCheck", () => {
     }).toThrow("Invalid secret format");
   });
 
-  it("should return false if token verification fails", () => {
+  test("should return false if token verification fails", () => {
     const checkMock = vi.fn().mockReturnValue(false);
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: checkMock,

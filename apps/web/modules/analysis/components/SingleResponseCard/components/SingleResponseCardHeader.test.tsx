@@ -1,7 +1,7 @@
 import { isSubmissionTimeMoreThan5Minutes } from "@/modules/analysis/components/SingleResponseCard/util";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -65,7 +65,7 @@ describe("SingleResponseCardHeader", () => {
   const dummyUser = { id: "user1", email: "user1@example.com" } as TUser;
   const dummyLocale = "en-US";
 
-  it("renders response view with contact (user exists)", () => {
+  test("renders response view with contact (user exists)", () => {
     vi.mocked(isSubmissionTimeMoreThan5Minutes).mockReturnValue(true);
     render(
       <SingleResponseCardHeader
@@ -84,7 +84,7 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByRole("link")).toBeInTheDocument();
   });
 
-  it("renders response view with no contact (anonymous)", () => {
+  test("renders response view with no contact (anonymous)", () => {
     const responseNoContact = { ...dummyResponse, contact: null };
     render(
       <SingleResponseCardHeader
@@ -101,7 +101,7 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByText("common.anonymous")).toBeInTheDocument();
   });
 
-  it("renders people view", () => {
+  test("renders people view", () => {
     render(
       <SingleResponseCardHeader
         pageType="people"
@@ -119,7 +119,7 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByTestId("SurveyStatusIndicator")).toBeInTheDocument();
   });
 
-  it("renders language label when response.language is not default", () => {
+  test("renders language label when response.language is not default", () => {
     const modifiedResponse = { ...dummyResponse, language: "fr" };
     render(
       <SingleResponseCardHeader
@@ -136,7 +136,7 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByText("fr_en-US")).toBeInTheDocument();
   });
 
-  it("renders enabled trash icon and handles click", async () => {
+  test("renders enabled trash icon and handles click", async () => {
     vi.mocked(isSubmissionTimeMoreThan5Minutes).mockReturnValue(true);
     const setDeleteDialogOpen = vi.fn();
     render(
@@ -156,7 +156,7 @@ describe("SingleResponseCardHeader", () => {
     expect(setDeleteDialogOpen).toHaveBeenCalledWith(true);
   });
 
-  it("renders disabled trash icon when deletion not allowed", async () => {
+  test("renders disabled trash icon when deletion not allowed", async () => {
     vi.mocked(isSubmissionTimeMoreThan5Minutes).mockReturnValue(false);
     render(
       <SingleResponseCardHeader

@@ -2,7 +2,7 @@ import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import { ViewPermissionModal } from "./view-permission-modal";
@@ -106,13 +106,13 @@ describe("ViewPermissionModal", () => {
     apiKey: mockApiKey,
   };
 
-  it("renders the modal with correct title", () => {
+  test("renders the modal with correct title", () => {
     render(<ViewPermissionModal {...defaultProps} />);
     // Check the localized text for the modal's title
     expect(screen.getByText(mockApiKey.label)).toBeInTheDocument();
   });
 
-  it("renders all permissions for the API key", () => {
+  test("renders all permissions for the API key", () => {
     render(<ViewPermissionModal {...defaultProps} />);
     // The same key has two environment permissions
     const projectNames = screen.getAllByText("Project 1");
@@ -123,7 +123,7 @@ describe("ViewPermissionModal", () => {
     expect(screen.getByText("write")).toBeInTheDocument();
   });
 
-  it("displays correct project and environment names", () => {
+  test("displays correct project and environment names", () => {
     render(<ViewPermissionModal {...defaultProps} />);
     // Check for 'Project 1', 'production', 'development'
     const projectNames = screen.getAllByText("Project 1");
@@ -132,14 +132,14 @@ describe("ViewPermissionModal", () => {
     expect(screen.getByText("development")).toBeInTheDocument();
   });
 
-  it("displays correct permission levels", () => {
+  test("displays correct permission levels", () => {
     render(<ViewPermissionModal {...defaultProps} />);
     // Check if permission levels 'read' and 'write' appear
     expect(screen.getByText("read")).toBeInTheDocument();
     expect(screen.getByText("write")).toBeInTheDocument();
   });
 
-  it("handles API key with no permissions", () => {
+  test("handles API key with no permissions", () => {
     render(<ViewPermissionModal {...defaultProps} apiKey={apiKeyWithoutPermissions} />);
     // Ensure environment/permission section is empty
     expect(screen.queryByText("Project 1")).not.toBeInTheDocument();
@@ -147,7 +147,7 @@ describe("ViewPermissionModal", () => {
     expect(screen.queryByText("development")).not.toBeInTheDocument();
   });
 
-  it("displays organizationAccess toggles", () => {
+  test("displays organizationAccess toggles", () => {
     render(<ViewPermissionModal {...defaultProps} apiKey={mockApiKeyWithOrgAccess} />);
 
     expect(screen.getByTestId("organization-access-accessControl-read")).toBeChecked();
