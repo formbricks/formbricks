@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
@@ -973,6 +972,7 @@
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Save your filters as a Segment to use it in other surveys",
       "segment_created_successfully": "Segment created successfully!",
       "segment_deleted_successfully": "Segment deleted successfully!",
+      "segment_id": "Segment ID",
       "segment_saved_successfully": "Segment saved successfully",
       "segment_updated_successfully": "Segment updated successfully!",
       "segments_help_you_target_users_with_same_characteristics_easily": "Segments help you target users with the same characteristics easily",

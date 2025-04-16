@@ -55,7 +55,7 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           <Label className="text-xs font-normal text-slate-500">
             {t("environments.segments.segment_id")}
           </Label>
-          <p className="text-xs text-slate-700">{currentSegment.id?.toString()}</p>
+          <p className="text-xs text-slate-700">{currentSegment.id.toString()}</p>
         </div>
       </div>
     </div>
