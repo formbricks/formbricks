@@ -1324,6 +1324,8 @@
         "cal_username": "Cal.com 使用者名稱或使用者名稱/事件",
         "calculate": "計算",
         "capture_a_new_action_to_trigger_a_survey_on": "擷取新的操作以觸發問卷。",
+        "capture_ip_address_of_respondent": "捕获IP地址",
+        "capture_ip_address_of_respondent_description": "捕获并存储受访者的 IP 地址作为元数据。",
         "capture_new_action": "擷取新操作",
         "card_arrangement_for_survey_type_derived": "'{'surveyTypeDerived'}' 問卷的卡片排列",
         "card_background_color": "卡片背景顏色",
