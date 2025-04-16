@@ -1,5 +1,6 @@
 "use client";
 
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -18,7 +19,7 @@ interface FollowUpItemProps {
   selectedLanguageCode: string;
   mailFrom: string;
   userEmail: string;
-  teamMemberEmails: string[];
+  teamMemberDetails: TFollowUpEmailToUser[];
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
@@ -29,7 +30,7 @@ export const FollowUpItem = ({
   mailFrom,
   selectedLanguageCode,
   userEmail,
-  teamMemberEmails,
+  teamMemberDetails,
   setLocalSurvey,
   locale,
 }: FollowUpItemProps) => {
@@ -45,11 +46,23 @@ export const FollowUpItem = ({
     const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
     const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
 
-    const updatedEmails = teamMemberEmails.includes(userEmail)
-      ? teamMemberEmails
-      : [...teamMemberEmails, userEmail];
+    const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
+      if (teamMemberDetail.email === userEmail) {
+        return { name: "Yourself", email: userEmail };
+      }
 
-    const matchedEmail = updatedEmails.find((email) => email === to);
+      return teamMemberDetail;
+    });
+
+    const isUserEmailInTeamMemberDetails = updatedTeamMemberDetails.some(
+      (teamMemberDetail) => teamMemberDetail.email === userEmail
+    );
+
+    const updatedTeamMembers = isUserEmailInTeamMemberDetails
+      ? updatedTeamMemberDetails
+      : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
+
+    const matchedEmail = updatedTeamMembers.find((detail) => detail.email === to);
 
     if (!matchedQuestion && !matchedHiddenField && !matchedEmail) return true;
 
@@ -75,7 +88,7 @@ export const FollowUpItem = ({
     followUp.action.properties,
     localSurvey.hiddenFields?.fieldIds,
     localSurvey.questions,
-    teamMemberEmails,
+    teamMemberDetails,
     userEmail,
   ]);
 
@@ -154,7 +167,7 @@ export const FollowUpItem = ({
           attachResponseData: followUp.action.properties.attachResponseData,
         }}
         mode="edit"
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberDetails}
         userEmail={userEmail}
         locale={locale}
       />

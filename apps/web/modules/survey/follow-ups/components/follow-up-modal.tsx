@@ -3,6 +3,7 @@
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
+  TFollowUpEmailToUser,
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
@@ -61,13 +62,13 @@ interface AddFollowUpModalProps {
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
   userEmail: string;
-  teamMemberEmails: string[];
+  teamMemberDetails: TFollowUpEmailToUser[];
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
 
 type EmailSendToOption = {
-  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "email";
+  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "user";
   label: string;
   id: string;
 };
@@ -81,7 +82,7 @@ export const FollowUpModal = ({
   defaultValues,
   mode = "create",
   userEmail,
-  teamMemberEmails,
+  teamMemberDetails,
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
@@ -114,9 +115,21 @@ export const FollowUpModal = ({
         ? { fieldIds: localSurvey.hiddenFields.fieldIds }
         : { fieldIds: [] };
 
-    const updatedTeamMembers = teamMemberEmails.includes(userEmail)
-      ? teamMemberEmails
-      : [...teamMemberEmails, userEmail];
+    const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
+      if (teamMemberDetail.email === userEmail) {
+        return { name: "Yourself", email: userEmail };
+      }
+
+      return teamMemberDetail;
+    });
+
+    const isUserEmailInTeamMemberDetails = updatedTeamMemberDetails.some(
+      (teamMemberDetail) => teamMemberDetail.email === userEmail
+    );
+
+    const updatedTeamMembers = isUserEmailInTeamMemberDetails
+      ? updatedTeamMemberDetails
+      : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
 
     return [
       ...openTextAndContactQuestions.map((question) => ({
@@ -136,13 +149,13 @@ export const FollowUpModal = ({
         type: "hiddenField" as EmailSendToOption["type"],
       })),
 
-      ...updatedTeamMembers.map((email) => ({
-        label: email,
-        id: email,
-        type: "email" as EmailSendToOption["type"],
+      ...updatedTeamMembers.map((member) => ({
+        label: `${member.name} (${member.email})`,
+        id: member.email,
+        type: "user" as EmailSendToOption["type"],
       })),
     ];
-  }, [localSurvey, selectedLanguageCode, teamMemberEmails, userEmail]);
+  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
@@ -354,7 +367,7 @@ export const FollowUpModal = ({
     (option) => option.type === "openTextQuestion" || option.type === "contactInfoQuestion"
   );
   const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
-  const emailSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "email");
+  const userSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "user");
 
   const renderSelectItem = (option: EmailSendToOption) => {
     return (
@@ -364,7 +377,7 @@ export const FollowUpModal = ({
             <EyeOffIcon className="h-4 w-4" />
             <span>{option.label}</span>
           </div>
-        ) : option.type === "email" ? (
+        ) : option.type === "user" ? (
           <div className="flex items-center space-x-2">
             <UserIcon className="h-4 w-4" />
             <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
@@ -655,13 +668,13 @@ export const FollowUpModal = ({
                                         </div>
                                       ) : null}
 
-                                      {emailSendToEmailOptions.length > 0 ? (
+                                      {userSendToEmailOptions.length > 0 ? (
                                         <div className="flex flex-col">
                                           <div className="flex space-x-2 p-2">
                                             <p className="text-sm text-slate-500">Users</p>
                                           </div>
 
-                                          {emailSendToEmailOptions.map((option) => renderSelectItem(option))}
+                                          {userSendToEmailOptions.map((option) => renderSelectItem(option))}
                                         </div>
                                       ) : null}
                                     </SelectContent>

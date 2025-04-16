@@ -192,7 +192,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -214,7 +214,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -236,7 +236,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -258,7 +258,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -280,7 +280,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -302,7 +302,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -327,7 +327,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -444,7 +444,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -466,7 +466,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -488,7 +488,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -621,7 +621,7 @@ describe("FollowUpItem - Endings Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -647,7 +647,7 @@ describe("FollowUpItem - Endings Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -742,7 +742,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -769,7 +769,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -816,7 +816,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
