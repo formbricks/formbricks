@@ -32,7 +32,7 @@ export const useSendERC20 = ({ address }: Props) => {
       return resp;
     },
     [signer, token]
-  );
+  ); 
 
   return { send };
 };

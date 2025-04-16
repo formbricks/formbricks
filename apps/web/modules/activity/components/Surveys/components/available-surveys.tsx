@@ -25,7 +25,7 @@ export function AvailableSurveys({ className = "" }: { className?: string }): Re
     <div className={cn("", className)}>
       {availableSurveys &&
         availableSurveys.map((survey) => {
-          return <SurveyCard key={survey.id} survey={survey} />;
+          return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </div>
   );

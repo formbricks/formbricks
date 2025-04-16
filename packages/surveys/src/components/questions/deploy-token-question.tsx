@@ -84,13 +84,6 @@ export function DeployTokenQuestion({
     },
   ];
 
-  useEffect(() => {
-    if (!user || !user.address) {
-      return;
-    }
-    handleChange("address", user.address);
-  }, [user, user?.address]);
-
   const handleChange = (fieldId: string, fieldValue: string) => {
     const newValue = fields.map((field) => {
       if (field.id === fieldId) {
@@ -123,6 +116,13 @@ export function DeployTokenQuestion({
 
     onSubmit({ [question.id]: finalValue }, updatedTtc);
   };
+
+  useEffect(() => {
+    if (!user || !user.address) {
+      return;
+    }
+    handleChange("address", user.address);
+  }, [user, user?.address, handleChange]);
 
   const DeployTokenRef = useCallback(
     (currentElement: HTMLInputElement | null) => {
@@ -217,15 +217,6 @@ export function DeployTokenQuestion({
       </ScrollableContainer>
 
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        {user && user.address ? (
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-          />
-        ) : (
-          <LoginButton />
-        )}
         {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
@@ -236,6 +227,15 @@ export function DeployTokenQuestion({
               onBack();
             }}
           />
+        )}
+        {user && user.address ? (
+          <SubmitButton
+            tabIndex={isCurrent ? 0 : -1}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+          />
+        ) : (
+          <LoginButton />
         )}
       </div>
     </form>
