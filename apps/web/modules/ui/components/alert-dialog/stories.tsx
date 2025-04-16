@@ -1,6 +1,5 @@
 import { TolgeeNextProvider } from "@/tolgee/client";
 import { Meta, StoryObj } from "@storybook/react";
-import React from "react";
 import { AlertDialog } from "./index";
 
 const meta: Meta<typeof AlertDialog> = {
