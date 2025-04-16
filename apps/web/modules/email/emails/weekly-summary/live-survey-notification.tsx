@@ -88,7 +88,7 @@ export async function LiveSurveyNotification({
           <Text className="mb-0 inline">
             <Link
               className="text-xl text-black underline"
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}>
+              href={`${WEBAPP_URL}/environments/${environmentId}/engagements/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}>
               {survey.name}
             </Link>
           </Text>
@@ -105,7 +105,7 @@ export async function LiveSurveyNotification({
           {survey.responseCount > 0 && (
             <Container className="mt-4 block">
               <EmailButton
-                href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+                href={`${WEBAPP_URL}/environments/${environmentId}/engagements/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
                 label={
                   noResponseLastWeek
                     ? t("emails.live_survey_notification_view_previous_responses")

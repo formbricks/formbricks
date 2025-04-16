@@ -268,7 +268,7 @@ export const SurveyMenuBar = ({
         segment,
       });
       setIsSurveyPublishing(false);
-      router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
+      router.push(`/environments/${environmentId}/engagements/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       console.error(error);
       toast.error(t("environments.surveys.edit.error_publishing_survey"));

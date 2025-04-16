@@ -192,7 +192,7 @@ export const SingleResponseCardHeader = ({
               )}
               <Link
                 className="hover:underline"
-                href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+                href={`/environments/${environmentId}/engagements/${survey.id}/summary`}>
                 {survey.name}
               </Link>
             </div>

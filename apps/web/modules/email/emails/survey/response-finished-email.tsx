@@ -156,7 +156,7 @@ export async function ResponseFinishedEmail({
               return null;
             })}
             <EmailButton
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
+              href={`${WEBAPP_URL}/environments/${environmentId}/engagements/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
                   ? t("emails.survey_response_finished_email_view_more_responses", {
