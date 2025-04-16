@@ -1,3 +1,4 @@
+import { extractIP } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -7,7 +8,7 @@ import { UAParser } from "ua-parser-js";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
-import { ZIP, ZId } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseMeta } from "@formbricks/types/responses";
 import { createResponse } from "./lib/response";
@@ -64,23 +65,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const responseInputData = responseInputValidation.data;
 
-  let ipValidationData: string | undefined = undefined;
+  let ip: string | undefined = undefined;
   if (responseInputData.meta?.isCaptureIPAddressEnabled) {
-    const ip =
-      requestHeaders.get("x-forwarded-for") ||
-      requestHeaders.get("x-vercel-forwarded-for") ||
-      requestHeaders.get("CF-Connecting-IP") ||
-      requestHeaders.get("True-Client-IP") ||
-      undefined;
-
-    const ipAddress = ip ? ip.split(",")[0] : undefined;
-    const ipValidation = ZIP.safeParse(ipAddress);
-
-    if (ipValidation.success && !!ipValidation.data) {
-      ipValidationData = ipValidation.data;
-    } else {
-      logger.warn(`Not able to capture IP address for survey: ${responseInputData.surveyId}`);
-    }
+    ip = extractIP(requestHeaders, responseInputData.surveyId);
   }
 
   if (responseInputData.contactId) {
@@ -118,9 +105,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
       },
       country: country,
       action: responseInputData?.meta?.action,
-      ...(responseInputData.meta?.isCaptureIPAddressEnabled &&
-        ipValidationData && { ipAddress: ipValidationData }),
     };
+
+    if (responseInputData.meta?.isCaptureIPAddressEnabled && ip) {
+      meta.ip = ip;
+    }
 
     response = await createResponse({
       ...responseInputData,

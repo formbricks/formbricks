@@ -245,7 +245,7 @@ export const ZResponseMeta = z.object({
     .optional(),
   country: z.string().optional(),
   action: z.string().optional(),
-  ipAddress: z.string().optional(),
+  ip: z.string().optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
