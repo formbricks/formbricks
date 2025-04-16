@@ -39,7 +39,10 @@ describe("FollowUpItem", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    { email: "team2@example.com", name: "team 2" },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
@@ -357,7 +360,13 @@ describe("FollowUpItem - Ending Validation", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
@@ -508,7 +517,13 @@ describe("FollowUpItem - Endings Validation", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   // Create a mock survey with endings
   const mockSurveyWithEndings = {
@@ -671,7 +686,13 @@ describe("FollowUpItem - Deletion Tests", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
