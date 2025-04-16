@@ -21,6 +21,8 @@ export function CompletedSurveys({ className = "" }: { className?: string }): Re
     })();
   }, []);
 
+  console.log(completedSurveys);
+
   return (
     <div className={cn("", className)}>
       {completedSurveys &&
