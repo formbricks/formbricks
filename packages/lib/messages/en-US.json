@@ -573,6 +573,11 @@
       "what_is_the_user_doing": "What is the user doing?",
       "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using"
     },
+    "activity": {
+      "card": {
+        "start_survey": "Start Survey"
+      }
+    },
     "connect": {
       "congrats": "Congrats!",
       "connection_successful_message": "Well done! We're connected.",
