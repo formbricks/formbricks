@@ -1,6 +1,6 @@
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, test, vi } from "vitest";
 import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 
