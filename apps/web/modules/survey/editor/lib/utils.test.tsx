@@ -43,6 +43,24 @@ describe("utils.tsx", () => {
       expect(extractParts(input)).toEqual(expected);
     });
 
+    test("should handle unmatched closing delimiter", () => {
+      const input = "Customer support experience How responsive was our team?\\";
+      const expected = ["Customer support experience How responsive was our team?\\"];
+      expect(extractParts(input)).toEqual(expected);
+    });
+
+    test("should handle nested delimiters", () => {
+      const input = "Customer support experience //How responsive/ was our\\ team?\\";
+      const expected = ["Customer support experience ", "/How responsive/ was our", " team?\\"];
+      expect(extractParts(input)).toEqual(expected);
+    });
+
+    test("should handle special characters", () => {
+      const input = "Customer's support @experience //How responsive/ was our\\ team?\\";
+      const expected = ["Customer's support @experience ", "/How responsive/ was our", " team?\\"];
+      expect(extractParts(input)).toEqual(expected);
+    });
+
     test("should handle empty string", () => {
       const input = "";
       const expected = [""];
@@ -51,6 +69,12 @@ describe("utils.tsx", () => {
 
     test("should handle text longer than MAX_STRING_LENGTH", () => {
       const longText = "a".repeat(MAX_STRING_LENGTH + 1); // Exceeds MAX_STRING_LENGTH
+      const expected = [longText];
+      expect(extractParts(longText)).toEqual(expected);
+    });
+
+    test("should handle text of length MAX_STRING_LENGTH", () => {
+      const longText = "a".repeat(MAX_STRING_LENGTH); // Equal to MAX_STRING_LENGTH
       const expected = [longText];
       expect(extractParts(longText)).toEqual(expected);
     });
