@@ -36,7 +36,7 @@ final class SurveyManager {
         
         filteredSurveys = filterSurveysBasedOnDisplayType(surveys, displays: displays, responses: responses)
         filteredSurveys = filterSurveysBasedOnRecontactDays(filteredSurveys, defaultRecontactDays: environment.data.data.project.recontactDays)
-        
+                
         // If we have a user, we do more filtering
         if userManager.userId != nil {
             if segments.isEmpty {
@@ -52,16 +52,17 @@ final class SurveyManager {
     /// Handles the display percentage and the delay of the survey.
     func track(_ action: String) {
         guard !isShowingSurvey else { return }
+        
         let actionClasses = environmentResponse?.data.data.actionClasses ?? []
         let codeActionClasses = actionClasses.filter { $0.type == "code" }
         let actionClass = codeActionClasses.first { $0.key == action }
         let firstSurveyWithActionClass = filteredSurveys.first { survey in
             return survey.triggers?.contains(where: { $0.actionClass?.name == actionClass?.name }) ?? false
         }
-        
+                
         // Display percentage
         let shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
-        
+                
         // Display and delay it if needed
         if let surveyId = firstSurveyWithActionClass?.id, shouldDisplay {
             isShowingSurvey = true

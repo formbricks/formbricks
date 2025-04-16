@@ -1,10 +1,3 @@
-//
-//  FormbricksSDKTests.swift
-//  FormbricksSDKTests
-//
-//  Created by Peter Pesti-Varga on 2025. 02. 03..
-//
-
 import XCTest
 @testable import FormbricksSDK
 
@@ -15,53 +8,27 @@ final class FormbricksSDKTests: XCTestCase {
     let userId = "6CCCE716-6783-4D0F-8344-9C7DFA43D8F7"
     let surveyID = "cm6ovw6j7000gsf0kduf4oo4i"
     let mockService = MockFormbricksService()
-//
-//    override func setUpWithError() throws {
-//        // Ensure previous state is cleaned up
-//        Formbricks.teardown()
-//        
-//        // Setup the SDK using your new instance-based design.
-//        // This creates new instances for both the UserManager and SurveyManager.
-//        Formbricks.setup(with: FormbricksConfig.Builder(appUrl: appUrl, environmentId: environmentId)
-//            .set(attributes: ["a": "b"])
-//            .add(attribute: "test", forKey: "key")
-//            .setLogLevel(.debug)
-//            .build())
-//       
-//        // Set up the service dependency on both managers.
-//        Formbricks.userManager?.service = mockService
-//        Formbricks.surveyManager?.service = mockService
-//       
-//        // Reset any stored environment response
-//        Formbricks.surveyManager?.environmentResponse = nil
-//    }
-//    
-//    override func tearDownWithError() throws {
-//        // Call teardown to release instances so they can be deallocated.
-//        Formbricks.teardown()
-//    }
-    
     
     func testFormbricks() throws {
-         // Everything should be in the default state before initialization.
-         XCTAssertFalse(Formbricks.isInitialized)
-         XCTAssertNil(Formbricks.surveyManager)
-         XCTAssertNil(Formbricks.userManager)
-         XCTAssertEqual(Formbricks.language, "default")
+        // Everything should be in the default state before initialization.
+        XCTAssertFalse(Formbricks.isInitialized)
+        XCTAssertNil(Formbricks.surveyManager)
+        XCTAssertNil(Formbricks.userManager)
+        XCTAssertEqual(Formbricks.language, "default")
         
         // User manager default state: there is no user yet.
         XCTAssertNil(Formbricks.userManager?.displays)
         XCTAssertNil(Formbricks.userManager?.responses)
         XCTAssertNil(Formbricks.userManager?.segments)
          
-         // Use methods before init should have no effect.
-         Formbricks.setUserId("userId")
-         Formbricks.setLanguage("de")
-         Formbricks.setAttributes(["testA" : "testB"])
-         Formbricks.setAttribute("test", forKey: "testKey")
-         XCTAssertNil(Formbricks.userManager?.userId)
-         XCTAssertEqual(Formbricks.language, "default")
-        
+        // Use methods before init should have no effect.
+        Formbricks.setUserId("userId")
+        Formbricks.setLanguage("de")
+        Formbricks.setAttributes(["testA" : "testB"])
+        Formbricks.setAttribute("test", forKey: "testKey")
+        XCTAssertNil(Formbricks.userManager?.userId)
+        XCTAssertEqual(Formbricks.language, "default")
+
         // Setup the SDK using your new instance-based design.
         // This creates new instances for both the UserManager and SurveyManager.
         Formbricks.setup(with: FormbricksConfig.Builder(appUrl: appUrl, environmentId: environmentId)
@@ -83,7 +50,9 @@ final class FormbricksSDKTests: XCTestCase {
          XCTAssertFalse(Formbricks.surveyManager?.hasApiError ?? false)
          Formbricks.surveyManager?.refreshEnvironmentIfNeeded(force: true)
          XCTAssertTrue(Formbricks.surveyManager?.hasApiError ?? false)
+
          mockService.isErrorResponseNeeded = false
+         Formbricks.surveyManager?.refreshEnvironmentIfNeeded(force: true)
          
          // Authenticate the user.
          Formbricks.setUserId(userId)
@@ -153,5 +122,44 @@ final class FormbricksSDKTests: XCTestCase {
          XCTAssertTrue(Formbricks.surveyManager?.isShowingSurvey ?? false)
          _ = XCTWaiter.wait(for: [expectation(description: "Wait for a seconds")], timeout: Double(Config.Environment.closingTimeoutInSeconds))
          XCTAssertFalse(Formbricks.surveyManager?.isShowingSurvey ?? false)
+        
+        // Test the cleanup
+        Formbricks.cleanup()
+        XCTAssertNil(Formbricks.userManager)
+        XCTAssertNil(Formbricks.surveyManager)
+        XCTAssertNil(Formbricks.apiQueue)
+        XCTAssertNil(Formbricks.presentSurveyManager)
+        XCTAssertFalse(Formbricks.isInitialized)
+        XCTAssertNil(Formbricks.appUrl)
+        XCTAssertNil(Formbricks.environmentId)
+        XCTAssertNil(Formbricks.logger)
+    }
+    
+    func testCleanupWithCompletion() {
+        // Setup the SDK
+        let config = FormbricksConfig.Builder(appUrl: appUrl, environmentId: environmentId)
+            .setLogLevel(.debug)
+            .build()
+        Formbricks.setup(with: config)
+        XCTAssertTrue(Formbricks.isInitialized)
+        
+        // Set expectation for cleanup completion
+        let cleanupExpectation = expectation(description: "Cleanup completed")
+        
+        Formbricks.cleanup(waitForOperations: true) {
+            cleanupExpectation.fulfill()
+        }
+        
+        wait(for: [cleanupExpectation], timeout: 2.0)
+        
+        // Validate cleanup: all main properties should be nil or false
+        XCTAssertNil(Formbricks.userManager)
+        XCTAssertNil(Formbricks.surveyManager)
+        XCTAssertNil(Formbricks.presentSurveyManager)
+        XCTAssertNil(Formbricks.apiQueue)
+        XCTAssertFalse(Formbricks.isInitialized)
+        XCTAssertNil(Formbricks.appUrl)
+        XCTAssertNil(Formbricks.environmentId)
+        XCTAssertNil(Formbricks.logger)
     }
 }

@@ -66,7 +66,12 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                     do {
                         if Request.Response.self == VoidResponse.self {
                             Formbricks.logger?.info(responseLogMessage)
-                            self.completion?(.success(VoidResponse() as! Request.Response))
+                            
+                            if let response = VoidResponse() as? Request.Response {
+                                self.completion?(.success(response))
+                            } else {
+                                self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse)))
+                            }
                         } else {
                             var body = try self.request.decoder.decode(Request.Response.self, from: data)
                             Formbricks.logger?.info(responseLogMessage)

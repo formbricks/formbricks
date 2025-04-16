@@ -64,7 +64,7 @@ final class UpdateQueue {
     }
     
     deinit {
-        print("UpdateQueue deinitialized")
+        Formbricks.logger?.debug("Deinitializing \(self)")
     }
 }
 

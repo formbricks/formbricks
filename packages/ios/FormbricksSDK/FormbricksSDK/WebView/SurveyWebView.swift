@@ -47,7 +47,7 @@ struct SurveyWebView: UIViewRepresentable {
 
        uiView.navigationDelegate = nil
        uiView.uiDelegate = nil
-       print("SurveyWebView: Dismantled")
+       Formbricks.logger?.debug("SurveyWebView: Dismantled")
    }
     
     /// Clean up cookies and website data.

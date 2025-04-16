@@ -12,7 +12,7 @@ import Network
     static internal var userManager: UserManager?
     static internal var presentSurveyManager: PresentSurveyManager?
     static internal var surveyManager: SurveyManager?
-    static internal var apiQueue = OperationQueue()
+    static internal var apiQueue: OperationQueue? = OperationQueue()
     static internal var logger: Logger?
     static internal var service = FormbricksService()
     
@@ -192,13 +192,46 @@ import Network
         userManager?.logout()
     }
     
-    @objc public static func teardown() {
-        print("calling teardown")
+    /**
+    Cleans up the SDK. This will clear the user attributes, the user id and the environment state.
+    The SDK must be initialized before calling this method.
+    If `waitForOperations` is set to `true`, it will wait for all operations to finish before cleaning up.
+    If `waitForOperations` is set to `false`, it will clean up immediately.
+    You can also provide a completion block that will be called when the cleanup is finished.
+
+    Example:
+    ```swift
+    Formbricks.cleanup()
+
+    Formbricks.cleanup(waitForOperations: true) {
+        // Cleanup completed
+    }
+    ```
+     */
+    
+    @objc public static func cleanup(waitForOperations: Bool = false, completion: (() -> Void)? = nil) {
+        if waitForOperations, let queue = apiQueue {
+            DispatchQueue.global(qos: .background).async {
+                queue.waitUntilAllOperationsAreFinished()
+                performCleanup()
+                DispatchQueue.main.async {
+                    completion?()
+                }
+            }
+        } else {
+            apiQueue?.cancelAllOperations()
+            performCleanup()
+            completion?()
+        }
+    }
+
+    private static func performCleanup() {
         userManager?.cleanupUpdateQueue()
         presentSurveyManager?.dismissView()
         presentSurveyManager = nil
         userManager = nil
         surveyManager = nil
+        apiQueue = nil
         isInitialized = false
         appUrl = nil
         environmentId = nil

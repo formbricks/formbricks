@@ -36,6 +36,6 @@ final class PresentSurveyManager {
     }
     
     deinit {
-        print("PresentSurveyManager deinitialized")
+        Formbricks.logger?.debug("Deinitializing \(self)")
     }
 }

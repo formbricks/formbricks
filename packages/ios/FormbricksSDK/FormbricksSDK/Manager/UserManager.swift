@@ -25,43 +25,30 @@ final class UserManager: UserManagerSyncable {
     private var backingResponses: [String]?
     private var backingLastDisplayedAt: Date?
     private var backingExpiresAt: Date?
-    private var updateQueue: UpdateQueue?
+    
+    lazy private var updateQueue: UpdateQueue? = {
+        return UpdateQueue(userManager: self)
+    }()
     
     internal var syncTimer: Timer?
     
     /// Starts an update queue with the given user id.
     func set(userId: String) {
-        if updateQueue == nil {
-            updateQueue = UpdateQueue(userManager: self)
-        }
-        
         updateQueue?.set(userId: userId)
     }
     
     /// Starts an update queue with the given attribute.
     func add(attribute: String, forKey key: String) {
-        if updateQueue == nil {
-            updateQueue = UpdateQueue(userManager: self)
-        }
-        
         updateQueue?.add(attribute: attribute, forKey: key)
     }
     
     /// Starts an update queue with the given attributes.
     func set(attributes: [String: String]) {
-        if updateQueue == nil {
-            updateQueue = UpdateQueue(userManager: self)
-        }
-        
         updateQueue?.set(attributes: attributes)
     }
     
     /// Starts an update queue with the given language..
     func set(language: String) {
-        if updateQueue == nil {
-            updateQueue = UpdateQueue(userManager: self)
-        }
-        
         updateQueue?.set(language: language)
     }
     
@@ -95,7 +82,7 @@ final class UserManager: UserManagerSyncable {
         syncUser(withId: id)
     }
 
-    /// Syncs the user state with the server, calls the `SurveyManager.shared.filterSurveys()` method and starts the sync timer.
+    /// Syncs the user state with the server, calls the `self?.surveyManager?.filterSurveys()` method and starts the sync timer.
     func syncUser(withId id: String, attributes: [String: String]? = nil) {
         service.postUser(id: id, attributes: attributes) { [weak self] result in
             switch result {
@@ -107,10 +94,6 @@ final class UserManager: UserManagerSyncable {
                 self?.responses = userResponse.data.state?.data?.responses
                 self?.lastDisplayedAt = userResponse.data.state?.data?.lastDisplayAt
                 self?.expiresAt = userResponse.data.state?.expiresAt
-                
-                if self?.updateQueue == nil {
-                    self?.updateQueue = UpdateQueue(userManager: self!)
-                }
                 
                 self?.updateQueue?.reset()
                 self?.surveyManager?.filterSurveys()
@@ -144,7 +127,7 @@ final class UserManager: UserManagerSyncable {
     }
     
     deinit {
-        print("UserManager deinitialized")
+        Formbricks.logger?.debug("Deinitializing \(self)")
     }
 }
 
