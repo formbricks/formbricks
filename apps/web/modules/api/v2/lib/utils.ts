@@ -1,4 +1,5 @@
-// @ts-nocheck
+// @ts-nocheck // We can remove this when we update the prisma client and the typescript version
+// if we don't add this we get build errors with prisma due to type-nesting
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import * as Sentry from "@sentry/nextjs";

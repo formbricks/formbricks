@@ -69,7 +69,6 @@ runs:
       shell: bash
 
     - run: |
-        export NODE_OPTIONS="--max-old-space-size=8192"
         pnpm build --filter=@formbricks/web...
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
