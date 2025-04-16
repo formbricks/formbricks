@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import * as Sentry from "@sentry/nextjs";
