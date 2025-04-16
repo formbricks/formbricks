@@ -1,5 +1,6 @@
 "use client";
 
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Button } from "@/modules/ui/components/button";
@@ -17,7 +18,7 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
-  teamMemberEmails: string[];
+  teamMemberDetails: TFollowUpEmailToUser[];
   locale: TUserLocale;
 }
 
@@ -28,7 +29,7 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   userEmail,
-  teamMemberEmails,
+  teamMemberDetails,
   locale,
 }: FollowUpsViewProps) => {
   const { t } = useTranslate();
@@ -112,7 +113,7 @@ export const FollowUpsView = ({
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               userEmail={userEmail}
-              teamMemberEmails={teamMemberEmails}
+              teamMemberDetails={teamMemberDetails}
               locale={locale}
             />
           );
@@ -127,7 +128,7 @@ export const FollowUpsView = ({
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberDetails}
         locale={locale}
       />
     </div>

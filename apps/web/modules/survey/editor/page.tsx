@@ -3,7 +3,7 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
-import { getTeamMemberEmails } from "@/modules/survey/editor/lib/team";
+import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -67,7 +67,7 @@ export const SurveyEditorPage = async (props) => {
   const userEmail = await getUserEmail(session.user.id);
   const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
 
-  const teamMemberEmails = await getTeamMemberEmails(projectWithTeamIds.teamIds);
+  const teamMemberDetails = await getTeamMemberDetails(projectWithTeamIds.teamIds);
 
   if (
     !survey ||
@@ -106,7 +106,7 @@ export const SurveyEditorPage = async (props) => {
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
       userEmail={userEmail}
-      teamMemberEmails={teamMemberEmails}
+      teamMemberDetails={teamMemberDetails}
     />
   );
 };

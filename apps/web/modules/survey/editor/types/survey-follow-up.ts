@@ -12,3 +12,8 @@ export const ZCreateSurveyFollowUpFormSchema = z.object({
 });
 
 export type TCreateSurveyFollowUpForm = z.infer<typeof ZCreateSurveyFollowUpFormSchema>;
+
+export type TFollowUpEmailToUser = {
+  name: string;
+  email: string;
+};

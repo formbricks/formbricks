@@ -39,7 +39,10 @@ describe("FollowUpItem", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    { email: "team2@example.com", name: "team 2" },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
@@ -192,7 +195,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -214,7 +217,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -236,7 +239,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -258,7 +261,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -280,7 +283,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -302,7 +305,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -327,7 +330,7 @@ describe("FollowUpItem", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -357,7 +360,13 @@ describe("FollowUpItem - Ending Validation", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
@@ -444,7 +453,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -466,7 +475,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -488,7 +497,7 @@ describe("FollowUpItem - Ending Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -508,7 +517,13 @@ describe("FollowUpItem - Endings Validation", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   // Create a mock survey with endings
   const mockSurveyWithEndings = {
@@ -621,7 +636,7 @@ describe("FollowUpItem - Endings Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -647,7 +662,7 @@ describe("FollowUpItem - Endings Validation", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -671,7 +686,13 @@ describe("FollowUpItem - Deletion Tests", () => {
 
   // Common test data
   const userEmail = "user@example.com";
-  const teamMemberEmails = ["team1@example.com", "team2@example.com"];
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
 
   const mockSurvey = {
     id: mockSurveyId,
@@ -742,7 +763,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -769,7 +790,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
@@ -816,7 +837,7 @@ describe("FollowUpItem - Deletion Tests", () => {
         mailFrom="noreply@example.com"
         selectedLanguageCode="default"
         userEmail={userEmail}
-        teamMemberEmails={teamMemberEmails}
+        teamMemberDetails={teamMemberEmails}
         setLocalSurvey={setLocalSurvey}
         locale="en-US"
       />
