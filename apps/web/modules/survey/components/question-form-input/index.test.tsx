@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -329,7 +329,7 @@ describe("QuestionFormInput", () => {
     vi.resetModules();
   });
 
-  it("renders with headline input", async () => {
+  test("renders with headline input", async () => {
     render(
       <QuestionFormInput
         id="headline"
@@ -349,7 +349,7 @@ describe("QuestionFormInput", () => {
     expect(screen.getByTestId("headline")).toBeInTheDocument();
   });
 
-  it("handles input changes correctly", async () => {
+  test("handles input changes correctly", async () => {
     const user = userEvent.setup();
 
     render(
@@ -374,7 +374,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateQuestion).toHaveBeenCalled();
   });
 
-  it("handles choice updates correctly", async () => {
+  test("handles choice updates correctly", async () => {
     // Mock the updateChoice function implementation for this test
     mockUpdateChoice.mockImplementation((_) => {
       // Implementation does nothing, but records that the function was called
@@ -413,7 +413,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateChoice).toHaveBeenCalled();
   });
 
-  it("handles welcome card updates correctly", async () => {
+  test("handles welcome card updates correctly", async () => {
     const user = userEvent.setup();
 
     render(
@@ -438,7 +438,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateSurvey).toHaveBeenCalled();
   });
 
-  it("handles end screen card updates correctly", async () => {
+  test("handles end screen card updates correctly", async () => {
     const user = userEvent.setup();
     const endScreenHeadline =
       mockSurvey.endings[0].type === "endScreen" ? mockSurvey.endings[0].headline : undefined;
@@ -465,7 +465,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateSurvey).toHaveBeenCalled();
   });
 
-  it("handles nested property updates correctly", async () => {
+  test("handles nested property updates correctly", async () => {
     const user = userEvent.setup();
 
     if (mockSurvey.questions[2].type !== TSurveyQuestionTypeEnum.Rating) {
@@ -494,7 +494,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateQuestion).toHaveBeenCalled();
   });
 
-  it("toggles image uploader when button is clicked", async () => {
+  test("toggles image uploader when button is clicked", async () => {
     const user = userEvent.setup();
 
     render(
@@ -519,7 +519,7 @@ describe("QuestionFormInput", () => {
     expect(screen.getByTestId("file-input")).toBeInTheDocument();
   });
 
-  it("removes subheader when remove button is clicked", async () => {
+  test("removes subheader when remove button is clicked", async () => {
     const user = userEvent.setup();
 
     render(
@@ -543,7 +543,7 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateQuestion).toHaveBeenCalledWith(0, { subheader: undefined });
   });
 
-  it("handles language switching", async () => {
+  test("handles language switching", async () => {
     // In this test, we won't check the value directly because our mocked components
     // don't actually render with real values, but we'll just make sure the component renders
     render(
@@ -564,7 +564,7 @@ describe("QuestionFormInput", () => {
     expect(screen.getByTestId("headline-lang")).toBeInTheDocument();
   });
 
-  it("handles max length constraint", async () => {
+  test("handles max length constraint", async () => {
     render(
       <QuestionFormInput
         id="headline-maxlength"
@@ -585,7 +585,7 @@ describe("QuestionFormInput", () => {
     expect(input).toHaveAttribute("maxLength", "10");
   });
 
-  it("uses custom placeholder when provided", () => {
+  test("uses custom placeholder when provided", () => {
     render(
       <QuestionFormInput
         id="headline-placeholder"
@@ -606,7 +606,7 @@ describe("QuestionFormInput", () => {
     expect(input).toHaveAttribute("placeholder", "Custom placeholder");
   });
 
-  it("handles onBlur callback", async () => {
+  test("handles onBlur callback", async () => {
     const onBlurMock = vi.fn();
     const user = userEvent.setup();
 
