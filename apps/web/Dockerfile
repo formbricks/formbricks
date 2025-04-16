@@ -81,7 +81,8 @@ RUN corepack enable
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
     # && addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
+    && addgroup -S nextjs \
+    && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
 
