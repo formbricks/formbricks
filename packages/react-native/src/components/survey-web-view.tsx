@@ -97,7 +97,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         setShowSurvey(false);
         setIsSurveyRunning(false);
       }}>
-      {/* @ts-expect-error -- WebView type incompatibility with React.Component */}
       <WebView
         ref={webViewRef}
         originWhitelist={["*"]}
