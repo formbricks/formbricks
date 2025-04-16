@@ -3,15 +3,16 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
-import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import { EditAPIKeys } from "./edit-api-keys";
 
 // Mock the actions
 vi.mock("../actions", () => ({
   createApiKeyAction: vi.fn(),
+  updateApiKeyAction: vi.fn(),
   deleteApiKeyAction: vi.fn(),
 }));
 
@@ -177,6 +178,50 @@ describe("EditAPIKeys", () => {
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_deleted");
   });
 
+  test("handles API key updation", async () => {
+    const updatedApiKey: TApiKeyWithEnvironmentPermission = {
+      id: "key1",
+      label: "Updated Key",
+      createdAt: new Date(),
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
+      apiKeyEnvironments: [
+        {
+          environmentId: "env1",
+          permission: ApiKeyPermission.read,
+        },
+      ],
+    };
+    (updateApiKeyAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ data: updatedApiKey });
+    render(<EditAPIKeys {...defaultProps} />);
+
+    // Open view permission modal
+    const apiKeyRows = screen.getAllByTestId("api-key-row");
+
+    // click on the first row
+    await userEvent.click(apiKeyRows[0]);
+
+    const labelInput = screen.getByTestId("api-key-label");
+    await userEvent.clear(labelInput);
+    await userEvent.type(labelInput, "Updated Key");
+
+    const submitButton = screen.getByRole("button", { name: "common.update" });
+    await userEvent.click(submitButton);
+
+    expect(updateApiKeyAction).toHaveBeenCalledWith({
+      apiKeyId: "key1",
+      apiKeyData: {
+        label: "Updated Key",
+      },
+    });
+
+    expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_updated");
+  });
+
   it("handles API key creation", async () => {
     const newApiKey: TApiKeyWithEnvironmentPermission = {
       id: "key3",
@@ -220,7 +265,7 @@ describe("EditAPIKeys", () => {
       organizationId: "org1",
       apiKeyData: {
         label: "New Key",
-        environmentPermissions: [{ environmentId: "env1", permission: ApiKeyPermission.read }],
+        environmentPermissions: [],
         organizationAccess: {
           accessControl: { read: true, write: false },
         },
