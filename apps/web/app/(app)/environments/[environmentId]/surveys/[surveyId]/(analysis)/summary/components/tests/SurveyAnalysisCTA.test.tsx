@@ -109,6 +109,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         isReadOnly={false}
         surveyDomain={surveyDomain}
         user={dummyUser}
+        responseCount={5}
       />
     );
 
@@ -133,6 +134,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         isReadOnly={false}
         surveyDomain={surveyDomain}
         user={dummyUser}
+        responseCount={5}
       />
     );
 
