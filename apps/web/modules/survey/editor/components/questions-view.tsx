@@ -10,7 +10,6 @@ import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fiel
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import { findQuestionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import {
   DndContext,
   DragEndEvent,

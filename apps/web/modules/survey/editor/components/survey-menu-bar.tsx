@@ -5,7 +5,6 @@ import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
