@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { Input } from "@/modules/ui/components/input";
@@ -329,7 +330,7 @@ export const SurveyMenuBar = ({
           />
         </div>
 
-        <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
           {responseCount > 0 && (
             <div>
               <Alert variant="warning" size="small">
@@ -387,6 +388,20 @@ export const SurveyMenuBar = ({
             </Button>
           )}
         </div>
+        <AlertDialog
+          headerText={t("environments.surveys.edit.confirm_survey_changes")}
+          open={isConfirmDialogOpen}
+          setOpen={setConfirmDialogOpen}
+          mainText={t("environments.surveys.edit.unsaved_changes_warning")}
+          confirmBtnLabel={t("common.save")}
+          declineBtnLabel={t("common.discard")}
+          declineBtnVariant="destructive"
+          onDecline={() => {
+            setConfirmDialogOpen(false);
+            router.back();
+          }}
+          onConfirm={() => handleSaveAndGoBack()}
+        />
         <CustomDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
