@@ -149,9 +149,15 @@ const getQuestionColumnsData = (
           },
         };
       });
-    
+
     case "deployToken":
-      const deployTokenFields = ["tokenName", "tokenSymbol", "initialSupply", "address", "transactionDetails"];
+      const deployTokenFields = [
+        "tokenName",
+        "tokenSymbol",
+        "initialSupply",
+        "address",
+        "transactionDetails",
+      ];
       return deployTokenFields.map((deployTokenField) => {
         return {
           accessorKey: deployTokenField,
@@ -353,13 +359,26 @@ export const generateResponseTableColumns = (
     ),
   };
 
+  const verifiedAddressColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "verifiedAddress",
+    header: () => (
+      <div className="flex items-center space-x-2 overflow-hidden">
+        <span className="h-4 w-4">
+          <MailIcon className="h-4 w-4" />
+        </span>
+        <span className="truncate">{t("common.verified_address")}</span>
+      </div>
+    ),
+  };
+
   // Combine the selection column with the dynamic question columns
 
   const baseColumns = [
     personColumn,
     dateColumn,
     statusColumn,
-    ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
+    verifiedEmailColumn,
+    verifiedAddressColumn,
     ...questionColumns,
     ...variableColumns,
     ...hiddenFieldColumns,

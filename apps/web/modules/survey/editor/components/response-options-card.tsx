@@ -33,10 +33,6 @@ export const ResponseOptionsCard = ({
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
-  const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
-  const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
-    localSurvey.isSingleResponsePerEmailEnabled
-  );
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: t("environments.surveys.edit.survey_completed_heading"),
@@ -114,19 +110,6 @@ export const ResponseOptionsCard = ({
     if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
       setLocalSurvey({ ...localSurvey, surveyClosedMessage: null });
     }
-  };
-
-  const handleVerifyEmailToogle = () => {
-    setVerifyEmailToggle(!verifyEmailToggle);
-    setLocalSurvey({ ...localSurvey, isVerifyEmailEnabled: !localSurvey.isVerifyEmailEnabled });
-  };
-
-  const handleSingleResponsePerEmailToggle = () => {
-    setIsSingleResponsePerEmailToggle(!isSingleResponsePerEmailEnabledToggle);
-    setLocalSurvey({
-      ...localSurvey,
-      isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
-    });
   };
 
   const handleRunOnDateChange = (date: Date) => {
@@ -471,24 +454,6 @@ export const ResponseOptionsCard = ({
                 </div>
               </AdvancedOptionToggle>
 
-              {/* Verify Email Section */}
-              <AdvancedOptionToggle
-                htmlId="verifyEmailBeforeSubmission"
-                isChecked={verifyEmailToggle}
-                onToggle={handleVerifyEmailToogle}
-                title={t("environments.surveys.edit.verify_email_before_submission")}
-                description={t("environments.surveys.edit.verify_email_before_submission_description")}
-                childBorder={true}>
-                <div className="m-1">
-                  <AdvancedOptionToggle
-                    htmlId="preventDoubleSubmission"
-                    isChecked={isSingleResponsePerEmailEnabledToggle}
-                    onToggle={handleSingleResponsePerEmailToggle}
-                    title={t("environments.surveys.edit.prevent_double_submission")}
-                    description={t("environments.surveys.edit.prevent_double_submission_description")}
-                  />
-                </div>
-              </AdvancedOptionToggle>
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}

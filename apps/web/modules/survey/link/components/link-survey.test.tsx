@@ -59,7 +59,7 @@ const dummySurvey = {
   environmentId: "env1",
   welcomeCard: { enabled: true },
   questions: [{ id: "q1" }, { id: "q2" }],
-  isVerifyEmailEnabled: false,
+  isVerifyEmailEnabled: true,
   hiddenFields: { fieldIds: ["hidden1"] },
   singleUse: "Single Use Message",
   styling: { overwriteThemeStyling: false },

@@ -39,6 +39,8 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
         return t("environments.surveys.edit.zip");
       case "verifiedEmail":
         return t("common.verified_email");
+      case "verifiedAddress":
+        return t("common.verified_address");
       case "userId":
         return t("common.user_id");
       case "contactsTableUser":

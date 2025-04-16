@@ -3,11 +3,9 @@
 import AvailableSurveys from "@/modules/activity/components/Surveys/components/available-surveys";
 import CompletedSurveys from "@/modules/activity/components/Surveys/components/completed-surveys";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { Survey } from "@prisma/client";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { getAvailableSurveysAction, getCompletedSurveysAction } from "./actions";
 
 export function Surveys({ className = "" }: { className?: string }): React.JSX.Element {
   const tabs = [

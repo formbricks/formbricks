@@ -14,8 +14,6 @@ export const getCompletedSurveysAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     return prisma.survey.findMany({
       where: {
-        public: true,
-        status: "inProgress",
         responses: {
           some: {
             data: {

@@ -1,16 +1,16 @@
 "use client";
 
+import { LoginForm } from "@/modules/auth/login/components/login-form";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { SurveyLinkUsed } from "@/modules/survey/link/components/survey-link-used";
 import { getPrefillValue } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { useUser } from "@account-kit/react";
 import { Project, Response } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { LoginForm } from "@/modules/auth/login/components/login-form";
-import { useUser } from "@account-kit/react";
 
 let setQuestionId = (_: string) => {};
 let setResponseData = (_: TResponseData) => {};
@@ -95,30 +95,30 @@ export const LinkSurvey = ({
   }, [searchParams, survey.hiddenFields.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
-    if (survey.isVerifyEmailEnabled && user?.email) {
-      return { verifiedEmail: user.email };
+    if (user?.email && user?.address) {
+      return { verifiedEmail: user.email, verifiedAddress: user.address };
     } else {
       return null;
     }
-  }, [survey.isVerifyEmailEnabled, user]);
+  }, [user]);
 
   if (hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
-  if (survey.isVerifyEmailEnabled && !user?.address) {
+  if (!user?.email || !user?.address) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="max-w-xs mx-auto border bg-white rounded-xl">
-          <LoginForm 
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="mx-auto max-w-xs rounded-xl border bg-white">
+          <LoginForm
             emailAuthEnabled={false}
             isMultiOrgEnabled={false}
             passwordResetEnabled={false}
-            publicSignUpEnabled={false}    
+            publicSignUpEnabled={false}
           />
         </div>
       </div>
-    )
+    );
   }
 
   const determineStyling = () => {

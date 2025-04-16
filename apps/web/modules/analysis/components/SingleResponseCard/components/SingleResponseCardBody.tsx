@@ -11,6 +11,7 @@ import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
 import { RenderResponse } from "./RenderResponse";
 import { ResponseVariables } from "./ResponseVariables";
+import { VerifiedAddress } from "./VerifiedAddress";
 import { VerifiedEmail } from "./VerifiedEmail";
 
 interface SingleResponseCardBodyProps {
@@ -59,9 +60,8 @@ export const SingleResponseCardBody = ({
         />
       )}
       <div className="space-y-6">
-        {survey.isVerifyEmailEnabled && response.data["verifiedEmail"] && (
-          <VerifiedEmail responseData={response.data} />
-        )}
+        {response.data["verifiedEmail"] && <VerifiedEmail responseData={response.data} />}
+        {response.data["verifiedAddress"] && <VerifiedAddress responseData={response.data} />}
         {survey.questions.map((question) => {
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)

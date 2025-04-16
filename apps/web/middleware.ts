@@ -31,7 +31,6 @@ import {
   SURVEY_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 import { logger } from "@formbricks/logger";
 
 const enforceHttps = (request: NextRequest): Response | null => {

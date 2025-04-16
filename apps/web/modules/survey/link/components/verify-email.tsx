@@ -55,18 +55,16 @@ export const VerifyEmail = ({
 
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email.toLowerCase();
-    if (localSurvey.isSingleResponsePerEmailEnabled) {
-      const actionResult = await isSurveyResponsePresentAction({
-        surveyId: localSurvey.id,
-        email,
+    const result = await isSurveyResponsePresentAction({
+      surveyId: localSurvey.id,
+      email,
+    });
+    if (result?.data) {
+      form.setError("email", {
+        type: "custom",
+        message: t("s.response_already_received"),
       });
-      if (actionResult?.data) {
-        form.setError("email", {
-          type: "custom",
-          message: t("s.response_already_received"),
-        });
-        return;
-      }
+      return;
     }
 
     const data = {

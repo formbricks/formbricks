@@ -106,6 +106,8 @@ const mapResponsesToTableData = (
       {} as Record<string, string | number>
     ),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
+    verifiedAddress:
+      typeof response.data["verifiedAddress"] === "string" ? response.data["verifiedAddress"] : "",
     language: response.language,
     person: response.contact,
     contactAttributes: response.contactAttributes,
