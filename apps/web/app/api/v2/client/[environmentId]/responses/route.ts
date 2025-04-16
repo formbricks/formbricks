@@ -4,12 +4,14 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { createResponse } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
@@ -85,6 +87,54 @@ export const POST = async (request: Request, context: Context): Promise<Response
       },
       true
     );
+  }
+
+  const MAX_OTHER_OPTION_LENGTH = 250;
+
+  // Validate response data for "other" options exceeding character limit
+  for (const questionId of Object.keys(responseInputData.data)) {
+    const question = survey.questions.find((q) => q.id === questionId);
+    if (
+      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
+    ) {
+      const answer = responseInputData.data[questionId];
+
+      /**
+       * Helper function to check if a string value is a valid "other" option
+       * @returns BadRequestResponse if the value exceeds the limit, undefined otherwise
+       */
+      const validateOtherOptionLength = (
+        value: string,
+        choices: TSurveyQuestionChoice[]
+      ): Response | undefined => {
+        // Check if this is an "other" option (not in predefined choices)
+        const matchingChoice = choices.find(
+          (choice) => getLocalizedValue(choice.label, responseInputData.language ?? "default") === value
+        );
+
+        // If this is an "other" option with value that's too long, reject the response
+        if (!matchingChoice && value.length > MAX_OTHER_OPTION_LENGTH) {
+          return responses.badRequestResponse("Other option text is too long", { questionId }, true);
+        }
+        return undefined;
+      };
+
+      // Handle single choice responses
+      if (typeof answer === "string") {
+        const validationResult = validateOtherOptionLength(answer, question.choices);
+        if (validationResult) return validationResult;
+      }
+      // Handle multi-select responses
+      else if (Array.isArray(answer)) {
+        for (const item of answer) {
+          if (typeof item === "string") {
+            const validationResult = validateOtherOptionLength(item, question.choices);
+            if (validationResult) return validationResult;
+          }
+        }
+      }
+    }
   }
 
   let response: TResponse;
