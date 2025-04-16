@@ -40,7 +40,7 @@ interface SurveyMenuBarProps {
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
-  setIsCautionDialogOpen?: (open: boolean) => void;
+  setIsCautionDialogOpen: (open: boolean) => void;
 }
 
 export const SurveyMenuBar = ({

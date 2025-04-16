@@ -23,7 +23,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Language, Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import React, { SetStateAction, useEffect, useMemo, useState } from "react";
+import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -64,7 +64,7 @@ interface QuestionsViewProps {
   isCxMode: boolean;
   locale: TUserLocale;
   responseCount: number;
-  setIsCautionDialogOpen?: (open: boolean) => void;
+  setIsCautionDialogOpen: (open: boolean) => void;
 }
 
 export const QuestionsView = ({
