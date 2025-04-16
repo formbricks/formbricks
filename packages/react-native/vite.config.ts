@@ -1,10 +1,6 @@
 import { resolve } from "node:path";
-import { type InlineConfig, type UserConfig, defineConfig } from "vite";
+import { type UserConfig, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-
-interface VitestConfigExport extends UserConfig {
-  test: InlineConfig;
-}
 
 const config = (): UserConfig => {
   return defineConfig({
@@ -19,7 +15,6 @@ const config = (): UserConfig => {
     build: {
       emptyOutDir: false,
       minify: "terser",
-      sourcemap: true,
       rollupOptions: {
         external: [
           "react",
@@ -36,7 +31,7 @@ const config = (): UserConfig => {
         fileName: "index",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/api", "@formbricks/types"] })],
+    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/types"] })],
     test: {
       setupFiles: ["./vitest.setup.ts"],
       coverage: {
@@ -45,7 +40,7 @@ const config = (): UserConfig => {
         include: ["src/lib/**/*.ts"],
       },
     },
-  } as VitestConfigExport);
+  });
 };
 
 export default config;

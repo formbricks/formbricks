@@ -1,12 +1,8 @@
 import { resolve } from "path";
-import { InlineConfig, UserConfig, defineConfig } from "vite";
+import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
-
-interface VitestConfigExport extends UserConfig {
-  test: InlineConfig;
-}
 
 const config = () => {
   return defineConfig({
@@ -24,7 +20,6 @@ const config = () => {
       },
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
       minify: "terser",
-      sourcemap: true,
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricks",
@@ -35,7 +30,6 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        bundledPackages: ["@formbricks/api"],
       }),
       copyCompiledAssetsPlugin({
         filename: "formbricks",
@@ -51,7 +45,7 @@ const config = () => {
         include: ["src/lib/**/*.ts"],
       },
     },
-  } as VitestConfigExport);
+  });
 };
 
 export default config;

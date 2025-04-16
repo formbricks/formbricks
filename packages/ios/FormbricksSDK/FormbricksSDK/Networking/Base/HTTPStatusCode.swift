@@ -20,7 +20,7 @@ enum HTTPStatusCode: Int, Error {
     // MARK: - Informational - 1xx -
     
     /// - continue: The server has received the request headers and the client should proceed to send the request body.
-    case `continue` = 100
+    case httpContinue = 100
     
     /// - switchingProtocols: The requester has asked the server to switch protocols and the server has agreed to do so.
     case switchingProtocols = 101

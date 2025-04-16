@@ -1,13 +1,13 @@
 /* eslint-disable no-console -- debugging*/
-import React, { type JSX, useEffect, useRef, useState } from "react";
-import { Modal } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getLanguageCode, getStyling } from "@/lib/common/utils";
 import { SurveyStore } from "@/lib/survey/store";
 import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "@/types/config";
 import type { SurveyContainerProps } from "@/types/survey";
+import React, { type JSX, useEffect, useRef, useState } from "react";
+import { Modal } from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -114,6 +114,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             clickOutside: surveyPlacement === "center" ? clickOutside : true,
             darkOverlay,
             getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
+            isWebEnvironment: false,
           }),
         }}
         style={{ backgroundColor: "transparent" }}

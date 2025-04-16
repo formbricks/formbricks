@@ -212,6 +212,7 @@
     "insights": "Informações",
     "integration": "integração",
     "integrations": "Integrações",
+    "invalid_date": "Data inválida",
     "invalid_file_type": "Tipo de ficheiro inválido",
     "invite": "Convidar",
     "invite_them": "Convide-os",
@@ -372,7 +373,7 @@
     "team": "Equipa",
     "team_access": "Acesso da Equipa",
     "team_name": "Nome da equipa",
-    "teams": "Equipas",
+    "teams": "Controlo de Acesso",
     "teams_not_found": "Equipas não encontradas",
     "text": "Texto",
     "time": "Tempo",
@@ -775,20 +776,21 @@
       "zapier_integration_description": "Integre o Formbricks com mais de 5000 apps via Zapier"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "Adicionar Chave API",
-        "add_env_api_key": "Adicionar Chave API {environmentType}",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
         "api_key_created": "Chave API criada",
         "api_key_deleted": "Chave API eliminada",
         "api_key_label": "Etiqueta da Chave API",
         "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
-        "dev_api_keys": "Chaves de Ambiente de Desenvolvimento",
-        "dev_api_keys_description": "Adicionar e remover chaves de API para o seu ambiente de Desenvolvimento.",
+        "api_key_updated": "Chave API atualizada",
+        "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Ainda não tem nenhuma chave API",
-        "prod_api_keys": "Chaves de Ambiente de Produção",
-        "prod_api_keys_description": "Adicionar e remover chaves de API para o seu ambiente de Produção.",
+        "no_env_permissions_found": "Nenhuma permissão de ambiente encontrada",
+        "organization_access": "Acesso à Organização",
+        "permissions": "Permissões",
+        "project_access": "Acesso ao Projeto",
         "secret": "Segredo",
         "unable_to_delete_api_key": "Não é possível eliminar a chave API"
       },
@@ -988,6 +990,12 @@
       "with_the_formbricks_sdk": "com o SDK Formbricks"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "Adicionar chave API",
+        "add_permission": "Adicionar permissão",
+        "api_keys_description": "Gerir chaves API para aceder às APIs de gestão do Formbricks",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Apenas os proprietários e gestores da organização podem gerir chaves API"
+      },
       "billing": {
         "10000_monthly_responses": "10000 Respostas Mensais",
         "1500_monthly_responses": "1500 Respostas Mensais",
@@ -1278,7 +1286,6 @@
         "add_question": "Adicionar pergunta",
         "add_question_below": "Adicionar pergunta abaixo",
         "add_row": "Adicionar linha",
-        "add_tooltip": "Adicionar dica de ferramenta",
         "add_variable": "Adicionar variável",
         "address_fields": "Campos de Endereço",
         "address_line_1": "Endereço Linha 1",
@@ -1552,7 +1559,6 @@
         "redirect_to_url_not_available_on_free_plan": "Redirecionar para URL não está disponível no plano gratuito",
         "release_survey_on_date": "Lançar inquérito na data",
         "remove_description": "Remover descrição",
-        "remove_tooltip": "Remover dica de ferramenta",
         "remove_translations": "Remover traduções",
         "require_answer": "Exigir Resposta",
         "required": "Obrigatório",
@@ -1620,7 +1626,6 @@
         "three_points": "3 pontos",
         "times": "tempos",
         "to_keep_the_placement_over_all_surveys_consistent_you_can": "Para manter a colocação consistente em todos os questionários, pode",
-        "tooltip": "Dica de ferramenta",
         "trigger_survey_when_one_of_the_actions_is_fired": "Desencadear inquérito quando uma das ações for disparada...",
         "try_lollipop_or_mountain": "Experimente 'lollipop' ou 'mountain'...",
         "type_field_id": "Escreva o id do campo",
@@ -1653,7 +1658,6 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Precisa de ter duas ou mais línguas configuradas no seu projeto para trabalhar com traduções.",
         "your_description_here_recall_information_with": "A sua descrição aqui. Recorde a informação com @",
         "your_question_here_recall_information_with": "A sua pergunta aqui. Recorde a informação com @",
-        "your_tooltip_here_recall_information_with": "Sua dica de ferramenta aqui. Recorde a informação com @",
         "your_web_app": "A sua aplicação web",
         "zip": "Comprimir"
       },
@@ -1718,8 +1722,6 @@
         "copy_link_to_public_results": "Copiar link para resultados públicos",
         "create_single_use_links": "Criar links de uso único",
         "create_single_use_links_description": "Aceitar apenas uma submissão por link. Aqui está como.",
-        "current_selection_csv": "Seleção atual (CSV)",
-        "current_selection_excel": "Seleção atual (Excel)",
         "custom_range": "Intervalo personalizado...",
         "data_prefilling": "Pré-preenchimento de dados",
         "data_prefilling_description": "Quer pré-preencher alguns campos no inquérito? Aqui está como.",
@@ -1744,6 +1746,8 @@
         "failed_to_copy_link": "Falha ao copiar link",
         "filter_added_successfully": "Filtro adicionado com sucesso",
         "filter_updated_successfully": "Filtro atualizado com sucesso",
+        "filtered_responses_csv": "Respostas filtradas (CSV)",
+        "filtered_responses_excel": "Respostas filtradas (Excel)",
         "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
         "go_to_setup_checklist": "Ir para a Lista de Verificação de Configuração \uD83D\uDC49",
         "hide_embed_code": "Ocultar código de incorporação",

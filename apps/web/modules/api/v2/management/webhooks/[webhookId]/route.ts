@@ -1,7 +1,6 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteWebhook,
@@ -9,9 +8,10 @@ import {
   updateWebhook,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import {
-  webhookIdSchema,
-  webhookUpdateSchema,
+  ZWebhookIdSchema,
+  ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
+      params: z.object({ webhookId: ZWebhookIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -38,13 +38,11 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error);
       }
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: webhook.ok ? webhook.data.environmentId : "",
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "GET")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "webhook", issue: "unauthorized" }],
+        });
       }
 
       return responses.successResponse(webhook);
@@ -55,8 +53,8 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
-      body: webhookUpdateSchema,
+      params: z.object({ webhookId: ZWebhookIdSchema }),
+      body: ZWebhookUpdateSchema,
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -83,14 +81,11 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error);
       }
 
-      // check webhook environment against the api key environment
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: webhook.ok ? webhook.data.environmentId : "",
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "PUT")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "webhook", issue: "unauthorized" }],
+        });
       }
 
       // check if webhook environment matches the surveys environment
@@ -117,7 +112,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
+      params: z.object({ webhookId: ZWebhookIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -136,13 +131,11 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         return handleApiError(request, webhook.error);
       }
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: webhook.ok ? webhook.data.environmentId : "",
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "DELETE")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "webhook", issue: "unauthorized" }],
+        });
       }
 
       const deletedWebhook = await deleteWebhook(params.webhookId);

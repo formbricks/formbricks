@@ -1,6 +1,5 @@
 // state.test.ts
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { FormbricksAPI } from "@formbricks/api";
+import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
@@ -10,15 +9,12 @@ import {
   fetchEnvironmentState,
 } from "@/lib/environment/state";
 import type { TEnvironmentState } from "@/types/config";
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// Mock the FormbricksAPI so we can control environment.getState
-vi.mock("@formbricks/api", () => ({
-  FormbricksAPI: vi.fn().mockImplementation(() => ({
-    client: {
-      environment: {
-        getState: vi.fn(),
-      },
-    },
+// Mock the ApiClient so we can control environment.getEnvironmentState
+vi.mock("@/lib/common/api", () => ({
+  ApiClient: vi.fn().mockImplementation(() => ({
+    getEnvironmentState: vi.fn(),
   })),
 }));
 
@@ -37,6 +33,7 @@ vi.mock("@/lib/common/logger", () => ({
 // Mock filterSurveys
 vi.mock("@/lib/common/utils", () => ({
   filterSurveys: vi.fn(),
+  getIsDebug: vi.fn(),
 }));
 
 // Mock Config
@@ -65,16 +62,12 @@ describe("environment/state.ts", () => {
   describe("fetchEnvironmentState()", () => {
     test("returns ok(...) with environment state", async () => {
       // Setup mock
-      (FormbricksAPI as unknown as Mock).mockImplementationOnce(() => {
+      (ApiClient as unknown as Mock).mockImplementationOnce(() => {
         return {
-          client: {
-            environment: {
-              getState: vi.fn().mockResolvedValue({
-                ok: true,
-                data: { data: { foo: "bar" }, expiresAt: new Date(Date.now() + 1000 * 60 * 30) },
-              }),
-            },
-          },
+          getEnvironmentState: vi.fn().mockResolvedValue({
+            ok: true,
+            data: { data: { foo: "bar" }, expiresAt: new Date(Date.now() + 1000 * 60 * 30) },
+          }),
         };
       });
 
@@ -92,19 +85,15 @@ describe("environment/state.ts", () => {
       }
     });
 
-    test("returns err(...) if environment.getState is not ok", async () => {
+    test("returns err(...) if environment.getEnvironmentState is not ok", async () => {
       const mockError = { code: "forbidden", status: 403, message: "Access denied" };
 
-      (FormbricksAPI as unknown as Mock).mockImplementationOnce(() => {
+      (ApiClient as unknown as Mock).mockImplementationOnce(() => {
         return {
-          client: {
-            environment: {
-              getState: vi.fn().mockResolvedValue({
-                ok: false,
-                error: mockError,
-              }),
-            },
-          },
+          getEnvironmentState: vi.fn().mockResolvedValue({
+            ok: false,
+            error: mockError,
+          }),
         };
       });
 
@@ -127,13 +116,9 @@ describe("environment/state.ts", () => {
         responseMessage: "Network fail",
       };
 
-      (FormbricksAPI as unknown as Mock).mockImplementationOnce(() => {
+      (ApiClient as unknown as Mock).mockImplementationOnce(() => {
         return {
-          client: {
-            environment: {
-              getState: vi.fn().mockRejectedValue(mockNetworkError),
-            },
-          },
+          getEnvironmentState: vi.fn().mockRejectedValue(mockNetworkError),
         };
       });
 
@@ -206,15 +191,11 @@ describe("environment/state.ts", () => {
 
       mockJsConfig.mockReturnValue(mockConfig as unknown as Config);
 
-      (FormbricksAPI as Mock).mockImplementation(() => ({
-        client: {
-          environment: {
-            getState: vi.fn().mockResolvedValue({
-              ok: true,
-              data: mockNewState,
-            }),
-          },
-        },
+      (ApiClient as Mock).mockImplementation(() => ({
+        getEnvironmentState: vi.fn().mockResolvedValue({
+          ok: true,
+          data: mockNewState,
+        }),
       }));
 
       (filterSurveys as Mock).mockReturnValue([]);
@@ -252,12 +233,8 @@ describe("environment/state.ts", () => {
       mockJsConfig.mockReturnValue(mockConfig as unknown as Config);
 
       // Mock API to throw an error
-      (FormbricksAPI as Mock).mockImplementation(() => ({
-        client: {
-          environment: {
-            getState: vi.fn().mockRejectedValue(new Error("Network error")),
-          },
-        },
+      (ApiClient as Mock).mockImplementation(() => ({
+        getEnvironmentState: vi.fn().mockRejectedValue(new Error("Network error")),
       }));
 
       addEnvironmentStateExpiryCheckListener();
@@ -285,14 +262,10 @@ describe("environment/state.ts", () => {
       mockJsConfig.mockReturnValue(mockConfig as unknown as Config);
 
       const apiMock = vi.fn().mockImplementation(() => ({
-        client: {
-          environment: {
-            getState: vi.fn(),
-          },
-        },
+        getEnvironmentState: vi.fn(),
       }));
 
-      (FormbricksAPI as Mock).mockImplementation(apiMock);
+      (ApiClient as Mock).mockImplementation(apiMock);
 
       addEnvironmentStateExpiryCheckListener();
 

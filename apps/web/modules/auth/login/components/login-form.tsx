@@ -63,12 +63,12 @@ export const LoginForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  const callbackUrl = searchParams?.get("callbackUrl") || "";
+  const callbackUrl = searchParams?.get("callbackUrl") ?? "";
   const { t } = useTranslate();
 
   const form = useForm<TLoginForm>({
     defaultValues: {
-      email: searchParams?.get("email") || "",
+      email: searchParams?.get("email") ?? "",
       password: "",
       totpCode: "",
       backupCode: "",
@@ -112,7 +112,7 @@ export const LoginForm = ({
       }
 
       if (!signInResponse?.error) {
-        router.push(searchParams?.get("callbackUrl") || "/");
+        router.push(searchParams?.get("callbackUrl") ?? "/");
       }
     } catch (error) {
       toast.error(error.toString());
@@ -142,7 +142,7 @@ export const LoginForm = ({
     }
 
     return t("auth.login.login_to_your_account");
-  }, [totpBackup, totpLogin]);
+  }, [t, totpBackup, totpLogin]);
 
   const TwoFactorComponent = useMemo(() => {
     if (totpBackup) {
@@ -154,7 +154,7 @@ export const LoginForm = ({
     }
 
     return null;
-  }, [totpBackup, totpLogin]);
+  }, [form, totpBackup, totpLogin]);
 
   return (
     <FormProvider {...form}>
@@ -256,6 +256,7 @@ export const LoginForm = ({
               samlTenant={samlTenant}
               samlProduct={samlProduct}
               callbackUrl={callbackUrl}
+              source="signin"
             />
           )}
         </div>

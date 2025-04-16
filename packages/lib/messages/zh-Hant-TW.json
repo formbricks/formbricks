@@ -212,6 +212,7 @@
     "insights": "洞察",
     "integration": "整合",
     "integrations": "整合",
+    "invalid_date": "無效日期",
     "invalid_file_type": "無效的檔案類型",
     "invite": "邀請",
     "invite_them": "邀請他們",
@@ -372,7 +373,7 @@
     "team": "團隊",
     "team_access": "團隊存取權限",
     "team_name": "團隊名稱",
-    "teams": "團隊",
+    "teams": "存取控制",
     "teams_not_found": "找不到團隊",
     "text": "文字",
     "time": "時間",
@@ -775,20 +776,21 @@
       "zapier_integration_description": "透過 Zapier 將 Formbricks 與 5000 多個應用程式整合"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "新增 API 金鑰",
-        "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
         "api_key_created": "API 金鑰已建立",
         "api_key_deleted": "API 金鑰已刪除",
         "api_key_label": "API 金鑰標籤",
         "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",
-        "dev_api_keys": "開發環境金鑰",
-        "dev_api_keys_description": "為您的開發環境新增和移除 API 金鑰。",
+        "api_key_updated": "API 金鑰已更新",
+        "duplicate_access": "不允許重複的 project 存取",
         "no_api_keys_yet": "您還沒有任何 API 金鑰",
-        "prod_api_keys": "生產環境金鑰",
-        "prod_api_keys_description": "為您的生產環境新增和移除 API 金鑰。",
+        "no_env_permissions_found": "找不到環境權限",
+        "organization_access": "組織 Access",
+        "permissions": "權限",
+        "project_access": "專案存取",
         "secret": "密碼",
         "unable_to_delete_api_key": "無法刪除 API 金鑰"
       },
@@ -988,6 +990,12 @@
       "with_the_formbricks_sdk": "使用 Formbricks SDK"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "新增 API 金鑰",
+        "add_permission": "新增權限",
+        "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API",
+        "only_organization_owners_and_managers_can_manage_api_keys": "只有組織擁有者和管理員才能管理 API 金鑰"
+      },
       "billing": {
         "10000_monthly_responses": "10000 個每月回應",
         "1500_monthly_responses": "1500 個每月回應",
@@ -1278,7 +1286,6 @@
         "add_question": "新增問題",
         "add_question_below": "在下方新增問題",
         "add_row": "新增列",
-        "add_tooltip": "新增工具提示",
         "add_variable": "新增變數",
         "address_fields": "地址欄位",
         "address_line_1": "地址 1",
@@ -1552,7 +1559,6 @@
         "redirect_to_url_not_available_on_free_plan": "重新導向至網址在免費方案中不可用",
         "release_survey_on_date": "在指定日期發佈問卷",
         "remove_description": "移除描述",
-        "remove_tooltip": "移除工具提示",
         "remove_translations": "移除翻譯",
         "require_answer": "要求回答",
         "required": "必填",
@@ -1620,7 +1626,6 @@
         "three_points": "3 分",
         "times": "次",
         "to_keep_the_placement_over_all_surveys_consistent_you_can": "若要保持所有問卷的位置一致，您可以",
-        "tooltip": "工具提示",
         "trigger_survey_when_one_of_the_actions_is_fired": "當觸發其中一個操作時，觸發問卷...",
         "try_lollipop_or_mountain": "嘗試「棒棒糖」或「山峰」...",
         "type_field_id": "輸入欄位 ID",
@@ -1653,7 +1658,6 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "您需要在您的專案中設定兩個或更多語言，才能使用翻譯。",
         "your_description_here_recall_information_with": "您的描述在這裡。使用 @ 回憶資訊",
         "your_question_here_recall_information_with": "您的問題在這裡。使用 @ 回憶資訊",
-        "your_tooltip_here_recall_information_with": "您的工具提示在這裡。使用 @ 召回信息",
         "your_web_app": "您的 Web 應用程式",
         "zip": "郵遞區號"
       },
@@ -1718,8 +1722,6 @@
         "copy_link_to_public_results": "複製公開結果的連結",
         "create_single_use_links": "建立單次使用連結",
         "create_single_use_links_description": "每個連結只接受一次提交。以下是如何操作。",
-        "current_selection_csv": "目前選取 (CSV)",
-        "current_selection_excel": "目前選取 (Excel)",
         "custom_range": "自訂範圍...",
         "data_prefilling": "資料預先填寫",
         "data_prefilling_description": "您想要預先填寫問卷中的某些欄位嗎？以下是如何操作。",
@@ -1744,6 +1746,8 @@
         "failed_to_copy_link": "無法複製連結",
         "filter_added_successfully": "篩選器已成功新增",
         "filter_updated_successfully": "篩選器已成功更新",
+        "filtered_responses_csv": "篩選回應 (CSV)",
+        "filtered_responses_excel": "篩選回應 (Excel)",
         "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",
         "go_to_setup_checklist": "前往設定檢查清單 \uD83D\uDC49",
         "hide_embed_code": "隱藏嵌入程式碼",

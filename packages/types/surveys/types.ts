@@ -950,10 +950,18 @@ export const ZSurvey = z
         "placeholder",
       ];
 
-      const fieldsToValidate =
+      let fieldsToValidate =
         questionIndex === 0 || isBackButtonHidden
           ? initialFieldsToValidate
           : [...initialFieldsToValidate, "backButtonLabel"];
+
+      // Skip buttonLabel validation for required NPS and Rating questions
+      if (
+        (question.type === TSurveyQuestionTypeEnum.NPS || question.type === TSurveyQuestionTypeEnum.Rating) &&
+        question.required
+      ) {
+        fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
+      }
 
       for (const field of fieldsToValidate) {
         // Skip label validation for consent questions as its called checkbox label
@@ -2357,6 +2365,29 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
 export type TSurvey = z.infer<typeof ZSurvey>;
+
+export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.innerType())
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    projectOverwrites: true,
+    languages: true,
+    followUps: true,
+  })
+  .extend({
+    name: z.string(), // Keep name required
+    environmentId: z.string(),
+    questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
+    languages: z.array(ZSurveyLanguage).default([]),
+    welcomeCard: ZSurveyWelcomeCard.default({
+      enabled: false,
+    }),
+    endings: ZSurveyEndings.default([]),
+    type: ZSurveyType.default("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
+  })
+  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];

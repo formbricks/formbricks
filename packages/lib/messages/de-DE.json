@@ -212,6 +212,7 @@
     "insights": "Einblicke",
     "integration": "Integration",
     "integrations": "Integrationen",
+    "invalid_date": "Ungültiges Datum",
     "invalid_file_type": "Ungültiger Dateityp",
     "invite": "Einladen",
     "invite_them": "Lade sie ein",
@@ -372,7 +373,7 @@
     "team": "Team",
     "team_access": "Teamzugriff",
     "team_name": "Teamname",
-    "teams": "Teams",
+    "teams": "Zugriffskontrolle",
     "teams_not_found": "Teams nicht gefunden",
     "text": "Text",
     "time": "Zeit",
@@ -775,20 +776,21 @@
       "zapier_integration_description": "Integriere Formbricks mit über 5000 Apps über Zapier"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "API-Schlüssel hinzufügen",
-        "add_env_api_key": "{environmentType} API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
         "api_key_created": "API-Schlüssel erstellt",
         "api_key_deleted": "API-Schlüssel gelöscht",
         "api_key_label": "API-Schlüssel Label",
         "api_key_security_warning": "Aus Sicherheitsgründen wird der API-Schlüssel nur einmal nach der Erstellung angezeigt. Bitte kopiere ihn sofort an einen sicheren Ort.",
-        "dev_api_keys": "API-Schlüssel (Dev)",
-        "dev_api_keys_description": "API-Schlüssel für deine Entwicklungsumgebung hinzufügen und entfernen.",
+        "api_key_updated": "API-Schlüssel aktualisiert",
+        "duplicate_access": "Doppelter Projektzugriff nicht erlaubt",
         "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
-        "prod_api_keys": "API-Schlüssel (Prod)",
-        "prod_api_keys_description": "API-Schlüssel für deine Produktionsumgebung hinzufügen und entfernen.",
+        "no_env_permissions_found": "Keine Umgebungsberechtigungen gefunden",
+        "organization_access": "Organisationszugang",
+        "permissions": "Berechtigungen",
+        "project_access": "Projektzugriff",
         "secret": "Geheimnis",
         "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
       },
@@ -988,6 +990,12 @@
       "with_the_formbricks_sdk": "mit dem Formbricks SDK"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "API-Schlüssel hinzufügen",
+        "add_permission": "Berechtigung hinzufügen",
+        "api_keys_description": "Verwalte API-Schlüssel, um auf die Formbricks-Management-APIs zuzugreifen",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Nur Organisationsinhaber und -manager können API-Schlüssel verwalten"
+      },
       "billing": {
         "10000_monthly_responses": "10,000 monatliche Antworten",
         "1500_monthly_responses": "1,500 monatliche Antworten",
@@ -1278,7 +1286,6 @@
         "add_question": "Frage hinzufügen",
         "add_question_below": "Frage unten hinzufügen",
         "add_row": "Zeile hinzufügen",
-        "add_tooltip": "Tooltip hinzufügen",
         "add_variable": "Variable hinzufügen",
         "address_fields": "Adressfelder",
         "address_line_1": "Adresszeile 1",
@@ -1552,7 +1559,6 @@
         "redirect_to_url_not_available_on_free_plan": "Umleitung zu URL ist im kostenlosen Plan nicht verfügbar",
         "release_survey_on_date": "Umfrage an Datum veröffentlichen",
         "remove_description": "Beschreibung entfernen",
-        "remove_tooltip": "Tooltip entfernen",
         "remove_translations": "Übersetzungen entfernen",
         "require_answer": "Antwort erforderlich",
         "required": "Erforderlich",
@@ -1620,7 +1626,6 @@
         "three_points": "3 Punkte",
         "times": "Zeiten",
         "to_keep_the_placement_over_all_surveys_consistent_you_can": "Um die Platzierung über alle Umfragen hinweg konsistent zu halten, kannst du",
-        "tooltip": "Tooltip",
         "trigger_survey_when_one_of_the_actions_is_fired": "Umfrage auslösen, wenn eine der Aktionen ausgeführt wird...",
         "try_lollipop_or_mountain": "Versuch 'Lolli' oder 'Berge'...",
         "type_field_id": "Feld-ID eingeben",
@@ -1653,7 +1658,6 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Du musst zwei oder mehr Sprachen in deinem Projekt einrichten, um mit Übersetzungen zu arbeiten.",
         "your_description_here_recall_information_with": "Deine Beschreibung hier. Informationen abrufen mit @",
         "your_question_here_recall_information_with": "Deine Frage hier. Informationen abrufen mit @",
-        "your_tooltip_here_recall_information_with": "Ihr Tooltip hier. Informationen abrufen mit @",
         "your_web_app": "Deine Web-App",
         "zip": "Postleitzahl"
       },
@@ -1718,8 +1722,6 @@
         "copy_link_to_public_results": "Link zu öffentlichen Ergebnissen kopieren",
         "create_single_use_links": "Single-Use Links erstellen",
         "create_single_use_links_description": "Akzeptiere nur eine Antwort pro Link. So geht's.",
-        "current_selection_csv": "Aktuelle Auswahl (CSV)",
-        "current_selection_excel": "Aktuelle Auswahl (Excel)",
         "custom_range": "Benutzerdefinierter Bereich...",
         "data_prefilling": "Daten-Prefilling",
         "data_prefilling_description": "Du möchtest einige Felder in der Umfrage vorausfüllen? So geht's.",
@@ -1744,6 +1746,8 @@
         "failed_to_copy_link": "Kopieren des Links fehlgeschlagen",
         "filter_added_successfully": "Filter erfolgreich hinzugefügt",
         "filter_updated_successfully": "Filter erfolgreich aktualisiert",
+        "filtered_responses_csv": "Gefilterte Antworten (CSV)",
+        "filtered_responses_excel": "Gefilterte Antworten (Excel)",
         "formbricks_email_survey_preview": "Formbricks E-Mail-Umfrage Vorschau",
         "go_to_setup_checklist": "Gehe zur Einrichtungs-Checkliste \uD83D\uDC49",
         "hide_embed_code": "Einbettungscode ausblenden",

@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- required for logging errors */
-import { FormbricksAPI } from "@formbricks/api";
+import { ApiClient } from "@/lib/common/api";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
@@ -24,10 +24,10 @@ export const sendUpdatesToBackend = async ({
   >
 > => {
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;
-  const api = new FormbricksAPI({ appUrl, environmentId });
+  const api = new ApiClient({ appUrl, environmentId, isDebug: false });
 
   try {
-    const response = await api.client.user.createOrUpdate({
+    const response = await api.createOrUpdateUser({
       userId: updates.userId,
       attributes: updates.attributes,
     });

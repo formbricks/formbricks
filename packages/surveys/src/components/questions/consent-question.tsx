@@ -136,7 +136,6 @@ export function ConsentQuestion({
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
-              onSubmit({ [question.id]: value }, updatedTtcObj);
               onBack();
             }}
           />

@@ -1,7 +1,7 @@
 // file-upload.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { StorageAPI } from "@/lib/common/file-upload";
 import type { TUploadFileConfig } from "@/types/storage";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // A global fetch mock so we can capture fetch calls.
 // Alternatively, use `vi.stubGlobal("fetch", ...)`.

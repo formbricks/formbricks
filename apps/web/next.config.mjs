@@ -117,6 +117,15 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+      {
         // matching all API routes
         source: "/api/v1/client/:path*",
         headers: [
@@ -126,7 +135,7 @@ const nextConfig = {
           {
             key: "Access-Control-Allow-Headers",
             value:
-              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cache-Control",
           },
         ],
       },
@@ -140,7 +149,7 @@ const nextConfig = {
           {
             key: "Access-Control-Allow-Headers",
             value:
-              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cache-Control",
           },
         ],
       },
@@ -321,8 +330,6 @@ const sentryConfig = {
   disableLogger: true,
 };
 
-const exportConfig = process.env.SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryOptions)
-  : nextConfig;
+const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
 export default nextConfig;

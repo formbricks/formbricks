@@ -280,6 +280,7 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
+                        pattern=".*\S+.*"
                       />
                     ) : null}
                   </label>

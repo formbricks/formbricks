@@ -1,8 +1,8 @@
 /* eslint-disable no-console -- required for logging errors */
-import { FormbricksAPI } from "@formbricks/api";
+import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
-import { filterSurveys } from "@/lib/common/utils";
+import { filterSurveys, getIsDebug } from "@/lib/common/utils";
 import { type TUpdates, type TUserState } from "@/types/config";
 import { type ApiErrorResponse, type Result, type ResultError, err, ok, okVoid } from "@/types/error";
 
@@ -26,9 +26,13 @@ export const sendUpdatesToBackend = async ({
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;
 
   try {
-    const api = new FormbricksAPI({ appUrl, environmentId });
+    const api = new ApiClient({
+      appUrl,
+      environmentId,
+      isDebug: getIsDebug(),
+    });
 
-    const response = await api.client.user.createOrUpdate({
+    const response = await api.createOrUpdateUser({
       userId: updates.userId,
       attributes: updates.attributes,
     });

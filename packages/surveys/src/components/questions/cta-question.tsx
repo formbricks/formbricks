@@ -108,7 +108,6 @@ export function CTAQuestion({
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
-              onSubmit({ [question.id]: "" }, updatedTtcObj);
               onBack();
             }}
           />

@@ -1,15 +1,15 @@
-import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
-import { FormbricksAPI } from "@formbricks/api";
 import {
   mockAppUrl,
   mockAttributes,
   mockEnvironmentId,
   mockUserId,
 } from "@/lib/user/tests/__mocks__/update.mock";
+import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { sendUpdates, sendUpdatesToBackend } from "@/lib/user/update";
 import { type TUpdates } from "@/types/config";
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {
@@ -30,15 +30,12 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   filterSurveys: vi.fn(),
+  getIsDebug: vi.fn(),
 }));
 
-vi.mock("@formbricks/api", () => ({
-  FormbricksAPI: vi.fn().mockImplementation(() => ({
-    client: {
-      user: {
-        createOrUpdate: vi.fn(),
-      },
-    },
+vi.mock("@/lib/common/api", () => ({
+  ApiClient: vi.fn().mockImplementation(() => ({
+    createOrUpdateUserUser: vi.fn(),
   })),
 }));
 
@@ -60,12 +57,8 @@ describe("sendUpdatesToBackend", () => {
       },
     };
 
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockResolvedValue(mockResponse),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
     }));
 
     const result = await sendUpdatesToBackend({
@@ -83,15 +76,11 @@ describe("sendUpdatesToBackend", () => {
   test("returns network error if API call fails", async () => {
     const mockUpdates: TUpdates = { userId: mockUserId, attributes: mockAttributes };
 
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockResolvedValue({
-            ok: false,
-            error: { code: "network_error", message: "Request failed", status: 500 },
-          }),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { code: "network_error", message: "Request failed", status: 500 },
+      }),
     }));
 
     const result = await sendUpdatesToBackend({
@@ -110,12 +99,8 @@ describe("sendUpdatesToBackend", () => {
   test("returns error if network request fails", async () => {
     const mockUpdates: TUpdates = { userId: mockUserId, attributes: { plan: "premium" } };
 
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockRejectedValue(new Error("Network error")),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Network error")),
     }));
 
     const result = await sendUpdatesToBackend({
@@ -166,12 +151,8 @@ describe("sendUpdates", () => {
       },
     };
 
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockResolvedValue(mockResponse),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
     }));
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
@@ -189,12 +170,8 @@ describe("sendUpdates", () => {
       },
     };
 
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockResolvedValue(mockErrorResponse),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockResolvedValue(mockErrorResponse),
     }));
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
@@ -206,12 +183,8 @@ describe("sendUpdates", () => {
   });
 
   test("handles unexpected errors", async () => {
-    (FormbricksAPI as Mock).mockImplementation(() => ({
-      client: {
-        user: {
-          createOrUpdate: vi.fn().mockRejectedValue(new Error("Unexpected error")),
-        },
-      },
+    (ApiClient as Mock).mockImplementation(() => ({
+      createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Unexpected error")),
     }));
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
