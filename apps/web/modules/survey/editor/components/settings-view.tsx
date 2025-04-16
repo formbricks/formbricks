@@ -7,6 +7,7 @@ import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyRewardCard } from "./survey-reward-card";
+import { Input } from "@/modules/ui/components/input";
 
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
@@ -29,6 +30,15 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
+        <Input
+          defaultValue={localSurvey.description}
+          onChange={(e) => {
+            const updatedSurvey = { ...localSurvey, description: e.target.value };
+            setLocalSurvey(updatedSurvey);
+          }}
+          className="h-8 w-72 border-white py-0 hover:border-slate-200"
+        />
+
       <SurveyVisibilityCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />

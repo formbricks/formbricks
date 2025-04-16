@@ -360,6 +360,7 @@ model Survey {
   createdAt           DateTime                @default(now()) @map(name: "created_at")
   updatedAt           DateTime                @updatedAt @map(name: "updated_at")
   name                String
+  description         String?
   redirectUrl         String?
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)

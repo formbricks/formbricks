@@ -16,6 +16,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
   .pick({
     id: true,
     name: true,
+    description: true,
     welcomeCard: true,
     questions: true,
     variables: true,

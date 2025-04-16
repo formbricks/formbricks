@@ -22,4 +22,4 @@ export const useERC20 = ({ address }: Props) => {
   }, [address, provider]);
 
   return { token };
-};
+}; 

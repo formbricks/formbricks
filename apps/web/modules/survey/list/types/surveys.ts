@@ -5,6 +5,7 @@ import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 export const ZSurvey = z.object({
   id: z.string(),
   name: z.string(),
+  description: z.string(),
   environmentId: z.string(),
   type: z.enum(["link", "app", "website", "web"]), //we can replace this with ZSurveyType after we remove "web" from schema
   status: ZSurveyStatus,

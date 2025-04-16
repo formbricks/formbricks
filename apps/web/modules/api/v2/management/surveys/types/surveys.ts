@@ -26,6 +26,7 @@ export const ZGetSurveysFilter = z
 
 export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   name: true,
+  description: true,
   redirectUrl: true,
   type: true,
   environmentId: true,
