@@ -120,10 +120,6 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
             /// Happens when the user closes the survey view with the close button.
             case .onClose:
                 Formbricks.surveyManager?.dismissSurveyWebView()
-                
-            /// Happens when the survey view is finished  by the user submitting the last question.
-            case .onFinished:
-                Formbricks.surveyManager?.delayedDismiss()
             
             /// Happens when the survey wants to open an external link in the default browser.
             case .onOpenExternalURL:

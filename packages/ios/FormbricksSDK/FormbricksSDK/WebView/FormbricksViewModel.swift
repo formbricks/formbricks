@@ -38,10 +38,6 @@ private extension FormbricksViewModel {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onClose" }));
                 };
 
-                function onFinished() {
-                    window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onFinished" }));
-                };
-
                 function onDisplayCreated() {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onDisplayCreated" }));
                 };
@@ -58,7 +54,6 @@ private extension FormbricksViewModel {
                     const options = JSON.parse(json);
                     surveyProps = {
                         ...options,
-                        onFinished,
                         onDisplayCreated,
                         onResponseCreated,
                         onClose,

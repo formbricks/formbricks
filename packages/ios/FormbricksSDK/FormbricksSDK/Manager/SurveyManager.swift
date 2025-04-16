@@ -117,13 +117,6 @@ extension SurveyManager {
         isShowingSurvey = false
         presentSurveyManager.dismissView()
     }
-    
-    /// Dismisses the presented survey window after a delay.
-    func delayedDismiss() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(Config.Environment.closingTimeoutInSeconds)) { [weak self] in
-            self?.dismissSurveyWebView()
-        }
-    }
 }
 
 private extension SurveyManager {
