@@ -11,7 +11,6 @@ class WebAppInterface(private val callback: WebAppCallback?) {
 
     interface WebAppCallback {
         fun onClose()
-        fun onFinished()
         fun onDisplayCreated()
         fun onResponseCreated()
         fun onFilePick(data: FileUploadData)
@@ -29,7 +28,6 @@ class WebAppInterface(private val callback: WebAppCallback?) {
             val jsMessage = JsMessageData.from(data)
             when (jsMessage.event) {
                 EventType.ON_CLOSE -> callback?.onClose()
-                EventType.ON_FINISHED -> callback?.onFinished()
                 EventType.ON_DISPLAY_CREATED -> callback?.onDisplayCreated()
                 EventType.ON_RESPONSE_CREATED -> callback?.onResponseCreated()
                 EventType.ON_FILE_PICK -> { callback?.onFilePick(FileUploadData.from(data)) }
