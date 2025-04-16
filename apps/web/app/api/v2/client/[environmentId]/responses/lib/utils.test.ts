@@ -1,5 +1,6 @@
 import { extractIP } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 
 // Mock the logger
 vi.mock("@formbricks/logger", () => ({
@@ -69,18 +70,14 @@ describe("utils", () => {
       });
       const ip = extractIP(mockHeaders, surveyId);
       expect(ip).toBeUndefined();
-      expect(require("@formbricks/logger").logger.warn).toHaveBeenCalledWith(
-        `Not able to capture IP address for survey: ${surveyId}`
-      );
+      expect(logger.warn).toHaveBeenCalledWith(`Not able to capture IP address for survey: ${surveyId}`);
     });
 
     test("should return undefined when no IP headers are present", () => {
       const mockHeaders = createMockHeaders({});
       const ip = extractIP(mockHeaders, surveyId);
       expect(ip).toBeUndefined();
-      expect(require("@formbricks/logger").logger.warn).toHaveBeenCalledWith(
-        `Not able to capture IP address for survey: ${surveyId}`
-      );
+      expect(logger.warn).toHaveBeenCalledWith(`Not able to capture IP address for survey: ${surveyId}`);
     });
 
     test("should handle null header values", () => {
@@ -89,9 +86,7 @@ describe("utils", () => {
       });
       const ip = extractIP(mockHeaders, surveyId);
       expect(ip).toBeUndefined();
-      expect(require("@formbricks/logger").logger.warn).toHaveBeenCalledWith(
-        `Not able to capture IP address for survey: ${surveyId}`
-      );
+      expect(logger.warn).toHaveBeenCalledWith(`Not able to capture IP address for survey: ${surveyId}`);
     });
 
     test("should extract first IP from comma-separated list", () => {

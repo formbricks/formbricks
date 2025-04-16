@@ -208,6 +208,7 @@ const baseSurveyProperties = {
   welcomeCard: mockWelcomeCard,
   questions: [mockQuestion],
   isBackButtonHidden: false,
+  isCaptureIPAddressEnabled: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",
