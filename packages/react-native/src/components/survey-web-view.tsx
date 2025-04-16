@@ -150,7 +150,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               return;
             }
 
-            const { onDisplayCreated, onResponseCreated, onClose, onFinished } = validatedMessage.data;
+            const { onDisplayCreated, onResponseCreated, onClose } = validatedMessage.data;
             if (onDisplayCreated) {
               const existingDisplays = appConfig.get().user.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
@@ -198,12 +198,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             if (onClose) {
               onCloseSurvey();
             }
-
-            if (onFinished) {
-              setTimeout(() => {
-                onCloseSurvey();
-              }, 2500);
-            }
           } catch (error) {
             logger.error(`Error handling WebView message: ${error as string}`);
           }
@@ -238,10 +232,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
         window.ReactNativeWebView.postMessage(JSON.stringify({ onClose: true }));
       };
 
-      function onFinished() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onFinished: true }));
-      };
-
       function onDisplayCreated() {
         window.ReactNativeWebView.postMessage(JSON.stringify({ onDisplayCreated: true }));
       };
@@ -254,7 +244,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
         const options = ${JSON.stringify(options)};
         const surveyProps = {
           ...options,
-          onFinished,
           onDisplayCreated,
           onResponseCreated,
           onClose,
