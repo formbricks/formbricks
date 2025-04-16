@@ -392,6 +392,19 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
             },
           ];
         }
+        if (Array.isArray(value)) {
+          const content = value.join("\n");
+          return [
+            {
+              text: {
+                content:
+                  content.length > NOTION_RICH_TEXT_LIMIT
+                    ? truncateText(content, NOTION_RICH_TEXT_LIMIT)
+                    : content,
+              },
+            },
+          ];
+        }
         return [
           {
             text: {
