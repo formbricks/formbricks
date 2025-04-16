@@ -14,6 +14,11 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
 }));
 
+// Mock SENTRY_DSN constant
+vi.mock("@formbricks/lib/constants", () => ({
+  SENTRY_DSN: "mocked-sentry-dsn",
+}));
+
 describe("utils", () => {
   describe("handleApiError", () => {
     test('return bad request response for "bad_request" error', async () => {
@@ -272,9 +277,6 @@ describe("utils", () => {
 
       // Mock Sentry's captureException method
       vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
-
-      // Set SENTRY_DSN to simulate Sentry being enabled
-      process.env.SENTRY_DSN = "mock-sentry-dsn";
 
       // Replace the original withContext with our mock
       const originalWithContext = logger.withContext;
