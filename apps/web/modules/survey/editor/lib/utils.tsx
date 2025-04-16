@@ -23,9 +23,9 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
-const MAX_STRING_LENGTH = 2000;
+export const MAX_STRING_LENGTH = 2000;
 
-const extractParts = (text: string): string[] => {
+export const extractParts = (text: string): string[] => {
   const parts: string[] = [];
   let i = 0;
 
@@ -56,6 +56,10 @@ const extractParts = (text: string): string[] => {
     parts.push(text.slice(start + 1, end));
     // Move past the `\`
     i = end + 1;
+  }
+
+  if (parts.length === 0) {
+    parts.push(text);
   }
 
   return parts;
