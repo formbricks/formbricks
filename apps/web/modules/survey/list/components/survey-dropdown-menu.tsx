@@ -259,14 +259,17 @@ export const SurveyDropDownMenu = ({
 
       {survey.responseCount > 0 && (
         <CustomDialog
+          data-testid="survey-caution-dialog"
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
           title={t("environments.surveys.edit.caution_edit_published_survey")}
           isLoading={loading}
           okBtnText={t("common.duplicate")}
           okBtnVariant="default"
-          onOk={async () => {await duplicateSurveyAndRefresh(survey.id);
-                    setIsCautionDialogOpen(false)}}
+          onOk={async () => {
+            await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+          }}
           cancelBtnText={t("common.edit")}
           cancelBtnVariant="outline"
           onCancel={() => router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)}>

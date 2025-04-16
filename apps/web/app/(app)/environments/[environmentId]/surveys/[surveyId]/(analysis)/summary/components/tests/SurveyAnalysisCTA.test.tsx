@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -93,6 +94,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         isReadOnly={false}
         surveyDomain={surveyDomain}
         user={dummyUser}
+        responseCount={1}
       />
     );
 
@@ -117,6 +119,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         isReadOnly={false}
         surveyDomain={surveyDomain}
         user={dummyUser}
+        responseCount={1}
       />
     );
 
@@ -130,3 +133,140 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
     });
   });
 });
+
+describe("SurveyAnalysisCTA - duplicateSurveyAndRoute", () => {
+  test("calls copySurveyToOtherEnvironmentAction and navigates to the new survey", async () => {
+    const mockRouterPush = vi.fn();
+
+    const mockCopySurveyToOtherEnvironmentAction = vi.fn(() =>
+      Promise.resolve({ data: { id: "newSurveyId" } })
+    );
+    // vi.mock("@/modules/survey/list/actions", () => ({
+    //   copySurveyToOtherEnvironmentAction: mockCopySurveyToOtherEnvironmentAction,
+    // }));
+
+    render(
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={1}
+      />
+    );
+
+    const buttonWrapper = screen.getByRole("toolbar");
+    expect(buttonWrapper).toBeInTheDocument();
+    const duplicateButton = buttonWrapper.querySelector("common.edit") as HTMLElement;
+    expect(buttonWrapper).toBeInTheDocument();
+    userEvent.click(duplicateButton);
+
+    await waitFor(() => {
+      expect(mockCopySurveyToOtherEnvironmentAction).toHaveBeenCalledWith({
+        environmentId: dummyEnvironment.id,
+        surveyId: dummySurvey.id,
+        targetEnvironmentId: dummyEnvironment.id,
+      });
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        `/environments/${dummyEnvironment.id}/surveys/newSurveyId/edit`
+      );
+    });
+  });
+});
+
+// describe("SurveyAnalysisCTA - SquarePenIcon action", () => {
+//   test("opens the caution dialog if responses exist", () => {
+//     render(
+//       <SurveyAnalysisCTA
+//         survey={dummySurvey}
+//         environment={dummyEnvironment}
+//         isReadOnly={false}
+//         surveyDomain={surveyDomain}
+//         user={dummyUser}
+//         responseCount={5}
+//       />
+//     );
+
+//     const editButton = screen.getByRole("button", { name: "common.edit" });
+//     fireEvent.click(editButton);
+
+//     expect(screen.getByText("environments.surveys.edit.caution_edit_published_survey")).toBeInTheDocument();
+//   });
+
+//   test("navigates to edit page if no responses exist", () => {
+//     const mockRouterPush = vi.fn();
+//     render(
+//       <SurveyAnalysisCTA
+//         survey={dummySurvey}
+//         environment={dummyEnvironment}
+//         isReadOnly={false}
+//         surveyDomain={surveyDomain}
+//         user={dummyUser}
+//         responseCount={0}
+//       />
+//     );
+
+//     const editButton = screen.getByRole("button", { name: "common.edit" });
+//     fireEvent.click(editButton);
+
+//     expect(mockRouterPush).toHaveBeenCalledWith(
+//       `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
+//     );
+//   });
+// });
+
+// describe("SurveyAnalysisCTA - CustomDialog", () => {
+//   test("calls duplicateSurveyAndRoute on confirm", async () => {
+//     const mockDuplicateSurveyAndRoute = vi.fn(() => Promise.resolve());
+//     // vi.mock("@/modules/survey/list/actions", () => ({
+//     //   duplicateSurveyAndRoute: mockDuplicateSurveyAndRoute,
+//     // }));
+
+//     render(
+//       <SurveyAnalysisCTA
+//         survey={dummySurvey}
+//         environment={dummyEnvironment}
+//         isReadOnly={false}
+//         surveyDomain={surveyDomain}
+//         user={dummyUser}
+//         responseCount={5}
+//       />
+//     );
+
+//     const editButton = screen.getByRole("button", { name: "common.edit" });
+//     fireEvent.click(editButton);
+
+//     const confirmButton = screen.getByRole("button", { name: "environments.surveys.edit.caution_edit_duplicate" });
+//     fireEvent.click(confirmButton);
+
+//     await waitFor(() => {
+//       expect(mockDuplicateSurveyAndRoute).toHaveBeenCalledWith(dummySurvey.id);
+//     });
+//   });
+
+//   test("navigates to edit page on cancel", () => {
+//     const mockRouterPush = vi.fn();
+
+//     render(
+//       <SurveyAnalysisCTA
+//         survey={dummySurvey}
+//         environment={dummyEnvironment}
+//         isReadOnly={false}
+//         surveyDomain={surveyDomain}
+//         user={dummyUser}
+//         responseCount={5}
+//       />
+//     );
+
+//     const editButton = screen.getByRole("button", { name: "common.edit" });
+//     fireEvent.click(editButton);
+
+//     const cancelButton = screen.getByRole("button", { name: "common.edit" });
+//     fireEvent.click(cancelButton);
+
+//     expect(mockRouterPush).toHaveBeenCalledWith(
+//       `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
+//     );
+//   });
+// });
