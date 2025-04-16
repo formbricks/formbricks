@@ -260,7 +260,8 @@ export const SurveyEditor = ({
         title={t("environments.surveys.edit.caution_edit_published_survey")}
         okBtnText={t("common.close")}
         okBtnVariant="default"
-        onOk={async () => setIsCautionDialogOpen(false)}>
+        onOk={async () => setIsCautionDialogOpen(false)}
+        hideCancelBtn={true}>
         <p>{t("environments.surveys.edit.caution_recommendation")}</p>
         <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
         <ul className="mt-3 list-disc space-y-0.5 pl-5">

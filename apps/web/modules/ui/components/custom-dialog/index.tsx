@@ -18,6 +18,7 @@ interface CustomDialogProps {
   cancelBtnText?: string;
   cancelBtnVariant?: "secondary" | "outline" | "ghost";
   disabled?: boolean;
+  hideCancelBtn?: boolean;
 }
 
 export const CustomDialog = ({
@@ -34,6 +35,7 @@ export const CustomDialog = ({
   cancelBtnText,
   cancelBtnVariant,
   disabled,
+  hideCancelBtn,
 }: CustomDialogProps) => {
   const { t } = useTranslate();
 
@@ -42,16 +44,18 @@ export const CustomDialog = ({
       <p>{text}</p>
       <div>{children}</div>
       <div className="my-4 space-x-2 text-right">
-        <Button
-          variant={cancelBtnVariant || "secondary"}
-          onClick={() => {
-            if (onCancel) {
-              onCancel();
-            }
-            setOpen(false);
-          }}>
-          {cancelBtnText || t("common.cancel")}
-        </Button>
+        {!hideCancelBtn && (
+          <Button
+            variant={cancelBtnVariant || "secondary"}
+            onClick={() => {
+              if (onCancel) {
+                onCancel();
+              }
+              setOpen(false);
+            }}>
+            {cancelBtnText || t("common.cancel")}
+          </Button>
+        )}
         <Button
           variant={okBtnVariant || "destructive"}
           onClick={onOk}
