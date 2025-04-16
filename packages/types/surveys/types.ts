@@ -256,10 +256,12 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export const ZSurveyRecaptcha = z.object({
-  enabled: z.boolean().default(false),
-  threshold: z.number().min(0).max(1).default(0),
-});
+export const ZSurveyRecaptcha = z
+  .object({
+    enabled: z.boolean(),
+    threshold: z.number().min(0).max(1),
+  })
+  .nullable();
 
 export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 
@@ -874,6 +876,7 @@ export const ZSurvey = z
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
     isVerifyEmailEnabled: z.boolean(),
+    recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),
     isBackButtonHidden: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),

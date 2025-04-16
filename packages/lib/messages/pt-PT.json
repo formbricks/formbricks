@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "Controlo de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
@@ -788,6 +787,7 @@
         "api_key_updated": "Chave API atualizada",
         "duplicate_access": "Acesso duplicado ao projeto não permitido",
         "no_api_keys_yet": "Ainda não tem nenhuma chave API",
+        "no_env_permissions_found": "Nenhuma permissão de ambiente encontrada",
         "organization_access": "Acesso à Organização",
         "permissions": "Permissões",
         "project_access": "Acesso ao Projeto",
@@ -1395,6 +1395,8 @@
         "edit_translations": "Editar traduções {lang}",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Ativar encriptação do Id de Uso Único (suId) no URL do inquérito.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permitir aos participantes mudar a língua do inquérito a qualquer momento durante o inquérito.",
+        "enable_recaptcha_to_protect_your_survey_from_spam": "Ativar reCAPTCHA v3 para filtrar as submissões de spam",
+        "enable_spam_protection": "Proteção contra spam",
         "end_screen_card": "Cartão de ecrã final",
         "ending_card": "Cartão de encerramento",
         "ending_card_used_in_logic": "Este cartão final é usado na lógica da pergunta {questionIndex}.",
@@ -1596,6 +1598,8 @@
         "single_use_survey_links_description": "Permitir apenas 1 resposta por link de inquérito.",
         "skip_button_label": "Rótulo do botão Ignorar",
         "smiley": "Sorridente",
+        "spam_protection_threshold_description": "Defina um valor entre 0 e 1, respostas abaixo deste valor serão rejeitadas.",
+        "spam_protection_threshold_heading": "Limite de resposta",
         "star": "Estrela",
         "starts_with": "Começa com",
         "state": "Estado",

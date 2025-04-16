@@ -1,6 +1,10 @@
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsContactsEnabled,
+  getIsSpamProtectionEnabled,
+  getMultiLanguagePermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
@@ -61,6 +65,7 @@ export const SurveyEditorPage = async (props) => {
   const isUserTargetingAllowed = await getIsContactsEnabled();
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
+  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled();
 
   const userEmail = await getUserEmail(session.user.id);
 
@@ -94,6 +99,7 @@ export const SurveyEditorPage = async (props) => {
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       isMultiLanguageAllowed={isMultiLanguageAllowed}
+      isSpamProtectionAllowed={isSpamProtectionAllowed}
       projectLanguages={projectLanguages}
       plan={organizationBilling.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

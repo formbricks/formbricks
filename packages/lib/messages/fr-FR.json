@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "Contrôle d'accès",
         "add_api_key": "Ajouter une clé API",
         "api_key": "Clé API",
         "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
@@ -788,6 +787,7 @@
         "api_key_updated": "Clé API mise à jour",
         "duplicate_access": "L'accès en double au projet n'est pas autorisé",
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
+        "no_env_permissions_found": "Aucune autorisation d'environnement trouvée",
         "organization_access": "Accès à l'organisation",
         "permissions": "Permissions",
         "project_access": "Accès au projet",
@@ -1395,6 +1395,8 @@
         "edit_translations": "Modifier les traductions {lang}",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Activer le chiffrement de l'identifiant à usage unique (suId) dans l'URL de l'enquête.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permettre aux participants de changer la langue de l'enquête à tout moment pendant celle-ci.",
+        "enable_recaptcha_to_protect_your_survey_from_spam": "Activer reCAPTCHA v3 pour filtrer les soumissions de spam",
+        "enable_spam_protection": "Protection contre le spam",
         "end_screen_card": "Carte de fin d'écran",
         "ending_card": "Carte de fin",
         "ending_card_used_in_logic": "Cette carte de fin est utilisée dans la logique de la question '{'questionIndex'}'.",
@@ -1596,6 +1598,8 @@
         "single_use_survey_links_description": "Autoriser uniquement 1 réponse par lien d'enquête.",
         "skip_button_label": "Étiquette du bouton Ignorer",
         "smiley": "Sourire",
+        "spam_protection_threshold_description": "Définir une valeur entre 0 et 1, les réponses en dessous de cette valeur seront rejetées.",
+        "spam_protection_threshold_heading": "Seuil de réponse",
         "star": "Étoile",
         "starts_with": "Commence par",
         "state": "État",

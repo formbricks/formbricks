@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
@@ -788,6 +787,7 @@
         "api_key_updated": "API-Schlüssel aktualisiert",
         "duplicate_access": "Doppelter Projektzugriff nicht erlaubt",
         "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
+        "no_env_permissions_found": "Keine Umgebungsberechtigungen gefunden",
         "organization_access": "Organisationszugang",
         "permissions": "Berechtigungen",
         "project_access": "Projektzugriff",
@@ -1395,6 +1395,8 @@
         "edit_translations": "{lang} -Übersetzungen bearbeiten",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Single Use Id (suId) in der Umfrage-URL verschlüsseln.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Teilnehmer können die Umfragesprache jederzeit während der Umfrage ändern.",
+        "enable_recaptcha_to_protect_your_survey_from_spam": "reCAPTCHA v3 aktivieren, um Spam-Einreichungen herauszufiltern",
+        "enable_spam_protection": "Spamschutz",
         "end_screen_card": "Abschluss-Karte",
         "ending_card": "Abschluss-Karte",
         "ending_card_used_in_logic": "Diese Abschlusskarte wird in der Logik der Frage {questionIndex} verwendet.",
@@ -1596,6 +1598,8 @@
         "single_use_survey_links_description": "Erlaube nur eine Antwort pro Umfragelink.",
         "skip_button_label": "Überspringen-Button-Beschriftung",
         "smiley": "Smiley",
+        "spam_protection_threshold_description": "Wert zwischen 0 und 1 festlegen, Antworten unter diesem Wert werden abgelehnt.",
+        "spam_protection_threshold_heading": "Antwortschwelle",
         "star": "Stern",
         "starts_with": "Fängt an mit",
         "state": "Bundesland",

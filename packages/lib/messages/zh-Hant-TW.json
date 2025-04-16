@@ -777,7 +777,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -788,6 +787,7 @@
         "api_key_updated": "API 金鑰已更新",
         "duplicate_access": "不允許重複的 project 存取",
         "no_api_keys_yet": "您還沒有任何 API 金鑰",
+        "no_env_permissions_found": "找不到環境權限",
         "organization_access": "組織 Access",
         "permissions": "權限",
         "project_access": "專案存取",
@@ -1395,6 +1395,8 @@
         "edit_translations": "編輯 '{'language'}' 翻譯",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "啟用問卷網址中單次使用 ID (suId) 的加密。",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "允許參與者在問卷中的任何時間點切換問卷語言。",
+        "enable_recaptcha_to_protect_your_survey_from_spam": "啟用 reCAPTCHA v3 以過濾垃圾提交",
+        "enable_spam_protection": "垃圾郵件保護",
         "end_screen_card": "結束畫面卡片",
         "ending_card": "結尾卡片",
         "ending_card_used_in_logic": "此結尾卡片用於問題 '{'questionIndex'}' 的邏輯中。",
@@ -1596,6 +1598,8 @@
         "single_use_survey_links_description": "每個問卷連結只允許 1 個回應。",
         "skip_button_label": "「跳過」按鈕標籤",
         "smiley": "表情符號",
+        "spam_protection_threshold_description": "設置值在 0 和 1 之間，低於此值的回應將被拒絕。",
+        "spam_protection_threshold_heading": "回應閾值",
         "star": "星形",
         "starts_with": "開頭為",
         "state": "州/省",

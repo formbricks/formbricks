@@ -33,6 +33,7 @@ interface SurveyEditorProps {
   colors: string[];
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
+  isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
@@ -58,6 +59,7 @@ export const SurveyEditor = ({
   colors,
   isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
+  isSpamProtectionAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
   plan,
@@ -217,6 +219,7 @@ export const SurveyEditor = ({
               responseCount={responseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
+              isSpamProtectionAllowed={isSpamProtectionAllowed}
               projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
             />
