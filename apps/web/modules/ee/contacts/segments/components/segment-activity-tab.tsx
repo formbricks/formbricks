@@ -51,6 +51,12 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
             {convertDateTimeStringShort(currentSegment.updatedAt?.toString())}
           </p>
         </div>
+        <div>
+          <Label className="text-xs font-normal text-slate-500">
+            {t("environments.segments.segment_id")}
+          </Label>
+          <p className="text-xs text-slate-700">{currentSegment.id?.toString()}</p>
+        </div>
       </div>
     </div>
   );
