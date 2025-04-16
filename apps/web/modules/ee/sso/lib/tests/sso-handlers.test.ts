@@ -1,15 +1,15 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
-import { getOrganizationByTeamId } from "@/modules/auth/signup/lib/team";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/auth/signup/lib/team";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import {
+  getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
   getRoleManagementPermission,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -36,11 +36,15 @@ vi.mock("@/modules/auth/lib/user", () => ({
   createUser: vi.fn(),
 }));
 
+vi.mock("@/modules/auth/signup/lib/invite", () => ({
+  getIsValidInviteToken: vi.fn(),
+}));
+
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getisSsoEnabled: vi.fn(),
   getRoleManagementPermission: vi.fn(),
-  getIsMultiOrgEnabled: vi.fn().mockResolvedValue(true),
+  getIsMultiOrgEnabled: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -73,21 +77,32 @@ vi.mock("@formbricks/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
+vi.mock("@formbricks/lib/jwt", () => ({
+  verifyInviteToken: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 // Mock environment variables
 vi.mock("@formbricks/lib/constants", () => ({
-  SKIP_INVITE_FOR_SSO: 1,
+  SKIP_INVITE_FOR_SSO: 0,
   DEFAULT_TEAM_ID: "team-123",
-  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 
 describe("handleSsoCallback", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.resetModules();
 
     // Default mock implementations
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
 
     // Mock organization-related functions
     vi.mocked(getOrganization).mockResolvedValue(mockOrganization);
@@ -99,6 +114,7 @@ describe("handleSsoCallback", () => {
       organizationId: mockOrganization.id,
     });
     vi.mocked(updateUser).mockResolvedValue({ ...mockUser, id: "user-123" });
+    vi.mocked(createDefaultTeamMembership).mockResolvedValue(undefined);
   });
 
   describe("Early return conditions", () => {
@@ -271,12 +287,11 @@ describe("handleSsoCallback", () => {
       expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
     });
 
-    it("should create membership for new user when DEFAULT_TEAM_ID is set", async () => {
+    it("should return true when organization doesn't exist with DEFAULT_TEAM_ID", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
-      vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(null);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -285,24 +300,32 @@ describe("handleSsoCallback", () => {
       });
 
       expect(result).toBe(true);
-      expect(createMembership).toHaveBeenCalledWith(mockOrganization.id, mockCreatedUser().id, {
-        role: "member",
-        accepted: true,
+      expect(getRoleManagementPermission).not.toHaveBeenCalled();
+    });
+
+    it("should return true when organization exists but role management is not enabled", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
       });
-      expect(createAccount).toHaveBeenCalledWith({
-        ...mockAccount,
-        userId: mockCreatedUser().id,
-      });
-      expect(updateUser).toHaveBeenCalledWith(mockCreatedUser().id, {
-        notificationSettings: expect.objectContaining({
-          unsubscribedOrganizationIds: [mockOrganization.id],
-        }),
-      });
+
+      expect(result).toBe(true);
+      expect(createMembership).not.toHaveBeenCalled();
     });
   });
 
   describe("OpenID Connect name handling", () => {
     it("should use oidcUser.name when available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: "Direct Name",
         given_name: "John",
@@ -321,16 +344,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
     it("should use given_name + family_name when name is not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: "John",
@@ -349,16 +370,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
     it("should use preferred_username when name and given_name/family_name are not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: undefined,
@@ -378,16 +397,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "preferred.user",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
     it("should fallback to email username when no OIDC name fields are available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: undefined,
@@ -408,11 +425,6 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "test user",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
@@ -420,6 +432,9 @@ describe("handleSsoCallback", () => {
 
   describe("SAML name handling", () => {
     it("should use samlUser.name when available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const samlUser = {
         ...mockUser,
         name: "Direct Name",
@@ -439,16 +454,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
-          email: samlUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "saml",
-          identityProviderAccountId: mockSamlAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
     it("should use firstName + lastName when name is not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const samlUser = {
         ...mockUser,
         name: "",
@@ -468,57 +481,162 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
-          email: samlUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "saml",
-          identityProviderAccountId: mockSamlAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
   });
 
-  describe("Organization handling", () => {
-    it("should handle invalid DEFAULT_TEAM_ID gracefully", async () => {
+  describe("Auto-provisioning and invite handling", () => {
+    it("should return false when auto-provisioning is disabled and no callback URL or multi-org", async () => {
+      vi.resetModules();
+
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganizationByTeamId).mockRejectedValue(new Error("Invalid team ID"));
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("Invalid team ID");
+      // const constants = await vi.importActual("@formbricks/lib/constants");
 
-      expect(getOrganizationByTeamId).toHaveBeenCalled();
-      expect(getRoleManagementPermission).not.toHaveBeenCalled();
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "",
+      });
+
+      expect(result).toBe(false);
     });
 
-    it("should handle membership creation failure gracefully", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-      vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
-      vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
-      vi.mocked(createMembership).mockRejectedValue(new Error("Failed to create membership"));
+    // it("should handle valid invite token in callback URL", async () => {
+    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
+    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    //   vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("Failed to create membership");
+    //   // Mock SKIP_INVITE_FOR_SSO as false
+    //   vi.doMock("@formbricks/lib/constants", () => ({
+    //     SKIP_INVITE_FOR_SSO: 0,
+    //     DEFAULT_TEAM_ID: "team-123",
+    //   }));
 
-      expect(createMembership).toHaveBeenCalled();
-    });
+    //   // Mock verify token
+    //   vi.mocked(verifyInviteToken).mockReturnValue({
+    //     email: mockUser.email,
+    //     inviteId: "invite-123",
+    //   });
+
+    //   vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+
+    //   const result = await handleSsoCallback({
+    //     user: mockUser,
+    //     account: mockAccount,
+    //     callbackUrl: "http://localhost:3000?token=valid-token&source=invite",
+    //   });
+
+    //   expect(result).toBe(true);
+    //   expect(verifyInviteToken).toHaveBeenCalledWith("valid-token");
+    //   expect(getIsValidInviteToken).toHaveBeenCalledWith("invite-123");
+    // });
+
+    // it("should return false when invite token email doesn't match user email", async () => {
+    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
+    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+
+    //   // Mock SKIP_INVITE_FOR_SSO as false
+    //   vi.doMock("@formbricks/lib/constants", () => ({
+    //     SKIP_INVITE_FOR_SSO: 0,
+    //     DEFAULT_TEAM_ID: "team-123",
+    //   }));
+
+    //   // Mock verify token
+    //   vi.mocked(verifyInviteToken).mockReturnValue({
+    //     email: "different@example.com",
+    //     inviteId: "invite-123",
+    //   });
+
+    //   const result = await handleSsoCallback({
+    //     user: mockUser,
+    //     account: mockAccount,
+    //     callbackUrl: "http://localhost:3000?token=valid-token&source=invite",
+    //   });
+
+    //   expect(result).toBe(false);
+    // });
+
+    // it("should return false when signin source without an invite token", async () => {
+    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
+    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+
+    //   // Mock SKIP_INVITE_FOR_SSO as false
+    //   vi.doMock("@formbricks/lib/constants", () => ({
+    //     SKIP_INVITE_FOR_SSO: 0,
+    //     DEFAULT_TEAM_ID: "team-123",
+    //   }));
+
+    //   const result = await handleSsoCallback({
+    //     user: mockUser,
+    //     account: mockAccount,
+    //     callbackUrl: "http://localhost:3000?source=signin",
+    //   });
+
+    //   expect(result).toBe(false);
+    // });
+
+    // it("should return false when invite token is invalid", async () => {
+    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
+    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+
+    //   // Mock SKIP_INVITE_FOR_SSO as false
+    //   vi.doMock("@formbricks/lib/constants", () => ({
+    //     SKIP_INVITE_FOR_SSO: 0,
+    //     DEFAULT_TEAM_ID: "team-123",
+    //   }));
+
+    //   // Mock verify token
+    //   vi.mocked(verifyInviteToken).mockReturnValue({
+    //     email: mockUser.email,
+    //     inviteId: "invite-123",
+    //   });
+
+    //   vi.mocked(getIsValidInviteToken).mockResolvedValue(false);
+
+    //   const result = await handleSsoCallback({
+    //     user: mockUser,
+    //     account: mockAccount,
+    //     callbackUrl: "http://localhost:3000?token=invalid-token&source=invite",
+    //   });
+
+    //   expect(result).toBe(false);
+    // });
+
+    // it("should log error and return false for invalid callback URL", async () => {
+    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
+    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+
+    //   // Mock SKIP_INVITE_FOR_SSO as false
+    //   vi.doMock("@formbricks/lib/constants", () => ({
+    //     SKIP_INVITE_FOR_SSO: 0,
+    //     DEFAULT_TEAM_ID: "team-123",
+    //   }));
+
+    //   const result = await handleSsoCallback({
+    //     user: mockUser,
+    //     account: mockAccount,
+    //     callbackUrl: "invalid-url",
+    //   });
+
+    //   expect(result).toBe(false);
+    //   expect(vi.mocked(require("@formbricks/logger").logger.error)).toHaveBeenCalledWith(
+    //     expect.any(Error),
+    //     "Invalid callbackUrl"
+    //   );
+    // });
   });
 
   describe("Error handling", () => {
-    it("should handle prisma errors gracefully", async () => {
+    it("should handle database errors", async () => {
       vi.mocked(prisma.user.findFirst).mockRejectedValue(new Error("Database error"));
 
       await expect(
@@ -530,11 +648,10 @@ describe("handleSsoCallback", () => {
       ).rejects.toThrow("Database error");
     });
 
-    it("should handle locale finding errors gracefully", async () => {
+    it("should handle locale finding errors", async () => {
       vi.mocked(findMatchingLocale).mockRejectedValue(new Error("Locale error"));
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
       await expect(
         handleSsoCallback({

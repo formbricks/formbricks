@@ -7,6 +7,10 @@ export const FORMBRICKS_API_HOST = env.FORMBRICKS_API_HOST;
 export const FORMBRICKS_ENVIRONMENT_ID = env.FORMBRICKS_ENVIRONMENT_ID;
 export const IS_FORMBRICKS_ENABLED = !!(env.FORMBRICKS_API_HOST && env.FORMBRICKS_ENVIRONMENT_ID);
 
+export const IS_PRODUCTION = env.NODE_ENV === "production";
+
+export const IS_DEVELOPMENT = env.NODE_ENV === "development";
+
 // URLs
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
@@ -61,7 +65,7 @@ export const SAML_PRODUCT = "formbricks";
 export const SAML_AUDIENCE = "https://saml.formbricks.com";
 export const SAML_PATH = "/api/auth/saml/callback";
 
-export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD;
+export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT;
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
@@ -289,10 +293,6 @@ export const IS_POSTHOG_CONFIGURED = Boolean(POSTHOG_API_KEY && POSTHOG_API_HOST
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 export const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY;
 export const IS_TURNSTILE_CONFIGURED = Boolean(env.TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
-
-export const IS_PRODUCTION = env.NODE_ENV === "production";
-
-export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 
 export const SENTRY_DSN = env.SENTRY_DSN;
 

@@ -117,8 +117,6 @@ export const handleSsoCallback = async ({
         userName = `${samlUser.firstName} ${samlUser.lastName}`;
       }
     }
-    // AUTH_SKIP_INVITE_FOR_SSO
-    // AUTH_SSO_DEFAULT_TEAM_ID
 
     // Get multi-org license status
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
