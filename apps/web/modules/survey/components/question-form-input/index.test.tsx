@@ -99,7 +99,7 @@ vi.mock("@formkit/auto-animate/react", () => ({
 }));
 
 vi.mock("lodash", () => ({
-  debounce: (fn: Function) => fn,
+  debounce: (fn: (...args: any[]) => unknown) => fn,
 }));
 
 // Mock hashString function
