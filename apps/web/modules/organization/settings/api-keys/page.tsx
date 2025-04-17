@@ -20,7 +20,7 @@ export const APIKeysPage = async (props) => {
 
   const isNotOwner = currentUserMembership.role !== "owner";
 
-  if (isNotOwner) throw new Error(t("common.unauthorized"));
+  if (isNotOwner) throw new Error(t("common.not_authorized"));
 
   return (
     <PageContentWrapper>
