@@ -46,7 +46,7 @@ export async function FollowUpEmail({
     <Html>
       <Tailwind>
         <Body
-          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-base text-slate-800"
+          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-slate-800"
           style={{
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
@@ -59,7 +59,7 @@ export async function FollowUpEmail({
               <Img alt="Logo" className="mx-auto max-h-[100px] w-60 object-contain" src={logoUrl} />
             )}
           </Section>
-          <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left">
+          <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left text-sm">
             <div
               dangerouslySetInnerHTML={{
                 __html: dompurify.sanitize(html, {
@@ -87,8 +87,7 @@ export async function FollowUpEmail({
           </Container>
 
           <Section className="mt-4 text-center text-sm">
-            <Text className="m-0 font-normal text-slate-500">{t("emails.powered_by_formbricks")}</Text>
-
+            <Text className="m-0 font-normal text-slate-500">{t("emails.email_template_text_1")}</Text>
             {IMPRINT_ADDRESS && (
               <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
             )}
