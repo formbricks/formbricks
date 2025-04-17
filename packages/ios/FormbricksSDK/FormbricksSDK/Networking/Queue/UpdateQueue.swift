@@ -56,12 +56,14 @@ final class UpdateQueue {
             let effectiveUserId = self.userId ?? Formbricks.userManager?.userId
             
             if effectiveUserId != nil {
-                // If we have a userId, use the existing set(attributes:) method
-                set(attributes: ["language": language])
+                // If we have a userId, set attributes
+                self.attributes = ["language": language]
             } else {
                 // If no userId, just update locally without API call
                 Formbricks.logger?.debug("UpdateQueue - updating language locally: \(language)")
             }
+            
+            startDebounceTimer()
         }
     }
     
