@@ -1,3 +1,4 @@
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import { TFnType } from "@tolgee/react";
@@ -9,7 +10,6 @@ import type {
   TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weekly-summary";
 import { EmailButton } from "../../components/email-button";
-import { renderEmailResponseValue } from "../survey/response-finished-email";
 
 const getButtonLabel = (count: number, t: TFnType): string => {
   if (count === 1) {
@@ -63,7 +63,7 @@ export async function LiveSurveyNotification({
       surveyFields.push(
         <Container className="mt-4" key={`${index.toString()}-${surveyResponse.headline}`}>
           <Text className="m-0">{surveyResponse.headline}</Text>
-          {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType)}
+          {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType, t)}
         </Container>
       );
 
@@ -103,7 +103,7 @@ export async function LiveSurveyNotification({
             createSurveyFields(survey.responses)
           )}
           {survey.responseCount > 0 && (
-            <Container className="mt-4 block">
+            <Container className="mt-4 block text-sm">
               <EmailButton
                 href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
                 label={
