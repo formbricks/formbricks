@@ -19,7 +19,7 @@ export const APIKeysPage = async (props) => {
 
   const projects = await getProjectsByOrganizationId(organization.id);
 
-  const isReadOnly = currentUserMembership.role !== "owner" && currentUserMembership.role !== "manager";
+  const isNotOwner = currentUserMembership.role !== "owner";
 
   return (
     <PageContentWrapper>
@@ -31,9 +31,9 @@ export const APIKeysPage = async (props) => {
           activeId="api-keys"
         />
       </PageHeader>
-      {isReadOnly ? (
-        <Alert variant="warning">
-          {t("environments.settings.api_keys.only_organization_owners_and_managers_can_manage_api_keys")}
+      {isNotOwner ? (
+        <Alert variant="warning" size={"small"}>
+          {t("environments.settings.general.only_org_owner_can_perform_action")}
         </Alert>
       ) : (
         <SettingsCard
@@ -42,7 +42,7 @@ export const APIKeysPage = async (props) => {
           <ApiKeyList
             organizationId={organization.id}
             locale={locale}
-            isReadOnly={isReadOnly}
+            isReadOnly={isNotOwner}
             projects={projects}
           />
         </SettingsCard>

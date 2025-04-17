@@ -478,7 +478,6 @@
     "password_changed_email_heading": "密碼已變更",
     "password_changed_email_text": "您的密碼已成功變更。",
     "password_reset_notify_email_subject": "您的 Formbricks 密碼已變更",
-    "powered_by_formbricks": "由 Formbricks 提供技術支援",
     "privacy_policy": "隱私權政策",
     "reject": "拒絕",
     "render_email_response_value_file_upload_response_link_not_included": "由於資料隱私原因，未包含上傳檔案的連結",

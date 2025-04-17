@@ -25,7 +25,7 @@ export const deleteApiKeyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
@@ -47,7 +47,7 @@ export const createApiKeyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
@@ -69,7 +69,7 @@ export const updateApiKeyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
