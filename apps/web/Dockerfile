@@ -20,6 +20,7 @@ FROM base AS installer
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
+RUN corepack prepare pnpm@9.15.0 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -77,6 +78,7 @@ FROM base AS runner
 
 RUN npm install -g corepack@latest
 RUN corepack enable
+RUN corepack prepare pnpm@9.15.0 --activate
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \

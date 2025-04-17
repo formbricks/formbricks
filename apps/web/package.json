@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/web",
   "version": "0.0.0",
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@9.15.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",

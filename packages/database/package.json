@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/database",
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@9.15.0",
   "private": true,
   "version": "0.1.0",
   "main": "./src/index.ts",
