@@ -145,6 +145,10 @@ import Network
             return
         }
         
+        if (Formbricks.language == language) {
+            return
+        }
+        
         Formbricks.language = language
         userManager?.set(language: language)
     }
@@ -236,6 +240,7 @@ import Network
         appUrl = nil
         environmentId = nil
         logger = nil
+        language = "default"
     }
 }
 
