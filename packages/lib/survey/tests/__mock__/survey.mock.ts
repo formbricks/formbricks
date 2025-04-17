@@ -273,7 +273,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
     decimals: 18,
     logo: "",
     name: "",
-    verificationRequired: false,
+    enableReward: false,
   },
 };
 
@@ -307,7 +307,7 @@ export const mockSurveyOutput: SurveyMock = {
     decimals: 18,
     logo: "",
     name: "",
-    verificationRequired: false,
+    enableReward: false,
   },
 };
 

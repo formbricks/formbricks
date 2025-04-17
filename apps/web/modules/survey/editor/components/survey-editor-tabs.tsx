@@ -2,7 +2,7 @@
 
 import { ProBadge } from "@/modules/ui/components/pro-badge";
 import { useTranslate } from "@tolgee/react";
-import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
+import { BadgeDollarSignIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
@@ -43,15 +43,15 @@ export const SurveyEditorTabs = ({
         icon: <PaintbrushIcon className="h-5 w-5" />,
       },
       {
+        id: "rewards",
+        label: t("common.rewards"),
+        icon: <BadgeDollarSignIcon className="h-5 w-5" />,
+      },
+      {
         id: "settings",
         label: t("common.settings"),
         icon: <SettingsIcon className="h-5 w-5" />,
       },
-      // {
-      //   id: "rewards",
-      //   label: t("common.rewards"),
-      //   icon: <BadgeDollarSignIcon className="h-5 w-5" />,
-      // },
       // {
       //   id: "followUps",
       //   label: t("environments.surveys.edit.follow_ups"),

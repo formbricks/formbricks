@@ -6,6 +6,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLanguage } from "../project";
+import { ZBaseReward } from "../rewards";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
@@ -497,14 +498,8 @@ export const ZSurveyLogic = z.object({
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
-export const ZSurveyReward = z.object({
-  chainId: z.number(),
-  contractAddress: z.string(),
-  amount: z.string(),
-  decimals: z.number(),
-  name: z.string(),
-  logo: z.string(),
-  verificationRequired: z.boolean().optional(),
+export const ZSurveyReward = ZBaseReward.extend({
+  enableReward: z.boolean().nullish(),
 });
 
 export type TSurveyReward = z.infer<typeof ZSurveyReward>;
@@ -708,7 +703,7 @@ export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
   tokenSymbol: ZToggleInputConfig,
   initialSupply: ZToggleInputConfig,
   address: ZToggleInputConfig,
-  transactionDetails: ZToggleInputConfig
+  transactionDetails: ZToggleInputConfig,
 });
 
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
@@ -1488,6 +1483,9 @@ const isInvalidOperatorsForQuestionType = (
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
+      break;
+    case TSurveyQuestionTypeEnum.DeployToken:
+      isInvalidOperator = false;
       break;
     default:
       isInvalidOperator = true;
@@ -2319,7 +2317,7 @@ const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLog
     ];
   });
 
-  return [...logicIssues.flat(), ...(logicFallbackIssue ? logicFallbackIssue : [])];
+  return [...logicIssues.flat(), ...(logicFallbackIssue ?? [])];
 };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.

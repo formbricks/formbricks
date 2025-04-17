@@ -22,6 +22,7 @@ import {
 import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
+  ActivityIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
@@ -32,7 +33,6 @@ import {
   PanelLeftOpenIcon,
   PlusIcon,
   UserCircleIcon,
-  UserIcon,
   UsersIcon,
   WalletMinimalIcon,
 } from "lucide-react";
@@ -126,7 +126,7 @@ export const MainNavigation = ({
       {
         name: t("common.activity"),
         href: `/environments/${environment.id}/activity`,
-        icon: UserIcon,
+        icon: ActivityIcon,
         isActive: pathname?.includes("/activity"),
         isHidden: false,
       },

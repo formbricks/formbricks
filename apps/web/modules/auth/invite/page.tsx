@@ -7,7 +7,6 @@ import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { after } from "next/server";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
@@ -50,17 +49,12 @@ export const InvitePage = async (props: InvitePageProps) => {
     }
 
     if (!session) {
-      const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
+      const redirectUrl = "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);
       return (
         <ContentLayout
           headline={t("auth.invite.happy_to_have_you")}
           description={t("auth.invite.happy_to_have_you_description")}>
-          <Button variant="secondary" asChild>
-            <Link href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-              {t("auth.invite.create_account")}
-            </Link>
-          </Button>
           <Button asChild>
             <Link href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
               {t("auth.invite.login")}

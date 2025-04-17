@@ -17,8 +17,7 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
-export const FB_LOGO_URL =
-  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
+export const FB_LOGO_URL = "https://app.engagehq.xyz/logo-small.png";
 
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
