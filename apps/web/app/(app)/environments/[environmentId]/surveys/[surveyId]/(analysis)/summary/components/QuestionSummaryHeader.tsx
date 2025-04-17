@@ -1,6 +1,7 @@
 "use client";
 
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
@@ -42,7 +43,7 @@ export const QuestionSummaryHeader = ({
   };
 
   return (
-    <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
+    <div className="space-y-2 px-4 pt-6 pb-5 md:px-6">
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
@@ -69,6 +70,7 @@ export const QuestionSummaryHeader = ({
           </div>
         )}
       </div>
+      <SettingsId title={t("common.question_id")} id={questionSummary.question.id}></SettingsId>
     </div>
   );
 };

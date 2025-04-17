@@ -95,6 +95,7 @@ export const QuestionFormInput = ({
         : question.id;
     //eslint-disable-next-line
   }, [isWelcomeCard, isEndingCard, question?.id]);
+  const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -245,7 +246,6 @@ export const QuestionFormInput = ({
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
-      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
       if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
     } else return question.imageUrl;
   };
@@ -253,7 +253,6 @@ export const QuestionFormInput = ({
   const getVideoUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
     if (isEndingCard) {
-      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
       if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
     } else return question.videoUrl;
   };
@@ -262,10 +261,17 @@ export const QuestionFormInput = ({
 
   const [animationParent] = useAutoAnimate();
 
+  const renderRemoveDescriptionButton = useMemo(() => {
+    if (id !== "subheader") return false;
+    return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endingCard?.type, id, question?.subheader]);
+
   return (
     <div className="w-full">
       {label && (
-        <div className="mb-2 mt-3">
+        <div className="mt-3 mb-2">
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -336,7 +342,7 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           }`}
                           dir="auto"
@@ -396,7 +402,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {id === "subheader" && question && question.subheader !== undefined && (
+                        {renderRemoveDescriptionButton ? (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                             <Button
                               variant="secondary"
@@ -408,11 +414,14 @@ export const QuestionFormInput = ({
                                 if (updateQuestion) {
                                   updateQuestion(questionIdx, { subheader: undefined });
                                 }
+                                if (updateSurvey) {
+                                  updateSurvey({ subheader: undefined });
+                                }
                               }}>
                               <TrashIcon />
                             </Button>
                           </TooltipRenderer>
-                        )}
+                        ) : null}
                       </>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SingleResponseCardBody } from "./SingleResponseCardBody";
@@ -65,17 +65,17 @@ describe("SingleResponseCardBody", () => {
     language: "en",
   } as unknown as TResponse;
 
-  it("renders welcomeCard branch when enabled", () => {
+  test("renders welcomeCard branch when enabled", () => {
     render(<SingleResponseCardBody survey={dummySurvey} response={dummyResponse} skippedQuestions={[]} />);
     expect(screen.getAllByTestId("QuestionSkip")[0]).toHaveTextContent("welcomeCard");
   });
 
-  it("renders VerifiedEmail when enabled and response verified", () => {
+  test("renders VerifiedEmail when enabled and response verified", () => {
     render(<SingleResponseCardBody survey={dummySurvey} response={dummyResponse} skippedQuestions={[]} />);
     expect(screen.getByTestId("VerifiedEmail")).toBeInTheDocument();
   });
 
-  it("renders RenderResponse for valid answer", () => {
+  test("renders RenderResponse for valid answer", () => {
     const surveyCopy = { ...dummySurvey, welcomeCard: { enabled: false } } as TSurvey;
     const responseCopy = { ...dummyResponse, data: { q1: "answer1", q2: "" } };
     render(<SingleResponseCardBody survey={surveyCopy} response={responseCopy} skippedQuestions={[]} />);
@@ -83,7 +83,7 @@ describe("SingleResponseCardBody", () => {
     expect(screen.getByTestId("RenderResponse")).toHaveTextContent("answer1");
   });
 
-  it("renders QuestionSkip for invalid answer", () => {
+  test("renders QuestionSkip for invalid answer", () => {
     const surveyCopy = { ...dummySurvey, welcomeCard: { enabled: false } } as TSurvey;
     const responseCopy = { ...dummyResponse, data: { q1: "", q2: "" } };
     render(
@@ -93,23 +93,23 @@ describe("SingleResponseCardBody", () => {
     expect(screen.getAllByTestId("QuestionSkip")[1]).toBeInTheDocument();
   });
 
-  it("renders ResponseVariables when variables exist", () => {
+  test("renders ResponseVariables when variables exist", () => {
     render(<SingleResponseCardBody survey={dummySurvey} response={dummyResponse} skippedQuestions={[]} />);
     expect(screen.getByTestId("ResponseVariables")).toBeInTheDocument();
   });
 
-  it("renders HiddenFields when hiddenFields enabled", () => {
+  test("renders HiddenFields when hiddenFields enabled", () => {
     render(<SingleResponseCardBody survey={dummySurvey} response={dummyResponse} skippedQuestions={[]} />);
     expect(screen.getByTestId("HiddenFields")).toBeInTheDocument();
   });
 
-  it("renders completion indicator when response finished", () => {
+  test("renders completion indicator when response finished", () => {
     render(<SingleResponseCardBody survey={dummySurvey} response={dummyResponse} skippedQuestions={[]} />);
     expect(screen.getByTestId("CheckCircle2Icon")).toBeInTheDocument();
     expect(screen.getByText("common.completed")).toBeInTheDocument();
   });
 
-  it("processes question mapping correctly with skippedQuestions modification", () => {
+  test("processes question mapping correctly with skippedQuestions modification", () => {
     // Provide one question valid and one not valid, with skippedQuestions for the invalid one.
     const surveyCopy = { ...dummySurvey, welcomeCard: { enabled: false } } as TSurvey;
     const responseCopy = { ...dummyResponse, data: { q1: "answer1", q2: "" } };
