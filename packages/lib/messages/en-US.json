@@ -1896,9 +1896,7 @@
           "min_amount": "Amount must be at least 0.01",
           "positive_amount": "Amount must be greater than zero"
         },
-        "recipient_address": "Recipient Address",
-        "token": "Token",
-        "token_address": "Token Address"
+        "recipient_address": "Recipient Address"
       },
       "login": "Login",
       "modal": {
