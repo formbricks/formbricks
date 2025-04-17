@@ -50,7 +50,7 @@ final class UpdateQueue {
     
     func set(language: String) {
         syncQueue.sync {
-            add(attribute: "language", forKey: language)
+            self.attributes = ["language": language]
             startDebounceTimer()
         }
     }
@@ -84,7 +84,9 @@ private extension UpdateQueue {
     }
     
     @objc func commit() {
-        guard let userId = userId else {
+        let effectiveUserId: String? = self.userId ?? Formbricks.userManager?.userId ?? nil
+    
+        guard let userId = effectiveUserId else {
             Formbricks.logger?.error(FormbricksSDKError(type: .userIdIsNotSetYet).message)
             return
         }

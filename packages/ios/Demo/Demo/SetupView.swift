@@ -21,6 +21,7 @@ struct SetupView: View {
                         DispatchQueue.global().async {
                             Formbricks.setup(with: config)
                             Formbricks.setUserId(UUID().uuidString)
+                            
                             DispatchQueue.main.async {
                                 isSetup = true
                                 isLoading = false
@@ -34,6 +35,20 @@ struct SetupView: View {
                     Formbricks.track("click_demo_button")
                 }
                 .padding()
+                
+                Button("Call Formbricks.setAttribute") {
+                    Formbricks.setAttribute("test@example.com", forKey: "user_email")
+                }
+                .padding()
+                
+                Button("Call Formbricks.setAttributes") {
+                    Formbricks.setAttributes(["user_name": "John Doe", "user_age": "30"])
+                }
+                .padding()
+                
+                Button("Call Formbricks.setLanguage") {
+                    Formbricks.setLanguage("vi")
+                }.padding()
                 
                 Button("Call Formbricks.cleanup") {
                     Formbricks.cleanup(waitForOperations: true) {
