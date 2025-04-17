@@ -41,14 +41,9 @@ class FormbricksViewModel : ViewModel() {
                 var json = `{{WEBVIEW_DATA}}`
 
                 function onClose() {
-                    console.log("onClose")
                     FormbricksJavascript.message(JSON.stringify({ event: "onClose" }));
                 };
-
-                function onFinished() {
-                    FormbricksJavascript.message(JSON.stringify({ event: "onFinished" }));
-                };
-
+                
                 function onDisplayCreated() {
                     FormbricksJavascript.message(JSON.stringify({ event: "onDisplayCreated" }));
                 };
@@ -61,7 +56,6 @@ class FormbricksViewModel : ViewModel() {
                     const options = JSON.parse(json);
                     const surveyProps = {
                         ...options,
-                        onFinished,
                         onDisplayCreated,
                         onResponseCreated,
                         onClose,
