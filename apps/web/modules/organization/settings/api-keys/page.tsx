@@ -21,6 +21,8 @@ export const APIKeysPage = async (props) => {
 
   const isNotOwner = currentUserMembership.role !== "owner";
 
+  if (isNotOwner) throw new Error(t("common.unauthorized"));
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
