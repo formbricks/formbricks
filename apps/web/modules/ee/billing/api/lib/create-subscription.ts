@@ -54,6 +54,9 @@ export const createSubscription = async (
       payment_method_data: { allow_redisplay: "always" },
       ...(!isNewOrganization && {
         customer: organization.billing.stripeCustomerId ?? undefined,
+        customer_update: {
+          name: "auto",
+        },
       }),
     };
 
