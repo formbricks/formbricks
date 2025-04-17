@@ -107,12 +107,14 @@ final class UserManager: UserManagerSyncable {
     /// Logs out the user and clears the user state.
     func logout() {
         UserDefaults.standard.removeObject(forKey: UserManager.userIdKey)
+        UserDefaults.standard.removeObject(forKey: UserManager.contactIdKey)
         UserDefaults.standard.removeObject(forKey: UserManager.segmentsKey)
         UserDefaults.standard.removeObject(forKey: UserManager.displaysKey)
         UserDefaults.standard.removeObject(forKey: UserManager.responsesKey)
         UserDefaults.standard.removeObject(forKey: UserManager.lastDisplayedAtKey)
         UserDefaults.standard.removeObject(forKey: UserManager.expiresAtKey)
         backingUserId = nil
+        backingContactId = nil
         backingSegments = nil
         backingDisplays = nil
         backingResponses = nil
