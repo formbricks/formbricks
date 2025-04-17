@@ -120,7 +120,7 @@ describe("FollowUpEmail", () => {
 
     render(followUpEmailElement);
 
-    expect(screen.getByText("emails.powered_by_formbricks")).toBeInTheDocument();
+    expect(screen.getByText("emails.email_template_text_1")).toBeInTheDocument();
     expect(screen.getByText("Imprint Address")).toBeInTheDocument();
   });
 
