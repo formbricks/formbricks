@@ -478,7 +478,6 @@
     "password_changed_email_heading": "Passwort geändert",
     "password_changed_email_text": "Dein Passwort wurde erfolgreich geändert.",
     "password_reset_notify_email_subject": "Dein Formbricks-Passwort wurde geändert",
-    "powered_by_formbricks": "Unterstützt von Formbricks",
     "privacy_policy": "Datenschutzerklärung",
     "reject": "Ablehnen",
     "render_email_response_value_file_upload_response_link_not_included": "Link zur hochgeladenen Datei ist aus Datenschutzgründen nicht enthalten",
