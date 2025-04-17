@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyVariables } from "@formbricks/types/surveys/types";
 import { ResponseVariables } from "./ResponseVariables";
@@ -46,7 +46,7 @@ describe("ResponseVariables", () => {
     cleanup();
   });
 
-  it("renders nothing when no variable in variablesData meets type check", () => {
+  test("renders nothing when no variable in variablesData meets type check", () => {
     render(
       <ResponseVariables
         variables={dummyVariables}
@@ -57,7 +57,7 @@ describe("ResponseVariables", () => {
     expect(screen.queryByText("Variable Two")).toBeNull();
   });
 
-  it("renders variables with valid response data", () => {
+  test("renders variables with valid response data", () => {
     render(<ResponseVariables variables={dummyVariables} variablesData={dummyVariablesData} />);
     expect(screen.getByText("Variable One")).toBeInTheDocument();
     expect(screen.getByText("Variable Two")).toBeInTheDocument();
@@ -66,13 +66,13 @@ describe("ResponseVariables", () => {
     expect(screen.getByText("abc")).toBeInTheDocument();
   });
 
-  it("renders FileDigitIcon for number type and FileType2Icon for string type", () => {
+  test("renders FileDigitIcon for number type and FileType2Icon for string type", () => {
     render(<ResponseVariables variables={dummyVariables} variablesData={dummyVariablesData} />);
     expect(screen.getByTestId("FileDigitIcon")).toBeInTheDocument();
     expect(screen.getByTestId("FileType2Icon")).toBeInTheDocument();
   });
 
-  it("displays tooltip content with 'common.variable'", () => {
+  test("displays tooltip content with 'common.variable'", () => {
     render(<ResponseVariables variables={dummyVariables} variablesData={dummyVariablesData} />);
     // TooltipContent mock always renders its children directly.
     expect(screen.getAllByText("common.variable")[0]).toBeInTheDocument();

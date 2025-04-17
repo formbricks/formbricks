@@ -3,7 +3,7 @@ import {
   TProjectTeamInput,
   ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TypeOf } from "zod";
 import { prisma } from "@formbricks/database";
 import { createProjectTeam, deleteProjectTeam, getProjectTeams, updateProjectTeam } from "../project-teams";
@@ -27,7 +27,7 @@ describe("ProjectTeams Lib", () => {
   });
 
   describe("getProjectTeams", () => {
-    it("returns projectTeams with meta on success", async () => {
+    test("returns projectTeams with meta on success", async () => {
       const mockTeams = [{ id: "projTeam1", organizationId: "orgx", projectId: "p1", teamId: "t1" }];
       (prisma.$transaction as any).mockResolvedValueOnce([mockTeams, mockTeams.length]);
       const result = await getProjectTeams("orgx", { skip: 0, limit: 10 } as TGetProjectTeamsFilter);
@@ -41,7 +41,7 @@ describe("ProjectTeams Lib", () => {
       }
     });
 
-    it("returns internal_server_error on exception", async () => {
+    test("returns internal_server_error on exception", async () => {
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("DB error"));
       const result = await getProjectTeams("orgx", { skip: 0, limit: 10 } as TGetProjectTeamsFilter);
       expect(result.ok).toBe(false);
@@ -52,7 +52,7 @@ describe("ProjectTeams Lib", () => {
   });
 
   describe("createProjectTeam", () => {
-    it("creates a projectTeam successfully", async () => {
+    test("creates a projectTeam successfully", async () => {
       const mockCreated = { id: "ptx", projectId: "p1", teamId: "t1", organizationId: "orgx" };
       (prisma.projectTeam.create as any).mockResolvedValueOnce(mockCreated);
       const result = await createProjectTeam({
@@ -65,7 +65,7 @@ describe("ProjectTeams Lib", () => {
       }
     });
 
-    it("returns internal_server_error on error", async () => {
+    test("returns internal_server_error on error", async () => {
       (prisma.projectTeam.create as any).mockRejectedValueOnce(new Error("Create error"));
       const result = await createProjectTeam({
         projectId: "p1",
@@ -79,7 +79,7 @@ describe("ProjectTeams Lib", () => {
   });
 
   describe("updateProjectTeam", () => {
-    it("updates a projectTeam successfully", async () => {
+    test("updates a projectTeam successfully", async () => {
       (prisma.projectTeam.update as any).mockResolvedValueOnce({
         id: "pt01",
         projectId: "p1",
@@ -95,7 +95,7 @@ describe("ProjectTeams Lib", () => {
       }
     });
 
-    it("returns internal_server_error on error", async () => {
+    test("returns internal_server_error on error", async () => {
       (prisma.projectTeam.update as any).mockRejectedValueOnce(new Error("Update error"));
       const result = await updateProjectTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
         typeof ZProjectZTeamUpdateSchema
@@ -108,7 +108,7 @@ describe("ProjectTeams Lib", () => {
   });
 
   describe("deleteProjectTeam", () => {
-    it("deletes a projectTeam successfully", async () => {
+    test("deletes a projectTeam successfully", async () => {
       (prisma.projectTeam.delete as any).mockResolvedValueOnce({
         projectId: "p1",
         teamId: "t1",
@@ -122,7 +122,7 @@ describe("ProjectTeams Lib", () => {
       }
     });
 
-    it("returns internal_server_error on error", async () => {
+    test("returns internal_server_error on error", async () => {
       (prisma.projectTeam.delete as any).mockRejectedValueOnce(new Error("Delete error"));
       const result = await deleteProjectTeam("t1", "p1");
       expect(result.ok).toBe(false);

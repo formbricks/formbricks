@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
@@ -16,7 +16,7 @@ describe("ApiClient", () => {
   });
 
   describe("createDisplay", () => {
-    it("creates a display successfully (v2) and returns the result", async () => {
+    test("creates a display successfully (v2) and returns the result", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "display123" } }),
@@ -33,7 +33,7 @@ describe("ApiClient", () => {
       expect(requestPath).toContain("/api/v2/");
     });
 
-    it("returns an error if fetch fails", async () => {
+    test("returns an error if fetch fails", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -48,7 +48,7 @@ describe("ApiClient", () => {
   });
 
   describe("createResponse", () => {
-    it("creates a response (v2) and returns success", async () => {
+    test("creates a response (v2) and returns success", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "response123" } }),
@@ -64,7 +64,7 @@ describe("ApiClient", () => {
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain("/api/v2/");
     });
 
-    it("creates a response (v1) if userId is present", async () => {
+    test("creates a response (v1) if userId is present", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "v1response" } }),
@@ -80,7 +80,7 @@ describe("ApiClient", () => {
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain("/api/v1/");
     });
 
-    it("handles create response fetch error", async () => {
+    test("handles create response fetch error", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -95,7 +95,7 @@ describe("ApiClient", () => {
   });
 
   describe("updateResponse", () => {
-    it("updates a response successfully", async () => {
+    test("updates a response successfully", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: {} }),
@@ -107,7 +107,7 @@ describe("ApiClient", () => {
       expect(result.ok).toBe(true);
     });
 
-    it("handles update error", async () => {
+    test("handles update error", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -124,7 +124,7 @@ describe("ApiClient", () => {
   });
 
   describe("uploadFile", () => {
-    it("uploads file (S3) successfully with presigned fields", async () => {
+    test("uploads file (S3) successfully with presigned fields", async () => {
       vi.mocked(global.fetch)
         .mockResolvedValueOnce({
           ok: true,
@@ -147,7 +147,7 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("https://fake-file-url.com");
     });
 
-    it("uploads file (local) when signingData is present", async () => {
+    test("uploads file (local) when signingData is present", async () => {
       vi.mocked(global.fetch)
         .mockResolvedValueOnce({
           ok: true,
@@ -170,13 +170,13 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("http://localhost:3000/uploads/test.jpg");
     });
 
-    it("throws an error if file is invalid", async () => {
+    test("throws an error if file is invalid", async () => {
       await expect(() => client.uploadFile({ base64: "", name: "", type: "" } as any)).rejects.toThrow(
         "Invalid file object"
       );
     });
 
-    it("throws an error if fetch for signing fails", async () => {
+    test("throws an error if fetch for signing fails", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 400 } as unknown as Response);
       await expect(() =>
         client.uploadFile({
@@ -187,7 +187,7 @@ describe("ApiClient", () => {
       ).rejects.toThrow("Upload failed with status: 400");
     });
 
-    it("throws an error if actual upload fails", async () => {
+    test("throws an error if actual upload fails", async () => {
       vi.mocked(global.fetch)
         .mockResolvedValueOnce({
           ok: true,
@@ -215,7 +215,7 @@ describe("ApiClient", () => {
       ).rejects.toThrow("Upload failed with status: 500");
     });
 
-    it('throws "Error uploading file" if base64 is invalid', async () => {
+    test('throws "Error uploading file" if base64 is invalid', async () => {
       // Mock the initial "signing" fetch to succeed
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,

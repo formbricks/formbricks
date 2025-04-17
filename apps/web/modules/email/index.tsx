@@ -352,17 +352,32 @@ export const sendNoLiveSurveyNotificationEmail = async (
   });
 };
 
-export const sendFollowUpEmail = async (
-  html: string,
-  subject: string,
-  to: string,
-  replyTo: string[],
-  logoUrl?: string
-): Promise<void> => {
+export const sendFollowUpEmail = async ({
+  html,
+  replyTo,
+  subject,
+  to,
+  survey,
+  response,
+  attachResponseData = false,
+  logoUrl,
+}: {
+  html: string;
+  subject: string;
+  to: string;
+  replyTo: string[];
+  attachResponseData: boolean;
+  survey: TSurvey;
+  response: TResponse;
+  logoUrl?: string;
+}): Promise<void> => {
   const emailHtmlBody = await render(
     await FollowUpEmail({
       html,
       logoUrl,
+      attachResponseData,
+      survey,
+      response,
     })
   );
 
