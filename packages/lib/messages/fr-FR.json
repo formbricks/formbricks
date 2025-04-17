@@ -994,8 +994,7 @@
       "api_keys": {
         "add_api_key": "Ajouter une clé API",
         "add_permission": "Ajouter une permission",
-        "api_keys_description": "Gérer les clés API pour accéder aux API de gestion de Formbricks",
-        "only_organization_owners_and_managers_can_manage_api_keys": "Seuls les propriétaires et les gestionnaires de l'organisation peuvent gérer les clés API"
+        "api_keys_description": "Gérer les clés API pour accéder aux API de gestion de Formbricks"
       },
       "billing": {
         "10000_monthly_responses": "10000 Réponses Mensuelles",
