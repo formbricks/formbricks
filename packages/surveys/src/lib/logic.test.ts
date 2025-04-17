@@ -994,8 +994,7 @@ describe("Survey Logic", () => {
       ).toBe(true);
 
       const completeMatrixData: TResponseData = {
--        q8: { "Row 1": "Column 1", "Row 2": "Column 2" },
-+        q8: { row1: "col1", row2: "col2" },
+        q8: { row1: "col1", row2: "col2" },
       };
 
       const completelySubmittedCondition: TConditionGroup = {
