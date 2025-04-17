@@ -4,6 +4,16 @@ import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { convertHeicToJpegAction } from "./actions";
 
+const toBase64 = (file: File) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+  });
+
 export const uploadFile = async (
   file: File | Blob,
   allowedFileExtensions: string[] | undefined,
@@ -30,7 +40,7 @@ export const uploadFile = async (
       fileName: file.name,
       fileType: file.type,
       allowedFileExtensions: allowedFileExtensions,
-      environmentId: environmentId,
+      environmentId,
     };
 
     const response = await fetch("/api/v1/management/storage", {
@@ -46,39 +56,57 @@ export const uploadFile = async (
     }
 
     const json = await response.json();
-
     const { data } = json;
+
     const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
 
-    let requestHeaders: Record<string, string> = {};
+    let localUploadDetails: Record<string, string> = {};
 
     if (signingData) {
       const { signature, timestamp, uuid } = signingData;
 
-      requestHeaders = {
-        "X-File-Type": file.type,
-        "X-File-Name": encodeURIComponent(updatedFileName),
-        "X-Environment-ID": environmentId ?? "",
-        "X-Signature": signature,
-        "X-Timestamp": String(timestamp),
-        "X-UUID": uuid,
+      localUploadDetails = {
+        fileType: file.type,
+        fileName: encodeURIComponent(updatedFileName),
+        environmentId: environmentId!,
+        signature,
+        timestamp: String(timestamp),
+        uuid,
       };
     }
 
-    const formData = new FormData();
+    const fileBase64 = (await toBase64(file)) as string;
+
+    const formData: Record<string, string> = {};
+    const formDataForS3 = new FormData();
 
     if (presignedFields) {
-      Object.keys(presignedFields).forEach((key) => {
-        formData.append(key, presignedFields[key]);
+      Object.entries(presignedFields as Record<string, string>).forEach(([key, value]) => {
+        formDataForS3.append(key, value);
       });
+
+      try {
+        const binaryString = atob(fileBase64.split(",")[1]);
+        const uint8Array = Uint8Array.from([...binaryString].map((char) => char.charCodeAt(0)));
+        const blob = new Blob([uint8Array], { type: file.type });
+
+        formDataForS3.append("file", blob);
+      } catch (err) {
+        console.error(err);
+        throw new Error("Error uploading file");
+      }
     }
 
-    formData.append("file", file);
+    formData.fileBase64String = fileBase64;
 
     const uploadResponse = await fetch(signedUrl, {
       method: "POST",
-      ...(signingData ? { headers: requestHeaders } : {}),
-      body: formData,
+      body: presignedFields
+        ? formDataForS3
+        : JSON.stringify({
+            ...formData,
+            ...localUploadDetails,
+          }),
     });
 
     if (!uploadResponse.ok) {
