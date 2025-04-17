@@ -5,7 +5,7 @@ description:
 icon: "fill"
 ---
 
-Data prefilling via the URL allows you to increase completion rate by prefilling data you already have in a different system. Formbricks allows you to prefill multiple questions in a survey.
+Data prefilling via the URL allows you to increase completion rate by prefilling data you already have in a different system. Formbricks allows you to prefill multiple questions in a survey and skip prefilled questions.
 
 ## Purpose
 
@@ -19,28 +19,31 @@ Data prefilling via URL comes in handy when you:
 ## Quick Example
 
 ```sh Example URL
-https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&question_id_2=answer_2
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&question_id_2=answer_2&skipPrefilled=true
 ```
 
 ## How it works
 
-To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation).
+1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`. 
+2. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation).
+3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
 
-<Note>
-  Please make sure the answer is [URL encoded](https://www.urlencoder.org/).
-</Note>
 
-## Prefilling Customisation
+### Skip prefilled questions
 
-You can customise the prefilling behaviour using the `skipPrefilled` parameter in the URL. To skip prefilled questions and show the next available question, add `skipPrefilled=true` to the URL. By default, `skipPrefilled` is set to `false`.
+You can skip prefilled questions by adding the `skipPrefilled` parameter in the URL. To skip prefilled questions and show the next available question, add `skipPrefilled=true` to the URL. By default, `skipPrefilled` is set to `false`.
 
-## Prefilling multiple values
+```sh Skipping prefilled questions
+app.formbricks.com/s/clin3dxj?question_id_1=answer_1&skipPrefilled=true
+```
+
+### Prefilling multiple values
 
 Formbricks lets you prefill as many values as you want. Combine multiple values in the URL using `&`, for example: `name=Bernadette&age=18`. The order of query parameters doesn’t matter, so you can move questions around or add new ones without worrying about the parameter order.
 
-## Where do I find my question Id?
+### Where do I find my question Id?
 
-You can find the `questionId` in the **Advanced Settings** at the bottom of each question card in the Survey Editor. You can update the `questionId` to any string you like. However, once you publish your survey, the `questionId` cannot be changed.
+You can find the `questionId` in the **Advanced Settings** at the bottom of each question card in the Survey Editor. You can update the `questionId` to any string you like **before you publish a survey.** After you published a survey, you cannot change the id anymore.
 
 ![The question Id is located at the bottom of each question card in the survey editor.](/images/xm-and-surveys/surveys/link-surveys//data-prefilling/question-id.webp)
 

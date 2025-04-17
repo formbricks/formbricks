@@ -973,6 +973,7 @@
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "將您的篩選器儲存為區隔，以便在其他問卷中使用",
       "segment_created_successfully": "區隔已成功建立！",
       "segment_deleted_successfully": "區隔已成功刪除！",
+      "segment_id": "區隔 ID",
       "segment_saved_successfully": "區隔已成功儲存",
       "segment_updated_successfully": "區隔已成功更新！",
       "segments_help_you_target_users_with_same_characteristics_easily": "區隔可協助您輕鬆針對具有相同特徵的使用者",

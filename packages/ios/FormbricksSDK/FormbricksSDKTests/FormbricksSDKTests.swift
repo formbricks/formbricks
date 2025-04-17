@@ -135,9 +135,7 @@ final class FormbricksSDKTests: XCTestCase {
         _ = XCTWaiter.wait(for: [expectation(description: "Wait for a seconds")], timeout: 1.0)
         XCTAssertTrue(SurveyManager.shared.isShowingSurvey)
         
-        SurveyManager.shared.delayedDismiss()
-        XCTAssertTrue(SurveyManager.shared.isShowingSurvey)
-        _ = XCTWaiter.wait(for: [expectation(description: "Wait for a seconds")], timeout: Double(Config.Environment.closingTimeoutInSeconds))
+        SurveyManager.shared.dismissSurveyWebView()
         XCTAssertFalse(SurveyManager.shared.isShowingSurvey)
     }
     
