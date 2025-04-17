@@ -168,6 +168,6 @@ export const middleware = async (originalRequest: NextRequest) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public|api/v1/og).*)", // Exclude the Open Graph image generation route from middleware
+    "/((?!_next/static|_next/image|favicon.ico|logo.png|logo-small.png|sitemap.xml|robots.txt|js|css|images|fonts|icons|public|api/v1/og).*)", // Exclude the Open Graph image generation route from middleware
   ],
 };
