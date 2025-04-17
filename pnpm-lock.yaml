@@ -415,8 +415,8 @@ importers:
         specifier: 6.2.0
         version: 6.2.0(webpack@5.99.5)
       framer-motion:
-        specifier: 12.6.3
-        version: 12.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: 12.7.2
+        version: 12.7.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       googleapis:
         specifier: 148.0.0
         version: 148.0.0(encoding@0.1.13)
@@ -8246,8 +8246,8 @@ packages:
   fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
 
-  framer-motion@12.6.3:
-    resolution: {integrity: sha512-2hsqknz23aloK85bzMc9nSR2/JP+fValQ459ZTVElFQ0xgwR2YqNjYSuDZdFBPOwVCt4Q9jgyTt6hg6sVOALzw==}
+  framer-motion@12.7.2:
+    resolution: {integrity: sha512-0vLY/JqYqieojTriuIR+UTCBVbj89eNUxXTkb01Xg8gSiTXDeuscOvoYm8vvgRGLMYGsCuJ31kDsTy081kPKFw==}
     peerDependencies:
       '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
@@ -9367,8 +9367,8 @@ packages:
   lexical@0.30.0:
     resolution: {integrity: sha512-6gxYeXaJiAcreJD0whCofvO0MuJmnWoIgIl1w7L5FTigfhnEohuCx2SoI/oywzfzXE9gzZnyr3rVvZrMItPL8A==}
 
-  lib0@0.2.102:
-    resolution: {integrity: sha512-g70kydI0I1sZU0ChO8mBbhw0oUW/8U0GHzygpvEIx8k+jgOpqnTSb/E+70toYVqHxBhrERD21TwD5QcZJQ40ZQ==}
+  lib0@0.2.104:
+    resolution: {integrity: sha512-1tqKRANSPTcjs/yjPoKh52oRM2u5AYdd8jie8sDiN8/5kpWWiQSHUGgtB4VEXLw1chVL3QPSPp8q9RWqzSn2FA==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -10186,11 +10186,11 @@ packages:
       socks:
         optional: true
 
-  motion-dom@12.6.3:
-    resolution: {integrity: sha512-gRY08RjcnzgFYLemUZ1lo/e9RkBxR+6d4BRvoeZDSeArG4XQXERSPapKl3LNQRu22Sndjf1h+iavgY0O4NrYqA==}
+  motion-dom@12.7.2:
+    resolution: {integrity: sha512-7+sytBQyb9XRRH6lyLRQf+R6y2BE79J2EgTijTSxYgGt+ufpnoRDPgru9KHvA125tTHnbAXDzeTUb9OvscSitA==}
 
-  motion-utils@12.6.3:
-    resolution: {integrity: sha512-R/b3Ia2VxtTNZ4LTEO5pKYau1OUNHOuUfxuP0WFCTDYdHkeTBR9UtxR1cc8mDmKr8PEhmmfnTKGz3rSMjNRoRg==}
+  motion-utils@12.7.2:
+    resolution: {integrity: sha512-XhZwqctxyJs89oX00zn3OGCuIIpVevbTa+u82usWBC6pSHUd2AoNWiYa7Du8tJxJy9TFbZ82pcn5t7NOm1PHAw==}
 
   mqtt-packet@6.10.0:
     resolution: {integrity: sha512-ja8+mFKIHdB1Tpl6vac+sktqy3gA8t9Mduom1BA75cI+R9AHnZOiaBQwpGiWnaVJLDGRdNhQmFaAqd7tkKSMGA==}
@@ -23074,10 +23074,10 @@ snapshots:
 
   fraction.js@4.3.7: {}
 
-  framer-motion@12.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  framer-motion@12.7.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
-      motion-dom: 12.6.3
-      motion-utils: 12.6.3
+      motion-dom: 12.7.2
+      motion-utils: 12.7.2
       tslib: 2.8.1
     optionalDependencies:
       react: 19.1.0
@@ -24318,7 +24318,7 @@ snapshots:
 
   lexical@0.30.0: {}
 
-  lib0@0.2.102:
+  lib0@0.2.104:
     dependencies:
       isomorphic.js: 0.2.5
 
@@ -25437,11 +25437,11 @@ snapshots:
       '@aws-sdk/credential-providers': 3.782.0(aws-crt@1.26.2)
       socks: 2.8.4
 
-  motion-dom@12.6.3:
+  motion-dom@12.7.2:
     dependencies:
-      motion-utils: 12.6.3
+      motion-utils: 12.7.2
 
-  motion-utils@12.6.3: {}
+  motion-utils@12.7.2: {}
 
   mqtt-packet@6.10.0:
     dependencies:
@@ -29206,7 +29206,7 @@ snapshots:
 
   yjs@13.6.24:
     dependencies:
-      lib0: 0.2.102
+      lib0: 0.2.104
 
   yn@3.1.1: {}
 
