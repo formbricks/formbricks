@@ -144,7 +144,13 @@ const getLeftOperandValue = (
         !Array.isArray(responseValue)
       ) {
         if (leftOperand.meta && leftOperand.meta?.row !== undefined) {
-          const row = getLocalizedValue(currentQuestion.rows[Number(leftOperand.meta.row)], selectedLanguage);
+          const rowIndex = Number(leftOperand.meta.row);
+
+          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
+            return undefined;
+          }
+
+          const row = getLocalizedValue(currentQuestion.rows[rowIndex], selectedLanguage);
 
           const rowValue = responseValue[row];
           if (rowValue === "") return "";
@@ -153,6 +159,8 @@ const getLeftOperandValue = (
             const columnIndex = currentQuestion.columns.findIndex((column) => {
               return getLocalizedValue(column, selectedLanguage) === rowValue;
             });
+
+            if (columnIndex === -1) return undefined;
             return columnIndex.toString();
           }
           return undefined;
@@ -432,6 +440,7 @@ const evaluateSingleCondition = (
         if (Array.isArray(rightValue) && typeof leftValue === "string") {
           return rightValue.includes(leftValue);
         }
+        return false;
       default:
         return false;
     }
