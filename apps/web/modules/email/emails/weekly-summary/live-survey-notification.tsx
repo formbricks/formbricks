@@ -103,7 +103,7 @@ export async function LiveSurveyNotification({
             createSurveyFields(survey.responses)
           )}
           {survey.responseCount > 0 && (
-            <Container className="mt-4 block">
+            <Container className="mt-4 block text-sm">
               <EmailButton
                 href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
                 label={
