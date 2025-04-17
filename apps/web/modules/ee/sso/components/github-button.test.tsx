@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { GithubButton } from "./github-button";
 
@@ -28,18 +28,18 @@ describe("GithubButton", () => {
     vi.clearAllMocks();
   });
 
-  it("renders correctly with default props", () => {
+  test("renders correctly with default props", () => {
     render(<GithubButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_github" });
     expect(button).toBeInTheDocument();
   });
 
-  it("renders with last used indicator when lastUsed is true", () => {
+  test("renders with last used indicator when lastUsed is true", () => {
     render(<GithubButton {...defaultProps} lastUsed={true} />);
     expect(screen.getByText("auth.last_used")).toBeInTheDocument();
   });
 
-  it("sets localStorage item and calls signIn on click", async () => {
+  test("sets localStorage item and calls signIn on click", async () => {
     render(<GithubButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_github" });
     fireEvent.click(button);
@@ -51,7 +51,7 @@ describe("GithubButton", () => {
     });
   });
 
-  it("uses inviteUrl in callbackUrl when provided", async () => {
+  test("uses inviteUrl in callbackUrl when provided", async () => {
     const inviteUrl = "https://example.com/invite";
     render(<GithubButton {...defaultProps} inviteUrl={inviteUrl} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_github" });
@@ -63,7 +63,7 @@ describe("GithubButton", () => {
     });
   });
 
-  it("handles signup source correctly", async () => {
+  test("handles signup source correctly", async () => {
     render(<GithubButton {...defaultProps} source="signup" />);
     const button = screen.getByRole("button", { name: "auth.continue_with_github" });
     fireEvent.click(button);

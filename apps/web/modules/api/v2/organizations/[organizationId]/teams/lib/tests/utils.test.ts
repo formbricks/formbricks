@@ -1,6 +1,6 @@
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { Prisma } from "@prisma/client";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { getTeamsQuery } from "../utils";
 
 // Mock the common utils functions
@@ -12,12 +12,12 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 describe("getTeamsQuery", () => {
   const organizationId = "org123";
 
-  it("returns base query when no params provided", () => {
+  test("returns base query when no params provided", () => {
     const result = getTeamsQuery(organizationId);
     expect(result.where).toEqual({ organizationId });
   });
 
-  it("returns unchanged query if pickCommonFilter returns null/undefined", () => {
+  test("returns unchanged query if pickCommonFilter returns null/undefined", () => {
     vi.mocked(pickCommonFilter).mockReturnValueOnce(null as any);
     const params: any = { someParam: "test" };
     const result = getTeamsQuery(organizationId, params);
@@ -26,7 +26,7 @@ describe("getTeamsQuery", () => {
     expect(result.where).toEqual({ organizationId });
   });
 
-  it("calls buildCommonFilterQuery and returns updated query when base filter exists", () => {
+  test("calls buildCommonFilterQuery and returns updated query when base filter exists", () => {
     const baseFilter = { key: "value" };
     vi.mocked(pickCommonFilter).mockReturnValueOnce(baseFilter as any);
     // Simulate buildCommonFilterQuery to merge base query with baseFilter

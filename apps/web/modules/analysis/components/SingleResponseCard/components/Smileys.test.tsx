@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import {
   ConfusedFace,
   FrowningFace,
@@ -27,34 +27,34 @@ describe("Smileys", () => {
     cleanup();
   });
 
-  it("renders TiredFace", () => {
+  test("renders TiredFace", () => {
     checkSvg(TiredFace);
   });
-  it("renders WearyFace", () => {
+  test("renders WearyFace", () => {
     checkSvg(WearyFace);
   });
-  it("renders PerseveringFace", () => {
+  test("renders PerseveringFace", () => {
     checkSvg(PerseveringFace);
   });
-  it("renders FrowningFace", () => {
+  test("renders FrowningFace", () => {
     checkSvg(FrowningFace);
   });
-  it("renders ConfusedFace", () => {
+  test("renders ConfusedFace", () => {
     checkSvg(ConfusedFace);
   });
-  it("renders NeutralFace", () => {
+  test("renders NeutralFace", () => {
     checkSvg(NeutralFace);
   });
-  it("renders SlightlySmilingFace", () => {
+  test("renders SlightlySmilingFace", () => {
     checkSvg(SlightlySmilingFace);
   });
-  it("renders SmilingFaceWithSmilingEyes", () => {
+  test("renders SmilingFaceWithSmilingEyes", () => {
     checkSvg(SmilingFaceWithSmilingEyes);
   });
-  it("renders GrinningFaceWithSmilingEyes", () => {
+  test("renders GrinningFaceWithSmilingEyes", () => {
     checkSvg(GrinningFaceWithSmilingEyes);
   });
-  it("renders GrinningSquintingFace", () => {
+  test("renders GrinningSquintingFace", () => {
     checkSvg(GrinningSquintingFace);
   });
 });

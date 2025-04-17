@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { RenderResponse } from "./RenderResponse";
 
 // Mocks for dependencies
@@ -53,7 +53,7 @@ describe("RenderResponse", () => {
   const defaultQuestion = { id: "q1", type: "Unknown" } as any;
   const dummyLanguage = "default";
 
-  it("returns '-' for empty responseData (string)", () => {
+  test("returns '-' for empty responseData (string)", () => {
     const { container } = render(
       <RenderResponse
         responseData={""}
@@ -65,7 +65,7 @@ describe("RenderResponse", () => {
     expect(container.textContent).toBe("-");
   });
 
-  it("returns '-' for empty responseData (array)", () => {
+  test("returns '-' for empty responseData (array)", () => {
     const { container } = render(
       <RenderResponse
         responseData={[]}
@@ -77,7 +77,7 @@ describe("RenderResponse", () => {
     expect(container.textContent).toBe("-");
   });
 
-  it("returns '-' for empty responseData (object)", () => {
+  test("returns '-' for empty responseData (object)", () => {
     const { container } = render(
       <RenderResponse
         responseData={{}}
@@ -89,7 +89,7 @@ describe("RenderResponse", () => {
     expect(container.textContent).toBe("-");
   });
 
-  it("renders RatingResponse for 'Rating' question with number", () => {
+  test("renders RatingResponse for 'Rating' question with number", () => {
     const question = { ...defaultQuestion, type: "rating", scale: 5, range: [1, 5] };
     render(
       <RenderResponse responseData={4} question={question} survey={defaultSurvey} language={dummyLanguage} />
@@ -97,7 +97,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("RatingResponse")).toHaveTextContent("Rating: 4");
   });
 
-  it("renders formatted date for 'Date' question", () => {
+  test("renders formatted date for 'Date' question", () => {
     const question = { ...defaultQuestion, type: "date" };
     const dateStr = new Date("2023-01-01T12:00:00Z").toISOString();
     render(
@@ -111,7 +111,7 @@ describe("RenderResponse", () => {
     expect(screen.getByText(/formatted_/)).toBeInTheDocument();
   });
 
-  it("renders PictureSelectionResponse for 'PictureSelection' question", () => {
+  test("renders PictureSelectionResponse for 'PictureSelection' question", () => {
     const question = { ...defaultQuestion, type: "pictureSelection", choices: ["a", "b"] };
     render(
       <RenderResponse
@@ -126,7 +126,7 @@ describe("RenderResponse", () => {
     );
   });
 
-  it("renders FileUploadResponse for 'FileUpload' question", () => {
+  test("renders FileUploadResponse for 'FileUpload' question", () => {
     const question = { ...defaultQuestion, type: "fileUpload" };
     render(
       <RenderResponse
@@ -139,7 +139,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("FileUploadResponse")).toHaveTextContent("FileUpload: file1,file2");
   });
 
-  it("renders Matrix response", () => {
+  test("renders Matrix response", () => {
     const question = { id: "q1", type: "matrix", rows: ["row1", "row2"] } as any;
     // getLocalizedValue returns the row value itself
     const responseData = { row1: "answer1", row2: "answer2" };
@@ -155,7 +155,7 @@ describe("RenderResponse", () => {
     expect(screen.getByText("row2:processed:answer2")).toBeInTheDocument();
   });
 
-  it("renders ArrayResponse for 'Address' question", () => {
+  test("renders ArrayResponse for 'Address' question", () => {
     const question = { ...defaultQuestion, type: "address" };
     render(
       <RenderResponse
@@ -168,7 +168,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ArrayResponse")).toHaveTextContent("addr1,addr2");
   });
 
-  it("renders ResponseBadges for 'Cal' question (string)", () => {
+  test("renders ResponseBadges for 'Cal' question (string)", () => {
     const question = { ...defaultQuestion, type: "cal" };
     render(
       <RenderResponse
@@ -181,7 +181,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Value");
   });
 
-  it("renders ResponseBadges for 'Consent' question (number)", () => {
+  test("renders ResponseBadges for 'Consent' question (number)", () => {
     const question = { ...defaultQuestion, type: "consent" };
     render(
       <RenderResponse responseData={5} question={question} survey={defaultSurvey} language={dummyLanguage} />
@@ -189,7 +189,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("5");
   });
 
-  it("renders ResponseBadges for 'CTA' question (string)", () => {
+  test("renders ResponseBadges for 'CTA' question (string)", () => {
     const question = { ...defaultQuestion, type: "cta" };
     render(
       <RenderResponse
@@ -202,7 +202,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Click");
   });
 
-  it("renders ResponseBadges for 'MultipleChoiceSingle' question (string)", () => {
+  test("renders ResponseBadges for 'MultipleChoiceSingle' question (string)", () => {
     const question = { ...defaultQuestion, type: "multipleChoiceSingle" };
     render(
       <RenderResponse
@@ -215,7 +215,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("option1");
   });
 
-  it("renders ResponseBadges for 'MultipleChoiceMulti' question (array)", () => {
+  test("renders ResponseBadges for 'MultipleChoiceMulti' question (array)", () => {
     const question = { ...defaultQuestion, type: "multipleChoiceMulti" };
     render(
       <RenderResponse
@@ -228,7 +228,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("opt1,opt2");
   });
 
-  it("renders ResponseBadges for 'NPS' question (number)", () => {
+  test("renders ResponseBadges for 'NPS' question (number)", () => {
     const question = { ...defaultQuestion, type: "nps" };
     render(
       <RenderResponse responseData={9} question={question} survey={defaultSurvey} language={dummyLanguage} />
@@ -236,7 +236,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("9");
   });
 
-  it("renders RankingRespone for 'Ranking' question", () => {
+  test("renders RankingRespone for 'Ranking' question", () => {
     const question = { ...defaultQuestion, type: "ranking" };
     render(
       <RenderResponse
@@ -249,7 +249,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("RankingRespone")).toHaveTextContent("first,second");
   });
 
-  it("renders default branch for unknown question type with string", () => {
+  test("renders default branch for unknown question type with string", () => {
     const question = { ...defaultQuestion, type: "unknown" };
     render(
       <RenderResponse
@@ -262,7 +262,7 @@ describe("RenderResponse", () => {
     expect(screen.getByText("hyper:some text")).toBeInTheDocument();
   });
 
-  it("renders default branch for unknown question type with array", () => {
+  test("renders default branch for unknown question type with array", () => {
     const question = { ...defaultQuestion, type: "unknown" };
     render(
       <RenderResponse

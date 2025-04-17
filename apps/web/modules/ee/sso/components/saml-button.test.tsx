@@ -2,7 +2,7 @@ import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { SamlButton } from "./saml-button";
 
@@ -44,18 +44,18 @@ describe("SamlButton", () => {
     vi.clearAllMocks();
   });
 
-  it("renders correctly with default props", () => {
+  test("renders correctly with default props", () => {
     render(<SamlButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_saml" });
     expect(button).toBeInTheDocument();
   });
 
-  it("renders with last used indicator when lastUsed is true", () => {
+  test("renders with last used indicator when lastUsed is true", () => {
     render(<SamlButton {...defaultProps} lastUsed={true} />);
     expect(screen.getByText("auth.last_used")).toBeInTheDocument();
   });
 
-  it("sets localStorage item and calls signIn on click when SAML connection exists", async () => {
+  test("sets localStorage item and calls signIn on click when SAML connection exists", async () => {
     vi.mocked(doesSamlConnectionExistAction).mockResolvedValue({ data: true });
     render(<SamlButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_saml" });
@@ -76,7 +76,7 @@ describe("SamlButton", () => {
     );
   });
 
-  it("shows error toast when SAML connection does not exist", async () => {
+  test("shows error toast when SAML connection does not exist", async () => {
     vi.mocked(doesSamlConnectionExistAction).mockResolvedValue({ data: false });
     render(<SamlButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_saml" });
@@ -87,7 +87,7 @@ describe("SamlButton", () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
-  it("uses inviteUrl in callbackUrl when provided", async () => {
+  test("uses inviteUrl in callbackUrl when provided", async () => {
     vi.mocked(doesSamlConnectionExistAction).mockResolvedValue({ data: true });
     const inviteUrl = "https://example.com/invite";
     render(<SamlButton {...defaultProps} inviteUrl={inviteUrl} />);
@@ -108,7 +108,7 @@ describe("SamlButton", () => {
     );
   });
 
-  it("handles signup source correctly", async () => {
+  test("handles signup source correctly", async () => {
     vi.mocked(doesSamlConnectionExistAction).mockResolvedValue({ data: true });
     render(<SamlButton {...defaultProps} source="signup" />);
     const button = screen.getByRole("button", { name: "auth.continue_with_saml" });
