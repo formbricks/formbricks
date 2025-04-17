@@ -1055,7 +1055,7 @@ describe("Survey Logic", () => {
     });
   });
 
-  describe("Edge Cases and Uncovered Lines", () => {
+  describe("Edge Cases", () => {
     const mockData: TResponseData = {
       q1: "test answer",
       q2: "42",
