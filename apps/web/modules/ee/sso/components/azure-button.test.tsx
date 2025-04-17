@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { AzureButton } from "./azure-button";
 
@@ -28,18 +28,18 @@ describe("AzureButton", () => {
     vi.clearAllMocks();
   });
 
-  it("renders correctly with default props", () => {
+  test("renders correctly with default props", () => {
     render(<AzureButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_azure" });
     expect(button).toBeInTheDocument();
   });
 
-  it("renders with last used indicator when lastUsed is true", () => {
+  test("renders with last used indicator when lastUsed is true", () => {
     render(<AzureButton {...defaultProps} lastUsed={true} />);
     expect(screen.getByText("auth.last_used")).toBeInTheDocument();
   });
 
-  it("sets localStorage item and calls signIn on click", async () => {
+  test("sets localStorage item and calls signIn on click", async () => {
     render(<AzureButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_azure" });
     fireEvent.click(button);
@@ -51,7 +51,7 @@ describe("AzureButton", () => {
     });
   });
 
-  it("uses inviteUrl in callbackUrl when provided", async () => {
+  test("uses inviteUrl in callbackUrl when provided", async () => {
     const inviteUrl = "https://example.com/invite";
     render(<AzureButton {...defaultProps} inviteUrl={inviteUrl} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_azure" });
@@ -63,7 +63,7 @@ describe("AzureButton", () => {
     });
   });
 
-  it("handles signup source correctly", async () => {
+  test("handles signup source correctly", async () => {
     render(<AzureButton {...defaultProps} source="signup" />);
     const button = screen.getByRole("button", { name: "auth.continue_with_azure" });
     fireEvent.click(button);
@@ -74,7 +74,7 @@ describe("AzureButton", () => {
     });
   });
 
-  it("triggers direct redirect when directRedirect is true", () => {
+  test("triggers direct redirect when directRedirect is true", () => {
     render(<AzureButton {...defaultProps} directRedirect={true} />);
     expect(signIn).toHaveBeenCalledWith("azure-ad", {
       redirect: true,

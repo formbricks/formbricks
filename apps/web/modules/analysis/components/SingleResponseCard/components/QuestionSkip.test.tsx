@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { QuestionSkip } from "./QuestionSkip";
@@ -34,7 +34,7 @@ describe("QuestionSkip", () => {
     cleanup();
   });
 
-  it("renders nothing when skippedQuestions is falsy", () => {
+  test("renders nothing when skippedQuestions is falsy", () => {
     render(
       <QuestionSkip
         skippedQuestions={undefined}
@@ -47,7 +47,7 @@ describe("QuestionSkip", () => {
     expect(screen.queryByText("headline2")).toBeNull();
   });
 
-  it("renders welcomeCard branch", () => {
+  test("renders welcomeCard branch", () => {
     render(
       <QuestionSkip
         skippedQuestions={["f1"]}
@@ -60,7 +60,7 @@ describe("QuestionSkip", () => {
     expect(screen.getByText("common.welcome_card")).toBeInTheDocument();
   });
 
-  it("renders skipped branch with tooltip and parsed headlines", () => {
+  test("renders skipped branch with tooltip and parsed headlines", () => {
     vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline1");
     vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline2");
 
@@ -79,7 +79,7 @@ describe("QuestionSkip", () => {
     expect(screen.getByText("parsed: headline2")).toBeInTheDocument();
   });
 
-  it("renders aborted branch with closed message and parsed headlines", () => {
+  test("renders aborted branch with closed message and parsed headlines", () => {
     vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline1");
     vi.mocked(parseRecallInfo).mockReturnValueOnce("parsed: headline2");
 

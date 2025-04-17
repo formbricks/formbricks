@@ -8,7 +8,7 @@ import {
   mockEnvironment,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -30,7 +30,7 @@ beforeEach(() => {
 
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
-    it("Creates a new display when a userId exists", async () => {
+    test("Creates a new display when a userId exists", async () => {
       prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       prisma.display.create.mockResolvedValue(mockDisplayWithPersonId);
 
@@ -38,7 +38,7 @@ describe("Tests for createDisplay service", () => {
       expect(display).toEqual(mockDisplayWithPersonId);
     });
 
-    it("Creates a new display when a userId does not exists", async () => {
+    test("Creates a new display when a userId does not exists", async () => {
       prisma.display.create.mockResolvedValue(mockDisplay);
 
       const display = await createDisplay(mockDisplayInput);
@@ -49,7 +49,7 @@ describe("Tests for createDisplay service", () => {
   describe("Sad Path", () => {
     testInputValidation(createDisplay, "123");
 
-    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
@@ -62,7 +62,7 @@ describe("Tests for createDisplay service", () => {
       await expect(createDisplay(mockDisplayInputWithUserId)).rejects.toThrow(DatabaseError);
     });
 
-    it("Throws a generic Error for other exceptions", async () => {
+    test("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.display.create.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -73,7 +73,7 @@ describe("Tests for createDisplay service", () => {
 
 describe("Tests for delete display service", () => {
   describe("Happy Path", () => {
-    it("Deletes a display", async () => {
+    test("Deletes a display", async () => {
       prisma.display.delete.mockResolvedValue(mockDisplay);
 
       const display = await deleteDisplay(mockDisplay.id);
@@ -81,7 +81,7 @@ describe("Tests for delete display service", () => {
     });
   });
   describe("Sad Path", () => {
-    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
@@ -93,7 +93,7 @@ describe("Tests for delete display service", () => {
       await expect(deleteDisplay(mockDisplay.id)).rejects.toThrow(DatabaseError);
     });
 
-    it("Throws a generic Error for other exceptions", async () => {
+    test("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.display.delete.mockRejectedValue(new Error(mockErrorMessage));
 

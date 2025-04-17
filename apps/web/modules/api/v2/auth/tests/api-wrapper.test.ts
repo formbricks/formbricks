@@ -3,7 +3,7 @@ import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request"
 import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { err, ok, okVoid } from "@formbricks/types/error-handlers";
 
@@ -25,7 +25,7 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
 }));
 
 describe("apiWrapper", () => {
-  it("should handle request and return response", async () => {
+  test("should handle request and return response", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -49,7 +49,7 @@ describe("apiWrapper", () => {
     expect(handler).toHaveBeenCalled();
   });
 
-  it("should handle errors and return error response", async () => {
+  test("should handle errors and return error response", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "invalid-api-key" },
     });
@@ -67,7 +67,7 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("should parse body schema correctly", async () => {
+  test("should parse body schema correctly", async () => {
     const request = new Request("http://localhost", {
       method: "POST",
       body: JSON.stringify({ key: "value" }),
@@ -100,7 +100,7 @@ describe("apiWrapper", () => {
     );
   });
 
-  it("should handle body schema errors", async () => {
+  test("should handle body schema errors", async () => {
     const request = new Request("http://localhost", {
       method: "POST",
       body: JSON.stringify({ key: 123 }),
@@ -131,7 +131,7 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("should parse query schema correctly", async () => {
+  test("should parse query schema correctly", async () => {
     const request = new Request("http://localhost?key=value");
 
     vi.mocked(authenticateRequest).mockResolvedValue(
@@ -160,7 +160,7 @@ describe("apiWrapper", () => {
     );
   });
 
-  it("should handle query schema errors", async () => {
+  test("should handle query schema errors", async () => {
     const request = new Request("http://localhost?foo%ZZ=abc");
 
     vi.mocked(authenticateRequest).mockResolvedValue(
@@ -187,7 +187,7 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("should parse params schema correctly", async () => {
+  test("should parse params schema correctly", async () => {
     const request = new Request("http://localhost");
 
     vi.mocked(authenticateRequest).mockResolvedValue(
@@ -217,7 +217,7 @@ describe("apiWrapper", () => {
     );
   });
 
-  it("should handle no external params", async () => {
+  test("should handle no external params", async () => {
     const request = new Request("http://localhost");
 
     vi.mocked(authenticateRequest).mockResolvedValue(
@@ -245,7 +245,7 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("should handle params schema errors", async () => {
+  test("should handle params schema errors", async () => {
     const request = new Request("http://localhost");
 
     vi.mocked(authenticateRequest).mockResolvedValue(
@@ -273,7 +273,7 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("should handle rate limit errors", async () => {
+  test("should handle rate limit errors", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });

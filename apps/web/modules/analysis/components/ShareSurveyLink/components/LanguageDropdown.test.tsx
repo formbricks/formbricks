@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { getEnabledLanguages, getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageDropdown } from "./LanguageDropdown";
@@ -27,7 +27,7 @@ describe("LanguageDropdown", () => {
     cleanup();
   });
 
-  it("renders nothing when enabledLanguages length is 1", () => {
+  test("renders nothing when enabledLanguages length is 1", () => {
     vi.mocked(getEnabledLanguages).mockReturnValueOnce([{ language: { code: "en" } } as TSurveyLanguage]);
     render(
       <LanguageDropdown survey={dummySurveySingle} setLanguage={setLanguageMock} locale={dummyLocale} />
@@ -36,7 +36,7 @@ describe("LanguageDropdown", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("renders button and toggles dropdown when multiple languages exist", async () => {
+  test("renders button and toggles dropdown when multiple languages exist", async () => {
     vi.mocked(getEnabledLanguages).mockReturnValue(dummySurveyMultiple.languages);
     vi.mocked(getLanguageLabel).mockImplementation((code: string, _locale: string) => code.toUpperCase());
 
@@ -66,7 +66,7 @@ describe("LanguageDropdown", () => {
     });
   });
 
-  it("closes dropdown when clicking outside", async () => {
+  test("closes dropdown when clicking outside", async () => {
     vi.mocked(getEnabledLanguages).mockReturnValue(dummySurveyMultiple.languages);
     vi.mocked(getLanguageLabel).mockImplementation((code: string, _locale: string) => code);
 

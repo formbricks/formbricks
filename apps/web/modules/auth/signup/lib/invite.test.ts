@@ -1,6 +1,6 @@
 import { inviteCache } from "@/lib/cache/invite";
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
@@ -63,7 +63,7 @@ describe("Invite Management", () => {
   });
 
   describe("deleteInvite", () => {
-    it("deletes an invite successfully and invalidates cache", async () => {
+    test("deletes an invite successfully and invalidates cache", async () => {
       vi.mocked(prisma.invite.delete).mockResolvedValue(mockInvite);
 
       const result = await deleteInvite(mockInviteId);
@@ -79,7 +79,7 @@ describe("Invite Management", () => {
       });
     });
 
-    it("throws DatabaseError when invite doesn't exist", async () => {
+    test("throws DatabaseError when invite doesn't exist", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Record not found", {
         code: PrismaErrorType.RecordDoesNotExist,
         clientVersion: "0.0.1",
@@ -89,7 +89,7 @@ describe("Invite Management", () => {
       await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
     });
 
-    it("throws DatabaseError for other Prisma errors", async () => {
+    test("throws DatabaseError for other Prisma errors", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -99,7 +99,7 @@ describe("Invite Management", () => {
       await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
     });
 
-    it("throws DatabaseError for generic errors", async () => {
+    test("throws DatabaseError for generic errors", async () => {
       vi.mocked(prisma.invite.delete).mockRejectedValue(new Error("Generic error"));
 
       await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
@@ -107,7 +107,7 @@ describe("Invite Management", () => {
   });
 
   describe("getInvite", () => {
-    it("retrieves an invite with creator details successfully", async () => {
+    test("retrieves an invite with creator details successfully", async () => {
       vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
 
       const result = await getInvite(mockInviteId);
@@ -131,7 +131,7 @@ describe("Invite Management", () => {
       });
     });
 
-    it("returns null when invite doesn't exist", async () => {
+    test("returns null when invite doesn't exist", async () => {
       vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
 
       const result = await getInvite(mockInviteId);
@@ -139,7 +139,7 @@ describe("Invite Management", () => {
       expect(result).toBeNull();
     });
 
-    it("throws DatabaseError on prisma error", async () => {
+    test("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -149,7 +149,7 @@ describe("Invite Management", () => {
       await expect(getInvite(mockInviteId)).rejects.toThrow(DatabaseError);
     });
 
-    it("throws DatabaseError for generic errors", async () => {
+    test("throws DatabaseError for generic errors", async () => {
       vi.mocked(prisma.invite.findUnique).mockRejectedValue(new Error("Generic error"));
 
       await expect(getInvite(mockInviteId)).rejects.toThrow(DatabaseError);
@@ -157,7 +157,7 @@ describe("Invite Management", () => {
   });
 
   describe("getIsValidInviteToken", () => {
-    it("returns true for valid invite", async () => {
+    test("returns true for valid invite", async () => {
       vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
 
       const result = await getIsValidInviteToken(mockInviteId);
@@ -168,7 +168,7 @@ describe("Invite Management", () => {
       });
     });
 
-    it("returns false when invite doesn't exist", async () => {
+    test("returns false when invite doesn't exist", async () => {
       vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
 
       const result = await getIsValidInviteToken(mockInviteId);
@@ -176,7 +176,7 @@ describe("Invite Management", () => {
       expect(result).toBe(false);
     });
 
-    it("returns false for expired invite", async () => {
+    test("returns false for expired invite", async () => {
       const expiredInvite = {
         ...mockInvite,
         expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
@@ -195,7 +195,7 @@ describe("Invite Management", () => {
       );
     });
 
-    it("returns false and logs error when database error occurs", async () => {
+    test("returns false and logs error when database error occurs", async () => {
       const error = new Error("Database error");
       vi.mocked(prisma.invite.findUnique).mockRejectedValue(error);
 
@@ -205,7 +205,7 @@ describe("Invite Management", () => {
       expect(logger.error).toHaveBeenCalledWith(error, "Error getting invite");
     });
 
-    it("returns false for invite with null expiresAt", async () => {
+    test("returns false for invite with null expiresAt", async () => {
       const invalidInvite = {
         ...mockInvite,
         expiresAt: null,
@@ -224,7 +224,7 @@ describe("Invite Management", () => {
       );
     });
 
-    it("returns false for invite with invalid expiresAt", async () => {
+    test("returns false for invite with invalid expiresAt", async () => {
       const invalidInvite = {
         ...mockInvite,
         expiresAt: new Date("invalid-date"),
