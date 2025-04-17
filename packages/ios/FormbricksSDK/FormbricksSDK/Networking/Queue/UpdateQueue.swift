@@ -50,8 +50,18 @@ final class UpdateQueue {
     
     func set(language: String) {
         syncQueue.sync {
-            self.attributes = ["language": language]
-            startDebounceTimer()
+            self.language = language
+            
+            // Check if we have an effective userId
+            let effectiveUserId = self.userId ?? Formbricks.userManager?.userId
+            
+            if effectiveUserId != nil {
+                // If we have a userId, use the existing set(attributes:) method
+                set(attributes: ["language": language])
+            } else {
+                // If no userId, just update locally without API call
+                Formbricks.logger?.debug("UpdateQueue - updating language locally: \(language)")
+            }
         }
     }
     

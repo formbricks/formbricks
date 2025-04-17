@@ -50,6 +50,10 @@ struct SetupView: View {
                     Formbricks.setLanguage("vi")
                 }.padding()
                 
+                Button("Call Formbricks.logout") {
+                    Formbricks.logout()
+                }.padding()
+                
                 Button("Call Formbricks.cleanup") {
                     Formbricks.cleanup(waitForOperations: true) {
                         print(">>> Cleanup complete")
