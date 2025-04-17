@@ -20,9 +20,6 @@ struct SetupView: View {
                         // Simulate async setup delay
                         DispatchQueue.global().async {
                             Formbricks.setup(with: config)
-                            
-                            Formbricks.logout()
-    
                             Formbricks.setUserId(UUID().uuidString)
                             
                             DispatchQueue.main.async {

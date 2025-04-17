@@ -121,6 +121,8 @@ final class UserManager: UserManagerSyncable {
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
         updateQueue?.reset()
+        
+        Formbricks.logger?.debug("Successfully logged out user and reset the user state.")
     }
     
     func cleanupUpdateQueue() {
