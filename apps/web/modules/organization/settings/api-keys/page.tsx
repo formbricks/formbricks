@@ -2,7 +2,6 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
-import { Alert } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -33,22 +32,16 @@ export const APIKeysPage = async (props) => {
           activeId="api-keys"
         />
       </PageHeader>
-      {isNotOwner ? (
-        <Alert variant="warning" size={"small"}>
-          {t("environments.settings.general.only_org_owner_can_perform_action")}
-        </Alert>
-      ) : (
-        <SettingsCard
-          title={t("common.api_keys")}
-          description={t("environments.settings.api_keys.api_keys_description")}>
-          <ApiKeyList
-            organizationId={organization.id}
-            locale={locale}
-            isReadOnly={isNotOwner}
-            projects={projects}
-          />
-        </SettingsCard>
-      )}
+      <SettingsCard
+        title={t("common.api_keys")}
+        description={t("environments.settings.api_keys.api_keys_description")}>
+        <ApiKeyList
+          organizationId={organization.id}
+          locale={locale}
+          isReadOnly={isNotOwner}
+          projects={projects}
+        />
+      </SettingsCard>
     </PageContentWrapper>
   );
 };
