@@ -65,7 +65,7 @@ export const MultipleChoiceSummary = ({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
@@ -78,7 +78,7 @@ export const MultipleChoiceSummary = ({
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div
             key={result.value}

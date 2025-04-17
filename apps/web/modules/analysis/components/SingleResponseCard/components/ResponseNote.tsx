@@ -100,14 +100,14 @@ export const ResponseNotes = ({
   return (
     <div
       className={clsx(
-        "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
+        "absolute w-1/4 rounded-lg border border-slate-200 shadow-xs transition-all",
         !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
         !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
           ? "top-0 -right-2 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
             ? "top-[8.33%] right-0 h-5/6 max-h-[600px] w-1/12"
-            : "top-[8.333%] right-[120px] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            : "top-[8.333%] right-[120px] h-5/6 max-h-[600px] w-1/12 group-hover:right-0"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);
@@ -215,7 +215,7 @@ export const ResponseNotes = ({
                   <textarea
                     rows={2}
                     className={cn(
-                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm",
+                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-xs focus:border-slate-500 focus:ring-0 sm:text-sm",
                       !isTextAreaOpen && "scale-y-0 transition-all duration-1000",
                       !isTextAreaOpen && "translate-y-8 transition-all duration-300",
                       isTextAreaOpen && "scale-y-1 transition-all duration-1000",

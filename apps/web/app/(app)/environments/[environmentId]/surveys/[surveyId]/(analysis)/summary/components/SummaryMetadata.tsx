@@ -17,7 +17,7 @@ const StatCard = ({ label, percentage, value, tooltipText, isLoading }) => {
     <TooltipProvider delayDuration={50}>
       <Tooltip>
         <TooltipTrigger>
-          <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
+          <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs">
             <p className="flex items-center gap-1 text-sm text-slate-600">
               {label}
               {typeof percentage === "number" && !isNaN(percentage) && !isLoading && (
@@ -101,7 +101,7 @@ export const SummaryMetadata = ({
             <TooltipTrigger>
               <div
                 onClick={() => setShowDropOffs(!showDropOffs)}
-                className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-xs">
                 <span className="text-sm text-slate-600">
                   {t("environments.surveys.summary.drop_offs")}
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && !isLoading && (

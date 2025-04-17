@@ -88,7 +88,7 @@ export const QuestionSkip = ({
           {status === "aborted" && (
             <div className="flex">
               <div
-                className="flex w-0.5 flex-grow items-start justify-center"
+                className="flex w-0.5 grow items-start justify-center"
                 style={{
                   background:
                     "repeating-linear-gradient(to bottom,  rgb(148 163 184),  rgb(148 163 184) 2px, transparent 2px, transparent 10px)", // adjust the 2px to change dot size and 10px to change space between dots

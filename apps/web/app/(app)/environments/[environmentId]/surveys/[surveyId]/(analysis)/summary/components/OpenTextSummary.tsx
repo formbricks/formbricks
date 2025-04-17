@@ -60,7 +60,7 @@ export const OpenTextSummary = ({
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}

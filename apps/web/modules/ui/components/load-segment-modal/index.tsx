@@ -95,7 +95,7 @@ const SegmentDetail = ({
       )}
       <div className="col-span-3 flex items-center pl-6 text-sm">
         <div className="flex items-center gap-4">
-          <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">
+          <div className="ph-no-capture h-8 w-8 shrink-0 text-slate-700">
             <UsersIcon className="h-5 w-5" />
           </div>
           <div className="flex flex-col">

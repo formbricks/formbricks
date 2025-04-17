@@ -38,7 +38,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
+          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -55,7 +55,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
           <button
             type="button"
             key={questionType.id}
-            className="group relative mx-2 inline-flex items-center justify-between rounded p-0.5 px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
+            className="group relative mx-2 inline-flex items-center justify-between rounded-sm p-0.5 px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
             onClick={() => {
               addQuestion({
                 ...universalQuestionPresets,
@@ -68,7 +68,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
             onMouseEnter={() => setHoveredQuestionId(questionType.id)}
             onMouseLeave={() => setHoveredQuestionId(null)}>
             <div className="flex items-center">
-              <questionType.icon className="text-brand-dark -ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+              <questionType.icon className="text-brand-dark mr-2 -ml-0.5 h-4 w-4" aria-hidden="true" />
               {questionType.label}
             </div>
             <div

@@ -24,7 +24,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <Search className="h-4 w-4" />
       <input
         type="text"
-        className="w-full border-none bg-transparent text-sm focus:outline-none"
+        className="w-full border-none bg-transparent text-sm focus:outline-hidden"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

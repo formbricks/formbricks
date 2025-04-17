@@ -8,7 +8,7 @@ export const ErrorComponent: React.FC = () => {
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <XCircleIcon className="h-12 w-12 text-red-400" aria-hidden="true" />
         </div>
         <div className="ml-3">

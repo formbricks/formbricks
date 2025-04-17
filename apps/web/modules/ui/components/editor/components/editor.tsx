@@ -75,7 +75,7 @@ export const Editor = (props: TextEditorProps) => {
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
         <div
           ref={editorContainerRef}
-          className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
+          className={cn("editor-container rounded-md p-0", props.isInvalid && "border! border-red-500!")}>
           <ToolbarPlugin
             getText={props.getText}
             setText={props.setText}

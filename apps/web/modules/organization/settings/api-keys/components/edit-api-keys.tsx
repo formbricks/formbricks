@@ -169,7 +169,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
             apiKeysLocal?.map((apiKey) => (
               <div
                 role="button"
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-hidden"
                 onClick={() => {
                   setActiveKey(apiKey);
                   setViewPermissionsOpen(true);

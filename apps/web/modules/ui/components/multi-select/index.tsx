@@ -99,7 +99,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             <Badge key={option.value} className="rounded-md">
               {option.label}
               <button
-                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleUnselect(option);
@@ -122,14 +122,14 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-none"
+            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
           />
         </div>
       </div>
       {open && selectableOptions.length > 0 && !disabled && (
         <div className="relative mt-2">
           <CommandList>
-            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full rounded-md border bg-white shadow-md outline-none">
+            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full rounded-md border bg-white shadow-md outline-hidden">
               <CommandGroup className="h-full overflow-auto">
                 {selectableOptions.map((option) => (
                   <CommandItem

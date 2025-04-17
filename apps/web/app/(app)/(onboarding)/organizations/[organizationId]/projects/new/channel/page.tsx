@@ -50,7 +50,7 @@ const Page = async (props: ChannelPageProps) => {
       <OnboardingOptionsContainer options={channelOptions} />
       {projects.length >= 1 && (
         <Button
-          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute top-5 right-5 mt-0! text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={"/"}>

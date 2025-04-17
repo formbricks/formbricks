@@ -188,7 +188,7 @@ export const SurveyMenuBar = ({
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
           toast.error(currentError.message, {
-            className: "w-fit !max-w-md",
+            className: "w-fit max-w-md!",
           });
         }
 
@@ -329,7 +329,7 @@ export const SurveyMenuBar = ({
           />
         </div>
         {responseCount > 0 && (
-          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
+          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-xs lg:mx-auto">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
@@ -340,12 +340,12 @@ export const SurveyMenuBar = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="hidden text-ellipsis whitespace-nowrap pl-1.5 text-xs md:text-sm lg:block">
+            <p className="hidden pl-1.5 text-xs text-ellipsis whitespace-nowrap md:text-sm lg:block">
               {cautionText}
             </p>
           </div>
         )}
-        <div className="mt-3 flex sm:ml-4 sm:mt-0">
+        <div className="mt-3 flex sm:mt-0 sm:ml-4">
           {!isCxMode && (
             <Button
               disabled={disableSave}

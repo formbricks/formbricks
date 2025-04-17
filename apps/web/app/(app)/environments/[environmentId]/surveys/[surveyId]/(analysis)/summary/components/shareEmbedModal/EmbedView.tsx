@@ -99,7 +99,7 @@ export const EmbedView = ({
                 className={cn(
                   "rounded-md px-4 py-2",
                   tab.id === activeId
-                    ? "bg-white text-slate-900 shadow-sm"
+                    ? "bg-white text-slate-900 shadow-xs"
                     : "border-transparent text-slate-700 hover:text-slate-900"
                 )}>
                 {tab.label}
