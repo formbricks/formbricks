@@ -56,7 +56,7 @@ export async function EmailTemplate({
                   {t("emails.imprint")}
                 </Link>
               )}
-              {IMPRINT_URL && PRIVACY_URL && "&npsp; • &npsp;"}
+              {IMPRINT_URL && PRIVACY_URL && " • "}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
                   {t("emails.privacy_policy")}

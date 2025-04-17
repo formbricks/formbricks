@@ -97,7 +97,7 @@ export async function FollowUpEmail({
                   {t("emails.imprint")}
                 </Link>
               )}
-              {IMPRINT_URL && PRIVACY_URL && "•"}
+              {IMPRINT_URL && PRIVACY_URL && " • "}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
                   {t("emails.privacy_policy")}
