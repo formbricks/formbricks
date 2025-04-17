@@ -4,13 +4,19 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
+import { formatUnits } from "ethers";
 import { ArrowRightIcon } from "lucide-react";
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { formatUnits } from "ethers";
+import { Controller, useForm } from "react-hook-form";
 import { useSendERC20 } from "@formbricks/web3/src/hooks/useSendERC20";
 
 type FormValues = {
@@ -37,15 +43,14 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
     formState: { errors },
   } = useForm<FormValues>();
   const tokenAddress = watch("tokenAddress");
-  const { send } = useSendERC20({address:tokenAddress});
-
+  const { send } = useSendERC20({ address: tokenAddress });
 
   const onSubmit = async (data: FormValues) => {
     const { address, amount } = data;
     try {
-      const tx = await send({ to: address, amount });
+      const tx = await send(address, amount);
       console.log("Transaction sent:", tx);
-    } catch(err) {
+    } catch (err) {
       console.error("Send failed", err);
     }
   };
@@ -55,7 +60,6 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
       setValue("tokenAddress", balance.token.address);
     }
   }, [balance, setValue]);
-
   return (
     <>
       <Modal open={!!balance} setOpen={onClose}>
@@ -66,7 +70,6 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
             </div>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 pt-6">
-    
             <div className="flex w-full flex-col gap-2 rounded-lg">
               <Label>{t("environments.wallet.form.token")}</Label>
               <Controller
@@ -80,33 +83,39 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
                   },
                 }}
                 render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={(address) => {
-                        field.onChange(address);
-                        const selected = balances.find(b => b.token.address === address);
-                        if (selected) onSelectBalance(selected);
-                      }}
-                    >
+                  <Select
+                    value={field.value}
+                    onValueChange={(address) => {
+                      field.onChange(address);
+                      const selected = balances.find((b) => b.token.address === address);
+                      if (selected) onSelectBalance(selected);
+                    }}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={balance ? `${balance.token.symbol} — ${balance.token.address}` : "Select a token address"}/>
+                      <SelectValue
+                        placeholder={
+                          balance
+                            ? `${balance.token.symbol} — ${balance.token.address}`
+                            : "Select a token address"
+                        }
+                      />
                     </SelectTrigger>
 
-                      <SelectContent className="bg-white">
+                    <SelectContent className="bg-white">
                       {balances?.map((balance) => (
                         <SelectItem
                           key={balance.token.address}
                           value={balance.token.address}
-                          className="group font-normal hover:text-slate-900"
-                        >
+                          className="group font-normal hover:text-slate-900">
                           <div className="flex w-full items-center justify-start gap-2">
-                            {balance.token.name} — {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
+                            {balance.token.name} —{" "}
+                            {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
                           </div>
                         </SelectItem>
                       ))}
-                      </SelectContent>
-                    </Select>
-                )}/>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="flex w-full flex-col gap-2 rounded-lg">
               <Label>{t("environments.wallet.form.recipient_address")}</Label>

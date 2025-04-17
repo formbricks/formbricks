@@ -32,7 +32,7 @@ export function Surveys({ className = "" }: { className?: string }): React.JSX.E
           tabStyle="button"
           className="bg-slate-100"
         />
-        <div className="grid md:grid-cols-3">
+        <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {(() => {
             switch (activeTab) {
               case "available-surveys":
