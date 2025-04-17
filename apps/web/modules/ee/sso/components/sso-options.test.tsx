@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SSOOptions } from "./sso-options";
 
 // Mock environment variables
@@ -81,7 +81,7 @@ describe("SSOOptions Component", () => {
     source: "signin" as const,
   };
 
-  it("renders all SSO options when all are enabled", () => {
+  test("renders all SSO options when all are enabled", () => {
     render(<SSOOptions {...defaultProps} />);
 
     expect(screen.getByTestId("google-button")).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe("SSOOptions Component", () => {
     expect(screen.getByTestId("saml-button")).toBeInTheDocument();
   });
 
-  it("only renders enabled SSO options", () => {
+  test("only renders enabled SSO options", () => {
     render(
       <SSOOptions
         {...defaultProps}
@@ -108,7 +108,7 @@ describe("SSOOptions Component", () => {
     expect(screen.getByTestId("saml-button")).toBeInTheDocument();
   });
 
-  it("passes correct props to OpenID button", () => {
+  test("passes correct props to OpenID button", () => {
     render(<SSOOptions {...defaultProps} />);
     const openIdButton = screen.getByTestId("openid-button");
 
@@ -116,7 +116,7 @@ describe("SSOOptions Component", () => {
     expect(openIdButton).toHaveTextContent("auth.continue_with_oidc");
   });
 
-  it("passes correct props to SAML button", () => {
+  test("passes correct props to SAML button", () => {
     render(<SSOOptions {...defaultProps} />);
     const samlButton = screen.getByTestId("saml-button");
 
@@ -125,7 +125,7 @@ describe("SSOOptions Component", () => {
     expect(samlButton).toHaveAttribute("data-product", "test-product");
   });
 
-  it("passes correct source prop to all buttons", () => {
+  test("passes correct source prop to all buttons", () => {
     render(<SSOOptions {...defaultProps} source="signup" />);
 
     expect(screen.getByTestId("google-button")).toHaveAttribute("data-source", "signup");

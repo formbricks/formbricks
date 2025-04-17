@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as nextAuth from "next-auth/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import * as actions from "./actions";
@@ -32,7 +32,7 @@ describe("DeleteAccountModal", () => {
     cleanup();
   });
 
-  it("renders modal with correct props", () => {
+  test("renders modal with correct props", () => {
     render(
       <DeleteAccountModal
         open={true}
@@ -48,7 +48,7 @@ describe("DeleteAccountModal", () => {
     expect(screen.getByText("Org2")).toBeInTheDocument();
   });
 
-  it("disables delete button when email does not match", () => {
+  test("disables delete button when email does not match", () => {
     render(
       <DeleteAccountModal
         open={true}
@@ -65,7 +65,7 @@ describe("DeleteAccountModal", () => {
     expect(input).toHaveValue("wrong@example.com");
   });
 
-  it("allows account deletion flow (non-cloud)", async () => {
+  test("allows account deletion flow (non-cloud)", async () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
@@ -96,7 +96,7 @@ describe("DeleteAccountModal", () => {
     });
   });
 
-  it("allows account deletion flow (cloud)", async () => {
+  test("allows account deletion flow (cloud)", async () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
@@ -133,7 +133,7 @@ describe("DeleteAccountModal", () => {
     });
   });
 
-  it("handles deletion errors", async () => {
+  test("handles deletion errors", async () => {
     const deleteUserAction = vi.spyOn(actions, "deleteUserAction").mockRejectedValue(new Error("fail"));
 
     render(

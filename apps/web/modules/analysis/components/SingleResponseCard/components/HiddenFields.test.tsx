@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { HiddenFields } from "./HiddenFields";
 
@@ -16,7 +16,7 @@ describe("HiddenFields", () => {
     cleanup();
   });
 
-  it("renders empty container when no fieldIds are provided", () => {
+  test("renders empty container when no fieldIds are provided", () => {
     render(
       <HiddenFields hiddenFields={{ fieldIds: [] } as unknown as TSurveyHiddenFields} responseData={{}} />
     );
@@ -24,7 +24,7 @@ describe("HiddenFields", () => {
     expect(container).toBeDefined();
   });
 
-  it("renders nothing for fieldIds with no corresponding response data", () => {
+  test("renders nothing for fieldIds with no corresponding response data", () => {
     render(
       <HiddenFields
         hiddenFields={{ fieldIds: ["field1"] } as unknown as TSurveyHiddenFields}
@@ -34,7 +34,7 @@ describe("HiddenFields", () => {
     expect(screen.queryByText("field1")).toBeNull();
   });
 
-  it("renders field and value when responseData exists and is a string", async () => {
+  test("renders field and value when responseData exists and is a string", async () => {
     render(
       <HiddenFields
         hiddenFields={{ fieldIds: ["field1", "field2"] } as unknown as TSurveyHiddenFields}
@@ -46,7 +46,7 @@ describe("HiddenFields", () => {
     expect(screen.queryByText("field2")).toBeNull();
   });
 
-  it("renders empty text when responseData value is not a string", () => {
+  test("renders empty text when responseData value is not a string", () => {
     render(
       <HiddenFields
         hiddenFields={{ fieldIds: ["field1"] } as unknown as TSurveyHiddenFields}
@@ -58,7 +58,7 @@ describe("HiddenFields", () => {
     expect(valueParagraphs.length).toBeGreaterThan(0);
   });
 
-  it("displays tooltip content for hidden field", async () => {
+  test("displays tooltip content for hidden field", async () => {
     render(
       <HiddenFields
         hiddenFields={{ fieldIds: ["field1"] } as unknown as TSurveyHiddenFields}

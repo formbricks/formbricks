@@ -1,7 +1,7 @@
 import Intercom from "@intercom/messenger-js-sdk";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClient } from "./IntercomClient";
 
@@ -26,7 +26,7 @@ describe("IntercomClient", () => {
     global.window.Intercom = originalWindowIntercom;
   });
 
-  it("calls Intercom with user data when isIntercomConfigured is true and user is provided", () => {
+  test("calls Intercom with user data when isIntercomConfigured is true and user is provided", () => {
     const testUser = {
       id: "test-id",
       name: "Test User",
@@ -55,7 +55,7 @@ describe("IntercomClient", () => {
     });
   });
 
-  it("calls Intercom with user data without createdAt", () => {
+  test("calls Intercom with user data without createdAt", () => {
     const testUser = {
       id: "test-id",
       name: "Test User",
@@ -83,7 +83,7 @@ describe("IntercomClient", () => {
     });
   });
 
-  it("calls Intercom with minimal params if user is not provided", () => {
+  test("calls Intercom with minimal params if user is not provided", () => {
     render(
       <IntercomClient isIntercomConfigured={true} intercomAppId="my-app-id" intercomUserHash="my-user-hash" />
     );
@@ -94,7 +94,7 @@ describe("IntercomClient", () => {
     });
   });
 
-  it("does not call Intercom if isIntercomConfigured is false", () => {
+  test("does not call Intercom if isIntercomConfigured is false", () => {
     render(
       <IntercomClient
         isIntercomConfigured={false}
@@ -106,7 +106,7 @@ describe("IntercomClient", () => {
     expect(Intercom).not.toHaveBeenCalled();
   });
 
-  it("shuts down Intercom on unmount", () => {
+  test("shuts down Intercom on unmount", () => {
     const { unmount } = render(
       <IntercomClient isIntercomConfigured={true} intercomAppId="my-app-id" intercomUserHash="my-user-hash" />
     );
@@ -120,7 +120,7 @@ describe("IntercomClient", () => {
     expect(mockWindowIntercom).toHaveBeenCalledWith("shutdown");
   });
 
-  it("logs an error if Intercom initialization fails", () => {
+  test("logs an error if Intercom initialization fails", () => {
     // Spy on console.error
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -141,7 +141,7 @@ describe("IntercomClient", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("logs an error if isIntercomConfigured is true but no intercomAppId is provided", () => {
+  test("logs an error if isIntercomConfigured is true but no intercomAppId is provided", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     render(
@@ -159,7 +159,7 @@ describe("IntercomClient", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("logs an error if isIntercomConfigured is true but no intercomUserHash is provided", () => {
+  test("logs an error if isIntercomConfigured is true but no intercomUserHash is provided", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const testUser = {
       id: "test-id",

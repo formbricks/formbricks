@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { AddMemberRole } from "./add-member-role";
 
 // Mock dependencies
@@ -39,7 +39,7 @@ describe("AddMemberRole Component", () => {
   };
 
   describe("Rendering", () => {
-    it("renders role selector when user is owner", () => {
+    test("renders role selector when user is owner", () => {
       render(
         <FormWrapper
           defaultValues={defaultValues}
@@ -54,7 +54,7 @@ describe("AddMemberRole Component", () => {
       expect(roleLabel).toBeInTheDocument();
     });
 
-    it("does not render anything when user is member", () => {
+    test("does not render anything when user is member", () => {
       render(
         <FormWrapper
           defaultValues={defaultValues}
@@ -69,7 +69,7 @@ describe("AddMemberRole Component", () => {
       expect(screen.getByTestId("child")).toBeInTheDocument();
     });
 
-    it("disables the role selector when canDoRoleManagement is false", () => {
+    test("disables the role selector when canDoRoleManagement is false", () => {
       render(
         <FormWrapper
           defaultValues={defaultValues}
@@ -86,7 +86,7 @@ describe("AddMemberRole Component", () => {
   });
 
   describe("Default values", () => {
-    it("displays the default role value", () => {
+    test("displays the default role value", () => {
       render(
         <FormWrapper
           defaultValues={defaultValues}
