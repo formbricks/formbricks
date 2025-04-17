@@ -6910,8 +6910,8 @@ packages:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
     engines: {node: '>=10'}
 
-  chromatic@11.28.0:
-    resolution: {integrity: sha512-Xy3907MXY5UP7LoMksmsT02xCUsoLZpcC6sRITjd+KiXBteOxPF7J+QsFqy/VzQCEN6fpt/R2bOIpE+PwPfcZA==}
+  chromatic@11.28.1:
+    resolution: {integrity: sha512-h3mHjS4SYODrHzcXYfLvGRBWBGTYDDLQMDXeXTu3vzUO9/2Db5c7Yc0XnPcbO9ttWrClvHzZo2UfkvZ+tBFeQA==}
     hasBin: true
     peerDependencies:
       '@chromatic-com/cypress': ^0.*.* || ^1.0.0
@@ -15640,7 +15640,7 @@ snapshots:
 
   '@chromatic-com/storybook@3.2.6(react@19.1.0)(storybook@8.6.12(prettier@3.5.3))':
     dependencies:
-      chromatic: 11.28.0
+      chromatic: 11.28.1
       filesize: 10.1.6
       jsonfile: 6.1.0
       react-confetti: 6.4.0(react@19.1.0)
@@ -21532,7 +21532,7 @@ snapshots:
 
   chownr@2.0.0: {}
 
-  chromatic@11.28.0: {}
+  chromatic@11.28.1: {}
 
   chrome-launcher@0.15.2:
     dependencies:
