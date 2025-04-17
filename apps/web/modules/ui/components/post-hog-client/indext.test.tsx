@@ -1,7 +1,7 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import posthog, { CaptureResult } from "posthog-js";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { PHProvider, PostHogPageview } from "./index";
 
 vi.mock("next/navigation", () => ({
@@ -20,7 +20,7 @@ describe("PostHogPageview", () => {
     cleanup();
   });
 
-  it("does not initialize or capture when posthogEnabled is false", async () => {
+  test("does not initialize or capture when posthogEnabled is false", async () => {
     let captureResult: CaptureResult = { uuid: "test-uuid", event: "$pageview", properties: {} };
     const initSpy = vi.spyOn(posthog, "init").mockImplementation(() => posthog);
     const captureSpy = vi.spyOn(posthog, "capture").mockImplementation(() => captureResult);
@@ -33,7 +33,7 @@ describe("PostHogPageview", () => {
     });
   });
 
-  it("logs an error if postHogApiHost is missing", async () => {
+  test("logs an error if postHogApiHost is missing", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<PostHogPageview posthogEnabled={true} postHogApiKey="test-key" />);
 
@@ -45,7 +45,7 @@ describe("PostHogPageview", () => {
     });
   });
 
-  it("logs an error if postHogApiKey is missing", async () => {
+  test("logs an error if postHogApiKey is missing", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<PostHogPageview posthogEnabled={true} postHogApiHost="test-host" />);
 
@@ -57,7 +57,7 @@ describe("PostHogPageview", () => {
     });
   });
 
-  it("initializes posthog and captures a pageview when enabled and credentials are provided", async () => {
+  test("initializes posthog and captures a pageview when enabled and credentials are provided", async () => {
     let captureResult: CaptureResult = { uuid: "test-uuid", event: "$pageview", properties: {} };
     const initSpy = vi.spyOn(posthog, "init").mockImplementation(() => posthog);
     const captureSpy = vi.spyOn(posthog, "capture").mockImplementation(() => captureResult);
@@ -80,7 +80,7 @@ describe("PHProvider", () => {
     cleanup();
   });
 
-  it("wraps children with PostHogProvider when posthogEnabled is true", () => {
+  test("wraps children with PostHogProvider when posthogEnabled is true", () => {
     // Here we simply verify that the children are rendered.
     // The PostHogProvider from "posthog-js/react" acts as a context provider
     // so we verify that our children appear in the output.
@@ -93,7 +93,7 @@ describe("PHProvider", () => {
     expect(getByText("Child Content")).toBeInTheDocument();
   });
 
-  it("renders children directly when posthogEnabled is false", () => {
+  test("renders children directly when posthogEnabled is false", () => {
     const Child = () => <div>Child Content</div>;
     const { getByText } = render(
       <PHProvider posthogEnabled={false}>

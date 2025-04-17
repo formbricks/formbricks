@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { RatingSmiley } from "./index";
 
 // Mock the smiley components from ../SingleResponseCard/components/Smileys
@@ -64,7 +64,7 @@ describe("RatingSmiley", () => {
   const activeClass = "fill-rating-fill";
 
   // Test branch: range === 10 => iconsIdx = [0,1,2,...,9]
-  it("renders correct icon for range 10 when active", () => {
+  test("renders correct icon for range 10 when active", () => {
     // For idx 0, iconsIdx[0] === 0, which corresponds to TiredFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={10} addColors={true} />);
     const icon = getByTestId("TiredFace");
@@ -72,7 +72,7 @@ describe("RatingSmiley", () => {
     expect(icon.className).toContain(activeClass);
   });
 
-  it("renders correct icon for range 10 when inactive", () => {
+  test("renders correct icon for range 10 when inactive", () => {
     const { getByTestId } = render(<RatingSmiley active={false} idx={0} range={10} />);
     const icon = getByTestId("TiredFace");
     expect(icon).toBeDefined();
@@ -80,7 +80,7 @@ describe("RatingSmiley", () => {
   });
 
   // Test branch: range === 7 => iconsIdx = [1,3,4,5,6,8,9]
-  it("renders correct icon for range 7 when active", () => {
+  test("renders correct icon for range 7 when active", () => {
     // For idx 0, iconsIdx[0] === 1, which corresponds to WearyFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={7} addColors={true} />);
     const icon = getByTestId("WearyFace");
@@ -89,7 +89,7 @@ describe("RatingSmiley", () => {
   });
 
   // Test branch: range === 5 => iconsIdx = [3,4,5,6,7]
-  it("renders correct icon for range 5 when active", () => {
+  test("renders correct icon for range 5 when active", () => {
     // For idx 0, iconsIdx[0] === 3, which corresponds to FrowningFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={5} addColors={true} />);
     const icon = getByTestId("FrowningFace");
@@ -98,7 +98,7 @@ describe("RatingSmiley", () => {
   });
 
   // Test branch: range === 4 => iconsIdx = [4,5,6,7]
-  it("renders correct icon for range 4 when active", () => {
+  test("renders correct icon for range 4 when active", () => {
     // For idx 0, iconsIdx[0] === 4, corresponding to ConfusedFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={4} addColors={true} />);
     const icon = getByTestId("ConfusedFace");
@@ -107,7 +107,7 @@ describe("RatingSmiley", () => {
   });
 
   // Test branch: range === 3 => iconsIdx = [4,5,7]
-  it("renders correct icon for range 3 when active", () => {
+  test("renders correct icon for range 3 when active", () => {
     // For idx 0, iconsIdx[0] === 4, corresponding to ConfusedFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={3} addColors={true} />);
     const icon = getByTestId("ConfusedFace");

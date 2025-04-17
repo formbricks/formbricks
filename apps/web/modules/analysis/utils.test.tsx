@@ -1,6 +1,6 @@
 import { cleanup } from "@testing-library/react";
 import { isValidElement } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { renderHyperlinkedContent } from "./utils";
 
 describe("renderHyperlinkedContent", () => {
@@ -8,7 +8,7 @@ describe("renderHyperlinkedContent", () => {
     cleanup();
   });
 
-  it("returns a single span element when input has no url", () => {
+  test("returns a single span element when input has no url", () => {
     const input = "Hello world";
     const elements = renderHyperlinkedContent(input);
     expect(elements).toHaveLength(1);
@@ -19,7 +19,7 @@ describe("renderHyperlinkedContent", () => {
     expect(element.props.children).toEqual("Hello world");
   });
 
-  it("splits input with a valid url into span, anchor, span", () => {
+  test("splits input with a valid url into span, anchor, span", () => {
     const input = "Visit https://example.com for info";
     const elements = renderHyperlinkedContent(input);
     // Expect three elements: before text, URL link, after text.
@@ -36,7 +36,7 @@ describe("renderHyperlinkedContent", () => {
     expect(elements[2].props.children).toEqual(" for info");
   });
 
-  it("handles multiple valid urls in the input", () => {
+  test("handles multiple valid urls in the input", () => {
     const input = "Link1: https://example.com and Link2: https://vitejs.dev";
     const elements = renderHyperlinkedContent(input);
     // Expected parts: "Link1: ", "https://example.com", " and Link2: ", "https://vitejs.dev", ""
@@ -47,7 +47,7 @@ describe("renderHyperlinkedContent", () => {
     expect(elements[3].props.href).toEqual("https://vitejs.dev");
   });
 
-  it("renders a span instead of anchor when URL constructor throws", () => {
+  test("renders a span instead of anchor when URL constructor throws", () => {
     // Force global.URL to throw for this test.
     const originalURL = global.URL;
     vi.spyOn(global, "URL").mockImplementation(() => {

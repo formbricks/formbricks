@@ -1,5 +1,5 @@
 import { TGetTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { createTeam, getTeams } from "../teams";
@@ -32,7 +32,7 @@ vi.spyOn(organizationCache, "revalidate").mockImplementation(() => {});
 
 describe("Teams Lib", () => {
   describe("createTeam", () => {
-    it("creates a team successfully and revalidates cache", async () => {
+    test("creates a team successfully and revalidates cache", async () => {
       (prisma.team.create as any).mockResolvedValueOnce(mockTeam);
 
       const teamInput = { name: "Test Team" };
@@ -49,7 +49,7 @@ describe("Teams Lib", () => {
       if (result.ok) expect(result.data).toEqual(mockTeam);
     });
 
-    it("returns internal error when prisma.team.create fails", async () => {
+    test("returns internal error when prisma.team.create fails", async () => {
       (prisma.team.create as any).mockRejectedValueOnce(new Error("Create error"));
       const teamInput = { name: "Test Team" };
       const organizationId = "org456";
@@ -63,7 +63,7 @@ describe("Teams Lib", () => {
 
   describe("getTeams", () => {
     const filter = { limit: 10, skip: 0 };
-    it("returns teams with meta on success", async () => {
+    test("returns teams with meta on success", async () => {
       const teamsArray = [mockTeam];
       // Simulate prisma transaction return [teams, count]
       (prisma.$transaction as any).mockResolvedValueOnce([teamsArray, teamsArray.length]);
@@ -80,7 +80,7 @@ describe("Teams Lib", () => {
       }
     });
 
-    it("returns internal_server_error when prisma transaction fails", async () => {
+    test("returns internal_server_error when prisma transaction fails", async () => {
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("Transaction error"));
       const organizationId = "org456";
       const result = await getTeams(organizationId, filter as TGetTeamsFilter);

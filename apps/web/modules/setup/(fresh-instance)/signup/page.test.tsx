@@ -2,7 +2,7 @@ import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
 
@@ -84,7 +84,7 @@ describe("SignupPage", () => {
     vi.mocked(getTranslate).mockResolvedValue((key) => key);
   });
 
-  it("renders the signup page correctly", async () => {
+  test("renders the signup page correctly", async () => {
     const page = await SignupPage();
     render(page);
 
