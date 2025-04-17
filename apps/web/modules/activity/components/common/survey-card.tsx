@@ -30,7 +30,10 @@ export const SurveyCard = ({ survey, type }: SurveyCardProps) => {
           <Badge size="tiny" type="gray" text={surveyTypeLabel} />
         </div>
       </div>
-      <p className="mb-2 text-lg font-medium">{survey.name}</p>
+      <div className="flex-1">
+        <p className="mb-1 text-lg font-medium">{survey.name}</p>
+        <p className="mb-2 text-sm text-slate-500">{survey.description}</p>
+      </div>
       <Button
         onClick={() => (window.location.href = `/s/${survey.id}`)}
         className="ring-offset-background focus-visible:ring-ring group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
