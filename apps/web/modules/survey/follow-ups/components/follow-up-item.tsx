@@ -6,9 +6,10 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
-import { TrashIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CopyPlusIcon, TrashIcon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -96,6 +97,19 @@ export const FollowUpItem = ({
     return followUp.trigger.type === "endings" && !followUp.trigger.properties?.endingIds?.length;
   }, [followUp.trigger.properties?.endingIds?.length, followUp.trigger.type]);
 
+  const duplicateFollowUp = useCallback(() => {
+    const newFollowUp = {
+      ...followUp,
+      id: createId(),
+      name: `${followUp.name} (copy)`,
+    };
+
+    setLocalSurvey((prev) => ({
+      ...prev,
+      followUps: [...prev.followUps, newFollowUp],
+    }));
+  }, [followUp, setLocalSurvey]);
+
   return (
     <>
       <div className="relative cursor-pointer rounded-lg border border-slate-300 bg-white p-4 hover:bg-slate-50">
@@ -132,7 +146,7 @@ export const FollowUpItem = ({
           </div>
         </div>
 
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"
@@ -143,6 +157,19 @@ export const FollowUpItem = ({
               }}
               aria-label={t("common.delete")}>
               <TrashIcon className="h-4 w-4 text-slate-500" />
+            </Button>
+          </TooltipRenderer>
+
+          <TooltipRenderer tooltipContent={t("common.duplicate")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async (e) => {
+                e.stopPropagation();
+                duplicateFollowUp();
+              }}
+              aria-label={t("common.duplicate")}>
+              <CopyPlusIcon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
         </div>
