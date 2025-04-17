@@ -477,9 +477,6 @@ importers:
       papaparse:
         specifier: 5.5.2
         version: 5.5.2
-      pnpm:
-        specifier: 10.8.1
-        version: 10.8.1
       postcss:
         specifier: 8.5.3
         version: 8.5.3
@@ -10943,11 +10940,6 @@ packages:
   pngjs@6.0.0:
     resolution: {integrity: sha512-TRzzuFRRmEoSW/p1KVAmiOgPco2Irlah+bGFCeNfJXxxYGwSw7YwAOAcd7X28K/m5bjBWKsC29KyoMfHbypayg==}
     engines: {node: '>=12.13.0'}
-
-  pnpm@10.8.1:
-    resolution: {integrity: sha512-xQCIupmMZ7jKjJnfil4C/Sri4rKaryOP6qnhJCSNP0j5+22yQklJ/5Ac/7teDwzBrWrttgLNKUUHUdEcNQI2dw==}
-    engines: {node: '>=18.12'}
-    hasBin: true
 
   polished@4.3.1:
     resolution: {integrity: sha512-OBatVyC/N7SCW/FaDHrSd+vn0o5cS855TOmYi4OkdWUMSJCET/xip//ch8xGUvtr3i44X9LVyWwQlRMTN3pwSA==}
@@ -26243,8 +26235,6 @@ snapshots:
   pngjs@5.0.0: {}
 
   pngjs@6.0.0: {}
-
-  pnpm@10.8.1: {}
 
   polished@4.3.1:
     dependencies:
