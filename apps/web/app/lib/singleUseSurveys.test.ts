@@ -1,5 +1,5 @@
 import cuid2 from "@paralleldrive/cuid2";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@formbricks/lib/crypto";
 import { generateSurveySingleUseId, validateSurveySingleUseId } from "./singleUseSurveys";
 
@@ -45,21 +45,21 @@ describe("generateSurveySingleUseId", () => {
     vi.resetAllMocks();
   });
 
-  it("returns unencrypted cuid when isEncrypted is false", () => {
+  test("returns unencrypted cuid when isEncrypted is false", () => {
     const result = generateSurveySingleUseId(false);
 
     expect(result).toBe(mockCuid);
     expect(crypto.symmetricEncrypt).not.toHaveBeenCalled();
   });
 
-  it("returns encrypted cuid when isEncrypted is true", () => {
+  test("returns encrypted cuid when isEncrypted is true", () => {
     const result = generateSurveySingleUseId(true);
 
     expect(result).toBe(mockEncryptedCuid);
     expect(crypto.symmetricEncrypt).toHaveBeenCalledWith(mockCuid, "test-encryption-key");
   });
 
-  it("returns undefined when cuid is not valid", () => {
+  test("returns undefined when cuid is not valid", () => {
     vi.mocked(cuid2.isCuid).mockReturnValue(false);
 
     const result = validateSurveySingleUseId(mockEncryptedCuid);
@@ -67,7 +67,7 @@ describe("generateSurveySingleUseId", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns undefined when decryption fails", () => {
+  test("returns undefined when decryption fails", () => {
     vi.mocked(crypto.symmetricDecrypt).mockImplementation(() => {
       throw new Error("Decryption failed");
     });
@@ -77,7 +77,7 @@ describe("generateSurveySingleUseId", () => {
     expect(result).toBeUndefined();
   });
 
-  it("throws error when ENCRYPTION_KEY is not set in generateSurveySingleUseId", async () => {
+  test("throws error when ENCRYPTION_KEY is not set in generateSurveySingleUseId", async () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
     vi.doMock("@formbricks/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
@@ -90,7 +90,7 @@ describe("generateSurveySingleUseId", () => {
     expect(() => generateSurveySingleUseIdNoKey(true)).toThrow("ENCRYPTION_KEY is not set");
   });
 
-  it("throws error when ENCRYPTION_KEY is not set in validateSurveySingleUseId for symmetric encryption", async () => {
+  test("throws error when ENCRYPTION_KEY is not set in validateSurveySingleUseId for symmetric encryption", async () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
     vi.doMock("@formbricks/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
@@ -103,7 +103,7 @@ describe("generateSurveySingleUseId", () => {
     expect(() => validateSurveySingleUseIdNoKey(mockEncryptedCuid)).toThrow("ENCRYPTION_KEY is not set");
   });
 
-  it("throws error when FORMBRICKS_ENCRYPTION_KEY is not set in validateSurveySingleUseId for AES128", async () => {
+  test("throws error when FORMBRICKS_ENCRYPTION_KEY is not set in validateSurveySingleUseId for AES128", async () => {
     // Temporarily mock FORMBRICKS_ENCRYPTION_KEY as undefined
     vi.doMock("@formbricks/lib/constants", () => ({
       ENCRYPTION_KEY: "test-encryption-key",

@@ -1,6 +1,6 @@
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TemplateList } from "@/modules/survey/components/template-list";
-import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
+import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { Button } from "@/modules/ui/components/button";
@@ -38,7 +38,7 @@ export const SurveysPage = async ({
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const project = await getProjectByEnvironmentId(params.environmentId);
+  const project = await getProjectWithTeamIdsByEnvironmentId(params.environmentId);
 
   if (!project) {
     throw new Error(t("common.project_not_found"));

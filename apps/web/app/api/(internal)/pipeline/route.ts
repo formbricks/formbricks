@@ -20,6 +20,7 @@ import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -50,7 +51,7 @@ export const POST = async (request: Request) => {
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", "Organization not found");
   }
 
   // Fetch webhooks

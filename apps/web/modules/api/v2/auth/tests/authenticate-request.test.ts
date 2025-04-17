@@ -1,5 +1,5 @@
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { authenticateRequest } from "../authenticate-request";
 
@@ -17,7 +17,7 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 }));
 
 describe("authenticateRequest", () => {
-  it("should return authentication data if apiKey is valid", async () => {
+  test("should return authentication data if apiKey is valid", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -87,7 +87,7 @@ describe("authenticateRequest", () => {
     }
   });
 
-  it("should return unauthorized error if apiKey is not found", async () => {
+  test("should return unauthorized error if apiKey is not found", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "invalid-api-key" },
     });
@@ -101,7 +101,7 @@ describe("authenticateRequest", () => {
     }
   });
 
-  it("should return unauthorized error if apiKey is missing", async () => {
+  test("should return unauthorized error if apiKey is missing", async () => {
     const request = new Request("http://localhost");
 
     const result = await authenticateRequest(request);

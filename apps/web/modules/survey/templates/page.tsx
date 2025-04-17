@@ -1,5 +1,5 @@
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
+import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { getTranslate } from "@/tolgee/server";
 import { redirect } from "next/navigation";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
@@ -25,7 +25,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
 
   const { session, environment, isReadOnly } = await getEnvironmentAuth(environmentId);
 
-  const project = await getProjectByEnvironmentId(environmentId);
+  const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
 
   if (!project) {
     throw new Error(t("common.project_not_found"));

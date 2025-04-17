@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TFnType } from "@tolgee/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { EmailTemplate } from "./email-template";
 
 const mockTranslate: TFnType = (key) => key;
@@ -25,7 +25,7 @@ describe("EmailTemplate", () => {
     cleanup();
   });
 
-  it("renders the default logo if no custom logo is provided", async () => {
+  test("renders the default logo if no custom logo is provided", async () => {
     const emailTemplateElement = await EmailTemplate({
       children: <div>Test Content</div>,
       logoUrl: undefined,
@@ -39,7 +39,7 @@ describe("EmailTemplate", () => {
     expect(logoImage).toHaveAttribute("src", "https://example.com/mock-logo.png");
   });
 
-  it("renders the custom logo if provided", async () => {
+  test("renders the custom logo if provided", async () => {
     const emailTemplateElement = await EmailTemplate({
       ...defaultProps,
     });
@@ -51,7 +51,7 @@ describe("EmailTemplate", () => {
     expect(logoImage).toHaveAttribute("src", "https://example.com/custom-logo.png");
   });
 
-  it("renders the children content", async () => {
+  test("renders the children content", async () => {
     const emailTemplateElement = await EmailTemplate({
       ...defaultProps,
     });
@@ -61,7 +61,7 @@ describe("EmailTemplate", () => {
     expect(screen.getByTestId("child-text")).toBeInTheDocument();
   });
 
-  it("renders the imprint and privacy policy links if provided", async () => {
+  test("renders the imprint and privacy policy links if provided", async () => {
     const emailTemplateElement = await EmailTemplate({
       ...defaultProps,
     });
@@ -72,7 +72,7 @@ describe("EmailTemplate", () => {
     expect(screen.getByText("emails.privacy_policy")).toBeInTheDocument();
   });
 
-  it("renders the imprint address if provided", async () => {
+  test("renders the imprint address if provided", async () => {
     const emailTemplateElement = await EmailTemplate({
       ...defaultProps,
     });

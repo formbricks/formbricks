@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -71,7 +71,7 @@ describe("ProjectOnboardingLayout", () => {
     cleanup();
   });
 
-  it("redirects to /auth/login if there is no session", async () => {
+  test("redirects to /auth/login if there is no session", async () => {
     // Mock no session
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
@@ -85,7 +85,7 @@ describe("ProjectOnboardingLayout", () => {
     expect(layoutElement).toBeUndefined();
   });
 
-  it("throws an error if user does not exist", async () => {
+  test("throws an error if user does not exist", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({
       user: { id: "user-123" },
     });
@@ -99,7 +99,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.user_not_found");
   });
 
-  it("throws AuthorizationError if user cannot access organization", async () => {
+  test("throws AuthorizationError if user cannot access organization", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
     vi.mocked(canUserAccessOrganization).mockResolvedValueOnce(false);
@@ -112,7 +112,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.not_authorized");
   });
 
-  it("throws an error if organization does not exist", async () => {
+  test("throws an error if organization does not exist", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
     vi.mocked(canUserAccessOrganization).mockResolvedValueOnce(true);
@@ -126,7 +126,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.organization_not_found");
   });
 
-  it("renders child content plus PosthogIdentify & ToasterClient if everything is valid", async () => {
+  test("renders child content plus PosthogIdentify & ToasterClient if everything is valid", async () => {
     // Provide valid data
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123", name: "Test User" } as TUser);
