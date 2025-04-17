@@ -14,14 +14,14 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 
 const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
-  it("it should throw a ValidationError if the inputs are invalid", async () => {
+  test("it should throw a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
   });
 };
 
 describe("Tests for createLanguage service", () => {
   describe("Happy Path", () => {
-    it("Creates a new Language", async () => {
+    test("Creates a new Language", async () => {
       prismaMock.language.create.mockResolvedValue(mockLanguage);
 
       const language = await createLanguage(mockProjectId, mockEnvironmentId, mockLanguageInput);
@@ -32,7 +32,7 @@ describe("Tests for createLanguage service", () => {
   describe("Sad Path", () => {
     testInputValidation(createLanguage, "123");
 
-    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
@@ -46,7 +46,7 @@ describe("Tests for createLanguage service", () => {
       );
     });
 
-    it("Throws a generic Error for other exceptions", async () => {
+    test("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.language.create.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -59,7 +59,7 @@ describe("Tests for createLanguage service", () => {
 
 describe("Tests for updateLanguage Service", () => {
   describe("Happy Path", () => {
-    it("Updates a language", async () => {
+    test("Updates a language", async () => {
       prismaMock.language.update.mockResolvedValue(mockUpdatedLanguage);
 
       const language = await updateLanguage(mockEnvironmentId, mockLanguageId, mockLanguageUpdate);
@@ -70,7 +70,7 @@ describe("Tests for updateLanguage Service", () => {
   describe("Sad Path", () => {
     testInputValidation(updateLanguage, "123", "123");
 
-    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
@@ -84,7 +84,7 @@ describe("Tests for updateLanguage Service", () => {
       );
     });
 
-    it("Throws a generic Error for other unexpected issues", async () => {
+    test("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.language.update.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -97,7 +97,7 @@ describe("Tests for updateLanguage Service", () => {
 
 describe("Tests for deleteLanguage", () => {
   describe("Happy Path", () => {
-    it("Deletes a Language", async () => {
+    test("Deletes a Language", async () => {
       prismaMock.language.delete.mockResolvedValue(mockLanguage);
 
       const language = await deleteLanguage(mockLanguageId, mockProjectId);
@@ -107,7 +107,7 @@ describe("Tests for deleteLanguage", () => {
   describe("Sad Path", () => {
     testInputValidation(deleteLanguage, "123");
 
-    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
@@ -119,7 +119,7 @@ describe("Tests for deleteLanguage", () => {
       await expect(deleteLanguage(mockLanguageId, mockProjectId)).rejects.toThrow(DatabaseError);
     });
 
-    it("Throws a generic Error for other exceptions", async () => {
+    test("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.language.delete.mockRejectedValue(new Error(mockErrorMessage));
 

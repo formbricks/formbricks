@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { PosthogIdentify } from "./PosthogIdentify";
@@ -18,7 +18,7 @@ describe("PosthogIdentify", () => {
     cleanup();
   });
 
-  it("identifies the user and sets groups when isPosthogEnabled is true", () => {
+  test("identifies the user and sets groups when isPosthogEnabled is true", () => {
     const mockIdentify = vi.fn();
     const mockGroup = vi.fn();
 
@@ -72,7 +72,7 @@ describe("PosthogIdentify", () => {
     });
   });
 
-  it("does nothing if isPosthogEnabled is false", () => {
+  test("does nothing if isPosthogEnabled is false", () => {
     const mockIdentify = vi.fn();
     const mockGroup = vi.fn();
 
@@ -95,7 +95,7 @@ describe("PosthogIdentify", () => {
     expect(mockGroup).not.toHaveBeenCalled();
   });
 
-  it("does nothing if session user is missing", () => {
+  test("does nothing if session user is missing", () => {
     const mockIdentify = vi.fn();
     const mockGroup = vi.fn();
 
@@ -120,7 +120,7 @@ describe("PosthogIdentify", () => {
     expect(mockGroup).not.toHaveBeenCalled();
   });
 
-  it("identifies user but does not group if environmentId/organizationId not provided", () => {
+  test("identifies user but does not group if environmentId/organizationId not provided", () => {
     const mockIdentify = vi.fn();
     const mockGroup = vi.fn();
 
