@@ -922,7 +922,7 @@ describe("Survey Logic", () => {
         conditions: [
           {
             id: "condition1",
-            operator: "equals",
+            operator: "is",
             leftOperand: {
               type: "question",
               value: "q8",
@@ -1111,7 +1111,7 @@ describe("Survey Logic", () => {
               value: "q8",
               meta: { row: "99" }, // Invalid row index
             },
-            rightOperand: { type: "static", value: "Column 1" },
+            rightOperand: { type: "static", value: "1" },
           },
         ],
       };
