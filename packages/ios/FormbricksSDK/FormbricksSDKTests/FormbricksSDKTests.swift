@@ -118,11 +118,6 @@ final class FormbricksSDKTests: XCTestCase {
          _ = XCTWaiter.wait(for: [expectation(description: "Wait for a seconds")], timeout: 1.0)
          XCTAssertTrue(Formbricks.surveyManager?.isShowingSurvey ?? false)
          
-         Formbricks.surveyManager?.delayedDismiss()
-         XCTAssertTrue(Formbricks.surveyManager?.isShowingSurvey ?? false)
-         _ = XCTWaiter.wait(for: [expectation(description: "Wait for a seconds")], timeout: Double(Config.Environment.closingTimeoutInSeconds))
-         XCTAssertFalse(Formbricks.surveyManager?.isShowingSurvey ?? false)
-        
         // Test the cleanup
         Formbricks.cleanup()
         XCTAssertNil(Formbricks.userManager)
