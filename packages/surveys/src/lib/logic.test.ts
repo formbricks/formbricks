@@ -1054,4 +1054,371 @@ describe("Survey Logic", () => {
       );
     });
   });
+
+  describe("Edge Cases and Uncovered Lines", () => {
+    const mockData: TResponseData = {
+      q1: "test answer",
+      q2: "42",
+      q3: "opt1",
+      q4: ["Option 1", "Option 2"],
+      q5: "2023-01-01",
+      q6: "file-url.pdf",
+      q7: ["pic1", "pic2"],
+      q8: { "Row 1": "Column 1", "Row 2": "Column 2" },
+      fieldId1: "hidden value",
+      emptyField: "",
+      dateField: "2023-05-01",
+    };
+
+    const mockVariablesData: TResponseVariables = {
+      var1: "string value",
+      var2: 50,
+      var3: "",
+      numVar: 123,
+      dateVar: "2023-06-01",
+    };
+
+    test("evaluates matrix question with invalid row id", () => {
+      const matrixCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: {
+              type: "question",
+              value: "q8",
+              meta: { row: "invalid-row" },
+            },
+            rightOperand: { type: "static", value: "0" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, matrixCondition, "default")).toBe(false);
+    });
+
+    test("evaluates invalid row index for matrix question", () => {
+      const matrixCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: {
+              type: "question",
+              value: "q8",
+              meta: { row: "99" }, // Invalid row index
+            },
+            rightOperand: { type: "static", value: "Column 1" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, matrixCondition, "default")).toBe(false);
+    });
+
+    test("evaluates matrix question with empty row value", () => {
+      const emptyMatrixData: TResponseData = {
+        q8: { "Row 1": "" },
+      };
+
+      const matrixCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "isEmpty",
+            leftOperand: {
+              type: "question",
+              value: "q8",
+              meta: { row: "0" },
+            },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, emptyMatrixData, mockVariablesData, matrixCondition, "default")).toBe(
+        true
+      );
+    });
+
+    test("evaluates doesNotEqual with picture selection", () => {
+      const condition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "doesNotEqual",
+            leftOperand: { type: "question", value: "q7" },
+            rightOperand: { type: "static", value: "option2" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(true);
+    });
+
+    test("evaluates date conditions between questions", () => {
+      // Tests date comparisons between two questions
+      const dateData: TResponseData = {
+        dateQ1: "2023-01-01",
+        dateQ2: "2023-02-01",
+      };
+
+      // Test for equals operator
+      const equalsDateCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "question", value: "dateQ1" },
+            rightOperand: { type: "question", value: "dateQ2" },
+          },
+        ],
+      };
+
+      // Mock survey with date questions
+      const dateSurvey: TJsEnvironmentStateSurvey = {
+        ...mockSurvey,
+        questions: [
+          ...mockSurvey.questions,
+          {
+            id: "dateQ1",
+            type: TSurveyQuestionTypeEnum.Date,
+            headline: { default: "Date Question 1" },
+            required: true,
+            format: "d-M-y",
+          },
+          {
+            id: "dateQ2",
+            type: TSurveyQuestionTypeEnum.Date,
+            headline: { default: "Date Question 2" },
+            required: true,
+            format: "d-M-y",
+          },
+        ],
+      };
+
+      expect(evaluateLogic(dateSurvey, dateData, mockVariablesData, equalsDateCondition, "default")).toBe(
+        false
+      );
+
+      // Test for doesNotEqual operator
+      const doesNotEqualDateCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "doesNotEqual",
+            leftOperand: { type: "question", value: "dateQ1" },
+            rightOperand: { type: "question", value: "dateQ2" },
+          },
+        ],
+      };
+      expect(
+        evaluateLogic(dateSurvey, dateData, mockVariablesData, doesNotEqualDateCondition, "default")
+      ).toBe(true);
+    });
+
+    test("evaluates multiple choice conditions for equals/doesNotEqual", () => {
+      // Tests for array equals/doesNotEqual operations
+      const multiChoiceData: TResponseData = {
+        singleValue: "option1",
+        multiValue: ["option1", "option2"],
+      };
+
+      const multiSurvey: TJsEnvironmentStateSurvey = {
+        ...mockSurvey,
+        questions: [
+          ...mockSurvey.questions,
+          {
+            id: "multiQ",
+            type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+            headline: { default: "Multiple Choice" },
+            required: true,
+            choices: [
+              { id: "opt1", label: { default: "Option 1" } },
+              { id: "opt2", label: { default: "Option 2" } },
+            ],
+          },
+        ],
+      };
+
+      // Test equals with array length 1 and string
+      const equalsArrayCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "question", value: "multiValue" },
+            rightOperand: { type: "static", value: "option1" },
+          },
+        ],
+      };
+      expect(
+        evaluateLogic(multiSurvey, multiChoiceData, mockVariablesData, equalsArrayCondition, "default")
+      ).toBe(false);
+
+      // Test with right operand as multiple choice
+      const equalsMultiCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "question", value: "q1" },
+            rightOperand: { type: "question", value: "multiQ" },
+          },
+        ],
+      };
+      const multiChoiceTestData = {
+        multiQ: ["option1"],
+      };
+      expect(
+        evaluateLogic(multiSurvey, multiChoiceTestData, mockVariablesData, equalsMultiCondition, "default")
+      ).toBe(false);
+    });
+
+    test("evaluates isEmpty and isNotEmpty operators", () => {
+      // Test isEmpty
+      const isEmptyCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "isEmpty",
+            leftOperand: { type: "question", value: "q1" },
+          },
+        ],
+      };
+      expect(
+        evaluateLogic(mockSurvey, { ...mockData, q1: "" }, mockVariablesData, isEmptyCondition, "default")
+      ).toBe(true);
+
+      // Test isNotEmpty
+      const isNotEmptyCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition2",
+            operator: "isNotEmpty",
+            leftOperand: { type: "question", value: "q1" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, isNotEmptyCondition, "default")).toBe(
+        true
+      );
+    });
+
+    test("evaluates isAnyOf operator", () => {
+      const isAnyOfCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "isAnyOf",
+            leftOperand: { type: "question", value: "q1" },
+            rightOperand: { type: "static", value: ["wrong answer", "test answer", "another answer"] },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, isAnyOfCondition, "default")).toBe(true);
+
+      // Test isAnyOf with non-array right value
+      const invalidIsAnyOfCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition2",
+            operator: "isAnyOf",
+            leftOperand: { type: "question", value: "q1" },
+            rightOperand: { type: "static", value: "test answer" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, invalidIsAnyOfCondition, "default")).toBe(
+        false
+      );
+    });
+
+    test("getLeftOperandValue with edge cases", () => {
+      const specialSurvey: TJsEnvironmentStateSurvey = {
+        ...mockSurvey,
+        questions: [
+          ...mockSurvey.questions,
+          {
+            id: "multiChoiceWithOther",
+            type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Multiple Choice With Other" },
+            required: true,
+            choices: [
+              { id: "opt1", label: { default: "Option 1" } },
+              { id: "opt2", label: { default: "Option 2" } },
+              { id: "other", label: { default: "Other" } },
+            ],
+          },
+        ],
+      };
+
+      const otherOptionCondition: TConditionGroup = {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "question", value: "multiChoiceWithOther" },
+            rightOperand: { type: "static", value: "Custom Option" },
+          },
+        ],
+      };
+
+      const otherOptionData = {
+        multiChoiceWithOther: "Custom Option",
+      };
+
+      expect(
+        evaluateLogic(specialSurvey, otherOptionData, mockVariablesData, otherOptionCondition, "default")
+      ).toBe(false);
+
+      const multiChoiceArrayCondition: TConditionGroup = {
+        id: "group2",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition2",
+            operator: "equals",
+            leftOperand: { type: "question", value: "multiChoiceWithOther" },
+            rightOperand: { type: "static", value: "opt1" },
+          },
+        ],
+      };
+
+      const multiChoiceArrayData = {
+        multiChoiceWithOther: ["Option 1"],
+      };
+
+      expect(
+        evaluateLogic(
+          specialSurvey,
+          multiChoiceArrayData,
+          mockVariablesData,
+          multiChoiceArrayCondition,
+          "default"
+        )
+      ).toBe(true);
+    });
+  });
 });
