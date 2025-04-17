@@ -855,3 +855,128 @@ describe("FollowUpItem - Deletion Tests", () => {
     expect(setLocalSurvey).not.toHaveBeenCalled();
   });
 });
+
+describe("FollowUpItem - Duplicate Tests", () => {
+  // Clean up after each test
+  afterEach(() => {
+    cleanup();
+  });
+
+  // Common test data
+  const userEmail = "user@example.com";
+  const teamMemberEmails = [
+    { email: "team1@example.com", name: "team 1" },
+    {
+      email: "team2@example.com",
+      name: "team 2",
+    },
+  ];
+
+  const mockSurvey = {
+    id: mockSurveyId,
+    environmentId: mockEnvironmentId,
+    name: "Test Survey",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    status: "draft",
+    questions: [
+      {
+        id: mockQuestion1Id,
+        type: TSurveyQuestionTypeEnum.OpenText,
+        headline: {
+          default: "What would you like to know?",
+        },
+        required: true,
+        charLimit: {},
+        inputType: "email",
+        longAnswer: false,
+        buttonLabel: {
+          default: "Next",
+        },
+        placeholder: {
+          default: "example@email.com",
+        },
+      },
+    ],
+    hiddenFields: {
+      enabled: true,
+      fieldIds: ["hidden1"],
+    },
+    endings: [],
+    followUps: [],
+  } as unknown as TSurvey;
+
+  const createMockFollowUp = (): TSurveyFollowUp => ({
+    id: mockFollowUp1Id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    surveyId: mockSurveyId,
+    name: "Test Follow-up",
+    trigger: {
+      type: "response",
+      properties: null,
+    },
+    action: {
+      type: "send-email",
+      properties: {
+        to: mockQuestion1Id,
+        from: "noreply@example.com",
+        replyTo: [userEmail],
+        subject: "Follow-up Subject",
+        body: "Follow-up Body",
+        attachResponseData: false,
+      },
+    },
+  });
+
+  test("duplicates the follow-up when duplicate button is clicked", async () => {
+    const followUp = createMockFollowUp();
+    const setLocalSurvey = vi.fn();
+    const localSurvey = {
+      ...mockSurvey,
+      followUps: [followUp],
+    };
+    const newFollowUp = {
+      ...followUp,
+      id: "new-followup-id",
+      name: "Test Follow-up (copy)",
+    };
+
+    setLocalSurvey.mockImplementation((updateFn) => {
+      const updatedSurvey = updateFn(localSurvey);
+      return updatedSurvey;
+    });
+
+    render(
+      <FollowUpItem
+        followUp={followUp}
+        localSurvey={mockSurvey}
+        mailFrom="noreply@example.com"
+        selectedLanguageCode="default"
+        userEmail={userEmail}
+        teamMemberDetails={teamMemberEmails}
+        setLocalSurvey={setLocalSurvey}
+        locale="en-US"
+      />
+    );
+
+    // Click the duplicate button
+    const duplicateButton = screen.getByRole("button", { name: "common.duplicate" });
+    await userEvent.click(duplicateButton);
+    // Check if setLocalSurvey was called with the correct arguments
+    expect(setLocalSurvey).toHaveBeenCalledWith(expect.any(Function));
+    // Get the function that was passed to setLocalSurvey
+    const updateFunction = setLocalSurvey.mock.calls[0][0];
+    // Call the function with a mock previous state
+    const updatedState = updateFunction(localSurvey);
+    // Verify the updated state
+    expect(updatedState.followUps).toEqual([
+      ...localSurvey.followUps,
+      {
+        ...newFollowUp, // New follow-up with updated ID and name
+        id: expect.any(String), // ID should be a new unique ID
+        name: "Test Follow-up (copy)",
+      },
+    ]);
+  });
+});
