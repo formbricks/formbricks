@@ -129,6 +129,7 @@ export function RatingQuestion({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            tooltipContent={getLocalizedValue(question.tooltip, languageCode)}
           />
           <Subheader
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}

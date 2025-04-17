@@ -500,6 +500,7 @@ export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
   type: z.string(),
   headline: ZI18nString,
+  tooltip: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
@@ -928,6 +929,12 @@ export const ZSurvey = z
 
       if (question.subheader && question.subheader.default.trim() !== "") {
         multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+      if (question.tooltip && question.tooltip.default.trim() !== "") {
+        multiLangIssue = validateQuestionLabels("tooltip", question.tooltip, languages, questionIndex, true);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
         }
