@@ -146,7 +146,7 @@ RUN npm install -g tsx typescript prisma pino-pretty
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 ENV NODE_ENV="production"
-# USER nextjs
+USER nextjs
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/
