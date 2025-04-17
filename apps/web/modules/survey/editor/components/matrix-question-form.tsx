@@ -1,6 +1,7 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
@@ -9,6 +10,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
+import toast from "react-hot-toast";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -53,6 +55,30 @@ export const MatrixQuestionForm = ({
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
     const labels = type === "row" ? question.rows : question.columns;
     if (labels.length <= 2) return; // Prevent deleting below minimum length
+
+    // check if the label is used in logic
+    if (type === "column") {
+      const questionIdx = findOptionUsedInLogic(localSurvey, question.id, index.toString());
+      if (questionIdx !== -1) {
+        toast.error(
+          t("environments.surveys.edit.column_used_in_logic_error", {
+            questionIndex: questionIdx + 1,
+          })
+        );
+        return;
+      }
+    } else {
+      const questionIdx = findOptionUsedInLogic(localSurvey, question.id, index.toString(), true);
+      if (questionIdx !== -1) {
+        toast.error(
+          t("environments.surveys.edit.row_used_in_logic_error", {
+            questionIndex: questionIdx + 1,
+          })
+        );
+        return;
+      }
+    }
+
     const updatedLabels = labels.filter((_, idx) => idx !== index);
     if (type === "row") {
       updateQuestion(questionIdx, { rows: updatedLabels });

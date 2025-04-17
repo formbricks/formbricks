@@ -298,6 +298,11 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "isCompletelySubmitted",
   "isSet",
   "isNotSet",
+  "is",
+  "isNot",
+  "isEmpty",
+  "isNotEmpty",
+  "isAnyOf",
 ]);
 
 const operatorsWithoutRightOperand = [
@@ -310,6 +315,8 @@ const operatorsWithoutRightOperand = [
   ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
   ZSurveyLogicConditionsOperator.Enum.isSet,
   ZSurveyLogicConditionsOperator.Enum.isNotSet,
+  ZSurveyLogicConditionsOperator.Enum.isEmpty,
+  ZSurveyLogicConditionsOperator.Enum.isNotEmpty,
 ] as const;
 
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
@@ -325,6 +332,7 @@ export const ZActionNumberVariableCalculateOperator = z.enum(
 const ZDynamicQuestion = z.object({
   type: z.literal("question"),
   value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
+  meta: z.record(z.string()).optional(),
 });
 
 const ZDynamicVariable = z.object({
@@ -1461,7 +1469,18 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.Matrix:
-      if (!["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"].includes(operator)) {
+      if (
+        ![
+          "isPartiallySubmitted",
+          "isCompletelySubmitted",
+          "isSkipped",
+          "is",
+          "isNot",
+          "isEmpty",
+          "isNotEmpty",
+          "isAnyOf",
+        ].includes(operator)
+      ) {
         isInvalidOperator = true;
       }
       break;
@@ -1595,6 +1614,8 @@ const validateConditions = (
           "isBooked",
           "isPartiallySubmitted",
           "isCompletelySubmitted",
+          "isEmpty",
+          "isNotEmpty",
         ].includes(operator)
       ) {
         if (rightOperand !== undefined) {
@@ -1904,6 +1925,51 @@ const validateConditions = (
               message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
+          }
+        }
+      }
+      // todo: @gupta-piyush19 please add the checks for the matrix question with row ID for zod super refine
+      else if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        const row = leftOperand.meta?.row;
+        if (row === undefined) {
+          if (rightOperand?.value !== undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          if (rightOperand === undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is required in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (rightOperand) {
+            if (rightOperand.type !== "static") {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Right operand should be a static value in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+            const rowIndex = Number(row);
+            if (rowIndex < 0 || rowIndex >= question.rows.length) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid row index in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
           }
         }
       }

@@ -356,6 +356,31 @@ export const getLogicRules = (t: TFnType) => {
           },
         ],
       },
+      [`${TSurveyQuestionTypeEnum.Matrix}.row`]: {
+        options: [
+          {
+            label: t("environments.surveys.edit.is"),
+            value: ZSurveyLogicConditionsOperator.Enum.is,
+          },
+          {
+            label: t("environments.surveys.edit.is_not"),
+            value: ZSurveyLogicConditionsOperator.Enum.isNot,
+          },
+          {
+            label: t("environments.surveys.edit.is_empty"),
+            value: ZSurveyLogicConditionsOperator.Enum.isEmpty,
+          },
+
+          {
+            label: t("environments.surveys.edit.is_not_empty"),
+            value: ZSurveyLogicConditionsOperator.Enum.isNotEmpty,
+          },
+          {
+            label: t("environments.surveys.edit.is_any_of"),
+            value: ZSurveyLogicConditionsOperator.Enum.isAnyOf,
+          },
+        ],
+      },
       [TSurveyQuestionTypeEnum.Address]: {
         options: [
           {

@@ -460,6 +460,18 @@ const evaluateSingleCondition = (
         return leftValue !== undefined && leftValue !== null && leftValue !== "";
       case "isNotSet":
         return leftValue === undefined || leftValue === null || leftValue === "";
+      case "is":
+        return leftValue === rightValue;
+      case "isNot":
+        return leftValue !== rightValue;
+      case "isEmpty":
+        return leftValue === "";
+      case "isNotEmpty":
+        return leftValue !== "" && leftValue !== null && leftValue !== undefined;
+      case "isAnyOf":
+        if (Array.isArray(rightValue) && typeof leftValue === "string") {
+          return rightValue.includes(leftValue);
+        }
       default:
         return false;
     }
@@ -530,6 +542,27 @@ const getLeftOperandValue = (
           if (choices) {
             return Array.from(new Set(choices));
           }
+        }
+      }
+
+      if (
+        currentQuestion.type === "matrix" &&
+        typeof responseValue === "object" &&
+        !Array.isArray(responseValue)
+      ) {
+        if (leftOperand?.meta?.row !== undefined) {
+          const row = getLocalizedValue(currentQuestion.rows[Number(leftOperand.meta.row)], selectedLanguage);
+
+          const rowValue = responseValue[row];
+          if (rowValue === "") return "";
+
+          if (rowValue) {
+            const columnIndex = currentQuestion.columns.findIndex((column) => {
+              return getLocalizedValue(column, selectedLanguage) === rowValue;
+            });
+            return columnIndex.toString();
+          }
+          return undefined;
         }
       }
 
