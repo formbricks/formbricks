@@ -972,6 +972,7 @@
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Enregistrez vos filtres en tant que segment pour les utiliser dans d'autres enquêtes.",
       "segment_created_successfully": "Segment créé avec succès !",
       "segment_deleted_successfully": "Segment supprimé avec succès !",
+      "segment_id": "ID de segment",
       "segment_saved_successfully": "Segment enregistré avec succès",
       "segment_updated_successfully": "Segment mis à jour avec succès !",
       "segments_help_you_target_users_with_same_characteristics_easily": "Les segments vous aident à cibler facilement les utilisateurs ayant les mêmes caractéristiques.",
