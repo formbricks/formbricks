@@ -87,7 +87,13 @@ export async function FollowUpEmail({
           </Container>
 
           <Section className="mt-4 text-center text-sm">
-            <Text className="m-0 font-normal text-slate-500">{t("emails.email_template_text_1")}</Text>
+            <Link
+              className="m-0 font-normal text-slate-500"
+              href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
+              target="_blank"
+              rel="noopener noreferrer">
+              {t("emails.email_template_text_1")}
+            </Link>
             {IMPRINT_ADDRESS && (
               <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
             )}
