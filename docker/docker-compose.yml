@@ -79,8 +79,14 @@ x-environment: &environment
     # SURVEY_URL:
 
     # Configure Formbricks usage within Formbricks.
-    #FORMBRICKS_API_HOST:
-    #FORMBRICKS_ENVIRONMENT_ID:
+    # FORMBRICKS_API_HOST:
+    # FORMBRICKS_ENVIRONMENT_ID:
+
+    # The SENTRY_DSN is used for error tracking and performance monitoring with Sentry.
+    # SENTRY_DSN:
+    # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
+    # SENTRY_AUTH_TOKEN:
+
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 

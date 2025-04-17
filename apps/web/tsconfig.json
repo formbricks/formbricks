@@ -12,6 +12,7 @@
         "name": "next"
       }
     ],
+    "skipLibCheck": true,
     "strictNullChecks": true
   },
   "exclude": ["../../.env", "node_modules"],
