@@ -1627,6 +1627,386 @@ paths:
                       - skippedContacts
                 required:
                   - data
+  /contact-attribute-keys:
+    servers: *a6
+    get:
+      operationId: getContactAttributeKeys
+      summary: Get contact attribute keys
+      description: Gets contact attribute keys from the database.
+      tags:
+        - Management API > Contact Attribute Keys
+      parameters:
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: sortBy
+          description: Sort by field
+          schema:
+            type: string
+            enum: *a7
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a8
+            default: desc
+            description: Sort order
+        - in: query
+          name: startDate
+          description: Start date
+          schema:
+            type: string
+            description: Start date
+        - in: query
+          name: endDate
+          description: End date
+          schema:
+            type: string
+            description: End date
+        - in: query
+          name: environmentId
+          description: The environment ID to filter by
+          schema:
+            type: string
+            description: The environment ID to filter by
+      responses:
+        "200":
+          description: Contact attribute keys retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the contact attribute key
+                        createdAt:
+                          type: string
+                          description: The date and time the contact attribute key was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the contact attribute key was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        isUnique:
+                          type: boolean
+                          description: Whether the attribute must have unique values across contacts
+                          example: false
+                        key:
+                          type: string
+                          description: The attribute identifier used in the system
+                          example: email
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: Display name for the attribute
+                          example: Email Address
+                        description:
+                          type:
+                            - string
+                            - "null"
+                          description: Description of the attribute
+                          example: The user's email address
+                        type:
+                          type: string
+                          enum:
+                            - default
+                            - custom
+                          description: Whether this is a default or custom attribute
+                          example: custom
+                        environmentId:
+                          type: string
+                          description: The ID of the environment this attribute belongs to
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+    post:
+      operationId: createContactAttributeKey
+      summary: Create a contact attribute key
+      description: Creates a contact attribute key in the database.
+      tags:
+        - Management API > Contact Attribute Keys
+      requestBody:
+        required: true
+        description: The contact attribute key to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/contactAttributeKeyInput"
+      responses:
+        "201":
+          description: Contact attribute key created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
+  /contact-attribute-keys/{id}:
+    servers: *a6
+    get:
+      operationId: getContactAttributeKey
+      summary: Get a contact attribute key
+      description: Gets a contact attribute key from the database.
+      tags:
+        - Management API > Contact Attribute Keys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the contact attribute key
+          schema:
+            $ref: "#/components/schemas/contactAttributeKeyId"
+          required: true
+      responses:
+        "200":
+          description: Contact attribute key retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
+    put:
+      operationId: updateContactAttributeKey
+      summary: Update a contact attribute key
+      description: Updates a contact attribute key in the database.
+      tags:
+        - Management API > Contact Attribute Keys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the contact attribute key
+          schema:
+            $ref: "#/components/schemas/contactAttributeKeyId"
+          required: true
+      requestBody:
+        required: true
+        description: The contact attribute key to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/contactAttributeKeyUpdate"
+      responses:
+        "200":
+          description: Contact attribute key updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
+    delete:
+      operationId: deleteContactAttributeKey
+      summary: Delete a contact attribute key
+      description: Deletes a contact attribute key from the database.
+      tags:
+        - Management API > Contact Attribute Keys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the contact attribute key
+          schema:
+            $ref: "#/components/schemas/contactAttributeKeyId"
+          required: true
+      responses:
+        "200":
+          description: Contact attribute key deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
   /surveys/{surveyId}/contact-links/contacts/{contactId}/:
     servers: *a6
     get:
@@ -4218,6 +4598,61 @@ components:
     responseId:
       type: string
       description: The ID of the response
+    contactAttributeKeyInput:
+      type: object
+      properties:
+        key:
+          type: string
+          description: The attribute identifier used in the system
+          example: email
+        name:
+          type:
+            - string
+            - "null"
+          description: Display name for the attribute
+          example: Email Address
+        description:
+          type:
+            - string
+            - "null"
+          description: Description of the attribute
+          example: The user's email address
+        environmentId:
+          type: string
+          description: The ID of the environment this attribute belongs to
+      required:
+        - key
+        - name
+        - description
+        - environmentId
+      description: Input data for creating or updating a contact attribute
+    contactAttributeKeyId:
+      type: string
+      description: The ID of the contact attribute key
+    contactAttributeKeyUpdate:
+      type: object
+      properties:
+        name:
+          type:
+            - string
+            - "null"
+          description: Display name for the attribute
+          example: Email Address
+        description:
+          type:
+            - string
+            - "null"
+          description: Description of the attribute
+          example: The user's email address
+        key:
+          type: string
+          description: The attribute identifier used in the system
+          example: email
+      required:
+        - name
+        - description
+        - key
+      description: A contact attribute key to update.
     webhookId:
       type: string
       description: The ID of the webhook

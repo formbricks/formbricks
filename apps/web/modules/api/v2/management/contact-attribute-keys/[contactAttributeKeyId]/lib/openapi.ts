@@ -1,4 +1,8 @@
-import { ZContactAttributeKeyInput } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import {
+  ZContactAttributeKeyIdSchema,
+  ZContactAttributeKeyUpdateSchema,
+} from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
@@ -9,7 +13,7 @@ export const getContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
   description: "Gets a contact attribute key from the database.",
   requestParams: {
     path: z.object({
-      contactAttributeKeyId: z.string().cuid2(),
+      id: ZContactAttributeKeyIdSchema,
     }),
   },
   tags: ["Management API > Contact Attribute Keys"],
@@ -18,29 +22,7 @@ export const getContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
       description: "Contact attribute key retrieved successfully.",
       content: {
         "application/json": {
-          schema: ZContactAttributeKey,
-        },
-      },
-    },
-  },
-};
-
-export const deleteContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
-  operationId: "deleteContactAttributeKey",
-  summary: "Delete a contact attribute key",
-  description: "Deletes a contact attribute key from the database.",
-  tags: ["Management API > Contact Attribute Keys"],
-  requestParams: {
-    path: z.object({
-      contactAttributeId: z.string().cuid2(),
-    }),
-  },
-  responses: {
-    "200": {
-      description: "Contact attribute key deleted successfully.",
-      content: {
-        "application/json": {
-          schema: ZContactAttributeKey,
+          schema: makePartialSchema(ZContactAttributeKey),
         },
       },
     },
@@ -54,7 +36,7 @@ export const updateContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Contact Attribute Keys"],
   requestParams: {
     path: z.object({
-      contactAttributeKeyId: z.string().cuid2(),
+      id: ZContactAttributeKeyIdSchema,
     }),
   },
   requestBody: {
@@ -62,7 +44,7 @@ export const updateContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
     description: "The contact attribute key to update",
     content: {
       "application/json": {
-        schema: ZContactAttributeKeyInput,
+        schema: ZContactAttributeKeyUpdateSchema,
       },
     },
   },
@@ -71,7 +53,29 @@ export const updateContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
       description: "Contact attribute key updated successfully.",
       content: {
         "application/json": {
-          schema: ZContactAttributeKey,
+          schema: makePartialSchema(ZContactAttributeKey),
+        },
+      },
+    },
+  },
+};
+
+export const deleteContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
+  operationId: "deleteContactAttributeKey",
+  summary: "Delete a contact attribute key",
+  description: "Deletes a contact attribute key from the database.",
+  tags: ["Management API > Contact Attribute Keys"],
+  requestParams: {
+    path: z.object({
+      id: ZContactAttributeKeyIdSchema,
+    }),
+  },
+  responses: {
+    "200": {
+      description: "Contact attribute key deleted successfully.",
+      content: {
+        "application/json": {
+          schema: makePartialSchema(ZContactAttributeKey),
         },
       },
     },

@@ -72,6 +72,6 @@ export const POST = async (request: NextRequest) =>
         return handleApiError(request, createWebhookResult.error);
       }
 
-      return responses.successResponse(createWebhookResult);
+      return responses.createdResponse(createWebhookResult);
     },
   });

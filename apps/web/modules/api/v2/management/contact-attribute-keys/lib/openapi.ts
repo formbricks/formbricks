@@ -8,9 +8,9 @@ import {
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
-import { z } from "zod";
+import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 
 export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactAttributeKeys",
@@ -18,14 +18,14 @@ export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
   description: "Gets contact attribute keys from the database.",
   tags: ["Management API > Contact Attribute Keys"],
   requestParams: {
-    query: ZGetContactAttributeKeysFilter,
+    query: ZGetContactAttributeKeysFilter.sourceType(),
   },
   responses: {
     "200": {
       description: "Contact attribute keys retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(ZContactAttributeKey),
+          schema: responseWithMetaSchema(makePartialSchema(ZContactAttributeKey)),
         },
       },
     },
@@ -49,6 +49,11 @@ export const createContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
   responses: {
     "201": {
       description: "Contact attribute key created successfully.",
+      content: {
+        "application/json": {
+          schema: makePartialSchema(ZContactAttributeKey),
+        },
+      },
     },
   },
 };

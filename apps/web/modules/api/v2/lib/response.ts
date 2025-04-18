@@ -260,6 +260,34 @@ const successResponse = ({
   );
 };
 
+export const createdResponse = ({
+  data,
+  meta,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  data: Object;
+  meta?: Record<string, unknown>;
+  cors?: boolean;
+  cache?: string;
+}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      data,
+      meta,
+    } as ApiSuccessResponse,
+    {
+      status: 201,
+      headers,
+    }
+  );
+};
+
 export const multiStatusResponse = ({
   data,
   meta,
@@ -298,5 +326,6 @@ export const responses = {
   tooManyRequestsResponse,
   internalServerErrorResponse,
   successResponse,
+  createdResponse,
   multiStatusResponse,
 };
