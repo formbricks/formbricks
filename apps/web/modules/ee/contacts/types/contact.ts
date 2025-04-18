@@ -126,7 +126,7 @@ export const ZContactBulkUploadRequest = z.object({
   environmentId: z.string().cuid2(),
   contacts: z
     .array(ZContactBulkUploadContact)
-    .max(1000, { message: "Maximum 1000 contacts allowed at a time." })
+    .max(250, { message: "Maximum 250 contacts allowed at a time." })
     .superRefine((contacts, ctx) => {
       // Track all data in a single pass
       const seenEmails = new Set<string>();
