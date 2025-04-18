@@ -65,6 +65,7 @@ export default defineConfig({
         "modules/survey/follow-ups/components/follow-up-item.tsx",
         "modules/ee/contacts/segments/lib/**/*.ts",
         "modules/ee/contacts/segments/components/segment-settings.tsx",
+        "modules/survey/editor/lib/utils.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
         "modules/account/**/*.tsx",
