@@ -20,7 +20,7 @@ struct SetupView: View {
                         
                         // Simulate async setup delay
                         DispatchQueue.global().async {
-                            Formbricks.setup(with: config, force:true)
+                            Formbricks.setup(with: config)
                             
                             DispatchQueue.main.async {
                                 isSetup = true
