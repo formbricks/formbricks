@@ -41,14 +41,9 @@ class FormbricksViewModel : ViewModel() {
                 var json = `{{WEBVIEW_DATA}}`
 
                 function onClose() {
-                    console.log("onClose")
                     FormbricksJavascript.message(JSON.stringify({ event: "onClose" }));
                 };
-
-                function onFinished() {
-                    FormbricksJavascript.message(JSON.stringify({ event: "onFinished" }));
-                };
-
+                
                 function onDisplayCreated() {
                     FormbricksJavascript.message(JSON.stringify({ event: "onDisplayCreated" }));
                 };
@@ -61,7 +56,6 @@ class FormbricksViewModel : ViewModel() {
                     const options = JSON.parse(json);
                     const surveyProps = {
                         ...options,
-                        onFinished,
                         onDisplayCreated,
                         onResponseCreated,
                         onClose,
@@ -128,10 +122,11 @@ class FormbricksViewModel : ViewModel() {
         val jsonObject = JsonObject()
         environmentDataHolder.getSurveyJson(surveyId).let { jsonObject.add("survey", it) }
         jsonObject.addProperty("isBrandingEnabled", true)
-        jsonObject.addProperty("apiHost", Formbricks.appUrl)
+        jsonObject.addProperty("appUrl", Formbricks.appUrl)
         jsonObject.addProperty("languageCode", Formbricks.language)
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
         jsonObject.addProperty("contactId", UserManager.contactId)
+        jsonObject.addProperty("isWebEnvironment", false)
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false

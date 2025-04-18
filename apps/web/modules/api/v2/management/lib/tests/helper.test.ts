@@ -1,7 +1,7 @@
 import { fetchEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/services";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { createId } from "@paralleldrive/cuid2";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { getEnvironmentId, getEnvironmentIdFromSurveyIds } from "../helper";
 import { fetchEnvironmentId } from "../services";
@@ -12,7 +12,7 @@ vi.mock("../services", () => ({
 }));
 
 describe("Tests for getEnvironmentId", () => {
-  it("should return environmentId for surveyId", async () => {
+  test("should return environmentId for surveyId", async () => {
     vi.mocked(fetchEnvironmentId).mockResolvedValue(ok({ environmentId: "env-id" }));
 
     const result = await getEnvironmentId("survey-id", false);
@@ -22,7 +22,7 @@ describe("Tests for getEnvironmentId", () => {
     }
   });
 
-  it("should return environmentId for responseId", async () => {
+  test("should return environmentId for responseId", async () => {
     vi.mocked(fetchEnvironmentId).mockResolvedValue(ok({ environmentId: "env-id" }));
 
     const result = await getEnvironmentId("response-id", true);
@@ -32,7 +32,7 @@ describe("Tests for getEnvironmentId", () => {
     }
   });
 
-  it("should return error if getSurveyAndEnvironmentId fails", async () => {
+  test("should return error if getSurveyAndEnvironmentId fails", async () => {
     vi.mocked(fetchEnvironmentId).mockResolvedValue(
       err({ type: "not_found" } as unknown as ApiErrorResponseV2)
     );
@@ -49,7 +49,7 @@ describe("getEnvironmentIdFromSurveyIds", () => {
   const envId1 = createId();
   const envId2 = createId();
 
-  it("returns the common environment id when all survey ids are in the same environment", async () => {
+  test("returns the common environment id when all survey ids are in the same environment", async () => {
     vi.mocked(fetchEnvironmentIdFromSurveyIds).mockResolvedValueOnce({
       ok: true,
       data: [envId1, envId1],
@@ -58,7 +58,7 @@ describe("getEnvironmentIdFromSurveyIds", () => {
     expect(result).toEqual(ok(envId1));
   });
 
-  it("returns error when surveys are not in the same environment", async () => {
+  test("returns error when surveys are not in the same environment", async () => {
     vi.mocked(fetchEnvironmentIdFromSurveyIds).mockResolvedValueOnce({
       ok: true,
       data: [envId1, envId2],
@@ -73,7 +73,7 @@ describe("getEnvironmentIdFromSurveyIds", () => {
     }
   });
 
-  it("returns error when API call fails", async () => {
+  test("returns error when API call fails", async () => {
     const apiError = {
       type: "server_error",
       details: [{ field: "api", issue: "failed" }],

@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUser } from "@formbricks/types/user";
 import AppLayout from "./layout";
@@ -36,6 +36,9 @@ vi.mock("@formbricks/lib/constants", () => ({
   IS_POSTHOG_CONFIGURED: true,
   POSTHOG_API_HOST: "test-posthog-api-host",
   POSTHOG_API_KEY: "test-posthog-api-key",
+  FORMBRICKS_API_HOST: "mock-formbricks-api-host",
+  FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
+  IS_FORMBRICKS_ENABLED: true,
 }));
 
 vi.mock("@/app/(app)/components/FormbricksClient", () => ({
@@ -56,7 +59,7 @@ describe("(app) AppLayout", () => {
     cleanup();
   });
 
-  it("renders child content and all sub-components when user exists", async () => {
+  test("renders child content and all sub-components when user exists", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123", email: "test@example.com" } as TUser);
 
@@ -74,7 +77,7 @@ describe("(app) AppLayout", () => {
     expect(screen.getByTestId("formbricks-client")).toBeInTheDocument();
   });
 
-  it("skips FormbricksClient if no user is present", async () => {
+  test("skips FormbricksClient if no user is present", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
     const element = await AppLayout({

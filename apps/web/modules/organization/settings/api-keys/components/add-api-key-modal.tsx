@@ -2,6 +2,7 @@
 
 import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -15,7 +16,7 @@ import { Modal } from "@/modules/ui/components/modal";
 import { Switch } from "@/modules/ui/components/switch";
 import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangleIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -88,9 +89,7 @@ export const AddApiKeyModal = ({
   };
 
   // Initialize with one permission by default
-  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>(() =>
-    getInitialPermissions()
-  );
+  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -105,14 +104,12 @@ export const AddApiKeyModal = ({
 
   const addPermission = () => {
     const newIndex = Object.keys(selectedPermissions).length;
-    if (projects.length > 0 && projects[0].environments.length > 0) {
-      const initialPermission = getInitialPermissions()["permission-0"];
-      if (initialPermission) {
-        setSelectedPermissions({
-          ...selectedPermissions,
-          [`permission-${newIndex}`]: initialPermission,
-        });
-      }
+    const initialPermission = getInitialPermissions()["permission-0"];
+    if (initialPermission) {
+      setSelectedPermissions({
+        ...selectedPermissions,
+        [`permission-${newIndex}`]: initialPermission,
+      });
     }
   };
 
@@ -175,7 +172,7 @@ export const AddApiKeyModal = ({
     });
 
     reset();
-    setSelectedPermissions(getInitialPermissions());
+    setSelectedPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -190,11 +187,16 @@ export const AddApiKeyModal = ({
     if (!apiKeyLabel?.trim()) {
       return true;
     }
-    // Check if there are any valid permissions
-    if (Object.keys(selectedPermissions).length === 0) {
-      return true;
-    }
-    return false;
+
+    // Check if at least one project permission is set or one organization access toggle is ON
+    const hasProjectAccess = Object.keys(selectedPermissions).length > 0;
+
+    const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
+      Object.values(accessGroup).some((value) => value === true)
+    );
+
+    // Disable submit if no access rights are granted
+    return !(hasProjectAccess || hasOrganizationAccess);
   };
 
   const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
@@ -334,15 +336,8 @@ export const AddApiKeyModal = ({
                         <button
                           type="button"
                           className="p-2"
-                          onClick={() => removePermission(permissionIndex)}
-                          disabled={Object.keys(selectedPermissions).length <= 1}>
-                          <Trash2Icon
-                            className={`h-5 w-5 ${
-                              Object.keys(selectedPermissions).length <= 1
-                                ? "text-slate-300"
-                                : "text-slate-500 hover:text-red-500"
-                            }`}
-                          />
+                          onClick={() => removePermission(permissionIndex)}>
+                          <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                         </button>
                       </div>
                     );
@@ -389,11 +384,9 @@ export const AddApiKeyModal = ({
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
-                <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
-                <p>{t("environments.project.api_keys.api_key_security_warning")}</p>
-              </div>
+              <Alert variant="warning">
+                <AlertTitle>{t("environments.project.api_keys.api_key_security_warning")}</AlertTitle>
+              </Alert>
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
@@ -404,7 +397,7 @@ export const AddApiKeyModal = ({
                 onClick={() => {
                   setOpen(false);
                   reset();
-                  setSelectedPermissions(getInitialPermissions());
+                  setSelectedPermissions({});
                 }}>
                 {t("common.cancel")}
               </Button>

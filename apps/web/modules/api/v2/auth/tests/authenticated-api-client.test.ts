@@ -1,5 +1,5 @@
 import { logApiRequest } from "@/modules/api/v2/lib/utils";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { apiWrapper } from "../api-wrapper";
 import { authenticatedApiClient } from "../authenticated-api-client";
 
@@ -12,7 +12,7 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
 }));
 
 describe("authenticatedApiClient", () => {
-  it("should log request and return response", async () => {
+  test("should log request and return response", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });

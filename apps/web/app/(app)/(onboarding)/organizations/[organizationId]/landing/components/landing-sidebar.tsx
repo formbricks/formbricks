@@ -112,7 +112,7 @@ export const LandingSidebar = ({
             {/* Dropdown Items */}
 
             {dropdownNavigation.map((link) => (
-              <Link href={link.href} target={link.target} className="flex w-full items-center">
+              <Link id={link.href} href={link.href} target={link.target} className="flex w-full items-center">
                 <DropdownMenuItem>
                   <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                   {link.label}

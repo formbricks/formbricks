@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -85,7 +85,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
     cleanup();
   });
 
-  it("calls copySurveyLink and clipboard.writeText on success", async () => {
+  test("calls copySurveyLink and clipboard.writeText on success", async () => {
     render(
       <SurveyAnalysisCTA
         survey={dummySurvey}
@@ -108,7 +108,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
     });
   });
 
-  it("shows error toast on failure", async () => {
+  test("shows error toast on failure", async () => {
     refreshSingleUseIdSpy.mockImplementationOnce(() => Promise.reject(new Error("fail")));
     render(
       <SurveyAnalysisCTA

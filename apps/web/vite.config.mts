@@ -1,7 +1,7 @@
 // vitest.config.ts
+import react from "@vitejs/plugin-react";
 import { PluginOption, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -19,21 +19,28 @@ export default defineConfig({
         "modules/api/v2/**/*.ts",
         "modules/api/v2/**/*.tsx",
         "modules/auth/lib/**/*.ts",
+        "modules/auth/signup/components/signup-form.tsx",
+        "modules/auth/signup/page.tsx",
         "modules/signup/lib/**/*.ts",
         "modules/auth/signup/lib/**/*.ts",
         "modules/auth/signup/**/*.tsx",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
+        "modules/ee/sso/lib/**/*.ts",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
+        "modules/email/emails/lib/*.tsx",
+        "modules/environments/lib/**/*.ts",
         "modules/ui/components/post-hog-client/*.tsx",
         "modules/ee/role-management/components/*.tsx",
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/ui/components/alert/*.tsx",
+        "modules/ui/components/environmentId-base-layout/*.tsx",
         "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
         "app/(app)/(onboarding)/organizations/**/layout.tsx",
         "app/(app)/(survey-editor)/environments/**/layout.tsx",
+        "app/(app)/components/FormbricksClient.tsx",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
@@ -43,6 +50,7 @@ export default defineConfig({
         "modules/ee/sso/lib/**/*.ts",
         "app/lib/**/*.ts",
         "app/api/(internal)/insights/lib/**/*.ts",
+        "app/api/(internal)/pipeline/lib/survey-follow-up.ts",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
         "modules/organization/settings/api-keys/lib/**/*.ts",
@@ -50,11 +58,20 @@ export default defineConfig({
         "modules/api/v2/management/auth/*.ts",
         "modules/organization/settings/api-keys/components/*.tsx",
         "modules/survey/hooks/*.tsx",
+        "modules/survey/components/question-form-input/index.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
+        "modules/survey/follow-ups/components/follow-up-item.tsx",
+        "modules/ee/contacts/segments/lib/**/*.ts",
+        "modules/ee/contacts/segments/components/segment-settings.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
+        "modules/account/**/*.tsx",
+        "modules/account/**/*.ts",
+        "modules/analysis/**/*.tsx",
+        "modules/analysis/**/*.ts",
+        "modules/survey/editor/components/end-screen-form.tsx",
       ],
       exclude: [
         "**/.next/**",

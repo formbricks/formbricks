@@ -1,7 +1,7 @@
 // mock these globally used functions
 import "@testing-library/jest-dom/vitest";
 import ResizeObserver from "resize-observer-polyfill";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
 // Make ResizeObserver available globally (Vitest/Jest environment)
@@ -49,13 +49,17 @@ vi.mock("react", async () => {
 
 // mock tolgee useTranslate on components
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => {
-    return {
+vi.mock("@tolgee/react", async () => {
+  const actual = await vi.importActual<typeof import("@tolgee/react")>("@tolgee/react");
+
+  return {
+    ...actual,
+    useTranslate: () => ({
       t: (key: string) => key,
-    };
-  },
-}));
+    }),
+    T: ({ keyName }: { keyName: string }) => keyName, // Simple functional mock
+  };
+});
 
 // mock next/router navigation
 
@@ -148,7 +152,7 @@ afterEach(() => {
 });
 
 export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
-  it("it should throw a ValidationError if the inputs are invalid", async () => {
+  test("throws a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
   });
 };

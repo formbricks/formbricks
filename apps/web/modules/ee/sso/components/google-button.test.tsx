@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { GoogleButton } from "./google-button";
 
@@ -28,18 +28,18 @@ describe("GoogleButton", () => {
     vi.clearAllMocks();
   });
 
-  it("renders correctly with default props", () => {
+  test("renders correctly with default props", () => {
     render(<GoogleButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_google" });
     expect(button).toBeInTheDocument();
   });
 
-  it("renders with last used indicator when lastUsed is true", () => {
+  test("renders with last used indicator when lastUsed is true", () => {
     render(<GoogleButton {...defaultProps} lastUsed={true} />);
     expect(screen.getByText("auth.last_used")).toBeInTheDocument();
   });
 
-  it("sets localStorage item and calls signIn on click", async () => {
+  test("sets localStorage item and calls signIn on click", async () => {
     render(<GoogleButton {...defaultProps} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_google" });
     fireEvent.click(button);
@@ -51,7 +51,7 @@ describe("GoogleButton", () => {
     });
   });
 
-  it("uses inviteUrl in callbackUrl when provided", async () => {
+  test("uses inviteUrl in callbackUrl when provided", async () => {
     const inviteUrl = "https://example.com/invite";
     render(<GoogleButton {...defaultProps} inviteUrl={inviteUrl} />);
     const button = screen.getByRole("button", { name: "auth.continue_with_google" });
@@ -63,7 +63,7 @@ describe("GoogleButton", () => {
     });
   });
 
-  it("handles signup source correctly", async () => {
+  test("handles signup source correctly", async () => {
     render(<GoogleButton {...defaultProps} source="signup" />);
     const button = screen.getByRole("button", { name: "auth.continue_with_google" });
     fireEvent.click(button);

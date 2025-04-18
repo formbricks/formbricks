@@ -1,4 +1,13 @@
 {
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "When generating tests, always use vitest and use the `test` function instead of `it`."
+    }
+  ],
+  "sonarlint.connectedMode.project": {
+    "connectionId": "formbricks",
+    "projectKey": "formbricks_formbricks"
+  },
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.tsdk": "node_modules/typescript/lib"
 }
