@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D7D8DD62DB14F18002C453E /* AnyCodable in Frameworks */ = {isa = PBXBuildFile; productRef = 4D7D8DD52DB14F18002C453E /* AnyCodable */; };
 		4DDAED692D50D49B00A19B1F /* FormbricksSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DDAED602D50D49A00A19B1F /* FormbricksSDK.framework */; };
 /* End PBXBuildFile section */
 
@@ -108,6 +109,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D7D8DD62DB14F18002C453E /* AnyCodable in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,11 +124,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4D7D8DD42DB14F18002C453E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		4DDAED562D50D49A00A19B1F = {
 			isa = PBXGroup;
 			children = (
 				4DDAED622D50D49A00A19B1F /* FormbricksSDK */,
 				4DDAED6C2D50D49B00A19B1F /* FormbricksSDKTests */,
+				4D7D8DD42DB14F18002C453E /* Frameworks */,
 				4DDAED612D50D49A00A19B1F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -171,6 +181,7 @@
 			);
 			name = FormbricksSDK;
 			packageProductDependencies = (
+				4D7D8DD52DB14F18002C453E /* AnyCodable */,
 			);
 			productName = FormbricksSDK;
 			productReference = 4DDAED602D50D49A00A19B1F /* FormbricksSDK.framework */;
@@ -227,6 +238,9 @@
 			);
 			mainGroup = 4DDAED562D50D49A00A19B1F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4DA4A0952DB14E67007299C0 /* XCRemoteSwiftPackageReference "AnyCodable" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4DDAED612D50D49A00A19B1F /* Products */;
 			projectDirPath = "";
@@ -536,6 +550,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4DA4A0952DB14E67007299C0 /* XCRemoteSwiftPackageReference "AnyCodable" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Flight-School/AnyCodable";
+			requirement = {
+				kind = exactVersion;
+				version = 0.6.7;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4D7D8DD52DB14F18002C453E /* AnyCodable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4DA4A0952DB14E67007299C0 /* XCRemoteSwiftPackageReference "AnyCodable" */;
+			productName = AnyCodable;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4DDAED572D50D49A00A19B1F /* Project object */;
 }
