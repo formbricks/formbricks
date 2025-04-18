@@ -42,7 +42,7 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=8096"
+ARG NODE_OPTIONS="--max_old_space_size=4096"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Set the working directory
