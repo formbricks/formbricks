@@ -39,7 +39,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
     private func processResponse(data: Data?, response: URLResponse?, error: Error?) {
         guard let httpStatus = (response as? HTTPURLResponse)?.status else {
             let error = FormbricksAPIClientError(type: .invalidResponse)
-            Formbricks.logger.error("ERROR \(error.message)")
+            Formbricks.logger?.error("ERROR \(error.message)")
             completion?(.failure(error))
             return
         }
@@ -65,7 +65,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
 
         do {
             if Request.Response.self == VoidResponse.self {
-                Formbricks.logger.info(message)
+                Formbricks.logger?.info(message)
                 completion?(.success(VoidResponse() as! Request.Response))
             } else {
                 var body = try request.decoder.decode(Request.Response.self, from: data)
@@ -73,7 +73,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                     env.responseString = jsonString
                     body = env as! Request.Response
                 }
-                Formbricks.logger.info(message)
+                Formbricks.logger?.info(message)
                 completion?(.success(body))
             }
         } catch {
@@ -86,14 +86,14 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
 
         if let error = error {
             log.append("\nError: \(error.localizedDescription)")
-            Formbricks.logger.error(log)
+            Formbricks.logger?.error(log)
             completion?(.failure(error))
         } else if let data = data, let apiError = try? request.decoder.decode(FormbricksAPIError.self, from: data) {
-            Formbricks.logger.error("\(log)\n\(apiError.getDetailedErrorMessage())")
+            Formbricks.logger?.error("\(log)\n\(apiError.getDetailedErrorMessage())")
             completion?(.failure(apiError))
         } else {
             let error = FormbricksAPIClientError(type: .responseError, statusCode: statusCode)
-            Formbricks.logger.error("\(log)\n\(error.message)")
+            Formbricks.logger?.error("\(log)\n\(error.message)")
             completion?(.failure(error))
         }
     }
@@ -112,7 +112,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
             message.append("Error: \(error.localizedDescription)")
         }
 
-        Formbricks.logger.error(message)
+        Formbricks.logger?.error(message)
         completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: statusCode)))
     }
     
@@ -127,7 +127,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
             message.append("\nBody: \(bodyString)")
         }
 
-        Formbricks.logger.info(message)
+        Formbricks.logger?.info(message)
     }
 
 }
