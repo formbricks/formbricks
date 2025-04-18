@@ -29,7 +29,8 @@ RUN apk update && apk upgrade && \
     openssl \
     sqlite \
     libxml2 \
-    zstd
+    zstd \
+    jq
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -48,7 +49,7 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=4096"
+ARG NODE_OPTIONS="--max_old_space_size=8096"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Set the working directory
