@@ -23,14 +23,7 @@ RUN corepack enable
 
 # Install necessary build tools and compilers
 # Update all packages and specifically upgrade vulnerable ones
-RUN apk update && apk upgrade && \
-    apk add --no-cache --upgrade \
-    busybox \
-    openssl \
-    sqlite \
-    libxml2 \
-    zstd \
-    jq
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
