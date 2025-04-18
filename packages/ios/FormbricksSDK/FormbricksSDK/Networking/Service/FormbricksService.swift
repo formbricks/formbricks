@@ -20,6 +20,6 @@ private extension FormbricksService {
     /// Creates the APIClient operation and adds it to the queue
     func execute<Request: CodableRequest>(_ request: Request, withCompletion completion: @escaping (ResultType<Request.Response>) -> Void) {
         let operation = APIClient(request: request, completion: completion)
-        Formbricks.apiQueue.addOperation(operation)
+        Formbricks.apiQueue?.addOperation(operation)
     }
 }

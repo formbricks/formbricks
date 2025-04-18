@@ -478,7 +478,6 @@
     "password_changed_email_heading": "Senha alterada",
     "password_changed_email_text": "Sua senha foi alterada com sucesso.",
     "password_reset_notify_email_subject": "Sua senha Formbricks foi alterada",
-    "powered_by_formbricks": "Desenvolvido por Formbricks",
     "privacy_policy": "Política de Privacidade",
     "reject": "Rejeitar",
     "render_email_response_value_file_upload_response_link_not_included": "O link para o arquivo enviado não está incluído por motivos de privacidade de dados",
@@ -995,8 +994,7 @@
       "api_keys": {
         "add_api_key": "Adicionar chave de API",
         "add_permission": "Adicionar permissão",
-        "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks",
-        "only_organization_owners_and_managers_can_manage_api_keys": "Apenas proprietários e gerentes da organização podem gerenciar chaves de API"
+        "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks"
       },
       "billing": {
         "10000_monthly_responses": "10000 Respostas Mensais",
