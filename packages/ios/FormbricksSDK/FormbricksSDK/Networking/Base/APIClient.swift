@@ -20,8 +20,8 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
         let urlRequest = createURLRequest(forURL: finalURL)
         logRequest(urlRequest)
         
-        session.dataTask(with: urlRequest) { data, response, error in
-            self.processResponse(data: data, response: response, error: error)
+        session.dataTask(with: urlRequest) { [weak self] data, response, error in
+            self?.processResponse(data: data, response: response, error: error)
         }.resume()
     }
     
