@@ -92,6 +92,24 @@ updates:
       interval: "weekly"
     security-updates-only: true
 
+  - package-ecosystem: "npm"
+    directory: "/packages/js"
+    schedule:
+      interval: "weekly"
+    security-updates-only: true
+
+  - package-ecosystem: "npm"
+    directory: "/packages/react-native"
+    schedule:
+      interval: "weekly"
+    security-updates-only: true
+
+  - package-ecosystem: "npm"
+    directory: "/packages/vite-plugins"
+    schedule:
+      interval: "weekly"
+    security-updates-only: true
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
