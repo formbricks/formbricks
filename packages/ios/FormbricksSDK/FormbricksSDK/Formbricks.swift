@@ -58,7 +58,7 @@ import Network
         if let userId = config.userId {
             userManager?.set(userId: userId)
         }
-        if let attributes = config.attributes {
+        if let attributes = config.attributes, !attributes.isEmpty {
             userManager?.set(attributes: attributes)
         }
         if let language = config.attributes?["language"] {
