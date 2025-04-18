@@ -7,111 +7,58 @@ version: 2
 updates:
   - package-ecosystem: "npm" # For pnpm monorepos, use npm ecosystem
     directory: "/" # Root package.json
-    schedule:
-      interval: "weekly"
-    versioning-strategy: increase
-    security-updates-only: true
 
   # Apps directory packages
   - package-ecosystem: "npm"
     directory: "/apps/demo"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/apps/demo-react-native"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/apps/storybook"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/apps/web"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   # Packages directory
   - package-ecosystem: "npm"
     directory: "/packages/database"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/lib"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/types"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/config-eslint"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/config-prettier"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/config-typescript"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/js-core"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/surveys"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/logger"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/js"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/react-native"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "npm"
     directory: "/packages/vite-plugins"
-    schedule:
-      interval: "weekly"
-    security-updates-only: true
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
