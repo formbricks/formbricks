@@ -17,10 +17,10 @@ struct SetupView: View {
                         let config = FormbricksConfig.Builder(appUrl: "[appUrl]", environmentId: "[environmentId]")
                             .setLogLevel(.debug)
                             .build()
+                        
                         // Simulate async setup delay
                         DispatchQueue.global().async {
                             Formbricks.setup(with: config)
-                            Formbricks.setUserId(UUID().uuidString)
                             
                             DispatchQueue.main.async {
                                 isSetup = true
@@ -31,6 +31,10 @@ struct SetupView: View {
                     .padding()
                 }
             } else {
+                Button("Call Formbricks.setUserId with a random userId") {
+                    Formbricks.setUserId(UUID().uuidString)
+                }.padding()
+                
                 Button("Call Formbricks.track") {
                     Formbricks.track("click_demo_button")
                 }
