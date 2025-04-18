@@ -44,15 +44,19 @@ struct SurveyWebView: UIViewRepresentable {
     func clean() {
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
-                    /*
-                     This completion handler is intentionally empty since we only need to 
-                     ensure the data is removed. No additional actions are required after
-                     the website data has been cleared.
-                    */
-                })
-            }
+            self.remove(records)
+        }
+    }
+    
+    private func remove(_ records: [WKWebsiteDataRecord]) {
+        records.forEach { record in
+            WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
+                /*
+                 This completion handler is intentionally empty since we only need to
+                 ensure the data is removed. No additional actions are required after
+                 the website data has been cleared.
+                */
+            })
         }
     }
 }

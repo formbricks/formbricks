@@ -1,12 +1,14 @@
 package com.formbricks.demo
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.formbricks.formbrickssdk.Formbricks
+import com.formbricks.formbrickssdk.FormbricksCallback
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
 import java.util.UUID
 
@@ -15,7 +17,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
+        Formbricks.callback = object: FormbricksCallback {
+            override fun onSurveyStarted() {
+                Log.d("FormbricksCallback", "onSurveyStarted")
+            }
+
+            override fun onSurveyFinished() {
+                Log.d("FormbricksCallback", "onSurveyFinished")
+            }
+
+            override fun onSurveyClosed() {
+                Log.d("FormbricksCallback", "onSurveyClosed")
+            }
+
+            override fun onError(error: Exception) {
+                Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
+            }
+
+        }
+
+//        val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
+        val config = FormbricksConfig.Builder("http://192.168.0.12:3000","cm8ebrmrx0009sfrno2kebu62")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
         Formbricks.setup(this, config.build())
