@@ -1,3 +1,4 @@
+import { extractIP } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -9,9 +10,9 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseMeta } from "@formbricks/types/responses";
 import { createResponse } from "./lib/response";
-import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
+import { ZResponseInputV2 } from "./types/response";
 
 interface Context {
   params: Promise<{
@@ -64,6 +65,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const responseInputData = responseInputValidation.data;
 
+  let ip: string | undefined = undefined;
+  if (responseInputData.meta?.isCaptureIPAddressEnabled) {
+    ip = extractIP(requestHeaders, responseInputData.surveyId);
+  }
+
   if (responseInputData.contactId) {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
@@ -89,7 +95,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   let response: TResponse;
   try {
-    const meta: TResponseInputV2["meta"] = {
+    const meta: TResponseMeta = {
       source: responseInputData?.meta?.source,
       url: responseInputData?.meta?.url,
       userAgent: {
@@ -100,6 +106,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
       country: country,
       action: responseInputData?.meta?.action,
     };
+
+    if (responseInputData.meta?.isCaptureIPAddressEnabled && ip) {
+      meta.ip = ip;
+    }
 
     response = await createResponse({
       ...responseInputData,

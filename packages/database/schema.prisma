@@ -418,6 +418,7 @@ model Survey {
   showLanguageSwitch              Boolean?
   documents                       Document[]
   followUps                       SurveyFollowUp[]
+  isCaptureIPAddressEnabled       Boolean          @default(false)
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

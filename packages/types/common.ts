@@ -69,3 +69,5 @@ export const getZSafeUrl = (message: string): z.ZodEffects<z.ZodString, string, 
         });
       }
     });
+
+export const ZIP = z.string().ip().optional();

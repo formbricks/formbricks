@@ -1324,6 +1324,8 @@
         "cal_username": "Cal.com Benutzername oder Benutzername/Ereignis",
         "calculate": "Berechnen",
         "capture_a_new_action_to_trigger_a_survey_on": "Erfasse eine neue Aktion, um eine Umfrage auszulösen.",
+        "capture_ip_address_of_respondent": "Erfassen Sie die IP-Adresse",
+        "capture_ip_address_of_respondent_description": "Erfassung der IP-Adresse der Antwortbeschreibung.",
         "capture_new_action": "Neue Aktion erfassen",
         "card_arrangement_for_survey_type_derived": "Kartenanordnung für {surveyTypeDerived} Umfragen",
         "card_background_color": "Hintergrundfarbe der Karte",

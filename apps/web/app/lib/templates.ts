@@ -6965,6 +6965,7 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     environmentId: "cltwumfcz0009echxg02fh7oa",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress",
+    isCaptureIPAddressEnabled: false,
     welcomeCard: {
       html: {
         default: t("templates.preview_survey_welcome_card_html"),

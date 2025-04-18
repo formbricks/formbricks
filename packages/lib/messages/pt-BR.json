@@ -1324,6 +1324,8 @@
         "cal_username": "Nome de usuário do Cal.com ou nome de usuário/evento",
         "calculate": "Calcular",
         "capture_a_new_action_to_trigger_a_survey_on": "Captura uma nova ação pra disparar uma pesquisa.",
+        "capture_ip_address_of_respondent": "Capturar endereço IP",
+        "capture_ip_address_of_respondent_description": "Captura e armazena endereços IP dos entrevistados como metadados.",
         "capture_new_action": "Capturar nova ação",
         "card_arrangement_for_survey_type_derived": "Arranjo de Cartões para Pesquisas {surveyTypeDerived}",
         "card_background_color": "Cor de fundo do cartão",
