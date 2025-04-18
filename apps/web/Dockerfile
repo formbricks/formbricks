@@ -22,17 +22,14 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache \
-  cmake \
-  g++ \
-  gcc \
-  jq \
-  make \
-  openssl-dev \
-  zstd \
-  sqlite-libs \
-  libxml2-dev \
-  python3
+# Update all packages and specifically upgrade vulnerable ones
+RUN apk update && apk upgrade && \
+    apk add --no-cache --upgrade \
+    busybox \
+    openssl \
+    sqlite \
+    libxml2 \
+    zstd
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
