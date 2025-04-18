@@ -1,4 +1,4 @@
-FROM node:22-alpine3.20@sha256:40be979442621049f40b1d51a26b55e281246b5de4e5f51a18da7beb6e17e3f9 AS base
+FROM node:22-alpine3.21 AS base
 
 #
 ## step 1: Prune monorepo
@@ -22,7 +22,17 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+RUN apk update && apk add --no-cache \
+  cmake \
+  g++ \
+  gcc \
+  jq \
+  make \
+  openssl-dev \
+  zstd \
+  sqlite-libs \
+  libxml2-dev \
+  python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
