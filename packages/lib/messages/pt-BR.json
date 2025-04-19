@@ -23,7 +23,8 @@
           "text": "Agora você pode fazer login com sua nova senha"
         }
       },
-      "reset_password": "Redefinir senha"
+      "reset_password": "Redefinir senha",
+      "reset_password_description": "Você será desconectado para redefinir sua senha."
     },
     "invite": {
       "create_account": "Cria uma conta",

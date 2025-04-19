@@ -23,7 +23,8 @@
           "text": "Pode agora iniciar sessão com a sua nova palavra-passe"
         }
       },
-      "reset_password": "Redefinir palavra-passe"
+      "reset_password": "Redefinir palavra-passe",
+      "reset_password_description": "Será desconectado para redefinir a sua senha."
     },
     "invite": {
       "create_account": "Criar uma conta",
