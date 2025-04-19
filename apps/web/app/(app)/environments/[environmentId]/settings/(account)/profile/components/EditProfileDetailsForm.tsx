@@ -1,5 +1,8 @@
 "use client";
 
+import { formbricksLogout } from "@/app/lib/formbricks";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -20,6 +23,8 @@ import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -39,6 +44,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
 
   const { isSubmitting, isDirty } = form.formState;
   const { t } = useTranslate();
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     try {
@@ -51,6 +57,25 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
     } catch (error) {
       toast.error(`${t("common.error")}: ${error.message}`);
     }
+  };
+
+  const handleResetPassword = async () => {
+    if (!user.email) return;
+
+    setIsResettingPassword(true);
+
+    const resetPasswordResponse = await forgotPasswordAction({ email: user.email });
+
+    if (!resetPasswordResponse?.data) {
+      const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
+      toast.error(errorMessage);
+    } else {
+      toast.success(t("auth.forgot-password.email-sent.heading"));
+      await signOut({ callbackUrl: "/auth/login" });
+      await formbricksLogout();
+    }
+
+    setIsResettingPassword(false);
   };
 
   return (
@@ -76,7 +101,6 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
           )}
         />
 
-        {/* disabled email field */}
         <div className="mt-4 space-y-2">
           <Label htmlFor="email">{t("common.email")}</Label>
           <Input type="email" id="email" defaultValue={user.email} disabled />
@@ -121,6 +145,24 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
             </FormItem>
           )}
         />
+
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="reset-password">{t("auth.forgot-password.reset_password")}</Label>
+          <p className="mt-1 text-sm text-slate-500">
+            {t("auth.forgot-password.reset_password_description")}
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <Input type="email" id="reset-password" defaultValue={user.email} disabled />
+            <Button
+              onClick={handleResetPassword}
+              loading={isResettingPassword}
+              disabled={isResettingPassword || !user.email}
+              size="default"
+              variant="secondary">
+              {t("auth.forgot-password.reset_password")}
+            </Button>
+          </div>
+        </div>
 
         <Button
           type="submit"

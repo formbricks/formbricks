@@ -23,7 +23,8 @@
           "text": "Du kannst Dich jetzt mit deinem neuen Passwort einloggen"
         }
       },
-      "reset_password": "Passwort zurücksetzen"
+      "reset_password": "Passwort zurücksetzen",
+      "reset_password_description": "Sie werden abgemeldet, um Ihr Passwort zurückzusetzen."
     },
     "invite": {
       "create_account": "Konto erstellen",

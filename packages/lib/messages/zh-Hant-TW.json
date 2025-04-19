@@ -23,7 +23,8 @@
           "text": "您現在可以使用新密碼登入"
         }
       },
-      "reset_password": "重設密碼"
+      "reset_password": "重設密碼",
+      "reset_password_description": "您將被註銷以重設您的密碼。"
     },
     "invite": {
       "create_account": "建立帳戶",
