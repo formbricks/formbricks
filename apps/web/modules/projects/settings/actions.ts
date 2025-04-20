@@ -1,12 +1,12 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";

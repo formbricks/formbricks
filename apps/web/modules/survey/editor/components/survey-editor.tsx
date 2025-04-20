@@ -1,5 +1,8 @@
 "use client";
 
+import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
@@ -12,9 +15,6 @@ import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSegment } from "@formbricks/types/segment";

@@ -1,9 +1,9 @@
 import { webhookCache } from "@/lib/cache/webhook";
+import { captureTelemetry } from "@/lib/telemetry";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { createWebhook, getWebhooks } from "../webhook";
 
 vi.mock("@formbricks/database", () => ({
@@ -21,7 +21,7 @@ vi.mock("@/lib/cache/webhook", () => ({
     revalidate: vi.fn(),
   },
 }));
-vi.mock("@formbricks/lib/telemetry", () => ({
+vi.mock("@/lib/telemetry", () => ({
   captureTelemetry: vi.fn(),
 }));
 

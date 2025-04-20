@@ -1,4 +1,4 @@
-import { PROMETHEUS_ENABLED, SENTRY_DSN } from "@formbricks/lib/constants";
+import { PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
 // instrumentation.ts
 export const register = async () => {

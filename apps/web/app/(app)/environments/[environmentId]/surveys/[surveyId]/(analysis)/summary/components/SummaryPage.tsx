@@ -14,10 +14,10 @@ import {
   getResponseCountBySurveySharingKeyAction,
   getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/actions";
+import { useIntervalWhenFocused } from "@/lib/utils/hooks/useIntervalWhenFocused";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";

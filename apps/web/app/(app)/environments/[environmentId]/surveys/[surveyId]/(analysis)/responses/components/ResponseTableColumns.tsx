@@ -1,5 +1,10 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { processResponseData } from "@/lib/responses";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
@@ -9,11 +14,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFnType } from "@tolgee/react";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { processResponseData } from "@formbricks/lib/responses";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 

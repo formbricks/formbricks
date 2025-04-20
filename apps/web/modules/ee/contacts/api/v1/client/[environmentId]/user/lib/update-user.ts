@@ -1,7 +1,7 @@
 import { contactCache } from "@/lib/cache/contact";
+import { getEnvironment } from "@/lib/environment/service";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { prisma } from "@formbricks/database";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { getContactByUserIdWithAttributes } from "./contact";

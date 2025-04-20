@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/action";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
@@ -18,7 +19,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamsTableProps {

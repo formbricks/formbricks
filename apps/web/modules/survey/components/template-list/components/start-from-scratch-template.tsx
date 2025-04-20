@@ -1,11 +1,11 @@
 "use client";
 
 import { customSurveyTemplate } from "@/app/lib/templates";
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TTemplate } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 
@@ -45,10 +45,10 @@ export const StartFromScratchTemplate = ({
         activeTemplate?.name === customSurvey.name
           ? "ring-brand-dark border-transparent ring-2"
           : "hover:border-brand-dark border-dashed border-slate-300",
-        "duration-120 group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-150"
+        "group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
       )}>
       <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-      <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{customSurvey.name}</h3>
+      <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{customSurvey.name}</h3>
       <p className="text-left text-xs text-slate-600">{customSurvey.description}</p>
       {activeTemplate?.name === customSurvey.name && (
         <div className="text-left">

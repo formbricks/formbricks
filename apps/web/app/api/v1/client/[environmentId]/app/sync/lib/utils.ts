@@ -1,4 +1,4 @@
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

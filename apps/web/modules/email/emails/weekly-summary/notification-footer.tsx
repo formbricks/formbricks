@@ -1,7 +1,7 @@
+import { WEBAPP_URL } from "@/lib/constants";
 import { getTranslate } from "@/tolgee/server";
 import { Container, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 interface NotificatonFooterProps {
   environmentId: string;

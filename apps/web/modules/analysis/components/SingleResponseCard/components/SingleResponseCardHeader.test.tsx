@@ -21,8 +21,8 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
   TooltipProvider: ({ children }: any) => <div>{children}</div>,
   TooltipTrigger: ({ children }: any) => <div>{children}</div>,
 }));
-vi.mock("@formbricks/lib/i18n/utils", () => ({
-  getLanguageLabel: vi.fn((lang, locale) => lang + "_" + locale),
+vi.mock("@formbricks/i18n-utils/src/utils", () => ({
+  getLanguageLabel: vi.fn(),
 }));
 vi.mock("@/modules/lib/time", () => ({
   timeSince: vi.fn(() => "5 minutes ago"),

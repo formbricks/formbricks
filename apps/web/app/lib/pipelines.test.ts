@@ -6,7 +6,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { sendToPipeline } from "./pipelines";
 
 // Mock the constants module
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   CRON_SECRET: "mocked-cron-secret",
   WEBAPP_URL: "https://test.formbricks.com",
 }));
@@ -91,10 +91,10 @@ describe("pipelines", () => {
   test("sendToPipeline should throw error if CRON_SECRET is not set", async () => {
     // For this test, we need to mock CRON_SECRET as undefined
     // Let's use a more compatible approach to reset the mocks
-    const originalModule = await import("@formbricks/lib/constants");
+    const originalModule = await import("@/lib/constants");
     const mockConstants = { ...originalModule, CRON_SECRET: undefined };
 
-    vi.doMock("@formbricks/lib/constants", () => mockConstants);
+    vi.doMock("@/lib/constants", () => mockConstants);
 
     // Re-import the module to get the new mocked values
     const { sendToPipeline: sendToPipelineNoSecret } = await import("./pipelines");

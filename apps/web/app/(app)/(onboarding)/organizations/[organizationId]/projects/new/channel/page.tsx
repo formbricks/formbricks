@@ -1,4 +1,5 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { getUserProjects } from "@/lib/project/service";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -6,7 +7,6 @@ import { getTranslate } from "@/tolgee/server";
 import { PictureInPicture2Icon, SendIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getUserProjects } from "@formbricks/lib/project/service";
 
 interface ChannelPageProps {
   params: Promise<{
@@ -50,7 +50,7 @@ const Page = async (props: ChannelPageProps) => {
       <OnboardingOptionsContainer options={channelOptions} />
       {projects.length >= 1 && (
         <Button
-          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={"/"}>

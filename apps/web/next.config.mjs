@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-jiti("@formbricks/lib/env");
+jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
@@ -28,7 +28,7 @@ const nextConfig = {
     defaultLocale: "en-US",
   },
   experimental: {},
-  transpilePackages: ["@formbricks/database", "@formbricks/lib"],
+  transpilePackages: ["@formbricks/database"],
   images: {
     remotePatterns: [
       {

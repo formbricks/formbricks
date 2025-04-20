@@ -1,5 +1,7 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -10,8 +12,6 @@ import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useRef } from "react";
-import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

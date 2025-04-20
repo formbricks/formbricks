@@ -1,11 +1,11 @@
+import { cache } from "@/lib/cache";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
+import { segmentCache } from "@/lib/cache/segment";
+import { validateInputs } from "@/lib/utils/validate";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";

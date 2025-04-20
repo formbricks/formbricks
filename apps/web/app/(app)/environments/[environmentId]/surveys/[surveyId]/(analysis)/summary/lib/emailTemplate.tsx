@@ -1,9 +1,9 @@
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurvey } from "@/lib/survey/service";
+import { getStyling } from "@/lib/utils/styling";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import { getTranslate } from "@/tolgee/server";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { getStyling } from "@formbricks/lib/utils/styling";
 
 export const getEmailTemplateHtml = async (surveyId: string, locale: string) => {
   const t = await getTranslate();
