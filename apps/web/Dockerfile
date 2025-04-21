@@ -1,5 +1,23 @@
 FROM node:22-alpine3.21 AS base
 
+# ───────────────────────────────────────────────────────────────────────────────
+# Pull selected newer versions from edge (busybox, c-ares, libarchive, etc.)
+# ───────────────────────────────────────────────────────────────────────────────
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main"      >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing"   >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+      busybox=1.37.0-r0 \
+      c-ares=1.3.0-r0 \
+      protobuf=1.36.6-r0        \
+      libarchive=3.7.9-r0       \
+      libxml2=2.14.1-r0         \
+      openssl=3.5.0-r0          \
+      sqlite=3.49.1-r0          \
+      v8=12.9.66680202_pgo-r0   \
+      zstd=1.5.6.7-r0
+
 #
 ## step 1: Prune monorepo
 #
