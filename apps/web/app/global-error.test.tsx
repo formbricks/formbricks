@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { cleanup, render, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import GlobalError from "./global-error";
 
 vi.mock("@sentry/nextjs", () => ({
@@ -14,7 +14,7 @@ describe("GlobalError", () => {
     cleanup();
   });
 
-  it("logs error using console.error in development", async () => {
+  test("logs error using console.error in development", async () => {
     (process.env as { [key: string]: string }).NODE_ENV = "development";
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
@@ -27,7 +27,7 @@ describe("GlobalError", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it("captures error with Sentry in production", async () => {
+  test("captures error with Sentry in production", async () => {
     (process.env as { [key: string]: string }).NODE_ENV = "production";
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 

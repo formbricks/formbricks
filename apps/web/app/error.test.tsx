@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import ErrorBoundary from "./error";
 
 vi.mock("@/modules/ui/components/button", () => ({
@@ -24,7 +24,7 @@ describe("ErrorBoundary", () => {
   const dummyError = new Error("Test error");
   const resetMock = vi.fn();
 
-  it("logs error via console.error in development", async () => {
+  test("logs error via console.error in development", async () => {
     (process.env as { [key: string]: string }).NODE_ENV = "development";
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
@@ -37,7 +37,7 @@ describe("ErrorBoundary", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it("captures error with Sentry in production", async () => {
+  test("captures error with Sentry in production", async () => {
     (process.env as { [key: string]: string }).NODE_ENV = "production";
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
@@ -50,14 +50,14 @@ describe("ErrorBoundary", () => {
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
-  it("calls reset when try again button is clicked", async () => {
+  test("calls reset when try again button is clicked", async () => {
     render(<ErrorBoundary error={{ ...dummyError }} reset={resetMock} />);
     const tryAgainBtn = screen.getByRole("button", { name: "common.try_again" });
     userEvent.click(tryAgainBtn);
     await waitFor(() => expect(resetMock).toHaveBeenCalled());
   });
 
-  it("sets window.location.href to '/' when dashboard button is clicked", async () => {
+  test("sets window.location.href to '/' when dashboard button is clicked", async () => {
     const originalLocation = window.location;
     delete (window as any).location;
     (window as any).location = { href: "" };

@@ -17,6 +17,7 @@ vi.mock("@sentry/nextjs", () => ({
 // Mock SENTRY_DSN constant
 vi.mock("@formbricks/lib/constants", () => ({
   SENTRY_DSN: "mocked-sentry-dsn",
+  IS_PRODUCTION: true,
 }));
 
 describe("utils", () => {
