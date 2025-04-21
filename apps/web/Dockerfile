@@ -1,29 +1,14 @@
-FROM node:22-alpine3.21 AS base
+FROM base AS installer
 
-# enable edge repos for newer packages
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main"    >> /etc/apk/repositories \
- && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
- && apk update \
- && apk add --no-cache \
-      busybox~1.37.0   \
-      c-ares~1.3.0     \
-      libarchive~3.7.9 \
-      libxml2~2.14.1   \
-      openssl~3.5.0    \
-      sqlite~3.49.1    \
-      zstd~1.5.6       \
-      glib~2.84.1      \
- && rm -rf /var/cache/apk/*
+# Enable corepack and prepare pnpm
+RUN npm install -g corepack@latest
+RUN corepack enable
 
-# ─────────────────────────────────────────────────────────
-# 2) Install Go 1.24.2 and protoc‑gen‑go v1.36.6
-ENV GOLANG_VERSION=1.24.2
-RUN wget -qO /tmp/go.tar.gz https://go.dev/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz \
- && rm -rf /usr/local/go \
- && tar -C /usr/local -xzf /tmp/go.tar.gz \
- && rm /tmp/go.tar.gz \
- && ln -s /usr/local/go/bin/{go,gofmt} /usr/local/bin/ \
- && /usr/local/go/bin/go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
+# Install necessary build tools and compilers
+# Update all packages and install a specific version of busybox
+RUN apk update && \
+    apk add --no-cache busybox=1.37.0-r0 && \
+    apk add --no-cache cmake g++ gcc jq make openssl python3
 
 #
 ## step 1: Prune monorepo
