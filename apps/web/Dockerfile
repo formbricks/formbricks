@@ -4,14 +4,15 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main"    >> /etc/apk/reposit
  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
  && apk update \
  && apk add --no-cache \
-      busybox=1.37.0-r0 \
-      c-ares=1.3.0-r0 \
-      libarchive=3.7.9-r0 \
-      libxml2=2.14.1-r0 \
-      openssl=3.5.0-r0 \
-      sqlite=3.49.1-r0 \
-      zstd=1.5.6.7-r0 \
-      glib=2.84.1-r0 \
+      busybox=1.37.0* \
+      c-ares=1.3.*    \
+      libarchive=3.7.9* \
+      libxml2=2.14.*  \
+      openssl=3.5.*   \
+      sqlite=3.49.*   \
+      zstd=1.5.6*     \
+      glib=2.84.*     \
+      lcms2=2.17*     \
  && rm -rf /var/cache/apk/*
 
 # ─────────────────────────────────────────────────────────
