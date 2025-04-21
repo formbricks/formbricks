@@ -1,3 +1,5 @@
+import { contactCache } from "@/lib/cache/contact";
+import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -53,10 +55,37 @@ export const updateContactAttributeKey = async (
       data: contactAttributeKeyInput,
     });
 
+    const associatedContactAttributes = await prisma.contactAttribute.findMany({
+      where: {
+        attributeKeyId: updatedKey.id,
+      },
+      select: {
+        id: true,
+        contactId: true,
+      },
+    });
+
     contactAttributeKeyCache.revalidate({
       id: contactAttributeKeyId,
       environmentId: updatedKey.environmentId,
       key: updatedKey.key,
+    });
+    contactAttributeCache.revalidate({
+      key: updatedKey.key,
+      environmentId: updatedKey.environmentId,
+    });
+
+    contactCache.revalidate({
+      environmentId: updatedKey.environmentId,
+    });
+
+    associatedContactAttributes.forEach((contactAttribute) => {
+      contactAttributeCache.revalidate({
+        contactId: contactAttribute.contactId,
+      });
+      contactCache.revalidate({
+        id: contactAttribute.contactId,
+      });
     });
 
     return ok(updatedKey);
@@ -100,10 +129,37 @@ export const deleteContactAttributeKey = async (
       },
     });
 
+    const associatedContactAttributes = await prisma.contactAttribute.findMany({
+      where: {
+        attributeKeyId: deletedKey.id,
+      },
+      select: {
+        id: true,
+        contactId: true,
+      },
+    });
+
     contactAttributeKeyCache.revalidate({
       id: contactAttributeKeyId,
       environmentId: deletedKey.environmentId,
       key: deletedKey.key,
+    });
+    contactAttributeCache.revalidate({
+      key: deletedKey.key,
+      environmentId: deletedKey.environmentId,
+    });
+
+    contactCache.revalidate({
+      environmentId: deletedKey.environmentId,
+    });
+
+    associatedContactAttributes.forEach((contactAttribute) => {
+      contactAttributeCache.revalidate({
+        contactId: contactAttribute.contactId,
+      });
+      contactCache.revalidate({
+        id: contactAttribute.contactId,
+      });
     });
 
     return ok(deletedKey);
