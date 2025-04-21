@@ -25,12 +25,6 @@ RUN corepack enable
 # Update all packages and specifically upgrade vulnerable ones
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl python3
 
-RUN apk add --no-cache \
-  openssl=1.1.1w-r4 \
-  libssl1.1=1.1.1w-r4 \
-  && apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/v3.17/main libssl1.1
-
-
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
 RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
