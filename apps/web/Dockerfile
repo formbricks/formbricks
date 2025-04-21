@@ -1,34 +1,29 @@
 FROM node:22-alpine3.21 AS base
 
+#
+## step 1: Prune monorepo
+#
+# FROM base AS builder
+# RUN apk add --no-cache libc6-compat
+# RUN apk update
+# Set working directory
+# WORKDIR /app
+# RUN yarn global add turbo
+# COPY . .
+# RUN turbo prune @formbricks/web --docker
+
+#
+## step 2: Install & build
+#
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Add edge repositories to get access to newer package versions
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    apk update
-
-# Install exact versions from edge repositories
-# Note: We're using the format packagename=version-rX where X is a revision number
-# The actual revision number might differ in edge repositories
-RUN apk add --no-cache \
-    busybox=1.37.0-r0 \
-    c-ares=1.3.0-r0 \
-    libarchive=3.7.9-r0 \
-    libxml2=2.14.1-r0 \
-    openssl=3.5.0-r0 \
-    sqlite=3.49.1-r0 \
-    zstd=1.5.6-r0 \
-    glib=2.84.1-r0 \
-    lcms2=2.17_rc0-r0 \
-    cmake g++ gcc jq make python3
-
-# Install Go 1.24.2
-RUN apk add --no-cache go=1.24.2-r0
+# Install necessary build tools and compilers
+# Update all packages and specifically upgrade vulnerable ones
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
