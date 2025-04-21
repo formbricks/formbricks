@@ -15,7 +15,6 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main"      >> /etc/apk/repo
       libxml2=2.14.1-r0         \
       openssl=3.5.0-r0          \
       sqlite=3.49.1-r0          \
-      v8=12.9.66680202_pgo-r0   \
       zstd=1.5.6.7-r0
 
 #
