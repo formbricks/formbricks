@@ -7,7 +7,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
@@ -111,7 +111,7 @@ describe("SignupPage", () => {
     cleanup();
   });
 
-  it("renders the signup page with all components when signup is enabled", async () => {
+  test("renders the signup page with all components when signup is enabled", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
@@ -132,7 +132,7 @@ describe("SignupPage", () => {
     expect(screen.getByTestId("signup-form")).toBeInTheDocument();
   });
 
-  it("calls notFound when signup is disabled and no valid invite token is provided", async () => {
+  test("calls notFound when signup is disabled and no valid invite token is provided", async () => {
     // Mock the license check functions to return false
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
     vi.mocked(verifyInviteToken).mockImplementation(() => {
@@ -144,7 +144,7 @@ describe("SignupPage", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("calls notFound when invite token is invalid", async () => {
+  test("calls notFound when invite token is invalid", async () => {
     // Mock the license check functions to return false
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
     vi.mocked(verifyInviteToken).mockImplementation(() => {
@@ -156,7 +156,7 @@ describe("SignupPage", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("calls notFound when invite token is valid but invite is not found", async () => {
+  test("calls notFound when invite token is valid but invite is not found", async () => {
     // Mock the license check functions to return false
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
     vi.mocked(verifyInviteToken).mockReturnValue({
@@ -170,7 +170,7 @@ describe("SignupPage", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("renders the page with email from search params", async () => {
+  test("renders the page with email from search params", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);

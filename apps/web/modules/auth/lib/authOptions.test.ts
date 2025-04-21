@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { Provider } from "next-auth/providers/index";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
@@ -40,13 +40,13 @@ describe("authOptions", () => {
   describe("CredentialsProvider (credentials) - email/password login", () => {
     const credentialsProvider = getProviderById("credentials");
 
-    it("should throw error if credentials are not provided", async () => {
+    test("should throw error if credentials are not provided", async () => {
       await expect(credentialsProvider.options.authorize(undefined, {})).rejects.toThrow(
         "Invalid credentials"
       );
     });
 
-    it("should throw error if user not found", async () => {
+    test("should throw error if user not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const credentials = { email: mockUser.email, password: mockPassword };
@@ -56,7 +56,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should throw error if user has no password stored", async () => {
+    test("should throw error if user has no password stored", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -70,7 +70,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should throw error if password verification fails", async () => {
+    test("should throw error if password verification fails", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUserId,
         email: mockUser.email,
@@ -84,7 +84,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should successfully login when credentials are valid", async () => {
+    test("should successfully login when credentials are valid", async () => {
       const fakeUser = {
         id: mockUserId,
         email: mockUser.email,
@@ -108,7 +108,7 @@ describe("authOptions", () => {
     });
 
     describe("Two-Factor Backup Code login", () => {
-      it("should throw error if backup codes are missing", async () => {
+      test("should throw error if backup codes are missing", async () => {
         const mockUser = {
           id: mockUserId,
           email: "2fa@example.com",
@@ -130,13 +130,13 @@ describe("authOptions", () => {
   describe("CredentialsProvider (token) - Token-based email verification", () => {
     const tokenProvider = getProviderById("token");
 
-    it("should throw error if token is not provided", async () => {
+    test("should throw error if token is not provided", async () => {
       await expect(tokenProvider.options.authorize({}, {})).rejects.toThrow(
         "Either a user does not match the provided token or the token is invalid"
       );
     });
 
-    it("should throw error if token is invalid or user not found", async () => {
+    test("should throw error if token is invalid or user not found", async () => {
       const credentials = { token: "badtoken" };
 
       await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
@@ -144,7 +144,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should throw error if email is already verified", async () => {
+    test("should throw error if email is already verified", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
       const credentials = { token: createToken(mockUser.id, mockUser.email) };
@@ -154,7 +154,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should update user and verify email when token is valid", async () => {
+    test("should update user and verify email when token is valid", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({ id: mockUser.id, emailVerified: null });
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
@@ -175,7 +175,7 @@ describe("authOptions", () => {
 
   describe("Callbacks", () => {
     describe("jwt callback", () => {
-      it("should add profile information to token if user is found", async () => {
+      test("should add profile information to token if user is found", async () => {
         vi.spyOn(prisma.user, "findFirst").mockResolvedValue({
           id: mockUser.id,
           locale: mockUser.locale,
@@ -194,7 +194,7 @@ describe("authOptions", () => {
         });
       });
 
-      it("should return token unchanged if no existing user is found", async () => {
+      test("should return token unchanged if no existing user is found", async () => {
         vi.spyOn(prisma.user, "findFirst").mockResolvedValue(null);
 
         const token = { email: "nonexistent@example.com" };
@@ -207,7 +207,7 @@ describe("authOptions", () => {
     });
 
     describe("session callback", () => {
-      it("should add user profile to session", async () => {
+      test("should add user profile to session", async () => {
         const token = {
           id: "user6",
           profile: { id: "user6", email: "user6@example.com" },
@@ -223,7 +223,7 @@ describe("authOptions", () => {
     });
 
     describe("signIn callback", () => {
-      it("should throw error if email is not verified and email verification is enabled", async () => {
+      test("should throw error if email is not verified and email verification is enabled", async () => {
         const user = { ...mockUser, emailVerified: null };
         const account = { provider: "credentials" } as any;
         // EMAIL_VERIFICATION_DISABLED is imported from constants.
@@ -239,7 +239,7 @@ describe("authOptions", () => {
   describe("Two-Factor Authentication (TOTP)", () => {
     const credentialsProvider = getProviderById("credentials");
 
-    it("should throw error if TOTP code is missing when 2FA is enabled", async () => {
+    test("should throw error if TOTP code is missing when 2FA is enabled", async () => {
       const mockUser = {
         id: mockUserId,
         email: "2fa@example.com",
@@ -256,7 +256,7 @@ describe("authOptions", () => {
       );
     });
 
-    it("should throw error if two factor secret is missing", async () => {
+    test("should throw error if two factor secret is missing", async () => {
       const mockUser = {
         id: mockUserId,
         email: "2fa@example.com",

@@ -4,7 +4,7 @@ import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "react-hot-toast";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ShareSurveyLink } from "./index";
 
 const dummySurvey = {
@@ -91,7 +91,7 @@ describe("ShareSurveyLink", () => {
     cleanup();
   });
 
-  it("calls getUrl on mount and sets surveyUrl accordingly with singleUse enabled and default language", async () => {
+  test("calls getUrl on mount and sets surveyUrl accordingly with singleUse enabled and default language", async () => {
     // Inline mocks for this test
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
 
@@ -113,7 +113,7 @@ describe("ShareSurveyLink", () => {
     expect(url).not.toContain("lang=");
   });
 
-  it("appends language query when language is changed from default", async () => {
+  test("appends language query when language is changed from default", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn();
@@ -133,7 +133,7 @@ describe("ShareSurveyLink", () => {
     });
   });
 
-  it("preview button opens new window with preview query", async () => {
+  test("preview button opens new window with preview query", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn().mockReturnValue(`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`);
@@ -157,7 +157,7 @@ describe("ShareSurveyLink", () => {
     });
   });
 
-  it("copy button writes surveyUrl to clipboard and shows toast", async () => {
+  test("copy button writes surveyUrl to clipboard and shows toast", async () => {
     vi.mocked(getFormattedErrorMessage).mockReturnValue("common.copied_to_clipboard");
     vi.mocked(copySurveyLink).mockImplementation((url: string, newId: string) => `${url}?suId=${newId}`);
 
@@ -182,7 +182,7 @@ describe("ShareSurveyLink", () => {
     });
   });
 
-  it("download QR code button calls downloadQRCode", async () => {
+  test("download QR code button calls downloadQRCode", async () => {
     const dummyDownloadQRCode = vi.fn();
     vi.mocked(getFormattedErrorMessage).mockReturnValue("common.copied_to_clipboard");
     vi.mocked(useSurveyQRCode).mockReturnValue({ downloadQRCode: dummyDownloadQRCode } as any);
@@ -204,7 +204,7 @@ describe("ShareSurveyLink", () => {
     expect(dummyDownloadQRCode).toHaveBeenCalled();
   });
 
-  it("renders regenerate button when survey.singleUse.enabled is true and calls generateNewSingleUseLink", async () => {
+  test("renders regenerate button when survey.singleUse.enabled is true and calls generateNewSingleUseLink", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn();
@@ -225,7 +225,7 @@ describe("ShareSurveyLink", () => {
     });
   });
 
-  it("handles error when generating single-use link fails", async () => {
+  test("handles error when generating single-use link fails", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: undefined });
     vi.mocked(getFormattedErrorMessage).mockReturnValue("Failed to generate link");
 

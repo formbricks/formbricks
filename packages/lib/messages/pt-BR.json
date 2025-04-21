@@ -478,9 +478,9 @@
     "password_changed_email_heading": "Senha alterada",
     "password_changed_email_text": "Sua senha foi alterada com sucesso.",
     "password_reset_notify_email_subject": "Sua senha Formbricks foi alterada",
-    "powered_by_formbricks": "Desenvolvido por Formbricks",
     "privacy_policy": "Política de Privacidade",
     "reject": "Rejeitar",
+    "render_email_response_value_file_upload_response_link_not_included": "O link para o arquivo enviado não está incluído por motivos de privacidade de dados",
     "response_finished_email_subject": "Uma resposta para {surveyName} foi concluída ✅",
     "response_finished_email_subject_with_email": "{personEmail} acabou de completar sua pesquisa {surveyName} ✅",
     "schedule_your_meeting": "Agendar sua reunião",
@@ -972,6 +972,7 @@
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Salve seus filtros como um Segmento para usar em outras pesquisas",
       "segment_created_successfully": "Segmento criado com sucesso!",
       "segment_deleted_successfully": "Segmento deletado com sucesso!",
+      "segment_id": "ID do segmento",
       "segment_saved_successfully": "Segmento salvo com sucesso",
       "segment_updated_successfully": "Segmento atualizado com sucesso!",
       "segments_help_you_target_users_with_same_characteristics_easily": "Segmentos ajudam você a direcionar usuários com as mesmas características facilmente",
@@ -993,8 +994,7 @@
       "api_keys": {
         "add_api_key": "Adicionar chave de API",
         "add_permission": "Adicionar permissão",
-        "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks",
-        "only_organization_owners_and_managers_can_manage_api_keys": "Apenas proprietários e gerentes da organização podem gerenciar chaves de API"
+        "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks"
       },
       "billing": {
         "10000_monthly_responses": "10000 Respostas Mensais",
@@ -1422,6 +1422,8 @@
         "follow_ups_item_issue_detected_tag": "Problema detectado",
         "follow_ups_item_response_tag": "Qualquer resposta",
         "follow_ups_item_send_email_tag": "Enviar e-mail",
+        "follow_ups_modal_action_attach_response_data_description": "Adicionar os dados da resposta da pesquisa ao acompanhamento",
+        "follow_ups_modal_action_attach_response_data_label": "Anexar dados da resposta",
         "follow_ups_modal_action_body_label": "Corpo",
         "follow_ups_modal_action_body_placeholder": "Corpo do e-mail",
         "follow_ups_modal_action_email_content": "Conteúdo do e-mail",
