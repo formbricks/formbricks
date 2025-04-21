@@ -1,10 +1,10 @@
+import { segmentCache } from "@/lib/cache/segment";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { surveyCache } from "@/lib/survey/cache";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { doesSurveyHasOpenTextQuestion } from "@/modules/survey/lib/utils";
 import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 

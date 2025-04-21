@@ -1,4 +1,8 @@
+import { cache } from "@/lib/cache";
 import { insightCache } from "@/lib/cache/insight";
+import { INSIGHTS_PER_PAGE } from "@/lib/constants";
+import { responseCache } from "@/lib/response/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TInsightFilterCriteria,
   TInsightWithDocumentCount,
@@ -7,10 +11,6 @@ import {
 import { Insight, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";

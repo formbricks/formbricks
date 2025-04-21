@@ -1,6 +1,10 @@
 "use client";
 
 import { getDefaultEndingCard } from "@/app/lib/templates";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recall";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
@@ -25,10 +29,6 @@ import { Language, Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TConditionGroup,

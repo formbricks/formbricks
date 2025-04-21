@@ -7,7 +7,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FollowUpEmail } from "./follow-up";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   IMPRINT_URL: "https://example.com/imprint",

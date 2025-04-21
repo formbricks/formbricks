@@ -1,11 +1,11 @@
 "use client";
 
+import { recallToHeadline } from "@/lib/utils/recall";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
 interface HeadProps {

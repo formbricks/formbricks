@@ -2,15 +2,15 @@ import { ActionClassesTable } from "@/app/(app)/environments/[environmentId]/act
 import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/actions/components/ActionRowData";
 import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
+import { getActionClasses } from "@/lib/actionClass/service";
+import { getEnvironments } from "@/lib/environment/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const metadata: Metadata = {
   title: "Actions",

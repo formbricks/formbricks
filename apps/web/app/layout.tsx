@@ -1,11 +1,11 @@
 import { SentryProvider } from "@/app/sentry/SentryProvider";
+import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { TolgeeNextProvider } from "@/tolgee/client";
 import { getLocale } from "@/tolgee/language";
 import { getTolgee } from "@/tolgee/server";
 import { TolgeeStaticData } from "@tolgee/react";
 import { Metadata } from "next";
 import React from "react";
-import { IS_PRODUCTION, SENTRY_DSN } from "@formbricks/lib/constants";
 import "../modules/ui/globals.css";
 
 export const metadata: Metadata = {

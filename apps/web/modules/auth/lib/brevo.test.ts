@@ -1,15 +1,15 @@
+import { validateInputs } from "@/lib/utils/validate";
 import { Response } from "node-fetch";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { createBrevoCustomer } from "./brevo";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   BREVO_API_KEY: "mock_api_key",
   BREVO_LIST_ID: "123",
 }));
 
-vi.mock("@formbricks/lib/utils/validate", () => ({
+vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ describe("createBrevoCustomer", () => {
   });
 
   test("should return early if BREVO_API_KEY is not defined", async () => {
-    vi.doMock("@formbricks/lib/constants", () => ({
+    vi.doMock("@/lib/constants", () => ({
       BREVO_API_KEY: undefined,
       BREVO_LIST_ID: "123",
     }));

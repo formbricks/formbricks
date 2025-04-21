@@ -1,5 +1,17 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getEnvironment, getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import {
+  getMonthlyActiveOrganizationPeopleCount,
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+  getOrganizationsByUserId,
+} from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
 import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
@@ -7,18 +19,6 @@ import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-bann
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
-import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-  getOrganizationsByUserId,
-} from "@formbricks/lib/organization/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
 
 interface EnvironmentLayoutProps {
   environmentId: string;

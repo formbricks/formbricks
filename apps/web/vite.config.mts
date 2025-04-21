@@ -9,7 +9,7 @@ export default defineConfig({
     environment: "node",
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
-    setupFiles: ["../../packages/lib/vitestSetup.ts"],
+    setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
     coverage: {
       provider: "v8", // Use V8 as the coverage provider

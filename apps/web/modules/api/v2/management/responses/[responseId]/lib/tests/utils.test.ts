@@ -1,6 +1,6 @@
 import { environmentId, fileUploadQuestion, openTextQuestion, responseData } from "./__mocks__/utils.mock";
+import { deleteFile } from "@/lib/storage/service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { deleteFile } from "@formbricks/lib/storage/service";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
@@ -11,7 +11,7 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/storage/service", () => ({
+vi.mock("@/lib/storage/service", () => ({
   deleteFile: vi.fn(),
 }));
 
