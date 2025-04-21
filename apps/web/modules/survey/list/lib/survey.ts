@@ -623,7 +623,6 @@ export const getSurveyCount = reactCache(
           const surveyCount = await prisma.survey.count({
             where: {
               environmentId: environmentId,
-              createdBy: "",
             },
           });
 
