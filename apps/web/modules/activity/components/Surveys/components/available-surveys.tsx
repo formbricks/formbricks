@@ -19,7 +19,7 @@ export function AvailableSurveys(): React.JSX.Element {
       }
     })();
   }, []);
-  console.log(availableSurveys);
+
   return (
     <>
       {availableSurveys &&
