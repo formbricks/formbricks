@@ -7065,5 +7065,9 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     showLanguageSwitch: false,
     followUps: [],
     isBackButtonHidden: false,
+    description: "Demo Survey",
+    reward: {
+      enableReward: false,
+    },
   } as TSurvey;
 };

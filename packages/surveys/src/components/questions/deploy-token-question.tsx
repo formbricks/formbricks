@@ -1,9 +1,7 @@
-import { useUser } from "@account-kit/react";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
-import { LoginButton } from "@formbricks/web3/src/alchemy-wallet/components/LoginButton";
 import { getLocalizedValue } from "../../lib/i18n";
 import { getUpdatedTtc, useTtc } from "../../lib/ttc";
 import { BackButton } from "../buttons/back-button";
@@ -56,7 +54,6 @@ export function DeployTokenQuestion({
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", ""];
   }, [value]);
-  const user = useUser();
 
   const fields = [
     {
@@ -73,10 +70,6 @@ export function DeployTokenQuestion({
       id: "initialSupply",
       ...question.initialSupply,
       label: question.initialSupply.placeholder[languageCode],
-    },
-    {
-      id: "address",
-      label: "Address",
     },
     {
       id: "transactionDetails",
@@ -116,13 +109,6 @@ export function DeployTokenQuestion({
 
     onSubmit({ [question.id]: finalValue }, updatedTtc);
   };
-
-  useEffect(() => {
-    if (!user || !user.address) {
-      return;
-    }
-    handleChange("address", user.address);
-  }, [user, user?.address, handleChange]);
 
   const DeployTokenRef = useCallback(
     (currentElement: HTMLInputElement | null) => {
@@ -176,24 +162,6 @@ export function DeployTokenQuestion({
                 return;
               }
 
-              if (field.id === "address") {
-                return (
-                  <div key={field.id} className="space-y-1">
-                    <Label text={`${field.label}`} />
-                    <Input
-                      ref={index === 0 ? DeployTokenRef : null}
-                      key={field.id}
-                      required={true}
-                      value={user?.address}
-                      type={inputType}
-                      disabled
-                      tabIndex={isCurrent ? 0 : -1}
-                      aria-label={field.label}
-                    />
-                  </div>
-                );
-              }
-
               return (
                 <div key={field.id} className="space-y-1">
                   <Label text={`${field.label}*`} />
@@ -228,15 +196,11 @@ export function DeployTokenQuestion({
             }}
           />
         )}
-        {user && user.address ? (
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-          />
-        ) : (
-          <LoginButton />
-        )}
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
       </div>
     </form>
   );

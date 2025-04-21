@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export const ZBaseReward = z.object({
-  chainId: z.number(),
-  contractAddress: z.string(),
-  amount: z.string(),
-  decimals: z.number(),
-  name: z.string(),
-  logo: z.string(),
+  chainId: z.number().nullish(),
+  contractAddress: z.string().nullish(),
+  amount: z.string().nullish(),
+  decimals: z.number().nullish(),
+  name: z.string().nullish(),
+  logo: z.string().nullish(),
 });
 
 export type TBaseReward = z.infer<typeof ZBaseReward>;

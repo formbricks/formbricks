@@ -1,13 +1,11 @@
 import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-card";
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
-import { SurveyDescriptionCard } from "@/modules/survey/editor/components/survey-description-card";
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { SurveyVisibilityCard } from "@/modules/survey/editor/components/survey-visibility-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SurveyRewardCard } from "./survey-reward-card";
 
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
@@ -30,8 +28,6 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <SurveyDescriptionCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
-
       <SurveyVisibilityCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
@@ -63,8 +59,6 @@ export const SettingsView = ({
           environmentId={environment.id}
         />
       )}
-
-      <SurveyRewardCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 };

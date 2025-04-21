@@ -2,7 +2,7 @@
 
 import { ProBadge } from "@/modules/ui/components/pro-badge";
 import { useTranslate } from "@tolgee/react";
-import { BadgeDollarSignIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
+import { ALargeSmall, BadgeDollarSignIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
@@ -32,6 +32,11 @@ export const SurveyEditorTabs = ({
   const { t } = useTranslate();
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [
+      {
+        id: "intro",
+        label: t("common.intro"),
+        icon: <ALargeSmall className="h-5 w-5" />,
+      },
       {
         id: "questions",
         label: t("common.questions"),

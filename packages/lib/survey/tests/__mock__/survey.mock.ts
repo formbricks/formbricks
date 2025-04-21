@@ -245,6 +245,7 @@ export const mockOrganizationOutput: TOrganization = {
 
 export const mockSyncSurveyOutput: SurveyMock = {
   type: "app",
+  description: "test",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -279,6 +280,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
 
 export const mockSurveyOutput: SurveyMock = {
   type: "link",
+  description: "test",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -320,6 +322,7 @@ export const createSurveyInput: TSurveyCreateInput = {
 
 export const updateSurveyInput: TSurvey = {
   type: "link",
+  description: "test",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -337,6 +340,9 @@ export const updateSurveyInput: TSurvey = {
   followUps: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
+  reward: {
+    enableReward: false,
+  },
 };
 
 export const mockTransformedSurveyOutput = {
@@ -350,6 +356,7 @@ export const mockTransformedSyncSurveyOutput = {
 export const mockSurveyWithLogic: TSurvey = {
   ...mockSyncSurveyOutput,
   ...baseSurveyProperties,
+  description: "test",
   displayPercentage: null,
   segment: null,
   type: "link",

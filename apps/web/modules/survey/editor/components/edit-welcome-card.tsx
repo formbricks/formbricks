@@ -125,6 +125,18 @@ export const EditWelcomeCard = ({
                 selectedLanguageCode={selectedLanguageCode}
               />
             </div>
+            <div className="mt-3">
+              <QuestionFormInput
+                id="html"
+                value={localSurvey.welcomeCard.html}
+                label={t("common.description") + "*"}
+                localSurvey={localSurvey}
+                questionIdx={-1}
+                isInvalid={isInvalid}
+                updateSurvey={updateSurvey}
+                selectedLanguageCode={selectedLanguageCode}
+              />
+            </div>
 
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">

@@ -33,6 +33,8 @@ export const SurveyEditorPage = async (props) => {
     getResponseCountBySurveyId(params.surveyId),
   ]);
 
+  console.log("survey", survey);
+
   if (!project) {
     throw new Error(t("common.project_not_found"));
   }

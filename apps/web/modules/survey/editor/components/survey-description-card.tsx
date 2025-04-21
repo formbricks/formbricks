@@ -40,14 +40,14 @@ export const SurveyDescriptionCard = ({ localSurvey, setLocalSurvey }: SurveyDes
               {t("environments.surveys.edit.survey_description")}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.survey.edit.enter_a_description_to_tell_users_what_this_survey_is_about")}
+              {t("environments.surveys.edit.enter_a_description_to_tell_users_what_this_survey_is_about")}
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="pt-1 text-slate-600" />
-        <div className="p-3 pl-20 pt-1">
+        <div className="p-3 pt-1">
           <Input
             defaultValue={localSurvey.description}
             placeholder="Enter a description..."

@@ -14,6 +14,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { refetchProjectAction } from "../actions";
+import { IntroView } from "./intro-view";
 import { RewardsView } from "./rewards-view";
 
 interface SurveyEditorProps {
@@ -168,20 +169,10 @@ export const SurveyEditor = ({
           )}
 
           {activeView === "rewards" && project.styling.allowStyleOverwrite && (
-            <RewardsView
-              colors={colors}
-              environmentId={environment.id}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              project={localProject}
-              styling={styling ?? null}
-              setStyling={setStyling}
-              localStylingChanges={localStylingChanges}
-              setLocalStylingChanges={setLocalStylingChanges}
-              isUnsplashConfigured={isUnsplashConfigured}
-              isCxMode={isCxMode}
-            />
+            <RewardsView localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} isCxMode={isCxMode} />
           )}
+
+          {activeView === "intro" && <IntroView localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
 
           {activeView === "settings" && (
             <SettingsView

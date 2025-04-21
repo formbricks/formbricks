@@ -702,7 +702,6 @@ export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
   tokenName: ZToggleInputConfig,
   tokenSymbol: ZToggleInputConfig,
   initialSupply: ZToggleInputConfig,
-  address: ZToggleInputConfig,
   transactionDetails: ZToggleInputConfig,
 });
 
@@ -896,6 +895,7 @@ export const ZSurvey = z
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
     public: z.boolean().optional(),
+    reward: ZSurveyReward.nullable(),
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;
@@ -1489,9 +1489,6 @@ const isInvalidOperatorsForQuestionType = (
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
-      break;
-    case TSurveyQuestionTypeEnum.DeployToken:
-      isInvalidOperator = false;
       break;
     default:
       isInvalidOperator = true;
@@ -2391,7 +2388,7 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps" | "rewards";
+export type TSurveyEditorTabs = "intro" | "questions" | "settings" | "styling" | "followUps" | "rewards";
 
 export const ZSurveyQuestionSummaryOpenText = z.object({
   type: z.literal("openText"),

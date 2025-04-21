@@ -4,6 +4,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   id: "someUniqueId1",
+  description: "test",
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Minimal Survey",
@@ -42,4 +43,7 @@ export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   variables: [],
   followUps: [],
   isBackButtonHidden: false,
+  reward: {
+    enableReward: false,
+  },
 });
