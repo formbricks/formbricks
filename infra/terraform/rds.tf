@@ -40,7 +40,8 @@ module "rds-aurora" {
       cidr_blocks = module.vpc.private_subnets_cidr_blocks
     }
   }
-  performance_insights_enabled = true
+  performance_insights_enabled         = true
+  cluster_performance_insights_enabled = true
 
   backup_retention_period = 7
   apply_immediately       = true

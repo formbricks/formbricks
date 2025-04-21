@@ -478,9 +478,9 @@
     "password_changed_email_heading": "Password changed",
     "password_changed_email_text": "Your password has been changed successfully.",
     "password_reset_notify_email_subject": "Your Formbricks password has been changed",
-    "powered_by_formbricks": "Powered by Formbricks",
     "privacy_policy": "Privacy Policy",
     "reject": "Reject",
+    "render_email_response_value_file_upload_response_link_not_included": "Link to uploaded file is not included for data privacy reasons",
     "response_finished_email_subject": "A response for {surveyName} was completed ✅",
     "response_finished_email_subject_with_email": "{personEmail} just completed your {surveyName} survey ✅",
     "schedule_your_meeting": "Schedule your meeting",
@@ -789,6 +789,7 @@
         "no_api_keys_yet": "You don't have any API keys yet",
         "no_env_permissions_found": "No environment permissions found",
         "organization_access": "Organization Access",
+        "organization_access_description": "Select read or write privileges for organization-wide resources.",
         "permissions": "Permissions",
         "project_access": "Project Access",
         "secret": "Secret",
@@ -994,8 +995,7 @@
       "api_keys": {
         "add_api_key": "Add API key",
         "add_permission": "Add permission",
-        "api_keys_description": "Manage API keys to access Formbricks management APIs",
-        "only_organization_owners_and_managers_can_manage_api_keys": "Only organization owners and managers can manage API keys"
+        "api_keys_description": "Manage API keys to access Formbricks management APIs"
       },
       "billing": {
         "10000_monthly_responses": "10000 Monthly Responses",
@@ -1423,6 +1423,8 @@
         "follow_ups_item_issue_detected_tag": "Issue detected",
         "follow_ups_item_response_tag": "Any response",
         "follow_ups_item_send_email_tag": "Send email",
+        "follow_ups_modal_action_attach_response_data_description": "Add the data of the survey response to the follow-up",
+        "follow_ups_modal_action_attach_response_data_label": "Attach response data",
         "follow_ups_modal_action_body_label": "Body",
         "follow_ups_modal_action_body_placeholder": "Body of the email",
         "follow_ups_modal_action_email_content": "Email content",

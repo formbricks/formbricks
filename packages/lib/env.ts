@@ -30,7 +30,6 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
     FORMBRICKS_API_HOST: z
       .string()
       .url()
@@ -154,7 +153,6 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
-    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     FORMBRICKS_API_HOST: process.env.FORMBRICKS_API_HOST,
     FORMBRICKS_ENVIRONMENT_ID: process.env.FORMBRICKS_ENVIRONMENT_ID,
     GITHUB_ID: process.env.GITHUB_ID,

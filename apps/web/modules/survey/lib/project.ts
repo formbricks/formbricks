@@ -8,11 +8,17 @@ import { projectCache } from "@formbricks/lib/project/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const getProjectByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<Project | null> =>
+type ProjectWithTeam = Project & {
+  teamIds: string[];
+};
+
+export const getProjectWithTeamIdsByEnvironmentId = reactCache(
+  async (environmentId: string): Promise<ProjectWithTeam | null> =>
     cache(
       async () => {
-        let projectPrisma;
+        let projectPrisma: Prisma.ProjectGetPayload<{
+          include: { projectTeams: { select: { teamId: true } } };
+        }> | null = null;
 
         try {
           projectPrisma = await prisma.project.findFirst({
@@ -23,9 +29,25 @@ export const getProjectByEnvironmentId = reactCache(
                 },
               },
             },
+            include: {
+              projectTeams: {
+                select: {
+                  teamId: true,
+                },
+              },
+            },
           });
 
-          return projectPrisma;
+          if (!projectPrisma) {
+            return null;
+          }
+
+          const teamIds = projectPrisma.projectTeams.map((projectTeam) => projectTeam.teamId);
+
+          return {
+            ...projectPrisma,
+            teamIds,
+          };
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             logger.error(error, "Error fetching project by environment id");

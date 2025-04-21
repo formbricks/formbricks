@@ -127,7 +127,7 @@ const nextConfig = {
       },
       {
         // matching all API routes
-        source: "/api/v1/client/:path*",
+        source: "/api/(v1|v2)/client/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Origin", value: "*" },
@@ -300,36 +300,22 @@ nextConfig.images.remotePatterns.push({
 });
 
 const sentryOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
+// For all available options, see:
+// https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  // Suppresses source map uploading logs during build
-  silent: true,
+org: "formbricks",
+project: "formbricks-cloud",
 
-  org: "formbricks",
-  project: "formbricks-cloud",
+// Only print logs for uploading source maps in CI
+silent: true,
+
+// Upload a larger set of source maps for prettier stack traces (increases build time)
+widenClientFileUpload: true,
+
+// Automatically tree-shake Sentry logger statements to reduce bundle size
+disableLogger: true,
 };
 
-const sentryConfig = {
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+const exportConfig = (process.env.SENTRY_DSN && process.env.NODE_ENV === "production") ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
-
-  // Transpiles SDK to be compatible with IE11 (increases bundle size)
-  transpileClientSDK: true,
-
-  // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-  tunnelRoute: "/monitoring",
-
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-};
-
-const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
-export default nextConfig;
+export default exportConfig;

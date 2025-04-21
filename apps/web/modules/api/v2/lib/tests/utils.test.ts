@@ -1,4 +1,5 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import * as Sentry from "@sentry/nextjs";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { logger } from "@formbricks/logger";
@@ -8,6 +9,16 @@ const mockRequest = new Request("http://localhost");
 
 // Add the request id header
 mockRequest.headers.set("x-request-id", "123");
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+// Mock SENTRY_DSN constant
+vi.mock("@formbricks/lib/constants", () => ({
+  SENTRY_DSN: "mocked-sentry-dsn",
+  IS_PRODUCTION: true,
+}));
 
 describe("utils", () => {
   describe("handleApiError", () => {
@@ -253,6 +264,46 @@ describe("utils", () => {
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
+    });
+
+    test("log API error details with SENTRY_DSN set", () => {
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      // Mock Sentry's captureException method
+      vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
+
+      const mockRequest = new Request("http://localhost/api/test");
+      mockRequest.headers.set("x-request-id", "123");
+
+      const error: ApiErrorResponseV2 = {
+        type: "internal_server_error",
+        details: [{ field: "server", issue: "error occurred" }],
+      };
+
+      logApiError(mockRequest, error);
+
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith({
+        correlationId: "123",
+        error,
+      });
+
+      // Verify error was called on the child logger
+      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Verify Sentry.captureException was called
+      expect(Sentry.captureException).toHaveBeenCalled();
 
       // Restore the original method
       logger.withContext = originalWithContext;

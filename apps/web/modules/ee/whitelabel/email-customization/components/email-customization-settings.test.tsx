@@ -7,7 +7,7 @@ import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EmailCustomizationSettings } from "./email-customization-settings";
@@ -48,7 +48,7 @@ describe("EmailCustomizationSettings", () => {
     cleanup();
   });
 
-  it("renders the logo if one is set and shows Replace/Remove buttons", () => {
+  test("renders the logo if one is set and shows Replace/Remove buttons", () => {
     render(<EmailCustomizationSettings {...defaultProps} />);
 
     const logoImage = screen.getByTestId("email-customization-preview-image");
@@ -64,7 +64,7 @@ describe("EmailCustomizationSettings", () => {
     expect(screen.getByTestId("remove-logo-button")).toBeInTheDocument();
   });
 
-  it("calls removeOrganizationEmailLogoUrlAction when removing logo", async () => {
+  test("calls removeOrganizationEmailLogoUrlAction when removing logo", async () => {
     vi.mocked(removeOrganizationEmailLogoUrlAction).mockResolvedValue({
       data: true,
     });
@@ -81,7 +81,7 @@ describe("EmailCustomizationSettings", () => {
     });
   });
 
-  it("calls updateOrganizationEmailLogoUrlAction after uploading and clicking save", async () => {
+  test("calls updateOrganizationEmailLogoUrlAction after uploading and clicking save", async () => {
     vi.mocked(uploadFile).mockResolvedValueOnce({
       uploaded: true,
       url: "https://example.com/new-uploaded-logo.png",
@@ -111,7 +111,7 @@ describe("EmailCustomizationSettings", () => {
     });
   });
 
-  it("sends test email if a logo is saved and the user clicks 'Send Test Email'", async () => {
+  test("sends test email if a logo is saved and the user clicks 'Send Test Email'", async () => {
     vi.mocked(sendTestEmailAction).mockResolvedValue({
       data: { success: true },
     });
@@ -127,13 +127,13 @@ describe("EmailCustomizationSettings", () => {
     });
   });
 
-  it("displays upgrade prompt if hasWhiteLabelPermission is false", () => {
+  test("displays upgrade prompt if hasWhiteLabelPermission is false", () => {
     render(<EmailCustomizationSettings {...defaultProps} hasWhiteLabelPermission={false} />);
     // Check for text about upgrading
     expect(screen.getByText(/customize_email_with_a_higher_plan/i)).toBeInTheDocument();
   });
 
-  it("shows read-only warning if isReadOnly is true", () => {
+  test("shows read-only warning if isReadOnly is true", () => {
     render(<EmailCustomizationSettings {...defaultProps} isReadOnly />);
 
     expect(

@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TTag } from "@formbricks/types/tags";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 import { ResponseTagsWrapper } from "./ResponseTagsWrapper";
@@ -62,7 +62,7 @@ describe("ResponseTagsWrapper", () => {
     cleanup();
   });
 
-  it("renders settings button when not readOnly and navigates on click", async () => {
+  test("renders settings button when not readOnly and navigates on click", async () => {
     render(
       <ResponseTagsWrapper
         tags={dummyTags}
@@ -78,7 +78,7 @@ describe("ResponseTagsWrapper", () => {
     expect(dummyRouterPush).toHaveBeenCalledWith(`/environments/${dummyEnvironmentId}/project/tags`);
   });
 
-  it("does not render settings button when readOnly", () => {
+  test("does not render settings button when readOnly", () => {
     render(
       <ResponseTagsWrapper
         tags={dummyTags}
@@ -92,7 +92,7 @@ describe("ResponseTagsWrapper", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("renders provided tags", () => {
+  test("renders provided tags", () => {
     render(
       <ResponseTagsWrapper
         tags={dummyTags}
@@ -108,7 +108,7 @@ describe("ResponseTagsWrapper", () => {
     expect(screen.getByText("Tag Two")).toBeInTheDocument();
   });
 
-  it("calls deleteTagOnResponseAction on tag delete success", async () => {
+  test("calls deleteTagOnResponseAction on tag delete success", async () => {
     vi.mocked(deleteTagOnResponseAction).mockResolvedValueOnce({ data: "deleted" } as any);
     render(
       <ResponseTagsWrapper
@@ -128,7 +128,7 @@ describe("ResponseTagsWrapper", () => {
     });
   });
 
-  it("shows toast error on deleteTagOnResponseAction error", async () => {
+  test("shows toast error on deleteTagOnResponseAction error", async () => {
     vi.mocked(deleteTagOnResponseAction).mockRejectedValueOnce(new Error("delete error"));
     render(
       <ResponseTagsWrapper
@@ -149,7 +149,7 @@ describe("ResponseTagsWrapper", () => {
     });
   });
 
-  it("creates a new tag via TagsCombobox and calls updateFetchedResponses on success", async () => {
+  test("creates a new tag via TagsCombobox and calls updateFetchedResponses on success", async () => {
     vi.mocked(createTagAction).mockResolvedValueOnce({ data: { id: "newTagId", name: "NewTag" } } as any);
     vi.mocked(createTagToResponseAction).mockResolvedValueOnce({ data: "tagAdded" } as any);
     render(
@@ -174,7 +174,7 @@ describe("ResponseTagsWrapper", () => {
     });
   });
 
-  it("handles createTagAction failure and shows toast error", async () => {
+  test("handles createTagAction failure and shows toast error", async () => {
     vi.mocked(createTagAction).mockResolvedValueOnce({
       error: { details: [{ issue: "Unique constraint failed on the fields" }] },
     } as any);
@@ -198,7 +198,7 @@ describe("ResponseTagsWrapper", () => {
     });
   });
 
-  it("calls addTag correctly via TagsCombobox", async () => {
+  test("calls addTag correctly via TagsCombobox", async () => {
     vi.mocked(createTagToResponseAction).mockResolvedValueOnce({ data: "tagAdded" } as any);
     render(
       <ResponseTagsWrapper
@@ -218,7 +218,7 @@ describe("ResponseTagsWrapper", () => {
     });
   });
 
-  it("clears tagIdToHighlight after timeout", async () => {
+  test("clears tagIdToHighlight after timeout", async () => {
     vi.useFakeTimers();
 
     render(

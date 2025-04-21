@@ -18,7 +18,6 @@ export const WEBAPP_URL =
 export const SURVEY_URL = env.SURVEY_URL;
 
 // encryption keys
-export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
