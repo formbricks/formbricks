@@ -46,7 +46,7 @@ export const SurveyEditor = ({
   isSurveyFollowUpsAllowed = false,
   userEmail,
 }: SurveyEditorProps) => {
-  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
+  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("intro");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
