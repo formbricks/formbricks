@@ -123,7 +123,7 @@
     "otplib": "12.0.1",
     "papaparse": "5.5.2",
     "postcss": "8.5.3",
-    "posthog-js": "1.235.0",
+    "posthog-js": "1.236.3",
     "posthog-node": "4.11.3",
     "prismjs": "1.30.0",
     "qrcode": "1.5.4",
