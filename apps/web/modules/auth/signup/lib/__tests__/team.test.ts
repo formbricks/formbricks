@@ -8,12 +8,12 @@ import {
   MOCK_TEAM_USER,
 } from "./__mocks__/team-mocks";
 import { teamCache } from "@/lib/cache/team";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { projectCache } from "@/lib/project/cache";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { OrganizationRole } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { createDefaultTeamMembership, createTeamMembership } from "../team";
 
 // Setup all mocks
@@ -30,7 +30,7 @@ const setupMocks = () => {
     },
   }));
 
-  vi.mock("@formbricks/lib/constants", () => ({
+  vi.mock("@/lib/constants", () => ({
     DEFAULT_TEAM_ID: "team-123",
     DEFAULT_ORGANIZATION_ID: "org-123",
   }));
@@ -45,13 +45,13 @@ const setupMocks = () => {
     },
   }));
 
-  vi.mock("@formbricks/lib/project/cache", () => ({
+  vi.mock("@/lib/project/cache", () => ({
     projectCache: {
       revalidate: vi.fn(),
     },
   }));
 
-  vi.mock("@formbricks/lib/membership/service", () => ({
+  vi.mock("@/lib/membership/service", () => ({
     getMembershipByUserIdOrganizationId: vi.fn(),
   }));
 

@@ -62,11 +62,8 @@ export default defineConfig({
         "modules/survey/lib/client-utils.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
-<<<<<<< HEAD
         "modules/auth/signup/**/*.ts",
-=======
         "modules/survey/follow-ups/components/follow-up-item.tsx",
->>>>>>> a32b213ca5d00e33050baf41a8eab9c37d44daac
         "modules/ee/contacts/segments/lib/**/*.ts",
         "modules/ee/contacts/segments/components/segment-settings.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
