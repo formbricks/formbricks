@@ -12,8 +12,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main"    >> /etc/apk/reposit
       openssl~3.5.0    \
       sqlite~3.49.1    \
       zstd~1.5.6       \
-      glib~2.84.1      \
-      lcms2~2.17rc0    \
+      glib~2.84.1      
  && rm -rf /var/cache/apk/*
 
 # ─────────────────────────────────────────────────────────
