@@ -10,7 +10,7 @@ datasource db {
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
-  binaryTargets   = ["native", "linux-musl-arm64-openssl-1.1.x"]
+  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 // generator dbml {
