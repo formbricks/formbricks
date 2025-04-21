@@ -89,7 +89,7 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
+        uses: depot/build-push-action@v1 # v1.14.0
         with:
           project: tw0fqmsx3c
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
