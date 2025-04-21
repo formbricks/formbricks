@@ -1,10 +1,10 @@
 // @ts-nocheck // We can remove this when we update the prisma client and the typescript version
 // if we don't add this we get build errors with prisma due to type-nesting
+import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import * as Sentry from "@sentry/nextjs";
 import { ZodCustomIssue, ZodIssue } from "zod";
-import { IS_PRODUCTION, SENTRY_DSN } from "@formbricks/lib/constants";
 import { logger } from "@formbricks/logger";
 
 export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
