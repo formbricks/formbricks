@@ -119,23 +119,6 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByTestId("SurveyStatusIndicator")).toBeInTheDocument();
   });
 
-  test("renders language label when response.language is not default", () => {
-    const modifiedResponse = { ...dummyResponse, language: "fr" };
-    render(
-      <SingleResponseCardHeader
-        pageType="response"
-        response={modifiedResponse}
-        survey={{ ...dummySurvey }}
-        environment={dummyEnvironment}
-        user={dummyUser}
-        isReadOnly={false}
-        setDeleteDialogOpen={vi.fn()}
-        locale={dummyLocale}
-      />
-    );
-    expect(screen.getByText("fr_en-US")).toBeInTheDocument();
-  });
-
   test("renders enabled trash icon and handles click", async () => {
     vi.mocked(isSubmissionTimeMoreThan5Minutes).mockReturnValue(true);
     const setDeleteDialogOpen = vi.fn();

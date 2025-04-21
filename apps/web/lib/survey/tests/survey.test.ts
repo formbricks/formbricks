@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
+import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { Prisma } from "@prisma/client";
-import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, test } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
