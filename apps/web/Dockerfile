@@ -1,18 +1,19 @@
 FROM node:22-alpine3.21 AS base
 
+# enable edge repos for newer packages
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main"    >> /etc/apk/repositories \
  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
  && apk update \
  && apk add --no-cache \
-      busybox=1.37.0* \
-      c-ares=1.3.*    \
-      libarchive=3.7.9* \
-      libxml2=2.14.*  \
-      openssl=3.5.*   \
-      sqlite=3.49.*   \
-      zstd=1.5.6*     \
-      glib=2.84.*     \
-      lcms2=2.17*     \
+      busybox~1.37.0   \
+      c-ares~1.3.0     \
+      libarchive~3.7.9 \
+      libxml2~2.14.1   \
+      openssl~3.5.0    \
+      sqlite~3.49.1    \
+      zstd~1.5.6       \
+      glib~2.84.1      \
+      lcms2~2.17rc0    \
  && rm -rf /var/cache/apk/*
 
 # ─────────────────────────────────────────────────────────
