@@ -24,7 +24,7 @@ RUN corepack enable
 # Install necessary build tools and compilers
 # Update all packages and specifically upgrade vulnerable ones
 RUN apk update && \
-    apk add --no-cache busybox=1.37.0-r0 && \
+    apk add --no-cache busybox=1.37.0-r12 && \
     apk add --no-cache cmake g++ gcc jq make openssl python3
 
 # BuildKit secret handling without hardcoded fallback values
