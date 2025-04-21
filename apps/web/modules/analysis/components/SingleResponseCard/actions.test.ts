@@ -9,7 +9,7 @@ import {
   getProjectIdFromResponseNoteId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import {
   createResponseNote,
@@ -86,7 +86,7 @@ vi.mock("@/lib/utils/action-client", () => ({
 }));
 
 describe("createTagAction", () => {
-  it("successfully creates a tag", async () => {
+  test("successfully creates a tag", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValueOnce("org1");
     await createTagAction({ ...dummyTagInput, ...dummyCtx });
@@ -98,7 +98,7 @@ describe("createTagAction", () => {
 });
 
 describe("createTagToResponseAction", () => {
-  it("adds tag to response when environments match", async () => {
+  test("adds tag to response when environments match", async () => {
     vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
     vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
     await createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
@@ -111,7 +111,7 @@ describe("createTagToResponseAction", () => {
     );
   });
 
-  it("throws error when environments do not match", async () => {
+  test("throws error when environments do not match", async () => {
     vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
     vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
     await expect(createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
@@ -121,7 +121,7 @@ describe("createTagToResponseAction", () => {
 });
 
 describe("deleteTagOnResponseAction", () => {
-  it("deletes tag on response when environments match", async () => {
+  test("deletes tag on response when environments match", async () => {
     vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
     vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
     await deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
@@ -134,7 +134,7 @@ describe("deleteTagOnResponseAction", () => {
     );
   });
 
-  it("throws error when environments do not match", async () => {
+  test("throws error when environments do not match", async () => {
     vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
     vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
     await expect(deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
@@ -144,7 +144,7 @@ describe("deleteTagOnResponseAction", () => {
 });
 
 describe("deleteResponseAction", () => {
-  it("deletes response successfully", async () => {
+  test("deletes response successfully", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     await deleteResponseAction({ ...dummyResponseIdInput, ...dummyCtx });
     expect(checkAuthorizationUpdated).toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe("deleteResponseAction", () => {
 });
 
 describe("updateResponseNoteAction", () => {
-  it("updates response note successfully", async () => {
+  test("updates response note successfully", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     await updateResponseNoteAction({ ...dummyResponseNoteInput, ...dummyCtx });
     expect(checkAuthorizationUpdated).toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe("updateResponseNoteAction", () => {
 });
 
 describe("resolveResponseNoteAction", () => {
-  it("resolves response note successfully", async () => {
+  test("resolves response note successfully", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     await resolveResponseNoteAction({ responseNoteId: "note1", ...dummyCtx });
     expect(checkAuthorizationUpdated).toHaveBeenCalled();
@@ -180,7 +180,7 @@ describe("resolveResponseNoteAction", () => {
 });
 
 describe("createResponseNoteAction", () => {
-  it("creates a response note successfully", async () => {
+  test("creates a response note successfully", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     await createResponseNoteAction({ ...dummyCreateNoteInput, ...dummyCtx });
     expect(checkAuthorizationUpdated).toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe("createResponseNoteAction", () => {
 });
 
 describe("getResponseAction", () => {
-  it("retrieves response successfully", async () => {
+  test("retrieves response successfully", async () => {
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
     await getResponseAction({ ...dummyGetResponseInput, ...dummyCtx });
     expect(checkAuthorizationUpdated).toHaveBeenCalled();

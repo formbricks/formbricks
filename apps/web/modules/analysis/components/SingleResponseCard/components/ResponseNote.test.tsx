@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TResponseNote } from "@formbricks/types/responses";
 import { TUser } from "@formbricks/types/user";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -84,7 +84,7 @@ describe("ResponseNotes", () => {
     cleanup();
   });
 
-  it("renders collapsed view when isOpen is false", () => {
+  test("renders collapsed view when isOpen is false", () => {
     render(
       <ResponseNotes
         user={dummyUser}
@@ -99,7 +99,7 @@ describe("ResponseNotes", () => {
     expect(screen.getByText(/note/i)).toBeInTheDocument();
   });
 
-  it("opens panel on click when collapsed", async () => {
+  test("opens panel on click when collapsed", async () => {
     render(
       <ResponseNotes
         user={dummyUser}
@@ -115,7 +115,7 @@ describe("ResponseNotes", () => {
     expect(setIsOpen).toHaveBeenCalledWith(true);
   });
 
-  it("submits a new note", async () => {
+  test("submits a new note", async () => {
     vi.mocked(createResponseNoteAction).mockResolvedValueOnce("createdNote" as any);
     render(
       <ResponseNotes
@@ -140,7 +140,7 @@ describe("ResponseNotes", () => {
     });
   });
 
-  it("edits an existing note", async () => {
+  test("edits an existing note", async () => {
     vi.mocked(updateResponseNoteAction).mockResolvedValueOnce("updatedNote" as any);
     render(
       <ResponseNotes
@@ -169,7 +169,7 @@ describe("ResponseNotes", () => {
     });
   });
 
-  it("resolves a note", async () => {
+  test("resolves a note", async () => {
     vi.mocked(resolveResponseNoteAction).mockResolvedValueOnce(undefined);
     render(
       <ResponseNotes

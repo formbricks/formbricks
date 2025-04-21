@@ -7,6 +7,7 @@ import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
@@ -45,6 +46,7 @@ interface SurveyEditorProps {
   projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
+  teamMemberDetails: TFollowUpEmailToUser[];
 }
 
 export const SurveyEditor = ({
@@ -69,6 +71,7 @@ export const SurveyEditor = ({
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
+  teamMemberDetails,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -238,6 +241,7 @@ export const SurveyEditor = ({
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               userEmail={userEmail}
+              teamMemberDetails={teamMemberDetails}
               locale={locale}
             />
           )}

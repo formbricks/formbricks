@@ -3,7 +3,7 @@ import { getTolgee } from "@/tolgee/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TolgeeInstance } from "@tolgee/react";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import RootLayout from "./layout";
 
 // Mock dependencies for the layout
@@ -81,7 +81,7 @@ describe("RootLayout", () => {
     process.env.VERCEL = "1";
   });
 
-  it("renders the layout with the correct structure and providers", async () => {
+  test("renders the layout with the correct structure and providers", async () => {
     const fakeLocale = "en-US";
     // Mock getLocale to resolve to a fake locale
     vi.mocked(getLocale).mockResolvedValue(fakeLocale);
