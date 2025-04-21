@@ -21,11 +21,33 @@ FROM base AS installer
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Install necessary build tools and compilers
-# Update all packages and specifically upgrade vulnerable ones
-RUN apk update && \
-    apk add --no-cache busybox=1.37.0-r12 && \
-    apk add --no-cache cmake g++ gcc jq make openssl python3
+
+# Install specific package versions
+# Note: Some versions may require adding additional repositories
+RUN apk add --no-cache \
+    # Core system packages
+    busybox=1.37.0 \
+    c-ares=1.3.0 \
+    libarchive=3.7.9 \
+    libxml2=2.14.1 \
+    openssl=3.5.0 \
+    sqlite=3.49.1 \
+    zstd=1.5.6 \
+    glib=2.84.1 \
+    # Additional build tools
+    cmake g++ gcc jq make python3 \
+    # Add any other specific packages you need
+    lcms2=2.17_rc0
+
+# Install Go 1.24.2
+RUN apk add --no-cache go=1.24.2
+
+# For packages that need to be installed via npm/other package managers
+RUN npm install google-protobuf@1.36.6
+
+# For v8, which might require a special installation approach
+# This is just a placeholder - actual installation might differ
+RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main --no-cache v8=12.9.66680202
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
