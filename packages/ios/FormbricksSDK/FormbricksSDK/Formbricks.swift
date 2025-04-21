@@ -91,6 +91,11 @@ import Network
             return
         }
         
+        if let existing = userManager?.userId, !existing.isEmpty {
+            logger?.error("A userId is already set (\"\(existing)\") – please call Formbricks.logout() before setting a new one.")
+            return
+        }
+        
         userManager?.set(userId: userId)
     }
     
