@@ -6,23 +6,29 @@ FROM base AS installer
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Add edge repositories
+# Add edge repositories to get access to newer package versions
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
     apk update
 
-# For debugging: check available versions of each package
-RUN echo "Available versions:" && \
-    apk policy busybox && apk policy c-ares && apk policy libarchive && \
-    apk policy libxml2 && apk policy openssl && apk policy sqlite && \
-    apk policy zstd && apk policy glib && apk policy lcms2
-
-# Then install packages with specific versions
+# Install exact versions from edge repositories
+# Note: We're using the format packagename=version-rX where X is a revision number
+# The actual revision number might differ in edge repositories
 RUN apk add --no-cache \
-    busybox=1.37.0 \
-    c-ares=1.3.0 \
-    # Rest of your packages...
+    busybox=1.37.0-r0 \
+    c-ares=1.3.0-r0 \
+    libarchive=3.7.9-r0 \
+    libxml2=2.14.1-r0 \
+    openssl=3.5.0-r0 \
+    sqlite=3.49.1-r0 \
+    zstd=1.5.6-r0 \
+    glib=2.84.1-r0 \
+    lcms2=2.17_rc0-r0 \
+    cmake g++ gcc jq make python3
+
+# Install Go 1.24.2
+RUN apk add --no-cache go=1.24.2-r0
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
