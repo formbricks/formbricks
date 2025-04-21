@@ -15,13 +15,13 @@ export const useSendERC20 = ({ address }: Props) => {
   const { token } = useERC20({ address });
 
   const send = useCallback(
-    async (to: string, quantity: number) => {
+    async (to: string, amount: number) => {
       if (!signer || !token) return;
       const address = await signer.getAddress();
       const decimals = await token.decimals();
       const input = await token.transfer.populateTransaction(
         to,
-        parseUnits(quantity.toString(), parseInt(decimals.toString(), 10))
+        parseUnits(amount.toString(), parseInt(decimals.toString(), 10))
       );
 
       input.from = address;

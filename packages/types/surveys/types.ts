@@ -814,6 +814,7 @@ export const ZSurvey = z
     createdAt: z.date(),
     updatedAt: z.date(),
     name: z.string(),
+    description: z.string(),
     type: ZSurveyType,
     environmentId: z.string(),
     createdBy: z.string().nullable(),
@@ -1480,6 +1481,11 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.ContactInfo:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.DeployToken:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }

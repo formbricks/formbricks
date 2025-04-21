@@ -301,6 +301,7 @@
     "projects": "Projects",
     "projects_limit_reached": "Projects limit reached",
     "quantity": "Quantity",
+    "quest": "Quest",
     "question": "Question",
     "question_id": "Question ID",
     "questions": "Questions",
@@ -352,6 +353,7 @@
     "styling": "Styling",
     "submit": "Submit",
     "summary": "Summary",
+    "survey": "Survey",
     "survey_completed": "Engagement completed.",
     "survey_id": "Engagement ID",
     "survey_languages": "Engagement Languages",
@@ -392,6 +394,7 @@
     "user": "User",
     "user_id": "User ID",
     "user_not_found": "User not found",
+    "value": "Value",
     "variable": "Variable",
     "variables": "Variables",
     "verified_address": "Verified Addres",
@@ -1399,6 +1402,7 @@
         "ending_card": "Ending card",
         "ending_card_used_in_logic": "This ending card is used in logic of question {questionIndex}.",
         "ends_with": "Ends with",
+        "enter_a_description_to_tell_users_what_this_survey_is_about": "Enter a description to tell users what this survey is about",
         "equals": "Equals",
         "equals_one_of": "Equals one of",
         "error_publishing_survey": "An error occured while publishing the engagement.",
@@ -1611,6 +1615,7 @@
         "survey_already_answered_subheading": "You can only use this link once.",
         "survey_completed_heading": "Engagement Completed",
         "survey_completed_subheading": "This free & open-source engagement has been closed",
+        "survey_description": "Survey Description",
         "survey_display_settings": "Engagement Display Settings",
         "survey_make_public": "Make engagement public and searchable",
         "survey_make_public_description": "Allow other users to follow you and search your engagements and participate",
@@ -1882,7 +1887,7 @@
         "success": "Success!"
       },
       "form": {
-        "amount_usdc": "Amount (USDC)",
+        "amount": "Amount",
         "error": {
           "address_required": "Address is required",
           "amount_required": "Amount is required",
@@ -1891,7 +1896,9 @@
           "min_amount": "Amount must be at least 0.01",
           "positive_amount": "Amount must be greater than zero"
         },
-        "recipient_address": "Recipient Address"
+        "recipient_address": "Recipient Address",
+        "token": "Token",
+        "token_address": "Token Address"
       },
       "login": "Login",
       "modal": {

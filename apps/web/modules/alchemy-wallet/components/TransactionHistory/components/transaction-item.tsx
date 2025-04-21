@@ -4,6 +4,7 @@ import {
   TotalERC20,
   TotalERC1155,
 } from "@wonderchain/sdk/dist/blockscout-client";
+import { formatUnits } from "ethers";
 import { SendIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -41,7 +42,7 @@ export function TransactionItem({ transfer }: TransactionItemProps) {
           icon: <SendIcon className="h-4 w-4" strokeWidth={2} />,
           actionText: `Token Minted`,
           amountText: isERC20TotalOrERC1155Total(transfer.total)
-            ? `+ ${transfer.total.value} ${transfer.token.symbol}`
+            ? `+ ${formatUnits(transfer.total.value, parseInt(transfer.total.decimals, 10))} ${transfer.token.symbol}`
             : "",
           tag: "Survey Reward",
           color: "text-green-600",
