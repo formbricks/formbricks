@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SentryProvider } from "./SentryProvider";
 
 vi.mock("@sentry/nextjs", async () => {
@@ -22,7 +22,7 @@ describe("SentryProvider", () => {
     cleanup();
   });
 
-  it("calls Sentry.init when sentryDsn is provided", () => {
+  test("calls Sentry.init when sentryDsn is provided", () => {
     const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
@@ -47,7 +47,7 @@ describe("SentryProvider", () => {
     );
   });
 
-  it("does not call Sentry.init when sentryDsn is not provided", () => {
+  test("does not call Sentry.init when sentryDsn is not provided", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
@@ -59,7 +59,7 @@ describe("SentryProvider", () => {
     expect(initSpy).not.toHaveBeenCalled();
   });
 
-  it("renders children", () => {
+  test("renders children", () => {
     const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     render(
       <SentryProvider sentryDsn={sentryDsn}>
@@ -69,7 +69,7 @@ describe("SentryProvider", () => {
     expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
   });
 
-  it("processes beforeSend correctly", () => {
+  test("processes beforeSend correctly", () => {
     const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 

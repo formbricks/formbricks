@@ -1,6 +1,6 @@
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyCard } from "../survey-card";
 
 // Mock constants
@@ -52,7 +52,7 @@ describe("SurveyCard", () => {
     cleanup();
   });
 
-  it("renders survey card with a draft link when not readOnly", () => {
+  test("renders survey card with a draft link when not readOnly", () => {
     render(
       // ...existing code for test wrapper if needed...
       <SurveyCard
@@ -70,7 +70,7 @@ describe("SurveyCard", () => {
     expect(link).toHaveAttribute("href", `/environments/${environmentId}/surveys/${dummySurvey.id}/edit`);
   });
 
-  it("displays no clickable link when readOnly and survey is draft", () => {
+  test("displays no clickable link when readOnly and survey is draft", () => {
     render(
       <SurveyCard
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
@@ -87,7 +87,7 @@ describe("SurveyCard", () => {
     expect(link).toBeNull();
   });
 
-  it("renders summary link when survey status is not draft", () => {
+  test("renders summary link when survey status is not draft", () => {
     render(
       <SurveyCard
         survey={{ ...dummySurvey, status: "inProgress" } as unknown as TSurvey}

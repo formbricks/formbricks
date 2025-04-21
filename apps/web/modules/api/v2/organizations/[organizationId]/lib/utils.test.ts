@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { hasOrganizationIdAndAccess } from "./utils";
@@ -8,7 +8,7 @@ describe("hasOrganizationIdAndAccess", () => {
     vi.restoreAllMocks();
   });
 
-  it("should return false and log error if authentication has no organizationId", () => {
+  test("should return false and log error if authentication has no organizationId", () => {
     const spyError = vi.spyOn(logger, "error").mockImplementation(() => {});
     const authentication = {
       organizationAccess: { accessControl: { read: true } },
@@ -21,7 +21,7 @@ describe("hasOrganizationIdAndAccess", () => {
     );
   });
 
-  it("should return false and log error if param organizationId does not match authentication organizationId", () => {
+  test("should return false and log error if param organizationId does not match authentication organizationId", () => {
     const spyError = vi.spyOn(logger, "error").mockImplementation(() => {});
     const authentication = {
       organizationId: "org2",
@@ -35,7 +35,7 @@ describe("hasOrganizationIdAndAccess", () => {
     );
   });
 
-  it("should return false if access type is missing in organizationAccess", () => {
+  test("should return false if access type is missing in organizationAccess", () => {
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: {} },
@@ -45,7 +45,7 @@ describe("hasOrganizationIdAndAccess", () => {
     expect(result).toBe(false);
   });
 
-  it("should return true if organizationId and access type are valid", () => {
+  test("should return true if organizationId and access type are valid", () => {
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: { read: true } },
