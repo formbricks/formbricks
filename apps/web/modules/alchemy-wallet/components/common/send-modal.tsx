@@ -15,8 +15,9 @@ import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
 import { ArrowRightIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { useSendERC20 } from "@formbricks/web3/src/hooks/useSendERC20";
 
 type FormValues = {
@@ -44,15 +45,21 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
   } = useForm<FormValues>();
   const tokenAddress = watch("tokenAddress");
   const { send } = useSendERC20({ address: tokenAddress });
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: FormValues) => {
+    setLoading(true);
     const { address, amount } = data;
     try {
       const tx = await send(address, amount);
       console.log("Transaction sent:", tx);
+      toast.success(`Tokens sent successfully!`);
     } catch (err) {
       console.error("Send failed", err);
+      toast.error(`Tokens failed to send`);
     }
+    setLoading(false);
+    onClose();
   };
 
   useEffect(() => {
@@ -60,6 +67,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
       setValue("tokenAddress", balance.token.address);
     }
   }, [balance, setValue]);
+
   return (
     <>
       <Modal open={!!balance} setOpen={onClose}>
@@ -85,6 +93,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
                 render={({ field }) => (
                   <Select
                     value={field.value}
+                    disabled={loading}
                     onValueChange={(address) => {
                       field.onChange(address);
                       const selected = balances.find((b) => b.token.address === address);
@@ -94,7 +103,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
                       <SelectValue
                         placeholder={
                           balance
-                            ? `${balance.token.symbol} — ${balance.token.address}`
+                            ? `${balance.token.symbol} — ${formatUnits(balance.value, parseInt(balance.token.decimals, 10))}`
                             : "Select a token address"
                         }
                       />
@@ -122,6 +131,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
               <Input
                 autoFocus
                 type="text"
+                disabled={loading}
                 placeholder={"0x..."}
                 {...register("address", {
                   required: t("environments.wallet.form.error.address_required"),
@@ -138,6 +148,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
               <Input
                 autoFocus
                 type="number"
+                disabled={loading}
                 placeholder={"0.00"}
                 step="any"
                 {...register("amount", {
@@ -147,7 +158,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
                     message: t("environments.wallet.form.error.min_amount"),
                   },
                   max: {
-                    value: 1_000_000,
+                    value: balance ? formatUnits(balance.value, parseInt(balance.token.decimals, 10)) : 0,
                     message: t("environments.wallet.form.error.max_amount"),
                   },
                   validate: (value) => value > 0 || t("environments.wallet.form.error.positive_amount"),
@@ -158,13 +169,13 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
             {/* Send and Cancel Buttons */}
             <div className="flex justify-end">
               <div className="flex space-x-2">
-                <Button type="button" variant="ghost" onClick={onClose}>
+                <Button disabled={loading} type="button" variant="ghost" onClick={onClose}>
                   {t("common.cancel")}
                 </Button>
                 <Button
                   className="ring-offset-background focus-visible:ring-ring group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   type="submit"
-                  loading={false}>
+                  loading={loading}>
                   {t("common.send")}
                   <ArrowRightIcon
                     className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"

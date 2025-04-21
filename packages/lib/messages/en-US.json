@@ -1895,7 +1895,7 @@
           "address_required": "Address is required",
           "amount_required": "Amount is required",
           "invalid_eth_address": "Invalid Ethereum address",
-          "max_amount": "Amount cannot exceed 1,000,000",
+          "max_amount": "Amount cannot exceed balance",
           "min_amount": "Amount must be at least 0.01",
           "positive_amount": "Amount must be greater than zero"
         },
