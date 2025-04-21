@@ -91,7 +91,7 @@
     "dotenv": "16.4.7",
     "encoding": "0.1.13",
     "file-loader": "6.2.0",
-    "framer-motion": "12.6.3",
+    "framer-motion": "12.7.4",
     "googleapis": "148.0.0",
     "heic-convert": "2.1.0",
     "https-proxy-agent": "7.0.6",
