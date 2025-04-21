@@ -58,7 +58,7 @@ import Network
         if let userId = config.userId {
             userManager?.set(userId: userId)
         }
-        if let attributes = config.attributes {
+        if let attributes = config.attributes, !attributes.isEmpty {
             userManager?.set(attributes: attributes)
         }
         if let language = config.attributes?["language"] {
@@ -88,6 +88,11 @@ import Network
     @objc public static func setUserId(_ userId: String) {
         guard Formbricks.isInitialized else {
             Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            return
+        }
+        
+        if let existing = userManager?.userId, !existing.isEmpty {
+            logger?.error("A userId is already set (\"\(existing)\") – please call Formbricks.logout() before setting a new one.")
             return
         }
         

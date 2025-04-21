@@ -1,5 +1,5 @@
 import cuid2 from "@paralleldrive/cuid2";
-import { decryptAES128, symmetricDecrypt, symmetricEncrypt } from "../../lib/crypto";
+import { symmetricDecrypt, symmetricEncrypt } from "../../lib/crypto";
 import { env } from "../../lib/env";
 
 // generate encrypted single use id for the survey
@@ -36,15 +36,7 @@ export const validateSurveySingleUseId = (surveySingleUseId: string): string | u
       throw new Error("ENCRYPTION_KEY is not set");
     }
 
-    if (surveySingleUseId.length === 64) {
-      if (!env.FORMBRICKS_ENCRYPTION_KEY) {
-        throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
-      }
-
-      decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
-    } else {
-      decryptedCuid = symmetricDecrypt(surveySingleUseId, env.ENCRYPTION_KEY);
-    }
+    decryptedCuid = symmetricDecrypt(surveySingleUseId, env.ENCRYPTION_KEY);
 
     if (cuid2.isCuid(decryptedCuid)) {
       return decryptedCuid;
