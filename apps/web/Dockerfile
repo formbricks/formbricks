@@ -1,53 +1,34 @@
 FROM node:22-alpine3.21 AS base
 
-#
-## step 1: Prune monorepo
-#
-# FROM base AS builder
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
-# Set working directory
-# WORKDIR /app
-# RUN yarn global add turbo
-# COPY . .
-# RUN turbo prune @formbricks/web --docker
-
-#
-## step 2: Install & build
-#
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
 
+# Add edge repositories to get access to newer package versions
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    apk update
 
-# Install specific package versions
-# Note: Some versions may require adding additional repositories
+# Install exact versions from edge repositories
+# Note: We're using the format packagename=version-rX where X is a revision number
+# The actual revision number might differ in edge repositories
 RUN apk add --no-cache \
-    # Core system packages
-    busybox=1.37.0 \
-    c-ares=1.3.0 \
-    libarchive=3.7.9 \
-    libxml2=2.14.1 \
-    openssl=3.5.0 \
-    sqlite=3.49.1 \
-    zstd=1.5.6 \
-    glib=2.84.1 \
-    # Additional build tools
-    cmake g++ gcc jq make python3 \
-    # Add any other specific packages you need
-    lcms2=2.17_rc0
+    busybox=1.37.0-r* \
+    c-ares=1.3.0-r* \
+    libarchive=3.7.9-r* \
+    libxml2=2.14.1-r* \
+    openssl=3.5.0-r* \
+    sqlite=3.49.1-r* \
+    zstd=1.5.6-r* \
+    glib=2.84.1-r* \
+    lcms2=2.17_rc0-r* \
+    cmake g++ gcc jq make python3
 
 # Install Go 1.24.2
-RUN apk add --no-cache go=1.24.2
-
-# For packages that need to be installed via npm/other package managers
-RUN npm install google-protobuf@1.36.6
-
-# For v8, which might require a special installation approach
-# This is just a placeholder - actual installation might differ
-RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main --no-cache v8=12.9.66680202
+RUN apk add --no-cache go=1.24.2-r*
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
