@@ -1,5 +1,5 @@
+import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 import * as Sentry from "@sentry/nextjs";
-import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@formbricks/lib/constants";
 
 export const onRequestError = Sentry.captureRequestError;
 

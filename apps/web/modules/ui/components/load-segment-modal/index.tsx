@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { formatDate, timeSinceDate } from "@/lib/time";
 import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { Loader2, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { formatDate, timeSinceDate } from "@formbricks/lib/time";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

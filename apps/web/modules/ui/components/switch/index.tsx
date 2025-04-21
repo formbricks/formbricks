@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 const Switch: React.ComponentType<SwitchPrimitives.SwitchProps> = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
@@ -10,7 +10,7 @@ const Switch: React.ComponentType<SwitchPrimitives.SwitchProps> = React.forwardR
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-[20px] w-[40px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-slate-900 data-[state=unchecked]:bg-slate-200",
+      "peer inline-flex h-[20px] w-[40px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-slate-900 data-[state=unchecked]:bg-slate-200",
       className
     )}
     {...props}

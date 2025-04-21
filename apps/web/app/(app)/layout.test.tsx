@@ -1,8 +1,8 @@
+import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getUser } from "@formbricks/lib/user/service";
 import { TUser } from "@formbricks/types/user";
 import AppLayout from "./layout";
 
@@ -10,11 +10,11 @@ vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "test-app-id",

@@ -1,7 +1,7 @@
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
-import { getUser } from "@formbricks/lib/user/service";
 import { logger } from "@formbricks/logger";
 import {
   AuthenticationError,

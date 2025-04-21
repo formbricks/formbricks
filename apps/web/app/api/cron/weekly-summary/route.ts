@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { CRON_SECRET } from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@/modules/email";
 import { headers } from "next/headers";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
 import { getProjectsByOrganizationId } from "./lib/project";

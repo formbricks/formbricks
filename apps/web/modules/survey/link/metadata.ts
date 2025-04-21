@@ -1,7 +1,7 @@
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getBrandColorForURL, getNameForURL, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 
 export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metadata> => {

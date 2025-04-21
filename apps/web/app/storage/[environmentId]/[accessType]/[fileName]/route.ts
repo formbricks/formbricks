@@ -2,10 +2,10 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/delete-file";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import { getFile } from "./lib/get-file";
 

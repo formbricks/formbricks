@@ -5,7 +5,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EnvironmentIdBaseLayout } from "./index";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",

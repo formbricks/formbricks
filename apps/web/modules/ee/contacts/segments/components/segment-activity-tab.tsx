@@ -1,8 +1,8 @@
 "use client";
 
+import { convertDateTimeStringShort } from "@/lib/time";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TSegment } from "@formbricks/types/segment";
 
 interface SegmentActivityTabProps {

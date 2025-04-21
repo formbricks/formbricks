@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
@@ -29,8 +31,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
   TSurvey,
@@ -191,7 +191,7 @@ export const QuestionCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
 
-        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
+        <button className="opacity-0 group-hover:opacity-100 hover:cursor-move">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>

@@ -1,12 +1,12 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { teamCache } from "@/lib/cache/team";
+import { projectCache } from "@/lib/project/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 

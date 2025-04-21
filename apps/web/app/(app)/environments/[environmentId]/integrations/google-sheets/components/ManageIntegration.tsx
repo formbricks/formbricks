@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -9,7 +10,6 @@ import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,

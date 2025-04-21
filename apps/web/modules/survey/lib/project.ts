@@ -1,10 +1,10 @@
 import "server-only";
+import { cache } from "@/lib/cache";
+import { projectCache } from "@/lib/project/cache";
 import { Project } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 

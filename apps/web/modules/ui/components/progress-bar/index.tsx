@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 interface ProgressBarProps {
   progress: number;

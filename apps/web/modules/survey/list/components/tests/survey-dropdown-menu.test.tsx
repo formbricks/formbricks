@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   ENCRYPTION_KEY: "test",
   ENTERPRISE_LICENSE_KEY: "test",
