@@ -85,7 +85,7 @@
     "@vercel/functions": "2.0.0",
     "@vercel/og": "0.6.8",
     "@vercel/otel": "1.10.4",
-    "ai": "4.3.4",
+    "ai": "4.3.9",
     "autoprefixer": "10.4.21",
     "aws-crt": "1.26.2",
     "bcryptjs": "3.0.2",
