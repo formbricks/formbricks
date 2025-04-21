@@ -1,5 +1,30 @@
 FROM node:22-alpine3.21 AS base
 
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main"    >> /etc/apk/repositories \
+ && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+ && apk update \
+ && apk add --no-cache \
+      busybox=1.37.0-r0 \
+      c-ares=1.3.0-r0 \
+      libarchive=3.7.9-r0 \
+      libxml2=2.14.1-r0 \
+      openssl=3.5.0-r0 \
+      sqlite=3.49.1-r0 \
+      zstd=1.5.6.7-r0 \
+      glib=2.84.1-r0 \
+      lcms2=2.17rc0-r0 \
+ && rm -rf /var/cache/apk/*
+
+# ─────────────────────────────────────────────────────────
+# 2) Install Go 1.24.2 and protoc‑gen‑go v1.36.6
+ENV GOLANG_VERSION=1.24.2
+RUN wget -qO /tmp/go.tar.gz https://go.dev/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz \
+ && rm -rf /usr/local/go \
+ && tar -C /usr/local -xzf /tmp/go.tar.gz \
+ && rm /tmp/go.tar.gz \
+ && ln -s /usr/local/go/bin/{go,gofmt} /usr/local/bin/ \
+ && /usr/local/go/bin/go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
+
 #
 ## step 1: Prune monorepo
 #
