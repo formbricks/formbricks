@@ -13,7 +13,6 @@ vi.mock("@formbricks/lib/crypto", () => ({
 // Mock constants
 vi.mock("@formbricks/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key",
-  FORMBRICKS_ENCRYPTION_KEY: "test-formbricks-encryption-key",
 }));
 
 // Mock cuid2
@@ -81,7 +80,6 @@ describe("generateSurveySingleUseId", () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
     vi.doMock("@formbricks/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
-      FORMBRICKS_ENCRYPTION_KEY: "test-formbricks-encryption-key",
     }));
 
     // Re-import to get the new mock values
@@ -94,27 +92,11 @@ describe("generateSurveySingleUseId", () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
     vi.doMock("@formbricks/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
-      FORMBRICKS_ENCRYPTION_KEY: "test-formbricks-encryption-key",
     }));
 
     // Re-import to get the new mock values
     const { validateSurveySingleUseId: validateSurveySingleUseIdNoKey } = await import("./singleUseSurveys");
 
     expect(() => validateSurveySingleUseIdNoKey(mockEncryptedCuid)).toThrow("ENCRYPTION_KEY is not set");
-  });
-
-  test("throws error when FORMBRICKS_ENCRYPTION_KEY is not set in validateSurveySingleUseId for AES128", async () => {
-    // Temporarily mock FORMBRICKS_ENCRYPTION_KEY as undefined
-    vi.doMock("@formbricks/lib/constants", () => ({
-      ENCRYPTION_KEY: "test-encryption-key",
-      FORMBRICKS_ENCRYPTION_KEY: undefined,
-    }));
-
-    // Re-import to get the new mock values
-    const { validateSurveySingleUseId: validateSurveySingleUseIdNoKey } = await import("./singleUseSurveys");
-
-    expect(() =>
-      validateSurveySingleUseIdNoKey("M(.Bob=dS1!wUSH2lb,E7hxO=He1cnnitmXrG|Su/DKYZrPy~zgS)u?dgI53sfs/")
-    ).toThrow("FORMBRICKS_ENCRYPTION_KEY is not defined");
   });
 });
