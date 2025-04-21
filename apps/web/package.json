@@ -155,7 +155,7 @@
     "@types/testing-library__react": "10.2.0",
     "@vitest/coverage-v8": "3.1.1",
     "resize-observer-polyfill": "1.5.1",
-    "vite": "6.2.5",
+    "vite": "6.2.6",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.1.1",
     "vitest-mock-extended": "3.0.1"
