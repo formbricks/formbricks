@@ -14,13 +14,13 @@ struct SetupView: View {
                 } else {
                     Button("Setup Formbricks SDK") {
                         isLoading = true
-                        let config = FormbricksConfig.Builder(appUrl: "[appUrl]", environmentId: "[environmentId]")
+                        let config = FormbricksConfig.Builder(appUrl: "http://192.168.0.200:3000", environmentId: "cm9qk3m57000n195soukrmqhh")
                             .setLogLevel(.debug)
                             .build()
                         
                         // Simulate async setup delay
                         DispatchQueue.global().async {
-                            Formbricks.setup(with: config)
+                            Formbricks.setup(with: config, force: true)
                             
                             DispatchQueue.main.async {
                                 isSetup = true
@@ -51,7 +51,8 @@ struct SetupView: View {
                 .padding()
                 
                 Button("Call Formbricks.setLanguage") {
-                    Formbricks.setLanguage("vi")
+//                    Formbricks.setLanguage("en_us")
+                    Formbricks.setLanguage("someything")
                 }.padding()
                 
                 Button("Call Formbricks.logout") {
