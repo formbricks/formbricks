@@ -1,12 +1,12 @@
+import { cache } from "@/lib/cache";
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
+import { DOCUMENTS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { DOCUMENTS_PER_PAGE } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import {
   TDocument,

@@ -1,5 +1,6 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
@@ -14,7 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { timeSince } from "@formbricks/lib/time";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";

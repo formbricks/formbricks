@@ -1,6 +1,6 @@
+import { createI18nString } from "@/lib/i18n/utils";
+import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 import { TFnType } from "@tolgee/react";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TSurvey,

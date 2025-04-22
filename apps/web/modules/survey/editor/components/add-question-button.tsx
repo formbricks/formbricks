@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import {
   getCXQuestionTypes,
   getQuestionDefaults,
@@ -13,7 +14,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
@@ -38,7 +38,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
+          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -68,7 +68,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
             onMouseEnter={() => setHoveredQuestionId(questionType.id)}
             onMouseLeave={() => setHoveredQuestionId(null)}>
             <div className="flex items-center">
-              <questionType.icon className="text-brand-dark -ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+              <questionType.icon className="text-brand-dark mr-2 -ml-0.5 h-4 w-4" aria-hidden="true" />
               {questionType.label}
             </div>
             <div

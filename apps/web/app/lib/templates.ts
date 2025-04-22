@@ -1,6 +1,6 @@
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
   TSurveyEndScreenCard,

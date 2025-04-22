@@ -1,8 +1,8 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 
 export const getContactByUserId = reactCache(
   (

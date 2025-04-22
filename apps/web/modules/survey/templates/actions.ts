@@ -1,5 +1,6 @@
 "use server";
 
+import { llmModel } from "@/lib/aiModels";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -9,7 +10,6 @@ import { createSurvey } from "@/modules/survey/templates/lib/survey";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { llmModel } from "@formbricks/lib/aiModels";
 import { ZSurveyQuestion } from "@formbricks/types/surveys/types";
 
 const ZCreateAISurveyAction = z.object({

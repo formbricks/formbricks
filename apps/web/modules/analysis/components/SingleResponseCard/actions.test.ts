@@ -1,3 +1,7 @@
+import { deleteResponse, getResponse } from "@/lib/response/service";
+import { createResponseNote, resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
+import { createTag } from "@/lib/tag/service";
+import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getEnvironmentIdFromResponseId,
@@ -10,14 +14,6 @@ import {
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { describe, expect, test, vi } from "vitest";
-import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
-import {
-  createResponseNote,
-  resolveResponseNote,
-  updateResponseNote,
-} from "@formbricks/lib/responseNote/service";
-import { createTag } from "@formbricks/lib/tag/service";
-import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
 import {
   createResponseNoteAction,
   createTagAction,
@@ -54,19 +50,19 @@ vi.mock("@/lib/utils/helper", () => ({
 vi.mock("@/lib/utils/services", () => ({
   getTag: vi.fn(),
 }));
-vi.mock("@formbricks/lib/response/service", () => ({
+vi.mock("@/lib/response/service", () => ({
   deleteResponse: vi.fn().mockResolvedValue("deletedResponse"),
   getResponse: vi.fn().mockResolvedValue({ data: "responseData" }),
 }));
-vi.mock("@formbricks/lib/responseNote/service", () => ({
+vi.mock("@/lib/responseNote/service", () => ({
   createResponseNote: vi.fn().mockResolvedValue("createdNote"),
   updateResponseNote: vi.fn().mockResolvedValue("updatedNote"),
   resolveResponseNote: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("@formbricks/lib/tag/service", () => ({
+vi.mock("@/lib/tag/service", () => ({
   createTag: vi.fn().mockResolvedValue("createdTag"),
 }));
-vi.mock("@formbricks/lib/tagOnResponse/service", () => ({
+vi.mock("@/lib/tagOnResponse/service", () => ({
   addTagToRespone: vi.fn().mockResolvedValue("tagAdded"),
   deleteTagOnResponse: vi.fn().mockResolvedValue("tagDeleted"),
 }));

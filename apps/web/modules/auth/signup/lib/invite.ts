@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
 import { inviteCache } from "@/lib/cache/invite";
 import { InviteWithCreator } from "@/modules/auth/signup/types/invites";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 

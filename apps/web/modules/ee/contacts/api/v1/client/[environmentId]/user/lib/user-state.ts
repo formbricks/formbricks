@@ -1,12 +1,12 @@
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
+import { segmentCache } from "@/lib/cache/segment";
+import { displayCache } from "@/lib/display/cache";
+import { environmentCache } from "@/lib/environment/cache";
+import { organizationCache } from "@/lib/organization/cache";
+import { responseCache } from "@/lib/response/cache";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { displayCache } from "@formbricks/lib/display/cache";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
 import { TJsPersonState } from "@formbricks/types/js";
 import { getPersonSegmentIds } from "./segments";
 

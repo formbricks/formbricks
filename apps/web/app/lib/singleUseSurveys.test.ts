@@ -1,17 +1,17 @@
+import * as crypto from "@/lib/crypto";
 import cuid2 from "@paralleldrive/cuid2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import * as crypto from "@formbricks/lib/crypto";
 import { generateSurveySingleUseId, validateSurveySingleUseId } from "./singleUseSurveys";
 
 // Mock the crypto module
-vi.mock("@formbricks/lib/crypto", () => ({
+vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
   symmetricDecrypt: vi.fn(),
   decryptAES128: vi.fn(),
 }));
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key",
 }));
 
@@ -78,7 +78,7 @@ describe("generateSurveySingleUseId", () => {
 
   test("throws error when ENCRYPTION_KEY is not set in generateSurveySingleUseId", async () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
-    vi.doMock("@formbricks/lib/constants", () => ({
+    vi.doMock("@/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
     }));
 
@@ -90,7 +90,7 @@ describe("generateSurveySingleUseId", () => {
 
   test("throws error when ENCRYPTION_KEY is not set in validateSurveySingleUseId for symmetric encryption", async () => {
     // Temporarily mock ENCRYPTION_KEY as undefined
-    vi.doMock("@formbricks/lib/constants", () => ({
+    vi.doMock("@/lib/constants", () => ({
       ENCRYPTION_KEY: undefined,
     }));
 

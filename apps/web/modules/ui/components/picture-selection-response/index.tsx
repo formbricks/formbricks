@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import Image from "next/image";
-import { cn } from "@formbricks/lib/cn";
 
 interface PictureSelectionResponseProps {
   choices: { id: string; imageUrl: string }[];

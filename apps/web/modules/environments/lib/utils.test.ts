@@ -1,17 +1,17 @@
 // utils.test.ts
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { getEnvironment } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 // Pull in the mocked implementations to configure them in tests
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
@@ -41,31 +41,31 @@ vi.mock("@/modules/ee/teams/utils/teams", () => ({
   getTeamPermissionFlags: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/environment/auth", () => ({
+vi.mock("@/lib/environment/auth", () => ({
   hasUserEnvironmentAccess: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/environment/service", () => ({
+vi.mock("@/lib/environment/service", () => ({
   getEnvironment: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/utils", () => ({
+vi.mock("@/lib/membership/utils", () => ({
   getAccessFlags: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/project/service", () => ({
+vi.mock("@/lib/project/service", () => ({
   getProjectByEnvironmentId: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 

@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
+import { validateInputs } from "@/lib/utils/validate";
 import { TContact } from "@/modules/ee/contacts/types/contact";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 

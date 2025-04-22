@@ -1,12 +1,12 @@
 "use server";
 
 import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
+import { cache } from "@/lib/cache";
 import { teamCache } from "@/lib/cache/team";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 

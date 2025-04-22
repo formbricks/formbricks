@@ -13,7 +13,7 @@ import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -340,12 +340,12 @@ export const SurveyMenuBar = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="hidden text-ellipsis whitespace-nowrap pl-1.5 text-xs md:text-sm lg:block">
+            <p className="hidden pl-1.5 text-xs text-ellipsis whitespace-nowrap md:text-sm lg:block">
               {cautionText}
             </p>
           </div>
         )}
-        <div className="mt-3 flex sm:ml-4 sm:mt-0">
+        <div className="mt-3 flex sm:mt-0 sm:ml-4">
           {!isCxMode && (
             <Button
               disabled={disableSave}

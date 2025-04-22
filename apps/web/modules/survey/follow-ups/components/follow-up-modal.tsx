@@ -1,5 +1,7 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
@@ -48,8 +50,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

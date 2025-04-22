@@ -1,9 +1,9 @@
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { SamlButton } from "./saml-button";
 
 // Mock next-auth/react

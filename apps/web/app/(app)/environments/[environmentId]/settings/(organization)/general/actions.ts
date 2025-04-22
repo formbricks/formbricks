@@ -1,10 +1,10 @@
 "use server";
 
+import { deleteOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";

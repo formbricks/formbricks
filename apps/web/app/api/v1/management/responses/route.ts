@@ -1,10 +1,10 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getResponses } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
-import { getResponses } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
