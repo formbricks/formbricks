@@ -1,5 +1,6 @@
 "use client";
 
+import { extractRecallInfo } from "@/lib/utils/recall";
 import { findVariableUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -18,7 +19,6 @@ import { TrashIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardItemProps {

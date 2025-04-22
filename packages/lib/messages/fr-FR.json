@@ -789,6 +789,7 @@
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
         "no_env_permissions_found": "Aucune autorisation d'environnement trouvée",
         "organization_access": "Accès à l'organisation",
+        "organization_access_description": "Sélectionnez les privilèges de lecture ou d'écriture pour les ressources de l'organisation.",
         "permissions": "Permissions",
         "project_access": "Accès au projet",
         "secret": "Secret",
@@ -994,8 +995,7 @@
       "api_keys": {
         "add_api_key": "Ajouter une clé API",
         "add_permission": "Ajouter une permission",
-        "api_keys_description": "Gérer les clés API pour accéder aux API de gestion de Formbricks",
-        "only_organization_owners_and_managers_can_manage_api_keys": "Seuls les propriétaires et les gestionnaires de l'organisation peuvent gérer les clés API"
+        "api_keys_description": "Gérer les clés API pour accéder aux API de gestion de Formbricks"
       },
       "billing": {
         "10000_monthly_responses": "10000 Réponses Mensuelles",

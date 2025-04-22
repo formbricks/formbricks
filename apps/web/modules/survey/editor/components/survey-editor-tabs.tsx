@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { ProBadge } from "@/modules/ui/components/pro-badge";
 import { useTranslate } from "@tolgee/react";
 import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { type JSX, useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
 
 interface Tab {

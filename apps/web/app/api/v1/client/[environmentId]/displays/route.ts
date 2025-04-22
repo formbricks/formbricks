@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";

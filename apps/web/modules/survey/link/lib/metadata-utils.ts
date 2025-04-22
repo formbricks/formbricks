@@ -1,9 +1,9 @@
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { Metadata } from "next";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 
 /**

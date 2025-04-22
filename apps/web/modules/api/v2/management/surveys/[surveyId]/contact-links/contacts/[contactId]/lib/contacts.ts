@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Contact } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getContact = reactCache(async (contactId: string, environmentId: string) =>

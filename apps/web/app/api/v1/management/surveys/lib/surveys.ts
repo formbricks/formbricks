@@ -1,12 +1,12 @@
 import "server-only";
+import { cache } from "@/lib/cache";
+import { surveyCache } from "@/lib/survey/cache";
+import { selectSurvey } from "@/lib/survey/service";
+import { transformPrismaSurvey } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { selectSurvey } from "@formbricks/lib/survey/service";
-import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";

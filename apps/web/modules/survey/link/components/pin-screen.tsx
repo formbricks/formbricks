@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
@@ -7,7 +8,6 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 import { Project, Response } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface PinScreenProps {

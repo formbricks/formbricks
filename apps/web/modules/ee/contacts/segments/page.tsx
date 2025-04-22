@@ -1,3 +1,4 @@
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
@@ -8,7 +9,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
 export const SegmentsPage = async ({

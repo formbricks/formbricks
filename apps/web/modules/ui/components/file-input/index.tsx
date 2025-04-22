@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useTranslate } from "@tolgee/react";
@@ -7,7 +8,6 @@ import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { Uploader } from "./components/uploader";
 import { VideoSettings } from "./components/video-settings";
@@ -242,7 +242,7 @@ export const FileInput = ({
                             />
                             {file.uploaded ? (
                               <div
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -260,7 +260,7 @@ export const FileInput = ({
                             </p>
                             {file.uploaded ? (
                               <div
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -300,7 +300,7 @@ export const FileInput = ({
                         />
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>
@@ -316,7 +316,7 @@ export const FileInput = ({
                         </p>
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>

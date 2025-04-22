@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
@@ -7,7 +8,6 @@ import { H4, Muted } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { BulkInviteTab } from "./bulk-invite-tab";
 import { IndividualInviteTab } from "./individual-invite-tab";
@@ -71,7 +71,7 @@ export const InviteMemberModal = ({
       <div className="sticky top-0 flex h-full flex-col rounded-lg">
         <button
           className={cn(
-            "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
+            "absolute top-0 right-0 hidden pt-4 pr-4 text-slate-400 hover:text-slate-500 focus:ring-0 focus:outline-none sm:block"
           )}
           onClick={() => {
             setOpen(false);

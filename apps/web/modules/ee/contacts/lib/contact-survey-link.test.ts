@@ -1,7 +1,7 @@
+import { ENCRYPTION_KEY, SURVEY_URL } from "@/lib/constants";
+import * as crypto from "@/lib/crypto";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ENCRYPTION_KEY, SURVEY_URL } from "@formbricks/lib/constants";
-import * as crypto from "@formbricks/lib/crypto";
 import * as contactSurveyLink from "./contact-survey-link";
 
 // Mock all modules needed (this gets hoisted to the top of the file)
@@ -13,12 +13,12 @@ vi.mock("jsonwebtoken", () => ({
 }));
 
 // Mock constants - MUST be a literal object without using variables
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
   SURVEY_URL: "https://test.formbricks.com",
 }));
 
-vi.mock("@formbricks/lib/crypto", () => ({
+vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
   symmetricDecrypt: vi.fn(),
 }));
@@ -96,7 +96,7 @@ describe("Contact Survey Link", () => {
       // Reset modules so the new mock is used by the module under test
       vi.resetModules();
       // Re‑mock constants to simulate missing ENCRYPTION_KEY
-      vi.doMock("@formbricks/lib/constants", () => ({
+      vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
         SURVEY_URL: "https://test.formbricks.com",
       }));
@@ -170,7 +170,7 @@ describe("Contact Survey Link", () => {
 
     test("throws an error when ENCRYPTION_KEY is not available", async () => {
       vi.resetModules();
-      vi.doMock("@formbricks/lib/constants", () => ({
+      vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
         SURVEY_URL: "https://test.formbricks.com",
       }));

@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import {
   DropdownMenu,
@@ -15,8 +17,6 @@ import { useTranslate } from "@tolgee/react";
 import { BlendIcon, ChevronRightIcon, GlobeIcon, GlobeLockIcon, LinkIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 

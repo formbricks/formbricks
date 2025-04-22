@@ -1,10 +1,10 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getSurvey } from "@/lib/survey/service";
+import { generateSurveySingleUseIds } from "@/lib/utils/singleUseSurveys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { generateSurveySingleUseIds } from "@formbricks/lib/utils/singleUseSurveys";
 
 export const GET = async (
   request: NextRequest,

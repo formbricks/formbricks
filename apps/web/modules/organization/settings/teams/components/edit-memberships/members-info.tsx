@@ -1,5 +1,7 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utilts";
@@ -7,8 +9,6 @@ import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

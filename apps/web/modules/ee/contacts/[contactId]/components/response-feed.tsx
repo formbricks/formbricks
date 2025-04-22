@@ -1,13 +1,13 @@
 "use client";
 
+import { useMembershipRole } from "@/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useEffect, useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";

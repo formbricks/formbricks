@@ -15,7 +15,7 @@ vi.mock("@react-email/components", () => ({
 }));
 
 // Mock dependencies
-vi.mock("@formbricks/lib/storage/utils", () => ({
+vi.mock("@/lib/storage/utils", () => ({
   getOriginalFileNameFromUrl: (url: string) => {
     // Extract filename from the URL for testing purposes
     const parts = url.split("/");

@@ -1,12 +1,12 @@
 import "server-only";
+import { projectCache } from "@/lib/project/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TProjectUpdateBrandingInput,
   ZProjectUpdateBrandingInput,
 } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ValidationError } from "@formbricks/types/errors";

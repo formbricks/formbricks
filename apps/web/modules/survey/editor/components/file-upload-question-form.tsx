@@ -1,5 +1,7 @@
 "use client";
 
+import { extractLanguageCodes } from "@/lib/i18n/utils";
+import { createI18nString } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -12,8 +14,6 @@ import { PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -175,7 +175,7 @@ export const FileUploadQuestionForm = ({
           </Button>
         )}
       </div>
-      <div className="mb-8 mt-6 space-y-6">
+      <div className="mt-6 mb-8 space-y-6">
         <AdvancedOptionToggle
           isChecked={question.allowMultipleFiles}
           onToggle={() => updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })}
@@ -215,7 +215,7 @@ export const FileUploadQuestionForm = ({
 
                   updateQuestion(questionIdx, { maxSizeInMB: parseInt(e.target.value, 10) });
                 }}
-                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
               />
               MB
             </p>

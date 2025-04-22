@@ -1,5 +1,5 @@
+import { ENTERPRISE_LICENSE_KEY, REDIS_HTTP_URL } from "@/lib/constants";
 import { LRUCache } from "lru-cache";
-import { ENTERPRISE_LICENSE_KEY, REDIS_HTTP_URL } from "@formbricks/lib/constants";
 import { logger } from "@formbricks/logger";
 
 interface Options {

@@ -1,3 +1,6 @@
+import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getUserLocale } from "@/lib/user/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
@@ -11,9 +14,6 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {

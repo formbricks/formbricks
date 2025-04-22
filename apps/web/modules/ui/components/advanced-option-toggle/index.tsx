@@ -1,6 +1,6 @@
+import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { cn } from "@formbricks/lib/cn";
 
 interface AdvancedOptionToggleProps {
   isChecked: boolean;

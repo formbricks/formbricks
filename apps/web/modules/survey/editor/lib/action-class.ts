@@ -1,7 +1,7 @@
+import { actionClassCache } from "@/lib/actionClass/cache";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
 

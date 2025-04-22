@@ -1,5 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { mixColor } from "@/lib/utils/colors";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -9,9 +12,6 @@ import { useTranslate } from "@tolgee/react";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { cn } from "@formbricks/lib/cn";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { mixColor } from "@formbricks/lib/utils/colors";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -89,7 +89,7 @@ export const FormStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
                 className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"

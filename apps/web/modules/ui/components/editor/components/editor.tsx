@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -14,7 +15,6 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { type Dispatch, type SetStateAction, useRef } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { exampleTheme } from "../lib/example-theme";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";

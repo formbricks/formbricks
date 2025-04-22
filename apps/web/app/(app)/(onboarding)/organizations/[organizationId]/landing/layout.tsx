@@ -1,9 +1,9 @@
+import { getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
 
 const LandingLayout = async (props) => {
   const params = await props.params;

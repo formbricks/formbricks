@@ -1,5 +1,6 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
@@ -14,7 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TShuffleOption,
