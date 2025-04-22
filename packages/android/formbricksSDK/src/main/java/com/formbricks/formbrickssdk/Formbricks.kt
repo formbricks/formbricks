@@ -44,7 +44,7 @@ object Formbricks {
      * ```
      *
      */
-    fun setup(context: Context, config: FormbricksConfig) {
+    fun setup(context: Context, config: FormbricksConfig, force: Boolean =  false) {
         applicationContext = context
 
         appUrl = config.appUrl
@@ -57,7 +57,7 @@ object Formbricks {
         config.attributes?.get("language")?.let { UserManager.setLanguage(it) }
 
         FormbricksApi.initialize()
-        SurveyManager.refreshEnvironmentIfNeeded()
+        SurveyManager.refreshEnvironmentIfNeeded(force)
         UserManager.syncUserStateIfNeeded()
 
         isInitialized = true
@@ -77,6 +77,12 @@ object Formbricks {
             Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
+
+        if(UserManager.userId != null) {
+            Logger.e("A userId is already set ${UserManager.userId} - please call logout first before setting a new one.")
+            return
+        }
+
         UserManager.set(userId)
     }
 

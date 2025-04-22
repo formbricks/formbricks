@@ -149,7 +149,14 @@ object UserManager {
      * Logs out the user and clears the user state.
      */
     fun logout() {
+        val isUserIdDefined = userId != null
+
+        if (!isUserIdDefined) {
+            Logger.e("no userId is set, please set a userId first using the setUserId function")
+        }
+
         prefManager.edit().apply {
+            remove(CONTACT_ID_KEY)
             remove(USER_ID_KEY)
             remove(SEGMENTS_KEY)
             remove(DISPLAYS_KEY)
@@ -158,13 +165,20 @@ object UserManager {
             remove(EXPIRES_AT_KEY)
             apply()
         }
+
         backingUserId = null
+        backingContactId = null
         backingSegments = null
         backingDisplays = null
         backingResponses = null
         backingLastDisplayedAt = null
         backingExpiresAt = null
+        Formbricks.language = "default"
         UpdateQueue.current.reset()
+
+        if(isUserIdDefined) {
+            Logger.d("User logged out successfully!")
+        }
     }
 
     private fun startSyncTimer() {

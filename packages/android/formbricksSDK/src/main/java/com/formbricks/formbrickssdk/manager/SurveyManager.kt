@@ -135,6 +135,21 @@ object SurveyManager {
             triggers.firstOrNull { it.actionClass?.name.equals(actionClass?.name) } != null
         }
 
+        val isMultiLangSurvey = (firstSurveyWithActionClass?.languages?.size ?: 0) > 1
+        if(firstSurveyWithActionClass != null && isMultiLangSurvey) {
+            val currentLanguage = Formbricks.language
+            val languageCode = getLanguageCode(firstSurveyWithActionClass, currentLanguage)
+
+            if (languageCode == null) {
+                Logger.e(
+                    "Survey “${firstSurveyWithActionClass.name}” is not available in language “$currentLanguage”. Skipping."
+                )
+                return
+            }
+
+            Formbricks.setLanguage(languageCode)
+        }
+
         val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
 
         if (shouldDisplay) {
@@ -281,5 +296,40 @@ object SurveyManager {
         val percentage = displayPercentage.guard { return true }
         val randomNum = (0 until 10000).random() / 100.0
         return randomNum <= percentage
+    }
+
+    private fun getLanguageCode(survey: Survey, language: String?): String? {
+        // 1) Gather all valid codes
+        val availableLanguageCodes = survey.languages
+            ?.map { it.language.code }
+            ?: emptyList()
+
+        // 2) No input or explicit "default" → default
+        val raw = language
+            ?.lowercase()
+            ?.takeIf { it.isNotEmpty() }
+            ?: return "default"
+        if (raw == "default") return "default"
+
+        // 3) Find matching entry by code or alias
+        val selected = survey.languages
+            ?.firstOrNull { entry ->
+                entry.language.code.lowercase() == raw ||
+                        entry.language.alias?.lowercase() == raw
+            }
+
+        // 4) If that entry is marked default → default
+        if (selected?.default == true) return "default"
+
+        // 5) If missing, disabled, or not in the available list → null
+        if (selected == null
+            || !selected.enabled
+            || !availableLanguageCodes.contains(selected.language.code)
+        ) {
+            return null
+        }
+
+        // 6) Otherwise return its code
+        return selected.language.code
     }
 }

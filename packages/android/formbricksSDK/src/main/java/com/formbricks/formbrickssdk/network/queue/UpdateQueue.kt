@@ -36,8 +36,15 @@ class UpdateQueue private constructor() {
     }
 
     fun setLanguage(language: String) {
-        addAttribute("language", language)
-        startDebounceTimer()
+        val effectiveUserId =  userId ?: UserManager.userId
+
+        if(effectiveUserId != null) {
+            addAttribute("language", language)
+            startDebounceTimer()
+        } else {
+            Logger.d("UpdateQueue - updating language locally: ${language}")
+            return
+        }
     }
 
     fun reset() {
@@ -55,14 +62,15 @@ class UpdateQueue private constructor() {
     }
 
     private fun commit() {
-        val currentUserId = userId
-        if (currentUserId == null) {
+        val effectiveUserId = userId
+            ?: UserManager.userId
+        if (effectiveUserId == null) {
             Logger.d("Error: User ID is not set yet")
             return
         }
 
-        Logger.d("UpdateQueue - commit() called on UpdateQueue with $currentUserId and $attributes")
-        UserManager.syncUser(currentUserId, attributes)
+        Logger.d("UpdateQueue - commit() called on UpdateQueue with $effectiveUserId and $attributes")
+        UserManager.syncUser(effectiveUserId, attributes)
     }
 
     companion object {
