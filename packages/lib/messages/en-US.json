@@ -789,6 +789,7 @@
         "no_api_keys_yet": "You don't have any API keys yet",
         "no_env_permissions_found": "No environment permissions found",
         "organization_access": "Organization Access",
+        "organization_access_description": "Select read or write privileges for organization-wide resources.",
         "permissions": "Permissions",
         "project_access": "Project Access",
         "secret": "Secret",

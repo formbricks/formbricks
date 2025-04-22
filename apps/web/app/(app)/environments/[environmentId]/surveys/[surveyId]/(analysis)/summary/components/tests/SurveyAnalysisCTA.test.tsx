@@ -159,7 +159,7 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
     cleanup();
   });
 
-  test("opens CustomDialog when edit icon is clicked and response count > 0", async () => {
+  test("opens EditPublicSurveyAlertDialog when edit icon is clicked and response count > 0", async () => {
     render(
       <SurveyAnalysisCTA
         survey={dummySurvey}
@@ -220,8 +220,8 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
   });
 });
 
-// // New tests for duplicateSurveyAndRoute function and CustomDialog
-describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and CustomDialog", () => {
+// Updated test description to mention EditPublicSurveyAlertDialog
+describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertDialog", () => {
   afterEach(() => {
     cleanup();
   });
@@ -298,35 +298,6 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and CustomDialog", () => {
 
     // Verify error toast
     expect(toast.error).toHaveBeenCalledWith("Test error message");
-  });
-
-  test("shows generic error toast when duplication throws exception", async () => {
-    // Mock API failure with exception
-    mockCopySurveyToOtherEnvironmentAction.mockRejectedValueOnce(new Error("Network failure"));
-
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        surveyDomain={surveyDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
-
-    // Open dialog
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
-
-    // Click duplicate
-    const duplicateButton = screen.getByRole("button", {
-      name: "environments.surveys.edit.caution_edit_duplicate",
-    });
-    await fireEvent.click(duplicateButton);
-
-    // Verify error toast
-    expect(toast.error).toHaveBeenCalledWith("environments.surveys.survey_duplication_error");
   });
 
   test("navigates to edit page when cancel button is clicked in dialog", async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
@@ -8,7 +9,6 @@ import {
   getSurveyAction,
 } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -147,22 +147,13 @@ export const SurveyDropDownMenu = ({
             {!isSurveyCreationDeletionDisabled && (
               <>
                 <DropdownMenuItem>
-                  {survey.responseCount > 0 ? (
-                    <Link
-                      className="flex w-full items-center"
-                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
-                      onClick={handleEditforActiveSurvey}>
-                      <SquarePenIcon className="mr-2 size-4" />
-                      {t("common.edit")}
-                    </Link>
-                  ) : (
-                    <Link
-                      className="flex w-full items-center"
-                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                      <SquarePenIcon className="mr-2 size-4" />
-                      {t("common.edit")}
-                    </Link>
-                  )}
+                  <Link
+                    className="flex w-full items-center"
+                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                    onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
+                    <SquarePenIcon className="mr-2 size-4" />
+                    {t("common.edit")}
+                  </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem>
@@ -258,30 +249,20 @@ export const SurveyDropDownMenu = ({
       )}
 
       {survey.responseCount > 0 && (
-        <CustomDialog
-          data-testid="survey-caution-dialog"
+        <EditPublicSurveyAlertDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          title={t("environments.surveys.edit.caution_edit_published_survey")}
           isLoading={loading}
-          okBtnText={t("common.duplicate")}
-          okBtnVariant="default"
-          onOk={async () => {
+          primaryButtonAction={async () => {
             await duplicateSurveyAndRefresh(survey.id);
             setIsCautionDialogOpen(false);
           }}
-          cancelBtnText={t("common.edit")}
-          cancelBtnVariant="outline"
-          onCancel={() => router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)}>
-          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-          <ul className="mt-3 list-disc space-y-0.5 pl-5">
-            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-          </ul>
-        </CustomDialog>
+          primaryButtonText={t("common.duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
+        />
       )}
 
       {isCopyFormOpen && (

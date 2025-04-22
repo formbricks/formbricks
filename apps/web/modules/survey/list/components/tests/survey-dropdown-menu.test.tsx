@@ -4,6 +4,11 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 
+// Mock translation
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({ t: (key: string) => key }),
+}));
+
 // Mock constants
 vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -127,7 +132,7 @@ describe("SurveyDropDownMenu", () => {
     responseCount: 5,
   } as unknown as TSurvey;
 
-  test("handleEditforActiveSurvey opens caution dialog for active surveys", async () => {
+  test("handleEditforActiveSurvey opens EditPublicSurveyAlertDialog for active surveys", async () => {
     render(
       <SurveyDropDownMenu
         environmentId="env123"
@@ -202,7 +207,7 @@ describe("SurveyDropDownMenu", () => {
     });
   });
 
-  test("<CustomDialog> displays and handles actions correctly", async () => {
+  test("<EditPublicSurveyAlertDialog> displays and handles actions correctly", async () => {
     const mockDuplicateSurvey = vi.fn();
     render(
       <SurveyDropDownMenu
@@ -222,8 +227,18 @@ describe("SurveyDropDownMenu", () => {
 
     const editButton = screen.getByText("common.edit");
     expect(editButton).toBeInTheDocument();
+    await userEvent.click(editButton);
 
-    const duplicateButton = screen.getByText("common.duplicate");
+    // Test that the dialog is shown
+    const dialogTitle = screen.getByText("environments.surveys.edit.caution_edit_published_survey");
+    expect(dialogTitle).toBeInTheDocument();
+
+    // Test that the dialog buttons work
+    const editButtonInDialog = screen.getByRole("button", { name: "common.edit" });
+    expect(editButtonInDialog).toBeInTheDocument();
+    await userEvent.click(editButtonInDialog);
+
+    const duplicateButton = screen.getByRole("button", { name: "common.duplicate" });
     expect(duplicateButton).toBeInTheDocument();
     await userEvent.click(duplicateButton);
 

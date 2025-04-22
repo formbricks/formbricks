@@ -4,11 +4,11 @@ import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surve
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
@@ -97,21 +97,17 @@ export const SurveyAnalysisCTA = ({
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
     setLoading(true);
-    try {
-      const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
-        environmentId: environment.id,
-        surveyId: surveyId,
-        targetEnvironmentId: environment.id,
-      });
-      if (duplicatedSurveyResponse?.data) {
-        toast.success(t("environments.surveys.survey_duplicated_successfully"));
-        router.push(`/environments/${environment.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
-      } else {
-        const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
-        toast.error(errorMessage);
-      }
-    } catch (error) {
-      toast.error(t("environments.surveys.survey_duplication_error"));
+    const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+      environmentId: environment.id,
+      surveyId: surveyId,
+      targetEnvironmentId: environment.id,
+    });
+    if (duplicatedSurveyResponse?.data) {
+      toast.success(t("environments.surveys.survey_duplicated_successfully"));
+      router.push(`/environments/${environment.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
+      toast.error(errorMessage);
     }
     setIsCautionDialogOpen(false);
     setLoading(false);
@@ -218,26 +214,17 @@ export const SurveyAnalysisCTA = ({
       )}
 
       {responseCount > 0 && (
-        <CustomDialog
+        <EditPublicSurveyAlertDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          title={t("environments.surveys.edit.caution_edit_published_survey")}
           isLoading={loading}
-          okBtnText={t("environments.surveys.edit.caution_edit_duplicate")}
-          okBtnVariant="default"
-          onOk={async () => await duplicateSurveyAndRoute(survey.id)}
-          cancelBtnText={t("common.edit")}
-          cancelBtnVariant="outline"
-          onCancel={() => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)}>
-          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-          <ul className="mt-3 list-disc space-y-0.5 pl-5">
-            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-          </ul>
-        </CustomDialog>
+          primaryButtonAction={async () => await duplicateSurveyAndRoute(survey.id)}
+          primaryButtonText={t("environments.surveys.edit.caution_edit_duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
+        />
       )}
     </div>
   );

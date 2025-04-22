@@ -427,118 +427,116 @@ export const QuestionsView = ({
   const [parent] = useAutoAnimate();
 
   return (
-    <>
-      <div className="mt-12 w-full px-5 py-4">
+    <div className="mt-12 w-full px-5 py-4">
+      {!isCxMode && (
+        <div className="mb-5 flex w-full flex-col gap-5">
+          <EditWelcomeCard
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            setActiveQuestionId={setActiveQuestionId}
+            activeQuestionId={activeQuestionId}
+            isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            selectedLanguageCode={selectedLanguageCode}
+            locale={locale}
+          />
+        </div>
+      )}
+
+      <DndContext
+        id="questions"
+        sensors={sensors}
+        onDragEnd={onQuestionCardDragEnd}
+        collisionDetection={closestCorners}>
+        <QuestionsDroppable
+          localSurvey={localSurvey}
+          project={project}
+          moveQuestion={moveQuestion}
+          updateQuestion={updateQuestion}
+          duplicateQuestion={duplicateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          deleteQuestion={deleteQuestion}
+          activeQuestionId={activeQuestionId}
+          setActiveQuestionId={setActiveQuestionId}
+          invalidQuestions={invalidQuestions}
+          addQuestion={addQuestion}
+          isFormbricksCloud={isFormbricksCloud}
+          isCxMode={isCxMode}
+          locale={locale}
+          responseCount={responseCount}
+          onAlertTrigger={() => setIsCautionDialogOpen(true)}
+        />
+      </DndContext>
+
+      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} />
+      <div className="mt-5 flex flex-col gap-5" ref={parent}>
+        <hr className="border-t border-dashed" />
+        <DndContext
+          id="endings"
+          sensors={sensors}
+          onDragEnd={onEndingCardDragEnd}
+          collisionDetection={closestCorners}>
+          <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
+            {localSurvey.endings.map((ending, index) => {
+              return (
+                <EditEndingCard
+                  key={ending.id}
+                  localSurvey={localSurvey}
+                  endingCardIndex={index}
+                  setLocalSurvey={setLocalSurvey}
+                  setActiveQuestionId={setActiveQuestionId}
+                  activeQuestionId={activeQuestionId}
+                  isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  selectedLanguageCode={selectedLanguageCode}
+                  plan={plan}
+                  addEndingCard={addEndingCard}
+                  isFormbricksCloud={isFormbricksCloud}
+                  locale={locale}
+                />
+              );
+            })}
+          </SortableContext>
+        </DndContext>
+
         {!isCxMode && (
-          <div className="mb-5 flex w-full flex-col gap-5">
-            <EditWelcomeCard
+          <>
+            <AddEndingCardButton
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              addEndingCard={addEndingCard}
+            />
+            <hr />
+
+            <HiddenFieldsCard
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
-              isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
+            />
+
+            <SurveyVariablesCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              activeQuestionId={activeQuestionId}
+              setActiveQuestionId={setActiveQuestionId}
+            />
+
+            <MultiLanguageCard
+              localSurvey={localSurvey}
+              projectLanguages={projectLanguages}
+              setLocalSurvey={setLocalSurvey}
+              setActiveQuestionId={setActiveQuestionId}
+              activeQuestionId={activeQuestionId}
+              isMultiLanguageAllowed={isMultiLanguageAllowed}
+              isFormbricksCloud={isFormbricksCloud}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              selectedLanguageCode={selectedLanguageCode}
               locale={locale}
             />
-          </div>
+          </>
         )}
-
-        <DndContext
-          id="questions"
-          sensors={sensors}
-          onDragEnd={onQuestionCardDragEnd}
-          collisionDetection={closestCorners}>
-          <QuestionsDroppable
-            localSurvey={localSurvey}
-            project={project}
-            moveQuestion={moveQuestion}
-            updateQuestion={updateQuestion}
-            duplicateQuestion={duplicateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            deleteQuestion={deleteQuestion}
-            activeQuestionId={activeQuestionId}
-            setActiveQuestionId={setActiveQuestionId}
-            invalidQuestions={invalidQuestions}
-            addQuestion={addQuestion}
-            isFormbricksCloud={isFormbricksCloud}
-            isCxMode={isCxMode}
-            locale={locale}
-            responseCount={responseCount}
-            onAlertTrigger={() => setIsCautionDialogOpen(true)}
-          />
-        </DndContext>
-
-        <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} />
-        <div className="mt-5 flex flex-col gap-5" ref={parent}>
-          <hr className="border-t border-dashed" />
-          <DndContext
-            id="endings"
-            sensors={sensors}
-            onDragEnd={onEndingCardDragEnd}
-            collisionDetection={closestCorners}>
-            <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
-              {localSurvey.endings.map((ending, index) => {
-                return (
-                  <EditEndingCard
-                    key={ending.id}
-                    localSurvey={localSurvey}
-                    endingCardIndex={index}
-                    setLocalSurvey={setLocalSurvey}
-                    setActiveQuestionId={setActiveQuestionId}
-                    activeQuestionId={activeQuestionId}
-                    isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                    selectedLanguageCode={selectedLanguageCode}
-                    plan={plan}
-                    addEndingCard={addEndingCard}
-                    isFormbricksCloud={isFormbricksCloud}
-                    locale={locale}
-                  />
-                );
-              })}
-            </SortableContext>
-          </DndContext>
-
-          {!isCxMode && (
-            <>
-              <AddEndingCardButton
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                addEndingCard={addEndingCard}
-              />
-              <hr />
-
-              <HiddenFieldsCard
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                setActiveQuestionId={setActiveQuestionId}
-                activeQuestionId={activeQuestionId}
-              />
-
-              <SurveyVariablesCard
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                activeQuestionId={activeQuestionId}
-                setActiveQuestionId={setActiveQuestionId}
-              />
-
-              <MultiLanguageCard
-                localSurvey={localSurvey}
-                projectLanguages={projectLanguages}
-                setLocalSurvey={setLocalSurvey}
-                setActiveQuestionId={setActiveQuestionId}
-                activeQuestionId={activeQuestionId}
-                isMultiLanguageAllowed={isMultiLanguageAllowed}
-                isFormbricksCloud={isFormbricksCloud}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
-              />
-            </>
-          )}
-        </div>
       </div>
-    </>
+    </div>
   );
 };
