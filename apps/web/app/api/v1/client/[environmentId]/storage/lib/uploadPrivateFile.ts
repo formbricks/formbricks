@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { getUploadSignedUrl } from "@formbricks/lib/storage/service";
+import { getUploadSignedUrl } from "@/lib/storage/service";
 
 export const uploadPrivateFile = async (
   fileName: string,

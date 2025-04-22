@@ -1,10 +1,10 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -41,10 +41,10 @@ vi.mock("./components/EnvironmentStorageHandler", () => ({
 vi.mock("@/modules/environments/lib/utils", () => ({
   environmentIdLayoutChecks: vi.fn(),
 }));
-vi.mock("@formbricks/lib/project/service", () => ({
+vi.mock("@/lib/project/service", () => ({
   getProjectByEnvironmentId: vi.fn(),
 }));
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
 
@@ -53,7 +53,7 @@ describe("EnvLayout", () => {
     cleanup();
   });
 
-  it("renders successfully when all dependencies return valid data", async () => {
+  test("renders successfully when all dependencies return valid data", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any, // Mock translation function, we don't need to implement it for the test
       session: { user: { id: "user1" } } as Session,
@@ -77,7 +77,7 @@ describe("EnvLayout", () => {
     expect(screen.getByTestId("child")).toHaveTextContent("Content");
   });
 
-  it("throws error if project is not found", async () => {
+  test("throws error if project is not found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,
@@ -97,7 +97,7 @@ describe("EnvLayout", () => {
     ).rejects.toThrow("common.project_not_found");
   });
 
-  it("throws error if membership is not found", async () => {
+  test("throws error if membership is not found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,
@@ -115,7 +115,7 @@ describe("EnvLayout", () => {
     ).rejects.toThrow("common.membership_not_found");
   });
 
-  it("calls redirect when session is null", async () => {
+  test("calls redirect when session is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: undefined as unknown as Session,
@@ -134,7 +134,7 @@ describe("EnvLayout", () => {
     ).rejects.toThrow("Redirect called");
   });
 
-  it("throws error if user is null", async () => {
+  test("throws error if user is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,

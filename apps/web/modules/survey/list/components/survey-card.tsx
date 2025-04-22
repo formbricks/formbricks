@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { convertDateString, timeSince } from "@/lib/time";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
@@ -7,8 +9,6 @@ import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-ind
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
@@ -72,7 +72,7 @@ export const SurveyCard = ({
         </div>
         <div
           className={cn(
-            "col-span-1 flex w-fit items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
+            "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
             surveyStatusLabel === "Scheduled" && "bg-slate-200",
             surveyStatusLabel === "In Progress" && "bg-emerald-50",
             surveyStatusLabel === "Completed" && "bg-slate-200",
@@ -81,23 +81,23 @@ export const SurveyCard = ({
           )}>
           <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
         </div>
-        <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
           {survey.responseCount}
         </div>
         <div className="col-span-1 flex justify-between">
           <SurveyTypeIndicator type={survey.type} />
         </div>
-        <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
           {convertDateString(survey.createdAt.toString())}
         </div>
-        <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
           {timeSince(survey.updatedAt.toString(), locale)}
         </div>
-        <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
           {survey.creator ? survey.creator.name : "-"}
         </div>
       </div>
-      <div className="absolute right-3 top-3.5">
+      <div className="absolute top-3.5 right-3">
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}

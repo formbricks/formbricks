@@ -1,12 +1,12 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
 import Link from "next/link";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
 interface ConnectPageProps {
   params: Promise<{
@@ -44,7 +44,7 @@ const Page = async (props: ConnectPageProps) => {
         channel={channel}
       />
       <Button
-        className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+        className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
         variant="ghost"
         asChild>
         <Link href={`/environments/${environment.id}`}>

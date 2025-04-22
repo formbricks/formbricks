@@ -1,15 +1,15 @@
+import { validateInputs } from "@/lib/utils/validate";
 import { Response } from "node-fetch";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { createBrevoCustomer } from "./brevo";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   BREVO_API_KEY: "mock_api_key",
   BREVO_LIST_ID: "123",
 }));
 
-vi.mock("@formbricks/lib/utils/validate", () => ({
+vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
@@ -20,8 +20,8 @@ describe("createBrevoCustomer", () => {
     vi.clearAllMocks();
   });
 
-  it("should return early if BREVO_API_KEY is not defined", async () => {
-    vi.doMock("@formbricks/lib/constants", () => ({
+  test("should return early if BREVO_API_KEY is not defined", async () => {
+    vi.doMock("@/lib/constants", () => ({
       BREVO_API_KEY: undefined,
       BREVO_LIST_ID: "123",
     }));
@@ -35,7 +35,7 @@ describe("createBrevoCustomer", () => {
     expect(validateInputs).not.toHaveBeenCalled();
   });
 
-  it("should log an error if fetch fails", async () => {
+  test("should log an error if fetch fails", async () => {
     const loggerSpy = vi.spyOn(logger, "error");
 
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Fetch failed"));
@@ -45,7 +45,7 @@ describe("createBrevoCustomer", () => {
     expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error sending user to Brevo");
   });
 
-  it("should log the error response if fetch status is not 200", async () => {
+  test("should log the error response if fetch status is not 200", async () => {
     const loggerSpy = vi.spyOn(logger, "error");
 
     vi.mocked(global.fetch).mockResolvedValueOnce(

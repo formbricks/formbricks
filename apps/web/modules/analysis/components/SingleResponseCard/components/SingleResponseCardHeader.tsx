@@ -1,5 +1,7 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -7,9 +9,7 @@ import { useTranslate } from "@tolgee/react";
 import { LanguagesIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -153,7 +153,7 @@ export const SingleResponseCardHeader = ({
   const deleteSubmissionToolTip = <>{t("environments.surveys.responses.this_response_is_in_progress")}</>;
 
   return (
-    <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
+    <div className="space-y-2 border-b border-slate-200 px-6 pt-4 pb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center space-x-4">
           {pageType === "response" && (

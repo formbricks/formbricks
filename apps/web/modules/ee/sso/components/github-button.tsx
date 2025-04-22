@@ -1,11 +1,11 @@
 "use client";
 
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { GithubIcon } from "@/modules/ui/components/icons";
 import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface GithubButtonProps {
   inviteUrl?: string;

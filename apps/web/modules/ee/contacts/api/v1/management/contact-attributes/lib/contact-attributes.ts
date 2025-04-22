@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getContactAttributes = reactCache((environmentIds: string[]) =>

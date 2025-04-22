@@ -41,7 +41,7 @@
     "@calcom/embed-snippet": "1.3.2",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@formbricks/lib": "workspace:*",
+    "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "2.10.1",
     "@testing-library/preact": "3.2.4",

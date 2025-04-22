@@ -47,7 +47,7 @@ locals {
       alarm_description   = "Average API 5XX load balancer error code count is too high"
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
-      threshold           = 5
+      threshold           = 10
       period              = 600
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"

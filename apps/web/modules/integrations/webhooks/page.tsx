@@ -1,3 +1,5 @@
+import { getSurveys } from "@/lib/survey/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
@@ -8,8 +10,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { getSurveys } from "@formbricks/lib/survey/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const WebhooksPage = async (props) => {
   const params = await props.params;

@@ -1,5 +1,5 @@
-import { BREVO_API_KEY, BREVO_LIST_ID } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { BREVO_API_KEY, BREVO_LIST_ID } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";

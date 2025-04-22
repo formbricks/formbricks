@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;
@@ -54,7 +54,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
+      className={cn("text-2xl leading-none font-semibold tracking-tight", className)}
       {...props}
     />
   )

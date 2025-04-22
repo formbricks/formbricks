@@ -1,11 +1,11 @@
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   ENCRYPTION_KEY: "test",
   ENTERPRISE_LICENSE_KEY: "test",
@@ -52,7 +52,7 @@ describe("SurveyDropDownMenu", () => {
     cleanup();
   });
 
-  it("calls copySurveyLink when copy link is clicked", async () => {
+  test("calls copySurveyLink when copy link is clicked", async () => {
     const mockRefresh = vi.fn().mockResolvedValue("fakeSingleUseId");
     const mockDeleteSurvey = vi.fn();
     const mockDuplicateSurvey = vi.fn();
@@ -88,7 +88,7 @@ describe("SurveyDropDownMenu", () => {
     });
   });
 
-  it("shows edit and delete items when not disabled", async () => {
+  test("shows edit and delete items when not disabled", async () => {
     render(
       <SurveyDropDownMenu
         environmentId="env123"

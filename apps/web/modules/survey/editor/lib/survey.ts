@@ -1,3 +1,5 @@
+import { segmentCache } from "@/lib/cache/segment";
+import { surveyCache } from "@/lib/survey/cache";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -6,8 +8,6 @@ import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";

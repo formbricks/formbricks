@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -10,7 +11,6 @@ import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -66,7 +66,7 @@ export const EditWelcomeCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <Hand className="h-4 w-4" />

@@ -1331,11 +1331,15 @@ export const ZSurvey = z
             ];
 
             if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
-                path: ["followUps"],
-              });
+              // not from a valid option within the survey, but it could be a correct email from the team member emails or the user's email:
+              const parsedEmailTo = z.string().email().safeParse(followUp.action.properties.to);
+              if (!parsedEmailTo.success) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+                  path: ["followUps"],
+                });
+              }
             }
 
             if (followUp.trigger.type === "endings") {

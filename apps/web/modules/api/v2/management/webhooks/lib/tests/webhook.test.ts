@@ -1,9 +1,9 @@
 import { webhookCache } from "@/lib/cache/webhook";
+import { captureTelemetry } from "@/lib/telemetry";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { WebhookSource } from "@prisma/client";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { createWebhook, getWebhooks } from "../webhook";
 
 vi.mock("@formbricks/database", () => ({
@@ -21,7 +21,7 @@ vi.mock("@/lib/cache/webhook", () => ({
     revalidate: vi.fn(),
   },
 }));
-vi.mock("@formbricks/lib/telemetry", () => ({
+vi.mock("@/lib/telemetry", () => ({
   captureTelemetry: vi.fn(),
 }));
 
@@ -37,7 +37,7 @@ describe("getWebhooks", () => {
   ];
   const count = fakeWebhooks.length;
 
-  it("returns ok response with webhooks and meta", async () => {
+  test("returns ok response with webhooks and meta", async () => {
     vi.mocked(prisma.$transaction).mockResolvedValueOnce([fakeWebhooks, count]);
 
     const result = await getWebhooks(environmentId, params as TGetWebhooksFilter);
@@ -53,7 +53,7 @@ describe("getWebhooks", () => {
     }
   });
 
-  it("returns error when prisma.$transaction throws", async () => {
+  test("returns error when prisma.$transaction throws", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Test error"));
 
     const result = await getWebhooks(environmentId, params as TGetWebhooksFilter);
@@ -87,7 +87,7 @@ describe("createWebhook", () => {
     updatedAt: new Date(),
   };
 
-  it("creates a webhook and revalidates cache", async () => {
+  test("creates a webhook and revalidates cache", async () => {
     vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
 
     const result = await createWebhook(inputWebhook);
@@ -104,7 +104,7 @@ describe("createWebhook", () => {
     }
   });
 
-  it("returns error when creation fails", async () => {
+  test("returns error when creation fails", async () => {
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new Error("Creation failed"));
 
     const result = await createWebhook(inputWebhook);
