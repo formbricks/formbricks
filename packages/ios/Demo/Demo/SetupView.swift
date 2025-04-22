@@ -20,7 +20,7 @@ struct SetupView: View {
                         
                         // Simulate async setup delay
                         DispatchQueue.global().async {
-                            Formbricks.setup(with: config, force: true)
+                            Formbricks.setup(with: config)
                             
                             DispatchQueue.main.async {
                                 isSetup = true
@@ -51,8 +51,7 @@ struct SetupView: View {
                 .padding()
                 
                 Button("Call Formbricks.setLanguage") {
-//                    Formbricks.setLanguage("en_us")
-                    Formbricks.setLanguage("someything")
+                    Formbricks.setLanguage("vi")
                 }.padding()
                 
                 Button("Call Formbricks.logout") {
