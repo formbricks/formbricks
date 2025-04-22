@@ -70,7 +70,7 @@ export const getTeamProjectIds = reactCache(
         const team = await prisma.team.findUnique({
           where: {
             id: teamId,
-            organizationId: organizationId,
+            organizationId,
           },
           select: {
             projectTeams: {
