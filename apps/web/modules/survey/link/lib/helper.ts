@@ -1,5 +1,5 @@
 import "server-only";
-import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
+import { verifyTokenForLinkSurvey } from "@/lib/jwt";
 
 interface emailVerificationDetails {
   status: "not-verified" | "verified" | "fishy";

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 interface TabBarProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];

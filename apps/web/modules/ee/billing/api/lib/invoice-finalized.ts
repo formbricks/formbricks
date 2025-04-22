@@ -1,5 +1,5 @@
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
-import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 
 export const handleInvoiceFinalized = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice;

@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
@@ -30,8 +32,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
   TSurvey,

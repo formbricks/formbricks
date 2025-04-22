@@ -19,6 +19,16 @@
     "@formbricks/demo#lint": {
       "dependsOn": ["@formbricks/js#build"]
     },
+    "@formbricks/i18n-utils#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["packages/i18n-utils/dist/**"]
+    },
+    "@formbricks/i18n-utils#lint": {
+      "dependsOn": ["^lint"]
+    },
+    "@formbricks/i18n-utils#test": {
+      "dependsOn": ["@formbricks/i18n-utils#build"]
+    },
     "@formbricks/js#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -44,12 +54,6 @@
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
     },
-    "@formbricks/lib#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
-    },
-    "@formbricks/lib#test": {
-      "dependsOn": ["@formbricks/logger#build"]
-    },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
@@ -64,7 +68,7 @@
       "outputs": ["dist/**"]
     },
     "@formbricks/surveys#build:dev": {
-      "dependsOn": ["^build:dev"],
+      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/surveys#go": {
@@ -114,7 +118,6 @@
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
-        "FORMBRICKS_ENCRYPTION_KEY",
         "FORMBRICKS_API_HOST",
         "FORMBRICKS_ENVIRONMENT_ID",
         "GITHUB_ID",

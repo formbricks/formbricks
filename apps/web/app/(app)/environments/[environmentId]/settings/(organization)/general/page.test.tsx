@@ -1,3 +1,4 @@
+import { getUser } from "@/lib/user/service";
 import {
   getIsMultiOrgEnabled,
   getIsOrganizationAIReady,
@@ -7,11 +8,10 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getUser } from "@formbricks/lib/user/service";
 import { TUser } from "@formbricks/types/user";
 import Page from "./page";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
@@ -49,7 +49,7 @@ vi.mock("@/tolgee/server", () => ({
   getTranslate: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 

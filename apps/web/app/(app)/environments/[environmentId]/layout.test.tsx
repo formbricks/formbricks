@@ -1,10 +1,10 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -41,10 +41,10 @@ vi.mock("./components/EnvironmentStorageHandler", () => ({
 vi.mock("@/modules/environments/lib/utils", () => ({
   environmentIdLayoutChecks: vi.fn(),
 }));
-vi.mock("@formbricks/lib/project/service", () => ({
+vi.mock("@/lib/project/service", () => ({
   getProjectByEnvironmentId: vi.fn(),
 }));
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
 

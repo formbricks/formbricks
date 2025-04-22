@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
+import { surveyCache } from "@/lib/survey/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";

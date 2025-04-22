@@ -1,8 +1,8 @@
+import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import {
   getBasicSurveyMetadata,
@@ -21,13 +21,13 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 }));
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: vi.fn(() => false),
   WEBAPP_URL: "https://test.formbricks.com",
   SURVEY_URL: "https://surveys.test.formbricks.com",
 }));
 
-vi.mock("@formbricks/lib/styling/constants", () => ({
+vi.mock("@/lib/styling/constants", () => ({
   COLOR_DEFAULTS: {
     brandColor: "#00c4b8",
   },

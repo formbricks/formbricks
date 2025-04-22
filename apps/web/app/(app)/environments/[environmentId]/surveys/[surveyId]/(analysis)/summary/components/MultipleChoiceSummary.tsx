@@ -1,5 +1,6 @@
 "use client";
 
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
@@ -7,7 +8,6 @@ import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import {
   TI18nString,
   TSurvey,
@@ -78,7 +78,7 @@ export const MultipleChoiceSummary = ({
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div
             key={result.value}

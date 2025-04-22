@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
+import { projectCache } from "@/lib/project/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 

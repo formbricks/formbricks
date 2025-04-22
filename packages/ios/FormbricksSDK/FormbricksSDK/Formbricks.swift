@@ -41,6 +41,7 @@ import Network
      */
     @objc public static func setup(with config: FormbricksConfig, force: Bool = false) {
         logger = Logger()
+        apiQueue = OperationQueue()
         
         if (force == true) {
             isInitialized = false
@@ -88,6 +89,11 @@ import Network
     @objc public static func setUserId(_ userId: String) {
         guard Formbricks.isInitialized else {
             Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            return
+        }
+        
+        if let existing = userManager?.userId, !existing.isEmpty {
+            logger?.error("A userId is already set (\"\(existing)\") – please call Formbricks.logout() before setting a new one.")
             return
         }
         
@@ -230,6 +236,7 @@ import Network
     }
 
     private static func performCleanup() {
+        userManager?.logout()
         userManager?.cleanupUpdateQueue()
         presentSurveyManager?.dismissView()
         presentSurveyManager = nil

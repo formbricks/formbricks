@@ -7,4 +7,5 @@ struct UserStateDetails: Codable {
     let displays: [Display]?
     let responses: [String]?
     let lastDisplayAt: Date?
+    let language: String?
 }

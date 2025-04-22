@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
@@ -31,7 +32,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {

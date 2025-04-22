@@ -1,12 +1,12 @@
+import { cache } from "@/lib/cache";
+import { segmentCache } from "@/lib/cache/segment";
+import { surveyCache } from "@/lib/survey/cache";
+import { getSurvey } from "@/lib/survey/service";
+import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,

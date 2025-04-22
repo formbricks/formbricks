@@ -1,3 +1,5 @@
+import { verifyInviteToken } from "@/lib/jwt";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
@@ -8,8 +10,6 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
 
 // Mock the necessary dependencies
@@ -37,11 +37,11 @@ vi.mock("@/modules/auth/signup/lib/invite", () => ({
   getIsValidInviteToken: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/jwt", () => ({
+vi.mock("@/lib/jwt", () => ({
   verifyInviteToken: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
@@ -50,7 +50,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock environment variables and constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",

@@ -95,6 +95,9 @@ final class UserManager: UserManagerSyncable {
                 self?.lastDisplayedAt = userResponse.data.state?.data?.lastDisplayAt
                 self?.expiresAt = userResponse.data.state?.expiresAt
                 
+                let serverLanguage = userResponse.data.state?.data?.language
+                Formbricks.language = serverLanguage ?? "default"
+                
                 self?.updateQueue?.reset()
                 self?.surveyManager?.filterSurveys()
                 self?.startSyncTimer()
@@ -128,6 +131,7 @@ final class UserManager: UserManagerSyncable {
         backingResponses = nil
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
+        Formbricks.language = "default"
         updateQueue?.reset()
         
         if isUserIdDefined {

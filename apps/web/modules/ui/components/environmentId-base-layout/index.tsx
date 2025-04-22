@@ -1,14 +1,14 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { ToasterClient } from "@/modules/ui/components/toaster-client";
-import { Session } from "next-auth";
 import {
   FORMBRICKS_API_HOST,
   FORMBRICKS_ENVIRONMENT_ID,
   IS_FORMBRICKS_ENABLED,
   IS_POSTHOG_CONFIGURED,
-} from "@formbricks/lib/constants";
+} from "@/lib/constants";
+import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { Session } from "next-auth";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 

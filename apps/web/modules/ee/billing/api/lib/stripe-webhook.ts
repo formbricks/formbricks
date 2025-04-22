@@ -1,10 +1,10 @@
+import { STRIPE_API_VERSION } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { handleCheckoutSessionCompleted } from "@/modules/ee/billing/api/lib/checkout-session-completed";
 import { handleInvoiceFinalized } from "@/modules/ee/billing/api/lib/invoice-finalized";
 import { handleSubscriptionCreatedOrUpdated } from "@/modules/ee/billing/api/lib/subscription-created-or-updated";
 import { handleSubscriptionDeleted } from "@/modules/ee/billing/api/lib/subscription-deleted";
 import Stripe from "stripe";
-import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
 import { logger } from "@formbricks/logger";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {

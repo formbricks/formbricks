@@ -1,10 +1,10 @@
+import { actionClassCache } from "@/lib/actionClass/cache";
+import { cache } from "@/lib/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { ActionClass } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getActionClasses = reactCache(

@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
+import { surveyCache } from "@/lib/survey/cache";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Organization, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

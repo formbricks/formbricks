@@ -1,4 +1,6 @@
 import { teamCache } from "@/lib/cache/team";
+import { projectCache } from "@/lib/project/cache";
+import { captureTelemetry } from "@/lib/telemetry";
 import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import {
   TGetProjectTeamsFilter,
@@ -10,8 +12,6 @@ import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { ProjectTeam } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getProjectTeams = async (

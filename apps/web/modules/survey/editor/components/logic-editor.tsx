@@ -1,5 +1,6 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
@@ -13,7 +14,6 @@ import {
 import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {
