@@ -25,7 +25,7 @@ runs:
     - uses: ./.github/actions/dangerous-git-checkout
 
     - name: Cache Build
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       id: cache-build
       env:
         cache-name: prod-build

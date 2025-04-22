@@ -1,4 +1,4 @@
-FROM node:22-alpine3.21 AS base
+FROM node:22-alpine3.21@ AS base
 
 #
 ## step 1: Prune monorepo
@@ -22,7 +22,6 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-# Update all packages and specifically upgrade vulnerable ones
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl python3
 
 # BuildKit secret handling without hardcoded fallback values
