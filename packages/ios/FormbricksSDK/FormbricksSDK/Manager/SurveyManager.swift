@@ -62,18 +62,19 @@ final class SurveyManager {
                 
         // Display percentage
         let shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
-    
-    
-        guard let survey = firstSurveyWithActionClass else {return}
-        let currentLanguage = Formbricks.language
-        guard let languageCode = getLanguageCode(survey: survey, language: currentLanguage) else {
-            Formbricks.logger?.error("Survey \(survey.name) is not available in language “\(currentLanguage)”. Skipping.")
-            return
+        let isMultiLangSurvey = firstSurveyWithActionClass?.languages?.count ?? 0 > 1
+
+        if isMultiLangSurvey {
+            guard let survey = firstSurveyWithActionClass else {return}
+            let currentLanguage = Formbricks.language
+            guard let languageCode = getLanguageCode(survey: survey, language: currentLanguage) else {
+                Formbricks.logger?.error("Survey \(survey.name) is not available in language “\(currentLanguage)”. Skipping.")
+                return
+            }
+            
+            Formbricks.language = languageCode
         }
-        
-        Formbricks.language = languageCode
-        
-        
+
         // Display and delay it if needed
         if let surveyId = firstSurveyWithActionClass?.id, shouldDisplay {
             isShowingSurvey = true
@@ -277,7 +278,7 @@ private extension SurveyManager {
         guard
             let entry = selected,
             entry.enabled,
-            ((availableLanguageCodes?.contains(entry.language.code)) != nil)
+            availableLanguageCodes?.contains(entry.language.code) == true
         else {
             return nil
         }
