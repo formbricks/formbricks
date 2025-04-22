@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-card/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -9,7 +10,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { cn } from "@formbricks/lib/cn";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -57,7 +57,7 @@ export const BackgroundStylingCard = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
                 className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"

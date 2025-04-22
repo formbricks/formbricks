@@ -1,6 +1,6 @@
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 import React, { useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 export type OTPInputProps = {
   value: string;

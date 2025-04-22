@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -14,8 +16,6 @@ import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
@@ -186,7 +186,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
         )}>
         <p>
           <Languages className="h-6 w-6 rounded-full bg-indigo-500 p-1 text-white" />
@@ -248,7 +248,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             ) : (
               <>
                 {projectLanguages.length <= 1 && (
-                  <div className="mb-4 text-sm italic text-slate-500">
+                  <div className="mb-4 text-sm text-slate-500 italic">
                     {projectLanguages.length === 0
                       ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
                       : t(
@@ -260,7 +260,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   <div className="my-4 space-y-4">
                     <div>
                       {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                        <div className="text-sm italic text-slate-500">
+                        <div className="text-sm text-slate-500 italic">
                           {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
                         </div>
                       ) : null}

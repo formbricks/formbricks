@@ -1,10 +1,10 @@
+import { cn } from "@/lib/cn";
 import { TableHead } from "@/modules/ui/components/table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Header, flexRender } from "@tanstack/react-table";
 import { GripVerticalIcon } from "lucide-react";
 import { CSSProperties } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { getCommonPinningStyles } from "../lib/utils";
 import { ColumnSettingsDropdown } from "./column-settings-dropdown";
 

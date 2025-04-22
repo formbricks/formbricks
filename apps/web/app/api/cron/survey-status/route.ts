@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { CRON_SECRET } from "@/lib/constants";
+import { surveyCache } from "@/lib/survey/cache";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 
 export const POST = async () => {
   const headersList = await headers();

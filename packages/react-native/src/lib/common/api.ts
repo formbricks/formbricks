@@ -17,8 +17,8 @@ export const makeRequest = async <T>(
     method,
     headers: {
       "Content-Type": "application/json",
+      ...(isDebug && { "Cache-Control": "no-cache" }),
     },
-    ...(isDebug && { "Cache-Control": "no-cache" }),
     body,
   });
 

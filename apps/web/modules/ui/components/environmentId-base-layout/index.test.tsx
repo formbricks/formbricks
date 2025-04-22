@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EnvironmentIdBaseLayout } from "./index";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -51,7 +51,7 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/PosthogIdentify", (
 }));
 
 describe("EnvironmentIdBaseLayout", () => {
-  it("renders correctly with provided props and children", async () => {
+  test("renders correctly with provided props and children", async () => {
     const dummySession: Session = { user: { id: "user1" } } as Session;
     const dummyUser: TUser = { id: "user1", email: "user1@example.com" } as TUser;
     const dummyOrganization: TOrganization = { id: "org1", name: "Org1", billing: {} } as TOrganization;

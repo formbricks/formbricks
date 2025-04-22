@@ -1,14 +1,14 @@
 import { createDocument } from "@/app/api/(internal)/insights/lib/document";
 import { doesResponseHasAnyOpenTextAnswer } from "@/app/api/(internal)/insights/lib/utils";
+import { embeddingsModel } from "@/lib/aiModels";
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
+import { getPromptText } from "@/lib/utils/ai";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { validateInputs } from "@/lib/utils/validate";
 import { Insight, InsightCategory, Prisma } from "@prisma/client";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
-import { embeddingsModel } from "@formbricks/lib/aiModels";
-import { getPromptText } from "@formbricks/lib/utils/ai";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { TCreatedDocument } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";

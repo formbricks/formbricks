@@ -4,7 +4,7 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageToggleProps {

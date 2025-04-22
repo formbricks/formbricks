@@ -164,8 +164,8 @@ describe("api.ts", () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         },
-        "Cache-Control": "no-cache",
       });
     });
   });

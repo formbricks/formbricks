@@ -1,8 +1,8 @@
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import jwt from "jsonwebtoken";
-import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
-import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact

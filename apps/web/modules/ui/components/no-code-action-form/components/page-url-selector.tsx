@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { testURLmatch } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -23,8 +25,6 @@ import {
   useFieldArray,
 } from "react-hook-form";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { testURLmatch } from "@formbricks/lib/utils/url";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 
 interface PageUrlSelectorProps {

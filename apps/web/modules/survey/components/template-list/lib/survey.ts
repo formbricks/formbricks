@@ -1,3 +1,6 @@
+import { segmentCache } from "@/lib/cache/segment";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { surveyCache } from "@/lib/survey/cache";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
@@ -7,9 +10,6 @@ import { selectSurvey } from "@/modules/survey/lib/survey";
 import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";

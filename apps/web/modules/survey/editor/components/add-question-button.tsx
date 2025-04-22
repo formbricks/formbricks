@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import {
   getCXQuestionTypes,
   getQuestionDefaults,
@@ -13,7 +14,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;

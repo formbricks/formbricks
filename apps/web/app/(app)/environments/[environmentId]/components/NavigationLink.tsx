@@ -1,7 +1,7 @@
+import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import Link from "next/link";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface NavigationLinkProps {
   href: string;

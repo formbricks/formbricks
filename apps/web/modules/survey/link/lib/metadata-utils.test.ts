@@ -1,8 +1,8 @@
+import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import {
   getBasicSurveyMetadata,
@@ -21,13 +21,13 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 }));
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: vi.fn(() => false),
   WEBAPP_URL: "https://test.formbricks.com",
   SURVEY_URL: "https://surveys.test.formbricks.com",
 }));
 
-vi.mock("@formbricks/lib/styling/constants", () => ({
+vi.mock("@/lib/styling/constants", () => ({
   COLOR_DEFAULTS: {
     brandColor: "#00c4b8",
   },
@@ -40,29 +40,29 @@ describe("Metadata Utils", () => {
   });
 
   describe("getNameForURL", () => {
-    it("replaces spaces with %20", () => {
+    test("replaces spaces with %20", () => {
       const result = getNameForURL("Hello World");
       expect(result).toBe("Hello%20World");
     });
 
-    it("handles strings with no spaces correctly", () => {
+    test("handles strings with no spaces correctly", () => {
       const result = getNameForURL("HelloWorld");
       expect(result).toBe("HelloWorld");
     });
 
-    it("handles strings with multiple spaces", () => {
+    test("handles strings with multiple spaces", () => {
       const result = getNameForURL("Hello  World  Test");
       expect(result).toBe("Hello%20%20World%20%20Test");
     });
   });
 
   describe("getBrandColorForURL", () => {
-    it("replaces # with %23", () => {
+    test("replaces # with %23", () => {
       const result = getBrandColorForURL("#ff0000");
       expect(result).toBe("%23ff0000");
     });
 
-    it("handles strings with no # correctly", () => {
+    test("handles strings with no # correctly", () => {
       const result = getBrandColorForURL("ff0000");
       expect(result).toBe("ff0000");
     });
@@ -72,7 +72,7 @@ describe("Metadata Utils", () => {
     const mockSurveyId = "survey-123";
     const mockEnvironmentId = "env-456";
 
-    it("returns default metadata when survey is not found", async () => {
+    test("returns default metadata when survey is not found", async () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
@@ -83,7 +83,7 @@ describe("Metadata Utils", () => {
       });
     });
 
-    it("uses welcome card headline when available", async () => {
+    test("uses welcome card headline when available", async () => {
       const mockSurvey = {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
@@ -115,7 +115,7 @@ describe("Metadata Utils", () => {
       });
     });
 
-    it("falls back to survey name when welcome card is not enabled", async () => {
+    test("falls back to survey name when welcome card is not enabled", async () => {
       const mockSurvey = {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
@@ -137,7 +137,7 @@ describe("Metadata Utils", () => {
       });
     });
 
-    it("adds Formbricks to title when IS_FORMBRICKS_CLOUD is true", async () => {
+    test("adds Formbricks to title when IS_FORMBRICKS_CLOUD is true", async () => {
       // Change the mock for this specific test
       (IS_FORMBRICKS_CLOUD as unknown as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
@@ -162,7 +162,7 @@ describe("Metadata Utils", () => {
   });
 
   describe("getSurveyOpenGraphMetadata", () => {
-    it("generates correct OpenGraph metadata", () => {
+    test("generates correct OpenGraph metadata", () => {
       const surveyId = "survey-123";
       const surveyName = "Test Survey";
       const brandColor = COLOR_DEFAULTS.brandColor.replace("#", "%23");
@@ -190,7 +190,7 @@ describe("Metadata Utils", () => {
       });
     });
 
-    it("handles survey names with spaces correctly", () => {
+    test("handles survey names with spaces correctly", () => {
       const surveyId = "survey-123";
       const surveyName = "Test Survey With Spaces";
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);

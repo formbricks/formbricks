@@ -1,10 +1,10 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 

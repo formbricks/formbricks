@@ -1,9 +1,9 @@
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { DeleteProjectRender } from "@/modules/projects/settings/general/components/delete-project-render";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
 interface DeleteProjectProps {

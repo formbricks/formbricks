@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import {
   Command,
   CommandEmpty,
@@ -15,7 +16,6 @@ import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
 import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;

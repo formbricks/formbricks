@@ -1,13 +1,6 @@
 "use client";
 
-import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
-import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { PencilIcon } from "lucide-react";
-import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   extractId,
   extractRecallInfo,
@@ -17,7 +10,14 @@ import {
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
-} from "@formbricks/lib/utils/recall";
+} from "@/lib/utils/recall";
+import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
+import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
+import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
+import { PencilIcon } from "lucide-react";
+import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface RecallWrapperRenderProps {

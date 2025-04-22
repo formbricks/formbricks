@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import React, { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface Option<T> {
   value: T;

@@ -1,5 +1,7 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
@@ -9,8 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";

@@ -1,75 +1,13 @@
+import { getQuestionResponseMapping } from "@/lib/responses";
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
-import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
+import { Column, Container, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
-import { getQuestionResponseMapping } from "@formbricks/lib/responses";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
-import {
-  type TSurvey,
-  type TSurveyQuestionType,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../../components/email-button";
 import { EmailTemplate } from "../../components/email-template";
-
-export const renderEmailResponseValue = async (
-  response: string | string[],
-  questionType: TSurveyQuestionType
-): Promise<React.JSX.Element> => {
-  switch (questionType) {
-    case TSurveyQuestionTypeEnum.FileUpload:
-      return (
-        <Container>
-          {Array.isArray(response) &&
-            response.map((responseItem) => (
-              <Link
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-xs"
-                href={responseItem}
-                key={responseItem}>
-                <FileIcon />
-                <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(responseItem)}</Text>
-              </Link>
-            ))}
-        </Container>
-      );
-
-    case TSurveyQuestionTypeEnum.PictureSelection:
-      return (
-        <Container>
-          <Row>
-            {Array.isArray(response) &&
-              response.map((responseItem) => (
-                <Column key={responseItem}>
-                  <Img alt={responseItem.split("/").pop()} className="m-2 h-28" src={responseItem} />
-                </Column>
-              ))}
-          </Row>
-        </Container>
-      );
-
-    case TSurveyQuestionTypeEnum.Ranking:
-      return (
-        <Container>
-          <Row className="my-1 font-semibold text-slate-700" dir="auto">
-            {Array.isArray(response) &&
-              response.map(
-                (item, index) =>
-                  item && (
-                    <Row key={item} className="mb-1 flex items-center">
-                      <Column className="w-6 text-slate-400">#{index + 1}</Column>
-                      <Column className="rounded-sm bg-slate-100 px-2 py-1">{item}</Column>
-                    </Row>
-                  )
-              )}
-          </Row>
-        </Container>
-      );
-
-    default:
-      return <Text className="mt-0 font-bold break-words whitespace-pre-wrap">{response}</Text>;
-  }
-};
 
 interface ResponseFinishedEmailProps {
   survey: TSurvey;
@@ -109,7 +47,7 @@ export async function ResponseFinishedEmail({
                 <Row key={question.question}>
                   <Column className="w-full">
                     <Text className="mb-2 font-medium">{question.question}</Text>
-                    {renderEmailResponseValue(question.response, question.type)}
+                    {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
                 </Row>
               );
@@ -189,25 +127,6 @@ export async function ResponseFinishedEmail({
         </Row>
       </Container>
     </EmailTemplate>
-  );
-}
-
-function FileIcon(): React.JSX.Element {
-  return (
-    <svg
-      className="lucide lucide-file"
-      fill="none"
-      height="24"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      width="24"
-      xmlns="http://www.w3.org/2000/svg">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    </svg>
   );
 }
 

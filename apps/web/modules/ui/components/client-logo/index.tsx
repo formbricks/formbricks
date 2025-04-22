@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@formbricks/lib/cn";
 
 interface ClientLogoProps {
   environmentId?: string;

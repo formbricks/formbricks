@@ -1,16 +1,16 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 type Params = Promise<{
   sharingKey: string;

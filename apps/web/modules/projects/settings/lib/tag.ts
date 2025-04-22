@@ -1,7 +1,7 @@
 import "server-only";
+import { tagCache } from "@/lib/tag/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { prisma } from "@formbricks/database";
-import { tagCache } from "@formbricks/lib/tag/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TTag } from "@formbricks/types/tags";
 

@@ -1,4 +1,7 @@
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
+import { getEnvironment } from "@/lib/environment/service";
+import { getProjectByEnvironmentId, getUserProjects } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
@@ -7,9 +10,6 @@ import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId, getUserProjects } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
 
 interface XMTemplatePageProps {
   params: Promise<{

@@ -1,6 +1,6 @@
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@formbricks/lib/constants";
-import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 

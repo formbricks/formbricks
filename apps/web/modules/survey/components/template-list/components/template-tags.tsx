@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { TFnType } from "@tolgee/react";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";

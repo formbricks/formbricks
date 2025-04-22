@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 const Switch: React.ComponentType<SwitchPrimitives.SwitchProps> = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,

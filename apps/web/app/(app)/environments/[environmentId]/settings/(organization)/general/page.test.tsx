@@ -1,3 +1,4 @@
+import { getUser } from "@/lib/user/service";
 import {
   getIsMultiOrgEnabled,
   getIsOrganizationAIReady,
@@ -6,12 +7,11 @@ import {
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getUser } from "@formbricks/lib/user/service";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import Page from "./page";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
@@ -49,7 +49,7 @@ vi.mock("@/tolgee/server", () => ({
   getTranslate: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
@@ -84,7 +84,7 @@ describe("Page", () => {
     vi.mocked(getWhiteLabelPermission).mockResolvedValue(true);
   });
 
-  it("renders the page with organization settings", async () => {
+  test("renders the page with organization settings", async () => {
     const props = {
       params: Promise.resolve({ environmentId: "env-123" }),
     };
@@ -94,7 +94,7 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("renders if session user id empty", async () => {
+  test("renders if session user id empty", async () => {
     mockEnvironmentAuth.session.user.id = "";
 
     vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
@@ -108,7 +108,7 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("handles getEnvironmentAuth error", async () => {
+  test("handles getEnvironmentAuth error", async () => {
     vi.mocked(getEnvironmentAuth).mockRejectedValue(new Error("Authentication error"));
 
     const props = {

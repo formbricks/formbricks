@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -81,7 +81,7 @@ describe("SingleResponseCard", () => {
     cleanup();
   });
 
-  it("renders as a plain div when survey is draft and isReadOnly", () => {
+  test("renders as a plain div when survey is draft and isReadOnly", () => {
     const draftSurvey = { ...dummySurvey, status: "draft" } as TSurvey;
     render(
       <SingleResponseCard
@@ -103,7 +103,7 @@ describe("SingleResponseCard", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
-  it("calls deleteResponseAction and refreshes router on successful deletion", async () => {
+  test("calls deleteResponseAction and refreshes router on successful deletion", async () => {
     render(
       <SingleResponseCard
         survey={dummySurvey}
@@ -131,7 +131,7 @@ describe("SingleResponseCard", () => {
     expect(dummyDeleteResponses).toHaveBeenCalledWith([dummyResponse.id]);
   });
 
-  it("calls toast.error when deleteResponseAction throws error", async () => {
+  test("calls toast.error when deleteResponseAction throws error", async () => {
     vi.mocked(deleteResponseAction).mockRejectedValueOnce(new Error("Delete failed"));
     render(
       <SingleResponseCard
@@ -157,7 +157,7 @@ describe("SingleResponseCard", () => {
     });
   });
 
-  it("calls updateResponse when getResponseAction returns updated response", async () => {
+  test("calls updateResponse when getResponseAction returns updated response", async () => {
     vi.mocked(getResponseAction).mockResolvedValueOnce({ data: { updated: true } as any });
     render(
       <SingleResponseCard

@@ -9,9 +9,12 @@ import Network
     static internal var language: String = "default"
     static internal var isInitialized: Bool = false
     
-    static internal var apiQueue = OperationQueue()
-    static internal var logger = Logger()
-    static internal var service = FormbricksService()      
+    static internal var userManager: UserManager?
+    static internal var presentSurveyManager: PresentSurveyManager?
+    static internal var surveyManager: SurveyManager?
+    static internal var apiQueue: OperationQueue? = OperationQueue()
+    static internal var logger: Logger?
+    static internal var service = FormbricksService()
     
     // make this class not instantiatable outside of the SDK
     internal override init() {
@@ -36,30 +39,39 @@ import Network
      Formbricks.setup(with: config)
      ```
      */
-    @objc public static func setup(with config: FormbricksConfig) {
+    @objc public static func setup(with config: FormbricksConfig, force: Bool = false) {
+        logger = Logger()
+        
+        if (force == true) {
+            isInitialized = false
+        }
         guard !isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsAlreadyInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsAlreadyInitialized).message)
             return
         }
         
         self.appUrl = config.appUrl
         self.environmentId = config.environmentId
-        self.logger.logLevel = config.logLevel
+        self.logger?.logLevel = config.logLevel
         
+        userManager = UserManager()
         if let userId = config.userId {
-            UserManager.shared.set(userId: userId)
+            userManager?.set(userId: userId)
         }
-        if let attributes = config.attributes {
-            UserManager.shared.set(attributes: attributes)
+        if let attributes = config.attributes, !attributes.isEmpty {
+            userManager?.set(attributes: attributes)
         }
         if let language = config.attributes?["language"] {
-            UserManager.shared.set(language: language)
+            userManager?.set(language: language)
             self.language = language
         }
+    
+        presentSurveyManager = PresentSurveyManager()
+        surveyManager = SurveyManager.create(userManager: userManager!, presentSurveyManager: presentSurveyManager!)
+        userManager?.surveyManager = surveyManager
         
-        SurveyManager.shared.refreshEnvironmentIfNeeded()
-        UserManager.shared.syncUserStateIfNeeded()
-        
+        surveyManager?.refreshEnvironmentIfNeeded(force: force)
+        userManager?.syncUserStateIfNeeded()
         
         self.isInitialized = true
     }
@@ -75,11 +87,16 @@ import Network
      */
     @objc public static func setUserId(_ userId: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
             return
         }
         
-        UserManager.shared.set(userId: userId)
+        if let existing = userManager?.userId, !existing.isEmpty {
+            logger?.error("A userId is already set (\"\(existing)\") – please call Formbricks.logout() before setting a new one.")
+            return
+        }
+        
+        userManager?.set(userId: userId)
     }
     
     /**
@@ -93,11 +110,11 @@ import Network
      */
     @objc public static func setAttribute(_ attribute: String, forKey key: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
             return
         }
         
-        UserManager.shared.add(attribute: attribute, forKey: key)
+        userManager?.add(attribute: attribute, forKey: key)
     }
     
     /**
@@ -111,11 +128,11 @@ import Network
      */
     @objc public static func setAttributes(_ attributes: [String : String]) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
             return
         }
         
-        UserManager.shared.set(attributes: attributes)
+        userManager?.set(attributes: attributes)
     }
     
     /**
@@ -129,12 +146,16 @@ import Network
      */
     @objc public static func setLanguage(_ language: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            return
+        }
+        
+        if (Formbricks.language == language) {
             return
         }
         
         Formbricks.language = language
-        UserManager.shared.set(language: language)
+        userManager?.set(language: language)
     }
     
     /**
@@ -148,15 +169,15 @@ import Network
      */
     @objc public static func track(_ action: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
             return
         }
         
         Formbricks.isInternetAvailabile { available in
             if available {
-                SurveyManager.shared.track(action)
+                surveyManager?.track(action)
             } else {
-                Formbricks.logger.warning(FormbricksSDKError.init(type: .networkError).message)
+                Formbricks.logger?.warning(FormbricksSDKError.init(type: .networkError).message)
             }
         }
         
@@ -173,11 +194,58 @@ import Network
      */
     @objc public static func logout() {
         guard Formbricks.isInitialized else {
-            Formbricks.logger.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
             return
         }
 
-        UserManager.shared.logout()
+        userManager?.logout()
+    }
+    
+    /**
+    Cleans up the SDK. This will clear the user attributes, the user id and the environment state.
+    The SDK must be initialized before calling this method.
+    If `waitForOperations` is set to `true`, it will wait for all operations to finish before cleaning up.
+    If `waitForOperations` is set to `false`, it will clean up immediately.
+    You can also provide a completion block that will be called when the cleanup is finished.
+
+    Example:
+    ```swift
+    Formbricks.cleanup()
+
+    Formbricks.cleanup(waitForOperations: true) {
+        // Cleanup completed
+    }
+    ```
+     */
+    
+    @objc public static func cleanup(waitForOperations: Bool = false, completion: (() -> Void)? = nil) {
+        if waitForOperations, let queue = apiQueue {
+            DispatchQueue.global(qos: .background).async {
+                queue.waitUntilAllOperationsAreFinished()
+                performCleanup()
+                DispatchQueue.main.async {
+                    completion?()
+                }
+            }
+        } else {
+            apiQueue?.cancelAllOperations()
+            performCleanup()
+            completion?()
+        }
+    }
+
+    private static func performCleanup() {
+        userManager?.cleanupUpdateQueue()
+        presentSurveyManager?.dismissView()
+        presentSurveyManager = nil
+        userManager = nil
+        surveyManager = nil
+        apiQueue = nil
+        isInitialized = false
+        appUrl = nil
+        environmentId = nil
+        logger = nil
+        language = "default"
     }
 }
 

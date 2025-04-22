@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;

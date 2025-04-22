@@ -1,3 +1,4 @@
+import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,6 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
   TSurveyHiddenFields,

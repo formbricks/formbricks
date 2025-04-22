@@ -1,7 +1,7 @@
+import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import { TFnType } from "@tolgee/react";
 import React from "react";
-import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
@@ -46,7 +46,13 @@ export async function EmailTemplate({
           </Container>
 
           <Section className="mt-4 text-center text-sm">
-            <Text className="m-0 font-normal text-slate-500">{t("emails.email_template_text_1")}</Text>
+            <Link
+              className="m-0 font-normal text-slate-500"
+              href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
+              target="_blank"
+              rel="noopener noreferrer">
+              {t("emails.email_template_text_1")}
+            </Link>
             {IMPRINT_ADDRESS && (
               <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
             )}
@@ -56,7 +62,7 @@ export async function EmailTemplate({
                   {t("emails.imprint")}
                 </Link>
               )}
-              {IMPRINT_URL && PRIVACY_URL && "•"}
+              {IMPRINT_URL && PRIVACY_URL && " • "}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
                   {t("emails.privacy_policy")}

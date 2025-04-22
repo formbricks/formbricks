@@ -1,11 +1,11 @@
+import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { controllers } from "@boxyhq/saml-jackson";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@formbricks/lib/constants";
 import init from "../jackson";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   SAML_AUDIENCE: "test-audience",
   SAML_DATABASE_URL: "test-db-url",
   SAML_PATH: "/test-path",

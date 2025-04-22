@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) =>

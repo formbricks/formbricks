@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 export const Slider: React.ForwardRefExoticComponent<
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> &

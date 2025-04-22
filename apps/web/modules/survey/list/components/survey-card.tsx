@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { convertDateString, timeSince } from "@/lib/time";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
@@ -7,8 +9,6 @@ import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-ind
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 

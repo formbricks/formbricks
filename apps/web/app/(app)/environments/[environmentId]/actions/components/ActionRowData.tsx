@@ -1,5 +1,5 @@
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
-import { timeSince } from "@formbricks/lib/time";
+import { timeSince } from "@/lib/time";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TUserLocale } from "@formbricks/types/user";
 

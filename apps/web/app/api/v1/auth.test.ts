@@ -1,7 +1,7 @@
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { authenticateRequest } from "./auth";
@@ -20,7 +20,7 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 }));
 
 describe("getApiKeyWithPermissions", () => {
-  it("should return API key data with permissions when valid key is provided", async () => {
+  test("returns API key data with permissions when valid key is provided", async () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
@@ -51,7 +51,7 @@ describe("getApiKeyWithPermissions", () => {
     });
   });
 
-  it("should return null when API key is not found", async () => {
+  test("returns null when API key is not found", async () => {
     vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
 
     const result = await getApiKeyWithPermissions("invalid-key");
@@ -85,31 +85,31 @@ describe("hasPermission", () => {
     },
   ];
 
-  it("should return true for manage permission with any method", () => {
+  test("returns true for manage permission with any method", () => {
     expect(hasPermission(permissions, "env-1", "GET")).toBe(true);
     expect(hasPermission(permissions, "env-1", "POST")).toBe(true);
     expect(hasPermission(permissions, "env-1", "DELETE")).toBe(true);
   });
 
-  it("should handle write permission correctly", () => {
+  test("handles write permission correctly", () => {
     expect(hasPermission(permissions, "env-2", "GET")).toBe(true);
     expect(hasPermission(permissions, "env-2", "POST")).toBe(true);
     expect(hasPermission(permissions, "env-2", "DELETE")).toBe(false);
   });
 
-  it("should handle read permission correctly", () => {
+  test("handles read permission correctly", () => {
     expect(hasPermission(permissions, "env-3", "GET")).toBe(true);
     expect(hasPermission(permissions, "env-3", "POST")).toBe(false);
     expect(hasPermission(permissions, "env-3", "DELETE")).toBe(false);
   });
 
-  it("should return false for non-existent environment", () => {
+  test("returns false for non-existent environment", () => {
     expect(hasPermission(permissions, "env-4", "GET")).toBe(false);
   });
 });
 
 describe("authenticateRequest", () => {
-  it("should return authentication data for valid API key", async () => {
+  test("should return authentication data for valid API key", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -159,13 +159,13 @@ describe("authenticateRequest", () => {
     });
   });
 
-  it("should return null when no API key is provided", async () => {
+  test("returns null when no API key is provided", async () => {
     const request = new Request("http://localhost");
     const result = await authenticateRequest(request);
     expect(result).toBeNull();
   });
 
-  it("should return null when API key is invalid", async () => {
+  test("returns null when API key is invalid", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "invalid-api-key" },
     });
