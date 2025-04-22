@@ -49,6 +49,9 @@ jobs:
           pnpm test:coverage
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@aa494459d7c39c106cc77b166de8b4250a32bb97
+        with:
+          args: -X
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          ACTIONS_RUNNER_DEBUG: 'true'
