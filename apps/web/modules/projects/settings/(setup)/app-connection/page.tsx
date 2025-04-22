@@ -1,5 +1,6 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
@@ -8,7 +9,6 @@ import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 export const AppConnectionPage = async (props) => {
   const params = await props.params;

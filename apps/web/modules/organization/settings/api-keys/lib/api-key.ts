@@ -1,5 +1,7 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { apiKeyCache } from "@/lib/cache/api-key";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
@@ -10,8 +12,6 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";

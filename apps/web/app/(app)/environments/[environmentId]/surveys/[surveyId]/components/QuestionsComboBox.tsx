@@ -1,5 +1,7 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import {
   Command,
   CommandEmpty,
@@ -33,8 +35,6 @@ import {
   User,
 } from "lucide-react";
 import * as React from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
@@ -164,7 +164,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={t("common.search") + "..."}
-            className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+            className="h-5 border-none border-transparent p-0 shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
           />
         )}
         <div>

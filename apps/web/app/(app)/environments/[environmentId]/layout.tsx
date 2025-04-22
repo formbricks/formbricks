@@ -1,9 +1,9 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
 import { redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 
 const EnvLayout = async (props: {

@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon, CheckIcon, RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
 interface WidgetStatusIndicatorProps {
@@ -53,7 +53,7 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
         <currentStatus.icon />
       </div>
       <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
-      <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
+      <p className="w-2/3 text-sm text-balance text-slate-600">{currentStatus.subtitle}</p>
       {status === "notImplemented" && (
         <Button variant="outline" size="sm" className="bg-white" onClick={() => router.refresh()}>
           <RotateCcwIcon />

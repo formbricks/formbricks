@@ -1,11 +1,11 @@
+import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@/lib/constants";
 import fs from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { logger } from "@formbricks/logger";
 import { preloadConnection } from "../preload-connection";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   SAML_PRODUCT: "test-product",
   SAML_TENANT: "test-tenant",
   SAML_XML_DIR: "test-xml-dir",

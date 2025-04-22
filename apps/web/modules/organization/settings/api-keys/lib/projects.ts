@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
+import { projectCache } from "@/lib/project/cache";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getProjectsByOrganizationId = reactCache(

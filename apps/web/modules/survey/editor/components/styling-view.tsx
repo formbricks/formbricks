@@ -1,5 +1,6 @@
 "use client";
 
+import { defaultStyling } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
@@ -21,7 +22,6 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 

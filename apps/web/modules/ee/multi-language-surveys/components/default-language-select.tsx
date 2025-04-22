@@ -10,7 +10,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {

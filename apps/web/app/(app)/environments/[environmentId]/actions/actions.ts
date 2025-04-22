@@ -1,12 +1,12 @@
 "use server";
 
+import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
+import { cache } from "@/lib/cache";
+import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { cache } from "@formbricks/lib/cache";
-import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";

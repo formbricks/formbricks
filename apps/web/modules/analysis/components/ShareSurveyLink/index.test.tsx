@@ -16,7 +16,7 @@ const dummySurvey = {
 const dummySurveyDomain = "http://dummy.com";
 const dummyLocale = "en-US";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",

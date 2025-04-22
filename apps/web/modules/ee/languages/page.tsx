@@ -1,4 +1,6 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getUser } from "@/lib/user/service";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -6,8 +8,6 @@ import { ProjectConfigNavigation } from "@/modules/projects/settings/components/
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getUser } from "@formbricks/lib/user/service";
 
 export const LanguagesPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;

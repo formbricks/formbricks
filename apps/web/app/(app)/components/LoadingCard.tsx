@@ -1,5 +1,5 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 export const LoadingCard = ({
   title,

@@ -1,8 +1,8 @@
 import "server-only";
+import { llmModel } from "@/lib/aiModels";
 import { Prisma } from "@prisma/client";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { llmModel } from "@formbricks/lib/aiModels";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import {

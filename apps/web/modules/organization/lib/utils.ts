@@ -1,10 +1,10 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganization } from "@/lib/organization/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { cache } from "react";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { TOrganizationAuth } from "../types/organization-auth";
 
 /**

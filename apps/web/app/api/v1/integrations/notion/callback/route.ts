@@ -1,14 +1,14 @@
 import { responses } from "@/app/lib/api/response";
-import { NextRequest } from "next/server";
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
   WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { symmetricEncrypt } from "@formbricks/lib/crypto";
-import { createOrUpdateIntegration, getIntegrationByType } from "@formbricks/lib/integration/service";
+} from "@/lib/constants";
+import { symmetricEncrypt } from "@/lib/crypto";
+import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { NextRequest } from "next/server";
 import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 
 export const GET = async (req: NextRequest) => {

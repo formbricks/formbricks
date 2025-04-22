@@ -1,11 +1,11 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";

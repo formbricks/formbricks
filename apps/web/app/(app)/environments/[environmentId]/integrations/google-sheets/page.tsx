@@ -1,19 +1,19 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/integrations/lib/surveys";
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+  WEBAPP_URL,
+} from "@/lib/constants";
+import { getIntegrations } from "@/lib/integration/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { redirect } from "next/navigation";
-import {
-  GOOGLE_SHEETS_CLIENT_ID,
-  GOOGLE_SHEETS_CLIENT_SECRET,
-  GOOGLE_SHEETS_REDIRECT_URL,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { getIntegrations } from "@formbricks/lib/integration/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 const Page = async (props) => {

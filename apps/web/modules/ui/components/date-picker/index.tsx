@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useTranslate } from "@tolgee/react";
@@ -7,7 +8,6 @@ import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import Calendar from "react-calendar";
-import { cn } from "@formbricks/lib/cn";
 import "./styles.css";
 
 const getOrdinalSuffix = (day: number) => {

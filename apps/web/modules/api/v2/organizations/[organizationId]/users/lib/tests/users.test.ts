@@ -1,9 +1,9 @@
 import { teamCache } from "@/lib/cache/team";
+import { membershipCache } from "@/lib/membership/cache";
+import { userCache } from "@/lib/user/cache";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { membershipCache } from "@formbricks/lib/membership/cache";
-import { userCache } from "@formbricks/lib/user/cache";
 import { createUser, getUsers, updateUser } from "../users";
 
 const mockUser = {

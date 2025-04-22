@@ -1,5 +1,10 @@
 "use server";
 
+import { hashPassword } from "@/lib/auth";
+import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
@@ -8,11 +13,6 @@ import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
-import { hashPassword } from "@formbricks/lib/auth";
-import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { UnknownError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";

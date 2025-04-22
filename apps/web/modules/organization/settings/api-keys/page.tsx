@@ -1,13 +1,12 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
-import { Alert } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ApiKeyList } from "./components/api-key-list";
 
 export const APIKeysPage = async (props) => {
@@ -19,7 +18,9 @@ export const APIKeysPage = async (props) => {
 
   const projects = await getProjectsByOrganizationId(organization.id);
 
-  const isReadOnly = currentUserMembership.role !== "owner" && currentUserMembership.role !== "manager";
+  const isNotOwner = currentUserMembership.role !== "owner";
+
+  if (isNotOwner) throw new Error(t("common.not_authorized"));
 
   return (
     <PageContentWrapper>
@@ -31,22 +32,16 @@ export const APIKeysPage = async (props) => {
           activeId="api-keys"
         />
       </PageHeader>
-      {isReadOnly ? (
-        <Alert variant="warning">
-          {t("environments.settings.api_keys.only_organization_owners_and_managers_can_manage_api_keys")}
-        </Alert>
-      ) : (
-        <SettingsCard
-          title={t("common.api_keys")}
-          description={t("environments.settings.api_keys.api_keys_description")}>
-          <ApiKeyList
-            organizationId={organization.id}
-            locale={locale}
-            isReadOnly={isReadOnly}
-            projects={projects}
-          />
-        </SettingsCard>
-      )}
+      <SettingsCard
+        title={t("common.api_keys")}
+        description={t("environments.settings.api_keys.api_keys_description")}>
+        <ApiKeyList
+          organizationId={organization.id}
+          locale={locale}
+          isReadOnly={isNotOwner}
+          projects={projects}
+        />
+      </SettingsCard>
     </PageContentWrapper>
   );
 };
