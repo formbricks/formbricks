@@ -5,7 +5,7 @@ import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
-import { HTMLInputTypeAttribute } from "react";
+import { HTMLInputTypeAttribute, JSX } from "react";
 import {
   TConditionGroup,
   TLeftOperand,
