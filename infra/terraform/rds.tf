@@ -11,11 +11,17 @@ resource "random_password" "postgres" {
   special = false
 }
 
-module "rds-aurora" {
-  source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "9.12.0"
+moved {
+  from = module.rds-aurora
+  to   = module.rds-aurora["prod"]
+}
 
-  name                              = "${local.name}-postgres"
+module "rds-aurora" {
+  for_each = local.envs
+  source   = "terraform-aws-modules/rds-aurora/aws"
+  version  = "9.12.0"
+
+  name                              = "${each.value}-postgres"
   engine                            = data.aws_rds_engine_version.postgresql.engine
   engine_mode                       = "provisioned"
   engine_version                    = data.aws_rds_engine_version.postgresql.version

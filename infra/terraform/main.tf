@@ -2,8 +2,12 @@ locals {
   project     = "formbricks"
   environment = "prod"
   name        = "${local.project}-${local.environment}"
-  vpc_cidr    = "10.0.0.0/16"
-  azs         = slice(data.aws_availability_zones.available.names, 0, 3)
+  envs = {
+    prod  = "${local.project}-prod"
+    stage = "${local.project}-stage"
+  }
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
   tags = {
     Project     = local.project
     Environment = local.environment
