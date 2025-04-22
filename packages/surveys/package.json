@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@formkit/auto-animate": "0.8.2",
-    "@wonderchain/sdk": "1.0.14",
+    "@wonderchain/sdk": "1.0.15",
     "react-calendar": "5.1.0"
   }
 }

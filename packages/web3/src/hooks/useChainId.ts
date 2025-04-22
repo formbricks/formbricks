@@ -1,3 +1,3 @@
 export const useChainId = () => {
-  return "300";
+  return "96371";
 };
