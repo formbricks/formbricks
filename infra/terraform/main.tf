@@ -14,6 +14,20 @@ locals {
     MangedBy    = "Terraform"
     Blueprint   = local.name
   }
+  tags_map = {
+    prod = {
+      Project     = local.project
+      Environment = "prod"
+      MangedBy    = "Terraform"
+      Blueprint   = "${local.project}-prod"
+    }
+    stage = {
+      Project     = local.project
+      Environment = "stage"
+      MangedBy    = "Terraform"
+      Blueprint   = "${local.project}-stage"
+    }
+  }
   domain                 = "k8s.formbricks.com"
   karpetner_helm_version = "1.3.1"
   karpenter_namespace    = "karpenter"

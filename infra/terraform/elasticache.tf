@@ -5,13 +5,15 @@ locals {
   valkey_major_version = 8
 }
 
-resource "random_password" "valkey" {
-  length  = 20
-  special = false
+moved {
+  from = random_password.valkey
+  to   = random_password.valkey["prod"]
 }
-resource "random_password" "valkey_default_user" {
-  length  = 20
-  special = false
+
+resource "random_password" "valkey" {
+  for_each = local.envs
+  length   = 20
+  special  = false
 }
 
 module "valkey_sg" {
@@ -35,8 +37,8 @@ moved {
 
 module "valkey" {
   for_each = local.envs
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "1.4.1"
+  source   = "terraform-aws-modules/elasticache/aws"
+  version  = "1.4.1"
 
   replication_group_id = "${each.value}-valkey"
 
@@ -45,7 +47,7 @@ module "valkey" {
   node_type      = "cache.m7g.large"
 
   transit_encryption_enabled = true
-  auth_token                 = random_password.valkey.result
+  auth_token                 = random_password.valkey[each.key].result
   maintenance_window         = "sun:05:00-sun:09:00"
   apply_immediately          = true
 
@@ -85,5 +87,5 @@ module "valkey" {
     }
   ]
 
-  tags = local.tags
+  tags = local.tags_map[each.key]
 }
