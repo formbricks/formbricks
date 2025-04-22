@@ -42,7 +42,10 @@ const fakeProject = {
   environments: [{ id: "env1" }, { id: "env2" }],
 } as TProject;
 
-const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
+const testInputValidation = async (
+  service: (projectId: string, ...functionArgs: any[]) => Promise<any>,
+  ...args: any[]
+): Promise<void> => {
   test("throws ValidationError on bad input", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
   });
