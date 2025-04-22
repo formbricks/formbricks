@@ -86,11 +86,18 @@ private class WebViewData {
     init(environmentResponse: EnvironmentResponse, surveyId: String) {
         data["survey"] = environmentResponse.getSurveyJson(forSurveyId: surveyId)
         data["isBrandingEnabled"] = true
-        data["languageCode"] = Formbricks.language
         data["appUrl"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
         data["contactId"] = Formbricks.userManager?.contactId
         data["isWebEnvironment"] = false
+        
+        let isMultiLangSurvey = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.languages?.count ?? 0 > 1
+        
+        if isMultiLangSurvey {
+            data["languageCode"] = Formbricks.language
+        } else {
+            data["languageCode"] = "default"
+        }
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false
