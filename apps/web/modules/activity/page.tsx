@@ -1,4 +1,4 @@
-import AvailableSurveys from "@/modules/activity/components/Surveys";
+import Surveys from "@/modules/activity/components/Surveys";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -9,7 +9,7 @@ export const ActivityPage = async () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.activity")} />
-      <AvailableSurveys />
+      <Surveys />
     </PageContentWrapper>
   );
 };

@@ -21,13 +21,17 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
 
+  const onClose = () => {
+    setSelectedBalance(null);
+  };
+
   useEffect(() => {
     (async () => {
       if (!address || !blockscoutApi) return;
       const data = await blockscoutApi.getAddressTokenBalances(address);
       setBalances(data.data);
     })();
-  }, [blockscoutApi, address]);
+  }, [blockscoutApi, address, onClose]);
 
   if (!balances) {
     return null;
@@ -76,7 +80,12 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
             ))}
           </TableBody>
         </Table>
-        <SendModal onSelectBalance={setSelectedBalance} balances={balances} balance={selectedBalance} onClose={() => setSelectedBalance(null)} />
+        <SendModal
+          onSelectBalance={setSelectedBalance}
+          balances={balances}
+          balance={selectedBalance}
+          onClose={onClose}
+        />
       </div>
     </div>
   );

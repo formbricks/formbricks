@@ -1,8 +1,5 @@
 "use client";
 
-// import React, { useState } from "react";
-// import { useTranslate } from "@tolgee/react";
-// import { useSmartAccountClient } from "@account-kit/react";
 import TransactionItem from "@/modules/alchemy-wallet/components/TransactionHistory/components/transaction-item";
 import { useUser } from "@account-kit/react";
 import { TokenTransfer } from "@wonderchain/sdk/dist/blockscout-client";
@@ -27,15 +24,21 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
   if (!transfers?.length) {
     return null;
   }
+
   return (
     <div
       className={cn(
-        "relative my-4 flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm",
+        "relative my-4 flex max-h-96 w-full flex-col gap-4 overflow-y-scroll rounded-xl border border-slate-200 bg-white p-4 shadow-sm",
         className
       )}
       id={"transaction-history"}>
       {transfers.map((t) => (
-        <TransactionItem transfer={t} key={t.transaction_hash + t.token + t.type + t.from + t.to} />
+        <TransactionItem
+          isToSelf={t.to.hash === address}
+          isFromSelf={t.from.hash === address}
+          transfer={t}
+          key={t.transaction_hash + t.token + t.type + t.from + t.to}
+        />
       ))}
     </div>
   );
