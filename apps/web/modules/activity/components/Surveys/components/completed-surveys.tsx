@@ -4,9 +4,8 @@ import { getCompletedSurveysAction } from "@/modules/activity/components/Surveys
 import { SurveyCard } from "@/modules/activity/components/common/survey-card";
 import { Survey } from "@prisma/client";
 import React, { useEffect, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
-export function CompletedSurveys({ className = "" }: { className?: string }): React.JSX.Element {
+export function CompletedSurveys(): React.JSX.Element {
   const [completedSurveys, setCompletedSurveys] = useState<Survey[] | null>(null);
 
   useEffect(() => {
@@ -20,14 +19,14 @@ export function CompletedSurveys({ className = "" }: { className?: string }): Re
       }
     })();
   }, []);
-
+  console.log(completedSurveys);
   return (
-    <div className={cn("", className)}>
+    <>
       {completedSurveys &&
         completedSurveys.map((survey) => {
           return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
-    </div>
+    </>
   );
 }
 
