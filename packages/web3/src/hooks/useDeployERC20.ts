@@ -1,5 +1,6 @@
 import { useSigner } from "@account-kit/react";
 import { getFactory, sendTransaction } from "@wonderchain/sdk";
+import { parseEther } from "ethers";
 import { useCallback } from "react";
 import { useProvider } from "./useProvider";
 
@@ -15,12 +16,12 @@ export const useDeployERC20 = () => {
       const input = await factory.deployERC20.populateTransaction(
         tokenName,
         tokenSymbol,
-        initialSupply,
+        parseEther(initialSupply),
         address
       );
       input.from = address;
       input.value = input.value || BigInt(0);
-      
+
       const resp = await sendTransaction(provider, input, signer.signTypedData);
       console.log(resp);
       return resp;
