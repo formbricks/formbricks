@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 

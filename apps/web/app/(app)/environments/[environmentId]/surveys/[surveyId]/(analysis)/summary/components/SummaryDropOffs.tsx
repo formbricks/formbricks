@@ -1,11 +1,11 @@
 "use client";
 
+import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIcon } from "@/modules/survey/lib/questions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { TimerIcon } from "lucide-react";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryDropOffsProps {

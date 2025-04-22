@@ -1,18 +1,18 @@
+import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { describe, expect, it, vi } from "vitest";
-import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
-import { deleteUser } from "@formbricks/lib/user/service";
+import { describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { deleteUserAction } from "./actions";
 
 // Mock all dependencies
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   deleteUser: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ vi.mock("@/lib/utils/action-client", () => ({
 }));
 
 describe("deleteUserAction", () => {
-  it("deletes user successfully when multi-org is enabled", async () => {
+  test("deletes user successfully when multi-org is enabled", async () => {
     const ctx = { user: { id: "test-user" } };
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "test-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([]);
@@ -44,7 +44,7 @@ describe("deleteUserAction", () => {
     expect(getIsMultiOrgEnabled).toHaveBeenCalledTimes(1);
   });
 
-  it("deletes user successfully when multi-org is disabled but user is not sole owner of any org", async () => {
+  test("deletes user successfully when multi-org is disabled but user is not sole owner of any org", async () => {
     const ctx = { user: { id: "another-user" } };
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "another-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([]);
@@ -58,7 +58,7 @@ describe("deleteUserAction", () => {
     expect(getIsMultiOrgEnabled).toHaveBeenCalledTimes(1);
   });
 
-  it("throws OperationNotAllowedError when user is sole owner in at least one org and multi-org is disabled", async () => {
+  test("throws OperationNotAllowedError when user is sole owner in at least one org and multi-org is disabled", async () => {
     const ctx = { user: { id: "sole-owner-user" } };
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "test-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([

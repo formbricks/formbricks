@@ -1,9 +1,9 @@
+import { hasOrganizationAccess } from "@/lib/auth";
+import { getEnvironments } from "@/lib/environment/service";
+import { getProject } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { hasOrganizationAccess } from "@formbricks/lib/auth";
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { getProject } from "@formbricks/lib/project/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ projectId: string }> }) => {

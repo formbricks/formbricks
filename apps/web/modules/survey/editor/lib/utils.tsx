@@ -1,11 +1,11 @@
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
-import { HTMLInputTypeAttribute, JSX } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
+import { HTMLInputTypeAttribute } from "react";
 import {
   TConditionGroup,
   TLeftOperand,

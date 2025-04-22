@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -10,8 +12,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import type { JSX } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

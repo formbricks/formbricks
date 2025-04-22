@@ -1,5 +1,7 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
+import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
+import { getUserProjects } from "@/lib/project/service";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -8,8 +10,6 @@ import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
-import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@formbricks/types/project";
 
 interface ProjectSettingsPageProps {
@@ -65,7 +65,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
       />
       {projects.length >= 1 && (
         <Button
-          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={"/"}>

@@ -38,8 +38,10 @@ module.exports = {
     },
   },
   ignorePatterns: ["node_modules/", "dist/"],
+  plugins: ["@vitest"],
   // add rules configurations here
   rules: {
     "import/no-default-export": "off",
+    "@vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
   },
 };

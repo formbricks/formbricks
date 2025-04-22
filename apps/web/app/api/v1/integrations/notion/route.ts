@@ -1,14 +1,14 @@
 import { responses } from "@/app/lib/api/response";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
-} from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+} from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");

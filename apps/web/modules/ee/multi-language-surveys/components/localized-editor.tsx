@@ -1,13 +1,13 @@
 "use client";
 
+import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
+import { md } from "@/lib/markdownIt";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { Editor } from "@/modules/ui/components/editor";
 import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
-import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
-import { md } from "@formbricks/lib/markdownIt";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageIndicator } from "./language-indicator";

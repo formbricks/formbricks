@@ -1,5 +1,6 @@
 "use client";
 
+import { appLanguages } from "@/lib/i18n/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -23,7 +24,6 @@ import { ChevronDownIcon } from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { appLanguages } from "@formbricks/lib/i18n/utils";
 import { TUser, ZUser } from "@formbricks/types/user";
 import { updateUserAction } from "../actions";
 

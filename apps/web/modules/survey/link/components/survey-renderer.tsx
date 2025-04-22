@@ -1,3 +1,6 @@
+import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
@@ -9,9 +12,6 @@ import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyRendererProps {

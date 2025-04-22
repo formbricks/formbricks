@@ -1,3 +1,4 @@
+import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,6 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -179,7 +179,7 @@ export const RecallItemSelect = ({
               }
             }}
           />
-          <div className="max-h-72 overflow-y-auto overflow-x-hidden">
+          <div className="max-h-72 overflow-x-hidden overflow-y-auto">
             {filteredRecallItems.map((recallItem, index) => {
               const IconComponent = getRecallItemIcon(recallItem);
               return (
@@ -201,7 +201,7 @@ export const RecallItemSelect = ({
                     }
                   }}>
                   <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-                  <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                  <p className="max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap">
                     {getRecallLabel(recallItem.label)}
                   </p>
                 </DropdownMenuItem>

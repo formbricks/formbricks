@@ -1,9 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClientWrapper } from "./IntercomClientWrapper";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "mock-intercom-app-id",
   INTERCOM_SECRET_KEY: "mock-intercom-secret-key",
@@ -31,7 +31,7 @@ describe("IntercomClientWrapper", () => {
     cleanup();
   });
 
-  it("renders IntercomClient with computed user hash when user is provided", () => {
+  test("renders IntercomClient with computed user hash when user is provided", () => {
     const testUser = { id: "user-123", name: "Test User", email: "test@example.com" } as TUser;
 
     render(<IntercomClientWrapper user={testUser} />);
@@ -48,7 +48,7 @@ describe("IntercomClientWrapper", () => {
     expect(props.user).toEqual(testUser);
   });
 
-  it("renders IntercomClient without computing a hash when no user is provided", () => {
+  test("renders IntercomClient without computing a hash when no user is provided", () => {
     render(<IntercomClientWrapper user={null} />);
 
     const intercomClientEl = screen.getByTestId("mock-intercom-client");

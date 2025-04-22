@@ -22,11 +22,12 @@ We use Vitest as our primary testing framework. All unit tests follow these conv
 2. **Test Organization**
 
    ```typescript
-   import { describe, expect, it } from "vitest";
+   import { describe, expect, test } from "vitest";
 
    describe("ComponentName or FeatureName", () => {
      describe("functionName or scenario", () => {
-       it("should describe expected behavior", () => {
+       // We use the `test` function instead of `it` throught our test suite
+       test("should describe expected behavior", () => {
          // test implementation
        });
      });

@@ -18,20 +18,14 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
+import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import {
-  E2E_TESTING,
-  IS_PRODUCTION,
-  RATE_LIMITING_DISABLED,
-  SURVEY_URL,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 import { logger } from "@formbricks/logger";
 
 const enforceHttps = (request: NextRequest): Response | null => {
@@ -42,7 +36,7 @@ const enforceHttps = (request: NextRequest): Response | null => {
       details: [
         {
           field: "",
-          issue: "Only HTTPS connections are allowed on the management and contacts bulk endpoints.",
+          issue: "Only HTTPS connections are allowed on the management endpoints.",
         },
       ],
     };

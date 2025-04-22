@@ -1,5 +1,6 @@
 "use client";
 
+import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@/lib/utils/videoUpload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -7,7 +8,6 @@ import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";
 import { Label } from "../../label";
 import { checkForYoutubePrivacyMode } from "../lib/utils";
 
