@@ -19,7 +19,7 @@ export function CompletedSurveys(): React.JSX.Element {
       }
     })();
   }, []);
-  console.log(completedSurveys);
+
   return (
     <>
       {completedSurveys &&
