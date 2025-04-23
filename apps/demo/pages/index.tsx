@@ -42,6 +42,7 @@ export default function AppPage(): React.JSX.Element {
         void formbricks.setup({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+          recaptchaSiteKey: "6LcQHxkrAAAAAP1l8x6zqBl6VmorXGbiRv4zbRWe",
         });
       }
 

@@ -71,6 +71,8 @@ export function Survey({
   singleUseId,
   singleUseResponseId,
   isWebEnvironment = true,
+  recaptchaSiteKey,
+  getRecaptchaToken,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -411,7 +413,7 @@ export function Survey({
   };
 
   const onResponseCreateOrUpdate = useCallback(
-    (responseUpdate: TResponseUpdate) => {
+    async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
       if (!appUrl || !environmentId) {
         onResponse?.({
@@ -447,6 +449,14 @@ export function Survey({
           surveyState.updateUserId(userId);
         }
 
+        if (recaptchaSiteKey && !surveyState?.responseId && getRecaptchaToken) {
+          const token = await getRecaptchaToken();
+          responseQueue.setResponseRecaptchaToken(token);
+
+          // // adding sleep of 1 second to receive the recaptcha token
+          // await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
@@ -477,6 +487,8 @@ export function Survey({
       onResponse,
       onResponseCreated,
       contactId,
+      recaptchaSiteKey,
+      getRecaptchaToken,
       userId,
       survey,
       isWebEnvironment,
@@ -486,6 +498,26 @@ export function Survey({
   );
 
   useEffect(() => {
+    if (!recaptchaSiteKey) return;
+
+    window.addEventListener("recaptchaToken", (event) => {
+      const customEvent = event as CustomEvent;
+
+      const recaptchaToken = customEvent.detail.token;
+      if (responseQueue && recaptchaToken) {
+        responseQueue.setResponseRecaptchaToken(recaptchaToken);
+      }
+    });
+
+    return () => {
+      // Cleanup the event listener when the component unmounts
+      window.removeEventListener("recaptchaToken", () => {
+        responseQueue?.setResponseRecaptchaToken(undefined);
+      });
+    };
+  }, [recaptchaSiteKey]);
+
+  useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
@@ -493,7 +525,7 @@ export function Survey({
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
-  const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+  const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
 

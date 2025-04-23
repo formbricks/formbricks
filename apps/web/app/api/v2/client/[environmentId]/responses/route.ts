@@ -1,9 +1,10 @@
+import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
@@ -76,6 +77,26 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!survey) {
     return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
   }
+
+  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+  if (isSpamProtectionEnabled) {
+    if (survey.recaptcha && survey.recaptcha.enabled) {
+      if (!responseInput.recaptchaToken) {
+        logger.error("Missing recaptcha token");
+        return responses.badRequestResponse("Missing recaptcha token", {}, true);
+      }
+      const isPassed = await verifyRecaptchaToken(
+        responseInput.recaptchaToken,
+        survey.recaptcha.threshold,
+        responseInput.siteKey
+      );
+
+      if (!isPassed) {
+        return responses.badRequestResponse("reCAPTCHA verification failed", {}, true);
+      }
+    }
+  }
+
   if (survey.environmentId !== environmentId) {
     return responses.badRequestResponse(
       "Survey is part of another environment",

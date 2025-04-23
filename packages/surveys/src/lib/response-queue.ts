@@ -23,6 +23,7 @@ export class ResponseQueue {
   private surveyState: SurveyState;
   private isRequestInProgress = false;
   readonly api: ApiClient;
+  private responseRecaptchaToken?: string;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -31,6 +32,10 @@ export class ResponseQueue {
       appUrl: config.appUrl,
       environmentId: config.environmentId,
     });
+  }
+
+  setResponseRecaptchaToken(token?: string) {
+    this.responseRecaptchaToken = token;
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -94,6 +99,7 @@ export class ResponseQueue {
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
+          recaptchaToken: this.responseRecaptchaToken ? this.responseRecaptchaToken : undefined,
         });
 
         if (!response.ok) {

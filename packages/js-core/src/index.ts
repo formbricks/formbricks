@@ -1,5 +1,6 @@
 /* eslint-disable import/no-default-export -- required for default export*/
 import { CommandQueue } from "@/lib/common/command-queue";
+import { loadRecaptchaScript } from "@/lib/common/recaptcha";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
@@ -36,6 +37,7 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
     queue.add(Setup.setup, false, setupConfig);
     await queue.wait();
   }
+  queue.add(loadRecaptchaScript, false, setupConfig.recaptchaSiteKey);
 };
 
 const setUserId = async (userId: string): Promise<void> => {

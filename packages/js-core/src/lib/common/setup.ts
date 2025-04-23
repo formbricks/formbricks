@@ -309,6 +309,7 @@ export const setup = async (
         user: userState,
         environment: environmentState,
         filteredSurveys,
+        recaptchaSiteKey: configInput.recaptchaSiteKey,
       });
     } catch (e) {
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });

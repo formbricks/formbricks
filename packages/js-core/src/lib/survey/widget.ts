@@ -2,6 +2,7 @@
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
+import { executeRecaptcha } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
@@ -103,6 +104,8 @@ export const renderWidget = async (
       placement,
       styling: getStyling(project, survey),
       hiddenFieldsRecord: hiddenFieldsObject,
+      recaptchaSiteKey: config.get().recaptchaSiteKey,
+      getRecaptchaToken: executeRecaptcha,
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };

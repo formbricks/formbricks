@@ -61,4 +61,6 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   singleUseId?: string;
   singleUseResponseId?: string;
   isWebEnvironment?: boolean;
+  recaptchaSiteKey?: string;
+  getRecaptchaToken?: () => Promise<string | undefined>;
 }

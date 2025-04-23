@@ -66,6 +66,7 @@ export interface TConfig {
   environment: TEnvironmentState;
   user: TUserState;
   filteredSurveys: TEnvironmentStateSurvey[];
+  recaptchaSiteKey?: string;
   status: {
     value: "success" | "error";
     expiresAt: Date | null;
@@ -84,6 +85,7 @@ export type TAttributes = Record<string, string>;
 export interface TConfigInput {
   environmentId: string;
   appUrl: string;
+  recaptchaSiteKey?: string;
 }
 
 export interface TStylingColor {
