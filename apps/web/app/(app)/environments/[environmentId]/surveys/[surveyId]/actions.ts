@@ -7,6 +7,7 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { z } from "zod";
@@ -129,6 +130,13 @@ export const updateSurveyAction = authenticatedActionClient
 
     if (parsedInput.languages?.length) {
       await checkMultiLanguagePermission(organizationId);
+    }
+
+    if (parsedInput.recaptcha && parsedInput.recaptcha.enabled) {
+      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+      if (!isSpamProtectionEnabled) {
+        throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
+      }
     }
 
     return await updateSurvey(parsedInput);

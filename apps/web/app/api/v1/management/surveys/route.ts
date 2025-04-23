@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getIsSpamProtectionEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { logger } from "@formbricks/logger";
@@ -80,6 +80,13 @@ export const POST = async (request: Request): Promise<Response> => {
       const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
       if (!isMultiLanguageEnabled) {
         return responses.forbiddenResponse("Multi language is not enabled for this organization");
+      }
+    }
+
+    if (surveyData.recaptcha && surveyData.recaptcha.enabled) {
+      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+      if (!isSpamProtectionEnabled) {
+        return responses.forbiddenResponse("Spam protection is not enabled for this organization");
       }
     }
 

@@ -10,6 +10,7 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
@@ -67,6 +68,13 @@ export const updateSurveyAction = authenticatedActionClient
 
     if (parsedInput.languages?.length) {
       await checkMultiLanguagePermission(organizationId);
+    }
+
+    if (parsedInput.recaptcha && parsedInput.recaptcha.enabled) {
+      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+      if (!isSpamProtectionEnabled) {
+        throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
+      }
     }
 
     return await updateSurvey(parsedInput);
