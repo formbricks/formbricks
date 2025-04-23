@@ -491,7 +491,7 @@ export function Survey({
   );
 
   useEffect(() => {
-    if (!recaptchaSiteKey || !survey.recaptcha?.enabled) return;
+    if (!recaptchaSiteKey || !survey.recaptcha?.enabled || true) return;
 
     window.addEventListener("recaptchaToken", (event) => {
       const customEvent = event as CustomEvent;
@@ -526,6 +526,9 @@ export function Survey({
     if (recaptchaSiteKey && !surveyState?.responseId && getRecaptchaToken && survey.recaptcha?.enabled) {
       const token = await getRecaptchaToken();
       console.log("returned token", { token });
+      if (responseQueue && token) {
+        responseQueue.setResponseRecaptchaToken(token);
+      }
 
       // adding sleep of 1 second to receive the recaptcha token
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -612,17 +615,15 @@ export function Survey({
             />
           );
         case TResponseErrorCodesEnum.RecaptchaError:
-          return <RecaptchaErrorComponent />;
+          return (
+            <>
+              <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
+                <SurveyCloseButton onClose={onClose} />
+              </div>
+              <RecaptchaErrorComponent />
+            </>
+          );
       }
-    }
-    if (showError && errorType === TResponseErrorCodesEnum.ResponseSendingError) {
-      return (
-        <ResponseErrorComponent
-          responseData={responseData}
-          questions={localSurvey.questions}
-          onRetry={retryResponse}
-        />
-      );
     }
 
     const content = () => {
