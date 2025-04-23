@@ -16,7 +16,9 @@ on:
         description: 'The environment to deploy to'
         required: true
         type: string
-        default: "stage"
+        options:
+          - stage
+          - prod
   workflow_call:
     inputs:
       VERSION:
@@ -32,7 +34,6 @@ on:
         description: 'The environment to deploy to'
         required: true
         type: string
-        default: "stage"
 
 permissions:
   id-token: write

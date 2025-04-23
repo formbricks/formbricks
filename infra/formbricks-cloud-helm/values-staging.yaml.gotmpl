@@ -47,7 +47,7 @@ cronJob:
         tag: latest
       schedule: 0 0 * * *
       successfulJobsHistoryLimit: 0
-    weekely-summary:
+    weekly-summary:
       args:
         - /bin/sh
         - -c
@@ -75,6 +75,7 @@ cronJob:
 deployment:
   resources:
     limits:
+      limits: 2
       memory: 2Gi
     requests:
       cpu: 1
