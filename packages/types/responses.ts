@@ -139,6 +139,7 @@ const ZResponseFilterCriteriaFilledOut = z.object({
 
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
+  responseIds: z.array(ZId).optional(),
   createdAt: z
     .object({
       min: z.date().optional(),
@@ -203,9 +204,6 @@ export const ZResponseFilterCriteria = z.object({
       })
     )
     .optional(),
-
-  // Add responseIds field to filter by specific response IDs
-  responseIds: z.array(ZId).optional(),
 });
 
 export const ZResponseContact = z.object({
