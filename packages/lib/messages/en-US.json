@@ -383,6 +383,7 @@
     "token_balances": "Token Balances",
     "top_left": "Top Left",
     "top_right": "Top Right",
+    "transaction_history": "Transaction History",
     "try_again": "Try again",
     "type": "Type",
     "unlock_more_projects_with_a_higher_plan": "Unlock more projects with a higher plan.",
@@ -1906,6 +1907,19 @@
       "login": "Login",
       "modal": {
         "send_funds": "Send Funds"
+      },
+      "transaction": {
+        "action_text": {
+          "received_from": "Received from",
+          "sent_or_received": "Sent/Received",
+          "sent_to": "Sent to",
+          "token_minted": "Token Minted"
+        },
+        "tag": {
+          "survey_reward": "Survey Reward",
+          "token_transfer": "Token Transfer",
+          "token_transfer_to_self": "Token Transfer to self"
+        }
       }
     },
     "xm-templates": {

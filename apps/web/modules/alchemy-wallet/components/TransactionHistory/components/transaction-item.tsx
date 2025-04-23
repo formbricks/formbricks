@@ -1,3 +1,4 @@
+import { useTranslate } from "@tolgee/react";
 import {
   TokenTransfer,
   TokenTransferTotal,
@@ -26,16 +27,18 @@ interface TransactionItemProps {
 }
 
 export function TransactionItem({ isFromSelf, isToSelf, transfer }: TransactionItemProps) {
+  const { t } = useTranslate();
+
   function isERC20TotalOrERC1155Total(total: TokenTransferTotal): total is TotalERC20 | TotalERC1155 {
     return "value" in total;
   }
-  // Update strings to useTranslate
+
   const mapTransferDataToTransaction = (type: string) => {
     let transactionUIData: TransactionRenderInfo = {
       icon: <SendIcon className="h-4 w-4" strokeWidth={2} />,
-      actionText: `Received from ${formatAddress(transfer.from.hash)}`,
+      actionText: `${t("environments.wallet.transaction.action_text.received_from")} ${formatAddress(transfer.from.hash)}`,
       amountText: "",
-      tag: "Survey Reward",
+      tag: t("environments.wallet.transaction.tag.survey_reward"),
       color: "text-green-600",
     };
 
@@ -43,11 +46,11 @@ export function TransactionItem({ isFromSelf, isToSelf, transfer }: TransactionI
       case "token_minting":
         transactionUIData = {
           icon: <ArrowDownLeftIcon className="h-4 w-4" strokeWidth={2} />,
-          actionText: `Token Minted`,
+          actionText: t("environments.wallet.transaction.action_text.token_minted"),
           amountText: isERC20TotalOrERC1155Total(transfer.total)
             ? `+ ${formatUnits(transfer.total.value, parseInt(transfer.total.decimals, 10))} ${transfer.token.symbol}`
             : "",
-          tag: "Survey Reward",
+          tag: t("environments.wallet.transaction.tag.survey_reward"),
           color: "text-green-600",
         };
         break;
@@ -55,31 +58,31 @@ export function TransactionItem({ isFromSelf, isToSelf, transfer }: TransactionI
         if (isFromSelf && isToSelf) {
           transactionUIData = {
             icon: <ArrowUpRightIcon className="h-4 w-4" strokeWidth={2} />,
-            actionText: `Sent/Recieved ${formatAddress(transfer.to.hash)}`,
+            actionText: `${t("environments.wallet.transaction.action_text.sent_or_received")} ${formatAddress(transfer.to.hash)}`,
             amountText: isERC20TotalOrERC1155Total(transfer.total)
               ? `${formatUnits(transfer.total.value, parseInt(transfer.total.decimals, 10))} ${transfer.token.symbol}`
               : "",
-            tag: "Token Transfer to self",
+            tag: t("environments.wallet.transaction.tag.token_transfer_to_self"),
             color: "text-slate-600",
           };
         } else if (isFromSelf) {
           transactionUIData = {
             icon: <ArrowUpRightIcon className="h-4 w-4" strokeWidth={2} />,
-            actionText: `Sent to ${formatAddress(transfer.to.hash)}`,
+            actionText: `${t("environments.wallet.transaction.action_text.sent_to")} ${formatAddress(transfer.to.hash)}`,
             amountText: isERC20TotalOrERC1155Total(transfer.total)
               ? `- ${formatUnits(transfer.total.value, parseInt(transfer.total.decimals, 10))} ${transfer.token.symbol}`
               : "",
-            tag: "Token Transfer",
+            tag: t("environments.wallet.transaction.tag.token_transfer"),
             color: "text-red-600",
           };
         } else {
           transactionUIData = {
             icon: <ArrowDownLeftIcon className="h-4 w-4" strokeWidth={2} />,
-            actionText: `Recieved from ${formatAddress(transfer.from.hash)}`,
+            actionText: `${t("environments.wallet.transaction.action_text.received_from")} ${formatAddress(transfer.from.hash)}`,
             amountText: isERC20TotalOrERC1155Total(transfer.total)
               ? `+ ${formatUnits(transfer.total.value, parseInt(transfer.total.decimals, 10))} ${transfer.token.symbol}`
               : "",
-            tag: "Token Transfer",
+            tag: t("environments.wallet.transaction.tag.token_transfer"),
             color: "text-green-600",
           };
         }

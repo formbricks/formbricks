@@ -26,14 +26,19 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   };
 
   useEffect(() => {
-    (async () => {
+    const fetchBalances = async () => {
       if (!address || !blockscoutApi) return;
       const data = await blockscoutApi.getAddressTokenBalances(address);
       setBalances(data.data);
-    })();
+    };
+
+    fetchBalances();
+
+    let interval = setInterval(fetchBalances, 60000);
+    return () => clearInterval(interval);
   }, [blockscoutApi, address, onClose]);
 
-  if (!balances) {
+  if (!balances || balances.length < 1) {
     return null;
   }
 
