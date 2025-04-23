@@ -483,10 +483,10 @@ data "aws_iam_policy_document" "replication_bucket_policy" {
 
 module "formbricks_s3_bucket" {
   for_each = local.envs
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.6.0"
+  source   = "terraform-aws-modules/s3-bucket/aws"
+  version  = "4.6.0"
 
-  bucket = each.key == "prod" ? "formbricks-cloud-eks" : "formbricks-cloud-eks-${each.key}"
+  bucket                   = each.key == "prod" ? "formbricks-cloud-eks" : "formbricks-cloud-eks-${each.key}"
   force_destroy            = true
   control_object_ownership = true
   object_ownership         = "BucketOwnerPreferred"
@@ -506,8 +506,8 @@ module "formbricks_s3_bucket" {
 
 module "formbricks_app_iam_policy" {
   for_each = local.envs
-  source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
-  version = "5.53.0"
+  source   = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  version  = "5.53.0"
 
   name_prefix = each.key == "prod" ? "formbricks-" : "formbricks-${each.key}-"
   path        = "/"
@@ -532,8 +532,8 @@ module "formbricks_app_iam_policy" {
 
 module "formbricks_app_iam_role" {
   for_each = local.envs
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.53.0"
+  source   = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version  = "5.53.0"
 
   role_name_prefix = "formbricks-"
 
