@@ -74,6 +74,7 @@ export default defineConfig({
         "modules/analysis/**/*.tsx",
         "modules/analysis/**/*.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
+        "lib/utils/billing.ts"
       ],
       exclude: [
         "**/.next/**",
