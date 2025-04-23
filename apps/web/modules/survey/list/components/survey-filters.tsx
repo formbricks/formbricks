@@ -23,11 +23,6 @@ interface SurveyFilterProps {
   currentProjectChannel: TProjectConfigChannel;
 }
 
-const getCreatorOptions = (t: TFnType): TFilterOption[] => [
-  { label: t("common.you"), value: "you" },
-  { label: t("common.others"), value: "others" },
-];
-
 const getStatusOptions = (t: TFnType): TFilterOption[] => [
   { label: t("common.scheduled"), value: "scheduled" },
   { label: t("common.paused"), value: "paused" },
