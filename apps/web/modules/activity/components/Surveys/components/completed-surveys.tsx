@@ -24,7 +24,7 @@ export function CompletedSurveys(): React.JSX.Element {
     <>
       {completedSurveys &&
         completedSurveys.map((survey) => {
-          return <CompletedSurveyCard type={"survey"} key={survey.id} survey={survey} />;
+          return <CompletedSurveyCard key={survey.id} survey={survey} />;
         })}
     </>
   );

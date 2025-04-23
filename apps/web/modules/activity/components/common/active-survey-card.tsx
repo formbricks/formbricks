@@ -3,7 +3,6 @@ import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { formatDistance } from "date-fns";
 import { ArrowRightIcon } from "lucide-react";
-import { Sparkles } from "lucide-react";
 import { Clock } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -12,23 +11,14 @@ interface ActiveSurveyCardProps {
   type: String;
 }
 
-export const ActiveSurveyCard = ({ survey, type }: ActiveSurveyCardProps) => {
+export const ActiveSurveyCard = ({ survey }: ActiveSurveyCardProps) => {
   const { t } = useTranslate();
 
-  const surveyTypeLabel = (() => {
-    switch (type) {
-      case "survey":
-        return t("common.survey");
-      case "quest":
-        return t("common.quest");
-      default:
-        return t("common.survey");
-    }
-  })();
+  const surveyTypeLabel = t("common.engagement");
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="p-6">
+      <div className="min-h-[170px] p-6">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div>
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
@@ -42,22 +32,8 @@ export const ActiveSurveyCard = ({ survey, type }: ActiveSurveyCardProps) => {
           )}
         </div>
         <div className="flex-1">
-          <p className="mb-1 text-lg font-medium">{survey.name}</p>
-          <p className="mb-4 text-sm text-slate-500">{survey.description}</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-blue-400">
-            <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-            <span className="font-bold">{t("environments.activity.card.five_usdc")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <a className="flex items-center hover:underline" href="/communities/wonder">
-              <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
-                <div className="mx-auto w-80 bg-slate-500" />
-              </span>
-              <span className="text-xs text-slate-500">{t("environments.activity.card.chain")}</span>
-            </a>
-          </div>
+          <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
+          <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
       </div>
       <div className="flex items-center p-6 pt-0">

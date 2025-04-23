@@ -1,64 +1,37 @@
+// import { getUserResponseForSurveyAction } from "@/modules/activity/components/Surveys/actions";
 // import { SurveyInfoModal } from "@/modules/activity/components/common/survey-info-modal";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { formatDistance } from "date-fns";
-import { ArrowRightIcon, Clock, Sparkles } from "lucide-react";
-// import { useState } from "react";
+import { ArrowRightIcon, CheckCircleIcon } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface CompletedSurveyCardProps {
   survey: TSurvey;
-  type: String;
 }
 
-export const CompletedSurveyCard = ({ survey, type }: CompletedSurveyCardProps) => {
+export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
   const { t } = useTranslate();
   // const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const surveyTypeLabel = (() => {
-    switch (type) {
-      case "survey":
-        return t("common.survey");
-      case "quest":
-        return t("common.quest");
-      default:
-        return t("common.survey");
-    }
-  })();
+  const surveyTypeLabel = t("common.engagement");
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="p-6">
+      <div className="min-h-[170px] p-6">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div>
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
           </div>
 
-          {survey.closeOnDate && (
-            <div className="mt-1 flex items-center text-xs text-slate-500">
-              <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
-              {formatDistance(new Date(survey.closeOnDate), new Date(), { addSuffix: false })}
-            </div>
-          )}
+          <div className="flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+            <CheckCircleIcon className="mr-1 h-3 w-3" />
+            {t("common.completed")}
+          </div>
         </div>
         <div className="flex-1">
-          <p className="mb-1 text-lg font-medium">{survey.name}</p>
-          <p className="mb-4 text-sm text-slate-500">{survey.description}</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-blue-400">
-            <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-            <span className="font-bold">5 USDC</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <a className="flex items-center hover:underline" href="/communities/wonder">
-              <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
-                <div className="mx-auto w-80 bg-slate-500" />
-              </span>
-              <span className="text-xs text-slate-500">Wonder Protocol</span>
-            </a>
-          </div>
+          <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
+          <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
       </div>
       <div className="flex items-center p-6 pt-0">
