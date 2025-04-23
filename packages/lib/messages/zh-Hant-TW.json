@@ -1792,6 +1792,8 @@
         "quickstart_web_apps": "快速入門：Web apps",
         "quickstart_web_apps_description": "請按照 Quickstart 指南開始：",
         "results_are_public": "結果是公開的",
+        "selected_responses_csv": "選擇的回應 (CSV)",
+        "selected_responses_excel": "選擇的回應 (Excel)",
         "send_preview": "發送預覽",
         "send_to_panel": "發送到小組",
         "setup_instructions": "設定說明",

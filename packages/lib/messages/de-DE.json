@@ -1792,6 +1792,8 @@
         "quickstart_web_apps": "Schnellstart: Web-Apps",
         "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
         "results_are_public": "Ergebnisse sind öffentlich",
+        "selected_responses_csv": "Ausgewählte Antworten (CSV)",
+        "selected_responses_excel": "Ausgewählte Antworten (Excel)",
         "send_preview": "Vorschau senden",
         "send_to_panel": "An das Panel senden",
         "setup_instructions": "Einrichtung",

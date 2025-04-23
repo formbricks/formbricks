@@ -184,12 +184,11 @@ export const ResponseTable = ({
   };
 
   // Handle downloading selected responses
-  const downloadSelectedRows = async (responseIds: string[]) => {
+  const downloadSelectedRows = async (responseIds: string[], format: "csv" | "xlsx") => {
     try {
-      // Use the new responseIds filter to reuse server download logic
       const downloadResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
-        format: "csv",
+        format: format,
         filterCriteria: { responseIds },
       });
 
@@ -199,16 +198,15 @@ export const ResponseTable = ({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success(t("environments.surveys.responses.download_success"));
       } else {
         toast.error(
           getFormattedErrorMessage(downloadResponse) ||
-            t("environments.surveys.responses.error_downloading_selected")
+            t("environments.surveys.responses.error_downloading_responses")
         );
       }
     } catch (error) {
       const toast = (await import("react-hot-toast")).default;
-      toast.error(t("environments.surveys.responses.error_downloading_selected"));
+      toast.error(t("environments.surveys.responses.error_downloading_responses"));
       console.error(error);
     }
   };

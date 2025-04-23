@@ -1,10 +1,17 @@
 "use client";
 
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { Table } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
-import { Trash2Icon } from "lucide-react";
+import { ArrowDownToLineIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -13,7 +20,7 @@ interface SelectedRowSettingsProps<T> {
   deleteRows: (rowId: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  downloadRows?: (rowIds: string[]) => void;
+  downloadRows?: (rowIds: string[], format: string) => void;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -67,53 +74,71 @@ export const SelectedRowSettings = <T,>({
   };
 
   // Handle download selected rows
-  const handleDownloadSelectedRows = async () => {
+  const handleDownloadSelectedRows = async (format: string) => {
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
-    alert("HELLO");
     if (downloadRows && rowsToDownload.length > 0) {
-      downloadRows(rowsToDownload);
+      downloadRows(rowsToDownload, format);
     }
   };
 
   // Helper component for the separator
   const Separator = () => <div>|</div>;
 
-  // Helper component for selectable options
-  const SelectableOption = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <div className="cursor-pointer rounded-md p-1 hover:bg-slate-500" onClick={onClick}>
-      {label}
-    </div>
-  );
-
   return (
-    <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
+    <div className="dark bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
       <div className="lowercase">
         {selectedRowCount} {t(`common.${type}`)}s {t("common.selected")}
       </div>
       <Separator />
-      <SelectableOption label={t("common.select_all")} onClick={() => handleToggleAllRowsSelection(true)} />
+      {/* <SelectableOption label={t("common.select_all")} onClick={() => handleToggleAllRowsSelection(true)} /> */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+        onClick={() => handleToggleAllRowsSelection(true)}>
+        {t("common.select_all")}
+      </Button>
       <Separator />
-      <SelectableOption
-        label={t("common.clear_selection")}
-        onClick={() => handleToggleAllRowsSelection(false)}
-      />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+        onClick={() => handleToggleAllRowsSelection(false)}>
+        {t("common.clear_selection")}
+      </Button>
       <Separator />
       {downloadRows && (
-        <>
-          <SelectableOption
-            label={t("common.download")}
-            onClick={() => {
-              handleDownloadSelectedRows();
-            }}
-          />
-          <Separator />
-        </>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" size="sm" className="h-6 gap-1 px-2">
+              {t("common.download")}
+              <ArrowDownToLineIcon />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => {
+                handleDownloadSelectedRows("csv");
+              }}>
+              <p className="text-slate-700">{t("environments.surveys.summary.selected_responses_csv")}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                handleDownloadSelectedRows("xlsx");
+              }}>
+              <p>{t("environments.surveys.summary.selected_responses_excel")}</p>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
-      <div
-        className="cursor-pointer rounded-md bg-slate-500 p-1 hover:bg-slate-600"
+      <Button
+        variant="destructive"
+        size="sm"
+        className="h-6 gap-1 px-2"
         onClick={() => setIsDeleteDialogOpen(true)}>
-        <Trash2Icon strokeWidth={1.5} className="h-4 w-4" />
-      </div>
+        {t("common.delete")}
+        <Trash2Icon />
+      </Button>
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}

@@ -1792,6 +1792,8 @@
         "quickstart_web_apps": "Démarrage rapide : Applications web",
         "quickstart_web_apps_description": "Veuillez suivre le guide de démarrage rapide pour commencer :",
         "results_are_public": "Les résultats sont publics.",
+        "selected_responses_csv": "Réponses sélectionnées (CSV)",
+        "selected_responses_excel": "Réponses sélectionnées (Excel)",
         "send_preview": "Envoyer un aperçu",
         "send_to_panel": "Envoyer au panneau",
         "setup_instructions": "Instructions d'installation",
