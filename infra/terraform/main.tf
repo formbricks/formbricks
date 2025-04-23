@@ -506,7 +506,7 @@ module "formbricks_app_iam_role" {
   source   = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version  = "5.53.0"
 
-  role_name_prefix = "formbricks-"
+  role_name_prefix = each.key == "prod" ? "formbricks-" : "formbricks-${each.key}-"
 
   role_policy_arns = {
     "formbricks" = module.formbricks_app_iam_policy[each.key].arn
