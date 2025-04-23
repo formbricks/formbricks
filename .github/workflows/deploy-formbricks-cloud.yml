@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: 'ghcr.io/formbricks/formbricks'
+      ENVIRONMENT:
+        description: 'The environment to deploy to'
+        required: true
+        type: string
+        default: "stage"
   workflow_call:
     inputs:
       VERSION:
@@ -23,6 +28,11 @@ on:
         required: false
         type: string
         default: 'ghcr.io/formbricks/formbricks'
+      ENVIRONMENT:
+        description: 'The environment to deploy to'
+        required: true
+        type: string
+        default: "stage"
 
 permissions:
   id-token: write
@@ -48,6 +58,8 @@ jobs:
           AWS_REGION: eu-central-1
 
       - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Prod
+        if: (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch') && github.event.inputs.ENVIRONMENT == 'prod'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -58,7 +70,23 @@ jobs:
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
-          helmfile-args: apply
+          helmfile-args: apply -l environment=prod
+          helmfile-auto-init: "false"
+          helmfile-workdirectory: infra/formbricks-cloud-helm
+
+      - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Stage
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.ENVIRONMENT == 'stage'
+        env:
+          VERSION: ${{ inputs.VERSION }}
+          REPOSITORY: ${{ inputs.REPOSITORY }}
+          FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
+          FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
+        with:
+          helm-plugins: >
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
+          helmfile-args: apply -l environment=stage
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
