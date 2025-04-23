@@ -8,8 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.formbricks.formbrickssdk.Formbricks
-//import com.formbricks.formbrickssdk.FormbricksCallback
+import com.formbricks.formbrickssdk.FormbricksCallback
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -17,26 +18,34 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-//        Formbricks.callback = object: FormbricksCallback {
-//            override fun onSurveyStarted() {
-//                Log.d("FormbricksCallback", "onSurveyStarted")
-//            }
-//
-//            override fun onSurveyFinished() {
-//                Log.d("FormbricksCallback", "onSurveyFinished")
-//            }
-//
-//            override fun onSurveyClosed() {
-//                Log.d("FormbricksCallback", "onSurveyClosed")
-//            }
-//
-//            override fun onError(error: Exception) {
-//                Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
-//            }
-//
-//        }
+        Formbricks.callback = object: FormbricksCallback {
+            override fun onSurveyStarted() {
+                Log.d("FormbricksCallback", "onSurveyStarted")
+            }
 
-        val config = FormbricksConfig.Builder("http://192.168.29.117:3000","cm9qk3m57000n195soukrmqhh")
+            override fun onSurveyFinished() {
+                Log.d("FormbricksCallback", "onSurveyFinished")
+            }
+
+            override fun onSurveyClosed() {
+                Log.d("FormbricksCallback", "onSurveyClosed")
+            }
+
+            override fun onPageCommitVisible() {
+                Log.d("FormbricksCallback", "onPageCommitVisible")
+            }
+
+            override fun onError(error: Exception) {
+                Log.d("FormbricksCallback", "onError from the CB: ${error.localizedMessage}")
+            }
+
+            override fun onSuccess(successType: SuccessType) {
+                Log.d("FormbricksCallback", "onSuccess: ${successType.name}")
+            }
+
+        }
+
+        val config = FormbricksConfig.Builder("http://192.168.0.200:3000","cm9qk3m57000n195soukrmqhh")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
 

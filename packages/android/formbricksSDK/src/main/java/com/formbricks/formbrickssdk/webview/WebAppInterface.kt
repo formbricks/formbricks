@@ -1,11 +1,13 @@
 package com.formbricks.formbrickssdk.webview
 
 import android.webkit.JavascriptInterface
+import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.javascript.JsMessageData
 import com.formbricks.formbrickssdk.model.javascript.EventType
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
 import com.google.gson.JsonParseException
+import java.lang.RuntimeException
 
 class WebAppInterface(private val callback: WebAppCallback?) {
 
@@ -34,13 +36,16 @@ class WebAppInterface(private val callback: WebAppCallback?) {
                 EventType.ON_SURVEY_LIBRARY_LOAD_ERROR -> { callback?.onSurveyLibraryLoadError() }
             }
         } catch (e: Exception) {
-            Logger.e(e.message)
+            Formbricks.callback?.onError(e)
+            Logger.e(RuntimeException(e.message))
         } catch (e: JsonParseException) {
-            Logger.e("Failed to parse JSON message: $data")
+            Logger.e(RuntimeException("Failed to parse JSON message: $data"))
         } catch (e: IllegalArgumentException) {
-            Logger.e("Invalid message format: $data")
+            Formbricks.callback?.onError(e)
+            Logger.e(RuntimeException("Invalid message format: $data"))
         } catch (e: Exception) {
-            Logger.e("Unexpected error processing message: $data")
+            Formbricks.callback?.onError(e)
+            Logger.e(RuntimeException("Unexpected error processing message: $data"))
         }
     }
 

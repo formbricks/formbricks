@@ -19,5 +19,4 @@ interface FormbricksService {
     companion object {
         const val API_PREFIX = "/api/v2"
     }
-
 }

@@ -1,7 +1,9 @@
 package com.formbricks.formbrickssdk.network.queue
 
+import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.UserManager
+import com.formbricks.formbrickssdk.model.error.SDKError
 import java.util.*
 import kotlin.concurrent.timer
 
@@ -65,7 +67,9 @@ class UpdateQueue private constructor() {
         val effectiveUserId = userId
             ?: UserManager.userId
         if (effectiveUserId == null) {
-            Logger.d("Error: User ID is not set yet")
+            val error = SDKError.noUserIdSetError
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 

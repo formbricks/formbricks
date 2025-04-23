@@ -8,6 +8,8 @@ import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.extensions.lastDisplayAt
 import com.formbricks.formbrickssdk.logger.Logger
+import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.formbricks.formbrickssdk.network.queue.UpdateQueue
 import com.google.gson.Gson
@@ -136,11 +138,20 @@ object UserManager {
                 responses = userResponse.data.state.data.responses
                 lastDisplayedAt = userResponse.data.state.data.lastDisplayAt()
                 expiresAt = userResponse.data.state.expiresAt()
+                val languageFromUserResponse = userResponse.data.state.data.language
+
+                if(languageFromUserResponse != null) {
+                    Formbricks.language = languageFromUserResponse
+                }
+
                 UpdateQueue.current.reset()
                 SurveyManager.filterSurveys()
                 startSyncTimer()
+                Formbricks.callback?.onSuccess(SuccessType.SET_USER_SUCCESS)
             } catch (e: Exception) {
-                Logger.e("Unable to post survey response.")
+                val error = SDKError.unableToPostResponse
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
             }
         }
     }
@@ -152,7 +163,9 @@ object UserManager {
         val isUserIdDefined = userId != null
 
         if (!isUserIdDefined) {
-            Logger.e("no userId is set, please set a userId first using the setUserId function")
+            val error = SDKError.noUserIdSetError
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
         }
 
         prefManager.edit().apply {

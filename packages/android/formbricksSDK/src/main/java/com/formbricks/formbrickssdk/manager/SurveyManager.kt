@@ -8,11 +8,14 @@ import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
+import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.lang.RuntimeException
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
@@ -57,7 +60,8 @@ object SurveyManager {
                     try {
                         Gson().fromJson(json, EnvironmentDataHolder::class.java)
                     } catch (e: Exception) {
-                        Logger.e("Unable to retrieve environment data from the local storage.")
+                        Formbricks.callback?.onError(e)
+                        Logger.e(RuntimeException("Unable to retrieve environment data from the local storage."))
                         null
                     }
                 }
@@ -114,9 +118,12 @@ object SurveyManager {
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
                 hasApiError = false
+                Formbricks.callback?.onSuccess(SuccessType.GET_ENVIRONMENT_SUCCESS)
             } catch (e: Exception) {
                 hasApiError = true
-                Logger.e("Unable to refresh environment state.")
+                val error = SDKError.unableToRefreshEnvironment
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
                 startErrorTimer()
             }
         }
@@ -135,15 +142,19 @@ object SurveyManager {
             triggers.firstOrNull { it.actionClass?.name.equals(actionClass?.name) } != null
         }
 
+        if (firstSurveyWithActionClass == null) {
+            Formbricks.callback?.onError(SDKError.surveyNotFoundError)
+        }
+
         val isMultiLangSurvey = (firstSurveyWithActionClass?.languages?.size ?: 0) > 1
         if(firstSurveyWithActionClass != null && isMultiLangSurvey) {
             val currentLanguage = Formbricks.language
             val languageCode = getLanguageCode(firstSurveyWithActionClass, currentLanguage)
 
             if (languageCode == null) {
-                Logger.e(
-                    "Survey “${firstSurveyWithActionClass.name}” is not available in language “$currentLanguage”. Skipping."
-                )
+                val error = RuntimeException("Survey “${firstSurveyWithActionClass.name}” is not available in language “$currentLanguage”. Skipping.")
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
                 return
             }
 
@@ -164,6 +175,8 @@ object SurveyManager {
 
                 }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))
             }
+        } else {
+           Formbricks.callback?.onError(SDKError.surveyNotDisplayedError)
         }
     }
 
@@ -181,7 +194,9 @@ object SurveyManager {
      */
     fun postResponse(surveyId: String?) {
         val id = surveyId.guard {
-            Logger.e("Survey id is mandatory to set.")
+            val error = SDKError.missingSurveyId
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -193,7 +208,9 @@ object SurveyManager {
      */
     fun onNewDisplay(surveyId: String?) {
         val id = surveyId.guard {
-            Logger.e("Survey id is mandatory to set.")
+            val error = SDKError.missingSurveyId
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -254,7 +271,9 @@ object SurveyManager {
                 }
 
                 else -> {
-                    Logger.e("Invalid Display Option")
+                    val error = SDKError.invalidDisplayOption
+                    Formbricks.callback?.onError(error)
+                    Logger.e(error)
                     false
                 }
             }
