@@ -581,7 +581,10 @@
     },
     "activity": {
       "card": {
-        "start_survey": "Start Survey"
+        "chain": "Wonder Protocol",
+        "five_usdc": "5 USDC",
+        "start_survey": "Start Survey",
+        "view_info": "View Info"
       }
     },
     "connect": {

@@ -1,12 +1,12 @@
 "use client";
 
 import { getAvailableSurveysAction } from "@/modules/activity/components/Surveys/actions";
-import { SurveyCard } from "@/modules/activity/components/common/survey-card";
-import { Survey } from "@prisma/client";
+import { ActiveSurveyCard } from "@/modules/activity/components/common/active-survey-card";
 import React, { useEffect, useState } from "react";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export function AvailableSurveys(): React.JSX.Element {
-  const [availableSurveys, setAvailableSurveys] = useState<Survey[] | null>(null);
+  const [availableSurveys, setAvailableSurveys] = useState<TSurvey[] | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -14,8 +14,9 @@ export function AvailableSurveys(): React.JSX.Element {
         take: 10,
         skip: 0,
       });
-      if (availableSurveys?.data) {
-        setAvailableSurveys(availableSurveys.data);
+
+      if (availableSurveys && availableSurveys.data) {
+        setAvailableSurveys(availableSurveys.data as TSurvey[]);
       }
     })();
   }, []);
@@ -24,7 +25,7 @@ export function AvailableSurveys(): React.JSX.Element {
     <>
       {availableSurveys &&
         availableSurveys.map((survey) => {
-          return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
+          return <ActiveSurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </>
   );
