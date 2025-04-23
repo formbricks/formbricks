@@ -1,5 +1,6 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -11,7 +12,6 @@ import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
 import toast from "react-hot-toast";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";

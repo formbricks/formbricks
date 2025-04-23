@@ -1,8 +1,8 @@
+import { actionClassCache } from "@/lib/actionClass/cache";
+import { cache } from "@/lib/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateActionClass } from "@formbricks/types/js";

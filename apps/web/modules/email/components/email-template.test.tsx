@@ -6,7 +6,7 @@ import { EmailTemplate } from "./email-template";
 
 const mockTranslate: TFnType = (key) => key;
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   IMPRINT_URL: "https://example.com/imprint",

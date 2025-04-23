@@ -1,11 +1,11 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
 import { EditTagsWrapper } from "./components/edit-tags-wrapper";
 
 export const TagsPage = async (props) => {

@@ -1,21 +1,21 @@
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/integrations/lib/surveys";
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { GoBackButton } from "@/modules/ui/components/go-back-button";
-import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { redirect } from "next/navigation";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
   WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { getIntegrationByType } from "@formbricks/lib/integration/service";
-import { getNotionDatabases } from "@formbricks/lib/notion/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+} from "@/lib/constants";
+import { getIntegrationByType } from "@/lib/integration/service";
+import { getNotionDatabases } from "@/lib/notion/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
+import { redirect } from "next/navigation";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 
 const Page = async (props) => {

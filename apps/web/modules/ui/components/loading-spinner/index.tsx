@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 export const LoadingSpinner = ({ className = "h-6 w-6" }: { className?: string }) => {
   return (

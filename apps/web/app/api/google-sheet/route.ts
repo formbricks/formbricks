@@ -1,14 +1,14 @@
 import { responses } from "@/app/lib/api/response";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { google } from "googleapis";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
-} from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+} from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { google } from "googleapis";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",

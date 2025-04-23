@@ -3,22 +3,18 @@ import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[
 import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { MAX_RESPONSES_FOR_INSIGHT_GENERATION, RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getUser } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import {
-  MAX_RESPONSES_FOR_INSIGHT_GENERATION,
-  RESPONSES_PER_PAGE,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 const Page = async (props) => {
   const params = await props.params;

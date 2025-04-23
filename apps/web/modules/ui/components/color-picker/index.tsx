@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { PopoverPicker } from "@/modules/ui/components/color-picker/components/popover-picker";
 import { HexColorInput } from "react-colorful";
-import { cn } from "@formbricks/lib/cn";
 
 interface ColorPickerProps {
   color: string;
@@ -17,7 +17,7 @@ export const ColorPicker = ({ color, onChange, containerClass, disabled = false 
         <div className="flex w-full items-center">
           #
           <HexColorInput
-            className="ml-2 mr-2 h-10 w-32 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
+            className="mr-2 ml-2 h-10 w-32 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
             color={color}
             onChange={onChange}
             id="color"

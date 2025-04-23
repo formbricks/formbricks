@@ -1,7 +1,7 @@
+import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { userCache } from "@formbricks/lib/user/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserUpdateInput } from "@formbricks/types/user";
 

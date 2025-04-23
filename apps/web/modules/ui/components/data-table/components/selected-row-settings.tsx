@@ -1,12 +1,12 @@
 "use client";
 
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Table } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;

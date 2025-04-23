@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getContactAttributeKeys = reactCache((environmentId: string) =>

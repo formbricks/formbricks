@@ -1,13 +1,13 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { teamCache } from "@/lib/cache/team";
+import { membershipCache } from "@/lib/membership/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { membershipCache } from "@formbricks/lib/membership/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";

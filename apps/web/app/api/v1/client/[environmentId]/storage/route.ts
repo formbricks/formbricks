@@ -1,9 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZUploadFileRequest } from "@formbricks/types/storage";
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 

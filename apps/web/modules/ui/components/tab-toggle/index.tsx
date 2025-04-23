@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import React, { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface Option<T> {
   value: T;
@@ -39,7 +39,7 @@ export const TabToggle = <T extends string | number>({
             className={cn(
               "flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
               selectedOption === option.value && "bg-white",
-              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50",
+              "focus:ring-brand-dark focus:ring-opacity-50 focus:ring-2 focus:outline-none",
               disabled && "cursor-not-allowed opacity-50"
             )}>
             <input

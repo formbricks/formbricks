@@ -1,5 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
+import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getUser } from "@/lib/user/service";
 import {
   getIsMultiOrgEnabled,
   getIsOrganizationAIReady,
@@ -11,8 +13,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";

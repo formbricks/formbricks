@@ -1,5 +1,15 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import {
+  addConditionBelow,
+  createGroupFromResource,
+  duplicateCondition,
+  isConditionGroup,
+  removeCondition,
+  toggleGroupConnector,
+  updateCondition,
+} from "@/lib/surveyLogic/utils";
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -17,16 +27,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
-import {
-  addConditionBelow,
-  createGroupFromResource,
-  duplicateCondition,
-  isConditionGroup,
-  removeCondition,
-  toggleGroupConnector,
-  updateCondition,
-} from "@formbricks/lib/surveyLogic/utils";
 import {
   TConditionGroup,
   TDynamicLogicField,

@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Circle } from "lucide-react";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 const RadioGroup: React.FC<React.ComponentProps<typeof RadioGroupPrimitive.Root>> = React.forwardRef(
   ({ className, ...props }, ref) => {

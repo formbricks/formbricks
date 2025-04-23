@@ -2,6 +2,8 @@
 
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -15,8 +17,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationSlack,

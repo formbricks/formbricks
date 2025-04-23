@@ -1,10 +1,10 @@
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { TOrganization } from "@formbricks/types/organizations";
 import { OrganizationActions } from "./organization-actions";
 

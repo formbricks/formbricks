@@ -12,9 +12,10 @@ type FollowUpResult = {
   error?: string;
 };
 
-const evaluateFollowUp = async (
+export const evaluateFollowUp = async (
   followUpId: string,
   followUpAction: TSurveyFollowUpAction,
+  survey: TSurvey,
   response: TResponse,
   organization: TOrganization
 ): Promise<void> => {
@@ -22,6 +23,25 @@ const evaluateFollowUp = async (
   const { to, subject, body, replyTo } = properties;
   const toValueFromResponse = response.data[to];
   const logoUrl = organization.whitelabel?.logoUrl || "";
+
+  // Check if 'to' is a direct email address (team member or user email)
+  const parsedEmailTo = z.string().email().safeParse(to);
+  if (parsedEmailTo.success) {
+    // 'to' is a valid email address, send email directly
+    await sendFollowUpEmail({
+      html: body,
+      subject,
+      to: parsedEmailTo.data,
+      replyTo,
+      survey,
+      response,
+      attachResponseData: properties.attachResponseData,
+      logoUrl,
+    });
+    return;
+  }
+
+  // If not a direct email, check if it's a question ID or hidden field ID
   if (!toValueFromResponse) {
     throw new Error(`"To" value not found in response data for followup: ${followUpId}`);
   }
@@ -31,7 +51,16 @@ const evaluateFollowUp = async (
     const parsedResult = z.string().email().safeParse(toValueFromResponse);
     if (parsedResult.data) {
       // send email to this email address
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
+      await sendFollowUpEmail({
+        html: body,
+        subject,
+        to: parsedResult.data,
+        replyTo,
+        logoUrl,
+        survey,
+        response,
+        attachResponseData: properties.attachResponseData,
+      });
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -42,7 +71,16 @@ const evaluateFollowUp = async (
     }
     const parsedResult = z.string().email().safeParse(emailAddress);
     if (parsedResult.data) {
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
+      await sendFollowUpEmail({
+        html: body,
+        subject,
+        to: parsedResult.data,
+        replyTo,
+        logoUrl,
+        survey,
+        response,
+        attachResponseData: properties.attachResponseData,
+      });
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -53,7 +91,7 @@ export const sendSurveyFollowUps = async (
   survey: TSurvey,
   response: TResponse,
   organization: TOrganization
-) => {
+): Promise<FollowUpResult[]> => {
   const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
     const { trigger } = followUp;
 
@@ -70,7 +108,7 @@ export const sendSurveyFollowUps = async (
       }
     }
 
-    return evaluateFollowUp(followUp.id, followUp.action, response, organization)
+    return evaluateFollowUp(followUp.id, followUp.action, survey, response, organization)
       .then(() => ({
         followUpId: followUp.id,
         status: "success" as const,
@@ -92,4 +130,6 @@ export const sendSurveyFollowUps = async (
   if (errors.length > 0) {
     logger.error(errors, "Follow-up processing errors");
   }
+
+  return followUpResults;
 };

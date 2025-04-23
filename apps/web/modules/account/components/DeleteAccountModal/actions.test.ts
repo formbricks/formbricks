@@ -1,18 +1,18 @@
+import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { describe, expect, test, vi } from "vitest";
-import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
-import { deleteUser } from "@formbricks/lib/user/service";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { deleteUserAction } from "./actions";
 
 // Mock all dependencies
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   deleteUser: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),
 }));
 

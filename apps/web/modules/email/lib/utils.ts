@@ -22,7 +22,9 @@ export const getRatingNumberOptionColor = (range: number, idx: number): string =
 const defaultLocale = "en-US";
 
 const getMessages = (locale: string): Record<string, string> => {
-  const messages = require(`@formbricks/lib/messages/${locale}.json`) as { emails: Record<string, string> };
+  const messages = require(`@/lib/messages/${locale}.json`) as {
+    emails: Record<string, string>;
+  };
   return messages.emails;
 };
 

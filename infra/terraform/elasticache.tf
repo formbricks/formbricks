@@ -5,13 +5,15 @@ locals {
   valkey_major_version = 8
 }
 
-resource "random_password" "valkey" {
-  length  = 20
-  special = false
+moved {
+  from = random_password.valkey
+  to   = random_password.valkey["prod"]
 }
-resource "random_password" "valkey_default_user" {
-  length  = 20
-  special = false
+
+resource "random_password" "valkey" {
+  for_each = local.envs
+  length   = 20
+  special  = false
 }
 
 module "valkey_sg" {
@@ -28,40 +30,24 @@ module "valkey_sg" {
   tags = local.tags
 }
 
-module "elasticache_user_group" {
-  source  = "terraform-aws-modules/elasticache/aws//modules/user-group"
-  version = "1.4.1"
-
-  user_group_id       = "${local.name}-valkey"
-  create_default_user = false
-  default_user = {
-    user_id   = "formbricks-default"
-    passwords = [random_password.valkey_default_user.result]
-  }
-  users = {
-    formbricks = {
-      access_string = "on ~* +@all"
-      passwords     = [random_password.valkey.result]
-    }
-  }
-  engine = "redis"
-  tags = merge(local.tags, {
-    terraform-aws-modules = "elasticache"
-  })
+moved {
+  from = module.valkey
+  to   = module.valkey["prod"]
 }
 
 module "valkey" {
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "1.4.1"
+  for_each = local.envs
+  source   = "terraform-aws-modules/elasticache/aws"
+  version  = "1.4.1"
 
-  replication_group_id = "${local.name}-valkey"
+  replication_group_id = "${each.value}-valkey"
 
   engine         = "valkey"
   engine_version = "8.0"
   node_type      = "cache.m7g.large"
 
   transit_encryption_enabled = true
-  auth_token                 = random_password.valkey.result
+  auth_token                 = random_password.valkey[each.key].result
   maintenance_window         = "sun:05:00-sun:09:00"
   apply_immediately          = true
 
@@ -85,15 +71,15 @@ module "valkey" {
   }
 
   # Subnet Group
-  subnet_group_name        = "${local.name}-valkey"
-  subnet_group_description = "${title(local.name)} subnet group"
+  subnet_group_name        = "${each.value}-valkey"
+  subnet_group_description = "${title(each.value)} subnet group"
   subnet_ids               = module.vpc.database_subnets
 
   # Parameter Group
   create_parameter_group      = true
-  parameter_group_name        = "${local.name}-valkey-${local.valkey_major_version}"
+  parameter_group_name        = "${each.value}-valkey-${local.valkey_major_version}"
   parameter_group_family      = "valkey8"
-  parameter_group_description = "${title(local.name)} parameter group"
+  parameter_group_description = "${title(each.value)} parameter group"
   parameters = [
     {
       name  = "latency-tracking"
@@ -101,20 +87,5 @@ module "valkey" {
     }
   ]
 
-  tags = local.tags
-}
-
-module "valkey_serverless" {
-  source  = "terraform-aws-modules/elasticache/aws//modules/serverless-cache"
-  version = "1.4.1"
-
-  engine               = "valkey"
-  cache_name           = "${local.name}-valkey-serverless"
-  major_engine_version = 8
-  subnet_ids           = module.vpc.database_subnets
-
-  security_group_ids = [
-    module.valkey_sg.security_group_id
-  ]
-  user_group_id = module.elasticache_user_group.group_id
+  tags = local.tags_map[each.key]
 }
