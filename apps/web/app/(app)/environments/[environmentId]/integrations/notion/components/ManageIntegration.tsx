@@ -39,11 +39,11 @@ export const ManageIntegration = ({
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
-  const integrationArray = notionIntegration
-    ? notionIntegration.config.data
-      ? notionIntegration.config.data
-      : []
-    : [];
+
+  let integrationArray: TIntegrationNotionConfigData[] = [];
+  if (notionIntegration && notionIntegration.config.data) {
+    integrationArray = notionIntegration.config.data;
+  }
 
   const handleDeleteIntegration = async () => {
     setisDeleting(true);
@@ -121,9 +121,9 @@ export const ManageIntegration = ({
             {integrationArray &&
               integrationArray.map((data, index) => {
                 return (
-                  <div
-                    key={index}
-                    className="m-2 grid h-16 cursor-pointer grid-cols-6 content-center rounded-lg hover:bg-slate-100"
+                  <button
+                    key={`${index}-${data.databaseId}`}
+                    className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
@@ -132,7 +132,7 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">
                       {timeSince(data.createdAt.toString(), locale)}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
           </div>

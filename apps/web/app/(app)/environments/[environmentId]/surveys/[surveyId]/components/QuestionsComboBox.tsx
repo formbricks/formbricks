@@ -149,7 +149,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
 
   return (
     <Command ref={commandRef} className="h-10 overflow-visible bg-transparent hover:bg-slate-50">
-      <div
+      <button
         onClick={() => setOpen(true)}
         className="group flex cursor-pointer items-center justify-between rounded-md bg-white px-3 py-2 text-sm">
         {!open && selected.hasOwnProperty("label") && (
@@ -174,7 +174,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
           )}
         </div>
-      </div>
+      </button>
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">

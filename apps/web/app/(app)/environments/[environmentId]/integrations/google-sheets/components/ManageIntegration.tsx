@@ -36,11 +36,10 @@ export const ManageIntegration = ({
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
-  const integrationArray = googleSheetIntegration
-    ? googleSheetIntegration.config.data
-      ? googleSheetIntegration.config.data
-      : []
-    : [];
+  let integrationArray: TIntegrationGoogleSheetsConfigData[] = [];
+  if (googleSheetIntegration && googleSheetIntegration.config.data) {
+    integrationArray = googleSheetIntegration.config.data;
+  }
   const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
@@ -112,9 +111,9 @@ export const ManageIntegration = ({
             {integrationArray &&
               integrationArray.map((data, index) => {
                 return (
-                  <div
-                    key={index}
-                    className="m-2 grid h-16 cursor-pointer grid-cols-8 content-center rounded-lg hover:bg-slate-100"
+                  <button
+                    key={`${index}-${data.spreadsheetName}-${data.surveyName}`}
+                    className="grid h-16 w-full cursor-pointer grid-cols-8 content-center rounded-lg p-2 hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
@@ -124,7 +123,7 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">
                       {timeSince(data.createdAt.toString(), locale)}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
           </div>
