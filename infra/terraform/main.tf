@@ -437,49 +437,6 @@ module "eks_blueprints_addons" {
 }
 
 ### Formbricks App
-data "aws_iam_policy_document" "replication_bucket_policy" {
-  statement {
-    sid    = "Set-permissions-for-objects"
-    effect = "Allow"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::050559574035:role/service-role/s3crr_role_for_formbricks-cloud-uploads"
-      ]
-    }
-
-    actions = [
-      "s3:ReplicateObject",
-      "s3:ReplicateDelete"
-    ]
-
-    resources = [
-      "arn:aws:s3:::formbricks-cloud-eks/*"
-    ]
-  }
-
-  statement {
-    sid    = "Set permissions on bucket"
-    effect = "Allow"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::050559574035:role/service-role/s3crr_role_for_formbricks-cloud-uploads"
-      ]
-    }
-
-    actions = [
-      "s3:GetBucketVersioning",
-      "s3:PutBucketVersioning"
-    ]
-
-    resources = [
-      "arn:aws:s3:::formbricks-cloud-eks"
-    ]
-  }
-}
 
 moved {
   from = module.formbricks_s3_bucket
@@ -498,7 +455,6 @@ module "formbricks_s3_bucket" {
   versioning = {
     enabled = true
   }
-  policy = data.aws_iam_policy_document.replication_bucket_policy.json
   cors_rule = [
     {
       allowed_methods = ["POST"]
