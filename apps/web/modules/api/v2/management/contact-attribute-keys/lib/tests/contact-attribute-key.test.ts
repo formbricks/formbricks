@@ -3,8 +3,9 @@ import {
   TContactAttributeKeyInput,
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
-import { ContactAttributeKey, Prisma } from "@prisma/client";
-import { describe, expect, it, vi } from "vitest";
+import { ContactAttributeKey } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { createContactAttributeKey, getContactAttributeKeys } from "../contact-attribute-key";
@@ -42,7 +43,7 @@ describe("getContactAttributeKeys", () => {
   ];
   const count = fakeContactAttributeKeys.length;
 
-  it("returns ok response with contact attribute keys and meta", async () => {
+  test("returns ok response with contact attribute keys and meta", async () => {
     vi.mocked(prisma.$transaction).mockResolvedValueOnce([fakeContactAttributeKeys, count]);
 
     const result = await getContactAttributeKeys(environmentIds, params);
@@ -58,7 +59,7 @@ describe("getContactAttributeKeys", () => {
     }
   });
 
-  it("returns error when prisma.$transaction throws", async () => {
+  test("returns error when prisma.$transaction throws", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Test error"));
 
     const result = await getContactAttributeKeys(environmentIds, params);
@@ -90,7 +91,7 @@ describe("createContactAttributeKey", () => {
     updatedAt: new Date(),
   };
 
-  it("creates a contact attribute key and revalidates cache", async () => {
+  test("creates a contact attribute key and revalidates cache", async () => {
     vi.mocked(prisma.contactAttributeKey.create).mockResolvedValueOnce(createdContactAttributeKey);
 
     const result = await createContactAttributeKey(inputContactAttributeKey);
@@ -106,7 +107,7 @@ describe("createContactAttributeKey", () => {
     }
   });
 
-  it("returns error when creation fails", async () => {
+  test("returns error when creation fails", async () => {
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValueOnce(new Error("Creation failed"));
 
     const result = await createContactAttributeKey(inputContactAttributeKey);
@@ -117,8 +118,8 @@ describe("createContactAttributeKey", () => {
     }
   });
 
-  it("returns conflict error when key already exists", async () => {
-    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+  test("returns conflict error when key already exists", async () => {
+    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.UniqueConstraintViolation,
       clientVersion: "0.0.1",
     });
@@ -140,8 +141,8 @@ describe("createContactAttributeKey", () => {
     }
   });
 
-  it("returns not found error when related record does not exist", async () => {
-    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+  test("returns not found error when related record does not exist", async () => {
+    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.RelatedRecordDoesNotExist,
       clientVersion: "0.0.1",
     });

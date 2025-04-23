@@ -1,3 +1,4 @@
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
@@ -8,7 +9,6 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: string) =>

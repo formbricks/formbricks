@@ -27,13 +27,6 @@ export const GET = async (
     handler: async ({ authentication, parsedInput }) => {
       const { params } = parsedInput;
 
-      if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
-      }
-
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
@@ -64,12 +57,6 @@ export const PUT = async (
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
       const { params, body } = parsedInput;
-      if (!body || !params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: !body ? "body" : "params", issue: "missing" }],
-        });
-      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
@@ -112,13 +99,6 @@ export const DELETE = async (
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
       const { params } = parsedInput;
-
-      if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
-      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 

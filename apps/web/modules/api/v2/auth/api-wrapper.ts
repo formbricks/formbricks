@@ -20,12 +20,15 @@ export type ExtendedSchemas = {
   params?: z.ZodObject<ZodRawShape>;
 };
 
-// Define a type that returns separate keys for each input type.
-export type ParsedSchemas<S extends ExtendedSchemas | undefined> = {
-  body?: S extends { body: z.ZodObject<any> } ? z.infer<S["body"]> : undefined;
-  query?: S extends { query: z.ZodObject<any> } ? z.infer<S["query"]> : undefined;
-  params?: S extends { params: z.ZodObject<any> } ? z.infer<S["params"]> : undefined;
-};
+export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends object
+  ? {
+      [K in keyof S as NonNullable<S[K]> extends z.ZodObject<any> ? K : never]: NonNullable<
+        S[K]
+      > extends z.ZodObject<any>
+        ? z.infer<NonNullable<S[K]>>
+        : never;
+    }
+  : {};
 
 export const apiWrapper = async <S extends ExtendedSchemas>({
   request,

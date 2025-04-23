@@ -21,13 +21,6 @@ export const GET = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;
 
-      if (!query) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "query", issue: "missing" }],
-        });
-      }
-
       let environmentIds: string[] = [];
 
       if (query.environmentId) {
@@ -59,13 +52,6 @@ export const POST = async (request: NextRequest) =>
     },
     handler: async ({ authentication, parsedInput }) => {
       const { body } = parsedInput;
-
-      if (!body) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "body", issue: "missing" }],
-        });
-      }
 
       if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
         return handleApiError(request, {

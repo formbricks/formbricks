@@ -1,6 +1,7 @@
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
-import { ContactAttributeKey, Prisma } from "@prisma/client";
+import { ContactAttributeKey } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -17,6 +18,10 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      findMany: vi.fn(),
+    },
+    contactAttribute: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -49,12 +54,12 @@ const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
   description: "User's verified email address",
 };
 
-const prismaNotFoundError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+const prismaNotFoundError = new PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.RelatedRecordDoesNotExist,
   clientVersion: "0.0.1",
 });
 
-const prismaUniqueConstraintError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+const prismaUniqueConstraintError = new PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.UniqueConstraintViolation,
   clientVersion: "0.0.1",
 });
@@ -101,6 +106,11 @@ describe("updateContactAttributeKey", () => {
   test("returns ok on successful update", async () => {
     const updatedKey = { ...mockContactAttributeKey, ...mockUpdateInput };
     vi.mocked(prisma.contactAttributeKey.update).mockResolvedValueOnce(updatedKey);
+
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+      { id: "contact1", contactId: "contact1" },
+      { id: "contact2", contactId: "contact2" },
+    ]);
 
     const result = await updateContactAttributeKey("cak123", mockUpdateInput);
     expect(result.ok).toBe(true);
@@ -164,7 +174,10 @@ describe("updateContactAttributeKey", () => {
 describe("deleteContactAttributeKey", () => {
   test("returns ok on successful delete", async () => {
     vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValueOnce(mockContactAttributeKey);
-
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+      { id: "contact1", contactId: "contact1" },
+      { id: "contact2", contactId: "contact2" },
+    ]);
     const result = await deleteContactAttributeKey("cak123");
     expect(result.ok).toBe(true);
 
