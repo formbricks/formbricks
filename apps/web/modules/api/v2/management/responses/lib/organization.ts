@@ -1,7 +1,9 @@
 import { cache } from "@/lib/cache";
 import { organizationCache } from "@/lib/organization/cache";
+import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Organization } from "@prisma/client";
+import { get } from "lodash";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
@@ -133,38 +135,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
         }
 
         // Determine the start date based on the plan type
-        let startDate: Date;
-
-        if (organization.billing.plan === "free") {
-          // For free plans, use the first day of the current calendar month
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else if (organization.billing.period === "yearly" && organization.billing.periodStart) {
-          // For yearly plans, use the same day of the month as the original subscription date
-          const periodStart = new Date(organization.billing.periodStart);
-          const subscriptionDay = periodStart.getDate();
-
-          // Get current month's subscription day
-          const currentMonthSubscriptionDay = new Date(now.getFullYear(), now.getMonth(), subscriptionDay);
-
-          // If today is before the subscription day in the current month,
-          // we should use the previous month's subscription day as our start date
-          if (now.getDate() < subscriptionDay) {
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, subscriptionDay);
-          } else {
-            startDate = currentMonthSubscriptionDay;
-          }
-        } else if (organization.billing.period === "monthly" && organization.billing.periodStart) {
-          startDate = organization.billing.periodStart;
-        } else {
-          // For other plans, use the periodStart from billing
-          if (!billing.data.periodStart) {
-            return err({
-              type: "internal_server_error",
-              details: [{ field: "organization", issue: "billing period start is not set" }],
-            });
-          }
-          startDate = organization.billing.periodStart;
-        }
+        const startDate = getBillingPeriodStartDate(billing.data);
 
         // Get all environment IDs for the organization
         const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);
