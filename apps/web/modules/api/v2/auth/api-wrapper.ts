@@ -20,6 +20,11 @@ export type ExtendedSchemas = {
   params?: z.ZodObject<ZodRawShape>;
 };
 
+// Define a type that returns separate keys for each input type.
+// It uses mapped types to create a new type based on the input schemas.
+// It checks if each schema is defined and if it is a ZodObject, then infers the type from it.
+// It also uses conditional types to ensure that the keys are only included if the schema is defined and valid.
+// This allows for more flexibility and type safety when working with the input schemas.
 export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends object
   ? {
       [K in keyof S as NonNullable<S[K]> extends z.ZodObject<any> ? K : never]: NonNullable<
