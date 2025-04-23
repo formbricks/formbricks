@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        val config = FormbricksConfig.Builder("http://192.168.0.200:3000","cm9qk3m57000n195soukrmqhh")
+        val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
 
