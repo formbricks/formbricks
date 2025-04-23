@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
@@ -20,7 +21,7 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): 
     headline: createI18nString(t("templates.default_ending_card_headline"), languageCodes),
     subheader: createI18nString(t("templates.default_ending_card_subheader"), languageCodes),
     buttonLabel: createI18nString(t("templates.default_ending_card_button_label"), languageCodes),
-    buttonLink: "/",
+    buttonLink: WEBAPP_URL,
   };
 };
 
