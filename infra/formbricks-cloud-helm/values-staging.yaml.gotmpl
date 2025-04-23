@@ -12,12 +12,12 @@ cronJob:
           valueFrom:
             secretKeyRef:
               key: CRON_SECRET
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
         WEBAPP_URL:
           valueFrom:
             secretKeyRef:
               key: WEBAPP_URL
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
         repository: curlimages/curl
@@ -35,12 +35,12 @@ cronJob:
           valueFrom:
             secretKeyRef:
               key: CRON_SECRET
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
         WEBAPP_URL:
           valueFrom:
             secretKeyRef:
               key: WEBAPP_URL
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
         repository: curlimages/curl
@@ -58,12 +58,12 @@ cronJob:
           valueFrom:
             secretKeyRef:
               key: CRON_SECRET
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
         WEBAPP_URL:
           valueFrom:
             secretKeyRef:
               key: WEBAPP_URL
-              name: formbricks-app-env
+              name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
         repository: curlimages/curl
@@ -155,7 +155,7 @@ rbac:
       eks.amazonaws.com/role-arn: {{ requiredEnv "FORMBRICKS_ROLE_ARN" }}
     additionalLabels: {}
     enabled: true
-    name: formbricks
+    name: formbricks-stage
 
 ## Dependencies
 postgresql:
