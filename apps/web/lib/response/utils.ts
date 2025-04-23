@@ -442,6 +442,13 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
       AND: data,
     });
   }
+
+  // filter by explicit response IDs
+  if (filterCriteria?.responseIds) {
+    whereClause.push({
+      id: { in: filterCriteria.responseIds },
+    });
+  }
   return { AND: whereClause };
 };
 

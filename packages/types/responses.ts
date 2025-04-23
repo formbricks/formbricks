@@ -203,6 +203,9 @@ export const ZResponseFilterCriteria = z.object({
       })
     )
     .optional(),
+
+  // Add responseIds field to filter by specific response IDs
+  responseIds: z.array(ZId).optional(),
 });
 
 export const ZResponseContact = z.object({
