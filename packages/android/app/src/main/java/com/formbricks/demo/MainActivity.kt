@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
 
-        Formbricks.setup(this, config.build(), true)
+        Formbricks.setup(this, config.build())
 
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
