@@ -399,7 +399,7 @@
     "value": "Value",
     "variable": "Variable",
     "variables": "Variables",
-    "verified_address": "Verified Addres",
+    "verified_address": "Verified Address",
     "verified_email": "Verified Email",
     "video": "Video",
     "wallet": "Wallet",
@@ -1901,6 +1901,7 @@
           "positive_amount": "Amount must be greater than zero"
         },
         "recipient_address": "Recipient Address",
+        "reward_amount": "Reward Amount",
         "token": "Token",
         "token_address": "Token Address"
       },

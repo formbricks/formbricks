@@ -6,6 +6,7 @@ export const ZBaseReward = z.object({
   amount: z.string().nullish(),
   decimals: z.number().nullish(),
   name: z.string().nullish(),
+  symbol: z.string().nullish(),
   logo: z.string().nullish(),
 });
 
