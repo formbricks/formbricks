@@ -63,7 +63,6 @@ export function Survey({
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
-  clickOutside,
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
@@ -178,7 +177,7 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
-    return offset === 0 && localSurvey.type !== "link" && (clickOutside ?? true);
+    return offset === 0 && localSurvey.type !== "link";
   };
   const getShowLanguageSwitch = (offset: number) => {
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;

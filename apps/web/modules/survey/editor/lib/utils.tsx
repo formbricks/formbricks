@@ -5,7 +5,7 @@ import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
-import { HTMLInputTypeAttribute } from "react";
+import { HTMLInputTypeAttribute, JSX } from "react";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -23,16 +23,64 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
+export const MAX_STRING_LENGTH = 2000;
+
+export const extractParts = (text: string): string[] => {
+  const parts: string[] = [];
+  let i = 0;
+
+  if (text.length > MAX_STRING_LENGTH) {
+    // If the text is unexpectedly too long, return it as a single part
+    parts.push(text);
+    return parts;
+  }
+
+  while (i < text.length) {
+    const start = text.indexOf("/", i);
+    if (start === -1) {
+      // No more `/`, push the rest and break
+      parts.push(text.slice(i));
+      break;
+    }
+    const end = text.indexOf("\\", start + 1);
+    if (end === -1) {
+      // No matching `\`, treat as plain text
+      parts.push(text.slice(i));
+      break;
+    }
+    // Add text before the match
+    if (start > i) {
+      parts.push(text.slice(i, start));
+    }
+    // Add the highlighted part (without `/` and `\`)
+    parts.push(text.slice(start + 1, end));
+    // Move past the `\`
+    i = end + 1;
+  }
+
+  if (parts.length === 0) {
+    parts.push(text);
+  }
+
+  return parts;
+};
+
 // formats the text to highlight specific parts of the text with slashes
-export const formatTextWithSlashes = (text: string) => {
-  const regex = /\/(.*?)\\/g;
-  const parts = text.split(regex);
+export const formatTextWithSlashes = (
+  text: string,
+  prefix: string = "",
+  classNames: string[] = ["text-xs"]
+): (string | JSX.Element)[] => {
+  const parts = extractParts(text);
 
   return parts.map((part, index) => {
     // Check if the part was inside slashes
     if (index % 2 !== 0) {
       return (
-        <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
+        <span
+          key={index}
+          className={`mx-1 rounded-md bg-slate-100 p-1 px-2${classNames ? ` ${classNames.join(" ")}` : ""}`}>
+          {prefix}
           {part}
         </span>
       );

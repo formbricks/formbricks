@@ -62,7 +62,19 @@ final class SurveyManager {
                 
         // Display percentage
         let shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
-                
+        let isMultiLangSurvey = firstSurveyWithActionClass?.languages?.count ?? 0 > 1
+
+        if isMultiLangSurvey {
+            guard let survey = firstSurveyWithActionClass else {return}
+            let currentLanguage = Formbricks.language
+            guard let languageCode = getLanguageCode(survey: survey, language: currentLanguage) else {
+                Formbricks.logger?.error("Survey \(survey.name) is not available in language “\(currentLanguage)”. Skipping.")
+                return
+            }
+            
+            Formbricks.language = languageCode
+        }
+
         // Display and delay it if needed
         if let surveyId = firstSurveyWithActionClass?.id, shouldDisplay {
             isShowingSurvey = true
@@ -232,6 +244,47 @@ private extension SurveyManager {
             
             return true
         }
+    }
+    
+    func getLanguageCode(
+        survey: Survey,
+        language: String?
+    ) -> String? {
+        // 1) Collect all codes
+        let availableLanguageCodes = survey.languages?
+            .map { $0.language.code }
+        
+        // 2) If no language was passed or it's the explicit "default" token → default
+        guard let raw = language?.lowercased(), !raw.isEmpty else {
+            return "default"
+        }
+        
+        if raw == "default" {
+            return "default"
+        }
+    
+        // 3) Find matching entry by code or alias
+        let selected = survey.languages?.first { entry in
+            entry.language.code.lowercased() == raw ||
+            entry.language.alias?.lowercased() == raw
+        }
+        
+        // 4) If that entry is marked default → default
+        if selected?.isDefault == true {
+            return "default"
+        }
+        
+        // 5) If no entry, or not enabled, or code not in the available list → nil
+        guard
+            let entry = selected,
+            entry.enabled,
+            availableLanguageCodes?.contains(entry.language.code) == true
+        else {
+            return nil
+        }
+        
+        // 6) Otherwise return its code
+        return entry.language.code
     }
     
     /// Filters the surveys based on the user's segments.
