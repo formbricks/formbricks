@@ -13,7 +13,7 @@ interface SelectedRowSettingsProps<T> {
   deleteRows: (rowId: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  downloadSelectedRows?: (rowIds: string[]) => void;
+  downloadRows?: (rowIds: string[]) => void;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -21,7 +21,7 @@ export const SelectedRowSettings = <T,>({
   deleteRows,
   type,
   deleteAction,
-  downloadSelectedRows,
+  downloadRows,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,10 +69,9 @@ export const SelectedRowSettings = <T,>({
   // Handle download selected rows
   const handleDownloadSelectedRows = async () => {
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
-    console.log("Selected Row IDs:", rowsToDownload);
-    if (downloadSelectedRows && rowsToDownload.length > 0) {
-      console.log("Function:", downloadSelectedRows(rowsToDownload));
-      downloadSelectedRows(rowsToDownload);
+    alert("HELLO");
+    if (downloadRows && rowsToDownload.length > 0) {
+      downloadRows(rowsToDownload);
     }
   };
 
@@ -99,7 +98,7 @@ export const SelectedRowSettings = <T,>({
         onClick={() => handleToggleAllRowsSelection(false)}
       />
       <Separator />
-      {downloadSelectedRows && (
+      {downloadRows && (
         <>
           <SelectableOption
             label={t("common.download")}

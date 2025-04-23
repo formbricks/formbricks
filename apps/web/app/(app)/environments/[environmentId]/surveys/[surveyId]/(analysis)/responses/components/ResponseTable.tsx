@@ -30,6 +30,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -185,8 +186,6 @@ export const ResponseTable = ({
   // Handle downloading selected responses
   const downloadSelectedRows = async (responseIds: string[]) => {
     try {
-      const toast = (await import("react-hot-toast")).default;
-
       // Use the new responseIds filter to reuse server download logic
       const downloadResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
@@ -230,7 +229,7 @@ export const ResponseTable = ({
           deleteRows={deleteResponses}
           type="response"
           deleteAction={deleteResponse}
-          downloadSelectedRows={downloadSelectedRows}
+          downloadRows={downloadSelectedRows}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

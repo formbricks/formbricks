@@ -16,7 +16,7 @@ interface DataTableToolbarProps<T> {
   deleteRows: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  downloadSelectedRows?: (rowIds: string[]) => void;
+  downloadRows?: (rowIds: string[]) => void;
   refreshContacts?: () => Promise<void>;
 }
 
@@ -28,7 +28,7 @@ export const DataTableToolbar = <T,>({
   deleteRows,
   type,
   deleteAction,
-  downloadSelectedRows,
+  downloadRows,
   refreshContacts,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslate();
@@ -41,7 +41,7 @@ export const DataTableToolbar = <T,>({
           deleteRows={deleteRows}
           type={type}
           deleteAction={deleteAction}
-          downloadSelectedRows={downloadSelectedRows}
+          downloadRows={downloadRows}
         />
       ) : (
         <div></div>
