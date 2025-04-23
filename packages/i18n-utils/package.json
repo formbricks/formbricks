@@ -32,7 +32,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "vite": "^6.2.4",
+    "vite": "^6.3.2",
     "@formbricks/config-typescript": "workspace:*",
     "vitest": "3.1.1",
     "@formbricks/eslint-config": "workspace:*",
