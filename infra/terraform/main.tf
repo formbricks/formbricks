@@ -481,6 +481,11 @@ data "aws_iam_policy_document" "replication_bucket_policy" {
   }
 }
 
+moved {
+  from = module.formbricks_s3_bucket
+  to   = module.formbricks_s3_bucket["prod"]
+}
+
 module "formbricks_s3_bucket" {
   for_each = local.envs
   source   = "terraform-aws-modules/s3-bucket/aws"
@@ -502,6 +507,11 @@ module "formbricks_s3_bucket" {
       expose_headers  = []
     }
   ]
+}
+
+moved {
+  from = module.formbricks_app_iam_policy
+  to   = module.formbricks_app_iam_policy["prod"]
 }
 
 module "formbricks_app_iam_policy" {
@@ -528,6 +538,11 @@ module "formbricks_app_iam_policy" {
       }
     ]
   })
+}
+
+moved {
+  from = module.formbricks_app_iam_role
+  to   = module.formbricks_app_iam_role["prod"]
 }
 
 module "formbricks_app_iam_role" {
