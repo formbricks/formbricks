@@ -3,7 +3,6 @@ import { organizationCache } from "@/lib/organization/cache";
 import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Organization } from "@prisma/client";
-import { get } from "lodash";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
