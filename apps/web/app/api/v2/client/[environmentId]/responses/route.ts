@@ -78,9 +78,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
     return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
   }
 
-  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-  if (isSpamProtectionEnabled) {
-    if (survey.recaptcha && survey.recaptcha.enabled) {
+  if (survey.recaptcha && survey.recaptcha.enabled) {
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+    if (isSpamProtectionEnabled) {
       if (!responseInput.recaptchaToken) {
         logger.error("Missing recaptcha token");
         return responses.badRequestResponse(
@@ -106,6 +106,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
           true
         );
       }
+    } else {
+      logger.error("Spam protection is not enabled for this organization");
     }
   }
 
