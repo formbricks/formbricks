@@ -85,60 +85,61 @@ export const SelectedRowSettings = <T,>({
   const Separator = () => <div>|</div>;
 
   return (
-    <div className="dark bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
-      <div className="lowercase">
-        {selectedRowCount} {t(`common.${type}`)}s {t("common.selected")}
+    <>
+      <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
+        <div className="lowercase">
+          {selectedRowCount} {t(`common.${type}`)}s {t("common.selected")}
+        </div>
+        <Separator />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+          onClick={() => handleToggleAllRowsSelection(true)}>
+          {t("common.select_all")}
+        </Button>
+        <Separator />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+          onClick={() => handleToggleAllRowsSelection(false)}>
+          {t("common.clear_selection")}
+        </Button>
+        <Separator />
+        {downloadRows && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="sm" className="h-6 gap-1 px-2">
+                {t("common.download")}
+                <ArrowDownToLineIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDownloadSelectedRows("csv");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.selected_responses_csv")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDownloadSelectedRows("xlsx");
+                }}>
+                <p>{t("environments.surveys.summary.selected_responses_excel")}</p>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <Button
+          variant="destructive"
+          size="sm"
+          className="h-6 gap-1 px-2"
+          onClick={() => setIsDeleteDialogOpen(true)}>
+          {t("common.delete")}
+          <Trash2Icon />
+        </Button>
       </div>
-      <Separator />
-      {/* <SelectableOption label={t("common.select_all")} onClick={() => handleToggleAllRowsSelection(true)} /> */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
-        onClick={() => handleToggleAllRowsSelection(true)}>
-        {t("common.select_all")}
-      </Button>
-      <Separator />
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
-        onClick={() => handleToggleAllRowsSelection(false)}>
-        {t("common.clear_selection")}
-      </Button>
-      <Separator />
-      {downloadRows && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="sm" className="h-6 gap-1 px-2">
-              {t("common.download")}
-              <ArrowDownToLineIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={() => {
-                handleDownloadSelectedRows("csv");
-              }}>
-              <p className="text-slate-700">{t("environments.surveys.summary.selected_responses_csv")}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                handleDownloadSelectedRows("xlsx");
-              }}>
-              <p>{t("environments.surveys.summary.selected_responses_excel")}</p>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-      <Button
-        variant="destructive"
-        size="sm"
-        className="h-6 gap-1 px-2"
-        onClick={() => setIsDeleteDialogOpen(true)}>
-        {t("common.delete")}
-        <Trash2Icon />
-      </Button>
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
@@ -146,6 +147,6 @@ export const SelectedRowSettings = <T,>({
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />
-    </div>
+    </>
   );
 };
