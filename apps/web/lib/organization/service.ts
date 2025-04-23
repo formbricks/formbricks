@@ -337,12 +337,30 @@ export const getMonthlyOrganizationResponseCount = reactCache(
             throw new ResourceNotFoundError("Organization", organizationId);
           }
 
-          // Determine the start date based on the plan type
+          // Determine the start date based on the plan type and billing period
           let startDate: Date;
+          const now = new Date();
+
           if (organization.billing.plan === "free") {
             // For free plans, use the first day of the current calendar month
-            const now = new Date();
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          } else if (organization.billing.period === "yearly" && organization.billing.periodStart) {
+            // For yearly plans, use the same day of the month as the original subscription date
+            const periodStart = new Date(organization.billing.periodStart);
+            const subscriptionDay = periodStart.getDate();
+
+            // Get current month's subscription day
+            const currentMonthSubscriptionDay = new Date(now.getFullYear(), now.getMonth(), subscriptionDay);
+
+            // If today is before the subscription day in the current month,
+            // we should use the previous month's subscription day as our start date
+            if (now.getDate() < subscriptionDay) {
+              startDate = new Date(now.getFullYear(), now.getMonth() - 1, subscriptionDay);
+            } else {
+              startDate = currentMonthSubscriptionDay;
+            }
+          } else if (organization.billing.period === "monthly" && organization.billing.periodStart) {
+            startDate = organization.billing.periodStart;
           } else {
             // For other plans, use the periodStart from billing
             if (!organization.billing.periodStart) {
