@@ -70,16 +70,6 @@ export const SurveyFilters = ({
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
   };
 
-  const handleCreatedByChange = (value: string) => {
-    if (value === "you" || value === "others") {
-      if (createdBy.includes(value)) {
-        setSurveyFilters((prev) => ({ ...prev, createdBy: prev.createdBy.filter((v) => v !== value) }));
-      } else {
-        setSurveyFilters((prev) => ({ ...prev, createdBy: [...prev.createdBy, value] }));
-      }
-    }
-  };
-
   const handleStatusChange = (value: string) => {
     if (
       value === "inProgress" ||
