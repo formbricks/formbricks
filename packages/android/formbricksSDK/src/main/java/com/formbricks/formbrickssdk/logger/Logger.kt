@@ -10,9 +10,9 @@ object Logger {
         }
     }
 
-    fun e(message: String? = "Exception", exception: RuntimeException? = null) {
+    fun e(exception: RuntimeException) {
         if (Formbricks.loggingEnabled) {
-            Log.e("FormbricksSDK", message, exception)
+            Log.e("FormbricksSDK", exception.localizedMessage, exception)
         }
     }
 
