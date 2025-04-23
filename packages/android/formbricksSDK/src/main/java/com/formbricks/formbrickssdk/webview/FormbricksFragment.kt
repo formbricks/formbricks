@@ -37,9 +37,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.gson.JsonObject
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.util.Date
 import java.util.Timer
-import java.util.TimerTask
 
 
 class FormbricksFragment : BottomSheetDialogFragment() {
@@ -191,7 +189,6 @@ class FormbricksFragment : BottomSheetDialogFragment() {
 
                 override fun onPageCommitVisible(view: WebView?, url: String?) {
                     dialog?.window?.setDimAmount(0.5f)
-                    Formbricks.callback?.onSurveyStarted()
                     super.onPageCommitVisible(view, url)
                 }
             }

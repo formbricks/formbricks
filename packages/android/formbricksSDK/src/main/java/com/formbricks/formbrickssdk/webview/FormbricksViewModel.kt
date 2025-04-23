@@ -128,7 +128,7 @@ class FormbricksViewModel : ViewModel() {
         jsonObject.addProperty("isWebEnvironment", false)
 
         val isMultiLangSurvey =
-            (environmentDataHolder.data?.data?.surveys?.first { it.id === surveyId }?.languages?.size
+            (environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.languages?.size
                 ?: 0) > 1
 
         if (isMultiLangSurvey) {

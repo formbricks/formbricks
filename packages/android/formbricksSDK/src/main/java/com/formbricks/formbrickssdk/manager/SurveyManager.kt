@@ -144,10 +144,11 @@ object SurveyManager {
 
         if (firstSurveyWithActionClass == null) {
             Formbricks.callback?.onError(SDKError.surveyNotFoundError)
+            return
         }
 
-        val isMultiLangSurvey = (firstSurveyWithActionClass?.languages?.size ?: 0) > 1
-        if(firstSurveyWithActionClass != null && isMultiLangSurvey) {
+        val isMultiLangSurvey = (firstSurveyWithActionClass.languages?.size ?: 0) > 1
+        if(isMultiLangSurvey) {
             val currentLanguage = Formbricks.language
             val languageCode = getLanguageCode(firstSurveyWithActionClass, currentLanguage)
 
@@ -161,10 +162,10 @@ object SurveyManager {
             Formbricks.setLanguage(languageCode)
         }
 
-        val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
+        val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass.displayPercentage)
 
         if (shouldDisplay) {
-            firstSurveyWithActionClass?.id?.let {
+            firstSurveyWithActionClass.id.let {
                 isShowingSurvey = true
                 val timeout = firstSurveyWithActionClass.delay ?: 0.0
                 stopDisplayTimer()
