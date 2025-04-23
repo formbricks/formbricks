@@ -89,20 +89,22 @@ export function CalQuestion({
         </div>
       </ScrollableContainer>
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        {!question.required && (
-          <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-            tabIndex={isCurrent ? 0 : -1}
-          />
-        )}
-        <div />
-        {!isFirstQuestion && !isBackButtonHidden && (
+        {!isFirstQuestion && !isBackButtonHidden ? (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
+            tabIndex={isCurrent ? 0 : -1}
+          />
+        ) : (
+          <div />
+        )}
+        <div />
+        {!question.required && (
+          <SubmitButton
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
             tabIndex={isCurrent ? 0 : -1}
           />
         )}

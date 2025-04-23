@@ -241,12 +241,7 @@ export function MultipleChoiceSingleQuestion({
         </div>
       </ScrollableContainer>
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
+        {!isFirstQuestion && !isBackButtonHidden ? (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             tabIndex={isCurrent ? 0 : -1}
@@ -256,7 +251,15 @@ export function MultipleChoiceSingleQuestion({
               onBack();
             }}
           />
+        ) : (
+          <div />
         )}
+        <div />
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
       </div>
     </form>
   );

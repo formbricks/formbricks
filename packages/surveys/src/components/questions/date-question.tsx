@@ -270,12 +270,7 @@ export function DateQuestion({
         </div>
       </ScrollableContainer>
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          isLastQuestion={isLastQuestion}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
+        {!isFirstQuestion && !isBackButtonHidden ? (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
@@ -285,7 +280,15 @@ export function DateQuestion({
               onBack();
             }}
           />
+        ) : (
+          <div />
         )}
+        <div />
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          isLastQuestion={isLastQuestion}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+        />
       </div>
     </form>
   );

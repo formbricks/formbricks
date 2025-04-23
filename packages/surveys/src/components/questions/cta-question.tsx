@@ -63,7 +63,37 @@ export function CTAQuestion({
         </div>
       </ScrollableContainer>
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
+        {!isFirstQuestion && !isBackButtonHidden ? (
+          <BackButton
+            tabIndex={isCurrent ? 0 : -1}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onSubmit({ [question.id]: "" }, updatedTtcObj);
+              onBack();
+            }}
+          />
+        ) : (
+          <div />
+        )}
+        <div />
         <div className="flex w-full flex-row-reverse justify-start">
+          {!question.required && (
+            <button
+              dir="auto"
+              type="button"
+              tabIndex={isCurrent ? 0 : -1}
+              onClick={() => {
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
+                onSubmit({ [question.id]: "" }, updatedTtcObj);
+                onChange({ [question.id]: "" });
+              }}
+              className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
+              {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
+            </button>
+          )}
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
@@ -84,34 +114,7 @@ export function CTAQuestion({
             }}
             type="button"
           />
-          {!question.required && (
-            <button
-              dir="auto"
-              type="button"
-              tabIndex={isCurrent ? 0 : -1}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onSubmit({ [question.id]: "" }, updatedTtcObj);
-                onChange({ [question.id]: "" });
-              }}
-              className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
-              {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
-            </button>
-          )}
         </div>
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedTtcObj);
-              onSubmit({ [question.id]: "" }, updatedTtcObj);
-              onBack();
-            }}
-          />
-        )}
       </div>
     </div>
   );

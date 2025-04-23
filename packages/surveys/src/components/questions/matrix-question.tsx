@@ -207,18 +207,21 @@ export function MatrixQuestion({
         </div>
       </ScrollableContainer>
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          tabIndex={isCurrent ? 0 : -1}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
+        {!isFirstQuestion && !isBackButtonHidden ? (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}
             tabIndex={isCurrent ? 0 : -1}
           />
+        ) : (
+          <div />
         )}
+        <div />
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          tabIndex={isCurrent ? 0 : -1}
+        />
       </div>
     </form>
   );
