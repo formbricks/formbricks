@@ -1,6 +1,7 @@
 "use client";
 
 import { previewSurvey } from "@/app/lib/templates";
+import { defaultStyling } from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
@@ -27,7 +28,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 

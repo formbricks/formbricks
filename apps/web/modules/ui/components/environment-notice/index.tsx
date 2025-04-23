@@ -1,8 +1,8 @@
+import { WEBAPP_URL } from "@/lib/constants";
+import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { getTranslate } from "@/tolgee/server";
 import Link from "next/link";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 
 interface EnvironmentNoticeProps {
   environmentId: string;

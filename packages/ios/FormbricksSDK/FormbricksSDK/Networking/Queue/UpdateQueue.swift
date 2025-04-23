@@ -61,6 +61,7 @@ final class UpdateQueue {
             } else {
                 // If no userId, just update locally without API call
                 Formbricks.logger?.debug("UpdateQueue - updating language locally: \(language)")
+                return
             }
             
             startDebounceTimer()

@@ -1,12 +1,12 @@
 "use server";
 
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization } from "@/lib/organization/service";
+import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization } from "@formbricks/lib/organization/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 

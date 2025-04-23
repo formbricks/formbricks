@@ -7,7 +7,7 @@ import {
   SIGNUP_RATE_LIMIT,
   SYNC_USER_IDENTIFICATION_RATE_LIMIT,
   VERIFY_EMAIL_RATE_LIMIT,
-} from "@formbricks/lib/constants";
+} from "@/lib/constants";
 
 export const loginLimiter = rateLimit({
   interval: LOGIN_RATE_LIMIT.interval,

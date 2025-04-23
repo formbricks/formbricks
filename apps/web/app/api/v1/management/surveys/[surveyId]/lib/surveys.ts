@@ -1,10 +1,10 @@
+import { segmentCache } from "@/lib/cache/segment";
+import { responseCache } from "@/lib/response/cache";
+import { surveyCache } from "@/lib/survey/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 

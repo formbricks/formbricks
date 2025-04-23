@@ -1,7 +1,7 @@
+import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@/lib/constants";
+import { env } from "@/lib/env";
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
-import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
-import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {

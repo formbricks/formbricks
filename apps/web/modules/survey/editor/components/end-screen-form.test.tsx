@@ -1,7 +1,7 @@
+import { createI18nString } from "@/lib/i18n/utils";
 import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyEndScreenCard, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { EndScreenForm } from "./end-screen-form";
@@ -27,7 +27,7 @@ vi.mock("@formkit/auto-animate/react", () => ({
 }));
 
 // Mock constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   ENCRYPTION_KEY: "test",
   ENTERPRISE_LICENSE_KEY: "test",
@@ -63,7 +63,7 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-vi.mock("@formbricks/lib/utils/recall", () => ({
+vi.mock("@/lib/utils/recall", () => ({
   headlineToRecall: (val) => val,
   recallToHeadline: () => ({ default: "mocked value" }),
 }));

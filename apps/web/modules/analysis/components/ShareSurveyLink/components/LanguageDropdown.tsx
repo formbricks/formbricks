@@ -1,8 +1,9 @@
+import { getEnabledLanguages } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
 import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
-import { getEnabledLanguages, getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

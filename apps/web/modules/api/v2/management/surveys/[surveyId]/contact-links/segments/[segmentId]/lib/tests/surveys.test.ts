@@ -1,7 +1,7 @@
+import { cache } from "@/lib/cache";
+import { surveyCache } from "@/lib/survey/cache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurvey } from "../surveys";
 
 // Mock dependencies
@@ -13,11 +13,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/cache", () => ({
+vi.mock("@/lib/cache", () => ({
   cache: vi.fn((fn) => fn),
 }));
 
-vi.mock("@formbricks/lib/survey/cache", () => ({
+vi.mock("@/lib/survey/cache", () => ({
   surveyCache: {
     tag: {
       byId: vi.fn((id) => `survey-${id}`),

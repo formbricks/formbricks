@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClientWrapper } from "./IntercomClientWrapper";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "mock-intercom-app-id",
   INTERCOM_SECRET_KEY: "mock-intercom-secret-key",

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { SSOOptions } from "./sso-options";
 
 // Mock environment variables
-vi.mock("@formbricks/lib/env", () => ({
+vi.mock("@/lib/env", () => ({
   env: {
     IS_FORMBRICKS_CLOUD: "0",
   },

@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
+import { responseCache } from "@/lib/response/cache";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getResponseCountBySurveyId = reactCache(

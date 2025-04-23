@@ -1,9 +1,9 @@
 "use server";
 
+import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IConnectionAPIController, IOAuthController, JacksonOption } from "@boxyhq/saml-jackson";
-import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@formbricks/lib/constants";
 
 const opts: JacksonOption = {
   externalUrl: WEBAPP_URL,

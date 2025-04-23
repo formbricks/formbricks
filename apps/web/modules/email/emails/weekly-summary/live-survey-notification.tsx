@@ -1,9 +1,9 @@
+import { WEBAPP_URL } from "@/lib/constants";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 import { TFnType } from "@tolgee/react";
 import React, { type JSX } from "react";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type {
   TWeeklySummaryNotificationDataSurvey,

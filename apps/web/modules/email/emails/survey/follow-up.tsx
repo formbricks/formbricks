@@ -1,3 +1,5 @@
+import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
+import { getQuestionResponseMapping } from "@/lib/responses";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import {
@@ -15,8 +17,6 @@ import {
 } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
 import React from "react";
-import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
-import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

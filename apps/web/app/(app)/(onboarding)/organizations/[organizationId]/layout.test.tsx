@@ -1,19 +1,19 @@
+import { canUserAccessOrganization } from "@/lib/organization/auth";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import ProjectOnboardingLayout from "./layout";
 
 // Mock all the modules and functions that this layout uses:
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -42,13 +42,13 @@ vi.mock("next-auth", () => ({
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
-vi.mock("@formbricks/lib/organization/auth", () => ({
+vi.mock("@/lib/organization/auth", () => ({
   canUserAccessOrganization: vi.fn(),
 }));
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganization: vi.fn(),
 }));
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 vi.mock("@/tolgee/server", () => ({
