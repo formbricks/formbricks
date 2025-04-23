@@ -45,6 +45,7 @@ export const verifyRecaptchaToken = async (
       return false;
     }
 
+    console.log("reCAPTCHA verification successful", { data, threshold });
     // Check if the score meets the threshold
     if (data.score !== undefined && data.score <= threshold) {
       logger.error(data, "reCAPTCHA score below threshold");

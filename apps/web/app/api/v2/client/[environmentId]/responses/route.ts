@@ -83,17 +83,28 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (survey.recaptcha && survey.recaptcha.enabled) {
       if (!responseInput.recaptchaToken) {
         logger.error("Missing recaptcha token");
-        return responses.badRequestResponse("Missing recaptcha token", {}, true);
+        return responses.badRequestResponse(
+          "Missing recaptcha token",
+          {
+            code: "recaptcha_verification_failed",
+          },
+          true
+        );
       }
       const isPassed = await verifyRecaptchaToken(
         responseInput.recaptchaToken,
         survey.recaptcha.threshold,
         responseInput.siteKey
       );
-      console.log("isPassed", isPassed);
 
       if (!isPassed) {
-        return responses.badRequestResponse("reCAPTCHA verification failed", {}, true);
+        return responses.badRequestResponse(
+          "reCAPTCHA verification failed",
+          {
+            code: "recaptcha_verification_failed",
+          },
+          true
+        );
       }
     }
   }

@@ -3,6 +3,7 @@ import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
+import { RecaptchaErrorComponent } from "@/components/general/recaptcha-error-component";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -14,6 +15,7 @@ import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type JSX, useCallback } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -101,8 +103,9 @@ export function Survey({
           appUrl,
           environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: () => {
+          onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
+            setErrorType(errorCode);
 
             if (getSetIsError) {
               getSetIsError((_prev) => {});
@@ -152,6 +155,7 @@ export function Survey({
     }
     return localSurvey.questions[0]?.id;
   });
+  const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
@@ -589,6 +593,7 @@ export function Survey({
   const retryResponse = () => {
     if (responseQueue) {
       setShowError(false);
+      setErrorType(undefined);
       void responseQueue.processQueue();
     } else {
       onRetry?.();
@@ -597,6 +602,20 @@ export function Survey({
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
+      switch (errorType) {
+        case TResponseErrorCodesEnum.ResponseSendingError:
+          return (
+            <ResponseErrorComponent
+              responseData={responseData}
+              questions={localSurvey.questions}
+              onRetry={retryResponse}
+            />
+          );
+        case TResponseErrorCodesEnum.RecaptchaError:
+          return <RecaptchaErrorComponent />;
+      }
+    }
+    if (showError && errorType === TResponseErrorCodesEnum.ResponseSendingError) {
       return (
         <ResponseErrorComponent
           responseData={responseData}
