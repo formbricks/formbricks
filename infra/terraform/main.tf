@@ -482,10 +482,11 @@ data "aws_iam_policy_document" "replication_bucket_policy" {
 }
 
 module "formbricks_s3_bucket" {
+  for_each = local.envs
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "4.6.0"
 
-  bucket                   = "formbricks-cloud-eks"
+  bucket = each.key == "prod" ? "formbricks-cloud-eks" : "formbricks-cloud-eks-${each.key}"
   force_destroy            = true
   control_object_ownership = true
   object_ownership         = "BucketOwnerPreferred"
@@ -504,10 +505,11 @@ module "formbricks_s3_bucket" {
 }
 
 module "formbricks_app_iam_policy" {
+  for_each = local.envs
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.53.0"
 
-  name_prefix = "formbricks-"
+  name_prefix = each.key == "prod" ? "formbricks-" : "formbricks-${each.key}-"
   path        = "/"
   description = "Policy for fombricks app"
 
@@ -520,10 +522,8 @@ module "formbricks_app_iam_policy" {
           "s3:*",
         ]
         Resource = [
-          module.formbricks_s3_bucket.s3_bucket_arn,
-          "${module.formbricks_s3_bucket.s3_bucket_arn}/*",
-          "arn:aws:s3:::formbricks-cloud-uploads",
-          "arn:aws:s3:::formbricks-cloud-uploads/*"
+          module.formbricks_s3_bucket[each.key].s3_bucket_arn,
+          "${module.formbricks_s3_bucket[each.key].s3_bucket_arn}/*"
         ]
       }
     ]
@@ -531,20 +531,21 @@ module "formbricks_app_iam_policy" {
 }
 
 module "formbricks_app_iam_role" {
+  for_each = local.envs
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "5.53.0"
 
   role_name_prefix = "formbricks-"
 
   role_policy_arns = {
-    "formbricks" = module.formbricks_app_iam_policy.arn
+    "formbricks" = module.formbricks_app_iam_policy[each.key].arn
   }
   assume_role_condition_test = "StringLike"
 
   oidc_providers = {
     eks = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["formbricks:*"]
+      namespace_service_accounts = each.key == "prod" ? ["formbricks:*"] : ["formbricks-${each.key}:*"]
     }
   }
 }
