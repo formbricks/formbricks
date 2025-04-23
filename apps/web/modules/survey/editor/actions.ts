@@ -48,7 +48,7 @@ export const updateSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -73,7 +73,7 @@ export const refetchProjectAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -173,7 +173,7 @@ export const createActionClassAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });

@@ -21,9 +21,7 @@ export const SurveyEditorPage = async (props) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const { session, isMember, environment, hasReadAccess, currentUserMembership } = await getEnvironmentAuth(
-    params.environmentId
-  );
+  const { session, environment, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
   const [survey, project, actionClasses, responseCount] = await Promise.all([
@@ -33,13 +31,11 @@ export const SurveyEditorPage = async (props) => {
     getResponseCountBySurveyId(params.surveyId),
   ]);
 
-  console.log("survey", survey);
-
-  if (!project) {
+  if (!project || !survey) {
     throw new Error(t("common.project_not_found"));
   }
 
-  const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
+  const isSurveyCreationDeletionDisabled = survey.createdBy !== currentUserMembership.userId;
 
   const isSurveyFollowUpsAllowed = false;
   const userEmail = await getUserEmail(session.user.id);

@@ -29,7 +29,7 @@ export const getSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -62,7 +62,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -73,7 +73,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -100,7 +100,7 @@ export const getProjectsByEnvironmentIdAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -121,7 +121,7 @@ export const deleteSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -143,7 +143,7 @@ export const generateSingleUseIdAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -161,21 +161,9 @@ const ZGetSurveysAction = z.object({
 export const getSurveysAction = authenticatedActionClient
   .schema(ZGetSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      access: [
-        {
-          data: parsedInput.filterCriteria,
-          schema: ZSurveyFilterCriteria,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-
     return await getSurveys(
       parsedInput.environmentId,
+      ctx.user.id,
       parsedInput.limit,
       parsedInput.offset,
       parsedInput.filterCriteria

@@ -41,6 +41,7 @@ export const surveySelect: Prisma.SurveySelect = {
 export const getSurveys = reactCache(
   async (
     environmentId: string,
+    createdBy: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -50,13 +51,20 @@ export const getSurveys = reactCache(
         try {
           if (filterCriteria?.sortBy === "relevance") {
             // Call the sortByRelevance function
-            return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
+            return await getSurveysSortedByRelevance(
+              environmentId,
+              createdBy,
+              limit,
+              offset ?? 0,
+              filterCriteria
+            );
           }
 
           // Fetch surveys normally with pagination and include response count
           const surveysPrisma = await prisma.survey.findMany({
             where: {
               environmentId,
+              createdBy,
               ...buildWhereClause(filterCriteria),
             },
             select: surveySelect,
@@ -79,7 +87,9 @@ export const getSurveys = reactCache(
           throw error;
         }
       },
-      [`surveyList-getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [
+        `surveyList-getSurveys1-${createdBy}-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`,
+      ],
       {
         tags: [
           surveyCache.tag.byEnvironmentId(environmentId),
@@ -92,6 +102,7 @@ export const getSurveys = reactCache(
 export const getSurveysSortedByRelevance = reactCache(
   async (
     environmentId: string,
+    createdBy: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -104,6 +115,7 @@ export const getSurveysSortedByRelevance = reactCache(
           const inProgressSurveyCount = await prisma.survey.count({
             where: {
               environmentId,
+              createdBy,
               status: "inProgress",
               ...buildWhereClause(filterCriteria),
             },
@@ -116,6 +128,7 @@ export const getSurveysSortedByRelevance = reactCache(
               : await prisma.survey.findMany({
                   where: {
                     environmentId,
+                    createdBy,
                     status: "inProgress",
                     ...buildWhereClause(filterCriteria),
                   },
@@ -139,6 +152,7 @@ export const getSurveysSortedByRelevance = reactCache(
             const additionalSurveys = await prisma.survey.findMany({
               where: {
                 environmentId,
+                createdBy,
                 status: { not: "inProgress" },
                 ...buildWhereClause(filterCriteria),
               },
@@ -169,7 +183,7 @@ export const getSurveysSortedByRelevance = reactCache(
         }
       },
       [
-        `surveyList-getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`,
+        `surveyList-getSurveysSortedByRelevance1-${createdBy}-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`,
       ],
       {
         tags: [
@@ -615,14 +629,15 @@ export const copySurveyToOtherEnvironment = async (
 };
 
 export const getSurveyCount = reactCache(
-  async (environmentId: string): Promise<number> =>
+  async (environmentId: string, userId: string): Promise<number> =>
     cache(
       async () => {
-        validateInputs([environmentId, z.string().cuid2()]);
+        validateInputs([environmentId, z.string().cuid2()], [userId, z.string().cuid2()]);
         try {
           const surveyCount = await prisma.survey.count({
             where: {
               environmentId: environmentId,
+              createdBy: userId,
             },
           });
 
@@ -636,7 +651,7 @@ export const getSurveyCount = reactCache(
           throw error;
         }
       },
-      [`getSurveyCount-${environmentId}`],
+      [`getSurveyCount-${environmentId}-${userId}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }

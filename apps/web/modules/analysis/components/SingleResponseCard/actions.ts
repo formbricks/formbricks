@@ -34,7 +34,7 @@ export const createTagAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -67,7 +67,7 @@ export const createTagToResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -100,7 +100,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -121,7 +121,7 @@ export const deleteResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -143,7 +143,7 @@ export const updateResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -164,7 +164,7 @@ export const resolveResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -186,7 +186,7 @@ export const createResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });
@@ -207,7 +207,7 @@ export const getResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner", "manager", "member"],
         },
       ],
     });

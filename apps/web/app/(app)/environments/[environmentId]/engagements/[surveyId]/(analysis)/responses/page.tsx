@@ -30,6 +30,10 @@ const Page = async (props) => {
     throw new Error(t("common.user_not_found"));
   }
 
+  if (survey.createdBy !== user.id) {
+    throw new Error(t("common.user_not_found"));
+  }
+
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);

@@ -8,11 +8,9 @@ import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
   const params = await props.params;
@@ -29,11 +27,6 @@ const SurveyEditorEnvironmentLayout = async (props) => {
   const user = await getUser(session.user.id);
   if (!user) {
     throw new Error(t("common.user_not_found"));
-  }
-
-  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
   }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);

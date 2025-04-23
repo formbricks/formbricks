@@ -43,7 +43,9 @@ export const SurveysPage = async ({
     throw new Error(t("common.project_not_found"));
   }
 
-  const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, isBilling, environment, isReadOnly, currentUserMembership } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
@@ -51,7 +53,7 @@ export const SurveysPage = async ({
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const surveyCount = await getSurveyCount(params.environmentId);
+  const surveyCount = await getSurveyCount(params.environmentId, currentUserMembership.userId);
 
   const currentProjectChannel = project.config.channel ?? null;
   const CreateSurveyButton = () => {

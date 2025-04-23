@@ -130,15 +130,15 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/activity"),
         isHidden: false,
       },
+      {
+        name: t("common.surveys"),
+        href: `/environments/${environment.id}/engagements`,
+        icon: MessageCircle,
+        isActive: pathname?.includes("/engagements"),
+        isHidden: false,
+      },
       ...(hasAccess
         ? [
-            {
-              name: t("common.surveys"),
-              href: `/environments/${environment.id}/engagements`,
-              icon: MessageCircle,
-              isActive: pathname?.includes("/engagements"),
-              isHidden: false,
-            },
             // {
             //   href: `/environments/${environment.id}/contacts`,
             //   name: t("common.contacts"),

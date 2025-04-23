@@ -62,10 +62,10 @@ export const getZSafeUrl = (message: string): z.ZodEffects<z.ZodString, string, 
         });
       }
 
-      if (!url.startsWith("https://")) {
+      if (!url.startsWith("https://") && !url.startsWith("http://")) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "URL must start with https://",
+          message: "URL must start with https:// or http://",
         });
       }
     });

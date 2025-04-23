@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getSurvey, getSurveyCount, getSurveys, getSurveysByActionClassId, updateSurvey } from "../service";
+import { getSurvey, getSurveys, getSurveysByActionClassId, updateSurvey } from "../service";
 import {
   mockActionClass,
   mockId,
@@ -449,29 +449,3 @@ describe("Tests for updateSurvey", () => {
 //     });
 //   });
 // });
-
-describe("Tests for getSurveyCount service", () => {
-  describe("Happy Path", () => {
-    it("Counts the total number of surveys for a given environment ID", async () => {
-      const count = await getSurveyCount(mockId);
-      expect(count).toEqual(1);
-    });
-
-    it("Returns zero count when there are no surveys for a given environment ID", async () => {
-      prisma.survey.count.mockResolvedValue(0);
-      const count = await getSurveyCount(mockId);
-      expect(count).toEqual(0);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(getSurveyCount, "123#");
-
-    it("Throws a generic Error for other unexpected issues", async () => {
-      const mockErrorMessage = "Mock error message";
-      prisma.survey.count.mockRejectedValue(new Error(mockErrorMessage));
-
-      await expect(getSurveyCount(mockId)).rejects.toThrow(Error);
-    });
-  });
-});

@@ -293,35 +293,6 @@ export const getSurveys = reactCache(
     )()
 );
 
-export const getSurveyCount = reactCache(
-  async (environmentId: string): Promise<number> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
-        try {
-          const surveyCount = await prisma.survey.count({
-            where: {
-              environmentId: environmentId,
-            },
-          });
-
-          return surveyCount;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting survey count");
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getSurveyCount-${environmentId}`],
-      {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
-
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
 

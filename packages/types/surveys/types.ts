@@ -42,8 +42,8 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 const validateUrlWithRecall = (url: string): string | null => {
   try {
-    if (!url.startsWith("https://")) {
-      return "URL must start with https://";
+    if (!url.startsWith("https://") && !url.startsWith("http://")) {
+      return "URL must start with https:// or http://";
     }
 
     if (url.includes(" ") && !url.endsWith(" ")) {

@@ -37,6 +37,10 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     throw new Error(t("common.user_not_found"));
   }
 
+  if (survey.createdBy !== user.id) {
+    throw new Error(t("common.user_not_found"));
+  }
+
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   // I took this out cause it's cloud only right?

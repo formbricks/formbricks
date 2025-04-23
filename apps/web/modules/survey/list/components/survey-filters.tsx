@@ -126,17 +126,6 @@ export const SurveyFilters = ({
         />
         <div>
           <SurveyFilterDropdown
-            title={t("common.created_by")}
-            id="createdBy"
-            options={getCreatorOptions(t)}
-            selectedOptions={createdBy}
-            setSelectedOptions={handleCreatedByChange}
-            isOpen={dropdownOpenStates.get("createdBy")}
-            toggleDropdown={toggleDropdown}
-          />
-        </div>
-        <div>
-          <SurveyFilterDropdown
             title={t("common.status")}
             id="status"
             options={getStatusOptions(t)}

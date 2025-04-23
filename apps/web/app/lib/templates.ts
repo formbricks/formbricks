@@ -20,7 +20,7 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): 
     headline: createI18nString(t("templates.default_ending_card_headline"), languageCodes),
     subheader: createI18nString(t("templates.default_ending_card_subheader"), languageCodes),
     buttonLabel: createI18nString(t("templates.default_ending_card_button_label"), languageCodes),
-    buttonLink: window ? window.location.host : "",
+    buttonLink: window ? window.location.origin : "",
   };
 };
 
