@@ -85,10 +85,9 @@ export function symmetricDecrypt(payload: string, key: string): string {
   try {
     return symmetricDecryptV2(payload, key);
   } catch (err) {
-    logger.info("Failed to decrypt payload with V2", err);
+    logger.warn("AES-GCM decryption failed; refusing to fall back to insecure CBC", err);
 
-    // authentication failed or bad format → try the old one
-    return symmetricDecryptV1(payload, key);
+    throw err;
   }
 }
 
