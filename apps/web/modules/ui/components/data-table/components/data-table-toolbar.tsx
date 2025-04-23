@@ -16,6 +16,7 @@ interface DataTableToolbarProps<T> {
   deleteRows: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
+  downloadSelectedRows?: (rowIds: string[]) => void;
   refreshContacts?: () => Promise<void>;
 }
 
@@ -27,6 +28,7 @@ export const DataTableToolbar = <T,>({
   deleteRows,
   type,
   deleteAction,
+  downloadSelectedRows,
   refreshContacts,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslate();
@@ -34,7 +36,13 @@ export const DataTableToolbar = <T,>({
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <SelectedRowSettings table={table} deleteRows={deleteRows} type={type} deleteAction={deleteAction} />
+        <SelectedRowSettings
+          table={table}
+          deleteRows={deleteRows}
+          type={type}
+          deleteAction={deleteAction}
+          downloadSelectedRows={downloadSelectedRows}
+        />
       ) : (
         <div></div>
       )}

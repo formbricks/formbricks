@@ -13,6 +13,7 @@ interface SelectedRowSettingsProps<T> {
   deleteRows: (rowId: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
+  downloadSelectedRows?: (rowIds: string[]) => void;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -20,6 +21,7 @@ export const SelectedRowSettings = <T,>({
   deleteRows,
   type,
   deleteAction,
+  downloadSelectedRows,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,6 +66,16 @@ export const SelectedRowSettings = <T,>({
     }
   };
 
+  // Handle download selected rows
+  const handleDownloadSelectedRows = async () => {
+    const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
+    console.log("Selected Row IDs:", rowsToDownload);
+    if (downloadSelectedRows && rowsToDownload.length > 0) {
+      console.log("Function:", downloadSelectedRows(rowsToDownload));
+      downloadSelectedRows(rowsToDownload);
+    }
+  };
+
   // Helper component for the separator
   const Separator = () => <div>|</div>;
 
@@ -87,6 +99,17 @@ export const SelectedRowSettings = <T,>({
         onClick={() => handleToggleAllRowsSelection(false)}
       />
       <Separator />
+      {downloadSelectedRows && (
+        <>
+          <SelectableOption
+            label={t("common.download")}
+            onClick={() => {
+              handleDownloadSelectedRows();
+            }}
+          />
+          <Separator />
+        </>
+      )}
       <div
         className="cursor-pointer rounded-md bg-slate-500 p-1 hover:bg-slate-600"
         onClick={() => setIsDeleteDialogOpen(true)}>

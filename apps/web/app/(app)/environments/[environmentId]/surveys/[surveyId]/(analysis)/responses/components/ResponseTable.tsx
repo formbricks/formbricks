@@ -3,6 +3,8 @@
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -180,6 +182,101 @@ export const ResponseTable = ({
     await deleteResponseAction({ responseId });
   };
 
+  // Handle downloading selected responses
+  const downloadSelectedRows = async (responseIds: string[]) => {
+    try {
+      console.log("Downloading selected responses with IDs:", responseIds);
+
+      // Import toast dynamically to avoid the "toast is not defined" error
+      const toast = (await import("react-hot-toast")).default;
+
+      // Download all responses since we can't filter by ID on the server side
+      const fullDownloadResponse = await getResponsesDownloadUrlAction({
+        surveyId: survey.id,
+        format: "csv",
+        filterCriteria: {}, // No filter - get all responses
+      });
+
+      if (fullDownloadResponse?.data) {
+        // Fetch the CSV content
+        const response = await fetch(fullDownloadResponse.data);
+        const csvText = await response.text();
+
+        // Parse the CSV to filter only selected responses
+        const rows = csvText.split("\n");
+
+        if (rows.length < 2) {
+          toast.error(t("environments.surveys.responses.no_data_available"));
+          return;
+        }
+
+        // Get the header row
+        const header = rows[0];
+
+        // Find the index of the Response ID column (usually the 2nd column)
+        const headerColumns = header.split(",");
+        const responseIdColumnIndex = headerColumns.findIndex(
+          (col) => col.toLowerCase().includes("response id") || col.toLowerCase() === "response_id"
+        );
+
+        if (responseIdColumnIndex === -1) {
+          toast.error(t("environments.surveys.responses.error_downloading_selected"));
+          console.error("Could not find Response ID column in CSV");
+          return;
+        }
+
+        // Filter rows to only include those with matching response IDs
+        const filteredRows = [header];
+
+        for (let i = 1; i < rows.length; i++) {
+          const rowData = rows[i].split(",");
+
+          // Skip empty rows
+          if (rowData.length <= 1) continue;
+
+          // Check if this row's response ID is in our selected IDs
+          // Remove any quotes around the ID
+          const rowResponseId = rowData[responseIdColumnIndex].replace(/^"|"$/g, "");
+
+          if (responseIds.includes(rowResponseId)) {
+            filteredRows.push(rows[i]);
+          }
+        }
+
+        // Create a new CSV file with just the selected responses
+        const filteredCsv = filteredRows.join("\n");
+
+        // Create a download link for the filtered CSV
+        const blob = new Blob([filteredCsv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").substring(0, 19);
+        link.download = `${survey.name}-selected-responses-${timestamp}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // Show success message if we have rows
+        if (filteredRows.length > 1) {
+          toast.success(t("environments.surveys.responses.download_success"));
+        } else {
+          toast.warn(t("environments.surveys.responses.no_matching_responses"));
+        }
+      } else {
+        const errorMessage = getFormattedErrorMessage(fullDownloadResponse);
+        console.error("Error downloading selected responses:", errorMessage);
+        toast.error(errorMessage || t("environments.surveys.responses.error_downloading_selected"));
+      }
+    } catch (error) {
+      console.error("Exception caught when downloading:", error);
+      (await import("react-hot-toast")).default.error(
+        t("environments.surveys.responses.error_downloading_selected")
+      );
+    }
+  };
+
   return (
     <div>
       <DndContext
@@ -196,6 +293,7 @@ export const ResponseTable = ({
           deleteRows={deleteResponses}
           type="response"
           deleteAction={deleteResponse}
+          downloadSelectedRows={downloadSelectedRows}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
