@@ -17,7 +17,7 @@ releases:
         value: {{ requiredEnv "REPOSITORY" }}
     labels:
       environment: prod
-  - name: formbricks
+  - name: formbricks-stage
     namespace: formbricks-stage
     chart: helm-charts/formbricks
     version: ^3.0.0
