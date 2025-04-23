@@ -90,6 +90,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
         survey.recaptcha.threshold,
         responseInput.siteKey
       );
+      console.log("isPassed", isPassed);
 
       if (!isPassed) {
         return responses.badRequestResponse("reCAPTCHA verification failed", {}, true);

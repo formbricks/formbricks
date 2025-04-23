@@ -115,6 +115,14 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
         window.grecaptcha
           .execute(recaptchaSiteKey, { action })
           .then((token: string) => {
+            const recaptchaTokenEvent = new CustomEvent("recaptchaToken", {
+              detail: {
+                token,
+                action,
+              },
+            });
+            window.dispatchEvent(recaptchaTokenEvent);
+
             resolve(token);
           })
           .catch((error: unknown) => {

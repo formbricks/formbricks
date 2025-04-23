@@ -448,14 +448,6 @@ export function Survey({
           surveyState.updateUserId(userId);
         }
 
-        if (recaptchaSiteKey && !surveyState?.responseId && getRecaptchaToken) {
-          const token = await getRecaptchaToken();
-          responseQueue.setResponseRecaptchaToken(token);
-
-          // // adding sleep of 1 second to receive the recaptcha token
-          // await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
@@ -486,8 +478,6 @@ export function Survey({
       onResponse,
       onResponseCreated,
       contactId,
-      recaptchaSiteKey,
-      getRecaptchaToken,
       userId,
       survey,
       isWebEnvironment,
@@ -497,12 +487,13 @@ export function Survey({
   );
 
   useEffect(() => {
-    if (!recaptchaSiteKey) return;
+    if (!recaptchaSiteKey || !survey.recaptcha?.enabled) return;
 
     window.addEventListener("recaptchaToken", (event) => {
       const customEvent = event as CustomEvent;
 
       const recaptchaToken = customEvent.detail.token;
+      console.log("event token", recaptchaToken);
       if (responseQueue && recaptchaToken) {
         responseQueue.setResponseRecaptchaToken(recaptchaToken);
       }
@@ -527,6 +518,14 @@ export function Survey({
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
+
+    if (recaptchaSiteKey && !surveyState?.responseId && getRecaptchaToken && survey.recaptcha?.enabled) {
+      const token = await getRecaptchaToken();
+      console.log("returned token", { token });
+
+      // adding sleep of 1 second to receive the recaptcha token
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
 
     pushVariableState(respondedQuestionId);
 

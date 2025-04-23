@@ -2,7 +2,7 @@
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
-import { executeRecaptcha } from "@/lib/common/recaptcha";
+import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
@@ -88,6 +88,11 @@ export const renderWidget = async (
   const placement = projectOverwrites.placement ?? project.placement;
   const isBrandingEnabled = project.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
+
+  const recaptchaSiteKey = config.get().recaptchaSiteKey;
+  if (survey.recaptcha?.enabled && recaptchaSiteKey) {
+    await loadRecaptchaScript(recaptchaSiteKey);
+  }
 
   const timeoutId = setTimeout(() => {
     formbricksSurveys.renderSurvey({
