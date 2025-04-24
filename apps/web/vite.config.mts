@@ -76,7 +76,6 @@ export default defineConfig({
         "modules/analysis/**/*.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
         "lib/utils/billing.ts",
-        "app/(app)/environments/**/surveys/**/(analysis)/responses/components/*.tsx",
         "modules/ui/components/data-table/components/*.tsx",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
