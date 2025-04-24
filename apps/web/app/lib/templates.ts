@@ -15,12 +15,77 @@ import {
   TSurveyEnding,
   TSurveyHiddenFields,
   TSurveyLanguage,
+  TSurveyLogic,
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+
+// Helper function to create standard jump logic based on operator
+const createJumpLogic = (
+  sourceQuestionId: string,
+  targetId: string,
+  operator: "isSkipped" | "isSubmitted" | "isClicked"
+): TSurveyLogic => ({
+  id: createId(),
+  conditions: {
+    id: createId(),
+    connector: "and",
+    conditions: [
+      {
+        id: createId(),
+        leftOperand: {
+          value: sourceQuestionId,
+          type: "question",
+        },
+        operator: operator,
+      },
+    ],
+  },
+  actions: [
+    {
+      id: createId(),
+      objective: "jumpToQuestion",
+      target: targetId,
+    },
+  ],
+});
+
+// Helper function to create jump logic based on choice selection
+const createChoiceJumpLogic = (
+  sourceQuestionId: string,
+  choiceId: string,
+  targetId: string
+): TSurveyLogic => ({
+  id: createId(),
+  conditions: {
+    id: createId(),
+    connector: "and",
+    conditions: [
+      {
+        id: createId(),
+        leftOperand: {
+          value: sourceQuestionId,
+          type: "question",
+        },
+        operator: "equals",
+        rightOperand: {
+          type: "static",
+          value: choiceId,
+        },
+      },
+    ],
+  },
+  actions: [
+    {
+      id: createId(),
+      objective: "jumpToQuestion",
+      target: targetId,
+    },
+  ],
+});
 
 export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): TSurveyEndScreenCard => {
   const languageCodes = extractLanguageCodes(languages);
@@ -109,32 +174,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[0],
           html: t("templates.card_abandonment_survey_question_1_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.card_abandonment_survey_question_1_headline"),
           required: false,
           buttonLabel: t("templates.card_abandonment_survey_question_1_button_label"),
@@ -191,32 +231,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
         }),
         buildConsentQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
           headline: t("templates.card_abandonment_survey_question_6_headline"),
           required: false,
           label: t("templates.card_abandonment_survey_question_6_label"),
@@ -259,32 +274,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[0],
           html: t("templates.site_abandonment_survey_question_1_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.site_abandonment_survey_question_2_headline"),
           required: false,
           buttonLabel: t("templates.site_abandonment_survey_question_2_button_label"),
@@ -340,32 +330,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
         }),
         buildConsentQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
           headline: t("templates.site_abandonment_survey_question_7_headline"),
           required: false,
           label: t("templates.site_abandonment_survey_question_7_label"),
@@ -406,32 +371,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[0],
           html: t("templates.product_market_fit_superhuman_question_1_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.product_market_fit_superhuman_question_1_headline"),
           required: false,
           buttonLabel: t("templates.product_market_fit_superhuman_question_1_button_label"),
@@ -571,146 +511,11 @@ const churnSurvey = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[4],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[3], reusableQuestionIds[4]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[4], localSurvey.endings[0].id),
           ],
           choices: [
             t("templates.churn_survey_question_1_choice_1"),
@@ -733,32 +538,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.churn_survey_question_2_headline"),
           required: true,
           buttonLabel: t("templates.churn_survey_question_2_button_label"),
@@ -768,32 +548,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[2],
           html: t("templates.churn_survey_question_3_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isClicked",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.churn_survey_question_3_headline"),
           required: true,
           buttonUrl: "https://formbricks.com",
@@ -804,32 +559,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[3],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.churn_survey_question_4_headline"),
           required: true,
           inputType: "text",
@@ -838,32 +568,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[4],
           html: t("templates.churn_survey_question_5_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isClicked",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[4], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.churn_survey_question_5_headline"),
           required: true,
           buttonUrl: "mailto:ceo@company.com",
@@ -894,34 +599,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
           id: reusableQuestionIds[0],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
           ],
           shuffleOption: "none",
           choices: [
@@ -935,32 +613,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[3], "isSubmitted")],
           headline: t("templates.earned_advocacy_score_question_2_headline"),
           required: true,
           placeholder: t("templates.earned_advocacy_score_question_2_placeholder"),
@@ -979,34 +632,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[3], reusableOptionIds[3], localSurvey.endings[0].id),
           ],
           shuffleOption: "none",
           choices: [
@@ -1057,146 +683,11 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[4],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[3], reusableQuestionIds[4]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[4], localSurvey.endings[0].id),
           ],
           choices: [
             t("templates.improve_trial_conversion_question_1_choice_1"),
@@ -1219,32 +710,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[5], "isSubmitted")],
           headline: t("templates.improve_trial_conversion_question_2_headline"),
           required: true,
           buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
@@ -1253,32 +719,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[2],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[2], reusableQuestionIds[5], "isSubmitted")],
           headline: t("templates.improve_trial_conversion_question_2_headline"),
           required: true,
           buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
@@ -1288,32 +729,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[3],
           html: t("templates.improve_trial_conversion_question_4_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "isClicked",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.improve_trial_conversion_question_4_headline"),
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -1324,32 +740,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[4],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[4], reusableQuestionIds[5], "isSubmitted")],
           headline: t("templates.improve_trial_conversion_question_5_headline"),
           required: true,
           subheader: t("templates.improve_trial_conversion_question_5_subheader"),
@@ -1360,54 +751,8 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         buildOpenTextQuestion({
           id: reusableQuestionIds[5],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[5],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[5],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createJumpLogic(reusableQuestionIds[5], localSurvey.endings[0].id, "isSubmitted"),
+            createJumpLogic(reusableQuestionIds[5], localSurvey.endings[0].id, "isSkipped"),
           ],
           headline: t("templates.improve_trial_conversion_question_6_headline"),
           required: false,
@@ -1478,32 +823,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[1],
           html: t("templates.review_prompt_question_2_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isClicked",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.review_prompt_question_2_headline"),
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -1570,118 +890,10 @@ const improveActivationRate = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[4],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[3], reusableQuestionIds[4]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[4], reusableQuestionIds[5]),
           ],
           choices: [
             t("templates.improve_activation_rate_question_1_choice_1"),
@@ -1703,32 +915,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.improve_activation_rate_question_2_headline"),
           required: true,
           placeholder: t("templates.improve_activation_rate_question_2_placeholder"),
@@ -1737,32 +924,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[2],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.improve_activation_rate_question_3_headline"),
           required: true,
           placeholder: t("templates.improve_activation_rate_question_3_placeholder"),
@@ -1771,32 +933,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[3],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.improve_activation_rate_question_4_headline"),
           required: true,
           placeholder: t("templates.improve_activation_rate_question_4_placeholder"),
@@ -1805,32 +942,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[4],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[4], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.improve_activation_rate_question_5_headline"),
           required: true,
           placeholder: t("templates.improve_activation_rate_question_5_placeholder"),
@@ -2224,62 +1336,8 @@ const feedbackBox = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[3]),
           ],
           choices: [
             t("templates.feedback_box_question_1_choice_1"),
@@ -2293,32 +1351,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSubmitted")],
           headline: t("templates.feedback_box_question_2_headline"),
           required: true,
           subheader: t("templates.feedback_box_question_2_subheader"),
@@ -2329,54 +1362,8 @@ const feedbackBox = (t: TFnType): TTemplate => {
           id: reusableQuestionIds[2],
           html: t("templates.feedback_box_question_3_html"),
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isClicked",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isClicked"),
+            createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isSkipped"),
           ],
           headline: t("templates.feedback_box_question_3_headline"),
           required: false,
@@ -3323,32 +2310,7 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.rate_checkout_experience_question_2_headline"),
           required: true,
           placeholder: t("templates.rate_checkout_experience_question_2_placeholder"),
@@ -3424,32 +2386,7 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.measure_search_experience_question_2_headline"),
           required: true,
           placeholder: t("templates.measure_search_experience_question_2_placeholder"),
@@ -3525,32 +2462,7 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.evaluate_content_quality_question_2_headline"),
           required: true,
           placeholder: t("templates.evaluate_content_quality_question_2_placeholder"),
@@ -3589,90 +2501,9 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[4]),
           ],
           choices: [
             t("templates.measure_task_accomplishment_question_1_option_1_label"),
@@ -3849,32 +2680,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: reusableQuestionIds[0],
           html: t("templates.identify_sign_up_barriers_question_1_html"),
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.identify_sign_up_barriers_question_1_headline"),
           required: false,
           buttonLabel: t("templates.identify_sign_up_barriers_question_1_button_label"),
@@ -3928,146 +2734,11 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[6],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[4],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[7],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[2], reusableOptionIds[0], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[2], reusableOptionIds[1], reusableQuestionIds[4]),
+            createChoiceJumpLogic(reusableQuestionIds[2], reusableOptionIds[2], reusableQuestionIds[5]),
+            createChoiceJumpLogic(reusableQuestionIds[2], reusableOptionIds[3], reusableQuestionIds[6]),
+            createChoiceJumpLogic(reusableQuestionIds[2], reusableOptionIds[4], reusableQuestionIds[7]),
           ],
           choices: [
             t("templates.identify_sign_up_barriers_question_3_choice_1_label"),
@@ -4089,32 +2760,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[3],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[8],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[3], reusableQuestionIds[8], "isSubmitted")],
           headline: t("templates.identify_sign_up_barriers_question_4_headline"),
           required: true,
           placeholder: t("templates.identify_sign_up_barriers_question_4_placeholder"),
@@ -4123,32 +2769,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[4],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[8],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[4], reusableQuestionIds[8], "isSubmitted")],
           headline: t("templates.identify_sign_up_barriers_question_5_headline"),
           required: true,
           placeholder: t("templates.identify_sign_up_barriers_question_5_placeholder"),
@@ -4157,32 +2778,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[5],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[5],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[8],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[5], reusableQuestionIds[8], "isSubmitted")],
           headline: t("templates.identify_sign_up_barriers_question_6_headline"),
           required: true,
           placeholder: t("templates.identify_sign_up_barriers_question_6_placeholder"),
@@ -4191,32 +2787,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[6],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[6],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[8],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[6], reusableQuestionIds[8], "isSubmitted")],
           headline: t("templates.identify_sign_up_barriers_question_7_headline"),
           required: true,
           placeholder: t("templates.identify_sign_up_barriers_question_7_placeholder"),
@@ -4295,118 +2866,10 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
         buildRatingQUestion({
           id: reusableQuestionIds[0],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isLessThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 2,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: 3,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: 4,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: 5,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], "2", reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], "3", reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], "4", reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], "5", localSurvey.endings[0].id),
           ],
           range: 5,
           scale: "number",
@@ -4420,38 +2883,8 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "or",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted"),
+            createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSkipped"),
           ],
           headline: t("templates.understand_purchase_intention_question_2_headline"),
           required: false,
@@ -4488,34 +2921,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
         buildRatingQUestion({
           id: reusableQuestionIds[0],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: 5,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], "5", reusableQuestionIds[2]),
             {
               id: createId(),
               conditions: {
@@ -4557,38 +2963,8 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "or",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSkipped",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
+            createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted"),
+            createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSkipped"),
           ],
           headline: t("templates.improve_newsletter_content_question_2_headline"),
           required: false,
@@ -4645,62 +3021,8 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         buildRatingQUestion({
           id: reusableQuestionIds[1],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isLessThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 3,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isGreaterThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 4,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[1], "3", reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[1], "4", reusableQuestionIds[3]),
           ],
           range: 5,
           scale: "number",
@@ -4732,62 +3054,8 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         buildRatingQUestion({
           id: reusableQuestionIds[4],
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isLessThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 3,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isGreaterThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 4,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[6],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[4], "3", reusableQuestionIds[5]),
+            createChoiceJumpLogic(reusableQuestionIds[4], "4", reusableQuestionIds[6]),
           ],
           range: 5,
           scale: "number",
@@ -4800,32 +3068,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[5],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[5],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[7],
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[5], reusableQuestionIds[7], "isSubmitted")],
           headline: t("templates.evaluate_a_product_idea_question_6_headline"),
           required: true,
           placeholder: t("templates.evaluate_a_product_idea_question_6_placeholder"),
@@ -4873,146 +3116,11 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[0],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[1],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[1],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[2],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[3],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: reusableOptionIds[3],
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[4],
-                },
-              ],
-            },
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "equals",
-                    rightOperand: {
-                      type: "static",
-                      value: "other",
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5],
-                },
-              ],
-            },
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[3], reusableQuestionIds[4]),
+            createChoiceJumpLogic(reusableQuestionIds[0], "other", reusableQuestionIds[5]),
           ],
           choices: [
             t("templates.understand_low_engagement_question_1_choice_1"),
@@ -5028,32 +3136,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[1],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.understand_low_engagement_question_2_headline"),
           required: true,
           placeholder: t("templates.understand_low_engagement_question_2_placeholder"),
@@ -5062,32 +3145,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[2],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[2],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.understand_low_engagement_question_3_headline"),
           required: true,
           placeholder: t("templates.understand_low_engagement_question_3_placeholder"),
@@ -5096,32 +3154,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[3],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[3],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.understand_low_engagement_question_4_headline"),
           required: true,
           placeholder: t("templates.understand_low_engagement_question_4_placeholder"),
@@ -5130,32 +3163,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
         }),
         buildOpenTextQuestion({
           id: reusableQuestionIds[4],
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[4],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: localSurvey.endings[0].id,
-                },
-              ],
-            },
-          ],
+          logic: [createJumpLogic(reusableQuestionIds[4], localSurvey.endings[0].id, "isSubmitted")],
           headline: t("templates.understand_low_engagement_question_5_headline"),
           required: true,
           placeholder: t("templates.understand_low_engagement_question_5_placeholder"),
@@ -5203,7 +3211,6 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
           range: 10,
           lowerLabel: t("templates.employee_well_being_question_2_lower_label"),
           upperLabel: t("templates.employee_well_being_question_2_upper_label"),
-          isColorCodingEnabled: false,
           t,
         }),
         buildRatingQUestion({
@@ -5213,7 +3220,6 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
           range: 10,
           lowerLabel: t("templates.employee_well_being_question_3_lower_label"),
           upperLabel: t("templates.employee_well_being_question_3_upper_label"),
-          isColorCodingEnabled: false,
           t,
         }),
         buildOpenTextQuestion({
