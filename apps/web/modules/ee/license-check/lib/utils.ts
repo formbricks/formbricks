@@ -393,7 +393,6 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
-  return true;
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
   console.log(IS_RECAPTCHA_CONFIGURED);

@@ -78,7 +78,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
   }
 
-  if (survey.recaptcha && survey.recaptcha.enabled) {
+  if (survey.recaptcha?.enabled) {
     const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
     if (isSpamProtectionEnabled) {
       if (!responseInput.recaptchaToken) {

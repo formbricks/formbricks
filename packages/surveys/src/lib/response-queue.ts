@@ -70,6 +70,8 @@ export class ResponseQueue {
       }
 
       if (res.error.details?.code === "recaptcha_verification_failed") {
+        this.isRequestInProgress = false;
+
         if (this.config.onResponseSendingFailed) {
           this.config.onResponseSendingFailed(responseUpdate, TResponseErrorCodesEnum.RecaptchaError);
         }

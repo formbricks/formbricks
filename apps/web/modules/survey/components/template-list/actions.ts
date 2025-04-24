@@ -65,8 +65,8 @@ export const createSurveyAction = authenticatedActionClient
       await checkMultiLanguagePermission(organizationId);
     }
 
-    if (parsedInput.surveyBody.recaptcha && parsedInput.surveyBody.recaptcha.enabled) {
-      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+    if (parsedInput.surveyBody.recaptcha?.enabled) {
+      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
       if (!isSpamProtectionEnabled) {
         throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
       }

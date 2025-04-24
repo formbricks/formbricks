@@ -7045,6 +7045,7 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     displayLimit: null,
     autoClose: null,
     runOnDate: null,
+    recaptcha: null,
     closeOnDate: null,
     delay: 0,
     displayPercentage: null,

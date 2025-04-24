@@ -83,8 +83,8 @@ export const POST = async (request: Request): Promise<Response> => {
       }
     }
 
-    if (surveyData.recaptcha && surveyData.recaptcha.enabled) {
-      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+    if (surveyData.recaptcha?.enabled) {
+      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
       if (!isSpamProtectionEnabled) {
         return responses.forbiddenResponse("Spam protection is not enabled for this organization");
       }

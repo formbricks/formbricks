@@ -110,8 +110,8 @@ export const PUT = async (
       }
     }
 
-    if (surveyUpdate.recaptcha && surveyUpdate.recaptcha.enabled) {
-      const isSpamProtectionEnabled = getIsSpamProtectionEnabled();
+    if (surveyUpdate.recaptcha?.enabled) {
+      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
       if (!isSpamProtectionEnabled) {
         return responses.forbiddenResponse("Spam protection is not enabled for this organization");
       }

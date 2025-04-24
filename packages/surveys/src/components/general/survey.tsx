@@ -508,9 +508,6 @@ export function Survey({
       if (responseQueue && token) {
         responseQueue.setResponseRecaptchaToken(token);
       }
-
-      // adding sleep of 1 second to receive the recaptcha token
-      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     pushVariableState(respondedQuestionId);
