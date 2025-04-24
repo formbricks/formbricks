@@ -44,9 +44,8 @@
   font-size: 14px;
   position: relative;
   tab-size: 1;
-  outline: 0;
-  padding: 10px 10px;
   outline: none;
+  padding: 10px 10px;
 }
 
 pre::-webkit-scrollbar {
@@ -121,7 +120,6 @@ pre::-webkit-scrollbar-thumb {
 
 .toolbar .toolbar-item .text {
   line-height: 20px;
-  width: 200px;
   vertical-align: middle;
   font-size: 14px;
   text-overflow: ellipsis;
