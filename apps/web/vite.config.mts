@@ -80,7 +80,7 @@ export default defineConfig({
         "modules/ui/components/data-table/components/*.tsx",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
-        "apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable.tsx"
+        "apps/web/app/(app)/environments/**/surveys/**/(analysis)/responses/components/ResponseTable.tsx"
       ],
       exclude: [
         "**/.next/**",
