@@ -207,7 +207,7 @@ export const ZResponseFilterCriteria = z.object({
 
 export const ZResponseContact = z.object({
   id: ZId,
-  userId: z.string(),
+  userId: z.string().optional(),
 });
 
 export type TResponseContact = z.infer<typeof ZResponseContact>;

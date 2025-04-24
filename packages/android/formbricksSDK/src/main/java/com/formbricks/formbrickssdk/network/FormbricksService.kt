@@ -9,7 +9,6 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface FormbricksService {
-
     @GET("$API_PREFIX/client/{environmentId}/environment")
     fun getEnvironmentState(@Path("environmentId") environmentId: String): Call<Map<String, Any>>
 
@@ -19,5 +18,4 @@ interface FormbricksService {
     companion object {
         const val API_PREFIX = "/api/v2"
     }
-
 }
