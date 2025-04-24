@@ -1,9 +1,7 @@
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { render, screen, waitFor } from "@testing-library/react";
 import * as ReactHotToast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ResponseTable } from "./ResponseTable";
 
 // Mock environment variables
 vi.mock("@/lib/env", () => ({
