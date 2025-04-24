@@ -154,7 +154,7 @@ export const buildSurvey = (
       ...localSurvey,
       name: config.name,
       questions: config.questions,
-      endings: config.endings ?? [],
+      endings: config.endings ?? localSurvey.endings,
       hiddenFields: config.hiddenFields ?? hiddenFieldsDefault,
     },
   };
@@ -170,6 +170,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
       industries: ["eCommerce"],
       channels: ["app", "website", "link"],
       description: t("templates.card_abandonment_survey_description"),
+      endings: localSurvey.endings,
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -270,6 +271,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
       industries: ["eCommerce"],
       channels: ["app", "website"],
       description: t("templates.site_abandonment_survey_description"),
+      endings: localSurvey.endings,
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -367,6 +369,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.product_market_fit_superhuman_description"),
+      endings: localSurvey.endings,
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -505,6 +508,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.churn_survey_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -594,6 +598,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.earned_advocacy_score_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -677,6 +682,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["link", "app"],
       description: t("templates.improve_trial_conversion_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -778,6 +784,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link", "app"],
       description: t("templates.review_prompt_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -884,6 +891,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["link"],
       description: t("templates.improve_activation_rate_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -1330,6 +1338,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.feedback_box_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -2266,6 +2275,7 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
       industries: ["eCommerce"],
       channels: ["website", "app"],
       description: t("templates.rate_checkout_experience_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2342,6 +2352,7 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
       industries: ["saas", "eCommerce"],
       channels: ["app", "website"],
       description: t("templates.measure_search_experience_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2418,6 +2429,7 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
       industries: ["other"],
       channels: ["website"],
       description: t("templates.evaluate_content_quality_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2495,6 +2507,7 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["app", "website"],
       description: t("templates.measure_task_accomplishment_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -2676,6 +2689,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["website"],
       description: t("templates.identify_sign_up_barriers_description"),
+      endings: localSurvey.endings,
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -2862,6 +2876,7 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
       industries: ["eCommerce"],
       channels: ["website", "link", "app"],
       description: t("templates.understand_purchase_intention_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2917,6 +2932,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
       industries: ["eCommerce", "saas", "other"],
       channels: ["link"],
       description: t("templates.improve_newsletter_content_description"),
+      endings: localSurvey.endings,
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -3110,6 +3126,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
       industries: ["saas"],
       channels: ["link"],
       description: t("templates.understand_low_engagement_description"),
+      endings: localSurvey.endings,
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
