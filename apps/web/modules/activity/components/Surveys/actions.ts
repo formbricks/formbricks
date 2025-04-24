@@ -3,6 +3,8 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 const ZGetAvailableSurveysAction = z.object({
   take: z.number(),
@@ -12,7 +14,7 @@ const ZGetAvailableSurveysAction = z.object({
 export const getCompletedSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
-    return prisma.survey.findMany({
+    const surveysPrisma = await prisma.survey.findMany({
       where: {
         responses: {
           some: {
@@ -36,12 +38,13 @@ export const getCompletedSurveysAction = authenticatedActionClient
       take: parsedInput.take,
       skip: parsedInput.skip,
     });
+    return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
   });
 
 export const getAvailableSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
-    return prisma.survey.findMany({
+    const surveysPrisma = await prisma.survey.findMany({
       where: {
         public: true,
         status: "inProgress",
@@ -57,4 +60,5 @@ export const getAvailableSurveysAction = authenticatedActionClient
       take: parsedInput.take,
       skip: parsedInput.skip,
     });
+    return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
   });

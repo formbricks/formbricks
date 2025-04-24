@@ -1,12 +1,12 @@
 "use client";
 
 import { getCompletedSurveysAction } from "@/modules/activity/components/Surveys/actions";
-import { SurveyCard } from "@/modules/activity/components/common/survey-card";
-import { Survey } from "@prisma/client";
+import { CompletedSurveyCard } from "@/modules/activity/components/common/completed-survey-card";
 import React, { useEffect, useState } from "react";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export function CompletedSurveys(): React.JSX.Element {
-  const [completedSurveys, setCompletedSurveys] = useState<Survey[] | null>(null);
+  const [completedSurveys, setCompletedSurveys] = useState<TSurvey[] | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -15,7 +15,7 @@ export function CompletedSurveys(): React.JSX.Element {
         skip: 0,
       });
       if (completedSurveys?.data) {
-        setCompletedSurveys(completedSurveys.data);
+        setCompletedSurveys(completedSurveys.data as TSurvey[]);
       }
     })();
   }, []);
@@ -24,7 +24,7 @@ export function CompletedSurveys(): React.JSX.Element {
     <>
       {completedSurveys &&
         completedSurveys.map((survey) => {
-          return <SurveyCard type={"survey"} key={survey.id} survey={survey} />;
+          return <CompletedSurveyCard key={survey.id} survey={survey} />;
         })}
     </>
   );

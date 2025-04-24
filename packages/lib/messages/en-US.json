@@ -581,7 +581,8 @@
     },
     "activity": {
       "card": {
-        "start_survey": "Start Survey"
+        "start_survey": "Start Survey",
+        "view_info": "View Info"
       }
     },
     "connect": {
