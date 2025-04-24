@@ -12,13 +12,15 @@ import { TFnType } from "@tolgee/react";
 import {
   TSurvey,
   TSurveyEndScreenCard,
+  TSurveyEnding,
   TSurveyHiddenFields,
   TSurveyLanguage,
   TSurveyOpenTextQuestion,
+  TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
+import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
 export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): TSurveyEndScreenCard => {
   const languageCodes = extractLanguageCodes(languages);
@@ -58,18 +60,51 @@ export const getDefaultSurveyPreset = (t: TFnType): TTemplate["preset"] => {
   };
 };
 
+/**
+ * Generic builder for survey.
+ * @param config - The configuration for survey settings and questions.
+ * @param t - The translation function.
+ */
+export const buildSurvey = (
+  config: {
+    name: string;
+    role: TTemplateRole;
+    industries: ("eCommerce" | "saas" | "other")[];
+    channels: ("link" | "app" | "website")[];
+    description: string;
+    questions: TSurveyQuestion[];
+    endings?: TSurveyEnding[];
+    hiddenFields?: TSurveyHiddenFields;
+  },
+  t: TFnType
+): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
+  return {
+    name: config.name,
+    role: config.role,
+    industries: config.industries,
+    channels: config.channels,
+    description: config.description,
+    preset: {
+      ...localSurvey,
+      name: config.name,
+      questions: config.questions,
+      endings: config.endings ?? [],
+      hiddenFields: config.hiddenFields ?? hiddenFieldsDefault,
+    },
+  };
+};
+
 const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.card_abandonment_survey"),
-    role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["app", "website", "link"],
-    description: t("templates.card_abandonment_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.card_abandonment_survey"),
+      role: "productManager",
+      industries: ["eCommerce"],
+      channels: ["app", "website", "link"],
+      description: t("templates.card_abandonment_survey_description"),
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -205,21 +240,21 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.site_abandonment_survey"),
-    role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["app", "website"],
-    description: t("templates.site_abandonment_survey_description"),
-    preset: {
-      ...localSurvey,
+
+  return buildSurvey(
+    {
       name: t("templates.site_abandonment_survey"),
+      role: "productManager",
+      industries: ["eCommerce"],
+      channels: ["app", "website"],
+      description: t("templates.site_abandonment_survey_description"),
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -353,21 +388,20 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.product_market_fit_superhuman"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "link"],
-    description: t("templates.product_market_fit_superhuman_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.product_market_fit_superhuman"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.product_market_fit_superhuman_description"),
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -455,20 +489,18 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const onboardingSegmentation = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.onboarding_segmentation"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "link"],
-    description: t("templates.onboarding_segmentation_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.onboarding_segmentation"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.onboarding_segmentation_description"),
       questions: [
         buildMultipleChoiceQuestion({
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -518,22 +550,21 @@ const onboardingSegmentation = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const churnSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.churn_survey"),
-    role: "sales",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link"],
-    description: t("templates.churn_survey_description"),
-    preset: {
-      ...localSurvey,
-      name: "Churn Survey",
+  return buildSurvey(
+    {
+      name: t("templates.churn_survey"),
+      role: "sales",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link"],
+      description: t("templates.churn_survey_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -843,22 +874,21 @@ const churnSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const earnedAdvocacyScore = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.earned_advocacy_score_name"),
-    role: "customerSuccess",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link"],
-    description: t("templates.earned_advocacy_score_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.earned_advocacy_score_name"),
+      role: "customerSuccess",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link"],
+      description: t("templates.earned_advocacy_score_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -998,7 +1028,8 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const improveTrialConversion = (t: TFnType): TTemplate => {
@@ -1013,15 +1044,13 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
     createId(),
   ];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.improve_trial_conversion_name"),
-    role: "sales",
-    industries: ["saas"],
-    channels: ["link", "app"],
-    description: t("templates.improve_trial_conversion_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.improve_trial_conversion_name"),
+      role: "sales",
+      industries: ["saas"],
+      channels: ["link", "app"],
+      description: t("templates.improve_trial_conversion_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -1389,22 +1418,21 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const reviewPrompt = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
-  return {
-    name: t("templates.review_prompt_name"),
-    role: "marketing",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link", "app"],
-    description: t("templates.review_prompt_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.review_prompt_name"),
+      role: "marketing",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link", "app"],
+      description: t("templates.review_prompt_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -1496,20 +1524,18 @@ const reviewPrompt = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const interviewPrompt = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.interview_prompt_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.interview_prompt_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.interview_prompt_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.interview_prompt_description"),
       questions: [
         buildCTAQuestion({
           id: createId(),
@@ -1523,22 +1549,21 @@ const interviewPrompt = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const improveActivationRate = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.improve_activation_rate_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["link"],
-    description: t("templates.improve_activation_rate_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.improve_activation_rate_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["link"],
+      description: t("templates.improve_activation_rate_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -1825,20 +1850,18 @@ const improveActivationRate = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const employeeSatisfaction = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.employee_satisfaction_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link"],
-    description: t("templates.employee_satisfaction_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.employee_satisfaction_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link"],
+      description: t("templates.employee_satisfaction_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -1905,20 +1928,18 @@ const employeeSatisfaction = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.uncover_strengths_and_weaknesses_name"),
-    role: "productManager",
-    industries: ["saas", "other"],
-    channels: ["app", "link"],
-    description: t("templates.uncover_strengths_and_weaknesses_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.uncover_strengths_and_weaknesses_name"),
+      role: "productManager",
+      industries: ["saas", "other"],
+      channels: ["app", "link"],
+      description: t("templates.uncover_strengths_and_weaknesses_description"),
       questions: [
         buildMultipleChoiceQuestion({
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -1961,20 +1982,18 @@ const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const productMarketFitShort = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.product_market_fit_short_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "link"],
-    description: t("templates.product_market_fit_short_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.product_market_fit_short_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.product_market_fit_short_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2000,20 +2019,18 @@ const productMarketFitShort = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const marketAttribution = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.market_attribution_name"),
-    role: "marketing",
-    industries: ["saas", "eCommerce"],
-    channels: ["website", "app", "link"],
-    description: t("templates.market_attribution_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.market_attribution_name"),
+      role: "marketing",
+      industries: ["saas", "eCommerce"],
+      channels: ["website", "app", "link"],
+      description: t("templates.market_attribution_description"),
       questions: [
         buildMultipleChoiceQuestion({
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -2033,20 +2050,18 @@ const marketAttribution = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const changingSubscriptionExperience = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.changing_subscription_experience_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.changing_subscription_experience_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.changing_subscription_experience_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.changing_subscription_experience_description"),
       questions: [
         buildMultipleChoiceQuestion({
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -2078,20 +2093,18 @@ const changingSubscriptionExperience = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const identifyCustomerGoals = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.identify_customer_goals_name"),
-    role: "productManager",
-    industries: ["saas", "other"],
-    channels: ["app", "website"],
-    description: t("templates.identify_customer_goals_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.identify_customer_goals_name"),
+      role: "productManager",
+      industries: ["saas", "other"],
+      channels: ["app", "website"],
+      description: t("templates.identify_customer_goals_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2110,20 +2123,18 @@ const identifyCustomerGoals = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const featureChaser = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.feature_chaser_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.feature_chaser_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.feature_chaser_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.feature_chaser_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -2151,20 +2162,18 @@ const featureChaser = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const fakeDoorFollowUp = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.fake_door_follow_up_name"),
-    role: "productManager",
-    industries: ["saas", "eCommerce"],
-    channels: ["app", "website"],
-    description: t("templates.fake_door_follow_up_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.fake_door_follow_up_name"),
+      role: "productManager",
+      industries: ["saas", "eCommerce"],
+      channels: ["app", "website"],
+      description: t("templates.fake_door_follow_up_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.fake_door_follow_up_question_1_headline"),
@@ -2194,22 +2203,21 @@ const fakeDoorFollowUp = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const feedbackBox = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.feedback_box_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.feedback_box_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.feedback_box_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.feedback_box_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -2389,22 +2397,20 @@ const feedbackBox = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const integrationSetupSurvey = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
-  return {
-    name: t("templates.integration_setup_survey_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.integration_setup_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.integration_setup_survey_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.integration_setup_survey_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2466,20 +2472,18 @@ const integrationSetupSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const newIntegrationSurvey = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.new_integration_survey_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.new_integration_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.new_integration_survey_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.new_integration_survey_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2500,20 +2504,18 @@ const newIntegrationSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const docsFeedback = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.docs_feedback_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "website", "link"],
-    description: t("templates.docs_feedback_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.docs_feedback_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "website", "link"],
+      description: t("templates.docs_feedback_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2542,20 +2544,18 @@ const docsFeedback = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const nps = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.nps_name"),
-    role: "customerSuccess",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link", "website"],
-    description: t("templates.nps_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.nps_name"),
+      role: "customerSuccess",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
+      description: t("templates.nps_description"),
       questions: [
         buildNPSQuestion({
           headline: t("templates.nps_question_1_headline"),
@@ -2573,11 +2573,11 @@ const nps = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const customerSatisfactionScore = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -2590,15 +2590,13 @@ const customerSatisfactionScore = (t: TFnType): TTemplate => {
     createId(),
     createId(),
   ];
-  return {
-    name: t("templates.csat_name"),
-    role: "customerSuccess",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["app", "link", "website"],
-    description: t("templates.csat_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.csat_name"),
+      role: "customerSuccess",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
+      description: t("templates.csat_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2747,11 +2745,11 @@ const customerSatisfactionScore = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const collectFeedback = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -2761,15 +2759,13 @@ const collectFeedback = (t: TFnType): TTemplate => {
     createId(),
     createId(),
   ];
-  return {
-    name: t("templates.collect_feedback_name"),
-    role: "productManager",
-    industries: ["other", "eCommerce"],
-    channels: ["website", "link"],
-    description: t("templates.collect_feedback_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.collect_feedback_name"),
+      role: "productManager",
+      industries: ["other", "eCommerce"],
+      channels: ["website", "link"],
+      description: t("templates.collect_feedback_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -2905,20 +2901,18 @@ const collectFeedback = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.identify_upsell_opportunities_name"),
-    role: "sales",
-    industries: ["saas"],
-    channels: ["app", "link"],
-    description: t("templates.identify_upsell_opportunities_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.identify_upsell_opportunities_name"),
+      role: "sales",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.identify_upsell_opportunities_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2937,20 +2931,18 @@ const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const prioritizeFeatures = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.prioritize_features_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.prioritize_features_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.prioritize_features_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.prioritize_features_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -2992,20 +2984,18 @@ const prioritizeFeatures = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.gauge_feature_satisfaction_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.gauge_feature_satisfaction_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.gauge_feature_satisfaction_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.gauge_feature_satisfaction_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.gauge_feature_satisfaction_question_1_headline"),
@@ -3028,20 +3018,18 @@ const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
       endings: [getDefaultEndingCard([], t)],
       hiddenFields: hiddenFieldsDefault,
     },
-  };
+    t
+  );
 };
 
 const marketSiteClarity = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.market_site_clarity_name"),
-    role: "marketing",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["website"],
-    description: t("templates.market_site_clarity_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.market_site_clarity_name"),
+      role: "marketing",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["website"],
+      description: t("templates.market_site_clarity_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -3072,20 +3060,18 @@ const marketSiteClarity = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const customerEffortScore = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.customer_effort_score_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app"],
-    description: t("templates.customer_effort_score_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.customer_effort_score_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app"],
+      description: t("templates.customer_effort_score_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -3106,20 +3092,18 @@ const customerEffortScore = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.career_development_survey_name"),
-    role: "productManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.career_development_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.career_development_survey_name"),
+      role: "productManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.career_development_survey_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -3195,20 +3179,18 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.professional_development_survey_name"),
-    role: "productManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.professional_development_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.professional_development_survey_name"),
+      role: "productManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.professional_development_survey_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: createId(),
@@ -3283,21 +3265,20 @@ const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const rateCheckoutExperience = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.rate_checkout_experience_name"),
-    role: "productManager",
-    industries: ["eCommerce"],
-    channels: ["website", "app"],
-    description: t("templates.rate_checkout_experience_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.rate_checkout_experience_name"),
+      role: "productManager",
+      industries: ["eCommerce"],
+      channels: ["website", "app"],
+      description: t("templates.rate_checkout_experience_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -3385,21 +3366,20 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const measureSearchExperience = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.measure_search_experience_name"),
-    role: "productManager",
-    industries: ["saas", "eCommerce"],
-    channels: ["app", "website"],
-    description: t("templates.measure_search_experience_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.measure_search_experience_name"),
+      role: "productManager",
+      industries: ["saas", "eCommerce"],
+      channels: ["app", "website"],
+      description: t("templates.measure_search_experience_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -3487,21 +3467,20 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const evaluateContentQuality = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.evaluate_content_quality_name"),
-    role: "marketing",
-    industries: ["other"],
-    channels: ["website"],
-    description: t("templates.evaluate_content_quality_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.evaluate_content_quality_name"),
+      role: "marketing",
+      industries: ["other"],
+      channels: ["website"],
+      description: t("templates.evaluate_content_quality_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -3589,22 +3568,21 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const measureTaskAccomplishment = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.measure_task_accomplishment_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "website"],
-    description: t("templates.measure_task_accomplishment_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.measure_task_accomplishment_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "website"],
+      description: t("templates.measure_task_accomplishment_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -3841,7 +3819,8 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const identifySignUpBarriers = (t: TFnType): TTemplate => {
@@ -3859,15 +3838,13 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
   ];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
 
-  return {
-    name: t("templates.identify_sign_up_barriers_name"),
-    role: "marketing",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["website"],
-    description: t("templates.identify_sign_up_barriers_description"),
-    preset: {
-      ...localSurvey,
-      name: t("templates.identify_sign_up_barriers_with_project_name"),
+  return buildSurvey(
+    {
+      name: t("templates.identify_sign_up_barriers_name"),
+      role: "marketing",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["website"],
+      description: t("templates.identify_sign_up_barriers_description"),
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -4267,20 +4244,18 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const buildProductRoadmap = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.build_product_roadmap_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["app", "link"],
-    description: t("templates.build_product_roadmap_description"),
-    preset: {
-      ...localSurvey,
-      name: t("templates.build_product_roadmap_name_with_project_name"),
+  return buildSurvey(
+    {
+      name: t("templates.build_product_roadmap_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.build_product_roadmap_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -4302,21 +4277,20 @@ const buildProductRoadmap = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const understandPurchaseIntention = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.understand_purchase_intention_name"),
-    role: "sales",
-    industries: ["eCommerce"],
-    channels: ["website", "link", "app"],
-    description: t("templates.understand_purchase_intention_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.understand_purchase_intention_name"),
+      role: "sales",
+      industries: ["eCommerce"],
+      channels: ["website", "link", "app"],
+      description: t("templates.understand_purchase_intention_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -4496,21 +4470,20 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const improveNewsletterContent = (t: TFnType): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  return {
-    name: t("templates.improve_newsletter_content_name"),
-    role: "marketing",
-    industries: ["eCommerce", "saas", "other"],
-    channels: ["link"],
-    description: t("templates.improve_newsletter_content_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.improve_newsletter_content_name"),
+      role: "marketing",
+      industries: ["eCommerce", "saas", "other"],
+      channels: ["link"],
+      description: t("templates.improve_newsletter_content_description"),
       questions: [
         buildRatingQUestion({
           id: reusableQuestionIds[0],
@@ -4636,11 +4609,11 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const evaluateAProductIdea = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -4651,15 +4624,13 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
     createId(),
     createId(),
   ];
-  return {
-    name: t("templates.evaluate_a_product_idea_name"),
-    role: "productManager",
-    industries: ["saas", "other"],
-    channels: ["link", "app"],
-    description: t("templates.evaluate_a_product_idea_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.evaluate_a_product_idea_name"),
+      role: "productManager",
+      industries: ["saas", "other"],
+      channels: ["link", "app"],
+      description: t("templates.evaluate_a_product_idea_description"),
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
@@ -4880,7 +4851,8 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const understandLowEngagement = (t: TFnType): TTemplate => {
@@ -4888,15 +4860,13 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
 
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-  return {
-    name: t("templates.understand_low_engagement_name"),
-    role: "productManager",
-    industries: ["saas"],
-    channels: ["link"],
-    description: t("templates.understand_low_engagement_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.understand_low_engagement_name"),
+      role: "productManager",
+      industries: ["saas"],
+      channels: ["link"],
+      description: t("templates.understand_low_engagement_description"),
       questions: [
         buildMultipleChoiceQuestion({
           id: reusableQuestionIds[0],
@@ -5204,20 +5174,18 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const employeeWellBeing = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.employee_well_being_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.employee_well_being_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.employee_well_being_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.employee_well_being_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.employee_well_being_question_1_headline"),
@@ -5258,20 +5226,18 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.long_term_retention_check_in_name"),
-    role: "peopleManager",
-    industries: ["saas", "other"],
-    channels: ["app", "link"],
-    description: t("templates.long_term_retention_check_in_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.long_term_retention_check_in_name"),
+      role: "peopleManager",
+      industries: ["saas", "other"],
+      channels: ["app", "link"],
+      description: t("templates.long_term_retention_check_in_description"),
       questions: [
         buildRatingQUestion({
           range: 5,
@@ -5369,20 +5335,18 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.professional_development_growth_survey_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.professional_development_growth_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.professional_development_growth_survey_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.professional_development_growth_survey_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.professional_development_growth_survey_question_1_headline"),
@@ -5421,20 +5385,18 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const recognitionAndReward = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.recognition_and_reward_survey_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.recognition_and_reward_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.recognition_and_reward_survey_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.recognition_and_reward_survey_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.recognition_and_reward_survey_question_1_headline"),
@@ -5472,20 +5434,18 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const alignmentAndEngagement = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.alignment_and_engagement_survey_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.alignment_and_engagement_survey_description"),
-    preset: {
-      ...localSurvey,
-      name: "Alignment and Engagement with Company Vision",
+  return buildSurvey(
+    {
+      name: t("templates.alignment_and_engagement_survey_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.alignment_and_engagement_survey_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.alignment_and_engagement_survey_question_1_headline"),
@@ -5523,20 +5483,18 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 const supportiveWorkCulture = (t: TFnType): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: t("templates.supportive_work_culture_survey_name"),
-    role: "peopleManager",
-    industries: ["saas", "eCommerce", "other"],
-    channels: ["link"],
-    description: t("templates.supportive_work_culture_survey_description"),
-    preset: {
-      ...localSurvey,
+  return buildSurvey(
+    {
       name: t("templates.supportive_work_culture_survey_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["link"],
+      description: t("templates.supportive_work_culture_survey_description"),
       questions: [
         buildRatingQUestion({
           headline: t("templates.supportive_work_culture_survey_question_1_headline"),
@@ -5575,7 +5533,8 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
         }),
       ],
     },
-  };
+    t
+  );
 };
 
 export const templates = (t: TFnType): TTemplate[] => [
