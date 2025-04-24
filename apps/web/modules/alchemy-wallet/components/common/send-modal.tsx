@@ -31,9 +31,20 @@ type Props = {
   onSelectBalance: (TokenBalance) => void;
   balance: TokenBalance | null;
   onClose: () => void;
+  contractAddress?: string;
+  address?: string;
+  amount?: number;
 };
 
-export function SendModal({ balances, balance, onSelectBalance, onClose }: Props) {
+export function SendModal({
+  balances,
+  balance,
+  onSelectBalance,
+  onClose,
+  contractAddress,
+  address,
+  amount,
+}: Props) {
   const { t } = useTranslate();
   const {
     control,
@@ -42,7 +53,13 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
     setValue,
     watch,
     formState: { errors },
-  } = useForm<FormValues>();
+  } = useForm<FormValues>({
+    defaultValues: {
+      tokenAddress: contractAddress,
+      address: address,
+      amount: amount,
+    },
+  });
   const tokenAddress = watch("tokenAddress");
   const { send } = useSendERC20({ address: tokenAddress });
   const [loading, setLoading] = useState(false);
@@ -51,8 +68,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
     setLoading(true);
     const { address, amount } = data;
     try {
-      const tx = await send(address, amount);
-      console.log("Transaction sent:", tx);
+      await send(address, amount);
       toast.success(`Tokens sent successfully!`);
     } catch (err) {
       console.error("Send failed", err);
@@ -93,7 +109,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
                 render={({ field }) => (
                   <Select
                     value={field.value}
-                    disabled={loading}
+                    disabled={loading || !!contractAddress}
                     onValueChange={(address) => {
                       field.onChange(address);
                       const selected = balances.find((b) => b.token.address === address);
@@ -131,7 +147,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
               <Input
                 autoFocus
                 type="text"
-                disabled={loading}
+                disabled={loading || !!address}
                 placeholder={"0x..."}
                 {...register("address", {
                   required: t("environments.wallet.form.error.address_required"),
@@ -148,7 +164,7 @@ export function SendModal({ balances, balance, onSelectBalance, onClose }: Props
               <Input
                 autoFocus
                 type="number"
-                disabled={loading}
+                disabled={loading || !!amount}
                 placeholder={"0.00"}
                 step="any"
                 {...register("amount", {
