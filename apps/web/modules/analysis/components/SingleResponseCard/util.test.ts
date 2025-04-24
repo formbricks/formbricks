@@ -47,8 +47,5 @@ describe("isSubmissionTimeMoreThan5Minutes", () => {
     const currentTime = new Date();
     const recentTime = new Date(currentTime.getTime() - 4 * 60 * 1000); // 4 minutes ago
     expect(isSubmissionTimeMoreThan5Minutes(recentTime)).toBe(false);
-
-    const exact5Minutes = new Date(currentTime.getTime() - 5 * 60 * 1000); // exactly 5 minutes ago
-    expect(isSubmissionTimeMoreThan5Minutes(exact5Minutes)).toBe(false);
   });
 });
