@@ -74,7 +74,8 @@ export default defineConfig({
         "modules/analysis/**/*.tsx",
         "modules/analysis/**/*.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
-        "lib/utils/billing.ts"
+        "lib/utils/billing.ts",
+        "app/(app)/environments/**/integrations/airtable/components/ManageIntegration.tsx"
       ],
       exclude: [
         "**/.next/**",
