@@ -1,11 +1,12 @@
-import crypto from "crypto";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "crypto";
+import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "./constants";
 
-const ALGORITHM = "aes256";
+const ALGORITHM_V1 = "aes256";
+const ALGORITHM_V2 = "aes-256-gcm";
 const INPUT_ENCODING = "utf8";
 const OUTPUT_ENCODING = "hex";
-const BUFFER_ENCODING = ENCRYPTION_KEY!.length === 32 ? "latin1" : "hex";
+const BUFFER_ENCODING = ENCRYPTION_KEY.length === 32 ? "latin1" : "hex";
 const IV_LENGTH = 16; // AES blocksize
 
 /**
@@ -17,15 +18,12 @@ const IV_LENGTH = 16; // AES blocksize
  */
 export const symmetricEncrypt = (text: string, key: string) => {
   const _key = Buffer.from(key, BUFFER_ENCODING);
-  const iv = crypto.randomBytes(IV_LENGTH);
-
-  // @ts-ignore -- the package needs to be built
-  const cipher = crypto.createCipheriv(ALGORITHM, _key, iv);
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM_V2, _key, iv);
   let ciphered = cipher.update(text, INPUT_ENCODING, OUTPUT_ENCODING);
   ciphered += cipher.final(OUTPUT_ENCODING);
-  const ciphertext = iv.toString(OUTPUT_ENCODING) + ":" + ciphered;
-
-  return ciphertext;
+  const tag = cipher.getAuthTag().toString(OUTPUT_ENCODING);
+  return `${iv.toString(OUTPUT_ENCODING)}:${ciphered}:${tag}`;
 };
 
 /**
@@ -33,37 +31,67 @@ export const symmetricEncrypt = (text: string, key: string) => {
  * @param text Value to decrypt
  * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
  */
-export const symmetricDecrypt = (text: string, key: string) => {
+
+const symmetricDecryptV1 = (text: string, key: string): string => {
   const _key = Buffer.from(key, BUFFER_ENCODING);
 
   const components = text.split(":");
-  const iv_from_ciphertext = Buffer.from(components.shift() || "", OUTPUT_ENCODING);
-  // @ts-ignore -- the package needs to be built
-  const decipher = crypto.createDecipheriv(ALGORITHM, _key, iv_from_ciphertext);
+  const iv_from_ciphertext = Buffer.from(components.shift() ?? "", OUTPUT_ENCODING);
+  const decipher = createDecipheriv(ALGORITHM_V1, _key, iv_from_ciphertext);
   let deciphered = decipher.update(components.join(":"), OUTPUT_ENCODING, INPUT_ENCODING);
   deciphered += decipher.final(INPUT_ENCODING);
 
   return deciphered;
 };
 
-export const getHash = (key: string): string => createHash("sha256").update(key).digest("hex");
+/**
+ *
+ * @param text Value to decrypt
+ * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
+ */
 
-// create an aes128 encryption function
-export const encryptAES128 = (encryptionKey: string, data: string): string => {
-  // @ts-ignore -- the package needs to be built
-  const cipher = createCipheriv("aes-128-ecb", Buffer.from(encryptionKey, "base64"), "");
-  let encrypted = cipher.update(data, "utf-8", "hex");
-  encrypted += cipher.final("hex");
-  return encrypted;
-};
-// create an aes128 decryption function
-export const decryptAES128 = (encryptionKey: string, data: string): string => {
-  // @ts-ignore -- the package needs to be built
-  const cipher = createDecipheriv("aes-128-ecb", Buffer.from(encryptionKey, "base64"), "");
-  let decrypted = cipher.update(data, "hex", "utf-8");
-  decrypted += cipher.final("utf-8");
+const symmetricDecryptV2 = (text: string, key: string): string => {
+  // split into [ivHex, encryptedHex, tagHex]
+  const [ivHex, encryptedHex, tagHex] = text.split(":");
+  const _key = Buffer.from(key, BUFFER_ENCODING);
+  const iv = Buffer.from(ivHex, OUTPUT_ENCODING);
+  const decipher = createDecipheriv(ALGORITHM_V2, _key, iv);
+  decipher.setAuthTag(Buffer.from(tagHex, OUTPUT_ENCODING));
+  let decrypted = decipher.update(encryptedHex, OUTPUT_ENCODING, INPUT_ENCODING);
+  decrypted += decipher.final(INPUT_ENCODING);
   return decrypted;
 };
+
+/**
+ * Decrypts an encrypted payload, automatically handling multiple encryption versions.
+ *
+ * If the payload contains exactly one “:”, it is treated as a legacy V1 format
+ * and `symmetricDecryptV1` is invoked. Otherwise, it attempts a V2 GCM decryption
+ * via `symmetricDecryptV2`, falling back to V1 on failure (e.g., authentication
+ * errors or bad formats).
+ *
+ * @param payload - The encrypted string to decrypt.
+ * @param key - The secret key used for decryption.
+ * @returns The decrypted plaintext.
+ */
+
+export function symmetricDecrypt(payload: string, key: string): string {
+  // If it's clearly V1 (only one “:”), skip straight to V1
+  if (payload.split(":").length === 2) {
+    return symmetricDecryptV1(payload, key);
+  }
+
+  // Otherwise try GCM first, then fall back to CBC
+  try {
+    return symmetricDecryptV2(payload, key);
+  } catch (err) {
+    logger.warn("AES-GCM decryption failed; refusing to fall back to insecure CBC", err);
+
+    throw err;
+  }
+}
+
+export const getHash = (key: string): string => createHash("sha256").update(key).digest("hex");
 
 export const generateLocalSignedUrl = (
   fileName: string,
@@ -73,7 +101,7 @@ export const generateLocalSignedUrl = (
   const uuid = randomBytes(16).toString("hex");
   const timestamp = Date.now();
   const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const signature = createHmac("sha256", ENCRYPTION_KEY!).update(data).digest("hex");
+  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
   return { signature, uuid, timestamp };
 };
 
