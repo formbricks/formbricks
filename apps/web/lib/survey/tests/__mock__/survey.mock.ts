@@ -312,6 +312,7 @@ export const updateSurveyInput: TSurvey = {
   displayPercentage: null,
   createdBy: null,
   pin: null,
+  recaptcha: null,
   resultShareKey: null,
   segment: null,
   languages: [],
