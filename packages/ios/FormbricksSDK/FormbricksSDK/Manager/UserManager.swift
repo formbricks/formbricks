@@ -102,6 +102,7 @@ final class UserManager: UserManagerSyncable {
                 self?.surveyManager?.filterSurveys()
                 self?.startSyncTimer()
             case .failure(let error):
+                Formbricks.delegate?.onError(error)
                 Formbricks.logger?.error(error)
             }
         }
