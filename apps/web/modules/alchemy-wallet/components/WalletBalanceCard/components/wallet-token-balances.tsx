@@ -34,8 +34,8 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
 
     fetchBalances();
 
-    let interval = setInterval(fetchBalances, 60000);
-    return () => clearInterval(interval);
+    let timeout = setTimeout(fetchBalances, 60000);
+    return () => clearTimeout(timeout);
   }, [blockscoutApi, address, onClose]);
 
   if (!balances || balances.length < 1) {

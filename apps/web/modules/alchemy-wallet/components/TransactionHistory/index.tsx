@@ -24,8 +24,8 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
 
     fetchTransactions();
 
-    let interval = setInterval(fetchTransactions, 60000);
-    return () => clearInterval(interval);
+    let timeout = setTimeout(fetchTransactions, 60000);
+    return () => clearTimeout(timeout);
   }, [blockscoutApi, address]);
 
   if (!transfers?.length) {

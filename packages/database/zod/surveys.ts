@@ -226,6 +226,7 @@ const ZSurveyBase = z.object({
   reward: z
     .object({
       name: z.string(),
+      symbol: z.string(),
       logo: z.string(),
       contractAddress: z.string(),
       amount: z.string(),
