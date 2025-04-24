@@ -96,7 +96,7 @@ locals {
       metric_name         = "CPUUtilization"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     RDS_FreeStorageSpace = {
@@ -110,7 +110,7 @@ locals {
       metric_name         = "FreeStorageSpace"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     RDS_FreeableMemory = {
@@ -124,7 +124,7 @@ locals {
       metric_name         = "FreeableMemory"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     RDS_DiskQueueDepth = {
@@ -138,7 +138,7 @@ locals {
       metric_name         = "DiskQueueDepth"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     RDS_ReadIOPS = {
@@ -152,7 +152,7 @@ locals {
       metric_name         = "ReadIOPS"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     RDS_WriteIOPS = {
@@ -166,7 +166,7 @@ locals {
       metric_name         = "WriteIOPS"
       statistic           = "Average"
       dimensions = {
-        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+        DBInstanceIdentifier = module.rds-aurora["prod"].cluster_instances["one"].id
       }
     }
     SQS_ApproximateAgeOfOldestMessage = {

@@ -41,6 +41,7 @@ import Network
      */
     @objc public static func setup(with config: FormbricksConfig, force: Bool = false) {
         logger = Logger()
+        apiQueue = OperationQueue()
         
         if (force == true) {
             isInitialized = false
@@ -235,6 +236,7 @@ import Network
     }
 
     private static func performCleanup() {
+        userManager?.logout()
         userManager?.cleanupUpdateQueue()
         presentSurveyManager?.dismissView()
         presentSurveyManager = nil
