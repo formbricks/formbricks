@@ -78,7 +78,7 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
   const logger = Logger.getInstance();
   const config = Config.getInstance();
 
-  const recaptchaSiteKey = config.get().recaptchaSiteKey;
+  const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   if (!recaptchaSiteKey) {
     logger.debug("reCAPTCHA site key not found");
     return;

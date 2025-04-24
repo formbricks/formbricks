@@ -70,6 +70,7 @@ export const ZJsEnvironmentState = z.object({
     surveys: z.array(ZJsEnvironmentStateSurvey),
     actionClasses: z.array(ZJsEnvironmentStateActionClass),
     project: ZJsEnvironmentStateProject,
+    recaptchaSiteKey: z.string().optional(),
   }),
 });
 
