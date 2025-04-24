@@ -1,7 +1,7 @@
 "use client";
 
-import AvailableSurveys from "@/modules/activity/components/Surveys/components/available-surveys";
-import CompletedSurveys from "@/modules/activity/components/Surveys/components/completed-surveys";
+import AvailableSurveys from "@/modules/discover/components/Surveys/components/available-surveys";
+import CompletedSurveys from "@/modules/discover/components/Surveys/components/completed-surveys";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
 import React, { useState } from "react";

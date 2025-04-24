@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Activity",
+  title: "Discover",
 };
 
-export const ActivityLayout = async (props) => {
+export const DiscoverLayout = async (props) => {
   const { children } = props;
 
   try {

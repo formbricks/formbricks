@@ -1,14 +1,14 @@
-import Surveys from "@/modules/activity/components/Surveys";
+import Surveys from "@/modules/discover/components/Surveys";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 
-export const ActivityPage = async () => {
+export const DiscoverPage = async () => {
   const t = await getTranslate();
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.activity")} />
+      <PageHeader pageTitle={t("common.discover")} />
       <Surveys />
     </PageContentWrapper>
   );

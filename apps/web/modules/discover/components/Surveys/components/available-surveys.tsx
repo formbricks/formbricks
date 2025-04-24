@@ -1,7 +1,7 @@
 "use client";
 
-import { getAvailableSurveysAction } from "@/modules/activity/components/Surveys/actions";
-import { ActiveSurveyCard } from "@/modules/activity/components/common/active-survey-card";
+import { getAvailableSurveysAction } from "@/modules/discover/components/Surveys/actions";
+import { ActiveSurveyCard } from "@/modules/discover/components/common/active-survey-card";
 import React, { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

@@ -22,7 +22,6 @@ import {
 import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
-  ActivityIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
@@ -32,6 +31,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  SearchIcon,
   UserCircleIcon,
   UsersIcon,
   WalletMinimalIcon,
@@ -117,17 +117,10 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: t("common.wallet"),
-        href: `/environments/${environment.id}/wallet`,
-        icon: WalletMinimalIcon,
-        isActive: pathname?.includes("/wallet"),
-        isHidden: false,
-      },
-      {
-        name: t("common.activity"),
-        href: `/environments/${environment.id}/activity`,
-        icon: ActivityIcon,
-        isActive: pathname?.includes("/activity"),
+        name: t("common.discover"),
+        href: `/environments/${environment.id}/discover`,
+        icon: SearchIcon,
+        isActive: pathname?.includes("/discover"),
         isHidden: false,
       },
       {
@@ -135,6 +128,13 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/engagements`,
         icon: MessageCircle,
         isActive: pathname?.includes("/engagements"),
+        isHidden: false,
+      },
+      {
+        name: t("common.wallet"),
+        href: `/environments/${environment.id}/wallet`,
+        icon: WalletMinimalIcon,
+        isActive: pathname?.includes("/wallet"),
         isHidden: false,
       },
       ...(hasAccess
@@ -186,7 +186,7 @@ export const MainNavigation = ({
       : []),
   ];
 
-  const mainNavigationLink = `/environments/${environment.id}/wallet`;
+  const mainNavigationLink = `/environments/${environment.id}/discover`;
 
   return (
     <>
