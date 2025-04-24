@@ -1,10 +1,32 @@
 import Foundation
 
-class FormbricksEnvironment {
-    public static let baseApiUrl: String = Formbricks.appUrl ?? "http://localhost:3000"
-    public static let surveyScriptUrl: String = "\(baseApiUrl)/js/surveys.umd.cjs"
-    /// Endpoint for getting environment data. Replace {environmentId} with the actual environment ID.
-    public static let getEnvironmentRequestEndpoint: String = "/api/v2/client/{environmentId}/environment"
-    /// Endpoint for posting user data. Replace {environmentId} with the actual environment ID.
-    public static let postUserRequestEndpoint: String = "/api/v2/client/{environmentId}/user"
+internal enum FormbricksEnvironment {
+
+  /// Only `appUrl` is user-supplied. Crash early if it’s missing.
+  fileprivate static var baseApiUrl: String {
+    guard let url = Formbricks.appUrl else {
+      fatalError("Formbricks.setup must be called before using the SDK.")
+    }
+    return url
+  }
+
+  /// Returns the full survey‐script URL as a String
+  static var surveyScriptUrlString: String {
+    let path = "/" + ["js", "surveys.umd.cjs"].joined(separator: "/")
+    return baseApiUrl + path
+  }
+
+  /// Returns the full environment‐fetch URL as a String for the given ID
+    static var getEnvironmentRequestEndpoint: String {
+      let path = "/" + ["api", "v2", "client", "{environmentId}", "environment"]
+      .joined(separator: "/")
+    return path
+  }
+
+  /// Returns the full post-user URL as a String for the given ID
+    static var postUserRequestEndpoint: String {
+    let path = "/" + ["api", "v2", "client", "{environmentId}", "user"]
+      .joined(separator: "/")
+    return baseApiUrl + path
+  }
 }

@@ -37,7 +37,6 @@
 		4DDAED9C2D50D54A00A19B1F /* Exceptions for "FormbricksSDK" folder in "FormbricksSDKTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Config.swift,
 				"Extension/Calendar+DaysBetween.swift",
 				"Extension/Error+Message.swift",
 				"Extension/JSON+Formatter.swift",
