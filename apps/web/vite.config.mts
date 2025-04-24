@@ -59,6 +59,7 @@ export default defineConfig({
         "modules/organization/settings/api-keys/components/*.tsx",
         "modules/survey/hooks/*.tsx",
         "modules/survey/components/question-form-input/index.tsx",
+        "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
@@ -78,7 +79,9 @@ export default defineConfig({
         "lib/survey/service.ts",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/surveySummary.ts",
         "modules/ee/contacts/segments/lib/segments.ts",
-        "modules/survey/list/components/copy-survey-form.tsx"
+        "modules/survey/list/components/copy-survey-form.tsx",
+        "lib/crypto.ts",
+        "lib/utils/billing.ts"
       ],
       exclude: [
         "**/.next/**",

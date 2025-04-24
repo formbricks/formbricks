@@ -7,7 +7,6 @@ import { generateSurveySingleUseId, validateSurveySingleUseId } from "./singleUs
 vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
   symmetricDecrypt: vi.fn(),
-  decryptAES128: vi.fn(),
 }));
 
 // Mock constants
