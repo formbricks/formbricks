@@ -44,11 +44,12 @@ export const updateSurveyAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.id),
+      surveyId: parsedInput.id,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

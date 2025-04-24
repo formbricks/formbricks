@@ -14,7 +14,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
-import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
+// import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
 import { isValidValue } from "./util";
@@ -37,7 +37,6 @@ export const SingleResponseCard = ({
   response,
   user,
   pageType,
-  environmentTags,
   environment,
   updateResponse,
   deleteResponses,
@@ -45,7 +44,6 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
 }: SingleResponseCardProps) => {
   const { t } = useTranslate();
-  const environmentId = survey.environmentId;
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -138,7 +136,7 @@ export const SingleResponseCard = ({
 
         <SingleResponseCardBody survey={survey} response={response} skippedQuestions={skippedQuestions} />
 
-        <ResponseTagsWrapper
+        {/* <ResponseTagsWrapper
           key={response.id}
           environmentId={environmentId}
           responseId={response.id}
@@ -146,7 +144,7 @@ export const SingleResponseCard = ({
           environmentTags={environmentTags}
           updateFetchedResponses={updateFetchedResponses}
           isReadOnly={isReadOnly}
-        />
+        /> */}
 
         <DeleteDialog
           open={deleteDialogOpen}

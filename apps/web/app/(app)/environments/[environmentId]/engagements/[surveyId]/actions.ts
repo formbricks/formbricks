@@ -26,10 +26,11 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -53,10 +54,11 @@ export const getSurveyFilterDataAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -96,11 +98,12 @@ export const updateSurveyAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.id),
+      surveyId: parsedInput.id,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

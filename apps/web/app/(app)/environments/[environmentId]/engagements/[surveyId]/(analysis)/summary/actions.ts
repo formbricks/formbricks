@@ -18,16 +18,16 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .schema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = "";
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -61,10 +61,11 @@ export const generateResultShareUrlAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -94,10 +95,11 @@ export const getResultShareUrlAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -120,10 +122,11 @@ export const deleteResultShareUrlAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -146,10 +149,11 @@ export const getEmailHtmlAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

@@ -28,12 +28,11 @@ export const getResponsesAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -57,12 +56,11 @@ export const getSurveySummaryAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -81,12 +79,11 @@ export const getResponseCountAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          schema: ZResponseFilterCriteria,
-          data: parsedInput.filterCriteria,
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -104,12 +101,11 @@ export const generateInsightsForSurveyAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          schema: ZGenerateInsightsForSurveyAction,
-          data: parsedInput,
-          roles: ["owner", "manager"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

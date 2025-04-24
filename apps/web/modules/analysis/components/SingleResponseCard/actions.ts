@@ -7,6 +7,8 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
+  getSurveyIdFromResponseId,
+  getSurveyIdFromResponseNoteId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { z } from "zod";
@@ -34,7 +36,7 @@ export const createTagAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager", "member"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -67,7 +69,7 @@ export const createTagToResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager", "member"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -100,7 +102,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager", "member"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -118,10 +120,11 @@ export const deleteResponseAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      surveyId: await getSurveyIdFromResponseId(parsedInput.responseId),
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -140,10 +143,11 @@ export const updateResponseNoteAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
+      surveyId: await getSurveyIdFromResponseNoteId(parsedInput.responseNoteId),
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -161,10 +165,11 @@ export const resolveResponseNoteAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
+      surveyId: await getSurveyIdFromResponseNoteId(parsedInput.responseNoteId),
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -183,10 +188,11 @@ export const createResponseNoteAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      surveyId: await getSurveyIdFromResponseId(parsedInput.responseId),
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -204,10 +210,11 @@ export const getResponseAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      surveyId: await getSurveyIdFromResponseId(parsedInput.responseId),
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

@@ -26,10 +26,11 @@ export const getSurveyAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -58,11 +59,12 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -118,10 +120,11 @@ export const deleteSurveyAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });
@@ -140,10 +143,11 @@ export const generateSingleUseIdAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      surveyId: parsedInput.surveyId,
       access: [
         {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
+          type: "survey",
+          roles: [],
         },
       ],
     });

@@ -49,7 +49,7 @@ export const getEnvironmentAuth = cache(async (environmentId: string): Promise<T
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const isReadOnly = false;
+  const isReadOnly = isMember;
 
   return {
     environment,

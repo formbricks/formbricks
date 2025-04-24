@@ -68,13 +68,17 @@ export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
   return await getOrganizationIdFromEnvironmentId(survey.environmentId);
 };
 
-export const getOrganizationIdFromResponseId = async (responseId: string) => {
+export const getSurveyIdFromResponseId = async (responseId: string) => {
   const response = await getResponse(responseId);
   if (!response) {
     throw new ResourceNotFoundError("response", responseId);
   }
 
-  return await getOrganizationIdFromSurveyId(response.surveyId);
+  return response.surveyId;
+};
+
+export const getOrganizationIdFromResponseId = async (responseId: string) => {
+  return await getOrganizationIdFromSurveyId(await getSurveyIdFromResponseId(responseId));
 };
 
 export const getOrganizationIdFromContactId = async (contactId: string) => {
@@ -102,6 +106,15 @@ export const getOrganizationIdFromTagId = async (tagId: string) => {
   }
 
   return await getOrganizationIdFromEnvironmentId(tag.environmentId);
+};
+
+export const getSurveyIdFromResponseNoteId = async (responseNoteId: string) => {
+  const responseNote = await getResponseNote(responseNoteId);
+  if (!responseNote) {
+    throw new ResourceNotFoundError("responseNote", responseNoteId);
+  }
+
+  return await getSurveyIdFromResponseId(responseNote.responseId);
 };
 
 export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string) => {

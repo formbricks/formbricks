@@ -1,6 +1,7 @@
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
 
@@ -16,7 +17,7 @@ const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }>
 };
 
 export type TAccess<T extends z.ZodRawShape> = {
-  type: "organization";
+  type: "organization" | "survey";
   schema?: z.ZodObject<T>;
   data?: z.ZodObject<T>["_output"];
   roles: TOrganizationRole[];
@@ -25,11 +26,13 @@ export type TAccess<T extends z.ZodRawShape> = {
 export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   userId,
   organizationId,
+  surveyId,
   access,
 }: {
   userId: string;
   organizationId: string;
   access: TAccess<T>[];
+  surveyId?: string;
 }) => {
   const role = await getMembershipRole(userId, organizationId);
 
@@ -45,6 +48,13 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
       }
 
       if (accessItem.roles.includes(role)) {
+        return true;
+      }
+    }
+
+    if (accessItem.type === "survey" && surveyId) {
+      const survey = await getSurvey(surveyId);
+      if (survey?.createdBy === userId) {
         return true;
       }
     }

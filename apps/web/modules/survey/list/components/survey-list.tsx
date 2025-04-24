@@ -17,7 +17,6 @@ import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
   environmentId: string;
-  isReadOnly: boolean;
   surveyDomain: string;
   userId: string;
   surveysPerPage: number;
@@ -34,7 +33,6 @@ export const initialFilters: TSurveyFilters = {
 
 export const SurveysList = ({
   environmentId,
-  isReadOnly,
   surveyDomain,
   userId,
   surveysPerPage: surveysLimit,
@@ -137,14 +135,13 @@ export const SurveysList = ({
       {surveys.length > 0 ? (
         <div>
           <div className="flex-col space-y-3" ref={parent}>
-            <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
+            <div className="mt-6 grid w-full grid-cols-7 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
               <div className="col-span-2 place-self-start">Name</div>
               <div className="col-span-1">{t("common.status")}</div>
               <div className="col-span-1">{t("common.responses")}</div>
               <div className="col-span-1">{t("common.type")}</div>
               <div className="col-span-1">{t("common.created_at")}</div>
               <div className="col-span-1">{t("common.updated_at")}</div>
-              <div className="col-span-1">{t("common.created_by")}</div>
             </div>
             {surveys.map((survey) => {
               return (
@@ -152,7 +149,6 @@ export const SurveysList = ({
                   key={survey.id}
                   survey={survey}
                   environmentId={environmentId}
-                  isReadOnly={isReadOnly}
                   surveyDomain={surveyDomain}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}

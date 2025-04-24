@@ -43,7 +43,7 @@ export const SurveysPage = async ({
     throw new Error(t("common.project_not_found"));
   }
 
-  const { session, isBilling, environment, isReadOnly, currentUserMembership } = await getEnvironmentAuth(
+  const { session, isBilling, environment, currentUserMembership } = await getEnvironmentAuth(
     params.environmentId
   );
 
@@ -77,27 +77,14 @@ export const SurveysPage = async ({
   if (surveyCount > 0) {
     content = (
       <>
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
+        <PageHeader pageTitle={t("common.surveys")} cta={<CreateSurveyButton />} />
         <SurveysList
           environmentId={environment.id}
-          isReadOnly={isReadOnly}
           surveyDomain={surveyDomain}
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}
         />
-      </>
-    );
-  } else if (isReadOnly) {
-    content = (
-      <>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
-        </h1>
-
-        <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-        </h2>
       </>
     );
   } else {

@@ -66,6 +66,7 @@ export const createSurvey = async (
     const survey = await prisma.survey.create({
       data: {
         ...data,
+        public: false,
         environment: {
           connect: {
             id: environmentId,

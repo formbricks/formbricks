@@ -38,8 +38,6 @@ interface SurveyDropDownMenuProps {
   survey: TSurvey;
   surveyDomain: string;
   refreshSingleUseId: () => Promise<string | undefined>;
-  disabled?: boolean;
-  isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
 }
@@ -49,8 +47,6 @@ export const SurveyDropDownMenu = ({
   survey,
   surveyDomain,
   refreshSingleUseId,
-  disabled,
-  isSurveyCreationDeletionDisabled,
   deleteSurvey,
   duplicateSurvey,
 }: SurveyDropDownMenuProps) => {
@@ -123,62 +119,50 @@ export const SurveyDropDownMenu = ({
       data-testid="survey-dropdown-menu"
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
-          <div
-            className={cn(
-              "rounded-lg border bg-white p-2",
-              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
-            )}>
+        <DropdownMenuTrigger className="z-10" asChild>
+          <div className={cn("rounded-lg border bg-white p-2", "cursor-pointer hover:bg-slate-50")}>
             <span className="sr-only">{t("environments.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">
           <DropdownMenuGroup>
-            {!isSurveyCreationDeletionDisabled && (
-              <>
-                <DropdownMenuItem>
-                  <Link
-                    className="flex w-full items-center"
-                    href={`/environments/${environmentId}/engagements/${survey.id}/edit`}>
-                    <SquarePenIcon className="mr-2 h-4 w-4" />
-                    {t("common.edit")}
-                  </Link>
-                </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link
+                className="flex w-full items-center"
+                href={`/environments/${environmentId}/engagements/${survey.id}/edit`}>
+                <SquarePenIcon className="mr-2 h-4 w-4" />
+                {t("common.edit")}
+              </Link>
+            </DropdownMenuItem>
 
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      duplicateSurveyAndRefresh(survey.id);
-                    }}>
-                    <CopyIcon className="mr-2 h-4 w-4" />
-                    {t("common.duplicate")}
-                  </button>
-                </DropdownMenuItem>
-              </>
-            )}
-            {!isSurveyCreationDeletionDisabled && (
-              <>
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    disabled={loading}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      setIsCopyFormOpen(true);
-                    }}>
-                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                    {t("common.copy")}...
-                  </button>
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  duplicateSurveyAndRefresh(survey.id);
+                }}>
+                <CopyIcon className="mr-2 h-4 w-4" />
+                {t("common.duplicate")}
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                disabled={loading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setIsCopyFormOpen(true);
+                }}>
+                <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                {t("common.copy")}...
+              </button>
+            </DropdownMenuItem>
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
@@ -209,34 +193,30 @@ export const SurveyDropDownMenu = ({
                 </DropdownMenuItem>
               </>
             )}
-            {!isSurveyCreationDeletionDisabled && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  className="flex w-full items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    setDeleteDialogOpen(true);
-                  }}>
-                  <TrashIcon className="mr-2 h-4 w-4" />
-                  {t("common.delete")}
-                </button>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setDeleteDialogOpen(true);
+                }}>
+                <TrashIcon className="mr-2 h-4 w-4" />
+                {t("common.delete")}
+              </button>
+            </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {!isSurveyCreationDeletionDisabled && (
-        <DeleteDialog
-          deleteWhat="Survey"
-          open={isDeleteDialogOpen}
-          setOpen={setDeleteDialogOpen}
-          onDelete={() => handleDeleteSurvey(survey.id)}
-          text={t("environments.surveys.delete_survey_and_responses_warning")}
-        />
-      )}
+      <DeleteDialog
+        deleteWhat="Survey"
+        open={isDeleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onDelete={() => handleDeleteSurvey(survey.id)}
+        text={t("environments.surveys.delete_survey_and_responses_warning")}
+      />
 
       {isCopyFormOpen && (
         <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
