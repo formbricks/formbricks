@@ -133,7 +133,10 @@ final class UserManager: UserManagerSyncable {
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
         Formbricks.language = "default"
-        updateQueue?.reset()
+        
+        syncTimer?.invalidate()
+        syncTimer = nil
+        updateQueue?.cleanup()
         
         if isUserIdDefined {
             Formbricks.logger?.debug("Successfully logged out user and reset the user state.")
