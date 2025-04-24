@@ -76,7 +76,8 @@ export default defineConfig({
         "modules/analysis/**/*.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
         "lib/crypto.ts",
-        "lib/utils/billing.ts"
+        "lib/utils/billing.ts",
+        "modules/ui/components/card/index.tsx"
       ],
       exclude: [
         "**/.next/**",
