@@ -27,6 +27,6 @@ internal enum FormbricksEnvironment {
     static var postUserRequestEndpoint: String {
     let path = "/" + ["api", "v2", "client", "{environmentId}", "user"]
       .joined(separator: "/")
-    return baseApiUrl + path
+    return path
   }
 }

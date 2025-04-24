@@ -64,7 +64,7 @@ private extension FormbricksViewModel {
                 }
 
                 const script = document.createElement("script");
-                script.src = "\(Formbricks.appUrl ?? "http://localhost:3000")/js/surveys.umd.cjs";
+                script.src = "\(FormbricksEnvironment.surveyScriptUrlString)";
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
