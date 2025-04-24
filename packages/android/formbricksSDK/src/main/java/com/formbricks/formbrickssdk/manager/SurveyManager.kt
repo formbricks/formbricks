@@ -8,11 +8,14 @@ import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
+import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.lang.RuntimeException
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
@@ -57,7 +60,8 @@ object SurveyManager {
                     try {
                         Gson().fromJson(json, EnvironmentDataHolder::class.java)
                     } catch (e: Exception) {
-                        Logger.e("Unable to retrieve environment data from the local storage.")
+                        Formbricks.callback?.onError(e)
+                        Logger.e(RuntimeException("Unable to retrieve environment data from the local storage."))
                         null
                     }
                 }
@@ -114,9 +118,12 @@ object SurveyManager {
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
                 hasApiError = false
+                Formbricks.callback?.onSuccess(SuccessType.GET_ENVIRONMENT_SUCCESS)
             } catch (e: Exception) {
                 hasApiError = true
-                Logger.e("Unable to refresh environment state.")
+                val error = SDKError.unableToRefreshEnvironment
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
                 startErrorTimer()
             }
         }
@@ -135,10 +142,30 @@ object SurveyManager {
             triggers.firstOrNull { it.actionClass?.name.equals(actionClass?.name) } != null
         }
 
-        val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
+        if (firstSurveyWithActionClass == null) {
+            Formbricks.callback?.onError(SDKError.surveyNotFoundError)
+            return
+        }
+
+        val isMultiLangSurvey = (firstSurveyWithActionClass.languages?.size ?: 0) > 1
+        if(isMultiLangSurvey) {
+            val currentLanguage = Formbricks.language
+            val languageCode = getLanguageCode(firstSurveyWithActionClass, currentLanguage)
+
+            if (languageCode == null) {
+                val error = RuntimeException("Survey “${firstSurveyWithActionClass.name}” is not available in language “$currentLanguage”. Skipping.")
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
+                return
+            }
+
+            Formbricks.setLanguage(languageCode)
+        }
+
+        val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass.displayPercentage)
 
         if (shouldDisplay) {
-            firstSurveyWithActionClass?.id?.let {
+            firstSurveyWithActionClass.id.let {
                 isShowingSurvey = true
                 val timeout = firstSurveyWithActionClass.delay ?: 0.0
                 stopDisplayTimer()
@@ -149,6 +176,8 @@ object SurveyManager {
 
                 }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))
             }
+        } else {
+           Formbricks.callback?.onError(SDKError.surveyNotDisplayedError)
         }
     }
 
@@ -166,7 +195,9 @@ object SurveyManager {
      */
     fun postResponse(surveyId: String?) {
         val id = surveyId.guard {
-            Logger.e("Survey id is mandatory to set.")
+            val error = SDKError.missingSurveyId
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -178,7 +209,9 @@ object SurveyManager {
      */
     fun onNewDisplay(surveyId: String?) {
         val id = surveyId.guard {
-            Logger.e("Survey id is mandatory to set.")
+            val error = SDKError.missingSurveyId
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -239,7 +272,9 @@ object SurveyManager {
                 }
 
                 else -> {
-                    Logger.e("Invalid Display Option")
+                    val error = SDKError.invalidDisplayOption
+                    Formbricks.callback?.onError(error)
+                    Logger.e(error)
                     false
                 }
             }
@@ -281,5 +316,40 @@ object SurveyManager {
         val percentage = displayPercentage.guard { return true }
         val randomNum = (0 until 10000).random() / 100.0
         return randomNum <= percentage
+    }
+
+    private fun getLanguageCode(survey: Survey, language: String?): String? {
+        // 1) Gather all valid codes
+        val availableLanguageCodes = survey.languages
+            ?.map { it.language.code }
+            ?: emptyList()
+
+        // 2) No input or explicit "default" → default
+        val raw = language
+            ?.lowercase()
+            ?.takeIf { it.isNotEmpty() }
+            ?: return "default"
+        if (raw == "default") return "default"
+
+        // 3) Find matching entry by code or alias
+        val selected = survey.languages
+            ?.firstOrNull { entry ->
+                entry.language.code.lowercase() == raw ||
+                        entry.language.alias?.lowercase() == raw
+            }
+
+        // 4) If that entry is marked default → default
+        if (selected?.default == true) return "default"
+
+        // 5) If missing, disabled, or not in the available list → null
+        if (selected == null
+            || !selected.enabled
+            || !availableLanguageCodes.contains(selected.language.code)
+        ) {
+            return null
+        }
+
+        // 6) Otherwise return its code
+        return selected.language.code
     }
 }

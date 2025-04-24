@@ -22,6 +22,10 @@ export const GET = async (
       return responses.unauthorizedResponse();
     }
 
+    if (survey.type !== "link") {
+      return responses.badRequestResponse("Single use links are only available for link surveys");
+    }
+
     if (!survey.singleUse || !survey.singleUse.enabled) {
       return responses.badRequestResponse("Single use links are not enabled for this survey");
     }
