@@ -72,8 +72,11 @@ const Alert = React.forwardRef<
 Alert.displayName = "Alert";
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     const { size } = useAlertContext();
+
+    const headingContent = children || <span className="sr-only">Alert</span>;
+
     return (
       <h5
         ref={ref}
@@ -82,8 +85,9 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
           size === "small" ? "flex-shrink truncate" : "col-start-1 row-start-1",
           className
         )}
-        {...props}
-      />
+        {...props}>
+        {headingContent}
+      </h5>
     );
   }
 );
