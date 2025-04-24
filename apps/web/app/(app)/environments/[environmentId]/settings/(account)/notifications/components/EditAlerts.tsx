@@ -3,7 +3,6 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
-import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
@@ -11,7 +10,6 @@ import { NotificationSwitch } from "./NotificationSwitch";
 interface EditAlertsProps {
   memberships: Membership[];
   user: TUser;
-  environmentId: string;
   autoDisableNotificationType: string;
   autoDisableNotificationElementId: string;
 }
@@ -19,7 +17,6 @@ interface EditAlertsProps {
 export const EditAlerts = ({
   memberships,
   user,
-  environmentId,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {
@@ -103,12 +100,6 @@ export const EditAlerts = ({
                 <p>{t("common.no_surveys_found")}</p>
               </div>
             )}
-            <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}{" "}
-              <Link className="font-semibold" href={`/environments/${environmentId}/settings/general`}>
-                {t("common.invite_them")}
-              </Link>
-            </p>
           </div>
         </div>
       ))}

@@ -10,8 +10,6 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { EditAlerts } from "./components/EditAlerts";
-import { EditWeeklySummary } from "./components/EditWeeklySummary";
-import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
 const setCompleteNotificationSettings = (
@@ -46,37 +44,6 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
-      role: {
-        not: "billing",
-      },
-      OR: [
-        {
-          // Fetch all projects if user role is owner or manager
-          role: {
-            in: ["owner", "manager"],
-          },
-        },
-        {
-          // Filter projects based on team membership if user is not owner or manager
-          organization: {
-            projects: {
-              some: {
-                projectTeams: {
-                  some: {
-                    team: {
-                      teamUsers: {
-                        some: {
-                          userId,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      ],
     },
     select: {
       organization: {
@@ -84,38 +51,6 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
           id: true,
           name: true,
           projects: {
-            // Apply conditional filtering based on user's role
-            where: {
-              OR: [
-                {
-                  // Fetch all projects if user is owner or manager
-                  organization: {
-                    memberships: {
-                      some: {
-                        userId,
-                        role: {
-                          in: ["owner", "manager"],
-                        },
-                      },
-                    },
-                  },
-                },
-                {
-                  // Only include projects accessible through teams if user is not owner or manager
-                  projectTeams: {
-                    some: {
-                      team: {
-                        teamUsers: {
-                          some: {
-                            userId,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              ],
-            },
             select: {
               id: true,
               name: true,
@@ -126,6 +61,9 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
                 select: {
                   id: true,
                   surveys: {
+                    where: {
+                      createdBy: userId,
+                    },
                     select: {
                       id: true,
                       name: true,
@@ -184,16 +122,9 @@ const Page = async (props) => {
         <EditAlerts
           memberships={memberships}
           user={user}
-          environmentId={params.environmentId}
           autoDisableNotificationType={autoDisableNotificationType}
           autoDisableNotificationElementId={autoDisableNotificationElementId}
         />
-      </SettingsCard>
-      <IntegrationsTip environmentId={params.environmentId} />
-      <SettingsCard
-        title={t("environments.settings.notifications.weekly_summary_projects")}
-        description={t("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")}>
-        <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </PageContentWrapper>
   );

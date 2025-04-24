@@ -112,49 +112,7 @@ export const POST = async (request: Request) => {
     // TODO: add cache for this query. Not possible at the moment since we can't get the membership cache by environmentId
     const usersWithNotifications = await prisma.user.findMany({
       where: {
-        memberships: {
-          some: {
-            organization: {
-              projects: {
-                some: {
-                  environments: {
-                    some: { id: environmentId },
-                  },
-                },
-              },
-            },
-          },
-        },
-        OR: [
-          {
-            memberships: {
-              every: {
-                role: {
-                  in: ["owner", "manager"],
-                },
-              },
-            },
-          },
-          {
-            teamUsers: {
-              some: {
-                team: {
-                  projectTeams: {
-                    some: {
-                      project: {
-                        environments: {
-                          some: {
-                            id: environmentId,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
+        id: survey.createdBy || "",
         notificationSettings: {
           path: ["alert", surveyId],
           equals: true,
