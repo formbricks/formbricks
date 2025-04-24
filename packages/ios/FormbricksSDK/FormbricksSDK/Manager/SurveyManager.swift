@@ -105,7 +105,9 @@ extension SurveyManager {
                 self?.filterSurveys()
             case .failure:
                 self?.hasApiError = true
-                Formbricks.logger?.error(FormbricksSDKError(type: .unableToRefreshEnvironment).message)
+                let error = FormbricksSDKError(type: .unableToRefreshEnvironment)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger?.error(error.message)
                 self?.startErrorTimer()
             }
         }
@@ -183,7 +185,9 @@ extension SurveyManager {
                 if let data = UserDefaults.standard.data(forKey: SurveyManager.environmentResponseObjectKey) {
                     return try? JSONDecoder().decode(EnvironmentResponse.self, from: data)
                 } else {
-                    Formbricks.logger?.error(FormbricksSDKError(type: .unableToRetrieveEnvironment).message)
+                    let error = FormbricksSDKError(type: .unableToRetrieveEnvironment)
+                    Formbricks.delegate?.onError(error)
+                    Formbricks.logger?.error(error.message)
                     return nil
                 }
             }
@@ -192,7 +196,9 @@ extension SurveyManager {
                 UserDefaults.standard.set(data, forKey: SurveyManager.environmentResponseObjectKey)
                 backingEnvironmentResponse = newValue
             } else {
-                Formbricks.logger?.error(FormbricksSDKError(type: .unableToPersistEnvironment).message)
+                let error = FormbricksSDKError(type: .unableToPersistEnvironment)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger?.error(error.message)
             }
         }
     }
@@ -224,7 +230,9 @@ private extension SurveyManager {
                 }
                 
             default:
-                Formbricks.logger?.error(FormbricksSDKError(type: .invalidDisplayOption).message)
+                let error = FormbricksSDKError(type: .invalidDisplayOption)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger?.error(error.message)
                 return false
             }
             
