@@ -78,6 +78,7 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/survey/service.ts",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/surveySummary.ts",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/lib.ts",
         "modules/ee/contacts/segments/lib/segments.ts",
         "modules/survey/list/components/copy-survey-form.tsx",
         "lib/crypto.ts",
