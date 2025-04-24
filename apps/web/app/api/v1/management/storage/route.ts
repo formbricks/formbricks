@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 
@@ -50,12 +49,6 @@ export const POST = async (req: NextRequest): Promise<Response> => {
 
   if (!session || !session.user) {
     return responses.notAuthenticatedResponse();
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
   }
 
   return await getSignedUrlForPublicFile(fileName, environmentId, fileType);
