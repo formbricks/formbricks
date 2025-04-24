@@ -9,7 +9,7 @@ import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
 import { SendIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { useBlockscoutApi } from "@formbricks/web3";
 
@@ -21,9 +21,9 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setSelectedBalance(null);
-  };
+  }, []);
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -34,9 +34,9 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
 
     fetchBalances();
 
-    let timeout = setTimeout(fetchBalances, 60000);
-    return () => clearTimeout(timeout);
-  }, [blockscoutApi, address, onClose]);
+    let interval = setInterval(fetchBalances, 60000);
+    return () => clearInterval(interval);
+  }, [blockscoutApi, address]);
 
   if (!balances || balances.length < 1) {
     return null;
