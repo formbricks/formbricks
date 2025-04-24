@@ -72,8 +72,8 @@ export function Survey({
   singleUseId,
   singleUseResponseId,
   isWebEnvironment = true,
-  recaptchaSiteKey,
   getRecaptchaToken,
+  isSpamProtectionEnabled,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -491,27 +491,6 @@ export function Survey({
   );
 
   useEffect(() => {
-    if (!recaptchaSiteKey || !survey.recaptcha?.enabled || true) return;
-
-    window.addEventListener("recaptchaToken", (event) => {
-      const customEvent = event as CustomEvent;
-
-      const recaptchaToken = customEvent.detail.token;
-      console.log("event token", recaptchaToken);
-      if (responseQueue && recaptchaToken) {
-        responseQueue.setResponseRecaptchaToken(recaptchaToken);
-      }
-    });
-
-    return () => {
-      // Cleanup the event listener when the component unmounts
-      window.removeEventListener("recaptchaToken", () => {
-        responseQueue?.setResponseRecaptchaToken(undefined);
-      });
-    };
-  }, [recaptchaSiteKey]);
-
-  useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
@@ -523,7 +502,7 @@ export function Survey({
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
 
-    if (recaptchaSiteKey && !surveyState?.responseId && getRecaptchaToken && survey.recaptcha?.enabled) {
+    if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
       const token = await getRecaptchaToken();
       console.log("returned token", { token });
       if (responseQueue && token) {
@@ -617,9 +596,11 @@ export function Survey({
         case TResponseErrorCodesEnum.RecaptchaError:
           return (
             <>
-              <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
-                <SurveyCloseButton onClose={onClose} />
-              </div>
+              {localSurvey.type !== "link" ? (
+                <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
+                  <SurveyCloseButton onClose={onClose} />
+                </div>
+              ) : null}
               <RecaptchaErrorComponent />
             </>
           );

@@ -1,3 +1,4 @@
+import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 
@@ -15,8 +16,12 @@ declare global {
 
 export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
+  const getRecaptchaToken = useCallback(async () => {
+    return executeRecaptcha(props.recaptchaSiteKey);
+  }, [props.recaptchaSiteKey]);
+
   const renderInline = useCallback(
-    () => window.formbricksSurveys.renderSurvey({ ...props, containerId, mode: "inline" }),
+    () => window.formbricksSurveys.renderSurvey({ ...props, containerId, getRecaptchaToken, mode: "inline" }),
     [containerId, props]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
@@ -45,6 +50,9 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     const loadScript = async () => {
       if (!window.formbricksSurveys) {
         try {
+          if (props.isSpamProtectionEnabled) {
+            await loadRecaptchaScript(props.recaptchaSiteKey);
+          }
           await loadSurveyScript();
         } catch (error) {
           console.error("Failed to load the surveys package: ", error);

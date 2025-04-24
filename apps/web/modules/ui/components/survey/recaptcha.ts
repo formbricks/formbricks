@@ -1,6 +1,3 @@
-import { Config } from "./config";
-import { Logger } from "./logger";
-
 // Define a RecaptchaError class for specific error types
 export class RecaptchaError extends Error {
   constructor(message: string) {
@@ -26,19 +23,17 @@ declare global {
  * @returns A promise that resolves when the script is loaded
  */
 export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> => {
-  const logger = Logger.getInstance();
-
   return new Promise((resolve, reject) => {
     // Check if script already exists
     if (document.getElementById("formbricks-recaptcha-script")) {
-      logger.debug("reCAPTCHA script already loaded");
+      console.log("reCAPTCHA script already loaded");
       resolve();
       return;
     }
 
     // Check if site key is available
     if (!recaptchaSiteKey) {
-      logger.debug("reCAPTCHA site key not found");
+      console.log("reCAPTCHA site key not found");
       reject(new RecaptchaError("reCAPTCHA site key not found"));
       return;
     }
@@ -52,11 +47,11 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 
     // Handle load/error events
     script.onload = () => {
-      logger.debug("reCAPTCHA script loaded successfully");
+      console.log("reCAPTCHA script loaded successfully");
       resolve();
     };
     script.onerror = () => {
-      logger.debug("Error loading reCAPTCHA script:");
+      console.log("Error loading reCAPTCHA script:");
       reject(new RecaptchaError("Error loading reCAPTCHA script"));
     };
 
@@ -70,13 +65,12 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
  * @param action - The action name for reCAPTCHA (default: "submit_response")
  * @returns A promise that resolves when the token is dispatched
  */
-export const executeRecaptcha = async (action = "submit_response"): Promise<string | undefined> => {
-  const logger = Logger.getInstance();
-  const config = Config.getInstance();
-
-  const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
+export const executeRecaptcha = async (
+  recaptchaSiteKey?: string,
+  action = "submit_response"
+): Promise<string | undefined> => {
   if (!recaptchaSiteKey) {
-    logger.debug("reCAPTCHA site key not found");
+    console.log("reCAPTCHA site key not found");
     return;
   }
 
@@ -84,9 +78,8 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
     await loadRecaptchaScript(recaptchaSiteKey);
 
     // Check if grecaptcha is available
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- grecaptcha is a global variable and may not be defined
     if (!window.grecaptcha) {
-      logger.debug("reCAPTCHA API not available");
+      console.log("reCAPTCHA API not available");
       return;
     }
 
@@ -98,7 +91,7 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
             resolve(token);
           })
           .catch((error: unknown) => {
-            logger.debug(`Error during reCAPTCHA execution: ${error as string}`);
+            console.log(error, `Error during reCAPTCHA execution`);
             reject(new RecaptchaError(`Error during reCAPTCHA execution: ${error as string}`));
           });
       });
@@ -106,6 +99,6 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
 
     return val as string;
   } catch (error) {
-    logger.debug(`Error during reCAPTCHA execution: ${error as string}`);
+    console.log(error, `Error during reCAPTCHA execution`);
   }
 };

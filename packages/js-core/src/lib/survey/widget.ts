@@ -90,7 +90,9 @@ export const renderWidget = async (
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
-  if (survey.recaptcha?.enabled && recaptchaSiteKey) {
+  const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
+
+  if (isSpamProtectionEnabled) {
     await loadRecaptchaScript(recaptchaSiteKey);
   }
 
@@ -109,7 +111,8 @@ export const renderWidget = async (
       placement,
       styling: getStyling(project, survey),
       hiddenFieldsRecord: hiddenFieldsObject,
-      recaptchaSiteKey: config.get().environment.data.recaptchaSiteKey,
+      recaptchaSiteKey,
+      isSpamProtectionEnabled,
       getRecaptchaToken: executeRecaptcha,
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
