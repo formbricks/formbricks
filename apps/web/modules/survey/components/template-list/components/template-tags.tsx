@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { TFnType } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
@@ -17,7 +16,7 @@ interface TemplateTagsProps {
 
 type NonNullabeChannel = NonNullable<TProjectConfigChannel>;
 
-const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
+export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
       return "border-blue-300 bg-blue-50 text-blue-500";
@@ -44,7 +43,8 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): s
       if (label) return t(label);
       return undefined;
     })
-    .sort();
+    .filter((label): label is string => !!label)
+    .sort((a, b) => a.localeCompare(b));
 
   const removeSurveySuffix = (label: string | undefined) => label?.replace(" Survey", "");
 
