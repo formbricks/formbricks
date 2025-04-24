@@ -41,7 +41,7 @@ export const ManageIntegration = ({
   const [isDeleting, setisDeleting] = useState(false);
 
   let integrationArray: TIntegrationNotionConfigData[] = [];
-  if (notionIntegration && notionIntegration.config.data) {
+  if (notionIntegration?.config.data) {
     integrationArray = notionIntegration.config.data;
   }
 

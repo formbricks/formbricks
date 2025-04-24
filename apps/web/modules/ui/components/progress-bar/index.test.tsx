@@ -87,7 +87,7 @@ describe("HalfCircle", () => {
 
   test("renders correctly with value 100", () => {
     const testValue = 100;
-    const { getAllByText, getByText, container } = render(<HalfCircle value={testValue} />);
+    const { getAllByText, container } = render(<HalfCircle value={testValue} />);
     expect(getAllByText(Math.round(testValue).toString())[0]).toBeInTheDocument();
     // normalized = (100 + 100) / 200 = 1; mapped = (1 * 180 - 180) = 0deg
     const rotatingDiv = container.querySelector(".bg-brand-dark") as HTMLElement;

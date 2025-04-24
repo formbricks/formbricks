@@ -43,7 +43,7 @@ export const ManageIntegration = ({
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   let integrationArray: TIntegrationSlackConfigData[] = [];
-  if (slackIntegration && slackIntegration.config.data) {
+  if (slackIntegration?.config.data) {
     integrationArray = slackIntegration.config.data;
   }
 

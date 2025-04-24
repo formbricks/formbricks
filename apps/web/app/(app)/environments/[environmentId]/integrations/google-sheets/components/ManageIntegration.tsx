@@ -37,7 +37,7 @@ export const ManageIntegration = ({
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   let integrationArray: TIntegrationGoogleSheetsConfigData[] = [];
-  if (googleSheetIntegration && googleSheetIntegration.config.data) {
+  if (googleSheetIntegration?.config.data) {
     integrationArray = googleSheetIntegration.config.data;
   }
   const [isDeleting, setisDeleting] = useState(false);
