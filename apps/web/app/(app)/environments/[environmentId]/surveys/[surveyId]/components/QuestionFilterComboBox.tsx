@@ -162,25 +162,39 @@ export const QuestionFilterComboBox = ({
         </DropdownMenu>
       )}
       <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">
-        <button
-          onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+        <div
           className={clsx(
-            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm",
-            disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm"
           )}>
-          {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (
+          {filterComboBoxValue && filterComboBoxValue.length > 0 ? (
             filterComboBoxItem
           ) : (
-            <p className="text-slate-400">{t("common.select")}...</p>
+            <button
+              type="button"
+              onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+              disabled={disabled || isDisabledComboBox || !filterValue}
+              className={clsx(
+                "flex-1 text-left text-slate-400",
+                disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+              )}>
+              {t("common.select")}...
+            </button>
           )}
-          <div>
+          <button
+            type="button"
+            onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+            disabled={disabled || isDisabledComboBox || !filterValue}
+            className={clsx(
+              "ml-2 flex items-center justify-center",
+              disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+            )}>
             {open ? (
-              <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
+              <ChevronUp className="h-4 w-4 opacity-50" />
             ) : (
-              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              <ChevronDown className="h-4 w-4 opacity-50" />
             )}
-          </div>
-        </button>
+          </button>
+        </div>
         <div className="relative mt-2 h-full">
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">

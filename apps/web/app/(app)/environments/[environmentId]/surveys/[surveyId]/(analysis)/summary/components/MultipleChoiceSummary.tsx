@@ -45,10 +45,15 @@ export const MultipleChoiceSummary = ({
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
-    if (a.others) return 1; // Always put a after b if a has 'others'
-    if (b.others) return -1; // Always put b after a if b has 'others'
+    const aHasOthers = (a.others?.length ?? 0) > 0;
+    const bHasOthers = (b.others?.length ?? 0) > 0;
 
-    return b.count - a.count; // Sort by count
+    // if one has “others” and the other doesn’t, push the one with others to the end
+    if (aHasOthers && !bHasOthers) return 1;
+    if (!aHasOthers && bHasOthers) return -1;
+
+    // if they’re “tied” on having others, fall back to count
+    return b.count - a.count;
   });
 
   const handleLoadMore = (e: React.MouseEvent) => {

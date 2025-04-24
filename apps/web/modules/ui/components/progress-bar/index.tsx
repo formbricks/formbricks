@@ -20,7 +20,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, barColor, he
     }
   };
 
-  const maxWidth = Math.floor(progress * 100) > 100 ? 100 : Math.floor(progress * 100);
+  const maxWidth = Math.floor(Math.max(0, Math.min(progress, 1)) * 100);
 
   return (
     <div className={cn(heightClass(), "w-full rounded-full bg-slate-200")}>

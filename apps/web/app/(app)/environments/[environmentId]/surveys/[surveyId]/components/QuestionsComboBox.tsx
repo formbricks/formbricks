@@ -34,7 +34,7 @@ import {
   StarIcon,
   User,
 } from "lucide-react";
-import * as React from "react";
+import { Fragment, useRef, useState } from "react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
@@ -141,10 +141,10 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 };
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const { t } = useTranslate();
-  const commandRef = React.useRef(null);
-  const [inputValue, setInputValue] = React.useState("");
+  const commandRef = useRef(null);
+  const [inputValue, setInputValue] = useState("");
   useClickOutside(commandRef, () => setOpen(false));
 
   return (
@@ -181,7 +181,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (
-                <>
+                <Fragment key={data.header}>
                   {data?.option.length > 0 && (
                     <CommandGroup
                       heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
@@ -199,7 +199,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
                       ))}
                     </CommandGroup>
                   )}
-                </>
+                </Fragment>
               ))}
             </CommandList>
           </div>
