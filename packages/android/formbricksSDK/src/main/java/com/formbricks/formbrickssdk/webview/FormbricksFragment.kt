@@ -151,11 +151,6 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         dialog?.window?.setDimAmount(0.0f)
         binding.formbricksWebview.setBackgroundColor(Color.TRANSPARENT)
         binding.formbricksWebview.let {
-
-            if (Formbricks.loggingEnabled) {
-                WebView.setWebContentsDebuggingEnabled(true)
-            }
-
             it.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->

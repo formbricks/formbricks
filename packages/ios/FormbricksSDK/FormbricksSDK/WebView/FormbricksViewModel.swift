@@ -64,7 +64,7 @@ private extension FormbricksViewModel {
                 }
 
                 const script = document.createElement("script");
-                script.src = "\(Formbricks.appUrl ?? "http://localhost:3000")/js/surveys.umd.cjs";
+                script.src = "\(FormbricksEnvironment.surveyScriptUrlString)";
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
@@ -110,6 +110,7 @@ private class WebViewData {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
             return String(data: jsonData, encoding: .utf8)?.replacingOccurrences(of: "\\\"", with: "'")
         } catch {
+            Formbricks.delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return nil
         }
