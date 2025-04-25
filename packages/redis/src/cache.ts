@@ -1,5 +1,6 @@
 import Redis from "ioredis";
 import { parse, stringify } from "superjson";
+import { logger } from "@formbricks/logger";
 import { createRedisClient } from "./client";
 
 export class RedisCache {
@@ -12,20 +13,33 @@ export class RedisCache {
   }
 
   async get(key: string): Promise<string | null> {
-    const data = await this.redis.get(this.prefix + key);
-    return data;
+    try {
+      const data = await this.redis.get(this.prefix + key);
+      return data;
+    } catch (error) {
+      logger.error(`Error getting cache for key ${key}`, error);
+      return null;
+    }
   }
 
   async set(key: string, value: string, ttlInSeconds?: number): Promise<void> {
-    if (ttlInSeconds) {
-      await this.redis.set(this.prefix + key, value, "EX", ttlInSeconds);
-    } else {
-      await this.redis.set(this.prefix + key, value);
+    try {
+      if (ttlInSeconds) {
+        await this.redis.set(this.prefix + key, value, "EX", ttlInSeconds);
+      } else {
+        await this.redis.set(this.prefix + key, value);
+      }
+    } catch (error) {
+      logger.error(`Error setting cache for key ${key}`, error);
     }
   }
 
   async del(key: string): Promise<void> {
-    await this.redis.del(this.prefix + key);
+    try {
+      await this.redis.del(this.prefix + key);
+    } catch (error) {
+      logger.error(`Error deleting cache for key ${key}`, error);
+    }
   }
 }
 

@@ -27,8 +27,13 @@ export class PipelineConsumer extends BaseConsumer {
 
     return async (job: Job) => {
       logger.info(`Processing job ${job.id}`);
-      await processPipeline({ ...job.data, event: job.name as PipelineTriggers });
-      logger.info(`Job ${job.id} completed`);
+      try {
+        await processPipeline({ ...job.data, event: job.name as PipelineTriggers });
+        logger.info(`Job ${job.id} completed`);
+      } catch (error) {
+        logger.error(`Job ${job.id} failed`, error);
+        throw error;
+      }
     };
   }
 }

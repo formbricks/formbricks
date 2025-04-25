@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [tsconfigPaths()],
   build: {
-    target: 'node16',
+    target: 'node18',
     ssr: true,
     outDir: 'dist',
     rollupOptions: {

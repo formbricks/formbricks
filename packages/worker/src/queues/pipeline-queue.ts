@@ -9,10 +9,14 @@ export class PipelineQueue extends BaseQueue {
   }
 }
 
-export const queuePipelineJob = async <T = unknown>(name: string, data: T) => {
-  const queue = new PipelineQueue();
+let pipelineQueueInstance: PipelineQueue | null = null;
 
-  await queue.add({
+export const queuePipelineJob = async <T = unknown>(name: string, data: T) => {
+  if (!pipelineQueueInstance) {
+    pipelineQueueInstance = new PipelineQueue();
+  }
+
+  await pipelineQueueInstance.add({
     name,
     data,
   });

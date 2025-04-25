@@ -268,12 +268,6 @@ importers:
       '@boxyhq/saml-jackson':
         specifier: 1.45.0
         version: 1.45.0(aws-crt@1.26.2)(ioredis@5.6.1)(socks@2.8.4)(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.3))
-      '@bull-board/api':
-        specifier: 6.9.2
-        version: 6.9.2(@bull-board/ui@6.9.2)
-      '@bull-board/express':
-        specifier: 6.9.2
-        version: 6.9.2
       '@dnd-kit/core':
         specifier: 6.3.1
         version: 6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -508,9 +502,6 @@ importers:
       encoding:
         specifier: 0.1.13
         version: 0.1.13
-      express:
-        specifier: 5.1.0
-        version: 5.1.0
       file-loader:
         specifier: 6.2.0
         version: 6.2.0(webpack@5.99.5)
@@ -1061,6 +1052,10 @@ importers:
         version: 3.1.1(@types/debug@4.1.12)(@types/node@22.14.0)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.29.2)(terser@5.37.0)(tsx@4.19.3)(yaml@2.7.1)
 
   packages/redis:
+    dependencies:
+      ioredis:
+        specifier: 5.6.1
+        version: 5.6.1
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -1074,9 +1069,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 3.1.1
         version: 3.1.1(vitest@3.1.1(@types/debug@4.1.12)(@types/node@22.14.0)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.3)(yaml@2.7.1))
-      ioredis:
-        specifier: 5.6.1
-        version: 5.6.1
       terser:
         specifier: 5.39.0
         version: 5.39.0

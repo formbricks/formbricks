@@ -27,6 +27,11 @@ export class BaseConsumer {
   }
 
   public createWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
+    if (this.worker) {
+      logger.info(`Worker ${this.name} already initialized`);
+      return;
+    }
+
     this.instance.createWorker(this.name, processor, options);
   }
 

@@ -6,7 +6,6 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": false,
     "strictNullChecks": true
   },
   "exclude": ["../../.env", "node_modules"],

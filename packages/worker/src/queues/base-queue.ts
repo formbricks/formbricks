@@ -17,8 +17,19 @@ export interface IBulkJobParams {
 
 export class BaseQueue {
   private instance: WorkerService;
-
-  public readonly DEFAULT_ATTEMPTS = 5;
+  private static readonly DEFAULT_ATTEMPTS = 5;
+  private static readonly DEFAULT_JOB_OPTIONS: JobsOptions = {
+    attempts: BaseQueue.DEFAULT_ATTEMPTS,
+    backoff: {
+      type: "exponential",
+      delay: minutesToMilliseconds(8),
+    },
+    removeOnComplete: true,
+    removeOnFail: {
+      age: parseInt(process.env.REDIS_FAILED_JOB_RETENTION_DAYS ?? "30"),
+      count: parseInt(process.env.REDIS_FAILED_JOB_RETRY_COUNT ?? "2000"),
+    },
+  };
   public queue: Queue | undefined;
 
   constructor(
@@ -45,18 +56,7 @@ export class BaseQueue {
   private getQueueOptions(): QueueOptions {
     return {
       connection: this.instance.connection,
-      defaultJobOptions: {
-        attempts: this.DEFAULT_ATTEMPTS,
-        backoff: {
-          type: "exponential",
-          delay: minutesToMilliseconds(8),
-        },
-        removeOnComplete: true,
-        removeOnFail: {
-          age: parseInt(process.env.REDIS_FAILED_JOB_RETENTION_DAYS ?? "30"),
-          count: parseInt(process.env.REDIS_FAILED_JOB_RETRY_COUNT ?? "2000"),
-        },
-      },
+      defaultJobOptions: BaseQueue.DEFAULT_JOB_OPTIONS,
     };
   }
 
@@ -73,15 +73,15 @@ export class BaseQueue {
   }
 
   public async getWaitingCount() {
-    return await this.instance.queue?.getWaitingCount();
+    return await this.queue?.getWaitingCount();
   }
 
   public async getDelayedCount() {
-    return await this.instance.queue?.getDelayedCount();
+    return await this.queue?.getDelayedCount();
   }
 
   public async getActiveCount() {
-    return await this.instance.queue?.getActiveCount();
+    return await this.queue?.getActiveCount();
   }
 
   public async gracefulShutdown(): Promise<void> {
@@ -95,16 +95,7 @@ export class BaseQueue {
 
   public async add(params: IJobParams) {
     const jobOptions = {
-      attempts: this.DEFAULT_ATTEMPTS,
-      backoff: {
-        type: "exponential",
-        delay: minutesToMilliseconds(8),
-      },
-      removeOnComplete: true,
-      removeOnFail: {
-        age: parseInt(process.env.REDIS_FAILED_JOB_RETENTION_DAYS ?? "30"),
-        count: parseInt(process.env.REDIS_FAILED_JOB_RETRY_COUNT ?? "2000"),
-      },
+      ...BaseQueue.DEFAULT_JOB_OPTIONS,
       ...params.options,
     };
 

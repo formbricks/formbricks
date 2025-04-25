@@ -62,7 +62,7 @@ export class WorkerService {
   public createQueue(name: QueueName, queueOptions: QueueOptions) {
     const config = {
       connection: this._connection,
-      ...(queueOptions?.defaultJobOptions && {
+      ...(queueOptions.defaultJobOptions && {
         defaultJobOptions: {
           ...queueOptions.defaultJobOptions,
         },
@@ -100,7 +100,11 @@ export class WorkerService {
 
   public async add<T = unknown>(name: string, data: T, options: JobsOptions = {}) {
     try {
-      await this._queue?.add(name, data, options);
+      if (!this._queue) {
+        throw new Error("Queue not initialized");
+      }
+
+      await this._queue.add(name, data, options);
       logger.info(`Added job ${name} to queue ${this._queue?.name}`);
     } catch (error) {
       logger.error(`Failed to add job ${name}: ${error}`);
@@ -119,7 +123,6 @@ export class WorkerService {
       const jobs = data.map((job) => {
         const jobOptions = {
           removeOnComplete: true,
-          removeOnFail: true,
           ...job?.options,
         };
 
@@ -132,7 +135,11 @@ export class WorkerService {
         return jobResult;
       });
 
-      await this._queue?.addBulk(jobs);
+      if (!this._queue) {
+        throw new Error("Queue not initialized");
+      }
+
+      await this._queue.addBulk(jobs);
     } catch (error) {
       logger.error(`Failed to add bulk jobs: ${error}`);
       throw error;
