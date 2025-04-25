@@ -12,28 +12,29 @@ export const verifyRecaptchaToken = async (token: string, threshold: number): Pr
   const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
-    const recaptchaSiteKey = RECAPTCHA_SITE_KEY;
-    const recaptchaSecretKey = RECAPTCHA_SECRET_KEY;
-
-    if (!recaptchaSiteKey || !recaptchaSecretKey) {
-      logger.warn("reCAPTCHA verification skipped: site key or secret key not configured");
+    // If keys aren't configured, skip verification
+    if (!RECAPTCHA_SITE_KEY || !RECAPTCHA_SECRET_KEY) {
+      logger.warn("reCAPTCHA verification skipped: keys not configured");
       return true;
     }
 
-    // Verify the token with Google's reCAPTCHA API
-    const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+    // Build URL-encoded form data
+    const params = new URLSearchParams();
+    params.append("secret", RECAPTCHA_SECRET_KEY);
+    params.append("response", token);
+
+    // POST to Google’s siteverify endpoint
+    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify({
-        secret: recaptchaSecretKey,
-        response: token,
-      }),
+      body: params.toString(),
       signal: controller.signal,
     });
 
     if (!response.ok) {
+      logger.error(`reCAPTCHA HTTP error: ${response.status}`);
       return false;
     }
 
@@ -46,7 +47,7 @@ export const verifyRecaptchaToken = async (token: string, threshold: number): Pr
     }
 
     // Check if the score meets the threshold
-    if (data.score !== undefined && data.score <= threshold) {
+    if (data.score !== undefined && data.score < threshold) {
       logger.error(data, "reCAPTCHA score below threshold");
       return false;
     }

@@ -35,9 +35,7 @@ describe("verifyRecaptchaToken", () => {
     const { verifyRecaptchaToken: verifyWithNoKeys } = await import("./recaptcha");
     const result = await verifyWithNoKeys("token", 0.5);
     expect(result).toBe(true);
-    expect(logger.warn).toHaveBeenCalledWith(
-      "reCAPTCHA verification skipped: site key or secret key not configured"
-    );
+    expect(logger.warn).toHaveBeenCalledWith("reCAPTCHA verification skipped: keys not configured");
   });
 
   test("returns false if fetch response is not ok", async () => {
