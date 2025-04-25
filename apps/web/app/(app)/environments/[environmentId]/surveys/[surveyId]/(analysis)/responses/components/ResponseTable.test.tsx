@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react";
 import * as ReactHotToast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
@@ -286,6 +286,31 @@ describe("ResponseTable - downloadSelectedRows", () => {
     });
 
     // Verify link was created with the correct href
+    expect(document.createElement).toHaveBeenCalledWith("a");
+    expect(mockLink.href).toBe(mockData);
+    expect(document.body.appendChild).toHaveBeenCalled();
+    expect(clickMock).toHaveBeenCalled();
+    expect(document.body.removeChild).toHaveBeenCalled();
+  });
+
+  test("downloads responses successfully with xlsx format when response has data", async () => {
+    const { survey, downloadSelectedRows, mockLink, clickMock } = setup();
+
+    // Mock successful xlsx response
+    const mockData = "http://download-link.com/xlsx";
+    (getResponsesDownloadUrlAction as any).mockResolvedValue({ data: mockData });
+
+    // Call function with xlsx format
+    await downloadSelectedRows(["response1", "response2"], "xlsx");
+
+    // Verify action was called with correct parameters for xlsx
+    expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+      surveyId: "test-survey-id",
+      format: "xlsx",
+      filterCriteria: { responseIds: ["response1", "response2"] },
+    });
+
+    // Verify download link behavior
     expect(document.createElement).toHaveBeenCalledWith("a");
     expect(mockLink.href).toBe(mockData);
     expect(document.body.appendChild).toHaveBeenCalled();
