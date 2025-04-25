@@ -2475,7 +2475,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2510,7 +2510,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
             contact: z
               .object({
                 id: ZId,
-                userId: z.string(),
+                userId: z.string().optional(),
               })
               .nullable(),
             contactAttributes: ZContactAttributes.nullable(),
@@ -2628,7 +2628,7 @@ export const ZSurveyQuestionSummaryDate = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2650,7 +2650,7 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2707,7 +2707,7 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2729,7 +2729,7 @@ export const ZSurveyQuestionSummaryAddress = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2751,7 +2751,7 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2777,7 +2777,7 @@ export const ZSurveyQuestionSummaryRanking = z.object({
             contact: z
               .object({
                 id: ZId,
-                userId: z.string(),
+                userId: z.string().optional(),
               })
               .nullable(),
             contactAttributes: ZContactAttributes.nullable(),

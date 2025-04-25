@@ -21,11 +21,19 @@ export type ExtendedSchemas = {
 };
 
 // Define a type that returns separate keys for each input type.
-export type ParsedSchemas<S extends ExtendedSchemas | undefined> = {
-  body?: S extends { body: z.ZodObject<any> } ? z.infer<S["body"]> : undefined;
-  query?: S extends { query: z.ZodObject<any> } ? z.infer<S["query"]> : undefined;
-  params?: S extends { params: z.ZodObject<any> } ? z.infer<S["params"]> : undefined;
-};
+// It uses mapped types to create a new type based on the input schemas.
+// It checks if each schema is defined and if it is a ZodObject, then infers the type from it.
+// It also uses conditional types to ensure that the keys are only included if the schema is defined and valid.
+// This allows for more flexibility and type safety when working with the input schemas.
+export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends object
+  ? {
+      [K in keyof S as NonNullable<S[K]> extends z.ZodObject<any> ? K : never]: NonNullable<
+        S[K]
+      > extends z.ZodObject<any>
+        ? z.infer<NonNullable<S[K]>>
+        : never;
+    }
+  : {};
 
 export const apiWrapper = async <S extends ExtendedSchemas>({
   request,

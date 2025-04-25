@@ -1,7 +1,9 @@
 package com.formbricks.formbrickssdk.network.queue
 
+import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.UserManager
+import com.formbricks.formbrickssdk.model.error.SDKError
 import java.util.*
 import kotlin.concurrent.timer
 
@@ -36,8 +38,15 @@ class UpdateQueue private constructor() {
     }
 
     fun setLanguage(language: String) {
-        addAttribute("language", language)
-        startDebounceTimer()
+        val effectiveUserId =  userId ?: UserManager.userId
+
+        if(effectiveUserId != null) {
+            addAttribute("language", language)
+            startDebounceTimer()
+        } else {
+            Logger.d("UpdateQueue - updating language locally: ${language}")
+            return
+        }
     }
 
     fun reset() {
@@ -55,14 +64,17 @@ class UpdateQueue private constructor() {
     }
 
     private fun commit() {
-        val currentUserId = userId
-        if (currentUserId == null) {
-            Logger.d("Error: User ID is not set yet")
+        val effectiveUserId = userId
+            ?: UserManager.userId
+        if (effectiveUserId == null) {
+            val error = SDKError.noUserIdSetError
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
             return
         }
 
-        Logger.d("UpdateQueue - commit() called on UpdateQueue with $currentUserId and $attributes")
-        UserManager.syncUser(currentUserId, attributes)
+        Logger.d("UpdateQueue - commit() called on UpdateQueue with $effectiveUserId and $attributes")
+        UserManager.syncUser(effectiveUserId, attributes)
     }
 
     companion object {

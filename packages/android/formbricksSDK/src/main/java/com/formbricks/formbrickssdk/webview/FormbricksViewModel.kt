@@ -123,10 +123,19 @@ class FormbricksViewModel : ViewModel() {
         environmentDataHolder.getSurveyJson(surveyId).let { jsonObject.add("survey", it) }
         jsonObject.addProperty("isBrandingEnabled", true)
         jsonObject.addProperty("appUrl", Formbricks.appUrl)
-        jsonObject.addProperty("languageCode", Formbricks.language)
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
         jsonObject.addProperty("contactId", UserManager.contactId)
         jsonObject.addProperty("isWebEnvironment", false)
+
+        val isMultiLangSurvey =
+            (environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.languages?.size
+                ?: 0) > 1
+
+        if (isMultiLangSurvey) {
+            jsonObject.addProperty("languageCode", Formbricks.language)
+        } else {
+            jsonObject.addProperty("languageCode", "default")
+        }
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false

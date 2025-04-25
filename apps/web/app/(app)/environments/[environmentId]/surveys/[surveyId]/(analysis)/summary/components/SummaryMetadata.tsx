@@ -71,6 +71,8 @@ export const SummaryMetadata = ({
     ttcAverage,
   } = surveySummary;
   const { t } = useTranslate();
+  const displayCountValue = dropOffCount === 0 ? <span>-</span> : dropOffCount;
+
   return (
     <div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-4">
@@ -99,9 +101,7 @@ export const SummaryMetadata = ({
         <TooltipProvider delayDuration={50}>
           <Tooltip>
             <TooltipTrigger>
-              <div
-                onClick={() => setShowDropOffs(!showDropOffs)}
-                className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+              <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
                 <span className="text-sm text-slate-600">
                   {t("environments.surveys.summary.drop_offs")}
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && !isLoading && (
@@ -112,20 +112,20 @@ export const SummaryMetadata = ({
                   <span className="text-2xl font-bold text-slate-800">
                     {isLoading ? (
                       <div className="h-6 w-12 animate-pulse rounded-full bg-slate-200"></div>
-                    ) : dropOffCount === 0 ? (
-                      <span>-</span>
                     ) : (
-                      dropOffCount
+                      displayCountValue
                     )}
                   </span>
                   {!isLoading && (
-                    <span className="ml-1 flex items-center rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-50 group-hover:bg-slate-700">
+                    <button
+                      className="ml-1 flex items-center rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-50 group-hover:bg-slate-700"
+                      onClick={() => setShowDropOffs(!showDropOffs)}>
                       {showDropOffs ? (
                         <ChevronUpIcon className="h-4 w-4" />
                       ) : (
                         <ChevronDownIcon className="h-4 w-4" />
                       )}
-                    </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -135,6 +135,7 @@ export const SummaryMetadata = ({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
         <StatCard
           label={t("environments.surveys.summary.time_to_complete")}
           percentage={null}
