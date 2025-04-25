@@ -1,13 +1,4 @@
-import { Config } from "./config";
 import { Logger } from "./logger";
-
-// Define a RecaptchaError class for specific error types
-export class RecaptchaError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RecaptchaError";
-  }
-}
 
 declare global {
   interface Window {
@@ -39,7 +30,7 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
     // Check if site key is available
     if (!recaptchaSiteKey) {
       logger.debug("reCAPTCHA site key not found");
-      reject(new RecaptchaError("reCAPTCHA site key not found"));
+      reject(new Error("reCAPTCHA site key not found"));
       return;
     }
 
@@ -57,7 +48,7 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
     };
     script.onerror = () => {
       logger.debug("Error loading reCAPTCHA script:");
-      reject(new RecaptchaError("Error loading reCAPTCHA script"));
+      reject(new Error("Error loading reCAPTCHA script"));
     };
 
     // Add script to document
@@ -66,15 +57,16 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 };
 
 /**
- * Executes reCAPTCHA verification and dispatches a custom event with the token
+ * Executes reCAPTCHA verification and returns the token
  * @param action - The action name for reCAPTCHA (default: "submit_response")
- * @returns A promise that resolves when the token is dispatched
+ * @returns A promise that resolves to the token or undefined
  */
-export const executeRecaptcha = async (action = "submit_response"): Promise<string | undefined> => {
+export const executeRecaptcha = async (
+  recaptchaSiteKey?: string,
+  action = "submit_response"
+): Promise<string | undefined> => {
   const logger = Logger.getInstance();
-  const config = Config.getInstance();
 
-  const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   if (!recaptchaSiteKey) {
     logger.debug("reCAPTCHA site key not found");
     return;
@@ -90,7 +82,7 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
       return;
     }
 
-    const val = await new Promise((resolve, reject) => {
+    return await new Promise<string>((resolve, reject) => {
       window.grecaptcha.ready(() => {
         window.grecaptcha
           .execute(recaptchaSiteKey, { action })
@@ -98,14 +90,12 @@ export const executeRecaptcha = async (action = "submit_response"): Promise<stri
             resolve(token);
           })
           .catch((error: unknown) => {
-            logger.debug(`Error during reCAPTCHA execution: ${error as string}`);
-            reject(new RecaptchaError(`Error during reCAPTCHA execution: ${error as string}`));
+            logger.debug(`Error during reCAPTCHA execution: ${String(error)}`);
+            reject(new Error(`Error during reCAPTCHA execution: ${String(error)}`));
           });
       });
     });
-
-    return val as string;
   } catch (error) {
-    logger.debug(`Error during reCAPTCHA execution: ${error as string}`);
+    logger.debug(`Error during reCAPTCHA execution: ${String(error)}`);
   }
 };

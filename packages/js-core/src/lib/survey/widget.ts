@@ -92,6 +92,10 @@ export const renderWidget = async (
   const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
 
+  const getRecaptchaToken = async (): Promise<string | undefined> => {
+    return executeRecaptcha(recaptchaSiteKey);
+  };
+
   if (isSpamProtectionEnabled) {
     await loadRecaptchaScript(recaptchaSiteKey);
   }
@@ -113,7 +117,7 @@ export const renderWidget = async (
       hiddenFieldsRecord: hiddenFieldsObject,
       recaptchaSiteKey,
       isSpamProtectionEnabled,
-      getRecaptchaToken: executeRecaptcha,
+      getRecaptchaToken,
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };

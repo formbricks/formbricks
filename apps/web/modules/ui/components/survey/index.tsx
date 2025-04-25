@@ -22,7 +22,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
 
   const renderInline = useCallback(
     () => window.formbricksSurveys.renderSurvey({ ...props, containerId, getRecaptchaToken, mode: "inline" }),
-    [containerId, props]
+    [containerId, props, getRecaptchaToken]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
