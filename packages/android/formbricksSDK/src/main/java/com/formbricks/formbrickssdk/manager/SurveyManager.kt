@@ -182,12 +182,8 @@ object SurveyManager {
     }
 
     private fun stopDisplayTimer() {
-        try {
-            displayTimer.cancel()
-            displayTimer = Timer()
-        } catch (_: Exception) {
-
-        }
+        displayTimer.cancel()
+        displayTimer = Timer()
     }
 
     /**
