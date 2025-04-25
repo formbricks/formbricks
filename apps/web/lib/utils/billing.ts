@@ -9,7 +9,8 @@ export const getBillingPeriodStartDate = (billing: TOrganizationBilling): Date =
   } else if (billing.period === "yearly" && billing.periodStart) {
     // For yearly plans, use the same day of the month as the original subscription date
     const periodStart = new Date(billing.periodStart);
-    const subscriptionDay = periodStart.getDate();
+    // Use UTC to avoid timezone-offset shifting when parsing ISO date-only strings
+    const subscriptionDay = periodStart.getUTCDate();
 
     // Helper function to get the last day of a specific month
     const getLastDayOfMonth = (year: number, month: number): number => {
