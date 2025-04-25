@@ -2,11 +2,11 @@
 
 import { getAvailableSurveysAction } from "@/modules/discover/components/Surveys/actions";
 import { ActiveSurveyCard } from "@/modules/discover/components/common/active-survey-card";
+import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import React, { useEffect, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 export function AvailableSurveys(): React.JSX.Element {
-  const [availableSurveys, setAvailableSurveys] = useState<TSurvey[] | null>(null);
+  const [availableSurveys, setAvailableSurveys] = useState<TExtendedSurvey[] | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -15,8 +15,8 @@ export function AvailableSurveys(): React.JSX.Element {
         skip: 0,
       });
 
-      if (availableSurveys && availableSurveys.data) {
-        setAvailableSurveys(availableSurveys.data as TSurvey[]);
+      if (availableSurveys?.data) {
+        setAvailableSurveys(availableSurveys.data);
       }
     })();
   }, []);

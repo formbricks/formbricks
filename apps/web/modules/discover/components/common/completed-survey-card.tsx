@@ -1,27 +1,57 @@
-// import { getUserResponseForSurveyAction } from "@/modules/activity/components/Surveys/actions";
-// import { SurveyInfoModal } from "@/modules/activity/components/common/survey-info-modal";
+import { getUserResponseAction } from "@/modules/discover/components/Surveys/actions";
+import { SurveyInfoModal } from "@/modules/discover/components/common/survey-response-modal";
+import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { ArrowRightIcon, CheckCircleIcon } from "lucide-react";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { ArrowRightIcon, CheckCircleIcon, UsersIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TResponse } from "@formbricks/types/responses";
 
 interface CompletedSurveyCardProps {
-  survey: TSurvey;
+  survey: TExtendedSurvey;
 }
 
 export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
   const { t } = useTranslate();
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-
   const surveyTypeLabel = t("common.engagement");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [response, setResponse] = useState<TResponse | null>(null);
+
+  useEffect(() => {
+    const fetchResponse = async () => {
+      if (!response) {
+        const res = await getUserResponseAction({
+          surveyId: survey.id,
+          creatorId: survey.createdBy ? survey.createdBy : "",
+        });
+        if (res && res.data) {
+          setResponse(res.data);
+        }
+      }
+    };
+
+    fetchResponse();
+  }, [survey.id, response]);
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="min-h-[170px] p-6">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
-          <div>
+          <div className="flex items-center gap-2">
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
+            {survey.responseCount != undefined && (
+              <div className="flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                <UsersIcon className="mr-1 h-3 w-3" />
+                <div>
+                  <div className="flex items-center gap-1">
+                    <span>{survey.responseCount}</span>
+                    <span>{survey.responseCount <= 1 ? t("common.response") : t("common.responses")}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
@@ -34,19 +64,38 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
           <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
       </div>
-      <div className="flex items-center p-6 pt-0">
-        <Button
-          // onClick={() => setIsModalOpen(true)}
-          className="ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-          type="submit"
-          loading={false}>
-          {t("environments.activity.card.view_info")}
-          <ArrowRightIcon
-            className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-            strokeWidth={3}
-          />
-        </Button>
-        {/* <SurveyInfoModal survey={survey} open={isModalOpen} setOpen={setIsModalOpen} /> */}
+      <div className="p-6 pt-0">
+        {survey.creator && (
+          <div className="mb-4 flex items-center">
+            {survey.creator.imageUrl ? (
+              <img
+                src={survey.creator.imageUrl}
+                alt={t("")}
+                className="mr-2 h-6 w-6 rounded-full object-cover"
+              />
+            ) : (
+              <div className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-medium"></div>
+            )}
+            <span className="text-xs text-slate-500">
+              {t("common.created_by")}{" "}
+              <span className="font-medium text-slate-600">{survey.creator.name} </span>
+            </span>
+          </div>
+        )}
+        <div className="flex items-center">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            type="submit"
+            loading={false}>
+            {t("environments.activity.card.view_info")}
+            <ArrowRightIcon
+              className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              strokeWidth={3}
+            />
+          </Button>
+        </div>
+        <SurveyInfoModal survey={survey} response={response} open={isModalOpen} setOpen={setIsModalOpen} />
       </div>
     </div>
   );
