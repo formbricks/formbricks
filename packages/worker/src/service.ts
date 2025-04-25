@@ -59,10 +59,10 @@ export class WorkerService {
     return getRedisConnectionStatus() === "ready";
   }
 
-  public createQueue(name: QueueName, queueOptions: QueueOptions) {
+  public createQueue(name: QueueName, queueOptions?: QueueOptions) {
     const config = {
       connection: this._connection,
-      ...(queueOptions.defaultJobOptions && {
+      ...(queueOptions?.defaultJobOptions && {
         defaultJobOptions: {
           ...queueOptions.defaultJobOptions,
         },
@@ -78,7 +78,7 @@ export class WorkerService {
 
   public createWorker(
     name: QueueName,
-    processor?: string | Processor<any, unknown | void, string>,
+    processor?: string | Processor<any, unknown | undefined, string>,
     workerOptions?: WorkerOptions
   ) {
     const { concurrency, lockDuration, settings } = workerOptions || {};
@@ -105,7 +105,7 @@ export class WorkerService {
       }
 
       await this._queue.add(name, data, options);
-      logger.info(`Added job ${name} to queue ${this._queue?.name}`);
+      logger.info(`Added job ${name} to queue ${this._queue.name}`);
     } catch (error) {
       logger.error(`Failed to add job ${name}: ${error}`);
       throw error;
@@ -119,6 +119,11 @@ export class WorkerService {
       options?: BulkJobOptions;
     }[]
   ) {
+    if (!data.length) {
+      logger.warn("addBulk called with empty data array");
+      return;
+    }
+
     try {
       const jobs = data.map((job) => {
         const jobOptions = {
