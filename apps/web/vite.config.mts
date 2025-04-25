@@ -55,6 +55,7 @@ export default defineConfig({
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/PictureChoiceSummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/RatingSummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryMetadata.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/FileUploadSummary.tsx",
         "app/(app)/environments/**/surveys/**/components/QuestionFilterComboBox.tsx",
         "app/(app)/environments/**/surveys/**/components/QuestionsComboBox.tsx",
         "app/(app)/environments/**/integrations/airtable/components/ManageIntegration.tsx",
