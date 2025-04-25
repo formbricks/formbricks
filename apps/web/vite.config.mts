@@ -94,6 +94,7 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
+        "modules/ui/components/card/index.tsx"
       ],
       exclude: [
         "**/.next/**",
