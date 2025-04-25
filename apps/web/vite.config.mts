@@ -89,6 +89,7 @@ export default defineConfig({
         "modules/account/**/*.ts",
         "modules/analysis/**/*.tsx",
         "modules/analysis/**/*.ts",
+        "app/lib/survey-builder.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
         "lib/utils/billing.ts",
         "lib/crypto.ts",
