@@ -4,161 +4,18 @@ import {
   buildMultipleChoiceQuestion,
   buildNPSQuestion,
   buildOpenTextQuestion,
-  buildRatingQUestion,
+  buildRatingQuestion,
+  buildSurvey,
+  createChoiceJumpLogic,
+  createJumpLogic,
+  getDefaultEndingCard,
+  getDefaultSurveyPreset,
+  hiddenFieldsDefault,
 } from "@/app/lib/survey-builder";
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyEnding,
-  TSurveyHiddenFields,
-  TSurveyLanguage,
-  TSurveyLogic,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyWelcomeCard,
-} from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
-
-// Helper function to create standard jump logic based on operator
-const createJumpLogic = (
-  sourceQuestionId: string,
-  targetId: string,
-  operator: "isSkipped" | "isSubmitted" | "isClicked"
-): TSurveyLogic => ({
-  id: createId(),
-  conditions: {
-    id: createId(),
-    connector: "and",
-    conditions: [
-      {
-        id: createId(),
-        leftOperand: {
-          value: sourceQuestionId,
-          type: "question",
-        },
-        operator: operator,
-      },
-    ],
-  },
-  actions: [
-    {
-      id: createId(),
-      objective: "jumpToQuestion",
-      target: targetId,
-    },
-  ],
-});
-
-// Helper function to create jump logic based on choice selection
-const createChoiceJumpLogic = (
-  sourceQuestionId: string,
-  choiceId: string,
-  targetId: string
-): TSurveyLogic => ({
-  id: createId(),
-  conditions: {
-    id: createId(),
-    connector: "and",
-    conditions: [
-      {
-        id: createId(),
-        leftOperand: {
-          value: sourceQuestionId,
-          type: "question",
-        },
-        operator: "equals",
-        rightOperand: {
-          type: "static",
-          value: choiceId,
-        },
-      },
-    ],
-  },
-  actions: [
-    {
-      id: createId(),
-      objective: "jumpToQuestion",
-      target: targetId,
-    },
-  ],
-});
-
-export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): TSurveyEndScreenCard => {
-  const languageCodes = extractLanguageCodes(languages);
-  return {
-    id: createId(),
-    type: "endScreen",
-    headline: createI18nString(t("templates.default_ending_card_headline"), languageCodes),
-    subheader: createI18nString(t("templates.default_ending_card_subheader"), languageCodes),
-    buttonLabel: createI18nString(t("templates.default_ending_card_button_label"), languageCodes),
-    buttonLink: "https://formbricks.com",
-  };
-};
-
-const hiddenFieldsDefault: TSurveyHiddenFields = {
-  enabled: true,
-  fieldIds: [],
-};
-
-export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
-  return {
-    enabled: false,
-    headline: { default: t("templates.default_welcome_card_headline") },
-    html: { default: t("templates.default_welcome_card_html") },
-    buttonLabel: { default: t("templates.default_welcome_card_button_label") },
-    timeToFinish: false,
-    showResponseCount: false,
-  };
-};
-
-export const getDefaultSurveyPreset = (t: TFnType): TTemplate["preset"] => {
-  return {
-    name: "New Survey",
-    welcomeCard: getDefaultWelcomeCard(t),
-    endings: [getDefaultEndingCard([], t)],
-    hiddenFields: hiddenFieldsDefault,
-    questions: [],
-  };
-};
-
-/**
- * Generic builder for survey.
- * @param config - The configuration for survey settings and questions.
- * @param t - The translation function.
- */
-export const buildSurvey = (
-  config: {
-    name: string;
-    role: TTemplateRole;
-    industries: ("eCommerce" | "saas" | "other")[];
-    channels: ("link" | "app" | "website")[];
-    description: string;
-    questions: TSurveyQuestion[];
-    endings?: TSurveyEnding[];
-    hiddenFields?: TSurveyHiddenFields;
-  },
-  t: TFnType
-): TTemplate => {
-  const localSurvey = getDefaultSurveyPreset(t);
-  return {
-    name: config.name,
-    role: config.role,
-    industries: config.industries,
-    channels: config.channels,
-    description: config.description,
-    preset: {
-      ...localSurvey,
-      name: config.name,
-      questions: config.questions,
-      endings: config.endings ?? localSurvey.endings,
-      hiddenFields: config.hiddenFields ?? hiddenFieldsDefault,
-    },
-  };
-};
+import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TTemplate } from "@formbricks/types/templates";
 
 const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
@@ -204,7 +61,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
           inputType: "text",
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.card_abandonment_survey_question_4_headline"),
           required: true,
           scale: "number",
@@ -307,7 +164,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
           inputType: "text",
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.site_abandonment_survey_question_5_headline"),
           required: true,
           scale: "number",
@@ -786,7 +643,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
       description: t("templates.review_prompt_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -983,7 +840,7 @@ const employeeSatisfaction = (t: TFnType): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.employee_satisfaction_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "star",
           headline: t("templates.employee_satisfaction_question_1_headline"),
@@ -1014,7 +871,7 @@ const employeeSatisfaction = (t: TFnType): TTemplate => {
           inputType: "text",
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.employee_satisfaction_question_5_headline"),
@@ -1256,7 +1113,7 @@ const featureChaser = (t: TFnType): TTemplate => {
       channels: ["app"],
       description: t("templates.feature_chaser_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.feature_chaser_question_1_headline"),
@@ -1295,7 +1152,7 @@ const fakeDoorFollowUp = (t: TFnType): TTemplate => {
       channels: ["app", "website"],
       description: t("templates.fake_door_follow_up_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.fake_door_follow_up_question_1_headline"),
           required: true,
           lowerLabel: t("templates.fake_door_follow_up_question_1_lower_label"),
@@ -1408,7 +1265,7 @@ const integrationSetupSurvey = (t: TFnType): TTemplate => {
       channels: ["app"],
       description: t("templates.integration_setup_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -1594,7 +1451,7 @@ const customerSatisfactionScore = (t: TFnType): TTemplate => {
       channels: ["app", "link", "website"],
       description: t("templates.csat_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           range: 10,
           scale: "number",
@@ -1763,7 +1620,7 @@ const collectFeedback = (t: TFnType): TTemplate => {
       channels: ["website", "link"],
       description: t("templates.collect_feedback_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -1849,7 +1706,7 @@ const collectFeedback = (t: TFnType): TTemplate => {
           inputType: "text",
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[3],
           range: 5,
           scale: "smiley",
@@ -1993,7 +1850,7 @@ const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
       channels: ["app"],
       description: t("templates.gauge_feature_satisfaction_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.gauge_feature_satisfaction_question_1_headline"),
           required: true,
           lowerLabel: t("templates.gauge_feature_satisfaction_question_1_lower_label"),
@@ -2069,7 +1926,7 @@ const customerEffortScore = (t: TFnType): TTemplate => {
       channels: ["app"],
       description: t("templates.customer_effort_score_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.customer_effort_score_question_1_headline"),
@@ -2101,7 +1958,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.career_development_survey_question_1_headline"),
@@ -2110,7 +1967,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
           required: true,
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.career_development_survey_question_2_headline"),
@@ -2119,7 +1976,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
           required: true,
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.career_development_survey_question_3_headline"),
@@ -2128,7 +1985,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
           required: true,
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.career_development_survey_question_4_headline"),
@@ -2231,7 +2088,7 @@ const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
           ],
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.professional_development_survey_question_4_headline"),
@@ -2277,7 +2134,7 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
       description: t("templates.rate_checkout_experience_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -2354,7 +2211,7 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
       description: t("templates.measure_search_experience_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -2431,7 +2288,7 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
       description: t("templates.evaluate_content_quality_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             {
@@ -2527,7 +2384,7 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
           required: true,
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[1],
           logic: [
             {
@@ -2702,7 +2559,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
           dismissButtonLabel: t("templates.identify_sign_up_barriers_question_1_dismiss_button_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[1],
           logic: [
             {
@@ -2842,7 +2699,7 @@ const buildProductRoadmap = (t: TFnType): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.build_product_roadmap_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.build_product_roadmap_question_1_headline"),
@@ -2878,7 +2735,7 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
       description: t("templates.understand_purchase_intention_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             createChoiceJumpLogic(reusableQuestionIds[0], "2", reusableQuestionIds[1]),
@@ -2934,7 +2791,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
       description: t("templates.improve_newsletter_content_description"),
       endings: localSurvey.endings,
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
             createChoiceJumpLogic(reusableQuestionIds[0], "5", reusableQuestionIds[2]),
@@ -3034,7 +2891,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
           dismissButtonLabel: t("templates.evaluate_a_product_idea_question_1_dismiss_button_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[1],
           logic: [
             createChoiceJumpLogic(reusableQuestionIds[1], "3", reusableQuestionIds[2]),
@@ -3067,7 +2924,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
           dismissButtonLabel: t("templates.evaluate_a_product_idea_question_4_dismiss_button_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           id: reusableQuestionIds[4],
           logic: [
             createChoiceJumpLogic(reusableQuestionIds[4], "3", reusableQuestionIds[5]),
@@ -3212,7 +3069,7 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.employee_well_being_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.employee_well_being_question_1_headline"),
           required: true,
           scale: "number",
@@ -3221,7 +3078,7 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
           upperLabel: t("templates.employee_well_being_question_1_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.employee_well_being_question_2_headline"),
           required: true,
           scale: "number",
@@ -3230,7 +3087,7 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
           upperLabel: t("templates.employee_well_being_question_2_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.employee_well_being_question_3_headline"),
           required: true,
           scale: "number",
@@ -3262,7 +3119,7 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.long_term_retention_check_in_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "star",
           headline: t("templates.long_term_retention_check_in_question_1_headline"),
@@ -3293,7 +3150,7 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
           required: true,
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "number",
           headline: t("templates.long_term_retention_check_in_question_4_headline"),
@@ -3339,7 +3196,7 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
           inputType: "text",
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           range: 5,
           scale: "smiley",
           headline: t("templates.long_term_retention_check_in_question_9_headline"),
@@ -3371,7 +3228,7 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.professional_development_growth_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.professional_development_growth_survey_question_1_headline"),
           required: true,
           scale: "number",
@@ -3380,7 +3237,7 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
           upperLabel: t("templates.professional_development_growth_survey_question_1_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.professional_development_growth_survey_question_2_headline"),
           required: true,
           scale: "number",
@@ -3389,7 +3246,7 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
           upperLabel: t("templates.professional_development_growth_survey_question_2_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.professional_development_growth_survey_question_3_headline"),
           required: true,
           scale: "number",
@@ -3421,7 +3278,7 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.recognition_and_reward_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.recognition_and_reward_survey_question_1_headline"),
           required: true,
           scale: "number",
@@ -3430,7 +3287,7 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
           upperLabel: t("templates.recognition_and_reward_survey_question_1_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.recognition_and_reward_survey_question_2_headline"),
           required: true,
           scale: "number",
@@ -3439,7 +3296,7 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
           upperLabel: t("templates.recognition_and_reward_survey_question_2_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.recognition_and_reward_survey_question_3_headline"),
           required: true,
           scale: "number",
@@ -3470,7 +3327,7 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.alignment_and_engagement_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.alignment_and_engagement_survey_question_1_headline"),
           required: true,
           scale: "number",
@@ -3479,7 +3336,7 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
           upperLabel: t("templates.alignment_and_engagement_survey_question_1_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.alignment_and_engagement_survey_question_2_headline"),
           required: true,
           scale: "number",
@@ -3487,7 +3344,7 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
           lowerLabel: t("templates.alignment_and_engagement_survey_question_2_lower_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.alignment_and_engagement_survey_question_3_headline"),
           required: true,
           scale: "number",
@@ -3519,7 +3376,7 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
       channels: ["link"],
       description: t("templates.supportive_work_culture_survey_description"),
       questions: [
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.supportive_work_culture_survey_question_1_headline"),
           required: true,
           scale: "number",
@@ -3528,7 +3385,7 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
           upperLabel: t("templates.supportive_work_culture_survey_question_1_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.supportive_work_culture_survey_question_2_headline"),
           required: true,
           scale: "number",
@@ -3537,7 +3394,7 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
           upperLabel: t("templates.supportive_work_culture_survey_question_2_upper_label"),
           t,
         }),
-        buildRatingQUestion({
+        buildRatingQuestion({
           headline: t("templates.supportive_work_culture_survey_question_3_headline"),
           required: true,
           scale: "number",
@@ -3661,7 +3518,7 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     segment: null,
     questions: [
       {
-        ...buildRatingQUestion({
+        ...buildRatingQuestion({
           id: "lbdxozwikh838yc6a8vbwuju",
           range: 5,
           scale: "star",
