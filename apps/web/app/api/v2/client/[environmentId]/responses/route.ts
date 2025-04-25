@@ -91,11 +91,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
           true
         );
       }
-      const isPassed = await verifyRecaptchaToken(
-        responseInput.recaptchaToken,
-        survey.recaptcha.threshold,
-        responseInput.siteKey
-      );
+      const isPassed = await verifyRecaptchaToken(responseInput.recaptchaToken, survey.recaptcha.threshold);
 
       if (!isPassed) {
         return responses.badRequestResponse(

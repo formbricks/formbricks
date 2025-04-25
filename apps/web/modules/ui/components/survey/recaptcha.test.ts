@@ -99,7 +99,7 @@ describe("executeRecaptcha", () => {
   test("logs and returns undefined on error during execution", async () => {
     window.grecaptcha = {
       ...window.grecaptcha,
-      execute: vi.fn(() => Promise.reject("fail")),
+      execute: vi.fn(() => Promise.reject(new Error("fail"))),
     };
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
     expect(result).toBeUndefined();
