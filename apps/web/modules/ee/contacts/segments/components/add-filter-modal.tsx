@@ -148,6 +148,8 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
         <div>
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+            tabIndex={0}
+            data-testid="person-filter-item"
             onClick={() => {
               handleAddFilter({
                 type: "person",
@@ -186,6 +188,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             key={attributeKey.id}
+            tabIndex={0}
             onClick={() => {
               handleAddFilter({
                 type: "attribute",
@@ -193,6 +196,17 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
                 setOpen,
                 contactAttributeKey: attributeKey.name ?? attributeKey.key,
               });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleAddFilter({
+                  type: "attribute",
+                  onAddFilter,
+                  setOpen,
+                  contactAttributeKey: attributeKey.name ?? attributeKey.key,
+                });
+              }
             }}>
             <TagIcon className="h-4 w-4" />
             <p>{attributeKey.name ?? attributeKey.key}</p>
@@ -308,6 +322,8 @@ export function AddFilterModal({
                 return (
                   <div
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                    key={attributeKey.id}
+                    tabIndex={0}
                     onClick={() => {
                       handleAddFilter({
                         type: "attribute",
@@ -315,6 +331,17 @@ export function AddFilterModal({
                         setOpen,
                         contactAttributeKey: attributeKey.key,
                       });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleAddFilter({
+                          type: "attribute",
+                          onAddFilter,
+                          setOpen,
+                          contactAttributeKey: attributeKey.key,
+                        });
+                      }
                     }}>
                     <TagIcon className="h-4 w-4" />
                     <p>{attributeKey.name ?? attributeKey.key}</p>
@@ -326,12 +353,24 @@ export function AddFilterModal({
                 return (
                   <div
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                    key={personAttribute.name}
+                    tabIndex={0}
                     onClick={() => {
                       handleAddFilter({
                         type: "person",
                         onAddFilter,
                         setOpen,
                       });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleAddFilter({
+                          type: "person",
+                          onAddFilter,
+                          setOpen,
+                        });
+                      }
                     }}>
                     <FingerprintIcon className="h-4 w-4" />
                     <p>{personAttribute.name}</p>
@@ -343,6 +382,8 @@ export function AddFilterModal({
                 return (
                   <div
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                    key={segment.id}
+                    tabIndex={0}
                     onClick={() => {
                       handleAddFilter({
                         type: "segment",
@@ -350,6 +391,17 @@ export function AddFilterModal({
                         setOpen,
                         segmentId: segment.id,
                       });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleAddFilter({
+                          type: "segment",
+                          onAddFilter,
+                          setOpen,
+                          segmentId: segment.id,
+                        });
+                      }
                     }}>
                     <Users2Icon className="h-4 w-4" />
                     <p>{segment.title}</p>
@@ -361,6 +413,7 @@ export function AddFilterModal({
                 <div
                   className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                   key={deviceType.id}
+                  tabIndex={0}
                   onClick={() => {
                     handleAddFilter({
                       type: "device",
@@ -368,6 +421,17 @@ export function AddFilterModal({
                       setOpen,
                       deviceType: deviceType.id,
                     });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleAddFilter({
+                        type: "device",
+                        onAddFilter,
+                        setOpen,
+                        deviceType: deviceType.id,
+                      });
+                    }
                   }}>
                   <MonitorSmartphoneIcon className="h-4 w-4" />
                   <span>{deviceType.name}</span>
@@ -404,6 +468,8 @@ export function AddFilterModal({
             return (
               <div
                 className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+                key={segment.id}
+                tabIndex={0}
                 onClick={() => {
                   handleAddFilter({
                     type: "segment",
@@ -411,6 +477,17 @@ export function AddFilterModal({
                     setOpen,
                     segmentId: segment.id,
                   });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAddFilter({
+                      type: "segment",
+                      onAddFilter,
+                      setOpen,
+                      segmentId: segment.id,
+                    });
+                  }
                 }}>
                 <Users2Icon className="h-4 w-4" />
                 <p>{segment.title}</p>
@@ -428,6 +505,7 @@ export function AddFilterModal({
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             key={deviceType.id}
+            tabIndex={0}
             onClick={() => {
               handleAddFilter({
                 type: "device",
@@ -435,6 +513,17 @@ export function AddFilterModal({
                 setOpen,
                 deviceType: deviceType.id,
               });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleAddFilter({
+                  type: "device",
+                  onAddFilter,
+                  setOpen,
+                  deviceType: deviceType.id,
+                });
+              }
             }}>
             <MonitorSmartphoneIcon className="h-4 w-4" />
             <span>{deviceType.name}</span>
