@@ -29,11 +29,20 @@ WORKDIR /tmp/libxml2
 RUN wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
     tar -xf libxml2-2.14.1.tar.xz && \
     cd libxml2-2.14.1 && \
-    ./configure --prefix=/usr --without-python && \
+    ./configure --prefix=/usr --with-python=no --enable-static --enable-shared && \
     make -j$(nproc) && \
     make install && \
-    cd .. && \
-    rm -rf /tmp/libxml2
+    # Verify installation
+    echo "Checking libxml2 installation:" && \
+    find /usr -name "libxml2*" && \
+    # Install libxml2-utils explicitly to get xmllint
+    apk add --no-cache libxml2-utils && \
+    # Force linking against our custom-built library
+    rm -f /usr/lib/libxml2.so* && \
+    cp .libs/libxml2.so* /usr/lib/ && \
+    ldconfig /usr/lib || true && \
+    echo "Installation complete. Checking xmllint:" && \
+    which xmllint && xmllint --version || echo "xmllint not available"
 
 WORKDIR /app
 
