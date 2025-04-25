@@ -35,7 +35,7 @@ export default defineConfig({
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/ui/components/alert/*.tsx",
         "modules/ui/components/environmentId-base-layout/*.tsx",
-        "modules/ui/components/survey/recaptcha.tsx",
+        "modules/ui/components/survey/recaptcha.ts",
         "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
