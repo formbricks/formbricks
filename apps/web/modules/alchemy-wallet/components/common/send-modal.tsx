@@ -29,24 +29,27 @@ type FormValues = {
 type Props = {
   balances: TokenBalance[];
   onSelectBalance: (TokenBalance) => void;
+  onModalSubmit?: (string) => void;
   balance: TokenBalance | null;
-  onClose: () => void;
-  contractAddress?: string;
-  address?: string;
-  amount?: number;
+  open: boolean;
+  setOpen: (boolean) => void;
+  address?: string | null;
+  amount?: number | null;
 };
 
 export function SendModal({
   balances,
   balance,
   onSelectBalance,
-  onClose,
-  contractAddress,
+  onModalSubmit,
+  open,
+  setOpen,
   address,
   amount,
 }: Props) {
   const { t } = useTranslate();
   const {
+    // manual payments, tokens can be switched, when pay rewards is clicked store a note
     control,
     register,
     handleSubmit,
@@ -55,27 +58,34 @@ export function SendModal({
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
-      tokenAddress: contractAddress,
-      address: address,
-      amount: amount,
+      tokenAddress: balance?.token.address ?? undefined,
+      address: address ?? undefined,
+      amount: amount ?? undefined,
     },
   });
   const tokenAddress = watch("tokenAddress");
   const { send } = useSendERC20({ address: tokenAddress });
   const [loading, setLoading] = useState(false);
 
+  const onClose = () => {
+    setOpen(false);
+  };
+
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
     const { address, amount } = data;
     try {
-      await send(address, amount);
+      const tx = await send(address, amount);
       toast.success(`Tokens sent successfully!`);
+      if (onModalSubmit && tx) {
+        onModalSubmit(JSON.stringify(tx));
+      }
     } catch (err) {
       console.error("Send failed", err);
       toast.error(`Tokens failed to send`);
     }
     setLoading(false);
-    onClose();
+    setOpen(false);
   };
 
   useEffect(() => {
@@ -86,7 +96,7 @@ export function SendModal({
 
   return (
     <>
-      <Modal open={!!balance} setOpen={onClose}>
+      <Modal open={open} setOpen={setOpen}>
         <div className="flex h-full flex-col rounded-lg">
           <div className="flex inline-flex items-center justify-start gap-4">
             <div className="text-xl font-medium text-slate-700">
@@ -109,7 +119,7 @@ export function SendModal({
                 render={({ field }) => (
                   <Select
                     value={field.value}
-                    disabled={loading || !!contractAddress}
+                    disabled={loading}
                     onValueChange={(address) => {
                       field.onChange(address);
                       const selected = balances.find((b) => b.token.address === address);
@@ -147,7 +157,7 @@ export function SendModal({
               <Input
                 autoFocus
                 type="text"
-                disabled={loading || !!address}
+                disabled={loading}
                 placeholder={"0x..."}
                 {...register("address", {
                   required: t("environments.wallet.form.error.address_required"),
@@ -164,7 +174,7 @@ export function SendModal({
               <Input
                 autoFocus
                 type="number"
-                disabled={loading || !!amount}
+                disabled={loading}
                 placeholder={"0.00"}
                 step="any"
                 {...register("amount", {

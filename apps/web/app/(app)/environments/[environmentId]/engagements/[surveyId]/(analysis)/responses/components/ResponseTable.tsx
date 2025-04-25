@@ -12,6 +12,7 @@ import {
 } from "@/modules/ui/components/data-table";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { useUser } from "@account-kit/react";
 import {
   DndContext,
   type DragEndEvent,
@@ -27,12 +28,14 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
+import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
+import { useBlockscoutApi } from "@formbricks/web3";
 
 interface ResponseTableProps {
   data: TResponseTableData[];
@@ -72,6 +75,24 @@ export const ResponseTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [parent] = useAutoAnimate();
+  const userOnChain = useUser();
+  const address = userOnChain?.address || "";
+  const blockscoutApi = useBlockscoutApi();
+  const [balances, setBalances] = useState<TokenBalance[] | null>(null);
+
+  // Fetch balances
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (!address || !blockscoutApi) return;
+      const data = await blockscoutApi.getAddressTokenBalances(address);
+      setBalances(data.data);
+    };
+
+    fetchBalances();
+
+    let interval = setInterval(fetchBalances, 60000);
+    return () => clearInterval(interval);
+  }, [blockscoutApi, address]);
 
   // Generate columns
   const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
@@ -260,6 +281,7 @@ export const ResponseTable = ({
 
         {responses && (
           <ResponseCardModal
+            balances={balances}
             survey={survey}
             responses={responses}
             user={user}
