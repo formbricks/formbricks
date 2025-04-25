@@ -1,4 +1,4 @@
-FROM node:lts-alpine3.21 AS base
+FROM node:22-alpine3.21 AS base
 
 #
 ## step 1: Prune monorepo
@@ -21,8 +21,91 @@ FROM base AS installer
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+# Install necessary build tools and compilers, plus dependencies for custom builds
+# Added: meson, ninja, pkg-config, libffi-dev, pcre2-dev for glib
+RUN apk update && apk add --no-cache \
+    cmake g++ gcc jq make openssl-dev python3 \
+    build-base wget tar linux-headers zlib-dev perl \
+    meson ninja pkg-config libffi-dev pcre2-dev
+
+# --- Build custom OpenSSL ---
+ARG OPENSSL_VERSION=3.3.1 # Using latest LTS as 3.5.0 is not available
+RUN set -eux; \
+    cd /tmp; \
+    wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz"; \
+    tar -xzf "openssl-${OPENSSL_VERSION}.tar.gz"; \
+    cd "openssl-${OPENSSL_VERSION}"; \
+    ./config --prefix=/usr/local --openssldir=/usr/local/ssl shared zlib; \
+    make -j$(nproc); \
+    make install_sw; \
+    cd /; \
+    rm -rf "/tmp/openssl-${OPENSSL_VERSION}"; \
+    find /usr/local/lib -name '*.a' -delete
+
+# --- Build custom libxml2 ---
+ARG LIBXML2_VERSION=2.14.1 # User requested 2.14.1
+RUN set -eux; \
+    cd /tmp; \
+    LIBXML2_MAJOR_MINOR=$(echo $LIBXML2_VERSION | cut -d. -f1-2); \
+    wget "https://download.gnome.org/sources/libxml2/${LIBXML2_MAJOR_MINOR}/libxml2-${LIBXML2_VERSION}.tar.xz"; \
+    tar -xf "libxml2-${LIBXML2_VERSION}.tar.xz"; \
+    cd "libxml2-${LIBXML2_VERSION}"; \
+    ./configure --prefix=/usr/local --without-python --with-zlib=/usr; \
+    make -j$(nproc); \
+    make install; \
+    cd /; \
+    rm -rf "/tmp/libxml2-${LIBXML2_VERSION}"; \
+    find /usr/local/lib -name '*.a' -delete
+
+# --- Build custom c-ares ---
+ARG CARES_VERSION=1.30.0 # Using latest stable as 1.3.0 is very old
+RUN set -eux; \
+    cd /tmp; \
+    wget "https://c-ares.org/download/c-ares-${CARES_VERSION}.tar.gz"; \
+    tar -xzf "c-ares-${CARES_VERSION}.tar.gz"; \
+    cd "c-ares-${CARES_VERSION}"; \
+    # Use CMake for c-ares
+    cmake . -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    make -j$(nproc); \
+    make install; \
+    cd /; \
+    rm -rf "/tmp/c-ares-${CARES_VERSION}"; \
+    find /usr/local/lib -name '*.a' -delete
+
+# --- Build custom SQLite ---
+ARG SQLITE_VERSION_STR=3.46.0 # Using latest stable as 3.49.1 is not available
+ARG SQLITE_VERSION_NUM=3460000
+ARG SQLITE_YEAR=2024
+RUN set -eux; \
+    cd /tmp; \
+    wget "https://www.sqlite.org/${SQLITE_YEAR}/sqlite-autoconf-${SQLITE_VERSION_NUM}.tar.gz"; \
+    tar -xzf "sqlite-autoconf-${SQLITE_VERSION_NUM}.tar.gz"; \
+    cd "sqlite-autoconf-${SQLITE_VERSION_NUM}"; \
+    ./configure --prefix=/usr/local; \
+    make -j$(nproc); \
+    make install; \
+    cd /; \
+    rm -rf "/tmp/sqlite-autoconf-${SQLITE_VERSION_NUM}"; \
+    find /usr/local/lib -name '*.a' -delete
+
+# --- Build custom GLib ---
+ARG GLIB_VERSION=2.80.2 # Using latest stable as 2.84.1 is not available
+RUN set -eux; \
+    cd /tmp; \
+    GLIB_MAJOR_MINOR=$(echo $GLIB_VERSION | cut -d. -f1-2); \
+    wget "https://download.gnome.org/sources/glib/${GLIB_MAJOR_MINOR}/glib-${GLIB_VERSION}.tar.xz"; \
+    tar -xf "glib-${GLIB_VERSION}.tar.xz"; \
+    cd "glib-${GLIB_VERSION}"; \
+    # Use Meson for GLib, disable features not needed/problematic in Alpine
+    meson setup _build --prefix=/usr/local -Ddocumentation=false -Dtests=false -Dlibmount=disabled -Dselinux=disabled -Dxattr=false; \
+    ninja -C _build; \
+    ninja -C _build install; \
+    cd /; \
+    rm -rf "/tmp/glib-${GLIB_VERSION}"; \
+    find /usr/local/lib -name '*.a' -delete
+
+# Configure linker path for build time tools that might need the custom libs
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -78,13 +161,28 @@ FROM base AS runner
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
-    # && addgroup --system --gid 1001 nodejs \
-    && addgroup -S nextjs \
-    && adduser -S -u 1001 -G nextjs nextjs
+# Install runtime dependencies for custom builds (e.g., zlib for libxml2/openssl) and existing ones
+# Added: libffi, pcre2 for glib runtime
+RUN apk add --no-cache curl supercronic zlib libffi pcre2
+
+RUN addgroup -S nextjs && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
+
+# Copy compiled libraries from installer stage to /usr/local/lib
+COPY --from=installer /usr/local/lib/libssl.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libcrypto.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libxml2.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libcares.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libsqlite3.so.* /usr/local/lib/
+# GLib has multiple libraries, copy them all
+COPY --from=installer /usr/local/lib/libglib-2.0.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libgobject-2.0.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libgmodule-2.0.so.* /usr/local/lib/
+COPY --from=installer /usr/local/lib/libgio-2.0.so.* /usr/local/lib/
+
+# Configure linker path for runtime
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Ensure no write permissions are assigned to the copied resources
 COPY --from=installer /app/apps/web/.next/standalone ./
@@ -141,12 +239,14 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
+# Set permissions for copied custom libraries (readable/executable by all)
+RUN chmod -R 555 /usr/local/lib/*so*
+
 RUN npm install -g tsx typescript prisma pino-pretty
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 ENV NODE_ENV="production"
-# USER nextjs
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/
@@ -155,6 +255,8 @@ VOLUME /home/nextjs/apps/web/uploads/
 # Prepare volume for SAML preloaded connection
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
+
+USER nextjs
 
 CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
       echo "Starting cron jobs..."; \
