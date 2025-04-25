@@ -96,6 +96,7 @@ export const executeRecaptcha = async (
       });
     });
   } catch (error) {
-    logger.debug(`Error during reCAPTCHA execution: ${String(error)}`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logger.debug(`Error during reCAPTCHA execution: ${message}`);
   }
 };
