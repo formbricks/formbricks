@@ -1,7 +1,68 @@
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { render, screen } from "@testing-library/react";
 import * as ReactHotToast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
+import { TUserLocale } from "@formbricks/types/user";
+
+// Mock matchMedia - required for @formkit/auto-animate
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock auto-animate to avoid DOM issues
+vi.mock("@formkit/auto-animate/react", () => ({
+  useAutoAnimate: () => [() => {}, null],
+}));
+
+// Mock dnd-kit to avoid DOM issues
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }) => <div>{children}</div>,
+  useSensor: () => ({}),
+  useSensors: () => ({}),
+  MouseSensor: class {},
+  TouchSensor: class {},
+  KeyboardSensor: class {},
+  PointerSensor: class {},
+  closestCenter: () => ({}),
+  closestCorners: () => ({}),
+}));
+
+vi.mock("@dnd-kit/modifiers", () => ({
+  restrictToHorizontalAxis: () => ({}),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }) => <div>{children}</div>,
+  arrayMove: (arr, from, to) => arr,
+  horizontalListSortingStrategy: {},
+  verticalListSortingStrategy: {},
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: () => {},
+    transform: null,
+    isDragging: false,
+    isSorting: false,
+    over: null,
+    active: null,
+  }),
+}));
 
 // Mock environment variables
 vi.mock("@/lib/env", () => ({
@@ -157,6 +218,54 @@ describe("ResponseTable - downloadSelectedRows", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  test("renders the response table with data correctly", async () => {
+    // Mock minimal props required for the component
+    const mockProps = {
+      data: [
+        {
+          responseId: "response1",
+          createdAt: new Date().toISOString(),
+          finished: true,
+        },
+      ],
+      survey: {
+        id: "test-survey-id",
+        questions: [],
+        variables: [], // Add missing variables array
+        hiddenFields: { fieldIds: [] }, // Add missing hiddenFields
+        isVerifyEmailEnabled: false, // Add missing isVerifyEmailEnabled
+      } as TSurvey,
+      responses: [
+        {
+          id: "response1",
+          createdAt: new Date().toISOString(),
+          data: {},
+        },
+      ] as TResponse[],
+      environment: { id: "test-env-id" } as TEnvironment,
+      environmentTags: [] as TTag[],
+      isReadOnly: false,
+      fetchNextPage: vi.fn(),
+      hasMore: false,
+      deleteResponses: vi.fn(),
+      updateResponse: vi.fn(),
+      isFetchingFirstPage: false,
+      locale: "en" as TUserLocale,
+    };
+
+    // Use React Testing Library to render the component
+    render(<ResponseTable {...mockProps} />);
+
+    // Verify that a table is rendered
+    expect(screen.getByRole("table")).toBeInTheDocument();
+
+    // Check for no results message when there's no data
+    expect(screen.queryByText("common.no_results")).not.toBeInTheDocument();
+
+    // Check that load more button is not present when hasMore is false
+    expect(screen.queryByText("common.load_more")).not.toBeInTheDocument();
   });
 
   test("downloads responses successfully when response has data", async () => {
