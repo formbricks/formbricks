@@ -8,7 +8,6 @@ import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
@@ -55,12 +54,6 @@ export const POST = async (req: NextRequest): Promise<Response> => {
 
   if (!session || !session.user) {
     return responses.notAuthenticatedResponse();
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
   }
 
   const fileName = decodeURIComponent(encodedFileName);
