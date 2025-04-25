@@ -1,4 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
+import { TUserProject } from "@/modules/survey/list/types/projects";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -22,17 +24,19 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-// Mock the Checkbox component to match the actual DOM representation from the terminal output
+// Mock the Checkbox component to properly handle form changes
 vi.mock("@/modules/ui/components/checkbox", () => ({
   Checkbox: ({ id, onCheckedChange, ...props }: any) => (
     <input
-      type="button"
+      type="checkbox"
       id={id}
       data-testid={id}
       name={props.name}
-      value=""
       className="focus:ring-opacity-50 mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500"
-      onChange={() => onCheckedChange()}
+      onChange={() => {
+        // Call onCheckedChange with true to simulate checkbox selection
+        onCheckedChange(true);
+      }}
       {...props}
     />
   ),
@@ -54,16 +58,16 @@ vi.mock("@/modules/ui/components/button", () => ({
 // Mock data
 const mockSurvey = {
   id: "survey-1",
-  environmentId: "env-1",
-  name: "Test Survey",
+  name: "mockSurvey",
   type: "link",
-  status: "draft",
   createdAt: new Date(),
   updatedAt: new Date(),
-  responseCount: 5,
-  creator: { name: "Test User" },
+  environmentId: "env-1",
+  status: "draft",
   singleUse: null,
-};
+  responseCount: 0,
+  creator: null,
+} as any;
 
 const mockProjects = [
   {
@@ -82,7 +86,7 @@ const mockProjects = [
       { id: "env-4", type: "production" },
     ],
   },
-];
+] satisfies TUserProject[];
 
 describe("CopySurveyForm", () => {
   const mockSetOpen = vi.fn();
@@ -91,6 +95,7 @@ describe("CopySurveyForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(copySurveyToOtherEnvironmentAction).mockResolvedValue({});
   });
 
   afterEach(() => {

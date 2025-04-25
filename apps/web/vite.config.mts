@@ -55,6 +55,7 @@ export default defineConfig({
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/PictureChoiceSummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/RatingSummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryMetadata.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/lib.ts",
         "app/(app)/environments/**/surveys/**/components/QuestionFilterComboBox.tsx",
         "app/(app)/environments/**/surveys/**/components/QuestionsComboBox.tsx",
         "app/(app)/environments/**/integrations/airtable/components/ManageIntegration.tsx",
@@ -91,11 +92,6 @@ export default defineConfig({
         "modules/analysis/**/*.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
         "lib/utils/billing.ts",
-        "lib/utils/billing.ts",
-        "lib/survey/service.ts",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/surveySummary.ts",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/lib/lib.ts",
-        "modules/ee/contacts/segments/lib/segments.ts",
         "modules/survey/list/components/copy-survey-form.tsx",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
@@ -108,6 +104,7 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
+        "**/stories.tsx" // Exclude story files
       ],
     },
   },
