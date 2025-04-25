@@ -10,25 +10,25 @@ import {
   WorkerOptions,
 } from "bullmq";
 import { logger } from "@formbricks/logger";
-import { closeRedisConnection, createRedisClient, getRedisConnectionStatus } from "./redis-connection";
+import { closeRedisConnection, createRedisClient, getRedisConnectionStatus } from "@formbricks/redis";
 
 export enum QueueName {
-  RESPONSE = "responseJobs",
+  PIPELINE = "pipelineJobs",
   WEBHOOK = "webhookJobs",
   SCHEDULED = "repeatableJobs",
 }
 
 export class WorkerService {
-  private _queue: Queue;
-  private _worker: Worker;
+  private _queue: Queue | undefined;
+  private _worker: Worker | undefined;
   private _connection: RedisClient;
   private static _instances: Map<QueueName, WorkerService> = new Map();
 
-  public get worker(): Worker {
+  public get worker(): Worker | undefined {
     return this._worker;
   }
 
-  public get queue(): Queue {
+  public get queue(): Queue | undefined {
     return this._queue;
   }
 
@@ -100,7 +100,8 @@ export class WorkerService {
 
   public async add<T = unknown>(name: string, data: T, options: JobsOptions = {}) {
     try {
-      await this._queue.add(name, data, options);
+      await this._queue?.add(name, data, options);
+      logger.info(`Added job ${name} to queue ${this._queue?.name}`);
     } catch (error) {
       logger.error(`Failed to add job ${name}: ${error}`);
       throw error;
@@ -131,7 +132,7 @@ export class WorkerService {
         return jobResult;
       });
 
-      await this._queue.addBulk(jobs);
+      await this._queue?.addBulk(jobs);
     } catch (error) {
       logger.error(`Failed to add bulk jobs: ${error}`);
       throw error;
@@ -145,6 +146,7 @@ export class WorkerService {
       if (this._queue) {
         await this._queue.close();
       }
+
       if (this._worker) {
         await this._worker.close();
       }
@@ -153,7 +155,7 @@ export class WorkerService {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Find and remove this instance from the static instances map
-      for (const [key, instance] of WorkerService._instances.entries()) {
+      for (const [key, instance] of Array.from(WorkerService._instances.entries())) {
         if (instance === this) {
           WorkerService._instances.delete(key);
           break;
@@ -195,15 +197,27 @@ export class WorkerService {
   }
 
   public async isQueuePaused(): Promise<boolean> {
-    return await this._queue?.isPaused();
+    if (!this._queue) {
+      return false;
+    }
+
+    return await this._queue.isPaused();
   }
 
   public isWorkerPaused(): boolean {
-    return this._worker?.isPaused();
+    if (!this._worker) {
+      return false;
+    }
+
+    return this._worker.isPaused();
   }
 
   public isWorkerRunning(): boolean {
-    return this._worker?.isRunning();
+    if (!this._worker) {
+      return false;
+    }
+
+    return this._worker.isRunning();
   }
 
   public async pauseWorker(): Promise<void> {

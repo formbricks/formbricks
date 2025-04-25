@@ -1,4 +1,5 @@
 import { BulkJobOptions, JobsOptions, Queue, QueueOptions } from "bullmq";
+import { minutesToMilliseconds } from "date-fns";
 import { logger } from "@formbricks/logger";
 import { QueueName, WorkerService } from "../service";
 
@@ -45,7 +46,16 @@ export class BaseQueue {
     return {
       connection: this.instance.connection,
       defaultJobOptions: {
+        attempts: this.DEFAULT_ATTEMPTS,
+        backoff: {
+          type: "exponential",
+          delay: minutesToMilliseconds(8),
+        },
         removeOnComplete: true,
+        removeOnFail: {
+          age: parseInt(process.env.REDIS_FAILED_JOB_RETENTION_DAYS ?? "30"),
+          count: parseInt(process.env.REDIS_FAILED_JOB_RETRY_COUNT ?? "2000"),
+        },
       },
     };
   }
@@ -63,15 +73,15 @@ export class BaseQueue {
   }
 
   public async getWaitingCount() {
-    return await this.instance.queue.getWaitingCount();
+    return await this.instance.queue?.getWaitingCount();
   }
 
   public async getDelayedCount() {
-    return await this.instance.queue.getDelayedCount();
+    return await this.instance.queue?.getDelayedCount();
   }
 
   public async getActiveCount() {
-    return await this.instance.queue.getActiveCount();
+    return await this.instance.queue?.getActiveCount();
   }
 
   public async gracefulShutdown(): Promise<void> {
@@ -83,14 +93,22 @@ export class BaseQueue {
     logger.info(`Shutting down the ${this.name} queue service has finished`);
   }
 
-  public add(params: IJobParams) {
+  public async add(params: IJobParams) {
     const jobOptions = {
+      attempts: this.DEFAULT_ATTEMPTS,
+      backoff: {
+        type: "exponential",
+        delay: minutesToMilliseconds(8),
+      },
       removeOnComplete: true,
-      removeOnFail: true,
+      removeOnFail: {
+        age: parseInt(process.env.REDIS_FAILED_JOB_RETENTION_DAYS ?? "30"),
+        count: parseInt(process.env.REDIS_FAILED_JOB_RETRY_COUNT ?? "2000"),
+      },
       ...params.options,
     };
 
-    this.instance.add(params.name, params.data, jobOptions);
+    await this.instance.add(params.name, params.data, jobOptions);
   }
 
   public async addBulk(data: IBulkJobParams[]) {

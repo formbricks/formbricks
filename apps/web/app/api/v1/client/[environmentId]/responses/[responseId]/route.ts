@@ -1,11 +1,11 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { sendToPipeline } from "@/app/lib/pipelines";
 import { updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { queuePipelineJob } from "@formbricks/worker";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -72,21 +72,17 @@ export const PUT = async (
   }
 
   // send response update to pipeline
-  // don't await to not block the response
-  sendToPipeline({
-    event: "responseUpdated",
+  queuePipelineJob("responseCreated", {
     environmentId: survey.environmentId,
-    surveyId: survey.id,
-    response,
+    surveyId: response.surveyId,
+    response: response,
   });
 
   if (response.finished) {
     // send response to pipeline
-    // don't await to not block the response
-    sendToPipeline({
-      event: "responseFinished",
+    queuePipelineJob("responseFinished", {
       environmentId: survey.environmentId,
-      surveyId: survey.id,
+      surveyId: response.surveyId,
       response: response,
     });
   }

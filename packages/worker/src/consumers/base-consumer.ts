@@ -5,7 +5,7 @@ import { QueueName, WorkerService } from "../service";
 export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
 export class BaseConsumer {
-  private instance: WorkerService;
+  protected instance: WorkerService;
 
   public readonly DEFAULT_ATTEMPTS = 5;
 
@@ -16,7 +16,7 @@ export class BaseConsumer {
     this.instance = workerService;
   }
 
-  public get worker(): Worker {
+  public get worker(): Worker | undefined {
     return this.instance.worker;
   }
 

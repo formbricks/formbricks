@@ -1,6 +1,5 @@
 import Redis, { RedisOptions } from "ioredis";
 import { logger } from "@formbricks/logger";
-import { REDIS_URL } from "../constants";
 
 type CreateRedisClientParams = {
   /**
@@ -26,8 +25,9 @@ class RedisConnectionPool {
   }
 
   public getConnection(params?: CreateRedisClientParams): Redis {
+    const url = process.env.REDIS_URL;
     if (!this.redisClient) {
-      if (!REDIS_URL) {
+      if (!url) {
         throw new Error("REDIS_URL is not set");
       }
 
@@ -36,7 +36,7 @@ class RedisConnectionPool {
         ...params,
       };
 
-      this.redisClient = new Redis(REDIS_URL, config);
+      this.redisClient = new Redis(url, config);
       this.connectionCount++;
 
       logger.info(`Redis connection created. Total connections: ${this.connectionCount}`);
