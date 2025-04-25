@@ -24,25 +24,19 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
-# Build and install libxml2 2.14.1 from source
+# Build and install libxml2 2.14.1 with specific versioning
 WORKDIR /tmp/libxml2
 RUN wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
     tar -xf libxml2-2.14.1.tar.xz && \
     cd libxml2-2.14.1 && \
-    ./configure --prefix=/usr --with-python=no --enable-static --enable-shared && \
+    # Force library version to maintain compatibility
+    sed -i 's/LIBXML_MAJOR_VERSION=16/LIBXML_MAJOR_VERSION=2/g' configure && \
+    ./configure --prefix=/usr --with-python=no && \
     make -j$(nproc) && \
     make install && \
-    # Verify installation
-    echo "Checking libxml2 installation:" && \
-    find /usr -name "libxml2*" && \
-    # Install libxml2-utils explicitly to get xmllint
-    apk add --no-cache libxml2-utils && \
-    # Force linking against our custom-built library
-    rm -f /usr/lib/libxml2.so* && \
-    cp .libs/libxml2.so* /usr/lib/ && \
-    ldconfig /usr/lib || true && \
-    echo "Installation complete. Checking xmllint:" && \
-    which xmllint && xmllint --version || echo "xmllint not available"
+    # Don't install Alpine's packages to avoid conflicts
+    cd .. && \
+    rm -rf /tmp/libxml2
 
 WORKDIR /app
 
