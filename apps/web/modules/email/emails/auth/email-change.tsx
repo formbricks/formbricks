@@ -18,6 +18,12 @@ export async function VerificationNewEmail({
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
         <Text>{t("emails.verification_email_text")}</Text>
+        <Text>
+          {t(
+            "emails.verification_security_notice",
+            "If you did not request this email change, please ignore this email or contact support immediately."
+          )}
+        </Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
         <Text>{t("emails.verification_email_click_on_this_link")}</Text>
         <Link className="break-all text-black" href={verifyLink}>

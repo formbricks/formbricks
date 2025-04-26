@@ -61,7 +61,7 @@ export const sendVerificationNewEmailAction = authenticatedActionClient
     const user = await getUserByEmail(email);
 
     if (user && user.email === ctx.user.email) {
-      throw new Error("User with this email already exists");
+      throw new Error("Email already belongs to another user");
     }
 
     if (ctx.user.email === email) {

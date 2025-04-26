@@ -37,11 +37,16 @@ export const PasswordConfirmationModal = ({
   });
   const { isSubmitting, isDirty } = form.formState;
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    onConfirm(data.password);
-    form.reset();
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    try {
+      await onConfirm(data.password);
+      form.reset();
+    } catch (error) {
+      form.setError("password", {
+        message: error instanceof Error ? error.message : "Authentication failed",
+      });
+    }
   };
-
   const handleCancel = () => {
     form.reset();
     setOpen(false);

@@ -63,9 +63,6 @@ export const EditProfileDetailsForm = ({
           password,
           redirect: false,
         });
-        console.log("password", password);
-        console.log("email", user.email);
-        console.log("****", signInResponse);
 
         if (!signInResponse || signInResponse.error) {
           toast.error("Invalid password");
@@ -107,7 +104,6 @@ export const EditProfileDetailsForm = ({
       try {
         await updateUserAction({ ...data });
         toast.success(t("environments.settings.profile.profile_updated_successfully"));
-        ``;
         window.location.reload();
         form.reset(data);
       } catch (error: any) {
