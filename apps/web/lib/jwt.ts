@@ -21,6 +21,56 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
   return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET + surveyId);
 };
 
+export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  const decoded = jwt.decode(token);
+  const payload = decoded as { id: string; email: string };
+
+  if (!payload || !payload.id || !payload.email) {
+    throw new Error("Token is invalid or missing required fields");
+  }
+
+  let decryptedId: string;
+  let decryptedEmail: string;
+
+  try {
+    decryptedId = symmetricDecrypt(payload.id, env.ENCRYPTION_KEY);
+  } catch {
+    decryptedId = payload.id;
+  }
+
+  try {
+    decryptedEmail = symmetricDecrypt(payload.email, env.ENCRYPTION_KEY);
+  } catch {
+    decryptedEmail = payload.email;
+  }
+
+  return {
+    id: decryptedId,
+    email: decryptedEmail,
+  };
+};
+
+export const createEmailChangeToken = (userId: string, email: string): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
+  const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
+
+  const payload = {
+    id: encryptedUserId,
+    email: encryptedEmail,
+  };
+
+  return jwt.sign(payload, env.NEXTAUTH_SECRET as string, {
+    expiresIn: "1d",
+  });
+};
 export const createEmailToken = (email: string): string => {
   if (!env.ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
