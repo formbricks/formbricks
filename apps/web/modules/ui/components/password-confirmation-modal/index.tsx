@@ -53,17 +53,19 @@ export const PasswordConfirmationModal = ({
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} title={t("auth.confirm_password")}>
+    <Modal open={open} setOpen={setOpen} title={t("auth.forgot-password.reset.confirm_password")}>
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <p className="text-muted-foreground text-sm">{t("auth.confirm_password_description")}</p>
+          <p className="text-muted-foreground text-sm">
+            {t("auth.email-change.confirm_password_description")}
+          </p>
 
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between sm:gap-4">
             <p>
-              <strong>{t("auth.old_email")}:</strong> {oldEmail}
+              <strong>{t("auth.email-change.old_email")}:</strong> {oldEmail}
             </p>
             <p>
-              <strong>{t("auth.new_email")}:</strong> {newEmail}
+              <strong>{t("auth.email-change.new_email")}:</strong> {newEmail}
             </p>
           </div>
 
