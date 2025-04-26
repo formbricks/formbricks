@@ -34,6 +34,7 @@ object Formbricks {
     internal lateinit var appUrl: String
     internal var language: String = "default"
     internal var loggingEnabled: Boolean = true
+    internal var autoDismissErrors: Boolean = true
     private var fragmentManager: FragmentManager? = null
     internal var isInitialized = false
 
@@ -73,7 +74,7 @@ object Formbricks {
         environmentId = config.environmentId
         loggingEnabled = config.loggingEnabled
         fragmentManager = config.fragmentManager
-
+        autoDismissErrors = config.autoDismissErrors
         config.userId?.let { UserManager.set(it) }
         config.attributes?.let { UserManager.setAttributes(it) }
         config.attributes?.get("language")?.let { UserManager.setLanguage(it) }
@@ -100,6 +101,7 @@ object Formbricks {
             callback?.onError(error)
             Logger.e(error)
             return
+
         }
 
         if(UserManager.userId != null) {
@@ -179,7 +181,7 @@ object Formbricks {
      * ```
      *
      */
-    fun track(action: String) {
+    fun track(action: String, hiddenFields: Map<String, Any>? = null) {
         if (!isInitialized) {
             val error = SDKError.sdkIsNotInitialized
             callback?.onError(error)
@@ -194,7 +196,7 @@ object Formbricks {
             return
         }
 
-        SurveyManager.track(action)
+        SurveyManager.track(action = action, hiddenFields = hiddenFields)
     }
 
     /**
@@ -233,7 +235,7 @@ object Formbricks {
     }
 
     /// Assembles the survey fragment and presents it
-    internal fun showSurvey(id: String) {
+    internal fun showSurvey(id: String, hiddenFields: Map<String, Any>? = null) {
         if (fragmentManager == null) {
             val error = SDKError.fragmentManagerIsNotSet
             callback?.onError(error)
@@ -242,7 +244,7 @@ object Formbricks {
         }
 
         fragmentManager?.let {
-            FormbricksFragment.show(it, surveyId = id)
+            FormbricksFragment.show(it, surveyId = id, hiddenFields = hiddenFields)
         }
     }
 

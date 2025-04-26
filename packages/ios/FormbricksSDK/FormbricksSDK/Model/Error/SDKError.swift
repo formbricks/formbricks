@@ -8,10 +8,13 @@ public enum FormbricksSDKErrorType: Int {
     case unableToPersistEnvironment
     case unableToRetrieveEnvironment
     case invalidJavascriptMessage
+    case surveyLibraryLoadError
     case unableToRetrieveUser
     case unableToPersistUser
     case userIdIsNotSetYet
     case invalidDisplayOption
+    case surveyNotFoundError
+    case surveyNotDisplayableError
     case networkError
     
     var description: String {
@@ -38,6 +41,12 @@ public enum FormbricksSDKErrorType: Int {
             return "Unable to commit user attributes because userId is not set."
         case .invalidDisplayOption:
             return "Invalid Display Option"
+        case .surveyNotFoundError:
+            return "Survey Not Found"
+        case .surveyLibraryLoadError:
+            return "Survey Library Load Error"
+        case .surveyNotDisplayableError:
+            return "Survey Not Displayable"
         case .networkError:
             return "No internet connection"
         }

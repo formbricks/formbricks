@@ -1,12 +1,24 @@
 import Foundation
 import Network
 
+// Enum representing success actions
+public enum SuccessAction: Codable {
+    case onFinishedSetup
+    case onFinishedRefreshEnvironment
+    case onFinishedLogout
+    case onFinishedSetUserID
+    case onFoundSurvey
+}
+
 /// Formbricks SDK delegate protocol. It contains the main methods to interact with the SDK.
 public protocol FormbricksDelegate: AnyObject {
+    func onResponseCreated()
     func onSurveyStarted()
     func onSurveyFinished()
     func onSurveyClosed()
+    func onSurveyDisplayed()
     func onError(_ error: Error)
+    func onSuccess (_ successAction: SuccessAction)
 }
 
 /// The main class of the Formbricks SDK. It contains the main methods to interact with the SDK.
@@ -24,6 +36,7 @@ public protocol FormbricksDelegate: AnyObject {
     static internal var logger: Logger?
     static internal var service = FormbricksService()
     public static weak var delegate: FormbricksDelegate?
+    static internal var securityCertData: Data?
     
     // make this class not instantiatable outside of the SDK
     internal override init() {
@@ -48,7 +61,9 @@ public protocol FormbricksDelegate: AnyObject {
      Formbricks.setup(with: config)
      ```
      */
-    @objc public static func setup(with config: FormbricksConfig, force: Bool = false) {
+    @objc public static func setup(with config: FormbricksConfig,
+                                   force: Bool = false,
+                                   certData: Data? = nil) {
         logger = Logger()
         apiQueue = OperationQueue()
         
@@ -66,6 +81,7 @@ public protocol FormbricksDelegate: AnyObject {
         self.appUrl = config.appUrl
         self.environmentId = config.environmentId
         self.logger?.logLevel = config.logLevel
+        self.securityCertData = certData
         
         userManager = UserManager()
         if let userId = config.userId {
@@ -83,7 +99,8 @@ public protocol FormbricksDelegate: AnyObject {
         surveyManager = SurveyManager.create(userManager: userManager!, presentSurveyManager: presentSurveyManager!)
         userManager?.surveyManager = surveyManager
         
-        surveyManager?.refreshEnvironmentIfNeeded(force: force)
+        surveyManager?.refreshEnvironmentIfNeeded(force: force,
+                                                  isInitial: true)
         userManager?.syncUserStateIfNeeded()
         
         self.isInitialized = true
@@ -188,7 +205,7 @@ public protocol FormbricksDelegate: AnyObject {
      Formbricks.track("button_clicked")
      ```
      */
-    @objc public static func track(_ action: String) {
+    @objc public static func track(_ action: String, hiddenFields: [String: Any]? = nil) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
             delegate?.onError(error)
@@ -198,7 +215,7 @@ public protocol FormbricksDelegate: AnyObject {
         
         Formbricks.isInternetAvailabile { available in
             if available {
-                surveyManager?.track(action)
+                surveyManager?.track(action, hiddenFields: hiddenFields)
             } else {
                 Formbricks.logger?.warning(FormbricksSDKError.init(type: .networkError).message)
             }
@@ -224,6 +241,7 @@ public protocol FormbricksDelegate: AnyObject {
         }
 
         userManager?.logout()
+        Formbricks.delegate?.onSuccess(.onFinishedLogout)
     }
     
     /**

@@ -39,6 +39,7 @@ class WebAppInterface(private val callback: WebAppCallback?) {
             Formbricks.callback?.onError(e)
             Logger.e(RuntimeException(e.message))
         } catch (e: JsonParseException) {
+            Formbricks.callback?.onError(e)
             Logger.e(RuntimeException("Failed to parse JSON message: $data"))
         } catch (e: IllegalArgumentException) {
             Formbricks.callback?.onError(e)
