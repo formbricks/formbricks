@@ -45,13 +45,13 @@ export const EmailChangeSignIn = ({ token }: { token: string }) => {
     <>
       <h1 className={`mb-4 text-center leading-2 font-bold ${status === "error" ? "text-red-600" : ""}`}>
         {status === "success"
-          ? t("auth.email_change_success", "Email has been successfully changed.")
-          : t("auth.email_verification_failed", "Email verification failed")}
+          ? t("auth.email-change.email_change_success")
+          : t("auth.email-change.email_verification_failed")}
       </h1>
       <p className="text-center text-sm">
         {status === "success"
-          ? t("auth.email_change_success_description", "You can now log in using your new email address.")
-          : t("auth.invalid_or_expired_token", "The token is invalid or has expired.")}
+          ? t("auth.email-change.email_change_success_description")
+          : t("auth.email-change.invalid_or_expired_token")}
       </p>
       <hr className="my-4" />
     </>

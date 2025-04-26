@@ -7,6 +7,12 @@
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
     "continue_with_saml": "使用 SAML SSO 繼續",
+    "email-change": {
+      "email_change_success": "電子郵件已成功更改。",
+      "email_change_success_description": "您現在可以使用新的電子郵件地址登入。",
+      "email_verification_failed": "電子郵件驗證失敗",
+      "invalid_or_expired_token": "令牌無效或已過期。"
+    },
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {

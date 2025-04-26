@@ -7,6 +7,13 @@
     "continue_with_oidc": "Continuer avec {oidcDisplayName}",
     "continue_with_openid": "Continuer avec OpenID",
     "continue_with_saml": "Continuer avec SAML SSO",
+    "email-change": {
+      "email_change_success": "L'adresse e-mail a été modifiée avec succès.",
+      "email_change_success_description": "Vous pouvez maintenant vous connecter en utilisant votre nouvelle adresse e-mail.",
+      "email_verification_failed": "Échec de la vérification de l'e-mail",
+      "invalid_or_expired_token": "Le jeton est invalide ou a expiré."
+    },
+
     "forgot-password": {
       "back_to_login": "Retour à la connexion",
       "email-sent": {
