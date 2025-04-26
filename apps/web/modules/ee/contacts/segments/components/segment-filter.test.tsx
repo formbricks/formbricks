@@ -9,8 +9,6 @@ import {
   TSegment,
   TSegmentAttributeFilter,
   TSegmentDeviceFilter,
-  TSegmentFilters,
-  // Use TSegmentFilters
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
@@ -112,7 +110,7 @@ const segment = {
   environmentId,
   title: "Test Segment",
   isPrivate: false,
-  filters: [] as TSegmentFilters,
+  filters: [],
   surveys: ["survey1"],
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -124,7 +122,7 @@ const segments: TSegment[] = [
     environmentId,
     title: "Another Segment",
     isPrivate: false,
-    filters: [] as TSegmentFilters,
+    filters: [],
     surveys: ["survey1"],
     createdAt: new Date(),
     updatedAt: new Date(),
