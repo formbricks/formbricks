@@ -46,7 +46,7 @@ vi.mock("./add-filter-modal", () => ({
         <button
           onClick={() => {
             onAddFilter({
-              resource: { type: "attribute", key: "userId" },
+              resource: { type: "attribute", contactAttributeKey: "userId" },
               condition: "equals",
               value: "test",
             });

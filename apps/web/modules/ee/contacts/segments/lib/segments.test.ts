@@ -807,7 +807,7 @@ describe("Segment Service Tests", () => {
           connector: null,
           resource: {
             id: createId(), // Add ID to the resource object
-            root: { type: "device" }, // deviceType is missing, might cause issues later if schema requires it
+            root: { type: "device", deviceType: "desktop" },
             qualifier: { operator: "equals" },
             value: "desktop",
           },

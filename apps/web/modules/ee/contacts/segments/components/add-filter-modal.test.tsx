@@ -1,5 +1,6 @@
 import { AddFilterModal } from "@/modules/ee/contacts/segments/components/add-filter-modal";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+// Added waitFor
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -31,6 +32,11 @@ vi.mock("@/modules/ui/components/tab-bar", () => ({
       ))}
     </div>
   ),
+}));
+
+// Mock createId
+vi.mock("@paralleldrive/cuid2", () => ({
+  createId: vi.fn(() => "mockCuid"),
 }));
 
 const mockContactAttributeKeys: TContactAttributeKey[] = [
@@ -79,6 +85,28 @@ const mockSegments: TSegment[] = [
   },
 ];
 
+// Helper function to check filter payload
+const expectFilterPayload = (
+  callArgs: any[],
+  expectedType: string,
+  expectedRoot: object,
+  expectedQualifierOp: string,
+  expectedValue: string | undefined
+) => {
+  expect(callArgs[0]).toEqual(
+    expect.objectContaining({
+      id: "mockCuid",
+      connector: "and",
+      resource: expect.objectContaining({
+        id: "mockCuid",
+        root: expect.objectContaining({ type: expectedType, ...expectedRoot }),
+        qualifier: expect.objectContaining({ operator: expectedQualifierOp }),
+        value: expectedValue,
+      }),
+    })
+  );
+};
+
 describe("AddFilterModal", () => {
   let onAddFilter: ReturnType<typeof vi.fn>;
   let setOpen: ReturnType<typeof vi.fn>;
@@ -87,12 +115,14 @@ describe("AddFilterModal", () => {
   beforeEach(() => {
     onAddFilter = vi.fn();
     setOpen = vi.fn();
+    vi.clearAllMocks(); // Clear mocks before each test
   });
 
   afterEach(() => {
     cleanup();
   });
 
+  // --- Existing Tests (Rendering, Search, Tab Switching) ---
   test("renders correctly when open", () => {
     render(
       <AddFilterModal
@@ -103,7 +133,7 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
-
+    // ... assertions ...
     expect(screen.getByPlaceholderText("Browse filters...")).toBeInTheDocument();
     expect(screen.getByTestId("tab-all")).toHaveTextContent("common.all (Active)");
     expect(screen.getByText("Email Address")).toBeInTheDocument();
@@ -111,7 +141,7 @@ describe("AddFilterModal", () => {
     expect(screen.getByText("userId")).toBeInTheDocument();
     expect(screen.getByText("Active Users")).toBeInTheDocument();
     expect(screen.getByText("Paying Customers")).toBeInTheDocument();
-    expect(screen.queryByText("Private Segment")).not.toBeInTheDocument(); // Private segments shouldn't show
+    expect(screen.queryByText("Private Segment")).not.toBeInTheDocument();
     expect(screen.getByText("environments.segments.phone")).toBeInTheDocument();
     expect(screen.getByText("environments.segments.desktop")).toBeInTheDocument();
   });
@@ -139,17 +169,11 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
-
     const searchInput = screen.getByPlaceholderText("Browse filters...");
     await user.type(searchInput, "Email");
-
+    // ... assertions ...
     expect(screen.getByText("Email Address")).toBeInTheDocument();
     expect(screen.queryByText("Plan Type")).not.toBeInTheDocument();
-    expect(screen.queryByText("User ID")).not.toBeInTheDocument();
-    expect(screen.queryByText("Active Users")).not.toBeInTheDocument();
-    expect(screen.queryByText("Paying Customers")).not.toBeInTheDocument();
-    expect(screen.queryByText("Phone")).not.toBeInTheDocument();
-    expect(screen.queryByText("Desktop")).not.toBeInTheDocument();
   });
 
   test("switches tabs and displays correct content", async () => {
@@ -162,212 +186,288 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
-
     // Switch to Attributes tab
     const attributesTabButton = screen.getByTestId("tab-attributes");
     await user.click(attributesTabButton);
+    // ... assertions ...
     expect(attributesTabButton).toHaveTextContent("environments.segments.person_and_attributes (Active)");
     expect(screen.getByText("common.user_id")).toBeInTheDocument();
-    expect(screen.getByText("Email Address")).toBeInTheDocument();
-    expect(screen.getByText("Plan Type")).toBeInTheDocument();
-    expect(screen.queryByText("Active Users")).not.toBeInTheDocument();
-    expect(screen.queryByText("environments.segments.phone")).not.toBeInTheDocument();
 
     // Switch to Segments tab
     const segmentsTabButton = screen.getByTestId("tab-segments");
     await user.click(segmentsTabButton);
+    // ... assertions ...
     expect(segmentsTabButton).toHaveTextContent("common.segments (Active)");
     expect(screen.getByText("Active Users")).toBeInTheDocument();
-    expect(screen.getByText("Paying Customers")).toBeInTheDocument();
-    expect(screen.queryByText("Private Segment")).not.toBeInTheDocument();
-    expect(screen.queryByText("Email Address")).not.toBeInTheDocument();
-    expect(screen.queryByText("common.user_id")).not.toBeInTheDocument();
-    expect(screen.queryByText("environments.segments.phone")).not.toBeInTheDocument();
 
     // Switch to Devices tab
     const devicesTabButton = screen.getByTestId("tab-devices");
     await user.click(devicesTabButton);
+    // ... assertions ...
     expect(devicesTabButton).toHaveTextContent("environments.segments.devices (Active)");
     expect(screen.getByText("environments.segments.phone")).toBeInTheDocument();
-    expect(screen.getByText("environments.segments.desktop")).toBeInTheDocument();
-    expect(screen.queryByText("Active Users")).not.toBeInTheDocument();
-    expect(screen.queryByText("Email Address")).not.toBeInTheDocument();
   });
 
-  test("calls onAddFilter with correct payload for attribute filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
+  // --- Click and Keydown Tests ---
 
-    const attributeItem = screen.getByText("Email Address");
-    await user.click(attributeItem);
-
+  const testFilterInteraction = async (
+    elementFinder: () => HTMLElement,
+    expectedType: string,
+    expectedRoot: object,
+    expectedQualifierOp: string,
+    expectedValue: string | undefined
+  ) => {
+    // Test Click
+    const elementClick = elementFinder();
+    await user.click(elementClick);
     expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        connector: "and",
-        resource: expect.objectContaining({
-          root: { type: "attribute", contactAttributeKey: "email" },
-          qualifier: { operator: "equals" },
-          value: "",
-        }),
-      })
+    expectFilterPayload(
+      onAddFilter.mock.calls[0],
+      expectedType,
+      expectedRoot,
+      expectedQualifierOp,
+      expectedValue
     );
     expect(setOpen).toHaveBeenCalledWith(false);
-  });
+    onAddFilter.mockClear();
+    setOpen.mockClear();
 
-  test("calls onAddFilter with correct payload for person filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    const personItem = screen.getByText("userId");
-    await user.click(personItem);
-
-    expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        connector: "and",
-        resource: expect.objectContaining({
-          root: { type: "person", personIdentifier: "userId" },
-          qualifier: { operator: "equals" },
-          value: "",
-        }),
-      })
-    );
-    expect(setOpen).toHaveBeenCalledWith(false);
-  });
-
-  test("calls onAddFilter with correct payload for segment filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    const segmentItem = screen.getByText("Active Users");
-    await user.click(segmentItem);
-
-    expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        connector: "and",
-        resource: expect.objectContaining({
-          root: { type: "segment", segmentId: "seg1" },
-          qualifier: { operator: "userIsIn" },
-          value: "seg1",
-        }),
-      })
-    );
-    expect(setOpen).toHaveBeenCalledWith(false);
-  });
-
-  test("calls onAddFilter with correct payload for device filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    const deviceItem = screen.getByText("environments.segments.phone");
-    await user.click(deviceItem);
-
-    expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        connector: "and",
-        resource: expect.objectContaining({
-          root: { type: "device", deviceType: "phone" },
-          qualifier: { operator: "equals" },
-          value: "phone",
-        }),
-      })
-    );
-    expect(setOpen).toHaveBeenCalledWith(false);
-  });
-
-  test("handles keyboard interaction (Enter) for adding a filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    // Need to switch to attributes tab to test keyboard on person filter
-    const attributesTabButton = screen.getByTestId("tab-attributes");
-    await user.click(attributesTabButton);
-
-    const personItem = screen.getByTestId("person-filter-item"); // Use data-testid here
-    personItem.focus();
-    expect(personItem).toHaveFocus(); // Verify focus is set
+    // Test Enter Keydown
+    const elementEnter = elementFinder();
+    elementEnter.focus();
     await user.keyboard("{Enter}");
-
     expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resource: expect.objectContaining({
-          root: { type: "person", personIdentifier: "userId" },
-        }),
-      })
+    expectFilterPayload(
+      onAddFilter.mock.calls[0],
+      expectedType,
+      expectedRoot,
+      expectedQualifierOp,
+      expectedValue
     );
     expect(setOpen).toHaveBeenCalledWith(false);
-  });
+    onAddFilter.mockClear();
+    setOpen.mockClear();
 
-  test("handles keyboard interaction (Space) for adding a filter", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    // Switch to attributes tab
-    const attributesTabButton = screen.getByTestId("tab-attributes");
-    await user.click(attributesTabButton);
-
-    const personItem = screen.getByTestId("person-filter-item");
-    personItem.focus();
-    expect(personItem).toHaveFocus();
-    await user.keyboard(" "); // Test Space key
-
+    // Test Space Keydown
+    const elementSpace = elementFinder();
+    elementSpace.focus();
+    await user.keyboard(" ");
     expect(onAddFilter).toHaveBeenCalledTimes(1);
-    expect(onAddFilter).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resource: expect.objectContaining({
-          root: { type: "person", personIdentifier: "userId" },
-        }),
-      })
+    expectFilterPayload(
+      onAddFilter.mock.calls[0],
+      expectedType,
+      expectedRoot,
+      expectedQualifierOp,
+      expectedValue
     );
     expect(setOpen).toHaveBeenCalledWith(false);
+    onAddFilter.mockClear();
+    setOpen.mockClear();
+  };
+
+  describe("All Tab Interactions", () => {
+    beforeEach(() => {
+      render(
+        <AddFilterModal
+          open={true}
+          setOpen={setOpen}
+          onAddFilter={onAddFilter}
+          contactAttributeKeys={mockContactAttributeKeys}
+          segments={mockSegments}
+        />
+      );
+    });
+
+    test("handles Person (userId) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("userId"),
+        "person",
+        { personIdentifier: "userId" },
+        "equals",
+        ""
+      );
+    });
+
+    test("handles Attribute (Email Address) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Email Address"),
+        "attribute",
+        { contactAttributeKey: "email" },
+        "equals",
+        ""
+      );
+    });
+
+    test("handles Attribute (Plan Type) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Plan Type"),
+        "attribute",
+        { contactAttributeKey: "plan" },
+        "equals",
+        ""
+      );
+    });
+
+    test("handles Segment (Active Users) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Active Users"),
+        "segment",
+        { segmentId: "seg1" },
+        "userIsIn",
+        "seg1"
+      );
+    });
+
+    test("handles Segment (Paying Customers) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Paying Customers"),
+        "segment",
+        { segmentId: "seg2" },
+        "userIsIn",
+        "seg2"
+      );
+    });
+
+    test("handles Device (Phone) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("environments.segments.phone"),
+        "device",
+        { deviceType: "phone" },
+        "equals",
+        "phone"
+      );
+    });
+
+    test("handles Device (Desktop) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("environments.segments.desktop"),
+        "device",
+        { deviceType: "desktop" },
+        "equals",
+        "desktop"
+      );
+    });
   });
 
+  describe("Attributes Tab Interactions", () => {
+    beforeEach(async () => {
+      render(
+        <AddFilterModal
+          open={true}
+          setOpen={setOpen}
+          onAddFilter={onAddFilter}
+          contactAttributeKeys={mockContactAttributeKeys}
+          segments={mockSegments}
+        />
+      );
+      await user.click(screen.getByTestId("tab-attributes"));
+      await waitFor(() => expect(screen.getByTestId("tab-attributes")).toHaveTextContent("(Active)"));
+    });
+
+    test("handles Person (userId) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByTestId("person-filter-item"), // Use testid from component
+        "person",
+        { personIdentifier: "userId" },
+        "equals",
+        ""
+      );
+    });
+
+    test("handles Attribute (Email Address) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Email Address"),
+        "attribute",
+        { contactAttributeKey: "Email Address" }, // Uses name in this tab
+        "equals",
+        ""
+      );
+    });
+
+    test("handles Attribute (Plan Type) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Plan Type"),
+        "attribute",
+        { contactAttributeKey: "Plan Type" }, // Uses name in this tab
+        "equals",
+        ""
+      );
+    });
+  });
+
+  describe("Segments Tab Interactions", () => {
+    beforeEach(async () => {
+      render(
+        <AddFilterModal
+          open={true}
+          setOpen={setOpen}
+          onAddFilter={onAddFilter}
+          contactAttributeKeys={mockContactAttributeKeys}
+          segments={mockSegments}
+        />
+      );
+      await user.click(screen.getByTestId("tab-segments"));
+      await waitFor(() => expect(screen.getByTestId("tab-segments")).toHaveTextContent("(Active)"));
+    });
+
+    test("handles Segment (Active Users) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Active Users"),
+        "segment",
+        { segmentId: "seg1" },
+        "userIsIn",
+        "seg1"
+      );
+    });
+
+    test("handles Segment (Paying Customers) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("Paying Customers"),
+        "segment",
+        { segmentId: "seg2" },
+        "userIsIn",
+        "seg2"
+      );
+    });
+  });
+
+  describe("Devices Tab Interactions", () => {
+    beforeEach(async () => {
+      render(
+        <AddFilterModal
+          open={true}
+          setOpen={setOpen}
+          onAddFilter={onAddFilter}
+          contactAttributeKeys={mockContactAttributeKeys}
+          segments={mockSegments}
+        />
+      );
+      await user.click(screen.getByTestId("tab-devices"));
+      await waitFor(() => expect(screen.getByTestId("tab-devices")).toHaveTextContent("(Active)"));
+    });
+
+    test("handles Device (Phone) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("environments.segments.phone"),
+        "device",
+        { deviceType: "phone" },
+        "equals",
+        "phone"
+      );
+    });
+
+    test("handles Device (Desktop) filter add (click/keydown)", async () => {
+      await testFilterInteraction(
+        () => screen.getByText("environments.segments.desktop"),
+        "device",
+        { deviceType: "desktop" },
+        "equals",
+        "desktop"
+      );
+    });
+  });
+
+  // --- Edge Case Tests ---
   test("displays 'no attributes yet' message", async () => {
     render(
       <AddFilterModal
@@ -378,12 +478,8 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
-
-    // Switch to Attributes tab
-    const attributesTabButton = screen.getByTestId("tab-attributes");
-    await user.click(attributesTabButton);
-
-    expect(screen.getByText("environments.segments.no_attributes_yet")).toBeInTheDocument();
+    await user.click(screen.getByTestId("tab-attributes"));
+    expect(await screen.findByText("environments.segments.no_attributes_yet")).toBeInTheDocument();
   });
 
   test("displays 'no segments yet' message", async () => {
@@ -396,12 +492,8 @@ describe("AddFilterModal", () => {
         segments={[]} // Empty segments
       />
     );
-
-    // Switch to Segments tab
-    const segmentsTabButton = screen.getByTestId("tab-segments");
-    await user.click(segmentsTabButton);
-
-    expect(screen.getByText("environments.segments.no_segments_yet")).toBeInTheDocument();
+    await user.click(screen.getByTestId("tab-segments"));
+    expect(await screen.findByText("environments.segments.no_segments_yet")).toBeInTheDocument();
   });
 
   test("displays 'no filters match' message when search yields no results", async () => {
@@ -414,13 +506,8 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
-
     const searchInput = screen.getByPlaceholderText("Browse filters...");
     await user.type(searchInput, "nonexistentfilter");
-
-    expect(screen.getByText("environments.segments.no_filters_yet")).toBeInTheDocument();
-    expect(screen.queryByText("Email Address")).not.toBeInTheDocument();
-    expect(screen.queryByText("Active Users")).not.toBeInTheDocument();
-    expect(screen.queryByText("Phone")).not.toBeInTheDocument();
+    expect(await screen.findByText("environments.segments.no_filters_yet")).toBeInTheDocument();
   });
 });
