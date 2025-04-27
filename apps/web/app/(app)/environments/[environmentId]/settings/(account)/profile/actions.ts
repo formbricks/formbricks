@@ -60,12 +60,12 @@ export const sendVerificationNewEmailAction = authenticatedActionClient
 
     const user = await getUserByEmail(email);
 
-    if (user && user.email === ctx.user.email) {
-      throw new Error("Email already belongs to another user");
+    if (ctx.user.email === email) {
+     throw new Error("You cannot request verification for the same email.");
     }
 
-    if (ctx.user.email === email) {
-      throw new Error(" You cannot request verification for the same email.");
+    if (user && user.id !== ctx.user.id) {
+      throw new Error("Email already belongs to another user.");
     }
     return await sendVerificationNewEmail(ctx.user.id, email);
   });
