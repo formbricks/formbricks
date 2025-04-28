@@ -92,6 +92,7 @@ export default defineConfig({
         "modules/analysis/**/*.ts",
         "app/lib/survey-builder.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
+        "modules/survey/editor/components/matrix-question-form.tsx",
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",

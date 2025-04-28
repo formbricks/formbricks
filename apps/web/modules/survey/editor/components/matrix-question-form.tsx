@@ -203,7 +203,7 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.rows.length > 2 && (
-                  <TooltipRenderer tooltipContent={t("common.delete")}>
+                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -255,7 +255,7 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.columns.length > 2 && (
-                  <TooltipRenderer tooltipContent={t("common.delete")}>
+                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
                     <Button
                       variant="ghost"
                       size="icon"
