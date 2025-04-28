@@ -42,4 +42,5 @@ export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   variables: [],
   followUps: [],
   isBackButtonHidden: false,
+  isCaptureIPAddressEnabled: false,
 });

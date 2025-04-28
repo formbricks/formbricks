@@ -206,6 +206,9 @@ const ZSurveyBase = z.object({
   isBackButtonHidden: z.boolean().openapi({
     description: "Whether the back button is hidden",
   }),
+  isCaptureIPAddressEnabled: z.boolean().openapi({
+    description: "Whether capturing IP address is enabled",
+  }),
   verifyEmail: z
     .object({
       enabled: z.boolean(),

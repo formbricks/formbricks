@@ -209,6 +209,10 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
   };
 
+  const handleIsCaptureIPAddressEnabledToggle = () => {
+    setLocalSurvey({ ...localSurvey, isCaptureIPAddressEnabled: !localSurvey.isCaptureIPAddressEnabled });
+  };
+
   useEffect(() => {
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
@@ -525,6 +529,13 @@ export const ResponseOptionsCard = ({
             onToggle={handleHideBackButtonToggle}
             title={t("environments.surveys.edit.hide_back_button")}
             description={t("environments.surveys.edit.hide_back_button_description")}
+          />
+          <AdvancedOptionToggle
+            htmlId="captureIPAddressButton"
+            isChecked={localSurvey.isCaptureIPAddressEnabled}
+            onToggle={handleIsCaptureIPAddressEnabledToggle}
+            title={t("environments.surveys.edit.capture_ip_address_of_respondent")}
+            description={t("environments.surveys.edit.capture_ip_address_of_respondent_description")}
           />
         </div>
       </Collapsible.CollapsibleContent>

@@ -456,6 +456,7 @@ export function Survey({
           meta: {
             ...(isWebEnvironment && { url: window.location.href }),
             action,
+            ...(survey.isCaptureIPAddressEnabled && { isCaptureIPAddressEnabled: true }),
           },
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
