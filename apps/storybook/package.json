@@ -11,7 +11,7 @@
     "clean": "rimraf .turbo node_modules dist storybook-static"
   },
   "dependencies": {
-    "eslint-plugin-react-refresh": "0.4.19",
+    "eslint-plugin-react-refresh": "0.4.20",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
