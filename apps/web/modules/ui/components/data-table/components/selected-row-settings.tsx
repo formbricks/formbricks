@@ -77,7 +77,7 @@ export const SelectedRowSettings = <T,>({
   return (
     <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
       <div className="lowercase">
-        {selectedRowCount} {type === "response" ? t("common.response") : t("common.contact")}s{" "}
+        {selectedRowCount} {type === "response" ? t("common.responses") : t("common.contacts")}
         {t("common.selected")}
       </div>
       <Separator />
