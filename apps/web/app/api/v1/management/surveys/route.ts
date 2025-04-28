@@ -1,11 +1,11 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { createSurvey } from "@/lib/survey/service";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { createSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";

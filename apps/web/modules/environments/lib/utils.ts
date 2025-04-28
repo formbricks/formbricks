@@ -1,14 +1,17 @@
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { getEnvironment } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { cache } from "react";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { TEnvironmentAuth } from "../types/environment-auth";
 
 /**
@@ -74,3 +77,29 @@ export const getEnvironmentAuth = cache(async (environmentId: string): Promise<T
     isReadOnly,
   };
 });
+
+export const environmentIdLayoutChecks = async (environmentId: string) => {
+  const t = await getTranslate();
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return { t, session: null, user: null, organization: null };
+  }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
+    return { t, session, user: null, organization: null };
+  }
+
+  const hasAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!hasAccess) {
+    throw new AuthorizationError(t("common.not_authorized"));
+  }
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  return { t, session, user, organization };
+};

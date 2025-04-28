@@ -1,5 +1,5 @@
 final class PostUserRequest: EncodableRequest<PostUserRequest.Body>, CodableRequest {
-    var requestEndPoint: String { return "/api/v2/client/{environmentId}/user" }
+    var requestEndPoint: String { return FormbricksEnvironment.postUserRequestEndpoint }
     var requestType: HTTPMethod { return .post }
     
     

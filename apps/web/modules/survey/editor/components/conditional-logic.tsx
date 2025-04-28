@@ -1,5 +1,7 @@
 "use client";
 
+import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import {
   getDefaultOperatorForQuestion,
@@ -26,8 +28,6 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useMemo } from "react";
-import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface ConditionalLogicProps {

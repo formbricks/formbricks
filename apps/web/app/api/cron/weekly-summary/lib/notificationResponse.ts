@@ -1,6 +1,6 @@
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { convertResponseValue } from "@formbricks/lib/responses";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { convertResponseValue } from "@/lib/responses";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   TWeeklyEmailResponseData,

@@ -1,6 +1,6 @@
+import { cn } from "@/lib/cn";
 import { Search } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface SearchBarProps {
   value: string;

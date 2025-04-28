@@ -1,5 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContact } from "@formbricks/database/zod/contact";
+
+extendZodWithOpenApi(z);
 
 export const ZGetContactsFilter = z
   .object({

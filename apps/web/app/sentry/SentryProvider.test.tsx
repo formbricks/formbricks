@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SentryProvider } from "./SentryProvider";
 
 vi.mock("@sentry/nextjs", async () => {
@@ -17,17 +17,18 @@ vi.mock("@sentry/nextjs", async () => {
   };
 });
 
+const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
+
 describe("SentryProvider", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("calls Sentry.init when sentryDsn is provided", () => {
-    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
+  test("calls Sentry.init when sentryDsn is provided", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
-      <SentryProvider sentryDsn={sentryDsn}>
+      <SentryProvider sentryDsn={sentryDsn} isEnabled>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );
@@ -47,7 +48,7 @@ describe("SentryProvider", () => {
     );
   });
 
-  it("does not call Sentry.init when sentryDsn is not provided", () => {
+  test("does not call Sentry.init when sentryDsn is not provided", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
@@ -59,22 +60,32 @@ describe("SentryProvider", () => {
     expect(initSpy).not.toHaveBeenCalled();
   });
 
-  it("renders children", () => {
-    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
+  test("does not call Sentry.init when isEnabled is not provided", () => {
+    const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
+
     render(
       <SentryProvider sentryDsn={sentryDsn}>
+        <div data-testid="child">Test Content</div>
+      </SentryProvider>
+    );
+
+    expect(initSpy).not.toHaveBeenCalled();
+  });
+
+  test("renders children", () => {
+    render(
+      <SentryProvider sentryDsn={sentryDsn} isEnabled>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );
     expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
   });
 
-  it("processes beforeSend correctly", () => {
-    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
+  test("processes beforeSend correctly", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
-      <SentryProvider sentryDsn={sentryDsn}>
+      <SentryProvider sentryDsn={sentryDsn} isEnabled>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );

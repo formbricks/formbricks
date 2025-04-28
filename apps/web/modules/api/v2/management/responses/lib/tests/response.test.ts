@@ -9,6 +9,7 @@ import {
   responseInputWithoutDisplay,
   responseInputWithoutTtc,
 } from "./__mocks__/response.mock";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
@@ -16,11 +17,10 @@ import {
 } from "@/modules/api/v2/management/responses/lib/organization";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { createResponse, getResponses } from "../response";
 
-vi.mock("@formbricks/lib/posthogServer", () => ({
+vi.mock("@/lib/posthogServer", () => ({
   sendPlanLimitsReachedEventToPosthogWeekly: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -40,7 +40,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   IS_PRODUCTION: false,
 }));

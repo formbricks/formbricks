@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { VariantProps, cva } from "class-variance-authority";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
 import { createContext, useContext } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { Button, ButtonProps } from "../button";
 
 // Create a context to share variant and size with child components
@@ -72,8 +72,11 @@ const Alert = React.forwardRef<
 Alert.displayName = "Alert";
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     const { size } = useAlertContext();
+
+    const headingContent = children || <span className="sr-only">Alert</span>;
+
     return (
       <h5
         ref={ref}
@@ -82,8 +85,9 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
           size === "small" ? "flex-shrink truncate" : "col-start-1 row-start-1",
           className
         )}
-        {...props}
-      />
+        {...props}>
+        {headingContent}
+      </h5>
     );
   }
 );

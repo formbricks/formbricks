@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { testURLmatch } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -23,8 +25,6 @@ import {
   useFieldArray,
 } from "react-hook-form";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { testURLmatch } from "@formbricks/lib/utils/url";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 
 interface PageUrlSelectorProps {
@@ -99,7 +99,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
         />
       </div>
       {filterType === "specific" && (
-        <div className="mb-2 mt-4 w-full space-y-3 pe-2">
+        <div className="mt-4 mb-2 w-full space-y-3 pe-2">
           <Label>{t("environments.actions.url")}</Label>
           <UrlInput
             control={form.control}

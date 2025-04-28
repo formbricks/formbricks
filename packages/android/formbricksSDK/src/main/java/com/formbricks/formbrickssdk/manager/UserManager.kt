@@ -138,6 +138,12 @@ object UserManager {
                 responses = userResponse.data.state.data.responses
                 lastDisplayedAt = userResponse.data.state.data.lastDisplayAt()
                 expiresAt = userResponse.data.state.expiresAt()
+                val languageFromUserResponse = userResponse.data.state.data.language
+
+                if(languageFromUserResponse != null) {
+                    Formbricks.language = languageFromUserResponse
+                }
+
                 UpdateQueue.current.reset()
                 SurveyManager.filterSurveys()
                 startSyncTimer()
@@ -154,7 +160,16 @@ object UserManager {
      * Logs out the user and clears the user state.
      */
     fun logout() {
+        val isUserIdDefined = userId != null
+
+        if (!isUserIdDefined) {
+            val error = SDKError.noUserIdSetError
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
+        }
+
         prefManager.edit().apply {
+            remove(CONTACT_ID_KEY)
             remove(USER_ID_KEY)
             remove(SEGMENTS_KEY)
             remove(DISPLAYS_KEY)
@@ -163,13 +178,20 @@ object UserManager {
             remove(EXPIRES_AT_KEY)
             apply()
         }
+
         backingUserId = null
+        backingContactId = null
         backingSegments = null
         backingDisplays = null
         backingResponses = null
         backingLastDisplayedAt = null
         backingExpiresAt = null
+        Formbricks.language = "default"
         UpdateQueue.current.reset()
+
+        if(isUserIdDefined) {
+            Logger.d("User logged out successfully!")
+        }
     }
 
     private fun startSyncTimer() {

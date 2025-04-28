@@ -52,8 +52,8 @@ private extension Logger {
             logString.append(messageListString)
         }
         if logLevel == .error || logLevel.rawValue >= self.logLevel.rawValue {
-            DispatchQueue.main.async {
-                let str = logString + "\(self.emoji)\n"
+            DispatchQueue.main.async { [weak self] in
+                let str = logString + "\(self?.emoji ?? "")\n"
                 print(str)
             }
         }

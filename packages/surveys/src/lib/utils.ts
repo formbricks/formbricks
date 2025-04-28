@@ -83,7 +83,7 @@ export const calculateElementIdx = (
     return survey.questions.findIndex((e) => e.id === lastQuestion?.id);
   };
 
-  let elementIdx = currentQustionIdx || 0.5;
+  let elementIdx = currentQustionIdx + 1;
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
@@ -129,7 +129,6 @@ export const makeRequest = async <T>(
     headers: {
       "Content-Type": "application/json",
     },
-    cache: "no-store",
     body,
   });
 

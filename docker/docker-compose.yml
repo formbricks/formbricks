@@ -78,6 +78,16 @@ x-environment: &environment
     # Set the below to your Survey Domain(default is WEBAPP_URL)
     # SURVEY_URL:
 
+    # Configure Formbricks usage within Formbricks.
+    # FORMBRICKS_API_HOST:
+    # FORMBRICKS_ENVIRONMENT_ID:
+
+    # The SENTRY_DSN is used for error tracking and performance monitoring with Sentry.
+    # SENTRY_DSN:
+    # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
+    # SENTRY_AUTH_TOKEN:
+
+
     ################################################### OPTIONAL (STORAGE) ###################################################
 
     # Set the below to set a custom Upload Directory

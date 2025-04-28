@@ -7,12 +7,12 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getResponseCountBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { useIntervalWhenFocused } from "@/lib/utils/hooks/useIntervalWhenFocused";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyAnalysisNavigationProps {

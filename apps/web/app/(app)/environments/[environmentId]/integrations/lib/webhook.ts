@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Webhook } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 

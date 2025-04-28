@@ -1,3 +1,8 @@
+import { cn } from "@/lib/cn";
+import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
+import { processResponseData } from "@/lib/responses";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
@@ -7,11 +12,6 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
-import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { processResponseData } from "@formbricks/lib/responses";
-import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import {
   TSurvey,
   TSurveyMatrixQuestion,
@@ -67,10 +67,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Date:
       if (typeof responseData === "string") {
-        const formattedDateString = formatDateWithOrdinal(new Date(responseData));
-        return (
-          <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDateString}</p>
-        );
+        const parsedDate = new Date(responseData);
+
+        const formattedDate = isNaN(parsedDate.getTime()) ? responseData : formatDateWithOrdinal(parsedDate);
+
+        return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
       }
       break;
     case TSurveyQuestionTypeEnum.PictureSelection:
@@ -100,7 +101,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               return (
                 <p
                   key={rowValueInSelectedLanguage}
-                  className="ph-no-capture my-1 font-normal capitalize text-slate-700">
+                  className="ph-no-capture my-1 font-normal text-slate-700 capitalize">
                   {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
                 </p>
               );

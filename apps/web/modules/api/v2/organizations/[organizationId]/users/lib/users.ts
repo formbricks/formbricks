@@ -1,4 +1,7 @@
 import { teamCache } from "@/lib/cache/team";
+import { membershipCache } from "@/lib/membership/cache";
+import { captureTelemetry } from "@/lib/telemetry";
+import { userCache } from "@/lib/user/cache";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
@@ -10,9 +13,6 @@ import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { OrganizationRole, Prisma, TeamUserRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TUser } from "@formbricks/database/zod/users";
-import { membershipCache } from "@formbricks/lib/membership/cache";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { userCache } from "@formbricks/lib/user/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getUsers = async (

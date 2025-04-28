@@ -1,3 +1,4 @@
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -15,7 +16,6 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ organizationId: string }> }) =>
@@ -79,7 +79,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, createUserResult.error);
       }
 
-      return responses.successResponse({ data: createUserResult.data });
+      return responses.createdResponse({ data: createUserResult.data });
     },
   });
 

@@ -1,8 +1,8 @@
+import { CRON_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { mockSurveyOutput } from "@/lib/survey/tests/__mock__/survey.mock";
+import { doesSurveyHasOpenTextQuestion } from "@/lib/survey/utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { mockSurveyOutput } from "@formbricks/lib/survey/tests/__mock__/survey.mock";
-import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
@@ -12,27 +12,27 @@ import {
 } from "./utils";
 
 // Mock all dependencies
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   CRON_SECRET: vi.fn(() => "mocked-cron-secret"),
   WEBAPP_URL: "https://mocked-webapp-url.com",
 }));
 
-vi.mock("@formbricks/lib/survey/cache", () => ({
+vi.mock("@/lib/survey/cache", () => ({
   surveyCache: {
     revalidate: vi.fn(),
   },
 }));
 
-vi.mock("@formbricks/lib/survey/service", () => ({
+vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
   updateSurvey: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/survey/utils", () => ({
+vi.mock("@/lib/survey/utils", () => ({
   doesSurveyHasOpenTextQuestion: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/validate", () => ({
+vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
@@ -87,7 +87,7 @@ describe("Insights Utils", () => {
       vi.resetModules();
 
       // Mock CRON_SECRET as undefined
-      vi.doMock("@formbricks/lib/constants", () => ({
+      vi.doMock("@/lib/constants", () => ({
         CRON_SECRET: undefined,
         WEBAPP_URL: "https://mocked-webapp-url.com",
       }));

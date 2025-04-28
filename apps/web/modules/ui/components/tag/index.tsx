@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import { XCircleIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 
 interface Tag {
   tagId: string;

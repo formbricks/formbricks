@@ -1,12 +1,12 @@
 "use server";
 
+import { cache } from "@/lib/cache";
+import { responseCache } from "@/lib/response/cache";
+import { responseNoteCache } from "@/lib/responseNote/cache";
+import { surveyCache } from "@/lib/survey/cache";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const fetchEnvironmentId = reactCache(async (id: string, isResponseId: boolean) =>

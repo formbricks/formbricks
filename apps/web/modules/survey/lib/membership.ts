@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
+import { membershipCache } from "@/lib/membership/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { OrganizationRole, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { membershipCache } from "@formbricks/lib/membership/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, DatabaseError, UnknownError } from "@formbricks/types/errors";
 

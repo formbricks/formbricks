@@ -1,17 +1,17 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
-import { prisma } from "@formbricks/database";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { calculateTtcTotal } from "@formbricks/lib/response/utils";
-import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+} from "@/lib/organization/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { responseCache } from "@/lib/response/cache";
+import { calculateTtcTotal } from "@/lib/response/utils";
+import { responseNoteCache } from "@/lib/responseNote/cache";
+import { captureTelemetry } from "@/lib/telemetry";
+import { validateInputs } from "@/lib/utils/validate";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";

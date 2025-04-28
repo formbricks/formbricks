@@ -1,7 +1,7 @@
+import { projectCache } from "@/lib/project/cache";
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TOrganizationProject } from "../types/api-keys";
 import { getProjectsByOrganizationId } from "./projects";
@@ -54,7 +54,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/project/cache", () => ({
+vi.mock("@/lib/project/cache", () => ({
   projectCache: {
     tag: {
       byOrganizationId: vi.fn(),
@@ -68,7 +68,7 @@ describe("Projects Management", () => {
   });
 
   describe("getProjectsByOrganizationId", () => {
-    it("retrieves projects by organization ID successfully", async () => {
+    test("retrieves projects by organization ID successfully", async () => {
       vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
       vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
@@ -87,7 +87,7 @@ describe("Projects Management", () => {
       });
     });
 
-    it("returns empty array when no projects exist", async () => {
+    test("returns empty array when no projects exist", async () => {
       vi.mocked(prisma.project.findMany).mockResolvedValueOnce([]);
       vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
@@ -106,7 +106,7 @@ describe("Projects Management", () => {
       });
     });
 
-    it("throws DatabaseError on prisma error", async () => {
+    test("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -117,7 +117,7 @@ describe("Projects Management", () => {
       await expect(getProjectsByOrganizationId("org123")).rejects.toThrow(DatabaseError);
     });
 
-    it("bubbles up unexpected errors", async () => {
+    test("bubbles up unexpected errors", async () => {
       const unexpectedError = new Error("Unexpected error");
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(unexpectedError);
       vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");

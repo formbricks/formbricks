@@ -9,6 +9,7 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { getIntegrations } from "@/lib/integration/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -16,7 +17,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getIntegrations } from "@formbricks/lib/integration/service";
 import { TIntegrationType } from "@formbricks/types/integration";
 
 const Page = async (props) => {

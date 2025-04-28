@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
@@ -11,7 +12,6 @@ import {
   FormProvider,
   useFormContext,
 } from "react-hook-form";
-import { cn } from "@formbricks/lib/cn";
 import { Label } from "../label";
 
 type FormFieldContextValue<
