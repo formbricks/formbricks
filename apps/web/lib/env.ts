@@ -106,9 +106,6 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
-    LANGFUSE_SECRET_KEY: z.string().optional(),
-    LANGFUSE_PUBLIC_KEY: z.string().optional(),
-    LANGFUSE_BASEURL: z.string().optional(),
     UNKEY_ROOT_KEY: z.string().optional(),
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
@@ -122,9 +119,6 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
-    LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
-    LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,

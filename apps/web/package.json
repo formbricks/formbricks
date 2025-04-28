@@ -97,7 +97,6 @@
     "https-proxy-agent": "7.0.6",
     "jiti": "2.4.2",
     "jsonwebtoken": "9.0.2",
-    "langfuse-vercel": "3.37.1",
     "lexical": "0.30.0",
     "lodash": "4.17.21",
     "lru-cache": "11.1.0",
