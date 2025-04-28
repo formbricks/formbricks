@@ -83,6 +83,7 @@ vi.mock("@/lib/constants", () => ({
   SAML_DATABASE_URL: "test-saml-db-url",
   NEXTAUTH_SECRET: "test-nextauth-secret",
   WEBAPP_URL: "http://localhost:3000",
+  DISABLE_USER_MANAGEMENT_UI: false,
 }));
 
 vi.mock("@/lib/utils/action-client-middleware", () => ({
