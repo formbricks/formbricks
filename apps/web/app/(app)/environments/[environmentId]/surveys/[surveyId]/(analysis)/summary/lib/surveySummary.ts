@@ -319,7 +319,6 @@ export const getQuestionSummary = async (
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
-            insightResponsesIds.push(response.id);
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,

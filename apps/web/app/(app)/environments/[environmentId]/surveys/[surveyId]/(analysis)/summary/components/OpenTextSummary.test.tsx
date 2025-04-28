@@ -90,7 +90,6 @@ describe("OpenTextSummary", () => {
         questionSummary={questionSummary}
         environmentId={environmentId}
         survey={survey}
-        isAIEnabled={true}
         locale={locale}
       />
     );
@@ -117,7 +116,6 @@ describe("OpenTextSummary", () => {
         questionSummary={questionSummary}
         environmentId={environmentId}
         survey={survey}
-        isAIEnabled={true}
         locale={locale}
       />
     );
@@ -144,7 +142,6 @@ describe("OpenTextSummary", () => {
         questionSummary={questionSummary}
         environmentId={environmentId}
         survey={survey}
-        isAIEnabled={false}
         locale={locale}
       />
     );
@@ -172,7 +169,6 @@ describe("OpenTextSummary", () => {
         questionSummary={questionSummary}
         environmentId={environmentId}
         survey={survey}
-        isAIEnabled={false}
         locale={locale}
       />
     );

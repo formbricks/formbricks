@@ -1,16 +1,8 @@
 import "server-only";
-import { llmModel } from "@/lib/aiModels";
 import { Prisma } from "@prisma/client";
-import { generateObject } from "ai";
-import { z } from "zod";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyFilterCriteria,
-  TSurveyQuestion,
-  TSurveyQuestions,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
   surveyPrisma: any

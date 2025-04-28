@@ -1,7 +1,7 @@
 import "server-only";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyQuestions } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
   surveyPrisma: any

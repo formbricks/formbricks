@@ -17,19 +17,10 @@ interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
-  isAIEnabled: boolean;
-  documentsPerPage?: number;
   locale: TUserLocale;
 }
 
-export const OpenTextSummary = ({
-  questionSummary,
-  environmentId,
-  survey,
-  isAIEnabled,
-  documentsPerPage,
-  locale,
-}: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
   const { t } = useTranslate();
   const [visibleResponses, setVisibleResponses] = useState(10);
 

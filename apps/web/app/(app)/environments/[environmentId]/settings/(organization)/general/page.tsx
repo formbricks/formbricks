@@ -1,11 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -33,8 +29,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const currentUserRole = currentUserMembership?.role;
 
   const isOwnerOrManager = isManager || isOwner;
-
-  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
 
   return (
     <PageContentWrapper>
