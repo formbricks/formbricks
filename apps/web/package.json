@@ -17,7 +17,7 @@
     "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
   "dependencies": {
-    "@ai-sdk/azure": "1.1.9",
+    "@ai-sdk/azure": "1.3.21",
     "@aws-sdk/client-s3": "3.782.0",
     "@aws-sdk/s3-presigned-post": "3.782.0",
     "@aws-sdk/s3-request-presigner": "3.782.0",
