@@ -50,7 +50,7 @@ final class SurveyManager {
     
     /// Checks if there are any surveys to display, based in the track action, and if so, displays the first one.
     /// Handles the display percentage and the delay of the survey.
-    func track(_ action: String) {
+    func track(_ action: String, hiddenFields: [String: Any]? = nil) {
         guard !isShowingSurvey else { return }
         
         let actionClasses = environmentResponse?.data.data.actionClasses ?? []
@@ -58,6 +58,10 @@ final class SurveyManager {
         let actionClass = codeActionClasses.first { $0.key == action }
         let firstSurveyWithActionClass = filteredSurveys.first { survey in
             return survey.triggers?.contains(where: { $0.actionClass?.name == actionClass?.name }) ?? false
+        }
+        
+        if (firstSurveyWithActionClass == nil) {
+            Formbricks.delegate?.onError(FormbricksSDKError(type: .surveyNotFoundError))
         }
                 
         // Display percentage
@@ -80,7 +84,8 @@ final class SurveyManager {
             isShowingSurvey = true
             let timeout = firstSurveyWithActionClass?.delay ?? 0
             DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) { [weak self] in
-                self?.showSurvey(withId: surveyId)
+                self?.showSurvey(withId: surveyId, hiddenFields: hiddenFields)
+                Formbricks.delegate?.onSuccess(.onFoundSurvey)
             }
         }
     }
@@ -89,11 +94,14 @@ final class SurveyManager {
 // MARK: - API calls -
 extension SurveyManager {
     /// Checks if the environment state needs to be refreshed based on its `expiresAt` property, and if so, refreshes it, starts the refresh timer, and filters the surveys.
-    func refreshEnvironmentIfNeeded(force: Bool = false) {
-        if let environmentResponse = environmentResponse, environmentResponse.data.expiresAt.timeIntervalSinceNow > 0, !force {
-            Formbricks.logger?.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
-            filterSurveys()
-            return
+    func refreshEnvironmentIfNeeded(force: Bool = false,
+                                    isInitial: Bool = false) {
+        if (!force) {
+            if let environmentResponse = environmentResponse, environmentResponse.data.expiresAt.timeIntervalSinceNow > 0 {
+                Formbricks.logger?.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
+                filterSurveys()
+                return
+            }
         }
         
         service.getEnvironmentState { [weak self] result in
@@ -103,6 +111,11 @@ extension SurveyManager {
                 self?.environmentResponse = response
                 self?.startRefreshTimer(expiresAt: response.data.expiresAt)
                 self?.filterSurveys()
+                if (isInitial) {
+                    Formbricks.delegate?.onSuccess(.onFinishedSetup)
+                } else {
+                    Formbricks.delegate?.onSuccess(.onFinishedRefreshEnvironment)
+                }
             case .failure:
                 self?.hasApiError = true
                 let error = FormbricksSDKError(type: .unableToRefreshEnvironment)
@@ -121,6 +134,7 @@ extension SurveyManager {
     /// Creates a new display for the survey. It is called when the survey is displayed to the user.
     func onNewDisplay(surveyId: String) {
         userManager.onDisplay(surveyId: surveyId)
+        Formbricks.delegate?.onSurveyDisplayed()
     }
 }
 
@@ -137,9 +151,9 @@ private extension SurveyManager {
     /// Presents the survey window with the given id. It is called when a survey is triggered.
     /// The survey is displayed based on the `FormbricksView`.
     /// The view controller is presented over the current context.
-    func showSurvey(withId id: String) {
+    func showSurvey(withId id: String, hiddenFields: [String: Any]? = nil) {
         if let environmentResponse = environmentResponse {
-            presentSurveyManager.present(environmentResponse: environmentResponse, id: id)
+            presentSurveyManager.present(environmentResponse: environmentResponse, id: id, hiddenFields: hiddenFields)
         }
         
     }

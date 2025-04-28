@@ -2,6 +2,18 @@ import UIKit
 import FormbricksSDK
 
 class AppDelegate: NSObject, UIApplicationDelegate, FormbricksDelegate {
+    func onResponseCreated() {
+        
+    }
+    
+    func onSurveyDisplayed() {
+        
+    }
+    
+    func onSuccess(_ successAction: FormbricksSDK.SuccessAction) {
+        
+    }
+    
     
     func application(_ application: UIApplication, 
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {

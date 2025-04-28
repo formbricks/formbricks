@@ -2,7 +2,6 @@ import Foundation
 
 class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
     
-    private let session = URLSession.shared
     private let request: Request
     private let completion: ((ResultType<Request.Response>) -> Void)?
     
@@ -20,7 +19,13 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
         let urlRequest = createURLRequest(forURL: finalURL)
         logRequest(urlRequest)
         
+        let session = URLSession(configuration: URLSessionConfiguration.ephemeral,
+                                 delegate: SSLPinningDelegate(),
+                                 delegateQueue: nil)
         session.dataTask(with: urlRequest) { data, response, error in
+            defer {
+                session.finishTasksAndInvalidate()
+            }
             self.processResponse(data: data, response: response, error: error)
         }.resume()
     }
@@ -170,5 +175,39 @@ private extension APIClient {
         }
         
         return newPath
+    }
+}
+
+
+class SSLPinningDelegate: NSObject, URLSessionDelegate {
+    func urlSession(_ session: URLSession,
+                    didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+
+        guard let securityCertData = Formbricks.securityCertData else {
+            // No pinning cert available, fallback to default handling
+            if let serverTrust = challenge.protectionSpace.serverTrust {
+                let credential = URLCredential(trust: serverTrust)
+                completionHandler(.useCredential, credential)
+            } else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+            }
+            return
+        }
+
+        guard let serverTrust = challenge.protectionSpace.serverTrust,
+              let certificate = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
+        let serverCertificateData = SecCertificateCopyData(certificate) as Data
+
+        if serverCertificateData == securityCertData {
+            let credential = URLCredential(trust: serverTrust)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
     }
 }

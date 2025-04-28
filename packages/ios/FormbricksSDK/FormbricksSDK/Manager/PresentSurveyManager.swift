@@ -13,11 +13,11 @@ final class PresentSurveyManager {
     private weak var viewController: UIViewController?
     
     /// Present the webview
-    func present(environmentResponse: EnvironmentResponse, id: String) {
+    func present(environmentResponse: EnvironmentResponse, id: String, hiddenFields: [String: Any]? = nil) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            if let window = UIApplication.safeKeyWindow {
-                    let view = FormbricksView(viewModel: FormbricksViewModel(environmentResponse: environmentResponse, surveyId: id))
+            if let topVC = self.topViewControllerInVeryWindow(){
+                let view = FormbricksView(viewModel: FormbricksViewModel(environmentResponse: environmentResponse, surveyId: id, hiddenFields: hiddenFields))
                 let vc = UIHostingController(rootView: view)
                 vc.modalPresentationStyle = .overCurrentContext
                 vc.view.backgroundColor = UIColor.gray.withAlphaComponent(0.6)
@@ -25,17 +25,55 @@ final class PresentSurveyManager {
                     presentationController.detents = [.large()]
                 }
                 self.viewController = vc
-                window.rootViewController?.present(vc, animated: true, completion: nil)
+                topVC.present(vc, animated: true, completion: nil)
             }
         }
     }
     
     /// Dismiss the webview
     func dismissView() {
-        viewController?.dismiss(animated: true)
+        viewController?.dismiss(animated: false)
     }
+    
+    func topViewControllerInVeryWindow(controller: UIViewController? =
+                                           UIWindow.key?.rootViewController) -> UIViewController? {
+            if let navigationController = controller as? UINavigationController {
+                return topViewControllerInVeryWindow(controller: navigationController.visibleViewController)
+            }
+
+            if let tabController = controller as? UITabBarController, let selected = tabController.selectedViewController {
+                return topViewControllerInVeryWindow(controller: selected)
+            }
+
+            if let presented = controller?.presentedViewController {
+                return topViewControllerInVeryWindow(controller: presented)
+            }
+
+            return controller
+        }
     
     deinit {
         Formbricks.logger?.debug("Deinitializing \(self)")
+    }
+}
+
+
+extension UIWindow {
+    func dismiss() {
+        isHidden = true
+        if #available(iOS 13.0, *) {
+            windowScene = nil
+        }
+    }
+
+    static var key: UIWindow? {
+        if #available(iOS 13.0, *) {
+            return UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }
+        } else {
+            return UIApplication.shared.keyWindow
+        }
     }
 }

@@ -94,6 +94,10 @@ extension SurveyWebView {
                  completionHandler(.useCredential, nil)
             }
         }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            Formbricks.delegate?.onSurveyDisplayed()
+        }
     }
 }
 
@@ -116,6 +120,7 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
                 /// Happens when the user submits an answer.
             case .onResponseCreated:
                 Formbricks.surveyManager?.postResponse(surveyId: surveyId)
+                Formbricks.delegate?.onResponseCreated()
 
                 /// Happens when a survey is shown.
             case .onDisplayCreated:
