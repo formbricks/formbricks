@@ -59,6 +59,6 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, createTeamResult.error);
       }
 
-      return responses.successResponse({ data: createTeamResult.data });
+      return responses.createdResponse({ data: createTeamResult.data });
     },
   });

@@ -1,5 +1,6 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
@@ -9,7 +10,6 @@ import {
 } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 

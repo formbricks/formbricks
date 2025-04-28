@@ -1,19 +1,19 @@
+import { canUserAccessOrganization } from "@/lib/organization/auth";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import ProjectOnboardingLayout from "./layout";
 
 // Mock all the modules and functions that this layout uses:
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -42,13 +42,13 @@ vi.mock("next-auth", () => ({
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
-vi.mock("@formbricks/lib/organization/auth", () => ({
+vi.mock("@/lib/organization/auth", () => ({
   canUserAccessOrganization: vi.fn(),
 }));
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganization: vi.fn(),
 }));
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 vi.mock("@/tolgee/server", () => ({
@@ -71,7 +71,7 @@ describe("ProjectOnboardingLayout", () => {
     cleanup();
   });
 
-  it("redirects to /auth/login if there is no session", async () => {
+  test("redirects to /auth/login if there is no session", async () => {
     // Mock no session
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
@@ -85,7 +85,7 @@ describe("ProjectOnboardingLayout", () => {
     expect(layoutElement).toBeUndefined();
   });
 
-  it("throws an error if user does not exist", async () => {
+  test("throws an error if user does not exist", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({
       user: { id: "user-123" },
     });
@@ -99,7 +99,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.user_not_found");
   });
 
-  it("throws AuthorizationError if user cannot access organization", async () => {
+  test("throws AuthorizationError if user cannot access organization", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
     vi.mocked(canUserAccessOrganization).mockResolvedValueOnce(false);
@@ -112,7 +112,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.not_authorized");
   });
 
-  it("throws an error if organization does not exist", async () => {
+  test("throws an error if organization does not exist", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123" } as TUser);
     vi.mocked(canUserAccessOrganization).mockResolvedValueOnce(true);
@@ -126,7 +126,7 @@ describe("ProjectOnboardingLayout", () => {
     ).rejects.toThrow("common.organization_not_found");
   });
 
-  it("renders child content plus PosthogIdentify & ToasterClient if everything is valid", async () => {
+  test("renders child content plus PosthogIdentify & ToasterClient if everything is valid", async () => {
     // Provide valid data
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user-123" } });
     vi.mocked(getUser).mockResolvedValueOnce({ id: "user-123", name: "Test User" } as TUser);

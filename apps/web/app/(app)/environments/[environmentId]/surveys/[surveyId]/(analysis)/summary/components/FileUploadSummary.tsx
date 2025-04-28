@@ -1,14 +1,14 @@
 "use client";
 
+import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -80,7 +80,7 @@ export const FileUploadSummary = ({
                       return (
                         <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
                           <a href={fileUrl} key={index} target="_blank" rel="noopener noreferrer">
-                            <div className="absolute right-0 top-0 m-2">
+                            <div className="absolute top-0 right-0 m-2">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                                 <DownloadIcon className="h-6 text-slate-500" />
                               </div>

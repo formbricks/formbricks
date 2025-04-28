@@ -1,4 +1,4 @@
-// import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
+import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
 // import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
 // import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
@@ -42,7 +42,7 @@ const document = createDocument({
     ...bulkContactPaths,
     // ...contactPaths,
     // ...contactAttributePaths,
-    // ...contactAttributeKeyPaths,
+    ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...surveyContactLinksBySegmentPaths,
     ...webhookPaths,

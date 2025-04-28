@@ -81,6 +81,6 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error);
       }
 
-      return responses.successResponse({ data: createResponseResult.data });
+      return responses.createdResponse({ data: createResponseResult.data });
     },
   });

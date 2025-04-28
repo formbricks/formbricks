@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { getApiKeysWithEnvironmentPermissions } from "../lib/api-key";
 import { ApiKeyList } from "./api-key-list";
@@ -10,8 +10,8 @@ vi.mock("../lib/api-key", () => ({
   getApiKeysWithEnvironmentPermissions: vi.fn(),
 }));
 
-// Mock @formbricks/lib/constants
-vi.mock("@formbricks/lib/constants", () => ({
+// Mock @/lib/constants
+vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "test-app-id",
@@ -32,8 +32,8 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
 }));
 
-// Mock @formbricks/lib/env
-vi.mock("@formbricks/lib/env", () => ({
+// Mock @/lib/env
+vi.mock("@/lib/env", () => ({
   env: {
     IS_FORMBRICKS_CLOUD: "0",
   },
@@ -108,7 +108,7 @@ const mockApiKeys = [
 ];
 
 describe("ApiKeyList", () => {
-  it("renders EditAPIKeys with correct props", async () => {
+  test("renders EditAPIKeys with correct props", async () => {
     // Mock the getApiKeysWithEnvironmentPermissions function to return our mock data
     (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockApiKeys
@@ -128,7 +128,7 @@ describe("ApiKeyList", () => {
     expect(container).toBeInTheDocument();
   });
 
-  it("handles empty api keys", async () => {
+  test("handles empty api keys", async () => {
     // Mock the getApiKeysWithEnvironmentPermissions function to return empty array
     (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
@@ -146,7 +146,7 @@ describe("ApiKeyList", () => {
     expect(container).toBeInTheDocument();
   });
 
-  it("passes isReadOnly prop correctly", async () => {
+  test("passes isReadOnly prop correctly", async () => {
     (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockApiKeys
     );

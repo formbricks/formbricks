@@ -2,197 +2,188 @@ import Foundation
 
 class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
     
-    //private let session = URLSession.shared
-    
-    private let session = URLSession(configuration: URLSessionConfiguration.ephemeral,
-                                     delegate: SSLPinningDelegate(),
-                                     delegateQueue: nil)
     private let request: Request
     private let completion: ((ResultType<Request.Response>) -> Void)?
-    
+
     init(request: Request, completion: ((ResultType<Request.Response>) -> Void)?) {
         self.request = request
         self.completion = completion
     }
-    
-    override func main() {
-        performRequest()
-    }
-    
-    private func performRequest() {
-        guard let apiURL = request.baseURL, var baseUrlComponents = URLComponents(string: apiURL) else {
-            completion?(.failure(FormbricksSDKError(type: .sdkIsNotInitialized)))
-            return
-        }
-        
-        baseUrlComponents.queryItems = request.queryParams?.map { URLQueryItem(name: $0.key, value: $0.value) }
-        
-        guard var finalURL = baseUrlComponents.url else {
-            completion?(.failure(FormbricksSDKError(type: .invalidAppUrl)))
-            return
-        }
-        
-        guard let requestEndPoint = setPathParams(request.requestEndPoint) else {
-            completion?(.failure(FormbricksSDKError(type: .sdkIsNotInitialized)))
-            return
-        }
-        
-        finalURL.appendPathComponent(requestEndPoint)
-        
-        let urlRequest = createURLRequest(forURL: finalURL)
-        
-        // LOG
-        var requestLogMessage = "\(request.requestType.rawValue) >>> "
-        if let urlString = urlRequest.url?.absoluteString {
-            requestLogMessage.append(urlString)
-        }
-        if let headers = urlRequest.allHTTPHeaderFields {
-            requestLogMessage.append("\nHeaders: \(headers)")
-        }
-        if let body = urlRequest.httpBody {
-            requestLogMessage.append("\nBody: \(String(data: body, encoding: .utf8) ?? "")")
-        }
-        
-        Formbricks.logger.info(requestLogMessage)
-        
-        session.dataTask(with: urlRequest) { (data, response, error) in
-            if let httpStatus = (response as? HTTPURLResponse)?.status {
-                var responseLogMessage = "\(httpStatus.rawValue) <<< "
-                if let urlString = response?.url?.absoluteString {
-                    responseLogMessage.append(urlString)
-                }
-                
-                if httpStatus.responseType == .success {
-                    guard let data = data else {
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                        return
-                    }
-                    if let responseString = String(data: data, encoding: .utf8) {
-                        responseLogMessage.append("\n\(responseString)\n")
-                    }
-                    
-                    do {
-                        if Request.Response.self == VoidResponse.self {
-                            Formbricks.logger.info(responseLogMessage)
-                            self.completion?(.success(VoidResponse() as! Request.Response))
-                        } else {
-                            var body = try self.request.decoder.decode(Request.Response.self, from: data)
-                            Formbricks.logger.info(responseLogMessage)
-                            
-                            // We want to save the entire response dictionary for the environment response
-                            if var environmentResponse = body as? EnvironmentResponse,
-                               let jsonString = String(data: data, encoding: .utf8) {
-                                environmentResponse.responseString = jsonString
-                                body = environmentResponse as! Request.Response
-                            }
 
-                            
-                            self.completion?(.success(body))
-                        }
-                    }
-                    catch let DecodingError.dataCorrupted(context) {
-                        responseLogMessage.append("Data corrupted \(context)\n")
-                        Formbricks.logger.error(responseLogMessage)
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                    }
-                    catch let DecodingError.keyNotFound(key, context) {
-                        responseLogMessage.append("Key '\(key)' not found: \(context.debugDescription)\n")
-                        responseLogMessage.append("codingPath: \(context.codingPath)")
-                        Formbricks.logger.error(responseLogMessage)
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                    }
-                    catch let DecodingError.valueNotFound(value, context) {
-                        responseLogMessage.append("Value '\(value)' not found: \(context.debugDescription)\n")
-                        responseLogMessage.append("codingPath: \(context.codingPath)")
-                        Formbricks.logger.error(responseLogMessage)
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                    }
-                    catch let DecodingError.typeMismatch(type, context)  {
-                        responseLogMessage.append("Type '\(type)' mismatch: \(context.debugDescription)\n")
-                        responseLogMessage.append("codingPath: \(context.codingPath)")
-                        Formbricks.logger.error(responseLogMessage)
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                    }
-                    catch {
-                        responseLogMessage.append("error: \(error.message)")
-                        Formbricks.logger.error(responseLogMessage)
-                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
-                        Formbricks.delegate?.onError(error)
-                        self.completion?(.failure(error))
-                    }
-                } else {
-                    if let error = error {
-                        responseLogMessage.append("\nError: \(error.localizedDescription)")
-                        Formbricks.logger.error(responseLogMessage)
-                        
-                        self.completion?(.failure(error))
-                    } else if let data = data, let apiError = try? self.request.decoder.decode(FormbricksAPIError.self, from: data) {
-                        Formbricks.logger.error("\(responseLogMessage)\n\(apiError.getDetailedErrorMessage())")
-                        self.completion?(.failure(apiError))
-                    } else {
-                        let error = FormbricksAPIClientError(type: .responseError, statusCode: httpStatus.rawValue)
-                        Formbricks.logger.error("\(responseLogMessage)\n\(error.message)")
-                        self.completion?(.failure(error))
-                    }
-                }
-            } else {
-                let error = FormbricksAPIClientError(type: .invalidResponse)
-                Formbricks.logger.error("ERROR \(error.message)")
-                
-                Formbricks.delegate?.onError(error)
-                self.completion?(.failure(error))
+    override func main() {
+        guard let finalURL = buildFinalURL() else {
+            completion?(.failure(FormbricksSDKError(type: .sdkIsNotInitialized)))
+            return
+        }
+
+        let urlRequest = createURLRequest(forURL: finalURL)
+        logRequest(urlRequest)
+
+        let session = URLSession(configuration: URLSessionConfiguration.ephemeral,
+                                 delegate: SSLPinningDelegate(),
+                                 delegateQueue: nil)
+        session.dataTask(with: urlRequest) { data, response, error in
+            defer {
+                session.finishTasksAndInvalidate()
             }
+            self.processResponse(data: data, response: response, error: error)
         }.resume()
     }
+
+    private func buildFinalURL() -> URL? {
+        guard let apiURL = request.baseURL, var components = URLComponents(string: apiURL) else { return nil }
+
+        components.queryItems = request.queryParams?.map { URLQueryItem(name: $0.key, value: $0.value) }
+
+        guard var url = components.url, let path = setPathParams(request.requestEndPoint) else { return nil }
+
+        url.appendPathComponent(path)
+        return url
+    }
+
+    private func processResponse(data: Data?, response: URLResponse?, error: Error?) {
+        guard let httpStatus = (response as? HTTPURLResponse)?.status else {
+            let error = FormbricksAPIClientError(type: .invalidResponse)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error("ERROR \(error.message)")
+            completion?(.failure(error))
+            return
+        }
+
+        var message = "\(httpStatus.rawValue) <<< \(response?.url?.absoluteString ?? "")"
+
+        if httpStatus.responseType == .success {
+            handleSuccessResponse(data: data, statusCode: httpStatus.rawValue, message: &message)
+        } else {
+            handleFailureResponse(data: data, error: error, statusCode: httpStatus.rawValue, message: message)
+        }
+    }
+
+    private func handleSuccessResponse(data: Data?, statusCode: Int, message: inout String) {
+        guard let data = data else {
+            let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: statusCode)
+            Formbricks.delegate?.onError(error)
+            completion?(.failure(error))
+            return
+        }
+
+        if let responseString = String(data: data, encoding: .utf8) {
+            message.append("\n\(responseString)\n")
+        }
+
+        do {
+            if Request.Response.self == VoidResponse.self {
+                Formbricks.logger?.info(message)
+                completion?(.success(VoidResponse() as! Request.Response))
+            } else {
+                var body = try request.decoder.decode(Request.Response.self, from: data)
+                if var env = body as? EnvironmentResponse, let jsonString = String(data: data, encoding: .utf8) {
+                    env.responseString = jsonString
+                    body = env as! Request.Response
+                }
+                Formbricks.logger?.info(message)
+                completion?(.success(body))
+            }
+        } catch {
+            handleDecodingError(error, message: &message, statusCode: statusCode)
+        }
+    }
+
+    private func handleFailureResponse(data: Data?, error: Error?, statusCode: Int, message: String) {
+        var log = message
+
+        if let error = error {
+            log.append("\nError: \(error.localizedDescription)")
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error(log)
+            completion?(.failure(error))
+        } else if let data = data, let apiError = try? request.decoder.decode(FormbricksAPIError.self, from: data) {
+            Formbricks.delegate?.onError(apiError)
+            Formbricks.logger?.error("\(log)\n\(apiError.getDetailedErrorMessage())")
+            completion?(.failure(apiError))
+        } else {
+            let error = FormbricksAPIClientError(type: .responseError, statusCode: statusCode)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error("\(log)\n\(error.message)")
+            completion?(.failure(error))
+        }
+    }
+
+    private func handleDecodingError(_ error: Error, message: inout String, statusCode: Int) {
+        switch error {
+        case let DecodingError.dataCorrupted(context):
+            message.append("Data corrupted: \(context)")
+        case let DecodingError.keyNotFound(key, context):
+            message.append("Key '\(key)' not found: \(context.debugDescription)\ncodingPath: \(context.codingPath)")
+        case let DecodingError.valueNotFound(value, context):
+            message.append("Value '\(value)' not found: \(context.debugDescription)\ncodingPath: \(context.codingPath)")
+        case let DecodingError.typeMismatch(type, context):
+            message.append("Type '\(type)' mismatch: \(context.debugDescription)\ncodingPath: \(context.codingPath)")
+        default:
+            message.append("Error: \(error.localizedDescription)")
+        }
+
+        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: statusCode)
+        Formbricks.delegate?.onError(error)
+        Formbricks.logger?.error(error.message)
+        completion?(.failure(error))
+
+    }
+
+    private func logRequest(_ request: URLRequest) {
+        var message = "\(request.httpMethod ?? "") >>> \(request.url?.absoluteString ?? "")"
+
+        if let headers = request.allHTTPHeaderFields {
+            message.append("\nHeaders: \(headers)")
+        }
+
+        if let body = request.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+            message.append("\nBody: \(bodyString)")
+        }
+
+        Formbricks.logger?.info(message)
+    }
+
 }
 
 private extension APIClient {
     func createURLRequest(forURL url: URL) -> URLRequest {
         var urlRequest = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
-    
+
         request.headers?.forEach {
             urlRequest.addValue($0.value, forHTTPHeaderField: $0.key)
         }
-        
+
         urlRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         urlRequest.httpMethod = request.requestType.rawValue
-        
+
         if let body = request.requestBody {
             urlRequest.httpBody = body
         }
-        
+
         return urlRequest
     }
-    
+
     func setPathParams(_ path: String) -> String? {
         var newPath = path
         if let environmentId = Formbricks.environmentId {
             newPath = newPath.replacingOccurrences(of: "{environmentId}", with: environmentId)
         }
-        
+
         request.pathParams?.forEach { key, value in
             newPath = newPath.replacingOccurrences(of: key, with: value)
         }
-        
+
         return newPath
     }
 }
+
 
 class SSLPinningDelegate: NSObject, URLSessionDelegate {
     func urlSession(_ session: URLSession,
                     didReceive challenge: URLAuthenticationChallenge,
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        
+
         guard let securityCertData = Formbricks.securityCertData else {
             // No pinning cert available, fallback to default handling
             if let serverTrust = challenge.protectionSpace.serverTrust {
@@ -203,15 +194,15 @@ class SSLPinningDelegate: NSObject, URLSessionDelegate {
             }
             return
         }
-        
+
         guard let serverTrust = challenge.protectionSpace.serverTrust,
               let certificate = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
-        
+
         let serverCertificateData = SecCertificateCopyData(certificate) as Data
-        
+
         if serverCertificateData == securityCertData {
             let credential = URLCredential(trust: serverTrust)
             completionHandler(.useCredential, credential)
@@ -220,4 +211,3 @@ class SSLPinningDelegate: NSObject, URLSessionDelegate {
         }
     }
 }
-

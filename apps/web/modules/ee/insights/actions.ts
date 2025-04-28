@@ -1,12 +1,12 @@
 "use server";
 
 import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { getIsAIEnabled, getIsOrganizationAIReady } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";

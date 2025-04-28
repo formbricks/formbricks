@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -8,7 +9,6 @@ import { getTranslate } from "@/tolgee/server";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -123,7 +123,7 @@ const Page = async (props) => {
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
             <svg
               viewBox="0 0 1024 1024"
-              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+              className="absolute top-1/2 left-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
               aria-hidden="true">
               <circle
                 cx={512}

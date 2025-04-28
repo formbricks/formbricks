@@ -1,9 +1,9 @@
 "use server";
 
+import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
-import { deleteUser } from "@formbricks/lib/user/service";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const deleteUserAction = authenticatedActionClient.action(async ({ ctx }) => {

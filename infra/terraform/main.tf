@@ -2,13 +2,31 @@ locals {
   project     = "formbricks"
   environment = "prod"
   name        = "${local.project}-${local.environment}"
-  vpc_cidr    = "10.0.0.0/16"
-  azs         = slice(data.aws_availability_zones.available.names, 0, 3)
+  envs = {
+    prod  = "${local.project}-prod"
+    stage = "${local.project}-stage"
+  }
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
   tags = {
     Project     = local.project
     Environment = local.environment
     MangedBy    = "Terraform"
     Blueprint   = local.name
+  }
+  tags_map = {
+    prod = {
+      Project     = local.project
+      Environment = "prod"
+      MangedBy    = "Terraform"
+      Blueprint   = "${local.project}-prod"
+    }
+    stage = {
+      Project     = local.project
+      Environment = "stage"
+      MangedBy    = "Terraform"
+      Blueprint   = "${local.project}-stage"
+    }
   }
   domain                 = "k8s.formbricks.com"
   karpetner_helm_version = "1.3.1"
@@ -419,62 +437,24 @@ module "eks_blueprints_addons" {
 }
 
 ### Formbricks App
-data "aws_iam_policy_document" "replication_bucket_policy" {
-  statement {
-    sid    = "Set-permissions-for-objects"
-    effect = "Allow"
 
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::050559574035:role/service-role/s3crr_role_for_formbricks-cloud-uploads"
-      ]
-    }
-
-    actions = [
-      "s3:ReplicateObject",
-      "s3:ReplicateDelete"
-    ]
-
-    resources = [
-      "arn:aws:s3:::formbricks-cloud-eks/*"
-    ]
-  }
-
-  statement {
-    sid    = "Set permissions on bucket"
-    effect = "Allow"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::050559574035:role/service-role/s3crr_role_for_formbricks-cloud-uploads"
-      ]
-    }
-
-    actions = [
-      "s3:GetBucketVersioning",
-      "s3:PutBucketVersioning"
-    ]
-
-    resources = [
-      "arn:aws:s3:::formbricks-cloud-eks"
-    ]
-  }
+moved {
+  from = module.formbricks_s3_bucket
+  to   = module.formbricks_s3_bucket["prod"]
 }
 
 module "formbricks_s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.6.0"
+  for_each = local.envs
+  source   = "terraform-aws-modules/s3-bucket/aws"
+  version  = "4.6.0"
 
-  bucket                   = "formbricks-cloud-eks"
+  bucket                   = each.key == "prod" ? "formbricks-cloud-eks" : "formbricks-cloud-eks-${each.key}"
   force_destroy            = true
   control_object_ownership = true
   object_ownership         = "BucketOwnerPreferred"
   versioning = {
     enabled = true
   }
-  policy = data.aws_iam_policy_document.replication_bucket_policy.json
   cors_rule = [
     {
       allowed_methods = ["POST"]
@@ -485,11 +465,17 @@ module "formbricks_s3_bucket" {
   ]
 }
 
-module "formbricks_app_iam_policy" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
-  version = "5.53.0"
+moved {
+  from = module.formbricks_app_iam_policy
+  to   = module.formbricks_app_iam_policy["prod"]
+}
 
-  name_prefix = "formbricks-"
+module "formbricks_app_iam_policy" {
+  for_each = local.envs
+  source   = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  version  = "5.53.0"
+
+  name_prefix = each.key == "prod" ? "formbricks-" : "formbricks-${each.key}-"
   path        = "/"
   description = "Policy for fombricks app"
 
@@ -502,31 +488,35 @@ module "formbricks_app_iam_policy" {
           "s3:*",
         ]
         Resource = [
-          module.formbricks_s3_bucket.s3_bucket_arn,
-          "${module.formbricks_s3_bucket.s3_bucket_arn}/*",
-          "arn:aws:s3:::formbricks-cloud-uploads",
-          "arn:aws:s3:::formbricks-cloud-uploads/*"
+          module.formbricks_s3_bucket[each.key].s3_bucket_arn,
+          "${module.formbricks_s3_bucket[each.key].s3_bucket_arn}/*"
         ]
       }
     ]
   })
 }
 
-module "formbricks_app_iam_role" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.53.0"
+moved {
+  from = module.formbricks_app_iam_role
+  to   = module.formbricks_app_iam_role["prod"]
+}
 
-  role_name_prefix = "formbricks-"
+module "formbricks_app_iam_role" {
+  for_each = local.envs
+  source   = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version  = "5.53.0"
+
+  role_name_prefix = each.key == "prod" ? "formbricks-" : "formbricks-${each.key}-"
 
   role_policy_arns = {
-    "formbricks" = module.formbricks_app_iam_policy.arn
+    "formbricks" = module.formbricks_app_iam_policy[each.key].arn
   }
   assume_role_condition_test = "StringLike"
 
   oidc_providers = {
     eks = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["formbricks:*"]
+      namespace_service_accounts = each.key == "prod" ? ["formbricks:*"] : ["formbricks-${each.key}:*"]
     }
   }
 }

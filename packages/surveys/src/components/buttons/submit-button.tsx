@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes, useRef } from "preact/compat";
 import { useCallback, useEffect } from "preact/hooks";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  buttonLabel: string | undefined;
+  buttonLabel?: string;
   isLastQuestion: boolean;
   focus?: boolean;
 }

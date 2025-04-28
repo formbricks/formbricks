@@ -29,7 +29,7 @@ object FormbricksApi {
     fun initialize() {
         service.initialize(
             appUrl = Formbricks.appUrl,
-            isLoggingEnabled = Formbricks.loggingEnabled,
+            isLoggingEnabled = Formbricks.loggingEnabled
         )
     }
 
@@ -45,18 +45,14 @@ object FormbricksApi {
         }
     }
 
-    suspend fun postUser(userId: String, attributes: Map<String, *>?): Result<UserResponse> =
-        withContext(Dispatchers.IO) {
-            retryApiCall {
-                try {
-                    val result = service.postUser(
-                        Formbricks.environmentId,
-                        PostUserBody.create(userId, attributes)
-                    ).getOrThrow()
-                    Result.success(result)
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
+    suspend fun postUser(userId: String, attributes: Map<String, *>?): Result<UserResponse> = withContext(Dispatchers.IO) {
+        retryApiCall {
+            try {
+                val result = service.postUser(Formbricks.environmentId, PostUserBody.create(userId, attributes)).getOrThrow()
+                Result.success(result)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
+    }
 }

@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
+import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { userCache } from "@formbricks/lib/user/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TUserLocale } from "@formbricks/types/user";
 

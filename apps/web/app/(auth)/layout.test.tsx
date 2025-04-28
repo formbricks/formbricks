@@ -1,9 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import AppLayout from "../(auth)/layout";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_SECRET_KEY: "mock-intercom-secret-key",
@@ -18,7 +18,7 @@ vi.mock("@/modules/ui/components/no-mobile-overlay", () => ({
 }));
 
 describe("(auth) AppLayout", () => {
-  it("renders the NoMobileOverlay and IntercomClient, plus children", async () => {
+  test("renders the NoMobileOverlay and IntercomClient, plus children", async () => {
     const appLayoutElement = await AppLayout({
       children: <div data-testid="child-content">Hello from children!</div>,
     });

@@ -1,8 +1,8 @@
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
 const AccountSettingsLayout = async (props) => {
   const params = await props.params;

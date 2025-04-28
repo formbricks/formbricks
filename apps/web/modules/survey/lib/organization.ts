@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
 import { Organization, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(

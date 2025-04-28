@@ -1,6 +1,6 @@
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { getUsersQuery } from "../utils";
 
 vi.mock("@/modules/api/v2/management/lib/utils", () => ({
@@ -9,7 +9,7 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 }));
 
 describe("getUsersQuery", () => {
-  it("returns default query if no params are provided", () => {
+  test("returns default query if no params are provided", () => {
     const result = getUsersQuery("org123");
     expect(result).toEqual({
       where: {
@@ -22,7 +22,7 @@ describe("getUsersQuery", () => {
     });
   });
 
-  it("includes email filter if email param is provided", () => {
+  test("includes email filter if email param is provided", () => {
     const result = getUsersQuery("org123", { email: "test@example.com" } as TGetUsersFilter);
     expect(result.where?.email).toEqual({
       contains: "test@example.com",
@@ -30,12 +30,12 @@ describe("getUsersQuery", () => {
     });
   });
 
-  it("includes id filter if id param is provided", () => {
+  test("includes id filter if id param is provided", () => {
     const result = getUsersQuery("org123", { id: "user123" } as TGetUsersFilter);
     expect(result.where?.id).toBe("user123");
   });
 
-  it("applies baseFilter if pickCommonFilter returns something", () => {
+  test("applies baseFilter if pickCommonFilter returns something", () => {
     vi.mocked(pickCommonFilter).mockReturnValueOnce({ someField: "test" } as unknown as ReturnType<
       typeof pickCommonFilter
     >);

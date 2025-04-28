@@ -1,12 +1,12 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganization } from "@/lib/organization/service";
+import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 
 const OnboardingLayout = async (props) => {
   const params = await props.params;

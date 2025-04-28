@@ -24,6 +24,10 @@ import {
   mockUserId,
   mockUserName,
 } from "./__mocks__/actions.mock";
+import { createInviteToken } from "@/lib/jwt";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getUser } from "@/lib/user/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -32,10 +36,6 @@ import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createInviteToken } from "@formbricks/lib/jwt";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getUser } from "@formbricks/lib/user/service";
 import {
   createInviteTokenAction,
   deleteInviteAction,
@@ -72,7 +72,7 @@ vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
@@ -80,15 +80,15 @@ vi.mock("@/modules/email", () => ({
   sendInviteMemberEmail: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/jwt", () => ({
+vi.mock("@/lib/jwt", () => ({
   createInviteToken: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/utils", () => ({
+vi.mock("@/lib/membership/utils", () => ({
   getAccessFlags: vi.fn(),
 }));
 
@@ -101,7 +101,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 // Mock constants without importing the actual module
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_MULTI_ORG_ENABLED: true,
   ENCRYPTION_KEY: "test-encryption-key",

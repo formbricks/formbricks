@@ -1,7 +1,7 @@
+import { displayCache } from "@/lib/display/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { displayCache } from "@formbricks/lib/display/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContactByUserId } from "./contact";

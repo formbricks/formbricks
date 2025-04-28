@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
+import { segmentCache } from "@/lib/cache/segment";
 import { Segment } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
 import { getSegment } from "../segment";
 
 // Mock dependencies
@@ -14,11 +14,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/cache", () => ({
+vi.mock("@/lib/cache", () => ({
   cache: vi.fn((fn) => fn),
 }));
 
-vi.mock("@formbricks/lib/cache/segment", () => ({
+vi.mock("@/lib/cache/segment", () => ({
   segmentCache: {
     tag: {
       byId: vi.fn((id) => `segment-${id}`),

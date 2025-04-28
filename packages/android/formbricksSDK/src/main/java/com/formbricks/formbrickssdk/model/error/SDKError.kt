@@ -22,4 +22,6 @@ object SDKError {
     val invalidDisplayOption = RuntimeException("Invalid Display Option.")
     val unableToPostResponse = RuntimeException("Unable to post survey response.")
     val surveyNotFoundError = RuntimeException("No survey found matching the action class.")
+    val noUserIdSetError = RuntimeException("No userId is set, please set a userId first using the setUserId function")
+
 }
