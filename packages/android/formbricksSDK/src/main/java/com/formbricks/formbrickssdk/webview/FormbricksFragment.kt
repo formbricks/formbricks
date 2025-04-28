@@ -19,7 +19,6 @@ import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -38,9 +37,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.gson.JsonObject
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.util.Date
 import java.util.Timer
-import java.util.TimerTask
 
 
 class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomSheetDialogFragment() {
@@ -55,20 +52,6 @@ class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomShe
             Handler(Looper.getMainLooper()).post {
                 Formbricks.callback?.onSurveyClosed()
                 dismiss()
-            }
-        }
-
-        override fun onFinished() {
-            Handler(Looper.getMainLooper()).post {
-                dialog?.window?.setDimAmount(0f)
-                Formbricks.callback?.onSurveyFinished()
-                closeTimer.schedule(object: TimerTask() {
-                    override fun run() {
-                        dismiss()
-                    }
-
-                }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
-                )
             }
         }
 
@@ -168,11 +151,6 @@ class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomShe
         dialog?.window?.setDimAmount(0.0f)
         binding.formbricksWebview.setBackgroundColor(Color.TRANSPARENT)
         binding.formbricksWebview.let {
-
-            if (Formbricks.loggingEnabled) {
-                WebView.setWebContentsDebuggingEnabled(true)
-            }
-
             it.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
@@ -208,7 +186,6 @@ class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomShe
 
                 override fun onPageCommitVisible(view: WebView?, url: String?) {
                     dialog?.window?.setDimAmount(0.5f)
-                    Formbricks.callback?.onSurveyStarted()
                     super.onPageCommitVisible(view, url)
                 }
             }

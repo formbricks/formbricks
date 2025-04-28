@@ -34,7 +34,7 @@ class MainActivity : FragmentActivity() {
             }
 
             override fun onError(error: Exception) {
-                Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
+                Log.d("FormbricksCallback", "onError from the CB: ${error.localizedMessage}")
             }
 
             override fun onSuccess(successType: SuccessType) {
@@ -46,10 +46,8 @@ class MainActivity : FragmentActivity() {
         val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
-        Formbricks.setup(this, config.build())
 
-        Formbricks.logout()
-        Formbricks.setUserId(UUID.randomUUID().toString())
+        Formbricks.setup(this, config.build())
 
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -60,7 +58,32 @@ class MainActivity : FragmentActivity() {
 
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener {
-            Formbricks.track("costumer_click_acceptbutton")
+            Formbricks.track("click_demo_button")
+        }
+
+        val setUserIdButton = findViewById<Button>(R.id.setUserId)
+        setUserIdButton.setOnClickListener {
+            Formbricks.setUserId(UUID.randomUUID().toString())
+        }
+
+        val setAttributeButton = findViewById<Button>(R.id.setAttribute)
+        setAttributeButton.setOnClickListener {
+            Formbricks.setAttribute("test@web.com", "email")
+        }
+
+        val setAttributesButton = findViewById<Button>(R.id.setAttributes)
+        setAttributesButton.setOnClickListener {
+            Formbricks.setAttributes(mapOf(Pair("attr1", "val1"), Pair("attr2", "val2")))
+        }
+
+        val setLanguageButton = findViewById<Button>(R.id.setLanguage)
+        setLanguageButton.setOnClickListener {
+            Formbricks.setLanguage("vi")
+        }
+
+        val logoutButton = findViewById<Button>(R.id.logout)
+        logoutButton.setOnClickListener {
+            Formbricks.logout()
         }
     }
 }

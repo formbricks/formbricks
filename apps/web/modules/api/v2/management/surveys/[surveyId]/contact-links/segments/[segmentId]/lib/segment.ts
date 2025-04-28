@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
+import { segmentCache } from "@/lib/cache/segment";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Segment } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getSegment = reactCache(async (segmentId: string) =>

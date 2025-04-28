@@ -1,9 +1,9 @@
 import "server-only";
-import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { CRON_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { surveyCache } from "@/lib/survey/cache";
+import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { doesSurveyHasOpenTextQuestion } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";

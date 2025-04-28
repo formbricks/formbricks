@@ -1,6 +1,7 @@
 "use client";
 
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
@@ -9,7 +10,6 @@ import { useTranslate } from "@tolgee/react";
 import { BugIcon, CircleUserIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 

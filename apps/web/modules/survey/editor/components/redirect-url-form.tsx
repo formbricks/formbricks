@@ -1,11 +1,11 @@
 "use client";
 
+import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
 import { useRef } from "react";
-import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface RedirectUrlFormProps {
@@ -45,7 +45,7 @@ export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: Redir
               <div className="group relative">
                 {/* The highlight container is absolutely positioned behind the input */}
                 <div
-                  className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
+                  className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent`}
                   dir="auto"
                   key={highlightedJSX.toString()}>
                   {highlightedJSX}

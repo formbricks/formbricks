@@ -12,13 +12,12 @@ export const makeRequest = async <T>(
 ): Promise<Result<T, ApiErrorResponse>> => {
   const url = new URL(appUrl + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
-
   const res = await wrapThrowsAsync(fetch)(url.toString(), {
     method,
     headers: {
       "Content-Type": "application/json",
+      ...(isDebug && { "Cache-Control": "no-cache" }),
     },
-    ...(isDebug && { "Cache-Control": "no-cache" }),
     body,
   });
 

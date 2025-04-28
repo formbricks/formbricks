@@ -10,9 +10,10 @@ import com.formbricks.formbrickssdk.helper.FormbricksConfig
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.manager.UserManager
-import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.model.enums.SuccessType
+import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
+import java.lang.RuntimeException
 
 @Keep
 interface FormbricksCallback {
@@ -23,6 +24,7 @@ interface FormbricksCallback {
     fun onError(error: Exception)
     fun onSuccess(successType: SuccessType)
 }
+
 
 @Keep
 object Formbricks {
@@ -35,6 +37,7 @@ object Formbricks {
     internal var autoDismissErrors: Boolean = true
     private var fragmentManager: FragmentManager? = null
     internal var isInitialized = false
+
     var callback: FormbricksCallback? = null
 
     /**
@@ -100,6 +103,14 @@ object Formbricks {
             return
 
         }
+
+        if(UserManager.userId != null) {
+            val error = RuntimeException("A userId is already set ${UserManager.userId} - please call logout first before setting a new one")
+            callback?.onError(error)
+            Logger.e(error)
+            return
+        }
+
         UserManager.set(userId)
     }
 

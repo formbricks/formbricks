@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -13,7 +14,6 @@ import { Muted, P } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { useMemo } from "react";
 import { type Control, Controller } from "react-hook-form";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {

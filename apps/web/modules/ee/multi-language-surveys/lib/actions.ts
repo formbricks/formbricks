@@ -1,5 +1,12 @@
 "use server";
 
+import {
+  createLanguage,
+  deleteLanguage,
+  getSurveysUsingGivenLanguage,
+  updateLanguage,
+} from "@/lib/language/service";
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -9,13 +16,6 @@ import {
 } from "@/lib/utils/helper";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import {
-  createLanguage,
-  deleteLanguage,
-  getSurveysUsingGivenLanguage,
-  updateLanguage,
-} from "@formbricks/lib/language/service";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/project";

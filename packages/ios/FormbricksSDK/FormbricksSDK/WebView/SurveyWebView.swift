@@ -25,9 +25,7 @@ struct SurveyWebView: UIViewRepresentable {
         webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
-        if #available(iOS 16.4, *) {
-            webView.isInspectable = true
-        }
+        webView.isInspectable = true
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         return webView
@@ -41,20 +39,34 @@ struct SurveyWebView: UIViewRepresentable {
         return Coordinator()
     }
     
-    
+    /// Called automatically by SwiftUI when the view is torn down.
+   static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+       let userContentController = uiView.configuration.userContentController
+       userContentController.removeScriptMessageHandler(forName: "logging")
+       userContentController.removeScriptMessageHandler(forName: "jsMessage")
+
+       uiView.navigationDelegate = nil
+       uiView.uiDelegate = nil
+       Formbricks.logger?.debug("SurveyWebView: Dismantled")
+   }
+
     /// Clean up cookies and website data.
     func clean() {
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
-                    /*
-                     This completion handler is intentionally empty since we only need to 
-                     ensure the data is removed. No additional actions are required after
-                     the website data has been cleared.
-                    */
-                })
-            }
+            self.remove(records)
+        }
+    }
+
+    private func remove(_ records: [WKWebsiteDataRecord]) {
+        records.forEach { record in
+            WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
+                /*
+                 This completion handler is intentionally empty since we only need to
+                 ensure the data is removed. No additional actions are required after
+                 the website data has been cleared.
+                */
+            })
         }
     }
 }
@@ -64,8 +76,8 @@ extension SurveyWebView {
         // webView function handles Javascipt alert
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo,  completionHandler: @escaping () -> Void) {
             let alertController = UIAlertController(title: "", message: message, preferredStyle: .alert)
-           alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in 
-               /* 
+           alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+               /*
                 This closure is intentionally empty since we only need a simple OK button
                 to dismiss the alert. The alert dismissal is handled automatically by the
                 system when the button is tapped.
@@ -74,7 +86,7 @@ extension SurveyWebView {
             UIApplication.safeKeyWindow?.rootViewController?.presentedViewController?.present(alertController, animated: true)
             completionHandler()
         }
-        
+
         func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
             if let serverTrust = challenge.protectionSpace.serverTrust {
                 completionHandler(.useCredential, URLCredential(trust: serverTrust))
@@ -82,11 +94,9 @@ extension SurveyWebView {
                  completionHandler(.useCredential, nil)
             }
         }
-        
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            UIView.animate(withDuration: 1.0) {
-                webView.parentViewController?.view.backgroundColor = UIColor.gray.withAlphaComponent(0.6)
-            }
+            Formbricks.delegate?.onSurveyDisplayed()
         }
     }
 }
@@ -94,54 +104,49 @@ extension SurveyWebView {
 // MARK: - Javascript --> Native message handler -
 /// Handle messages coming from the Javascript in the WebView.
 final class JsMessageHandler: NSObject, WKScriptMessageHandler {
-    
+
     let surveyId: String
-    
+
     init(surveyId: String) {
         self.surveyId = surveyId
     }
-   
+
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        Formbricks.logger.debug(message.body)
-        
+        Formbricks.logger?.debug(message.body)
+
         if let body = message.body as? String, let data = body.data(using: .utf8), let obj = try? JSONDecoder().decode(JsMessageData.self, from: data) {
-            
+
             switch obj.event {
                 /// Happens when the user submits an answer.
             case .onResponseCreated:
-                SurveyManager.shared.postResponse(surveyId: surveyId)
+                Formbricks.surveyManager?.postResponse(surveyId: surveyId)
                 Formbricks.delegate?.onResponseCreated()
+
                 /// Happens when a survey is shown.
             case .onDisplayCreated:
-                SurveyManager.shared.onNewDisplay(surveyId: surveyId)
                 Formbricks.delegate?.onSurveyStarted()
-            
+                Formbricks.surveyManager?.onNewDisplay(surveyId: surveyId)
+
             /// Happens when the user closes the survey view with the close button.
             case .onClose:
-                SurveyManager.shared.dismissSurveyWebView()
                 Formbricks.delegate?.onSurveyClosed()
-                
-            /// Happens when the survey view is finished  by the user submitting the last question.
-            case .onFinished:
-                SurveyManager.shared.delayedDismiss()
-                Formbricks.delegate?.onSurveyFinished()
-            
+                Formbricks.surveyManager?.dismissSurveyWebView()
+
             /// Happens when the survey wants to open an external link in the default browser.
             case .onOpenExternalURL:
                 if let message = try? JSONDecoder().decode(OpenExternalUrlMessage.self, from: data), let url = URL(string:  message.onOpenExternalURLParams.url) {
                     UIApplication.shared.open(url)
                 }
-                
+
             /// Happens when the survey library fails to load.
             case .onSurveyLibraryLoadError:
-                Formbricks.delegate?.onError(FormbricksSDKError(type: .surveyLibraryLoadError))
-                SurveyManager.shared.dismissSurveyWebView()
+                Formbricks.surveyManager?.dismissSurveyWebView()
             }
-            
+
         } else {
             let error = FormbricksSDKError(type: .invalidJavascriptMessage)
             Formbricks.delegate?.onError(error)
-            Formbricks.logger.error("\(error.message): \(message.body)")
+            Formbricks.logger?.error("\(error.message): \(message.body)")
         }
     }
 }
@@ -150,7 +155,7 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
 /// Handle and send console.log messages from the Javascript to the local logger.
 final class LoggingMessageHandler: NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        Formbricks.logger.debug(message.body)
+        Formbricks.logger?.debug(message.body)
     }
 }
 
@@ -183,18 +188,5 @@ private extension SurveyWebView {
             log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
         })
     """
-    }
-}
-
-public extension UIView {
-    var parentViewController: UIViewController? {
-        var responder: UIResponder? = self
-        while let nextResponder = responder?.next {
-            if let viewController = nextResponder as? UIViewController {
-                return viewController
-            }
-            responder = nextResponder
-        }
-        return nil
     }
 }

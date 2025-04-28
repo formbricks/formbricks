@@ -1,3 +1,4 @@
+import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
 import {
@@ -20,7 +21,6 @@ import {
   StarIcon,
 } from "lucide-react";
 import type { JSX } from "react";
-import { replaceQuestionPresetPlaceholders } from "@formbricks/lib/utils/templates";
 import {
   TSurveyQuestionTypeEnum as QuestionId,
   TSurveyAddressQuestion,

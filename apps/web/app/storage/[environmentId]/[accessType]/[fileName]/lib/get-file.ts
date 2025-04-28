@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { UPLOADS_DIR, isS3Configured } from "@/lib/constants";
+import { getLocalFile, getS3File } from "@/lib/storage/service";
 import { notFound } from "next/navigation";
 import path from "node:path";
-import { UPLOADS_DIR, isS3Configured } from "@formbricks/lib/constants";
-import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 
 export const getFile = async (
   environmentId: string,

@@ -1,17 +1,14 @@
 import "server-only";
+import { isS3Configured } from "@/lib/constants";
+import { environmentCache } from "@/lib/environment/cache";
+import { createEnvironment } from "@/lib/environment/service";
+import { projectCache } from "@/lib/project/cache";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/lib/storage/service";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { isS3Configured } from "@formbricks/lib/constants";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { createEnvironment } from "@formbricks/lib/environment/service";
-import { projectCache } from "@formbricks/lib/project/cache";
-import {
-  deleteLocalFilesByEnvironmentId,
-  deleteS3FilesByEnvironmentId,
-} from "@formbricks/lib/storage/service";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";

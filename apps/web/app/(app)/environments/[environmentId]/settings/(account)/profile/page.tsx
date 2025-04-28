@@ -1,5 +1,8 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -7,9 +10,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";

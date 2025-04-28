@@ -1,9 +1,9 @@
 import { responses } from "@/app/lib/api/response";
+import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export const GET = async (req: NextRequest) => {
   const environmentId = req.headers.get("environmentId");

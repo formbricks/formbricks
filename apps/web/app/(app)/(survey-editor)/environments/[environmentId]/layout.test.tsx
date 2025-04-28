@@ -1,9 +1,9 @@
+import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -28,7 +28,7 @@ vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
 vi.mock("@/modules/environments/lib/utils", () => ({
   environmentIdLayoutChecks: vi.fn(),
 }));
-vi.mock("@formbricks/lib/environment/service", () => ({
+vi.mock("@/lib/environment/service", () => ({
   getEnvironment: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({
@@ -41,7 +41,7 @@ describe("SurveyEditorEnvironmentLayout", () => {
     vi.clearAllMocks();
   });
 
-  it("renders successfully when environment is found", async () => {
+  test("renders successfully when environment is found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any, // Mock translation function, we don't need to implement it for the test
       session: { user: { id: "user1" } } as Session,
@@ -62,7 +62,7 @@ describe("SurveyEditorEnvironmentLayout", () => {
     expect(screen.getByTestId("child")).toHaveTextContent("Survey Editor Content");
   });
 
-  it("throws an error when environment is not found", async () => {
+  test("throws an error when environment is not found", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,
@@ -79,7 +79,7 @@ describe("SurveyEditorEnvironmentLayout", () => {
     ).rejects.toThrow("common.environment_not_found");
   });
 
-  it("calls redirect when session is null", async () => {
+  test("calls redirect when session is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: undefined as unknown as Session,
@@ -98,7 +98,7 @@ describe("SurveyEditorEnvironmentLayout", () => {
     ).rejects.toThrow("Redirect called");
   });
 
-  it("throws error if user is null", async () => {
+  test("throws error if user is null", async () => {
     vi.mocked(environmentIdLayoutChecks).mockResolvedValueOnce({
       t: ((key: string) => key) as any,
       session: { user: { id: "user1" } } as Session,

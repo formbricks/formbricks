@@ -1,11 +1,11 @@
+import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
+import { verifyUserRoleAccess } from "@/lib/organization/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/constants";
-import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { AuthenticationError } from "@formbricks/types/errors";
 
 export const metadata: Metadata = {
