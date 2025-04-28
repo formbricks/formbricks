@@ -3,8 +3,7 @@ import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
-const EMAIL_MATCHER = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-
+const EMAIL_MATCHER = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
 const MATCHERS = [
   (text: any) => {
     const match = URL_MATCHER.exec(text);
