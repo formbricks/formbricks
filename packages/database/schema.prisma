@@ -12,10 +12,6 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
-// generator dbml {
-//  provider = "prisma-dbml-generator"
-// }
-
 generator json {
   provider = "prisma-json-types-generator"
 }
