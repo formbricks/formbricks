@@ -263,4 +263,260 @@ describe("surveyLogic", () => {
     expect(result.requiredQuestionIds).toContain("q2");
     expect(result.jumpTarget).toBe("q3");
   });
+
+  test("evaluateLogic handles all operators and error cases", () => {
+    const baseCond = (operator: string, right: any = undefined) => ({
+      id: "c",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator,
+      ...(right !== undefined ? { rightOperand: { type: "static", value: right } } : {}),
+    });
+    const vars: TResponseVariables = {};
+    const group = (cond: any) => ({ id: "g", connector: "and" as const, conditions: [cond] });
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("equals", "foo")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotEqual", "bar")), "en")).toBe(
+      true
+    );
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("contains", "o")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotContain", "z")), "en")).toBe(
+      true
+    );
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("startsWith", "f")), "en")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotStartWith", "z")), "en")
+    ).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("endsWith", "o")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotEndWith", "z")), "en")).toBe(
+      true
+    );
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isSubmitted")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isSkipped")), "en")).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fnum: 5 },
+        vars,
+        group({ ...baseCond("isGreaterThan", 2), leftOperand: { type: "hiddenField", value: "fnum" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fnum: 1 },
+        vars,
+        group({ ...baseCond("isLessThan", 2), leftOperand: { type: "hiddenField", value: "fnum" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fnum: 2 },
+        vars,
+        group({
+          ...baseCond("isGreaterThanOrEqual", 2),
+          leftOperand: { type: "hiddenField", value: "fnum" },
+        }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fnum: 2 },
+        vars,
+        group({ ...baseCond("isLessThanOrEqual", 2), leftOperand: { type: "hiddenField", value: "fnum" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { f: "foo" },
+        vars,
+        group({ ...baseCond("equalsOneOf", ["foo", "bar"]) }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { farr: ["foo", "bar"] },
+        vars,
+        group({ ...baseCond("includesAllOf", ["foo"]), leftOperand: { type: "hiddenField", value: "farr" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { farr: ["foo", "bar"] },
+        vars,
+        group({ ...baseCond("includesOneOf", ["foo"]), leftOperand: { type: "hiddenField", value: "farr" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { farr: ["foo", "bar"] },
+        vars,
+        group({
+          ...baseCond("doesNotIncludeAllOf", ["baz"]),
+          leftOperand: { type: "hiddenField", value: "farr" },
+        }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { farr: ["foo", "bar"] },
+        vars,
+        group({
+          ...baseCond("doesNotIncludeOneOf", ["baz"]),
+          leftOperand: { type: "hiddenField", value: "farr" },
+        }),
+        "en"
+      )
+    ).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "accepted" }, vars, group(baseCond("isAccepted")), "en")).toBe(
+      true
+    );
+    expect(evaluateLogic(mockSurvey, { f: "clicked" }, vars, group(baseCond("isClicked")), "en")).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { f: "2024-01-02" },
+        vars,
+        group({ ...baseCond("isAfter", "2024-01-01") }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { f: "2024-01-01" },
+        vars,
+        group({ ...baseCond("isBefore", "2024-01-02") }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fbooked: "booked" },
+        vars,
+        group({ ...baseCond("isBooked"), leftOperand: { type: "hiddenField", value: "fbooked" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fobj: { a: "", b: "x" } },
+        vars,
+        group({ ...baseCond("isPartiallySubmitted"), leftOperand: { type: "hiddenField", value: "fobj" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        { fobj: { a: "y", b: "x" } },
+        vars,
+        group({ ...baseCond("isCompletelySubmitted"), leftOperand: { type: "hiddenField", value: "fobj" } }),
+        "en"
+      )
+    ).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isSet")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isEmpty")), "en")).toBe(true);
+    expect(
+      evaluateLogic(mockSurvey, { f: "foo" }, vars, group({ ...baseCond("isAnyOf", ["foo", "bar"]) }), "en")
+    ).toBe(true);
+    // default/fallback
+    expect(
+      evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("notARealOperator", "bar")), "en")
+    ).toBe(false);
+    // error handling
+    expect(
+      evaluateLogic(
+        mockSurvey,
+        {},
+        vars,
+        group({ ...baseCond("equals", "foo"), leftOperand: { type: "question", value: "notfound" } }),
+        "en"
+      )
+    ).toBe(false);
+  });
+
+  test("performActions handles divide by zero, assign, concat, and missing variable", () => {
+    const survey = {
+      ...mockSurvey,
+      variables: [{ id: "v", name: "num", type: "number" as const, value: 0 }],
+    };
+    const data: TResponseData = { q: 2 };
+    const actions: TSurveyLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "v",
+        operator: "divide",
+        value: { type: "static", value: 0 },
+      },
+      {
+        id: "a2",
+        objective: "calculate",
+        variableId: "v",
+        operator: "assign",
+        value: { type: "static", value: 42 },
+      },
+      {
+        id: "a3",
+        objective: "calculate",
+        variableId: "v",
+        operator: "concat",
+        value: { type: "static", value: "bar" },
+      },
+      {
+        id: "a4",
+        objective: "calculate",
+        variableId: "notfound",
+        operator: "add",
+        value: { type: "static", value: 1 },
+      },
+    ];
+    const result = performActions(survey, actions, data, {});
+    expect(result.calculations.v).toBe("42bar");
+    expect(result.calculations.notfound).toBeUndefined();
+  });
+
+  test("getUpdatedActionBody returns same action if objective matches", () => {
+    const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
+    expect(getUpdatedActionBody(base, "requireAnswer")).toBe(base);
+  });
+
+  test("group/condition manipulation functions handle missing resourceId", () => {
+    const group = simpleGroup();
+    addConditionBelow(group, "notfound", {
+      id: "x",
+      leftOperand: { type: "hiddenField", value: "a" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "b" },
+    });
+    expect(group.conditions.length).toBe(2);
+    toggleGroupConnector(group, "notfound");
+    expect(group.connector).toBe("and");
+    removeCondition(group, "notfound");
+    expect(group.conditions.length).toBe(2);
+    duplicateCondition(group, "notfound");
+    expect(group.conditions.length).toBe(2);
+    createGroupFromResource(group, "notfound");
+    expect(group.conditions.length).toBe(2);
+    updateCondition(group, "notfound", { operator: "equals" });
+    expect(group.conditions.length).toBe(2);
+  });
 });
