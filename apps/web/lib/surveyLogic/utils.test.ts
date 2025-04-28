@@ -23,7 +23,7 @@ import {
 } from "./utils";
 
 vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: (label: string) => label,
+  getLocalizedValue: (label: { default: string }) => label.default,
 }));
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: () => "fixed-id",
@@ -52,7 +52,7 @@ describe("surveyLogic", () => {
     questions: [
       {
         id: "vjniuob08ggl8dewl0hwed41",
-        type: "openText" as TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyQuestionTypeEnum.OpenText,
         headline: {
           default: "What would you like to know?‌‌‍‍‌‍‍‍‌‌‌‍‍‌‍‍‌‌‌‌‌‌‍‌‍‌‌",
         },
@@ -454,9 +454,9 @@ describe("surveyLogic", () => {
   });
 
   test("performActions handles divide by zero, assign, concat, and missing variable", () => {
-    const survey = {
+    const survey: TJsEnvironmentStateSurvey = {
       ...mockSurvey,
-      variables: [{ id: "v", name: "num", type: "number" as const, value: 0 }],
+      variables: [{ id: "v", name: "num", type: "number", value: 0 }],
     };
     const data: TResponseData = { q: 2 };
     const actions: TSurveyLogicAction[] = [
@@ -518,5 +518,652 @@ describe("surveyLogic", () => {
     expect(group.conditions.length).toBe(2);
     updateCondition(group, "notfound", { operator: "equals" });
     expect(group.conditions.length).toBe(2);
+  });
+
+  // Additional tests for complete coverage
+
+  test("addConditionBelow with nested group correctly adds condition", () => {
+    const nestedGroup: TConditionGroup = {
+      id: "nestedGroup",
+      connector: "and",
+      conditions: [
+        {
+          id: "nestedC1",
+          leftOperand: { type: "hiddenField", value: "nf1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "nv1" },
+        },
+      ],
+    };
+
+    const group: TConditionGroup = {
+      id: "parentGroup",
+      connector: "and",
+      conditions: [nestedGroup],
+    };
+
+    const newCond: TSingleCondition = {
+      id: "new",
+      leftOperand: { type: "hiddenField", value: "x" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "y" },
+    };
+
+    addConditionBelow(group, "nestedGroup", newCond);
+    expect(group.conditions[1]).toEqual(newCond);
+
+    addConditionBelow(group, "nestedC1", newCond);
+    expect((group.conditions[0] as TConditionGroup).conditions[1]).toEqual(newCond);
+  });
+
+  test("getLeftOperandValue handles different question types", () => {
+    const surveyWithQuestions: TJsEnvironmentStateSurvey = {
+      ...mockSurvey,
+      questions: [
+        ...mockSurvey.questions,
+        {
+          id: "numQuestion",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Number question" },
+          required: true,
+          inputType: "number",
+          charLimit: { enabled: false },
+        },
+        {
+          id: "mcSingle",
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "MC Single" },
+          required: true,
+          choices: [
+            { id: "choice1", label: { default: "Choice 1" } },
+            { id: "choice2", label: { default: "Choice 2" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          buttonLabel: { default: "Next" },
+        },
+        {
+          id: "mcMulti",
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: { default: "MC Multi" },
+          required: true,
+          choices: [
+            { id: "choice1", label: { default: "Choice 1" } },
+            { id: "choice2", label: { default: "Choice 2" } },
+          ],
+          buttonLabel: { default: "Next" },
+        },
+        {
+          id: "matrixQ",
+          type: TSurveyQuestionTypeEnum.Matrix,
+          headline: { default: "Matrix Question" },
+          required: true,
+          rows: [{ default: "Row 1" }, { default: "Row 2" }],
+          columns: [{ default: "Column 1" }, { default: "Column 2" }],
+          buttonLabel: { default: "Next" },
+          shuffleOption: "none",
+        },
+        {
+          id: "pictureQ",
+          type: TSurveyQuestionTypeEnum.PictureSelection,
+          allowMulti: false,
+          headline: { default: "Picture Selection" },
+          required: true,
+          choices: [
+            { id: "pic1", imageUrl: "url1" },
+            { id: "pic2", imageUrl: "url2" },
+          ],
+          buttonLabel: { default: "Next" },
+        },
+        {
+          id: "dateQ",
+          type: TSurveyQuestionTypeEnum.Date,
+          format: "M-d-y",
+          headline: { default: "Date Question" },
+          required: true,
+          buttonLabel: { default: "Next" },
+        },
+        {
+          id: "fileQ",
+          type: TSurveyQuestionTypeEnum.FileUpload,
+          allowMultipleFiles: false,
+          headline: { default: "File Upload" },
+          required: true,
+          buttonLabel: { default: "Next" },
+        },
+      ],
+      variables: [
+        { id: "numVar", name: "numberVar", type: "number", value: 5 },
+        { id: "textVar", name: "textVar", type: "text", value: "hello" },
+      ],
+    };
+
+    const data: TResponseData = {
+      numQuestion: 42,
+      mcSingle: "Choice 1",
+      mcMulti: ["Choice 1", "Choice 2"],
+      matrixQ: { "Row 1": "Column 1" },
+      pictureQ: ["pic1"],
+      dateQ: "2024-01-15",
+      fileQ: "file.pdf",
+      unknownChoice: "Unknown option",
+      multiWithUnknown: ["Choice 1", "Unknown option"],
+    };
+
+    const vars: TResponseVariables = {
+      numVar: 10,
+      textVar: "world",
+    };
+
+    // Test number question
+    const numberCondition: TSingleCondition = {
+      id: "numCond",
+      leftOperand: { type: "question", value: "numQuestion" },
+      operator: "equals",
+      rightOperand: { type: "static", value: 42 },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [numberCondition] },
+        "en"
+      )
+    ).toBe(true);
+
+    // Test MC single with recognized choice
+    const mcSingleCondition: TSingleCondition = {
+      id: "mcCond",
+      leftOperand: { type: "question", value: "mcSingle" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "choice1" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [mcSingleCondition] },
+        "default"
+      )
+    ).toBe(true);
+
+    // Test MC multi
+    const mcMultiCondition: TSingleCondition = {
+      id: "mcMultiCond",
+      leftOperand: { type: "question", value: "mcMulti" },
+      operator: "includesOneOf",
+      rightOperand: { type: "static", value: ["choice1"] },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [mcMultiCondition] },
+        "en"
+      )
+    ).toBe(true);
+
+    // Test matrix question
+    const matrixCondition: TSingleCondition = {
+      id: "matrixCond",
+      leftOperand: { type: "question", value: "matrixQ", meta: { row: "0" } },
+      operator: "equals",
+      rightOperand: { type: "static", value: "0" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [matrixCondition] },
+        "en"
+      )
+    ).toBe(true);
+
+    // Test with variable type
+    const varCondition: TSingleCondition = {
+      id: "varCond",
+      leftOperand: { type: "variable", value: "numVar" },
+      operator: "equals",
+      rightOperand: { type: "static", value: 10 },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [varCondition] },
+        "en"
+      )
+    ).toBe(true);
+
+    // Test with missing question
+    const missingQuestionCondition: TSingleCondition = {
+      id: "missingCond",
+      leftOperand: { type: "question", value: "nonExistent" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "foo" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [missingQuestionCondition] },
+        "en"
+      )
+    ).toBe(false);
+
+    // Test with unknown value type in leftOperand
+    const unknownTypeCondition: TSingleCondition = {
+      id: "unknownCond",
+      leftOperand: { type: "unknown" as any, value: "x" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "x" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [unknownTypeCondition] },
+        "en"
+      )
+    ).toBe(false);
+
+    // Test MC single with "other" option
+    const otherCondition: TSingleCondition = {
+      id: "otherCond",
+      leftOperand: { type: "question", value: "mcSingle" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "Unknown option" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [otherCondition] },
+        "en"
+      )
+    ).toBe(false);
+
+    // Test matrix with invalid row index
+    const invalidMatrixCondition: TSingleCondition = {
+      id: "invalidMatrixCond",
+      leftOperand: { type: "question", value: "matrixQ", meta: { row: "999" } },
+      operator: "equals",
+      rightOperand: { type: "static", value: "0" },
+    };
+    expect(
+      evaluateLogic(
+        surveyWithQuestions,
+        data,
+        vars,
+        { id: "g", connector: "and", conditions: [invalidMatrixCondition] },
+        "en"
+      )
+    ).toBe(false);
+  });
+
+  test("getRightOperandValue handles different data types and sources", () => {
+    const surveyWithVars: TJsEnvironmentStateSurvey = {
+      ...mockSurvey,
+      questions: [
+        ...mockSurvey.questions,
+        {
+          id: "question1",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Question 1" },
+          required: true,
+          inputType: "text",
+          charLimit: { enabled: false },
+        },
+      ],
+      variables: [
+        { id: "numVar", name: "numberVar", type: "number", value: 5 },
+        { id: "textVar", name: "textVar", type: "text", value: "hello" },
+      ],
+    };
+
+    const vars: TResponseVariables = {
+      numVar: 10,
+      textVar: "world",
+    };
+
+    // Test with different rightOperand types
+    const staticCondition: TSingleCondition = {
+      id: "staticCond",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "test" },
+    };
+
+    const questionCondition: TSingleCondition = {
+      id: "questionCond",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator: "equals",
+      rightOperand: { type: "question", value: "question1" },
+    };
+
+    const variableCondition: TSingleCondition = {
+      id: "varCond",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator: "equals",
+      rightOperand: { type: "variable", value: "textVar" },
+    };
+
+    const hiddenFieldCondition: TSingleCondition = {
+      id: "hiddenFieldCond",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator: "equals",
+      rightOperand: { type: "hiddenField", value: "hiddenField1" },
+    };
+
+    const unknownTypeCondition: TSingleCondition = {
+      id: "unknownCond",
+      leftOperand: { type: "hiddenField", value: "f" },
+      operator: "equals",
+      rightOperand: { type: "unknown" as any, value: "x" },
+    };
+
+    expect(
+      evaluateLogic(
+        surveyWithVars,
+        { f: "test" },
+        vars,
+        { id: "g", connector: "and", conditions: [staticCondition] },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        surveyWithVars,
+        { f: "response1", question1: "response1" },
+        vars,
+        { id: "g", connector: "and", conditions: [questionCondition] },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        surveyWithVars,
+        { f: "world" },
+        vars,
+        { id: "g", connector: "and", conditions: [variableCondition] },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        surveyWithVars,
+        { f: "hidden1", hiddenField1: "hidden1" },
+        vars,
+        { id: "g", connector: "and", conditions: [hiddenFieldCondition] },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        surveyWithVars,
+        { f: "x" },
+        vars,
+        { id: "g", connector: "and", conditions: [unknownTypeCondition] },
+        "en"
+      )
+    ).toBe(false);
+  });
+
+  test("performCalculation handles different variable types and operations", () => {
+    const surveyWithVars: TJsEnvironmentStateSurvey = {
+      ...mockSurvey,
+      variables: [
+        { id: "numVar", name: "numberVar", type: "number", value: 5 },
+        { id: "textVar", name: "textVar", type: "text", value: "hello" },
+      ],
+    };
+
+    const data: TResponseData = {
+      questionNum: 20,
+      questionText: "world",
+      hiddenNum: 30,
+    };
+
+    // Test with variable value from another variable
+    const varValueAction: TSurveyLogicAction = {
+      id: "a1",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "add",
+      value: { type: "variable", value: "numVar" },
+    };
+
+    // Test with question value
+    const questionValueAction: TSurveyLogicAction = {
+      id: "a2",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "add",
+      value: { type: "question", value: "questionNum" },
+    };
+
+    // Test with hidden field value
+    const hiddenFieldValueAction: TSurveyLogicAction = {
+      id: "a3",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "add",
+      value: { type: "hiddenField", value: "hiddenNum" },
+    };
+
+    // Test with text variable for concat
+    const textVarAction: TSurveyLogicAction = {
+      id: "a4",
+      objective: "calculate",
+      variableId: "textVar",
+      operator: "concat",
+      value: { type: "question", value: "questionText" },
+    };
+
+    // Test with missing variable
+    const missingVarAction: TSurveyLogicAction = {
+      id: "a5",
+      objective: "calculate",
+      variableId: "nonExistentVar",
+      operator: "add",
+      value: { type: "static", value: 10 },
+    };
+
+    // Test with invalid value type (null)
+    const invalidValueAction: TSurveyLogicAction = {
+      id: "a6",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "add",
+      value: { type: "question", value: "nonExistentQuestion" },
+    };
+
+    // Test with other math operations
+    const multiplyAction: TSurveyLogicAction = {
+      id: "a7",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "multiply",
+      value: { type: "static", value: 2 },
+    };
+
+    const subtractAction: TSurveyLogicAction = {
+      id: "a8",
+      objective: "calculate",
+      variableId: "numVar",
+      operator: "subtract",
+      value: { type: "static", value: 3 },
+    };
+
+    let result = performActions(surveyWithVars, [varValueAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(10); // 5 + 5
+
+    result = performActions(surveyWithVars, [questionValueAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(25); // 5 + 20
+
+    result = performActions(surveyWithVars, [hiddenFieldValueAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(35); // 5 + 30
+
+    result = performActions(surveyWithVars, [textVarAction], data, { textVar: "hello" });
+    expect(result.calculations.textVar).toBe("helloworld");
+
+    result = performActions(surveyWithVars, [missingVarAction], data, {});
+    expect(result.calculations.nonExistentVar).toBeUndefined();
+
+    result = performActions(surveyWithVars, [invalidValueAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(5); // Unchanged
+
+    result = performActions(surveyWithVars, [multiplyAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(10); // 5 * 2
+
+    result = performActions(surveyWithVars, [subtractAction], data, { numVar: 5 });
+    expect(result.calculations.numVar).toBe(2); // 5 - 3
+  });
+
+  test("evaluateLogic handles more complex nested condition groups", () => {
+    const nestedGroup: TConditionGroup = {
+      id: "nestedGroup",
+      connector: "or",
+      conditions: [
+        {
+          id: "c1",
+          leftOperand: { type: "hiddenField", value: "f1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v1" },
+        },
+        {
+          id: "c2",
+          leftOperand: { type: "hiddenField", value: "f2" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v2" },
+        },
+      ],
+    };
+
+    const deeplyNestedGroup: TConditionGroup = {
+      id: "deepGroup",
+      connector: "and",
+      conditions: [
+        {
+          id: "d1",
+          leftOperand: { type: "hiddenField", value: "f3" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v3" },
+        },
+        nestedGroup,
+      ],
+    };
+
+    const rootGroup: TConditionGroup = {
+      id: "rootGroup",
+      connector: "and",
+      conditions: [
+        {
+          id: "r1",
+          leftOperand: { type: "hiddenField", value: "f4" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v4" },
+        },
+        deeplyNestedGroup,
+      ],
+    };
+
+    // All conditions met
+    expect(evaluateLogic(mockSurvey, { f1: "v1", f2: "v2", f3: "v3", f4: "v4" }, {}, rootGroup, "en")).toBe(
+      true
+    );
+
+    // One condition in OR fails but group still passes
+    expect(
+      evaluateLogic(mockSurvey, { f1: "v1", f2: "wrong", f3: "v3", f4: "v4" }, {}, rootGroup, "en")
+    ).toBe(true);
+
+    // Both conditions in OR fail, causing AND to fail
+    expect(
+      evaluateLogic(mockSurvey, { f1: "wrong", f2: "wrong", f3: "v3", f4: "v4" }, {}, rootGroup, "en")
+    ).toBe(false);
+
+    // Top level condition fails
+    expect(
+      evaluateLogic(mockSurvey, { f1: "v1", f2: "v2", f3: "v3", f4: "wrong" }, {}, rootGroup, "en")
+    ).toBe(false);
+  });
+
+  test("missing connector in group defaults to 'and'", () => {
+    const group: TConditionGroup = {
+      id: "g1",
+      conditions: [
+        {
+          id: "c1",
+          leftOperand: { type: "hiddenField", value: "f1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v1" },
+        },
+        {
+          id: "c2",
+          leftOperand: { type: "hiddenField", value: "f2" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v2" },
+        },
+      ],
+    } as any; // Intentionally missing connector
+
+    createGroupFromResource(group, "c1");
+    expect(group.connector).toBe("and");
+  });
+
+  test("getLeftOperandValue handles number input type with non-number value", () => {
+    const surveyWithNumberInput: TJsEnvironmentStateSurvey = {
+      ...mockSurvey,
+      questions: [
+        {
+          id: "numQuestion",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Number question" },
+          required: true,
+          inputType: "number",
+          placeholder: { default: "Enter a number" },
+          buttonLabel: { default: "Next" },
+          longAnswer: false,
+          charLimit: {},
+        },
+      ],
+    };
+
+    const condition: TSingleCondition = {
+      id: "numCond",
+      leftOperand: { type: "question", value: "numQuestion" },
+      operator: "equals",
+      rightOperand: { type: "static", value: 0 },
+    };
+
+    // Test with non-numeric string
+    expect(
+      evaluateLogic(
+        surveyWithNumberInput,
+        { numQuestion: "not-a-number" },
+        {},
+        { id: "g", connector: "and", conditions: [condition] },
+        "en"
+      )
+    ).toBe(false);
+
+    // Test with empty string
+    expect(
+      evaluateLogic(
+        surveyWithNumberInput,
+        { numQuestion: "" },
+        {},
+        { id: "g", connector: "and", conditions: [condition] },
+        "en"
+      )
+    ).toBe(false);
   });
 });
