@@ -1,5 +1,6 @@
 "use server";
 
+import { createOrUpdateIntegration, deleteIntegration } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -9,7 +10,6 @@ import {
   getProjectIdFromIntegrationId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
-import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 

@@ -1,17 +1,17 @@
+import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Dashboard } from "@/modules/ee/insights/experience/components/dashboard";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const ExperiencePage = async (props) => {
   const params = await props.params;

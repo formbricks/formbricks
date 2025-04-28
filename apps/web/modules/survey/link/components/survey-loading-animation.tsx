@@ -1,8 +1,8 @@
 import Logo from "@/images/powered-by-formbricks.svg";
+import { cn } from "@/lib/cn";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface SurveyLoadingAnimationProps {
   isWelcomeCardEnabled: boolean;

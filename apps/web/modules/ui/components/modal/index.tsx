@@ -1,7 +1,7 @@
+import { cn } from "@/lib/cn";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 const DialogPortal = DialogPrimitive.Portal;
 
@@ -13,7 +13,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       blur && "backdrop-blur-md",
-      "fixed inset-0 z-50 bg-slate-500 bg-opacity-30",
+      "bg-opacity-30 fixed inset-0 z-50",
       "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn"
     )}
     {...props}
@@ -58,8 +58,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-2 sm:w-full sm:max-w-xl",
-          `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
+          "fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-2 sm:w-full sm:max-w-xl",
+          `${noPadding ? "" : "px-4 pt-5 pb-4 sm:p-6"}`,
           "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn",
           size && sizeClassName && sizeClassName[size],
           !restrictOverflow && "overflow-hidden",
@@ -78,7 +78,7 @@ const DialogContent = React.forwardRef<
         {children}
         <DialogPrimitive.Close
           className={cn(
-            "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block",
+            "absolute top-0 right-0 hidden pt-4 pr-4 text-slate-400 hover:text-slate-500 focus:ring-0 focus:outline-none sm:block",
             hideCloseButton && "!hidden"
           )}>
           <XIcon className="h-6 w-6 rounded-md bg-white" />

@@ -1,5 +1,5 @@
 import posthog from "posthog-js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { captureFailedSignup, verifyTurnstileToken } from "./utils";
 
 beforeEach(() => {
@@ -16,7 +16,7 @@ describe("verifyTurnstileToken", () => {
   const secretKey = "test-secret";
   const token = "test-token";
 
-  it("should return true when verification is successful", async () => {
+  test("should return true when verification is successful", async () => {
     const mockResponse = { success: true };
     (global.fetch as any).mockResolvedValue({
       ok: true,
@@ -36,7 +36,7 @@ describe("verifyTurnstileToken", () => {
     );
   });
 
-  it("should return false when response is not ok", async () => {
+  test("should return false when response is not ok", async () => {
     (global.fetch as any).mockResolvedValue({
       ok: false,
       status: 400,
@@ -46,14 +46,14 @@ describe("verifyTurnstileToken", () => {
     expect(result).toBe(false);
   });
 
-  it("should return false when verification fails", async () => {
+  test("should return false when verification fails", async () => {
     (global.fetch as any).mockRejectedValue(new Error("Network error"));
 
     const result = await verifyTurnstileToken(secretKey, token);
     expect(result).toBe(false);
   });
 
-  it("should return false when request times out", async () => {
+  test("should return false when request times out", async () => {
     const mockAbortError = new Error("The operation was aborted");
     mockAbortError.name = "AbortError";
     (global.fetch as any).mockRejectedValue(mockAbortError);
@@ -64,7 +64,7 @@ describe("verifyTurnstileToken", () => {
 });
 
 describe("captureFailedSignup", () => {
-  it("should capture TELEMETRY_FAILED_SIGNUP event with email and name", () => {
+  test("should capture TELEMETRY_FAILED_SIGNUP event with email and name", () => {
     const captureSpy = vi.spyOn(posthog, "capture");
     const email = "test@example.com";
     const name = "Test User";

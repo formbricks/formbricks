@@ -1,13 +1,13 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
+import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
+import { canUserAccessOrganization } from "@/lib/organization/auth";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
-import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const ProjectOnboardingLayout = async (props) => {

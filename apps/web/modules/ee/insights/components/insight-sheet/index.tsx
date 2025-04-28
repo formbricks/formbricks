@@ -1,5 +1,6 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TInsightWithDocumentCount } from "@/modules/ee/insights/experience/types/insights";
 import { Button } from "@/modules/ui/components/button";
@@ -15,7 +16,6 @@ import { useTranslate } from "@tolgee/react";
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TUserLocale } from "@formbricks/types/user";
 import CategoryBadge from "../../experience/components/category-select";
@@ -151,10 +151,10 @@ export const InsightSheet = ({
         <div className="flex flex-1 flex-col gap-y-2 overflow-auto">
           {deferredDocuments.map((document, index) => (
             <Card key={`${document.id}-${index}`} className="transition-opacity duration-200">
-              <CardContent className="whitespace-pre-wrap p-4 text-sm">
+              <CardContent className="p-4 text-sm whitespace-pre-wrap">
                 <Markdown>{document.text}</Markdown>
               </CardContent>
-              <CardFooter className="flex justify-between rounded-bl-xl rounded-br-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <CardFooter className="flex justify-between rounded-br-xl rounded-bl-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
                   Sentiment: <SentimentSelect documentId={document.id} sentiment={document.sentiment} />
                 </p>

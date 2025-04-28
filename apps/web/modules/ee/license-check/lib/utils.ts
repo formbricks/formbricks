@@ -1,4 +1,14 @@
 import "server-only";
+import { cache, revalidateTag } from "@/lib/cache";
+import {
+  E2E_TESTING,
+  ENTERPRISE_LICENSE_KEY,
+  IS_AI_CONFIGURED,
+  IS_FORMBRICKS_CLOUD,
+  PROJECT_FEATURE_KEYS,
+} from "@/lib/constants";
+import { env } from "@/lib/env";
+import { hashString } from "@/lib/hashString";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
@@ -9,16 +19,6 @@ import { after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache, revalidateTag } from "@formbricks/lib/cache";
-import {
-  E2E_TESTING,
-  ENTERPRISE_LICENSE_KEY,
-  IS_AI_CONFIGURED,
-  IS_FORMBRICKS_CLOUD,
-  PROJECT_FEATURE_KEYS,
-} from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
-import { hashString } from "@formbricks/lib/hashString";
 import { logger } from "@formbricks/logger";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;

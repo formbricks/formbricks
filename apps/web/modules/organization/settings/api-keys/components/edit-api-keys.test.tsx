@@ -3,15 +3,16 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
-import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import { EditAPIKeys } from "./edit-api-keys";
 
 // Mock the actions
 vi.mock("../actions", () => ({
   createApiKeyAction: vi.fn(),
+  updateApiKeyAction: vi.fn(),
   deleteApiKeyAction: vi.fn(),
 }));
 
@@ -124,33 +125,33 @@ describe("EditAPIKeys", () => {
     projects: mockProjects,
   };
 
-  it("renders the API keys list", () => {
+  test("renders the API keys list", () => {
     render(<EditAPIKeys {...defaultProps} />);
     expect(screen.getByText("common.label")).toBeInTheDocument();
     expect(screen.getByText("Test Key 1")).toBeInTheDocument();
     expect(screen.getByText("Test Key 2")).toBeInTheDocument();
   });
 
-  it("renders empty state when no API keys", () => {
+  test("renders empty state when no API keys", () => {
     render(<EditAPIKeys {...defaultProps} apiKeys={[]} />);
     expect(screen.getByText("environments.project.api_keys.no_api_keys_yet")).toBeInTheDocument();
   });
 
-  it("shows add API key button when not readonly", () => {
+  test("shows add API key button when not readonly", () => {
     render(<EditAPIKeys {...defaultProps} />);
     expect(
       screen.getByRole("button", { name: "environments.settings.api_keys.add_api_key" })
     ).toBeInTheDocument();
   });
 
-  it("hides add API key button when readonly", () => {
+  test("hides add API key button when readonly", () => {
     render(<EditAPIKeys {...defaultProps} isReadOnly={true} />);
     expect(
       screen.queryByRole("button", { name: "environments.settings.api_keys.add_api_key" })
     ).not.toBeInTheDocument();
   });
 
-  it("opens add API key modal when clicking add button", async () => {
+  test("opens add API key modal when clicking add button", async () => {
     render(<EditAPIKeys {...defaultProps} />);
     const addButton = screen.getByRole("button", { name: "environments.settings.api_keys.add_api_key" });
     await userEvent.click(addButton);
@@ -162,7 +163,7 @@ describe("EditAPIKeys", () => {
     expect(modalTitle).toBeInTheDocument();
   });
 
-  it("handles API key deletion", async () => {
+  test("handles API key deletion", async () => {
     (deleteApiKeyAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ data: true });
 
     render(<EditAPIKeys {...defaultProps} />);
@@ -177,7 +178,51 @@ describe("EditAPIKeys", () => {
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_deleted");
   });
 
-  it("handles API key creation", async () => {
+  test("handles API key updation", async () => {
+    const updatedApiKey: TApiKeyWithEnvironmentPermission = {
+      id: "key1",
+      label: "Updated Key",
+      createdAt: new Date(),
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
+      apiKeyEnvironments: [
+        {
+          environmentId: "env1",
+          permission: ApiKeyPermission.read,
+        },
+      ],
+    };
+    (updateApiKeyAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ data: updatedApiKey });
+    render(<EditAPIKeys {...defaultProps} />);
+
+    // Open view permission modal
+    const apiKeyRows = screen.getAllByTestId("api-key-row");
+
+    // click on the first row
+    await userEvent.click(apiKeyRows[0]);
+
+    const labelInput = screen.getByTestId("api-key-label");
+    await userEvent.clear(labelInput);
+    await userEvent.type(labelInput, "Updated Key");
+
+    const submitButton = screen.getByRole("button", { name: "common.update" });
+    await userEvent.click(submitButton);
+
+    expect(updateApiKeyAction).toHaveBeenCalledWith({
+      apiKeyId: "key1",
+      apiKeyData: {
+        label: "Updated Key",
+      },
+    });
+
+    expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_updated");
+  });
+
+  test("handles API key creation", async () => {
     const newApiKey: TApiKeyWithEnvironmentPermission = {
       id: "key3",
       label: "New Key",
@@ -220,7 +265,7 @@ describe("EditAPIKeys", () => {
       organizationId: "org1",
       apiKeyData: {
         label: "New Key",
-        environmentPermissions: [{ environmentId: "env1", permission: ApiKeyPermission.read }],
+        environmentPermissions: [],
         organizationAccess: {
           accessControl: { read: true, write: false },
         },
@@ -230,7 +275,7 @@ describe("EditAPIKeys", () => {
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_created");
   });
 
-  it("handles copy to clipboard", async () => {
+  test("handles copy to clipboard", async () => {
     // Mock the clipboard writeText method
     const writeText = vi.fn();
     Object.assign(navigator, {

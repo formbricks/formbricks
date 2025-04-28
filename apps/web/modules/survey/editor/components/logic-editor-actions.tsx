@@ -1,5 +1,6 @@
 "use client";
 
+import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
@@ -18,7 +19,6 @@ import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
 import {
   TActionNumberVariableCalculateOperator,
   TActionObjective,

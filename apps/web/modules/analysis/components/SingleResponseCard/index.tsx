@@ -1,18 +1,17 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
-import { TUserLocale } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
@@ -61,28 +60,24 @@ export const SingleResponseCard = ({
     survey.questions.forEach((question) => {
       if (!isValidValue(response.data[question.id])) {
         temp.push(question.id);
-      } else {
-        if (temp.length > 0) {
-          skippedQuestions.push([...temp]);
-          temp = [];
-        }
+      } else if (temp.length > 0) {
+        skippedQuestions.push([...temp]);
+        temp = [];
       }
     });
   } else {
     for (let index = survey.questions.length - 1; index >= 0; index--) {
       const question = survey.questions[index];
-      if (!response.data[question.id]) {
-        if (skippedQuestions.length === 0) {
-          temp.push(question.id);
-        } else if (skippedQuestions.length > 0 && !isValidValue(response.data[question.id])) {
-          temp.push(question.id);
-        }
-      } else {
-        if (temp.length > 0) {
-          temp.reverse();
-          skippedQuestions.push([...temp]);
-          temp = [];
-        }
+      if (
+        !response.data[question.id] &&
+        (skippedQuestions.length === 0 ||
+          (skippedQuestions.length > 0 && !isValidValue(response.data[question.id])))
+      ) {
+        temp.push(question.id);
+      } else if (temp.length > 0) {
+        temp.reverse();
+        skippedQuestions.push([...temp]);
+        temp = [];
       }
     }
   }

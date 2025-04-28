@@ -1,12 +1,12 @@
 "use server";
 
 import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
+import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { getSurveySummary } from "./summary/lib/surveySummary";

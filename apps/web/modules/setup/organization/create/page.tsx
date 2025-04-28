@@ -1,3 +1,7 @@
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { gethasNoOrganizations } from "@/lib/instance/service";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
@@ -6,10 +10,6 @@ import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
-import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { CreateOrganization } from "./components/create-organization";
 

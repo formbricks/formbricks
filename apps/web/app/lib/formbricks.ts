@@ -1,5 +1,5 @@
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import formbricks from "@formbricks/js";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 export const formbricksLogout = async () => {
   const loggedInWith = localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS);

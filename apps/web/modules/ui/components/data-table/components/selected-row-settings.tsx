@@ -1,12 +1,12 @@
 "use client";
 
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Table } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
@@ -76,7 +76,7 @@ export const SelectedRowSettings = <T,>({
 
   return (
     <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
-      <div>
+      <div className="lowercase">
         {selectedRowCount} {t(`common.${type}`)}s {t("common.selected")}
       </div>
       <Separator />

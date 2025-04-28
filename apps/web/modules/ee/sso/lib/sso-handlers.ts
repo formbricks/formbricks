@@ -1,3 +1,9 @@
+import { createAccount } from "@/lib/account/service";
+import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@/lib/constants";
+import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
@@ -11,12 +17,6 @@ import {
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@formbricks/lib/constants";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 

@@ -1,10 +1,10 @@
 import { apiKeyCache } from "@/lib/cache/api-key";
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
-import { createApiKey, deleteApiKey, getApiKeysWithEnvironmentPermissions } from "./api-key";
+import { createApiKey, deleteApiKey, getApiKeysWithEnvironmentPermissions, updateApiKey } from "./api-key";
 
 const mockApiKey: ApiKey = {
   id: "apikey123",
@@ -39,6 +39,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       delete: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -68,7 +69,7 @@ describe("API Key Management", () => {
   });
 
   describe("getApiKeysWithEnvironmentPermissions", () => {
-    it("retrieves API keys successfully", async () => {
+    test("retrieves API keys successfully", async () => {
       vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments]);
       vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
@@ -94,7 +95,7 @@ describe("API Key Management", () => {
       });
     });
 
-    it("throws DatabaseError on prisma error", async () => {
+    test("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -107,7 +108,7 @@ describe("API Key Management", () => {
   });
 
   describe("deleteApiKey", () => {
-    it("deletes an API key successfully", async () => {
+    test("deletes an API key successfully", async () => {
       vi.mocked(prisma.apiKey.delete).mockResolvedValueOnce(mockApiKey);
 
       const result = await deleteApiKey(mockApiKey.id);
@@ -121,7 +122,7 @@ describe("API Key Management", () => {
       expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
-    it("throws DatabaseError on prisma error", async () => {
+    test("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -157,7 +158,7 @@ describe("API Key Management", () => {
       ],
     };
 
-    it("creates an API key successfully", async () => {
+    test("creates an API key successfully", async () => {
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
 
       const result = await createApiKey("org123", "user123", mockApiKeyData);
@@ -167,7 +168,7 @@ describe("API Key Management", () => {
       expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
-    it("creates an API key with environment permissions successfully", async () => {
+    test("creates an API key with environment permissions successfully", async () => {
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKeyWithEnvironments);
 
       const result = await createApiKey("org123", "user123", {
@@ -180,7 +181,7 @@ describe("API Key Management", () => {
       expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
-    it("throws DatabaseError on prisma error", async () => {
+    test("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -189,6 +190,30 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.create).mockRejectedValueOnce(errToThrow);
 
       await expect(createApiKey("org123", "user123", mockApiKeyData)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("updateApiKey", () => {
+    test("updates an API key successfully", async () => {
+      const updatedApiKey = { ...mockApiKey, label: "Updated API Key" };
+      vi.mocked(prisma.apiKey.update).mockResolvedValueOnce(updatedApiKey);
+
+      const result = await updateApiKey(mockApiKey.id, { label: "Updated API Key" });
+
+      expect(result).toEqual(updatedApiKey);
+      expect(prisma.apiKey.update).toHaveBeenCalled();
+      expect(apiKeyCache.revalidate).toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      vi.mocked(prisma.apiKey.update).mockRejectedValueOnce(errToThrow);
+
+      await expect(updateApiKey(mockApiKey.id, { label: "Updated API Key" })).rejects.toThrow(DatabaseError);
     });
   });
 });

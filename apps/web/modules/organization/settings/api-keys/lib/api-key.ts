@@ -1,7 +1,10 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { apiKeyCache } from "@/lib/cache/api-key";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
+  TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -9,8 +12,6 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -186,6 +187,32 @@ export const createApiKey = async (
     });
 
     return { ...result, actualKey: key };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): Promise<ApiKey | null> => {
+  try {
+    const updatedApiKey = await prisma.apiKey.update({
+      where: {
+        id: apiKeyId,
+      },
+      data: {
+        label: data.label,
+      },
+    });
+
+    apiKeyCache.revalidate({
+      id: updatedApiKey.id,
+      hashedKey: updatedApiKey.hashedKey,
+      organizationId: updatedApiKey.organizationId,
+    });
+
+    return updatedApiKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

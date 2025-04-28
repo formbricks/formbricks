@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getActionClasses } from "./action-classes";
@@ -43,7 +43,7 @@ describe("getActionClasses", () => {
     vi.clearAllMocks();
   });
 
-  it("should successfully fetch action classes for given environment IDs", async () => {
+  test("successfully fetches action classes for given environment IDs", async () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
 
@@ -61,14 +61,14 @@ describe("getActionClasses", () => {
     });
   });
 
-  it("should throw DatabaseError when prisma query fails", async () => {
+  test("throws DatabaseError when prisma query fails", async () => {
     // Mock the prisma findMany to throw an error
     vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error("Database error"));
 
     await expect(getActionClasses(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
   });
 
-  it("should handle empty environment IDs array", async () => {
+  test("handles empty environment IDs array", async () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
 

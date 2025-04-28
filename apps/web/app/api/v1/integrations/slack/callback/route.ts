@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
+import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { NextRequest } from "next/server";
-import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { createOrUpdateIntegration, getIntegrationByType } from "@formbricks/lib/integration/service";
 import {
   TIntegrationSlackConfig,
   TIntegrationSlackConfigData,

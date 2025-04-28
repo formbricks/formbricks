@@ -39,11 +39,10 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "clean": "rimraf .turbo node_modules dist coverage",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
-    "@formbricks/api": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "3.1.1",

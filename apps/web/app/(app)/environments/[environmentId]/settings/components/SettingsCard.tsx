@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { useTranslate } from "@tolgee/react";
-import { cn } from "@formbricks/lib/cn";
 
 export const SettingsCard = ({
   title,
@@ -31,7 +31,7 @@ export const SettingsCard = ({
       id={title}>
       <div className="border-b border-slate-200 px-4 pb-4">
         <div className="flex">
-          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
+          <h3 className="text-lg leading-6 font-medium text-slate-900 capitalize">{title}</h3>
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { hashPassword, verifyPassword } from "./utils";
 
 describe("Password Utils", () => {
@@ -6,7 +6,7 @@ describe("Password Utils", () => {
   const hashedPassword = "$2a$12$LZsLq.9nkZlU0YDPx2aLNelnwD/nyavqbewLN.5.Q5h/UxRD8Ymcy";
 
   describe("hashPassword", () => {
-    it("should hash a password", async () => {
+    test("should hash a password", async () => {
       const hashedPassword = await hashPassword(password);
 
       expect(typeof hashedPassword).toBe("string");
@@ -14,7 +14,7 @@ describe("Password Utils", () => {
       expect(hashedPassword.length).toBe(60);
     });
 
-    it("should generate different hashes for the same password", async () => {
+    test("should generate different hashes for the same password", async () => {
       const hash1 = await hashPassword(password);
       const hash2 = await hashPassword(password);
 
@@ -23,13 +23,13 @@ describe("Password Utils", () => {
   });
 
   describe("verifyPassword", () => {
-    it("should verify a correct password", async () => {
+    test("should verify a correct password", async () => {
       const isValid = await verifyPassword(password, hashedPassword);
 
       expect(isValid).toBe(true);
     });
 
-    it("should reject an incorrect password", async () => {
+    test("should reject an incorrect password", async () => {
       const isValid = await verifyPassword("WrongPassword123!", hashedPassword);
 
       expect(isValid).toBe(false);

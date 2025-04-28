@@ -1,8 +1,7 @@
-import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
@@ -101,7 +100,7 @@ describe("AddApiKeyModal", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the modal with initial state", () => {
+  test("renders the modal with initial state", () => {
     render(<AddApiKeyModal {...defaultProps} />);
     const modalTitle = screen.getByText("environments.project.api_keys.add_api_key", {
       selector: "div.text-xl",
@@ -112,7 +111,7 @@ describe("AddApiKeyModal", () => {
     expect(screen.getByText("environments.project.api_keys.project_access")).toBeInTheDocument();
   });
 
-  it("handles label input", async () => {
+  test("handles label input", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
 
@@ -120,8 +119,11 @@ describe("AddApiKeyModal", () => {
     expect(labelInput.value).toBe("Test API Key");
   });
 
-  it("handles permission changes", async () => {
+  test("handles permission changes", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
+
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
 
     // Open project dropdown for the first permission row
     const projectDropdowns = screen.getAllByRole("button", { name: /Project 1/i });
@@ -136,11 +138,13 @@ describe("AddApiKeyModal", () => {
     expect(updatedButton).toBeInTheDocument();
   });
 
-  it("adds and removes permissions", async () => {
+  test("adds and removes permissions", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Add new permission
     const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
+
     await userEvent.click(addButton);
 
     // Verify new permission row is added
@@ -154,12 +158,15 @@ describe("AddApiKeyModal", () => {
     expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
   });
 
-  it("submits form with correct data", async () => {
+  test("submits form with correct data", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Fill in label
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
     await userEvent.type(labelInput, "Test API Key");
+
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
 
     // Click submit
     const submitButton = screen.getByRole("button", {
@@ -172,7 +179,7 @@ describe("AddApiKeyModal", () => {
       environmentPermissions: [
         {
           environmentId: "env1",
-          permission: ApiKeyPermission.read,
+          permission: "read",
         },
       ],
       organizationAccess: {
@@ -184,7 +191,7 @@ describe("AddApiKeyModal", () => {
     });
   });
 
-  it("submits form with correct data including organization access toggles", async () => {
+  test("submits form with correct data including organization access toggles", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Fill in label
@@ -203,12 +210,7 @@ describe("AddApiKeyModal", () => {
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
       label: "Test API Key",
-      environmentPermissions: [
-        {
-          environmentId: "env1",
-          permission: ApiKeyPermission.read,
-        },
-      ],
+      environmentPermissions: [],
       organizationAccess: {
         accessControl: {
           read: true,
@@ -218,7 +220,7 @@ describe("AddApiKeyModal", () => {
     });
   });
 
-  it("disables submit button when label is empty", async () => {
+  test("disables submit button when label is empty and there are not environment permissions", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
     const submitButton = screen.getByRole("button", {
       name: "environments.project.api_keys.add_api_key",
@@ -228,12 +230,15 @@ describe("AddApiKeyModal", () => {
     // Initially disabled
     expect(submitButton).toBeDisabled();
 
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
+
     // After typing, it should be enabled
     await userEvent.type(labelInput, "Test");
     expect(submitButton).not.toBeDisabled();
   });
 
-  it("closes modal and resets form on cancel", async () => {
+  test("closes modal and resets form on cancel", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Type something into the label

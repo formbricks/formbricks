@@ -22,7 +22,7 @@ vi.mock("@formbricks/js", () => ({
 }));
 
 // A simple implementation for classnames.
-vi.mock("@formbricks/lib/cn", () => ({
+vi.mock("@/lib/cn", () => ({
   cn: (...classes) => classes.join(" "),
 }));
 

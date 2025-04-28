@@ -2,9 +2,9 @@
 import { generateInsightsForSurveyResponsesConcept } from "@/app/api/(internal)/insights/lib/insights";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { CRON_SECRET } from "@/lib/constants";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { CRON_SECRET } from "@formbricks/lib/constants";
 import { logger } from "@formbricks/logger";
 import { generateInsightsEnabledForSurveyQuestions } from "./lib/utils";
 

@@ -54,10 +54,10 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   mode?: "modal" | "inline";
   containerId?: string;
-  clickOutside?: boolean;
   darkOverlay?: boolean;
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
   singleUseId?: string;
   singleUseResponseId?: string;
+  isWebEnvironment?: boolean;
 }

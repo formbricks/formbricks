@@ -1,8 +1,8 @@
+import { cn } from "@/lib/cn";
 import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
 import { TableCell } from "@/modules/ui/components/table";
 import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 
 interface ResponseTableCellProps {
@@ -35,11 +35,13 @@ export const ResponseTableCell = ({
 
   // Conditional rendering of maximize icon
   const renderMaximizeIcon = cell.column.id === "createdAt" && (
-    <div
-      className="hidden flex-shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 hover:border-slate-300 group-hover:flex"
+    <button
+      type="button"
+      aria-label="Expand response"
+      className="hidden flex-shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 group-hover:flex hover:border-slate-300 focus:outline-none"
       onClick={handleCellClick}>
       <Maximize2Icon className="h-4 w-4" />
-    </div>
+    </button>
   );
 
   return (

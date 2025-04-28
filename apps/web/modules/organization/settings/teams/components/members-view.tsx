@@ -1,4 +1,5 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -7,7 +8,6 @@ import { OrganizationActions } from "@/modules/organization/settings/teams/compo
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

@@ -1,14 +1,13 @@
 "use client";
 
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { TIso639Language } from "@formbricks/lib/i18n/utils";
-import { iso639Languages } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { TIso639Language, iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageSelectProps {
@@ -66,7 +65,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
-        className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 ${isOpen ? "" : "hidden"}`}>
+        className={`ring-opacity-5 absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ${isOpen ? "" : "hidden"}`}>
         <Input
           autoComplete="off"
           onChange={(e) => {

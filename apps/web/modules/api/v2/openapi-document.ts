@@ -1,6 +1,6 @@
 import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
-import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
-import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
+// import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
+// import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
@@ -40,8 +40,8 @@ const document = createDocument({
     ...mePaths,
     ...responsePaths,
     ...bulkContactPaths,
-    ...contactPaths,
-    ...contactAttributePaths,
+    // ...contactPaths,
+    // ...contactAttributePaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...surveyContactLinksBySegmentPaths,
@@ -52,7 +52,7 @@ const document = createDocument({
   },
   servers: [
     {
-      url: `https://app.formbricks.com/api/v2/`,
+      url: "https://app.formbricks.com/api/v2",
       description: "Formbricks Cloud",
     },
   ],

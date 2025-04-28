@@ -1,7 +1,7 @@
+import { ENCRYPTION_KEY, SURVEY_URL } from "@/lib/constants";
+import * as crypto from "@/lib/crypto";
 import jwt from "jsonwebtoken";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENCRYPTION_KEY, SURVEY_URL } from "@formbricks/lib/constants";
-import * as crypto from "@formbricks/lib/crypto";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as contactSurveyLink from "./contact-survey-link";
 
 // Mock all modules needed (this gets hoisted to the top of the file)
@@ -13,12 +13,12 @@ vi.mock("jsonwebtoken", () => ({
 }));
 
 // Mock constants - MUST be a literal object without using variables
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
   SURVEY_URL: "https://test.formbricks.com",
 }));
 
-vi.mock("@formbricks/lib/crypto", () => ({
+vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
   symmetricDecrypt: vi.fn(),
 }));
@@ -53,7 +53,7 @@ describe("Contact Survey Link", () => {
   });
 
   describe("getContactSurveyLink", () => {
-    it("creates a survey link with encrypted contact and survey IDs", () => {
+    test("creates a survey link with encrypted contact and survey IDs", () => {
       const result = contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
 
       // Verify encryption was called for both IDs
@@ -77,7 +77,7 @@ describe("Contact Survey Link", () => {
       });
     });
 
-    it("adds expiration to the token when expirationDays is provided", () => {
+    test("adds expiration to the token when expirationDays is provided", () => {
       const expirationDays = 7;
       contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId, expirationDays);
 
@@ -92,11 +92,11 @@ describe("Contact Survey Link", () => {
       );
     });
 
-    it("throws an error when ENCRYPTION_KEY is not available", async () => {
+    test("throws an error when ENCRYPTION_KEY is not available", async () => {
       // Reset modules so the new mock is used by the module under test
       vi.resetModules();
       // Re‑mock constants to simulate missing ENCRYPTION_KEY
-      vi.doMock("@formbricks/lib/constants", () => ({
+      vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
         SURVEY_URL: "https://test.formbricks.com",
       }));
@@ -115,7 +115,7 @@ describe("Contact Survey Link", () => {
   });
 
   describe("verifyContactSurveyToken", () => {
-    it("verifies and decrypts a valid token", () => {
+    test("verifies and decrypts a valid token", () => {
       const result = contactSurveyLink.verifyContactSurveyToken(mockToken);
 
       // Verify JWT verify was called
@@ -131,7 +131,7 @@ describe("Contact Survey Link", () => {
       });
     });
 
-    it("throws an error when token verification fails", () => {
+    test("throws an error when token verification fails", () => {
       vi.mocked(jwt.verify).mockImplementation(() => {
         throw new Error("Token verification failed");
       });
@@ -147,7 +147,7 @@ describe("Contact Survey Link", () => {
       }
     });
 
-    it("throws an error when token has invalid format", () => {
+    test("throws an error when token has invalid format", () => {
       // Mock JWT.verify to return an incomplete payload
       vi.mocked(jwt.verify).mockReturnValue({
         // Missing surveyId
@@ -168,9 +168,9 @@ describe("Contact Survey Link", () => {
       }
     });
 
-    it("throws an error when ENCRYPTION_KEY is not available", async () => {
+    test("throws an error when ENCRYPTION_KEY is not available", async () => {
       vi.resetModules();
-      vi.doMock("@formbricks/lib/constants", () => ({
+      vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
         SURVEY_URL: "https://test.formbricks.com",
       }));

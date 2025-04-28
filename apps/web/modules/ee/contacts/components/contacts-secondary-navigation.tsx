@@ -1,6 +1,6 @@
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { getTranslate } from "@/tolgee/server";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
 interface PersonSecondaryNavigationProps {
