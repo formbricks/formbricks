@@ -9,11 +9,13 @@ import { TResponse } from "@formbricks/types/responses";
 const ZGetAvailableSurveysAction = z.object({
   take: z.number(),
   skip: z.number(),
+  searchQuery: z.string().optional(),
 });
 
 export const getCompletedSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
+    const searchQuery = parsedInput.searchQuery;
     const surveysPrisma = await prisma.survey.findMany({
       where: {
         responses: {
@@ -24,6 +26,20 @@ export const getCompletedSurveysAction = authenticatedActionClient
             },
           },
         },
+        OR: [
+          {
+            name: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
       include: {
         responses: {
@@ -112,6 +128,7 @@ export const getCompletedSurveysAction = authenticatedActionClient
 export const getAvailableSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
+    const searchQuery = parsedInput.searchQuery;
     const surveysPrisma = await prisma.survey.findMany({
       where: {
         public: true,
@@ -124,6 +141,20 @@ export const getAvailableSurveysAction = authenticatedActionClient
             },
           },
         },
+        OR: [
+          {
+            name: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
       include: {
         triggers: {

@@ -586,10 +586,13 @@
       "card": {
         "hash": "Hash",
         "response_info": "Response Info",
-        "start_survey": "Start Survey",
+        "start_engagement": "Start Engagement",
         "submission_date": "Submission Date",
         "view": "View",
         "view_info": "View Info"
+      },
+      "search": {
+        "search_by_engagement_name_or_description": "Search by engagement name or description"
       }
     },
     "connect": {

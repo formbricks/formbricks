@@ -1,13 +1,14 @@
 "use client";
 
-import AvailableSurveys from "@/modules/discover/components/Surveys/components/available-surveys";
-import CompletedSurveys from "@/modules/discover/components/Surveys/components/completed-surveys";
+import { SearchSection } from "@/modules/discover/components/common/search-section";
+import AvailableSurveys from "@/modules/discover/components/engagements/components/available-engagements";
+import CompletedSurveys from "@/modules/discover/components/engagements/components/completed-engagements";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
 import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 
-export function Surveys({ className = "" }: { className?: string }): React.JSX.Element {
+export function Engagements({ className = "" }: { className?: string }): React.JSX.Element {
   const tabs = [
     {
       id: "available-surveys",
@@ -21,10 +22,12 @@ export function Surveys({ className = "" }: { className?: string }): React.JSX.E
     },
   ];
   const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   return (
     <>
       <div className={cn("relative my-4 flex w-full flex-col gap-2", className)} id={"surveys"}>
+        <SearchSection setSearchQuery={setSearchQuery} />
         <TabBar
           tabs={tabs}
           activeId={activeTab}
@@ -36,11 +39,11 @@ export function Surveys({ className = "" }: { className?: string }): React.JSX.E
           {(() => {
             switch (activeTab) {
               case "available-surveys":
-                return <AvailableSurveys />;
+                return <AvailableSurveys searchQuery={searchQuery} />;
               case "completed-surveys":
-                return <CompletedSurveys />;
+                return <CompletedSurveys searchQuery={searchQuery} />;
               default:
-                return <AvailableSurveys />;
+                return <AvailableSurveys searchQuery={searchQuery} />;
             }
           })()}
         </div>
@@ -49,4 +52,4 @@ export function Surveys({ className = "" }: { className?: string }): React.JSX.E
   );
 }
 
-export default Surveys;
+export default Engagements;
