@@ -26,7 +26,7 @@ export const EditPublicSurveyAlertDialog = ({
     label?: string;
     onClick: () => void | Promise<void>;
     loading?: boolean;
-    variant?: string;
+    variant: React.ComponentProps<typeof Button>["variant"];
   }>;
   if (secondaryButtonAction) {
     actions.push({
@@ -62,7 +62,7 @@ export const EditPublicSurveyAlertDialog = ({
       </ul>
       <div className="my-4 space-x-2 text-right">
         {actions.map(({ label, onClick, loading, variant }) => (
-          <Button key={label} variant={variant as any} onClick={onClick} loading={loading}>
+          <Button key={label} variant={variant} onClick={onClick} loading={loading}>
             {label}
           </Button>
         ))}

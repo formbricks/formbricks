@@ -396,7 +396,7 @@ export const SurveyMenuBar = ({
           setConfirmDialogOpen(false);
           router.back();
         }}
-        onConfirm={() => handleSaveAndGoBack()}
+        onConfirm={handleSaveAndGoBack}
       />
     </div>
   );

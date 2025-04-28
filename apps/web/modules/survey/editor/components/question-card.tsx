@@ -267,7 +267,7 @@ export const QuestionCard = ({
             TSurveyQuestionTypeEnum.MultipleChoiceSingle,
             TSurveyQuestionTypeEnum.MultipleChoiceMulti,
             TSurveyQuestionTypeEnum.PictureSelection,
-            TSurveyQuestionTypeEnum.Ranking,
+            TSurveyQuestionTypeEnum.Rating,
             TSurveyQuestionTypeEnum.NPS,
             TSurveyQuestionTypeEnum.Ranking,
             TSurveyQuestionTypeEnum.Matrix,

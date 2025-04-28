@@ -218,7 +218,7 @@ export const SurveyAnalysisCTA = ({
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
           isLoading={loading}
-          primaryButtonAction={async () => await duplicateSurveyAndRoute(survey.id)}
+          primaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
           primaryButtonText={t("environments.surveys.edit.caution_edit_duplicate")}
           secondaryButtonAction={() =>
             router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
