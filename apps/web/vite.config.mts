@@ -60,7 +60,6 @@ export default defineConfig({
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ContactInfoSummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/CTASummary.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/DateQuestionSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/EnableInsightsBanner.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryDropOffs.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryPage.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/RankingSummary.tsx",
