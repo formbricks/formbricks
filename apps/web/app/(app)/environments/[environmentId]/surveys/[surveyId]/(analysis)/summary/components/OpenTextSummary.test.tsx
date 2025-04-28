@@ -105,24 +105,6 @@ describe("OpenTextSummary", () => {
     expect(screen.queryByTestId("secondary-navigation")).not.toBeInTheDocument();
   });
 
-  test("shows insights disabled message when AI is enabled but insights are disabled", () => {
-    const questionSummary = {
-      question: { id: "q1", headline: "Open Text Question" },
-      samples: [],
-    } as unknown as TSurveyQuestionSummaryOpenText;
-
-    render(
-      <OpenTextSummary
-        questionSummary={questionSummary}
-        environmentId={environmentId}
-        survey={survey}
-        locale={locale}
-      />
-    );
-
-    expect(screen.getByText("environments.surveys.summary.insights_disabled")).toBeInTheDocument();
-  });
-
   test("renders anonymous user when no contact is provided", () => {
     const questionSummary = {
       question: { id: "q1", headline: "Open Text Question" },
