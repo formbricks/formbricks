@@ -1,5 +1,5 @@
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const mockSurvey: TJsEnvironmentStateSurvey = {
   id: "cm9gptbhg0000192zceq9ayuc",
