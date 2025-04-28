@@ -290,12 +290,12 @@ export const ResponseOptionsCard = ({
     if (recaptchaToggle) {
       setRecaptchaToggle(false);
       if (localSurvey.recaptcha?.enabled) {
-        setRecaptchaThreshold(0);
-        setLocalSurvey({ ...localSurvey, recaptcha: { enabled: false, threshold: 0 } });
+        setRecaptchaThreshold(0.1);
+        setLocalSurvey({ ...localSurvey, recaptcha: { enabled: false, threshold: 0.1 } });
       }
     } else {
       setRecaptchaToggle(true);
-      setLocalSurvey({ ...localSurvey, recaptcha: { enabled: true, threshold: 0 } });
+      setLocalSurvey({ ...localSurvey, recaptcha: { enabled: true, threshold: 0.1 } });
     }
   };
 
@@ -407,18 +407,25 @@ export const ResponseOptionsCard = ({
                   {t("environments.surveys.edit.spam_protection_threshold_description")}
                 </p>
                 <div className="flex w-full items-center gap-1">
-                  <p>0</p>
+                  <div className="text-center">
+                    <p className="mx-2">0.1</p>
+                    <p className="mx-2 text-xs text-slate-500">Lenient</p>
+                  </div>
+
                   <Slider
                     value={[recaptchaThreshold]}
                     className="grow"
-                    max={1}
-                    min={0}
+                    max={0.9}
+                    min={0.1}
                     step={0.1}
                     onValueChange={(value) => {
                       handleThresholdChange(value[0]);
                     }}
                   />
-                  <p>1</p>
+                  <div className="text-center">
+                    <p className="mx-2">0.9</p>
+                    <p className="mx-2 text-xs text-slate-500">Strict</p>
+                  </div>
                 </div>
               </div>
             </AdvancedOptionToggle>

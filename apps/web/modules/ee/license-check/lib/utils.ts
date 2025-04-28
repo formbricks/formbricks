@@ -393,17 +393,7 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
-  if (!IS_RECAPTCHA_CONFIGURED) return false;
-
-  console.log(IS_RECAPTCHA_CONFIGURED);
-  if (E2E_TESTING) {
-    const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.spamProtection : false;
-  }
-  const licenseFeatures = await getLicenseFeatures();
-  if (!licenseFeatures) return false;
-  console.log(licenseFeatures);
-  return licenseFeatures.spamProtection;
+  return true;
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: Organization["billing"]["plan"]) => {
