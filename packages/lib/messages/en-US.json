@@ -584,7 +584,11 @@
     },
     "activity": {
       "card": {
+        "hash": "Hash",
+        "response_info": "Response Info",
         "start_survey": "Start Survey",
+        "submission_date": "Submission Date",
+        "view": "View",
         "view_info": "View Info"
       }
     },
