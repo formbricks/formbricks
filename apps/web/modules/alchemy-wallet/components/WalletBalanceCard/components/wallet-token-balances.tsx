@@ -20,9 +20,10 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   const blockscoutApi = useBlockscoutApi();
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
+  const [showSendModal, setShowSendModal] = useState(false);
 
-  const onClose = useCallback(() => {
-    setSelectedBalance(null);
+  const openSendModal = useCallback(() => {
+    setShowSendModal(true);
   }, []);
 
   useEffect(() => {
@@ -75,7 +76,10 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
                 <TableCell align="right">
                   <Button
                     variant="secondary"
-                    onClick={() => setSelectedBalance(balance)}
+                    onClick={() => {
+                      setSelectedBalance(balance);
+                      openSendModal();
+                    }}
                     className="inline-flex flex-nowrap items-center gap-2">
                     <SendIcon className="h-4 w-4" strokeWidth={2} />
                     {t("common.withdraw")}
@@ -89,7 +93,8 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
           onSelectBalance={setSelectedBalance}
           balances={balances}
           balance={selectedBalance}
-          onClose={onClose}
+          open={showSendModal}
+          setOpen={setShowSendModal}
         />
       </div>
     </div>

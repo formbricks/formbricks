@@ -1,10 +1,14 @@
 "use client";
 
+import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
+import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import clsx from "clsx";
+import { SendIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -13,6 +17,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { deleteResponseAction, getResponseAction } from "./actions";
+import { createResponseNoteAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
 // import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
@@ -20,6 +25,7 @@ import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader"
 import { isValidValue } from "./util";
 
 interface SingleResponseCardProps {
+  balances?: TokenBalance[] | null;
   survey: TSurvey;
   response: TResponse;
   user?: TUser;
@@ -33,6 +39,7 @@ interface SingleResponseCardProps {
 }
 
 export const SingleResponseCard = ({
+  balances,
   survey,
   response,
   user,
@@ -48,6 +55,18 @@ export const SingleResponseCard = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const [showSendModal, setShowSendModal] = useState(false);
+  const verifiedAddress = response.data["verifiedAddress"];
+  const reward = survey.reward;
+  const initialBalance = useMemo(() => {
+    if (!balances || !reward) return null;
+    return balances.find((balance) => balance.token.address == reward.contractAddress) || null;
+  }, [balances, reward]);
+  const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(initialBalance);
+  const openSendModal = useCallback(() => {
+    setShowSendModal(true);
+  }, []);
 
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
@@ -112,6 +131,15 @@ export const SingleResponseCard = ({
     }
   };
 
+  const handlePayReward = useCallback(async (tx: string) => {
+    try {
+      await createResponseNoteAction({ responseId: response.id, text: tx });
+      await updateFetchedResponses();
+    } catch (e) {
+      toast.error(t("environments.surveys.responses.an_error_occurred_creating_a_new_note"));
+    }
+  }, []);
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -164,6 +192,29 @@ export const SingleResponseCard = ({
           updateFetchedResponses={updateFetchedResponses}
         />
       )}
+      <div>
+        {balances && reward && (
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => openSendModal()}
+              className="inline-flex flex-nowrap items-center gap-2">
+              <SendIcon className="h-4 w-4" strokeWidth={2} />
+              {t("common.pay_reward")}
+            </Button>
+            <SendModal
+              balances={balances}
+              onSelectBalance={setSelectedBalance}
+              address={verifiedAddress.toString()}
+              balance={selectedBalance}
+              amount={Number(reward.amount)}
+              onModalSubmit={handlePayReward}
+              setOpen={setShowSendModal}
+              open={showSendModal}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 };

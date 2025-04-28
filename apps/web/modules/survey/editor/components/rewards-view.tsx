@@ -65,6 +65,9 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
     };
 
     fetchBalances();
+
+    let interval = setInterval(fetchBalances, 60000);
+    return () => clearInterval(interval);
   }, [blockscoutApi, address]);
 
   useEffect(() => {

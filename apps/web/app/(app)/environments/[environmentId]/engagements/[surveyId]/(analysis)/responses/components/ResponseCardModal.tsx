@@ -1,6 +1,7 @@
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
+import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -10,6 +11,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
 interface ResponseCardModalProps {
+  balances?: TokenBalance[] | null;
   responses: TResponse[];
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
@@ -25,6 +27,7 @@ interface ResponseCardModalProps {
 }
 
 export const ResponseCardModal = ({
+  balances,
   responses,
   selectedResponseId,
   setSelectedResponseId,
@@ -99,6 +102,7 @@ export const ResponseCardModal = ({
             </Button>
           </div>
           <SingleResponseCard
+            balances={balances}
             survey={survey}
             response={responses[currentIndex]}
             user={user}
