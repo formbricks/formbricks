@@ -34,33 +34,6 @@ class MainActivity : FragmentActivity() {
             }
 
             override fun onError(error: Exception) {
-                Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
-            }
-
-            override fun onSuccess(successType: SuccessType) {
-                Log.d("FormbricksCallback", "onSuccess: ${successType.name}")
-            }
-
-        }
-
-        Formbricks.callback = object: FormbricksCallback {
-            override fun onSurveyStarted() {
-                Log.d("FormbricksCallback", "onSurveyStarted")
-            }
-
-            override fun onSurveyFinished() {
-                Log.d("FormbricksCallback", "onSurveyFinished")
-            }
-
-            override fun onSurveyClosed() {
-                Log.d("FormbricksCallback", "onSurveyClosed")
-            }
-
-            override fun onPageCommitVisible() {
-                Log.d("FormbricksCallback", "onPageCommitVisible")
-            }
-
-            override fun onError(error: Exception) {
                 Log.d("FormbricksCallback", "onError from the CB: ${error.localizedMessage}")
             }
 
@@ -85,7 +58,7 @@ class MainActivity : FragmentActivity() {
 
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener {
-            Formbricks.track("costumer_click_acceptbutton")
+            Formbricks.track("click_demo_button")
         }
 
         val setUserIdButton = findViewById<Button>(R.id.setUserId)

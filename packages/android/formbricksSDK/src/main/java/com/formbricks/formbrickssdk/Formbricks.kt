@@ -12,7 +12,6 @@ import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.manager.UserManager
 import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.error.SDKError
-import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
 import java.lang.RuntimeException
 
@@ -28,16 +27,6 @@ interface FormbricksCallback {
 
 
 @Keep
-interface FormbricksCallback {
-    fun onSurveyStarted()
-    fun onSurveyFinished()
-    fun onSurveyClosed()
-    fun onPageCommitVisible()
-    fun onError(error: Exception)
-    fun onSuccess(successType: SuccessType)
-}
-
-@Keep
 object Formbricks {
     internal lateinit var applicationContext: Context
 
@@ -48,7 +37,6 @@ object Formbricks {
     internal var autoDismissErrors: Boolean = true
     private var fragmentManager: FragmentManager? = null
     internal var isInitialized = false
-    var callback: FormbricksCallback? = null
 
     var callback: FormbricksCallback? = null
 
