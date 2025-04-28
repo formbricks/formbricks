@@ -25,6 +25,7 @@ export const EditPublicSurveyAlertDialog = ({
   const actions = [] as Array<{
     label?: string;
     onClick: () => void | Promise<void>;
+    disabled?: boolean;
     loading?: boolean;
     variant: React.ComponentProps<typeof Button>["variant"];
   }>;
@@ -32,6 +33,7 @@ export const EditPublicSurveyAlertDialog = ({
     actions.push({
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
+      disabled: isLoading,
       variant: "outline",
     });
   }
@@ -61,8 +63,8 @@ export const EditPublicSurveyAlertDialog = ({
         <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
       </ul>
       <div className="my-4 space-x-2 text-right">
-        {actions.map(({ label, onClick, loading, variant }) => (
-          <Button key={label} variant={variant} onClick={onClick} loading={loading}>
+        {actions.map(({ label, onClick, loading, variant, disabled }) => (
+          <Button key={label} variant={variant} onClick={onClick} loading={loading} disabled={disabled}>
             {label}
           </Button>
         ))}
