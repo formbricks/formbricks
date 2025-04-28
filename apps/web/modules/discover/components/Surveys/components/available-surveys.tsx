@@ -1,7 +1,7 @@
 "use client";
 
 import { getAvailableSurveysAction } from "@/modules/discover/components/Surveys/actions";
-import { ActiveSurveyCard } from "@/modules/discover/components/common/active-survey-card";
+import { AvailableSurveyCard } from "@/modules/discover/components/common/available-survey-card";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import React, { useEffect, useState } from "react";
 
@@ -25,7 +25,7 @@ export function AvailableSurveys(): React.JSX.Element {
     <>
       {availableSurveys &&
         availableSurveys.map((survey) => {
-          return <ActiveSurveyCard type={"survey"} key={survey.id} survey={survey} />;
+          return <AvailableSurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </>
   );

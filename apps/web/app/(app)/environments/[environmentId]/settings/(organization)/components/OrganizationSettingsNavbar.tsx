@@ -32,6 +32,12 @@ export const OrganizationSettingsNavbar = ({
       href: `/environments/${environmentId}/settings/teams`,
       current: pathname?.includes("/teams"),
     },
+    {
+      id: "whitelist",
+      label: t("common.whitelist"),
+      href: `/environments/${environmentId}/settings/whitelist`,
+      current: pathname?.includes("/whitelist"),
+    },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
