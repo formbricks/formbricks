@@ -57,6 +57,7 @@ const Page = async (props) => {
             isReadOnly={isReadOnly}
             user={user}
             surveyDomain={surveyDomain}
+            responseCount={totalResponseCount}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (
