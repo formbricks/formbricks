@@ -45,7 +45,7 @@
     "@lexical/table": "0.30.0",
     "@opentelemetry/api-logs": "0.56.0",
     "@opentelemetry/exporter-prometheus": "0.57.2",
-    "@opentelemetry/host-metrics": "0.35.5",
+    "@opentelemetry/host-metrics": "0.36.0",
     "@opentelemetry/instrumentation": "0.57.2",
     "@opentelemetry/instrumentation-http": "0.57.2",
     "@opentelemetry/instrumentation-runtime-node": "0.12.2",
