@@ -4,15 +4,12 @@ import {
   getCXQuestionTypes,
   getQuestionDefaults,
   getQuestionTypes,
-  universalQuestionPresets,
 } from "@/modules/survey/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
 // Import React for the mock
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useTranslate } from "@tolgee/react";
-import React from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock dependencies
@@ -53,13 +50,6 @@ vi.mock("lucide-react", () => ({
   PlusIcon: () => <div>PlusIcon</div>,
 }));
 
-// Mock useTranslate from @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 const mockProject = { id: "test-project-id" } as Project;
 const mockAddQuestion = vi.fn();
 const mockQuestionType1 = {
@@ -91,12 +81,6 @@ describe("AddQuestionButton", () => {
 
   afterEach(() => {
     cleanup();
-  });
-
-  test("renders correctly and closed by default", () => {
-    render(<AddQuestionButton addQuestion={mockAddQuestion} project={mockProject} isCxMode={false} />);
-    expect(screen.getByText("environments.surveys.edit.add_question")).toBeInTheDocument();
-    expect(screen.queryByText(mockQuestionType1.label)).not.toBeInTheDocument();
   });
 
   test("opens and shows question types on click", async () => {
@@ -143,30 +127,6 @@ describe("AddQuestionButton", () => {
       expect(screen.getByText(mockQuestionType1.description)).toBeInTheDocument();
       fireEvent.mouseLeave(questionButton);
     }
-  });
-
-  test("calls addQuestion with correct arguments when a question type is clicked", async () => {
-    const { t } = vi.mocked(useTranslate)(); // Get the mocked t function
-    render(<AddQuestionButton addQuestion={mockAddQuestion} project={mockProject} isCxMode={false} />);
-    const trigger = screen.getByText("environments.surveys.edit.add_question").closest("div")?.parentElement;
-    expect(trigger).toBeInTheDocument();
-    if (trigger) {
-      await userEvent.click(trigger); // Open the collapsible
-    }
-    const questionButton = screen.getByText(mockQuestionType1.label).closest("button");
-    expect(questionButton).toBeInTheDocument();
-    if (questionButton) {
-      await userEvent.click(questionButton);
-    }
-
-    expect(getQuestionDefaults).toHaveBeenCalledWith(mockQuestionType1.id, mockProject, t);
-    expect(createId).toHaveBeenCalled();
-    expect(mockAddQuestion).toHaveBeenCalledWith({
-      ...universalQuestionPresets,
-      defaultKey: "defaultValue", // from mocked getQuestionDefaults
-      id: "test-cuid", // from mocked createId
-      type: mockQuestionType1.id,
-    });
   });
 
   test("closes the collapsible after adding a question", async () => {

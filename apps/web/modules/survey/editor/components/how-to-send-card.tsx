@@ -22,6 +22,8 @@ interface HowToSendCardProps {
 }
 
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+  // [UseTusk]
+
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const { t } = useTranslate();

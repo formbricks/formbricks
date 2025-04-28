@@ -60,6 +60,8 @@ export const EditorCardMenu = ({
   cardType,
   isCxMode = false,
 }: EditorCardMenuProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);

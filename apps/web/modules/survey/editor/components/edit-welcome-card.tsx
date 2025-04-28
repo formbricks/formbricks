@@ -35,6 +35,8 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   locale,
 }: EditWelcomeCardProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();

@@ -24,7 +24,6 @@ interface FileUploadFormProps {
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
@@ -44,6 +43,8 @@ export const FileUploadQuestionForm = ({
   isFormbricksCloud,
   locale,
 }: FileUploadFormProps): JSX.Element => {
+  // [UseTusk]
+
   const [extension, setExtension] = useState("");
   const { t } = useTranslate();
   const [isMaxSizeError, setMaxSizeError] = useState(false);

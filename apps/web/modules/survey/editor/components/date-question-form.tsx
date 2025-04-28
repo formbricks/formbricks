@@ -17,7 +17,6 @@ interface IDateQuestionFormProps {
   question: TSurveyDateQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -49,6 +48,8 @@ export const DateQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: IDateQuestionFormProps): JSX.Element => {
+  // [UseTusk]
+
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
