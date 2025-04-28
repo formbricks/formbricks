@@ -296,3 +296,5 @@ export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
+
+export const DISABLE_USER_MANAGEMENT_UI = env.DISABLE_USER_MANAGEMENT_UI === "1";

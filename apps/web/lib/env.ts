@@ -119,6 +119,7 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
+    DISABLE_USER_MANAGEMENT_UI: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -224,5 +225,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
+    DISABLE_USER_MANAGEMENT_UI: process.env.DISABLE_USER_MANAGEMENT_UI,
   },
 });
