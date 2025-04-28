@@ -102,7 +102,6 @@ export default defineConfig({
       exclude: [
         "**/.next/**",
         "**/*.spec.*",
-        "**/*.mock.*", // Exclude mock files
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
         "**/openapi.ts", // Exclude openapi configuration files
