@@ -3,6 +3,16 @@ import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/s
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import {
+  DEFAULT_LOCALE,
+  DOCUMENTS_PER_PAGE,
+  MAX_RESPONSES_FOR_INSIGHT_GENERATION,
+  WEBAPP_URL,
+} from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { getUser } from "@/lib/user/service";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -10,16 +20,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import {
-  DEFAULT_LOCALE,
-  DOCUMENTS_PER_PAGE,
-  MAX_RESPONSES_FOR_INSIGHT_GENERATION,
-  WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { getUser } from "@formbricks/lib/user/service";
 
 const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;

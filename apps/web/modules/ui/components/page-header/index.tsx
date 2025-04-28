@@ -1,4 +1,4 @@
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 export interface PageHeaderProps {
   pageTitle: string;
@@ -10,7 +10,7 @@ export const PageHeader = ({ cta, pageTitle, children }: PageHeaderProps) => {
   return (
     <div className="border-b border-slate-200">
       <div className="flex items-center justify-between space-x-4 pb-4">
-        <h1 className={cn("text-3xl font-bold capitalize text-slate-800")}>{pageTitle}</h1>
+        <h1 className={cn("text-3xl font-bold text-slate-800 capitalize")}>{pageTitle}</h1>
         {cta}
       </div>
       {children}

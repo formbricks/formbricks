@@ -1,13 +1,6 @@
 "use client";
 
-import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
-import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { PencilIcon } from "lucide-react";
-import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   extractId,
   extractRecallInfo,
@@ -17,7 +10,14 @@ import {
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
-} from "@formbricks/lib/utils/recall";
+} from "@/lib/utils/recall";
+import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
+import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
+import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
+import { PencilIcon } from "lucide-react";
+import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface RecallWrapperRenderProps {
@@ -220,7 +220,7 @@ export const RecallWrapper = ({
           }
           parts.push(
             <span
-              className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
+              className="z-30 flex h-fit cursor-pointer justify-center rounded-md bg-slate-100 text-sm whitespace-pre text-transparent"
               key={`recall-${parts.length}`}>
               {"@" + label}
             </span>
@@ -255,7 +255,7 @@ export const RecallWrapper = ({
               <Button
                 variant="ghost"
                 type="button"
-                className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
+                className="absolute top-full right-2 z-[1] flex h-6 cursor-pointer items-center rounded-t-none rounded-b-lg bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowFallbackInput(true);

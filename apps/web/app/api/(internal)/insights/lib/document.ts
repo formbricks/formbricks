@@ -1,10 +1,10 @@
+import { embeddingsModel, llmModel } from "@/lib/aiModels";
 import { documentCache } from "@/lib/cache/document";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { embed, generateObject } from "ai";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
   TDocument,
   TDocumentCreateInput,

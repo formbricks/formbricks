@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -14,7 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { cn } from "@formbricks/lib/cn";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },

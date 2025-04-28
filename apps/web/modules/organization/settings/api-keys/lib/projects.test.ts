@@ -1,7 +1,7 @@
+import { projectCache } from "@/lib/project/cache";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TOrganizationProject } from "../types/api-keys";
 import { getProjectsByOrganizationId } from "./projects";
@@ -54,7 +54,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/project/cache", () => ({
+vi.mock("@/lib/project/cache", () => ({
   projectCache: {
     tag: {
       byOrganizationId: vi.fn(),

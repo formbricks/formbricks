@@ -1,7 +1,7 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const EnvironmentPage = async (props) => {
   const params = await props.params;

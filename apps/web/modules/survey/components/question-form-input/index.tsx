@@ -1,5 +1,8 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -12,9 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
   TSurvey,

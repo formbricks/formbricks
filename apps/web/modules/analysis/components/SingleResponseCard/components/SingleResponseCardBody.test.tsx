@@ -22,10 +22,10 @@ vi.mock("./VerifiedEmail", () => ({
 }));
 
 // Mocks for utility functions used inside component
-vi.mock("@formbricks/lib/utils/recall", () => ({
+vi.mock("@/lib/utils/recall", () => ({
   parseRecallInfo: vi.fn((headline, data) => "parsed:" + headline),
 }));
-vi.mock("@formbricks/lib/i18n/utils", () => ({
+vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: vi.fn((headline) => headline),
 }));
 vi.mock("../util", () => ({

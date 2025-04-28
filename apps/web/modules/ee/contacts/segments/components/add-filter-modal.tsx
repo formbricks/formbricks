@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabBar } from "@/modules/ui/components/tab-bar";
@@ -7,7 +8,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,

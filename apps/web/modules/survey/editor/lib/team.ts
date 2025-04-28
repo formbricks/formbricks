@@ -1,8 +1,8 @@
+import { cache } from "@/lib/cache";
 import { teamCache } from "@/lib/cache/team";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 
 export const getTeamMemberDetails = reactCache(async (teamIds: string[]): Promise<TFollowUpEmailToUser[]> => {
   const cacheTags = teamIds.map((teamId) => teamCache.tag.byId(teamId));

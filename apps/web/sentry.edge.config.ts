@@ -2,11 +2,12 @@
 // The config you add here will be used whenever one of the edge features is loaded.
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
+import { SENTRY_DSN } from "@/lib/constants";
 import * as Sentry from "@sentry/nextjs";
-import { SENTRY_DSN } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 
 if (SENTRY_DSN) {
-  console.log("Sentry DSN found, enabling Sentry on the edge");
+  logger.info("Sentry DSN found, enabling Sentry on the edge");
 
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -18,5 +19,5 @@ if (SENTRY_DSN) {
     debug: false,
   });
 } else {
-  console.warn("Sentry DSN not found, Sentry will be disabled on the edge");
+  logger.warn("Sentry DSN not found, Sentry will be disabled on the edge");
 }

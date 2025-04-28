@@ -1,9 +1,10 @@
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
+import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) =>
@@ -133,22 +134,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
         }
 
         // Determine the start date based on the plan type
-        let startDate: Date;
-
-        if (billing.data.plan === "free") {
-          // For free plans, use the first day of the current calendar month
-          const now = new Date();
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else {
-          // For other plans, use the periodStart from billing
-          if (!billing.data.periodStart) {
-            return err({
-              type: "internal_server_error",
-              details: [{ field: "organization", issue: "billing period start is not set" }],
-            });
-          }
-          startDate = billing.data.periodStart;
-        }
+        const startDate = getBillingPeriodStartDate(billing.data);
 
         // Get all environment IDs for the organization
         const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);

@@ -1,12 +1,12 @@
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { userCache } from "@/lib/user/cache";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
 import { prisma } from "@formbricks/database";
-import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
-import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
-import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const setupTwoFactorAuth = async (

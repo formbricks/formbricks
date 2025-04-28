@@ -1,11 +1,11 @@
 import "server-only";
+import { cache } from "@/lib/cache";
+import { projectCache } from "@/lib/project/cache";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TProjectWithLanguages } from "@/modules/survey/list/types/surveys";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 

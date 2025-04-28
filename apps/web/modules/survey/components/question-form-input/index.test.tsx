@@ -1,18 +1,17 @@
+import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "./index";
 
 // Mock all the modules that might cause server-side environment variable access issues
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   FORMBRICKS_API_HOST: "http://localhost:3000",
   FORMBRICKS_ENVIRONMENT_ID: "test-env-id",
   ENCRYPTION_KEY: "test-encryption-key",
-  FORMBRICKS_ENCRYPTION_KEY: "test-fb-encryption-key",
   WEBAPP_URL: "http://localhost:3000",
   DEFAULT_BRAND_COLOR: "#64748b",
   AVAILABLE_LOCALES: ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"],
@@ -43,13 +42,12 @@ vi.mock("@formbricks/lib/constants", () => ({
 }));
 
 // Mock env module
-vi.mock("@formbricks/lib/env", () => ({
+vi.mock("@/lib/env", () => ({
   env: {
     IS_FORMBRICKS_CLOUD: "0",
     FORMBRICKS_API_HOST: "http://localhost:3000",
     FORMBRICKS_ENVIRONMENT_ID: "test-env-id",
     ENCRYPTION_KEY: "test-encryption-key",
-    FORMBRICKS_ENCRYPTION_KEY: "test-fb-encryption-key",
     NODE_ENV: "test",
     ENTERPRISE_LICENSE_KEY: "test-license-key",
   },
@@ -90,7 +88,7 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-vi.mock("@formbricks/lib/utils/hooks/useSyncScroll", () => ({
+vi.mock("@/lib/utils/hooks/useSyncScroll", () => ({
   useSyncScroll: vi.fn(),
 }));
 
@@ -103,12 +101,12 @@ vi.mock("lodash", () => ({
 }));
 
 // Mock hashString function
-vi.mock("@formbricks/lib/hashString", () => ({
+vi.mock("@/lib/hashString", () => ({
   hashString: (str: string) => "hashed_" + str,
 }));
 
 // Mock recallToHeadline to return test values for language switching test
-vi.mock("@formbricks/lib/utils/recall", () => ({
+vi.mock("@/lib/utils/recall", () => ({
   recallToHeadline: (value: any, _survey: any, _useOnlyNumbers = false) => {
     // For the language switching test, return different values based on language
     if (value && typeof value === "object") {

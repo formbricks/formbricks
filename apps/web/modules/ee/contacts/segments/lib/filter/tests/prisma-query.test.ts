@@ -1,11 +1,11 @@
+import { cache } from "@/lib/cache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { cache } from "@formbricks/lib/cache";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { getSegment } from "../../segments";
 import { segmentFilterToPrismaQuery } from "../prisma-query";
 
 // Mock dependencies
-vi.mock("@formbricks/lib/cache", () => ({
+vi.mock("@/lib/cache", () => ({
   cache: vi.fn((fn) => fn),
 }));
 

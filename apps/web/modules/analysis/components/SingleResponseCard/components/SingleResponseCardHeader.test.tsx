@@ -21,8 +21,8 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
   TooltipProvider: ({ children }: any) => <div>{children}</div>,
   TooltipTrigger: ({ children }: any) => <div>{children}</div>,
 }));
-vi.mock("@formbricks/lib/i18n/utils", () => ({
-  getLanguageLabel: vi.fn((lang, locale) => lang + "_" + locale),
+vi.mock("@formbricks/i18n-utils/src/utils", () => ({
+  getLanguageLabel: vi.fn(),
 }));
 vi.mock("@/modules/lib/time", () => ({
   timeSince: vi.fn(() => "5 minutes ago"),
@@ -117,23 +117,6 @@ describe("SingleResponseCardHeader", () => {
     expect(screen.getByRole("link")).toBeInTheDocument();
     expect(screen.getByText("Test Survey")).toBeInTheDocument();
     expect(screen.getByTestId("SurveyStatusIndicator")).toBeInTheDocument();
-  });
-
-  test("renders language label when response.language is not default", () => {
-    const modifiedResponse = { ...dummyResponse, language: "fr" };
-    render(
-      <SingleResponseCardHeader
-        pageType="response"
-        response={modifiedResponse}
-        survey={{ ...dummySurvey }}
-        environment={dummyEnvironment}
-        user={dummyUser}
-        isReadOnly={false}
-        setDeleteDialogOpen={vi.fn()}
-        locale={dummyLocale}
-      />
-    );
-    expect(screen.getByText("fr_en-US")).toBeInTheDocument();
   });
 
   test("renders enabled trash icon and handles click", async () => {

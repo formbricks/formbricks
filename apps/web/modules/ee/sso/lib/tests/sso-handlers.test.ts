@@ -1,13 +1,13 @@
+import { createAccount } from "@/lib/account/service";
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser } from "@formbricks/types/user";
 import { handleSsoCallback } from "../sso-handlers";
 import {
@@ -45,25 +45,25 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/lib/account/service", () => ({
+vi.mock("@/lib/account/service", () => ({
   createAccount: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   createMembership: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   createOrganization: vi.fn(),
   getOrganization: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
 // Mock environment variables
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   DEFAULT_ORGANIZATION_ID: "org-123",
   DEFAULT_ORGANIZATION_ROLE: "member",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",

@@ -1,12 +1,16 @@
+import { getEnabledLanguages } from "@/lib/i18n/utils";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getEnabledLanguages, getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageDropdown } from "./LanguageDropdown";
 
-vi.mock("@formbricks/lib/i18n/utils", () => ({
+vi.mock("@/lib/i18n/utils", () => ({
   getEnabledLanguages: vi.fn(),
+}));
+
+vi.mock("@formbricks/i18n-utils/src/utils", () => ({
   getLanguageLabel: vi.fn(),
 }));
 

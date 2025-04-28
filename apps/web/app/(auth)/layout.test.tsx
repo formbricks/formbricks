@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import AppLayout from "../(auth)/layout";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_SECRET_KEY: "mock-intercom-secret-key",

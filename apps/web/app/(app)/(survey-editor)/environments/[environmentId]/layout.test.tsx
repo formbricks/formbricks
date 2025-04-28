@@ -1,9 +1,9 @@
+import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -28,7 +28,7 @@ vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
 vi.mock("@/modules/environments/lib/utils", () => ({
   environmentIdLayoutChecks: vi.fn(),
 }));
-vi.mock("@formbricks/lib/environment/service", () => ({
+vi.mock("@/lib/environment/service", () => ({
   getEnvironment: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({

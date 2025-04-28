@@ -1,5 +1,6 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -8,7 +9,6 @@ import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

@@ -28,6 +28,11 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   <Card title="React Native" icon="react" color="lightblue" href="#react-native">
     [Easily integrate our SDK with your React Native app for seamless survey support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
   </Card>
+
+  <Card title="Swift" icon="swift" color="orange" href="#swift">
+  [Use our iOS SDK to quickly integrate surveys into your iOS applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
+  </Card>
+
 </CardGroup>
 
 ## Prerequisites
@@ -99,7 +104,7 @@ function App() {
 export default App;
 ```
 
-## Required Customizations
+### Required Customizations
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
@@ -313,7 +318,91 @@ export default function App() {
 }
 ```
 
-## Required Customizations
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| app-url        | string | URL of the hosted Formbricks instance. |
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## Swift
+
+Install the Formbricks iOS SDK using the following steps:
+
+**Swift Package Manager**
+
+1. In Xcode choose **File → Add Packages…**
+2. Enter your repo URL (e.g. `https://github.com/formbricks/ios.git`)
+3. Choose version rule (e.g. "Up to Next Major" starting at `1.0.0`).
+4. Import in your code:
+
+   ```swift
+   import FormbricksSDK
+   ```
+
+**CocoaPods**
+
+1. Add the following to your `Podfile`:
+
+   ```ruby
+   platform :ios, '16.6'
+   use_frameworks! :linkage => :static
+
+   target 'YourTargetName' do
+     pod 'FormbricksSDK', '1.0.0 (or the latest version)'
+   end
+   ```
+
+2. Run `pod install` in your project directory
+3. Import in your code:
+   ```swift
+   import FormbricksSDK
+   ```
+
+Now start using FormbricksSDK
+
+```swift
+import FormbricksSDK
+
+// 1. Build your config (you can also inject userId + attributes here)
+let config = FormbricksConfig.Builder(
+        appUrl: "https://your‑app.bricks.com",
+        environmentId: "YOUR_ENV_ID"
+    )
+    .setLogLevel(.debug)
+    .build()
+
+// 2. Initialize the SDK (once per launch)
+Formbricks.setup(with: config)
+
+// 3. Identify the user
+Formbricks.setUserId("user‑123")
+
+// 4. Track events
+Formbricks.track("button_pressed")
+
+// 5. Set or add user attributes
+Formbricks.setAttribute("blue", forKey: "favoriteColor")
+Formbricks.setAttributes([
+    "plan": "pro",
+    "tier": "gold"
+])
+
+// 6. Change language (no userId required):
+Formbricks.setLanguage("de")
+
+// 7. Log out (no userId required):
+Formbricks.logout()
+
+// 8. Clean up SDK state (optional):
+Formbricks.cleanup(waitForOperations: true) {
+    print("SDK torn down")
+}
+```
+
+### Required Customizations
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |

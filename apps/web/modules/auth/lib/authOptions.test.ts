@@ -1,9 +1,9 @@
+import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
+import { createToken } from "@/lib/jwt";
 import { randomBytes } from "crypto";
 import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
-import { createToken } from "@formbricks/lib/jwt";
 import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";

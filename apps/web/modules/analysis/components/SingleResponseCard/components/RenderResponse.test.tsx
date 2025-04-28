@@ -30,16 +30,16 @@ vi.mock("@/modules/ui/components/ranking-response", () => ({
 vi.mock("@/modules/analysis/utils", () => ({
   renderHyperlinkedContent: vi.fn((text: string) => "hyper:" + text),
 }));
-vi.mock("@formbricks/lib/responses", () => ({
+vi.mock("@/lib/responses", () => ({
   processResponseData: (val: any) => "processed:" + val,
 }));
-vi.mock("@formbricks/lib/utils/datetime", () => ({
+vi.mock("@/lib/utils/datetime", () => ({
   formatDateWithOrdinal: (d: Date) => "formatted_" + d.toISOString(),
 }));
-vi.mock("@formbricks/lib/cn", () => ({
+vi.mock("@/lib/cn", () => ({
   cn: (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" "),
 }));
-vi.mock("@formbricks/lib/i18n/utils", () => ({
+vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: vi.fn((val, _) => val),
   getLanguageCode: vi.fn().mockReturnValue("default"),
 }));
