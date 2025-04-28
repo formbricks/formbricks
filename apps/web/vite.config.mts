@@ -106,7 +106,9 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
-        "modules/ui/components/card/index.tsx"
+        "modules/ui/components/card/index.tsx",
+        "modules/survey/editor/components/add-action-modal.tsx",
+        "modules/survey/editor/components/add-ending-card-button.tsx",
       ],
       exclude: [
         "**/.next/**",
