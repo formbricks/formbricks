@@ -94,6 +94,7 @@ export default defineConfig({
         "modules/survey/editor/components/end-screen-form.tsx",
         "lib/utils/billing.ts",
         "lib/crypto.ts",
+        "lib/surveyLogic/utils.ts",
         "lib/utils/billing.ts",
         "survey/editor/lib/utils.tsx",
         "modules/ui/components/card/index.tsx"
