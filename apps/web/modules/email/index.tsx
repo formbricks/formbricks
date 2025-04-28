@@ -14,7 +14,7 @@ import {
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import VerificationNewEmail from "@/modules/email/emails/auth/email-change";
+import VerificationNewEmail from "@/modules/email/emails/auth/verification-new-email";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { getTranslate } from "@/tolgee/server";
 import { render } from "@react-email/render";

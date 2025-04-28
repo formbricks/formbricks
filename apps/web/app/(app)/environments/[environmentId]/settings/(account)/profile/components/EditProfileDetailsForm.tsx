@@ -15,14 +15,14 @@ import { PasswordConfirmationModal } from "@/modules/ui/components/password-conf
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { signIn, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { TUser, ZUser } from "@formbricks/types/user";
-import { sendVerificationNewEmailAction, updateUserAction } from "../actions";
+import { comparePasswordsAction, sendVerificationNewEmailAction, updateUserAction } from "../actions";
 
 // Schema & types
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true });
@@ -49,56 +49,75 @@ export const EditProfileDetailsForm = ({
   });
 
   const { isSubmitting, isDirty } = form.formState;
-
   const [showModal, setShowModal] = useState(false);
-  const [pendingData, setPendingData] = useState<TEditProfileNameForm | null>(null);
+
+  function getChangedFields(user: TUser, formValues: TEditProfileNameForm) {
+    const changedFields: Partial<TEditProfileNameForm> = {};
+
+    if (user.name !== formValues.name) changedFields.name = formValues.name;
+    if (user.locale !== formValues.locale) changedFields.locale = formValues.locale;
+    if (user.email !== formValues.email) changedFields.email = formValues.email;
+
+    return changedFields;
+  }
 
   const handleConfirmPassword = async (password: string) => {
-    if (!pendingData) return;
-
     try {
-      if (pendingData.email !== user.email) {
-        const signInResponse = await signIn("credentials", {
-          email: user.email,
-          password,
-          redirect: false,
-        });
+      const values = form.getValues();
+      const changedFields = getChangedFields(user, values);
 
-        if (!signInResponse || signInResponse.error) {
+      const emailChanged = !!changedFields.email;
+      const nameOrLocaleChanged = changedFields.name || changedFields.locale;
+
+      if (emailChanged) {
+        const passwordCheckResult = await comparePasswordsAction({ password });
+
+        if (!passwordCheckResult?.data?.success) {
           toast.error("Invalid password");
           return;
         }
-
         if (!emailVerificationDisabled) {
-          await updateUserAction({ name: pendingData.name, locale: pendingData.locale });
-          const response = await sendVerificationNewEmailAction({ email: pendingData.email });
+          if (nameOrLocaleChanged) {
+            await updateUserAction({
+              name: changedFields.name?.trim() ?? user.name,
+              locale: changedFields.locale ?? user.locale,
+            });
+          }
+          const response = await sendVerificationNewEmailAction({ email: values.email });
           if (response?.data) {
             toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
           } else {
             toast.error(getFormattedErrorMessage(response));
           }
         } else {
+          await updateUserAction({
+            name: changedFields.name?.trim() ?? user.name,
+            email: changedFields.email ?? user.email,
+            locale: changedFields.locale ?? user.locale,
+          });
           toast.success(t("environments.settings.profile.profile_updated_successfully"));
           await signOut({ redirect: false });
-          const url = `/email-change-without-verification-success`;
-          router.push(url);
+          router.push(`/email-change-without-verification-success`);
           return;
         }
-      } else {
-        await updateUserAction({ ...pendingData });
+      } else if (nameOrLocaleChanged) {
+        await updateUserAction({
+          name: changedFields.name?.trim() ?? user.name,
+          locale: changedFields.locale ?? user.locale,
+        });
         toast.success(t("environments.settings.profile.profile_updated_successfully"));
       }
 
       window.location.reload();
       setShowModal(false);
-    } catch (error: any) {
-      toast.error(`${t("common.error")}: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`${t("common.error")}: ${errorMessage}`);
     }
   };
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     if (data.email !== user.email) {
-      setPendingData(data);
       setShowModal(true);
     } else {
       try {
@@ -143,7 +162,13 @@ export const EditProfileDetailsForm = ({
               <FormItem className="mt-4">
                 <FormLabel>{t("common.email")}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="email" required isInvalid={!!form.formState.errors.email} />
+                  <Input
+                    {...field}
+                    type="email"
+                    required
+                    isInvalid={!!form.formState.errors.email}
+                    disabled={user.identityProvider !== "email"}
+                  />
                 </FormControl>
                 <FormError />
               </FormItem>
@@ -201,7 +226,7 @@ export const EditProfileDetailsForm = ({
         open={showModal}
         setOpen={setShowModal}
         oldEmail={user.email}
-        newEmail={pendingData?.email || user.email}
+        newEmail={form.getValues("email") || user.email}
         onConfirm={handleConfirmPassword}
       />
     </>
