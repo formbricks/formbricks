@@ -199,50 +199,6 @@ export const POST = async (request: Request) => {
         logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
-
-    // generate embeddings for all open text question responses for all paid plans
-    const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    if (hasSurveyOpenTextQuestions) {
-      const isAICofigured = IS_AI_CONFIGURED;
-      if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const isAIEnabled = await getIsAIEnabled({
-          isAIEnabled: organization.isAIEnabled,
-          billing: organization.billing,
-        });
-
-        if (isAIEnabled) {
-          for (const question of survey.questions) {
-            if (question.type === "openText" && question.insightsEnabled) {
-              const isQuestionAnswered =
-                response.data[question.id] !== undefined && response.data[question.id] !== "";
-              if (!isQuestionAnswered) {
-                continue;
-              }
-
-              const headline = parseRecallInfo(
-                question.headline[response.language ?? "default"],
-                response.data,
-                response.variables
-              );
-
-              const text = getPromptText(headline, response.data[question.id] as string);
-              // TODO: check if subheadline gives more context and better embeddings
-              try {
-                await createDocumentAndAssignInsight(survey.name, {
-                  environmentId,
-                  surveyId,
-                  responseId: response.id,
-                  questionId: question.id,
-                  text,
-                });
-              } catch (e) {
-                logger.error({ error: e, url: request.url }, "Error creating document and assigning insight");
-              }
-            }
-          }
-        }
-      }
-    }
   } else {
     // Await webhook promises if no emails are sent (with allSettled to prevent early rejection)
     const results = await Promise.allSettled(webhookPromises);

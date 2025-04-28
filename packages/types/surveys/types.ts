@@ -2415,14 +2415,6 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
-  insights: z.array(
-    ZInsight.extend({
-      _count: z.object({
-        documentInsights: z.number(),
-      }),
-    })
-  ),
-  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;

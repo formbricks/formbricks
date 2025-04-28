@@ -1,5 +1,4 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import {
@@ -56,17 +55,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           membershipRole={currentUserMembership?.role}
         />
       </SettingsCard>
-      {isOrganizationAIReady && (
-        <SettingsCard
-          title={t("environments.settings.general.formbricks_ai")}
-          description={t("environments.settings.general.formbricks_ai_description")}>
-          <AIToggle
-            environmentId={params.environmentId}
-            organization={organization}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        </SettingsCard>
-      )}
       <EmailCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}

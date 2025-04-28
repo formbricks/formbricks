@@ -74,8 +74,6 @@ describe("OpenTextSummary", () => {
   test("renders response mode by default when insights not enabled", () => {
     const questionSummary = {
       question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: false,
-      insights: [],
       samples: [
         {
           id: "response1",
@@ -111,8 +109,6 @@ describe("OpenTextSummary", () => {
   test("shows insights disabled message when AI is enabled but insights are disabled", () => {
     const questionSummary = {
       question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: false,
-      insights: [],
       samples: [],
     } as unknown as TSurveyQuestionSummaryOpenText;
 
@@ -129,72 +125,9 @@ describe("OpenTextSummary", () => {
     expect(screen.getByText("environments.surveys.summary.insights_disabled")).toBeInTheDocument();
   });
 
-  test("shows insights tab by default when insights are available", () => {
-    const questionSummary = {
-      question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: true,
-      insights: [{ id: "insight1", text: "Insight text" }],
-      samples: [],
-    } as unknown as TSurveyQuestionSummaryOpenText;
-
-    render(
-      <OpenTextSummary
-        questionSummary={questionSummary}
-        environmentId={environmentId}
-        survey={survey}
-        isAIEnabled={true}
-        locale={locale}
-      />
-    );
-
-    expect(screen.getByTestId("secondary-navigation")).toBeInTheDocument();
-    expect(screen.getByTestId("insight-view")).toBeInTheDocument();
-    expect(screen.queryByTestId("table")).not.toBeInTheDocument();
-  });
-
-  test("allows switching between insights and responses tabs", async () => {
-    const questionSummary = {
-      question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: true,
-      insights: [{ id: "insight1", text: "Insight text" }],
-      samples: [
-        {
-          id: "response1",
-          value: "Sample response text",
-          updatedAt: new Date().toISOString(),
-          contact: { id: "contact1" },
-          contactAttributes: {},
-        },
-      ],
-    } as unknown as TSurveyQuestionSummaryOpenText;
-
-    render(
-      <OpenTextSummary
-        questionSummary={questionSummary}
-        environmentId={environmentId}
-        survey={survey}
-        isAIEnabled={true}
-        locale={locale}
-      />
-    );
-
-    // Initially showing insights
-    expect(screen.getByTestId("insight-view")).toBeInTheDocument();
-    expect(screen.queryByTestId("table")).not.toBeInTheDocument();
-
-    // Click on responses tab
-    await userEvent.click(screen.getByText("common.responses"));
-
-    // Now showing responses
-    expect(screen.queryByTestId("insight-view")).not.toBeInTheDocument();
-    expect(screen.getByTestId("table")).toBeInTheDocument();
-  });
-
   test("renders anonymous user when no contact is provided", () => {
     const questionSummary = {
       question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: false,
-      insights: [],
       samples: [
         {
           id: "response1",
@@ -231,8 +164,6 @@ describe("OpenTextSummary", () => {
 
     const questionSummary = {
       question: { id: "q1", headline: "Open Text Question" },
-      insightsEnabled: false,
-      insights: [],
       samples,
     } as unknown as TSurveyQuestionSummaryOpenText;
 
