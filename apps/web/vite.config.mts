@@ -106,7 +106,9 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
-        "modules/ui/components/card/index.tsx"],
+        "modules/ui/components/card/index.tsx",
+        "app/api/v2/client/[environmentId]/responses/lib/utils.ts"
+      ],
       exclude: [
         "**/.next/**",
         "**/*.spec.*",
