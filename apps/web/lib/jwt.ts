@@ -26,8 +26,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const decoded = jwt.decode(token);
-  const payload = decoded as { id: string; email: string };
+  const payload = jwt.verify(token, env.NEXTAUTH_SECRET as string) as { id: string; email: string };
 
   if (!payload || !payload.id || !payload.email) {
     throw new Error("Token is invalid or missing required fields");
