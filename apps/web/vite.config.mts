@@ -45,6 +45,7 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
+        "app/api/v2/client/**/responses/lib/utils.ts",
         "app/intercom/*.tsx",
         "app/sentry/*.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ConsentSummary.tsx",
@@ -106,9 +107,7 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/utils/billing.ts",
-        "modules/ui/components/card/index.tsx",
-        "app/api/v2/client/[environmentId]/responses/lib/utils.ts"
-      ],
+        "modules/ui/components/card/index.tsx"],
       exclude: [
         "**/.next/**",
         "**/*.spec.*",
