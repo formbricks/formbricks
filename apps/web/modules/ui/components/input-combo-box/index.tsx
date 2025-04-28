@@ -15,7 +15,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
-import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
+import React, {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -175,14 +182,14 @@ export const InputCombobox = ({
         }
 
         return (
-          <>
+          <Fragment key={idx}>
             {idx !== 0 && <span>,</span>}
             <div className="flex items-center gap-2">
               {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
               {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
               <span>{option.label}</span>
             </div>
-          </>
+          </Fragment>
         );
       });
     } else {

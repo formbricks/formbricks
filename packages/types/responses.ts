@@ -28,8 +28,6 @@ export const ZResponseFilterCondition = z.enum([
   "booked",
   "isCompletelySubmitted",
   "isPartiallySubmitted",
-  "is",
-  "isNot",
   "isEmpty",
   "isNotEmpty",
   "isAnyOf",
@@ -138,16 +136,6 @@ const ZResponseFilterCriteriaMatrix = z.object({
   value: z.record(z.string(), z.string()),
 });
 
-const ZResponseFilterCriteriaIs = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.is),
-  value: z.record(z.string(), z.string()),
-});
-
-const ZResponseFilterCriteriaIsNot = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.isNot),
-  value: z.record(z.string(), z.string()),
-});
-
 const ZResponseFilterCriteriaIsEmpty = z.object({
   op: z.literal(ZResponseFilterCondition.Values.isEmpty),
 });
@@ -202,8 +190,6 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataNotUploaded,
         ZResponseFilterCriteriaDataBooked,
         ZResponseFilterCriteriaMatrix,
-        ZResponseFilterCriteriaIs,
-        ZResponseFilterCriteriaIsNot,
         ZResponseFilterCriteriaIsEmpty,
         ZResponseFilterCriteriaIsNotEmpty,
         ZResponseFilterCriteriaIsAnyOf,

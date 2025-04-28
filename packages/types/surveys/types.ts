@@ -298,8 +298,6 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "isCompletelySubmitted",
   "isSet",
   "isNotSet",
-  "is",
-  "isNot",
   "isEmpty",
   "isNotEmpty",
   "isAnyOf",
@@ -1478,11 +1476,11 @@ const isInvalidOperatorsForQuestionType = (
           "isPartiallySubmitted",
           "isCompletelySubmitted",
           "isSkipped",
-          "is",
-          "isNot",
           "isEmpty",
           "isNotEmpty",
           "isAnyOf",
+          "equals",
+          "doesNotEqual",
         ].includes(operator)
       ) {
         isInvalidOperator = true;

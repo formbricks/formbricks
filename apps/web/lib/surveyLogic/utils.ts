@@ -457,17 +457,12 @@ const evaluateSingleCondition = (
           return values.length > 0 && !values.includes("");
         } else return false;
       case "isSet":
+      case "isNotEmpty":
         return leftValue !== undefined && leftValue !== null && leftValue !== "";
       case "isNotSet":
         return leftValue === undefined || leftValue === null || leftValue === "";
-      case "is":
-        return leftValue === rightValue;
-      case "isNot":
-        return leftValue !== rightValue;
       case "isEmpty":
         return leftValue === "";
-      case "isNotEmpty":
-        return leftValue !== "" && leftValue !== null && leftValue !== undefined;
       case "isAnyOf":
         if (Array.isArray(rightValue) && typeof leftValue === "string") {
           return rightValue.includes(leftValue);

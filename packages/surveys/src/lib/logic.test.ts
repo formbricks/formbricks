@@ -922,7 +922,7 @@ describe("Survey Logic", () => {
         conditions: [
           {
             id: "condition1",
-            operator: "is",
+            operator: "equals",
             leftOperand: {
               type: "question",
               value: "q8",

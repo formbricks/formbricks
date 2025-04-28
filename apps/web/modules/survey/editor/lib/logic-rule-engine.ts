@@ -359,12 +359,12 @@ export const getLogicRules = (t: TFnType) => {
       [`${TSurveyQuestionTypeEnum.Matrix}.row`]: {
         options: [
           {
-            label: t("environments.surveys.edit.is"),
-            value: ZSurveyLogicConditionsOperator.Enum.is,
+            label: t("environments.surveys.edit.equals"),
+            value: ZSurveyLogicConditionsOperator.Enum.equals,
           },
           {
-            label: t("environments.surveys.edit.is_not"),
-            value: ZSurveyLogicConditionsOperator.Enum.isNot,
+            label: t("environments.surveys.edit.does_not_equal"),
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
           },
           {
             label: t("environments.surveys.edit.is_empty"),
