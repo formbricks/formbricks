@@ -188,6 +188,7 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
       columns: [{ default: "" }, { default: "" }],
       buttonLabel: { default: t("templates.next") },
       backButtonLabel: { default: t("templates.back") },
+      shuffleOption: "none",
     } as Partial<TSurveyMatrixQuestion>,
   },
   {
