@@ -16,9 +16,10 @@ declare global {
 
 export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
-  const getRecaptchaToken = useCallback(async () => {
-    return executeRecaptcha(props.recaptchaSiteKey);
-  }, [props.recaptchaSiteKey]);
+  const getRecaptchaToken = useCallback(
+    () => executeRecaptcha(props.recaptchaSiteKey),
+    [props.recaptchaSiteKey]
+  );
 
   const renderInline = useCallback(
     () => window.formbricksSurveys.renderSurvey({ ...props, containerId, getRecaptchaToken, mode: "inline" }),

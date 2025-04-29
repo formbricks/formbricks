@@ -70,15 +70,13 @@ export const executeRecaptcha = async (
     }
 
     const val = await new Promise((resolve, reject) => {
-      window.grecaptcha.ready(() => {
-        window.grecaptcha
-          .execute(recaptchaSiteKey, { action })
-          .then((token: string) => {
-            resolve(token);
-          })
-          .catch((error: unknown) => {
-            reject(new Error(`Error during reCAPTCHA execution: ${error as string}`));
-          });
+      window.grecaptcha.ready(async () => {
+        try {
+          const token = await window.grecaptcha.execute(recaptchaSiteKey, { action });
+          resolve(token);
+        } catch (error) {
+          reject(new Error(`Error during reCAPTCHA execution: ${error as string}`));
+        }
       });
     });
 

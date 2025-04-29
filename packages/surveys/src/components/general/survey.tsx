@@ -506,6 +506,11 @@ export function Survey({
       const token = await getRecaptchaToken();
       if (responseQueue && token) {
         responseQueue.setResponseRecaptchaToken(token);
+      } else {
+        setShowError(true);
+        setErrorType(TResponseErrorCodesEnum.RecaptchaError);
+        setLoadingElement(false);
+        return;
       }
     }
 

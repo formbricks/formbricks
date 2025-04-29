@@ -83,16 +83,13 @@ export const executeRecaptcha = async (
     }
 
     return await new Promise<string>((resolve, reject) => {
-      window.grecaptcha.ready(() => {
-        window.grecaptcha
-          .execute(recaptchaSiteKey, { action })
-          .then((token: string) => {
-            resolve(token);
-          })
-          .catch((error: unknown) => {
-            logger.debug(`Error during reCAPTCHA execution: ${String(error)}`);
-            reject(new Error(`Error during reCAPTCHA execution: ${String(error)}`));
-          });
+      window.grecaptcha.ready(async () => {
+        try {
+          const token = await window.grecaptcha.execute(recaptchaSiteKey, { action });
+          resolve(token);
+        } catch (error) {
+          reject(new Error(String(error)));
+        }
       });
     });
   } catch (error) {
