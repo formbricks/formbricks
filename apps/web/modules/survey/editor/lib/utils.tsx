@@ -115,7 +115,7 @@ export const getConditionValueOptions = (
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
-          label: `${getLocalizedValue(question.headline, "default")}: ${getLocalizedValue(row, "default")}`,
+          label: `${getLocalizedValue(row, "default")} (${getLocalizedValue(question.headline, "default")})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
