@@ -27,11 +27,6 @@ vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
 
-// Mock toast
-vi.mock("react-hot-toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
-
 describe("SelectedRowSettings", () => {
   const rows = [{ id: "r1" }, { id: "r2" }];
   let table: any;
@@ -47,6 +42,10 @@ describe("SelectedRowSettings", () => {
     deleteRows = vi.fn();
     deleteAction = vi.fn(() => Promise.resolve());
     downloadRows = vi.fn();
+
+    // Reset all toast mocks before each test
+    vi.mocked(toast.error).mockClear();
+    vi.mocked(toast.success).mockClear();
   });
 
   afterEach(() => {
@@ -168,7 +167,7 @@ describe("SelectedRowSettings", () => {
   });
 
   test("handles delete error for non-Error and shows generic error toast", async () => {
-    deleteAction = vi.fn(() => Promise.reject(new Error("fail nonerror")));
+    deleteAction = vi.fn(() => Promise.reject("fail nonerror")); // Changed from Error to string
     render(
       <SelectedRowSettings
         table={table}

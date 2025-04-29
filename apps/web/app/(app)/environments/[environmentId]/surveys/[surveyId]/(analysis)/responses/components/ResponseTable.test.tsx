@@ -1,14 +1,8 @@
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { Button } from "@/modules/ui/components/button";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import * as React from "react";
-// Mock toast
-// Note: This is already mocked in vitestSetup.ts
-// This code is kept here for reference but we'll use direct import for spying
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -16,9 +10,6 @@ import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
-
-// Mock necessary components and functions
-// ...existing code...
 
 // Mock components
 vi.mock("@/modules/ui/components/button", () => ({
