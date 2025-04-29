@@ -1,4 +1,4 @@
-import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/templates";
+import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/survey-builder";
 import { TFnType } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 

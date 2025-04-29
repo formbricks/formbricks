@@ -4,6 +4,7 @@ import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
@@ -91,6 +92,8 @@ export const SurveyEditor = ({
     }
   }, [localProject.id]);
 
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   useDocumentVisibility(fetchLatestProject);
 
   useEffect(() => {
@@ -162,6 +165,7 @@ export const SurveyEditor = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
         locale={locale}
+        setIsCautionDialogOpen={setIsCautionDialogOpen}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
@@ -192,6 +196,8 @@ export const SurveyEditor = ({
               plan={plan}
               isCxMode={isCxMode}
               locale={locale}
+              responseCount={responseCount}
+              setIsCautionDialogOpen={setIsCautionDialogOpen}
             />
           )}
 
@@ -253,6 +259,7 @@ export const SurveyEditor = ({
           />
         </aside>
       </div>
+      <EditPublicSurveyAlertDialog open={isCautionDialogOpen} setOpen={setIsCautionDialogOpen} />
     </div>
   );
 };

@@ -46,7 +46,6 @@ interface SummaryPageProps {
   webAppUrl: string;
   user?: TUser;
   totalResponseCount: number;
-  isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
   isReadOnly: boolean;
@@ -58,8 +57,6 @@ export const SummaryPage = ({
   surveyId,
   webAppUrl,
   totalResponseCount,
-  isAIEnabled,
-  documentsPerPage,
   locale,
   isReadOnly,
 }: SummaryPageProps) => {
@@ -184,8 +181,6 @@ export const SummaryPage = ({
         survey={surveyMemoized}
         environment={environment}
         totalResponseCount={totalResponseCount}
-        isAIEnabled={isAIEnabled}
-        documentsPerPage={documentsPerPage}
         locale={locale}
       />
     </>

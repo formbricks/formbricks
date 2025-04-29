@@ -1,9 +1,5 @@
 import { getUser } from "@/lib/user/service";
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
@@ -33,12 +29,6 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "mock-webapp-url",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-ai-azure-llm-ressource-name",
-  AI_AZURE_LLM_API_KEY: "mock-ai",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-ai-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-ai-azure-embeddings-ressource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-ai-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-ai-azure-embeddings-deployment-id",
 }));
 
 vi.mock("next-auth", () => ({
@@ -59,7 +49,6 @@ vi.mock("@/modules/environments/lib/utils", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsMultiOrgEnabled: vi.fn(),
-  getIsOrganizationAIReady: vi.fn(),
   getWhiteLabelPermission: vi.fn(),
 }));
 
@@ -80,7 +69,6 @@ describe("Page", () => {
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getIsOrganizationAIReady).mockResolvedValue(true);
     vi.mocked(getWhiteLabelPermission).mockResolvedValue(true);
   });
 

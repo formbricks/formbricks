@@ -419,7 +419,7 @@ model Survey {
   documents                       Document[]
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0}")
+  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
