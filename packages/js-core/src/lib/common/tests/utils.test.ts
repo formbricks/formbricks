@@ -402,7 +402,7 @@ describe("utils.ts", () => {
       const originalGetRandomValues = crypto.getRandomValues.bind(crypto);
       // Mock implementation
       const mockGetRandomValues = vi.fn((array: Uint32Array) => {
-        array[0] = 2000; // 20.00
+        array[0] = Math.floor((20 / 100) * 2 ** 32);
         return array;
       });
       // @ts-expect-error: Overriding readonly property for testing
@@ -410,7 +410,7 @@ describe("utils.ts", () => {
       expect(shouldDisplayBasedOnPercentage(30)).toBe(true);
 
       mockGetRandomValues.mockImplementation((array: Uint32Array) => {
-        array[0] = 8000; // 80.00
+        array[0] = Math.floor((80 / 100) * 2 ** 32);
         return array;
       });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(false);
