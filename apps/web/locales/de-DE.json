@@ -1661,6 +1661,7 @@
         "device": "Gerät",
         "device_info": "Geräteinfo",
         "email": "E-Mail",
+        "error_downloading_responses": "Beim Herunterladen der Antworten ist ein Fehler aufgetreten",
         "first_name": "Vorname",
         "how_to_identify_users": "Wie man Benutzer identifiziert",
         "last_name": "Nachname",

@@ -1661,6 +1661,7 @@
         "device": "Dispositif",
         "device_info": "Informations sur l'appareil",
         "email": "Email",
+        "error_downloading_responses": "Une erreur s'est produite lors du téléchargement des réponses",
         "first_name": "Prénom",
         "how_to_identify_users": "Comment identifier les utilisateurs",
         "last_name": "Nom de famille",

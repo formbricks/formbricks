@@ -1661,6 +1661,7 @@
         "device": "Dispositivo",
         "device_info": "Informações do dispositivo",
         "email": "Email",
+        "error_downloading_responses": "Ocorreu um erro ao transferir respostas",
         "first_name": "Primeiro Nome",
         "how_to_identify_users": "Como identificar utilizadores",
         "last_name": "Apelido",

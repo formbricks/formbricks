@@ -1661,6 +1661,7 @@
         "device": "Device",
         "device_info": "Device info",
         "email": "Email",
+        "error_downloading_responses": "An error occured while downloading responses",
         "first_name": "First Name",
         "how_to_identify_users": "How to identify users",
         "last_name": "Last Name",

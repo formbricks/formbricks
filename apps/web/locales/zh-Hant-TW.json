@@ -1661,6 +1661,7 @@
         "device": "裝置",
         "device_info": "裝置資訊",
         "email": "電子郵件",
+        "error_downloading_responses": "下載回應時發生錯誤",
         "first_name": "名字",
         "how_to_identify_users": "如何識別使用者",
         "last_name": "姓氏",
