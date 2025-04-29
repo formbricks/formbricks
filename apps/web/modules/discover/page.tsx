@@ -1,4 +1,4 @@
-import Engagements from "@/modules/discover/components/engagements";
+import Engagements from "@/modules/discover/components/Engagements";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";

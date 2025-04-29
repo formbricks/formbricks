@@ -1,8 +1,8 @@
 "use client";
 
+import AvailableSurveys from "@/modules/discover/components/Engagements/components/available-engagements";
+import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
 import { SearchSection } from "@/modules/discover/components/common/search-section";
-import AvailableSurveys from "@/modules/discover/components/engagements/components/available-engagements";
-import CompletedSurveys from "@/modules/discover/components/engagements/components/completed-engagements";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
 import React, { useState } from "react";
