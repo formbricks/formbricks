@@ -74,12 +74,12 @@ export const FileUploadSummary = ({
               <div className="col-span-2 grid">
                 {Array.isArray(response.value) &&
                   (response.value.length > 0 ? (
-                    response.value.map((fileUrl, index) => {
+                    response.value.map((fileUrl) => {
                       const fileName = getOriginalFileNameFromUrl(fileUrl);
 
                       return (
                         <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
-                          <a href={fileUrl} key={index} target="_blank" rel="noopener noreferrer">
+                          <a href={fileUrl} key={fileUrl} target="_blank" rel="noopener noreferrer">
                             <div className="absolute top-0 right-0 m-2">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                                 <DownloadIcon className="h-6 text-slate-500" />
