@@ -161,7 +161,7 @@
     "dotenv": "16.4.7",
     "ts-node": "10.9.2",
     "resize-observer-polyfill": "1.5.1",
-    "vite": "6.2.5",
+    "vite": "6.2.6",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.1.1",
     "vitest-mock-extended": "3.0.1"
