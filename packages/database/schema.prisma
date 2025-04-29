@@ -842,6 +842,7 @@ model User {
   locale                    String           @default("en-US")
   surveys                   Survey[]
   teamUsers                 TeamUser[]
+  whitelist                 Boolean          @default(false)
 
   @@index([email])
 }

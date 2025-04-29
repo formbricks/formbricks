@@ -128,89 +128,83 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
             />
           </div>
           {/* Update with collapsible component */}
-          {balances &&
-            enableReward &&
-            (balances.length < 1 ? (
-              <div className="flex w-full flex-col gap-4 rounded-lg">
-                <FormLabel>
-                  {t("common.no_tokens_click_the_button_below_to_mint_new_tokens_on_the_wonder_chain")}
-                </FormLabel>
-                <NoTokensCTAButton />
+          {balances && enableReward && (
+            <>
+              <div className="flex w-full flex-col gap-2 rounded-lg">
+                <FormLabel>{t("environments.wallet.form.token")}</FormLabel>
+                <Controller
+                  name="contractAddress"
+                  control={form.control}
+                  rules={{
+                    required: t("environments.wallet.form.error.address_required"),
+                    pattern: {
+                      value: /^0x[a-fA-F0-9]{40}$/,
+                      message: t("environments.wallet.form.error.invalid_eth_address"),
+                    },
+                  }}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ? field.value : undefined}
+                      onValueChange={(address) => {
+                        field.onChange(address);
+                        const selected = balances.find((b) => b.token.address === address);
+                        if (selected) setSelectedBalance(selected);
+                      }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={
+                            selectedBalance
+                              ? `${selectedBalance.token.symbol} — ${formatUnits(selectedBalance.value, parseInt(selectedBalance.token.decimals, 10))}`
+                              : "Select a token address"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {balances?.map((balance) => (
+                          <SelectItem
+                            key={balance.token.address}
+                            value={balance.token.address}
+                            className="group font-normal hover:text-slate-900">
+                            <div className="flex w-full items-center justify-start gap-2">
+                              {balance.token.name} —{" "}
+                              {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
+                            </div>
+                          </SelectItem>
+                        ))}
+                        <div className="my-1">
+                          <NoTokensCTAButton />
+                        </div>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
-            ) : (
-              <>
-                <div className="flex w-full flex-col gap-2 rounded-lg">
-                  <FormLabel>{t("environments.wallet.form.token")}</FormLabel>
-                  <Controller
-                    name="contractAddress"
-                    control={form.control}
-                    rules={{
-                      required: t("environments.wallet.form.error.address_required"),
-                      pattern: {
-                        value: /^0x[a-fA-F0-9]{40}$/,
-                        message: t("environments.wallet.form.error.invalid_eth_address"),
-                      },
-                    }}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value ? field.value : undefined}
-                        onValueChange={(address) => {
-                          field.onChange(address);
-                          const selected = balances.find((b) => b.token.address === address);
-                          if (selected) setSelectedBalance(selected);
-                        }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={
-                              selectedBalance
-                                ? `${selectedBalance.token.symbol} — ${formatUnits(selectedBalance.value, parseInt(selectedBalance.token.decimals, 10))}`
-                                : "Select a token address"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          {balances?.map((balance) => (
-                            <SelectItem
-                              key={balance.token.address}
-                              value={balance.token.address}
-                              className="group font-normal hover:text-slate-900">
-                              <div className="flex w-full items-center justify-start gap-2">
-                                {balance.token.name} —{" "}
-                                {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div className="flex w-full flex-col gap-2 rounded-lg">
-                  <FormLabel>{t("environments.wallet.form.reward_amount")}</FormLabel>
-                  <Input
-                    autoFocus
-                    type="number"
-                    placeholder={"0.00"}
-                    step="any"
-                    {...form.register("amount", {
-                      required: t("environments.wallet.form.error.amount_required"),
-                      min: {
-                        value: 0.01,
-                        message: t("environments.wallet.form.error.min_amount"),
-                      },
-                      max: {
-                        value: selectedBalance
-                          ? formatUnits(selectedBalance.value, parseInt(selectedBalance.token.decimals, 10))
-                          : 0,
-                        message: t("environments.wallet.form.error.max_amount"),
-                      },
-                      validate: (value) =>
-                        (value && Number(value) > 0) || t("environments.wallet.form.error.positive_amount"),
-                    })}
-                  />
-                </div>
-              </>
-            ))}
+              <div className="flex w-full flex-col gap-2 rounded-lg">
+                <FormLabel>{t("environments.wallet.form.reward_amount")}</FormLabel>
+                <Input
+                  autoFocus
+                  type="number"
+                  placeholder={"0.00"}
+                  step="any"
+                  {...form.register("amount", {
+                    required: t("environments.wallet.form.error.amount_required"),
+                    min: {
+                      value: 0.01,
+                      message: t("environments.wallet.form.error.min_amount"),
+                    },
+                    max: {
+                      value: selectedBalance
+                        ? formatUnits(selectedBalance.value, parseInt(selectedBalance.token.decimals, 10))
+                        : 0,
+                      message: t("environments.wallet.form.error.max_amount"),
+                    },
+                    validate: (value) =>
+                      (value && Number(value) > 0) || t("environments.wallet.form.error.positive_amount"),
+                  })}
+                />
+              </div>
+            </>
+          )}
 
           {/* <FormStylingSettings
             open={formStylingOpen}

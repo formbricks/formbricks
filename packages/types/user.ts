@@ -57,6 +57,7 @@ export const ZUser = z.object({
   role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
+  whitelist: z.boolean(),
   locale: ZUserLocale,
 });
 
@@ -71,6 +72,7 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
+  whitelist: z.boolean(),
   locale: ZUserLocale.optional(),
 });
 
