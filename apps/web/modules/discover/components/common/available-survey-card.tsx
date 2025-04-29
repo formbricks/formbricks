@@ -6,12 +6,12 @@ import { formatDistance } from "date-fns";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
 import { Clock } from "lucide-react";
 
-interface ActiveSurveyCardProps {
+interface AvailableSurveyCardProps {
   survey: TExtendedSurvey;
   type: String;
 }
 
-export const ActiveSurveyCard = ({ survey }: ActiveSurveyCardProps) => {
+export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
   const { t } = useTranslate();
   const surveyTypeLabel = t("common.engagement");
 
