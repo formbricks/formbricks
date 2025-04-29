@@ -5,8 +5,6 @@ import { render, screen } from "@testing-library/react";
 import * as ReactHotToast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -17,8 +15,8 @@ Object.defineProperty(window, "matchMedia", {
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -94,6 +92,56 @@ vi.mock("@/lib/constants", () => ({
   NEXTAUTH_SECRET: "mock-nextauth-secret",
   NEXTAUTH_URL: "http://localhost:3000", // Add NEXTAUTH_URL
 }));
+
+const mockProps = {
+  data: [
+    {
+      responseId: "response1",
+      createdAt: new Date(),
+      finished: true,
+      status: "completed",
+      contactAttributes: null,
+      tags: [],
+      verifiedEmail: null,
+      person: null,
+      notes: [],
+      meta: {
+        url: "http://example.com",
+        source: "web",
+        userAgent: {
+          browser: "Chrome",
+          os: "Mac OS",
+          device: "Desktop",
+        },
+      },
+      singleUseId: null,
+      ttc: null,
+    },
+  ] as any[],
+  survey: {
+    id: "test-survey-id",
+    questions: [],
+    variables: [],
+    hiddenFields: { fieldIds: [] },
+    isVerifyEmailEnabled: false,
+  } as any,
+  responses: [
+    {
+      id: "response1",
+      createdAt: new Date().toISOString(),
+      data: {},
+    },
+  ] as any[],
+  environment: { id: "test-env-id" } as TEnvironment,
+  environmentTags: [] as TTag[],
+  isReadOnly: false,
+  fetchNextPage: vi.fn(),
+  hasMore: false,
+  deleteResponses: vi.fn(),
+  updateResponse: vi.fn(),
+  isFetchingFirstPage: false,
+  locale: "en" as TUserLocale,
+};
 
 // Mock required actions and helpers
 vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions", () => ({
@@ -194,8 +242,8 @@ describe("ResponseTable - downloadSelectedRows", () => {
     const createElement = vi
       .spyOn(document, "createElement")
       .mockImplementation(() => mockLink as unknown as HTMLElement);
-    const appendChild = vi.spyOn(document.body, "appendChild").mockImplementation(() => {});
-    const removeChild = vi.spyOn(document.body, "removeChild").mockImplementation(() => {});
+    const appendChild = vi.spyOn(document.body, "appendChild").mockImplementation((node) => node);
+    const removeChild = vi.spyOn(document.body, "removeChild").mockImplementation((node) => node);
 
     const survey = { id: "test-survey-id" };
 
@@ -221,40 +269,6 @@ describe("ResponseTable - downloadSelectedRows", () => {
   });
 
   test("renders the response table with data correctly", async () => {
-    // Mock minimal props required for the component
-    const mockProps = {
-      data: [
-        {
-          responseId: "response1",
-          createdAt: new Date().toISOString(),
-          finished: true,
-        },
-      ],
-      survey: {
-        id: "test-survey-id",
-        questions: [],
-        variables: [], // Add missing variables array
-        hiddenFields: { fieldIds: [] }, // Add missing hiddenFields
-        isVerifyEmailEnabled: false, // Add missing isVerifyEmailEnabled
-      } as TSurvey,
-      responses: [
-        {
-          id: "response1",
-          createdAt: new Date().toISOString(),
-          data: {},
-        },
-      ] as TResponse[],
-      environment: { id: "test-env-id" } as TEnvironment,
-      environmentTags: [] as TTag[],
-      isReadOnly: false,
-      fetchNextPage: vi.fn(),
-      hasMore: false,
-      deleteResponses: vi.fn(),
-      updateResponse: vi.fn(),
-      isFetchingFirstPage: false,
-      locale: "en" as TUserLocale,
-    };
-
     // Use React Testing Library to render the component
     render(<ResponseTable {...mockProps} />);
 
