@@ -46,6 +46,8 @@ export const MultipleChoiceQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
