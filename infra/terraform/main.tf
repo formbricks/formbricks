@@ -161,15 +161,13 @@ module "eks" {
   }
 
   cluster_security_group_additional_rules = {
-    ingress = [
-      {
-        description = "Allow all traffic from the VPC CIDR"
-        from_port  = 0
-        to_port    = 0
-        protocol   = "-1"
-        cidr_blocks = [local.vpc_cidr]
-      }
-    ]
+    ingress_from_vpc_cidr = {
+      description = "Allow all traffic from the VPC CIDR"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = [local.vpc_cidr]
+    }
   }
 
   kms_key_administrators = [
