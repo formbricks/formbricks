@@ -1,6 +1,7 @@
 "use client";
 
 import Address from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/address";
+import NoTokensCTACard from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/no-tokens-cta-card";
 import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
@@ -39,8 +40,12 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
     return () => clearInterval(interval);
   }, [blockscoutApi, address]);
 
-  if (!balances || balances.length < 1) {
+  if (!balances) {
     return null;
+  }
+
+  if (balances.length < 1) {
+    return <NoTokensCTACard />;
   }
 
   return (
