@@ -113,6 +113,9 @@ export default defineConfig({
         "survey/editor/lib/utils.tsx",
         "modules/ui/components/card/index.tsx",
         "modules/survey/editor/components/open-question-form.tsx",
+        "modules/survey/editor/components/picture-selection-form.tsx",
+        "modules/survey/editor/components/placement.tsx",
+        "modules/survey/editor/components/question-card.tsx",
       ],
       exclude: [
         "**/.next/**",

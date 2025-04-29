@@ -48,6 +48,7 @@ export const Placement = ({
           ))}
         </RadioGroup>
         <div
+          data-testid="placement-preview" // Add this data-testid
           className={cn(
             clickOutsideClose ? "" : "cursor-not-allowed",
             "relative ml-8 h-40 w-full rounded",
