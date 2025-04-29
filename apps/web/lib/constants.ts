@@ -81,7 +81,7 @@ export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
-export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
+export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1" || env.SMTP_PORT === "465";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
