@@ -1,5 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { validateFile } from "@/lib/fileValidation";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
@@ -28,7 +29,6 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   const environmentId = params.environmentId;
 
   const jsonInput = await req.json();
-
   const inputValidation = ZUploadFileRequest.safeParse({
     ...jsonInput,
     environmentId,
@@ -43,6 +43,12 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   const { fileName, fileType, surveyId } = inputValidation.data;
+
+  // Perform server-side file validation
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error || "Invalid file", { fileName, fileType }, true);
+  }
 
   const [survey, organization] = await Promise.all([
     getSurvey(surveyId),

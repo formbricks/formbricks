@@ -4,6 +4,7 @@
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
 import { validateLocalSignedUrl } from "@/lib/crypto";
+import { validateFile } from "@/lib/fileValidation";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { putFileToLocalStorage } from "@/lib/storage/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -86,8 +87,14 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
 
   const fileName = decodeURIComponent(encodedFileName);
 
-  // validate signature
+  // Perform server-side file validation again
+  // This is crucial as attackers could bypass the initial validation and directly call this endpoint
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error || "Invalid file", { fileName, fileType });
+  }
 
+  // validate signature
   const validated = validateLocalSignedUrl(
     signedUuid,
     fileName,

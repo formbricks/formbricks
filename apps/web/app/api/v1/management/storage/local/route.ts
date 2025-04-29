@@ -5,6 +5,7 @@ import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
 import { validateLocalSignedUrl } from "@/lib/crypto";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { validateFile } from "@/lib/fileValidation";
 import { putFileToLocalStorage } from "@/lib/storage/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
@@ -64,6 +65,12 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   }
 
   const fileName = decodeURIComponent(encodedFileName);
+
+  // Perform server-side file validation
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error || "Invalid file");
+  }
 
   // validate signature
 
