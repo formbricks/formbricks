@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -10,6 +9,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
+import { queuePipelineJob } from "@formbricks/worker";
 import { createResponse } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
@@ -114,16 +114,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
     }
   }
 
-  sendToPipeline({
-    event: "responseCreated",
+  queuePipelineJob("responseCreated", {
     environmentId: survey.environmentId,
     surveyId: response.surveyId,
     response: response,
   });
 
   if (responseInput.finished) {
-    sendToPipeline({
-      event: "responseFinished",
+    queuePipelineJob("responseFinished", {
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
       response: response,

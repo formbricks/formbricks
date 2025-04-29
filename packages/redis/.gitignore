@@ -1,0 +1,4 @@
+node_modules
+.vscode
+build
+dist

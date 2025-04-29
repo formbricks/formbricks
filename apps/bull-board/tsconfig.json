@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "isolatedModules": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "strict": true
+  },
+  "exclude": ["../../.env", "node_modules"],
+  "extends": "@formbricks/config-typescript/node16.json",
+  "include": ["**/*.ts"]
+}
