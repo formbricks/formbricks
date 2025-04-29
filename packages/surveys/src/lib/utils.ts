@@ -1,5 +1,4 @@
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
-import { randomInt } from "node:crypto";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
@@ -17,8 +16,14 @@ export const cn = (...classes: string[]) => {
 };
 
 const shuffle = (array: unknown[]) => {
-  for (let i = 0; i < array.length; i++) {
-    const j = randomInt(i + 1); // Generates random integer in [0, i]
+  const getSecureRandom = (): number => {
+    const u32 = new Uint32Array(1);
+    crypto.getRandomValues(u32);
+    return u32[0] / 2 ** 32; // Normalized to [0, 1)
+  };
+
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };

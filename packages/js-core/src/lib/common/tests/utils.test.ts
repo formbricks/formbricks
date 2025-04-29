@@ -24,7 +24,6 @@ import type {
   TUserState,
 } from "@/types/config";
 import { type TActionClassPageUrlRule } from "@/types/survey";
-import { randomInt } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockSurveyId1 = "e3kxlpnzmdp84op9qzxl9olj";
@@ -400,16 +399,24 @@ describe("utils.ts", () => {
   // ---------------------------------------------------------------------------------
   describe("shouldDisplayBasedOnPercentage()", () => {
     test("returns true if random number <= displayPercentage", () => {
-      // We'll mock randomInt to return something
-      const mockedRandom = vi.spyOn({ randomInt }, "randomInt").mockImplementation(() => 2000); // 0.2 => 20%
-      // displayPercentage = 30 => 30% => we should display
+      const originalGetRandomValues = crypto.getRandomValues.bind(crypto);
+      // Mock implementation
+      const mockGetRandomValues = vi.fn((array: Uint32Array) => {
+        array[0] = 2000; // 20.00
+        return array;
+      });
+      // @ts-expect-error: Overriding readonly property for testing
+      crypto.getRandomValues = mockGetRandomValues;
       expect(shouldDisplayBasedOnPercentage(30)).toBe(true);
 
-      mockedRandom.mockImplementation(() => 5000); // 50%
+      mockGetRandomValues.mockImplementation((array: Uint32Array) => {
+        array[0] = 8000; // 80.00
+        return array;
+      });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(false);
 
-      // restore
-      mockedRandom.mockRestore();
+      // Restore original
+      crypto.getRandomValues = originalGetRandomValues;
     });
   });
 
