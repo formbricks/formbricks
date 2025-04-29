@@ -13,7 +13,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       blur && "backdrop-blur-md",
-      "bg-opacity-30 fixed inset-0 z-50 bg-slate-500",
+      "bg-opacity-30 fixed inset-0 z-50",
       "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn"
     )}
     {...props}

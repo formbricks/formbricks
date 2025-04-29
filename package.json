@@ -34,7 +34,7 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./packages/lib/messages/*.json"
+    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json"
   },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",

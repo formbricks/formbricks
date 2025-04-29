@@ -457,9 +457,17 @@ const evaluateSingleCondition = (
           return values.length > 0 && !values.includes("");
         } else return false;
       case "isSet":
+      case "isNotEmpty":
         return leftValue !== undefined && leftValue !== null && leftValue !== "";
       case "isNotSet":
         return leftValue === undefined || leftValue === null || leftValue === "";
+      case "isEmpty":
+        return leftValue === "";
+      case "isAnyOf":
+        if (Array.isArray(rightValue) && typeof leftValue === "string") {
+          return rightValue.includes(leftValue);
+        }
+        return false;
       default:
         return false;
     }
@@ -530,6 +538,33 @@ const getLeftOperandValue = (
           if (choices) {
             return Array.from(new Set(choices));
           }
+        }
+      }
+
+      if (
+        currentQuestion.type === "matrix" &&
+        typeof responseValue === "object" &&
+        !Array.isArray(responseValue)
+      ) {
+        if (leftOperand.meta && leftOperand.meta.row !== undefined) {
+          const rowIndex = Number(leftOperand.meta.row);
+
+          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
+            return undefined;
+          }
+          const row = getLocalizedValue(currentQuestion.rows[rowIndex], selectedLanguage);
+
+          const rowValue = responseValue[row];
+          if (rowValue === "") return "";
+
+          if (rowValue) {
+            const columnIndex = currentQuestion.columns.findIndex((column) => {
+              return getLocalizedValue(column, selectedLanguage) === rowValue;
+            });
+            if (columnIndex === -1) return undefined;
+            return columnIndex.toString();
+          }
+          return undefined;
         }
       }
 
