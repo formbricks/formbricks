@@ -97,6 +97,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         setShowSurvey(false);
         setIsSurveyRunning(false);
       }}>
+      {/* @ts-expect-error -- message this is  */}
       <WebView
         ref={webViewRef}
         originWhitelist={["*"]}

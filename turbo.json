@@ -206,7 +206,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "DISABLE_USER_MANAGEMENT_UI"
+        "DISABLE_USER_MANAGEMENT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

@@ -32,6 +32,7 @@ export default defineConfig({
         "modules/environments/lib/**/*.ts",
         "modules/ui/components/post-hog-client/*.tsx",
         "modules/ee/role-management/components/*.tsx",
+        "modules/ee/role-management/actions.ts",
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/ui/components/alert/*.tsx",
         "modules/ui/components/environmentId-base-layout/*.tsx",

@@ -189,7 +189,7 @@ x-environment: &environment
     # DEFAULT_ORGANIZATION_ROLE: owner
 
     # Set the below to 1 to disable the user management UI
-    # DISABLE_USER_MANAGEMENT_UI: 0
+    # DISABLE_USER_MANAGEMENT: 0
 
 services:
   postgres:
