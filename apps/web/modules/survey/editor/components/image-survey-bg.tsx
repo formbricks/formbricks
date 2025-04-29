@@ -11,8 +11,6 @@ export const UploadImageSurveyBg = ({
   handleBgChange,
   background,
 }: UploadImageSurveyBgProps) => {
-  // [UseTusk]
-
   return (
     <div className="mt-2 w-full">
       <div className="flex w-full items-center justify-center">

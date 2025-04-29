@@ -48,8 +48,6 @@ export const DateQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: IDateQuestionFormProps): JSX.Element => {
-  // [UseTusk]
-
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();

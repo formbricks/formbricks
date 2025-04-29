@@ -8,8 +8,6 @@ interface ColorSurveyBgProps {
 }
 
 export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurveyBgProps) => {
-  // [UseTusk]
-
   const [color, setColor] = useState(background || "#FFFFFF");
 
   const handleBg = (x: string) => {

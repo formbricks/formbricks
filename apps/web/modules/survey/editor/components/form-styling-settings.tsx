@@ -30,8 +30,6 @@ export const FormStylingSettings = ({
   setOpen,
   form,
 }: FormStylingSettingsProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
   const background = form.watch("background");
