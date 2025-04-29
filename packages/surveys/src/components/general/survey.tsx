@@ -504,7 +504,6 @@ export function Survey({
 
     if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
       const token = await getRecaptchaToken();
-      console.log("returned token", { token });
       if (responseQueue && token) {
         responseQueue.setResponseRecaptchaToken(token);
       }

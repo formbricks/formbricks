@@ -392,13 +392,14 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
-  return true;
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
-  console.log(IS_RECAPTCHA_CONFIGURED);
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
     return previousResult && previousResult.features ? previousResult.features.spamProtection : false;
+  }
+  if (IS_FORMBRICKS_CLOUD) {
+    return false;
   }
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
