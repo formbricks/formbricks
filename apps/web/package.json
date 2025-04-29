@@ -29,6 +29,7 @@
     "@formbricks/js": "workspace:*",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/logger": "workspace:*",
+    "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@hookform/resolvers": "5.0.1",
     "@intercom/messenger-js-sdk": "0.0.14",
