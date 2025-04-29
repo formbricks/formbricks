@@ -1,8 +1,33 @@
 import "server-only";
+import { llmModel } from "@/lib/aiModels";
 import { Prisma } from "@prisma/client";
+import { generateObject } from "ai";
+import { z } from "zod";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyFilterCriteria,
+  TSurveyQuestion,
+  TSurveyQuestions,
+} from "@formbricks/types/surveys/types";
+
+export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boolean> => {
+  try {
+    const { object } = await generateObject({
+      model: llmModel,
+      schema: z.object({
+        insightsEnabled: z.boolean(),
+      }),
+      prompt: `We extract insights (e.g. feature requests, complaints, other) from survey questions. Can we find them in this question?: ${question.headline.default}`,
+      experimental_telemetry: { isEnabled: true },
+    });
+
+    return object.insightsEnabled;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
   surveyPrisma: any
@@ -34,29 +59,36 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   }
 
   // for status
-  if (filterCriteria?.status?.length) {
+  if (filterCriteria?.status && filterCriteria?.status?.length) {
     whereClause.push({ status: { in: filterCriteria.status } });
   }
 
   // for type
-  if (filterCriteria?.type?.length) {
+  if (filterCriteria?.type && filterCriteria?.type?.length) {
     whereClause.push({ type: { in: filterCriteria.type } });
   }
 
   // for createdBy
-  const createdByValue = filterCriteria?.createdBy?.value;
-  const userId = filterCriteria?.createdBy?.userId;
-  const isCreatedByYou = createdByValue?.length === 1 && createdByValue[0] === "you" && userId;
-  const isCreatedByOthers = createdByValue?.length === 1 && createdByValue[0] === "others" && userId;
-
-  if (isCreatedByYou) {
-    whereClause.push({ createdBy: userId });
-  }
-
-  if (isCreatedByOthers) {
-    whereClause.push({
-      OR: [{ createdBy: { not: userId } }, { createdBy: null }],
-    });
+  if (filterCriteria?.createdBy?.value && filterCriteria?.createdBy?.value?.length) {
+    if (filterCriteria.createdBy.value.length === 1) {
+      if (filterCriteria.createdBy.value[0] === "you") {
+        whereClause.push({ createdBy: filterCriteria.createdBy.userId });
+      }
+      if (filterCriteria.createdBy.value[0] === "others") {
+        whereClause.push({
+          OR: [
+            {
+              createdBy: {
+                not: filterCriteria.createdBy.userId,
+              },
+            },
+            {
+              createdBy: null,
+            },
+          ],
+        });
+      }
+    }
   }
 
   return { AND: whereClause };
@@ -81,4 +113,8 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
     }
     return false;
   });
+};
+
+export const doesSurveyHasOpenTextQuestion = (questions: TSurveyQuestions): boolean => {
+  return questions.some((question) => question.type === "openText");
 };
