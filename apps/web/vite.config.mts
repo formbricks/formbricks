@@ -101,6 +101,7 @@ export default defineConfig({
         "modules/ee/sso/components/**/*.tsx",
         "app/global-error.tsx",
         "app/error.tsx",
+        "modules/survey/lib/permission.ts",
         "modules/account/**/*.tsx",
         "modules/account/**/*.ts",
         "modules/analysis/**/*.tsx",
