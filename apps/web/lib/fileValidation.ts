@@ -1,64 +1,4 @@
-// filepath: /Users/dhruwang/Desktop/formbricks/apps/web/lib/fileValidation.ts
-
-// List of blocked file extensions that could potentially be used for malicious purposes
-export const BLOCKED_FILE_EXTENSIONS = [
-  "ashx",
-  "bak",
-  "bat",
-  "bck",
-  "bin",
-  "bkp",
-  "cer",
-  "cfg",
-  "cgi",
-  "cmd",
-  "conf",
-  "config",
-  "crt",
-  "dat",
-  "der",
-  "dll",
-  "do",
-  "eml",
-  "exe",
-  "hta",
-  "htr",
-  "htw",
-  "ida",
-  "idc",
-  "idq",
-  "ini",
-  "java",
-  "jsp",
-  "key",
-  "log",
-  "lua",
-  "msi",
-  "nws",
-  "old",
-  "p12",
-  "p7b",
-  "p7c",
-  "pem",
-  "pfx",
-  "pol",
-  "printer",
-  "py",
-  "css",
-  "reg",
-  "sav",
-  "save",
-  "shtm",
-  "shtml",
-  "html",
-  "js",
-  "php",
-  "stm",
-  "sys",
-  "temp",
-  "tmp",
-  "wmz",
-];
+import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
 
 /**
  * Validates if the file extension is allowed
@@ -70,8 +10,8 @@ export const isAllowedFileExtension = (fileName: string): boolean => {
   const extension = fileName.split(".").pop()?.toLowerCase();
   if (!extension || extension === fileName.toLowerCase()) return false;
 
-  // Check if the extension is in the blocked list
-  return !BLOCKED_FILE_EXTENSIONS.includes(extension);
+  // Check if the extension is in the allowed list
+  return Object.values(ZAllowedFileExtension.enum).includes(extension as TAllowedFileExtension);
 };
 
 /**
@@ -87,36 +27,8 @@ export const isValidFileTypeForExtension = (fileName: string, mimeType: string):
   // Basic MIME type validation for common file types
   const mimeTypeLower = mimeType.toLowerCase();
 
-  // Map of extensions to expected MIME types
-  const commonMimeTypes: Record<string, string[]> = {
-    jpg: ["image/jpeg", "image/jpg"],
-    jpeg: ["image/jpeg", "image/jpg"],
-    png: ["image/png"],
-    gif: ["image/gif"],
-    webp: ["image/webp"],
-    pdf: ["application/pdf"],
-    doc: ["application/msword"],
-    docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-    xls: ["application/vnd.ms-excel"],
-    xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
-    csv: ["text/csv", "application/csv"],
-    txt: ["text/plain"],
-    mp4: ["video/mp4"],
-    mp3: ["audio/mpeg"],
-    mov: ["video/quicktime"],
-    zip: ["application/zip"],
-    rar: ["application/x-rar-compressed"],
-    // Add more as needed
-  };
-
-  // If we don't have a mapping for this extension, allow it
-  // This is to avoid blocking legitimate but uncommon file types
-  if (!commonMimeTypes[extension]) {
-    return true;
-  }
-
   // Check if the MIME type matches the expected type for this extension
-  return commonMimeTypes[extension].includes(mimeTypeLower);
+  return mimeTypes[extension] === mimeTypeLower;
 };
 
 /**

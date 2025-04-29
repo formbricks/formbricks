@@ -94,6 +94,7 @@ export default defineConfig({
         "modules/survey/follow-ups/components/follow-up-item.tsx",
         "modules/ee/contacts/segments/lib/**/*.ts",
         "modules/ee/contacts/segments/components/segment-settings.tsx",
+        "modules/survey/editor/lib/utils.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
         "app/global-error.tsx",
@@ -104,11 +105,15 @@ export default defineConfig({
         "modules/analysis/**/*.ts",
         "app/lib/survey-builder.ts",
         "modules/survey/editor/components/end-screen-form.tsx",
+        "modules/survey/editor/components/matrix-question-form.tsx",
         "lib/utils/billing.ts",
         "lib/crypto.ts",
+        "lib/surveyLogic/utils.ts",
         "lib/utils/billing.ts",
         "modules/ui/components/card/index.tsx",
-        "lib/fileValidation.ts"
+        "lib/fileValidation.ts",
+        "survey/editor/lib/utils.tsx",
+        "modules/ui/components/card/index.tsx"
       ],
       exclude: [
         "**/.next/**",

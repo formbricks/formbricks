@@ -1,10 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  BLOCKED_FILE_EXTENSIONS,
-  isAllowedFileExtension,
-  isValidFileTypeForExtension,
-  validateFile,
-} from "./fileValidation";
+import { ZAllowedFileExtension } from "@formbricks/types/common";
+import { isAllowedFileExtension, isValidFileTypeForExtension, validateFile } from "./fileValidation";
 
 describe("fileValidation", () => {
   describe("isAllowedFileExtension", () => {
@@ -12,7 +8,7 @@ describe("fileValidation", () => {
       expect(isAllowedFileExtension("filename")).toBe(false);
     });
 
-    test("should return false for a blocked file extension", () => {
+    test("should return false for a file with extension not in allowed list", () => {
       expect(isAllowedFileExtension("malicious.exe")).toBe(false);
       expect(isAllowedFileExtension("script.php")).toBe(false);
       expect(isAllowedFileExtension("config.js")).toBe(false);
@@ -20,19 +16,19 @@ describe("fileValidation", () => {
     });
 
     test("should return true for an allowed file extension", () => {
-      expect(isAllowedFileExtension("image.png")).toBe(true);
-      expect(isAllowedFileExtension("document.pdf")).toBe(true);
-      expect(isAllowedFileExtension("spreadsheet.xlsx")).toBe(true);
+      Object.values(ZAllowedFileExtension.enum).forEach((ext) => {
+        expect(isAllowedFileExtension(`file.${ext}`)).toBe(true);
+      });
     });
 
     test("should handle case insensitivity correctly", () => {
-      expect(isAllowedFileExtension("malicious.EXE")).toBe(false);
       expect(isAllowedFileExtension("image.PNG")).toBe(true);
+      expect(isAllowedFileExtension("document.PDF")).toBe(true);
     });
 
     test("should handle filenames with multiple dots", () => {
-      expect(isAllowedFileExtension("example.config.js")).toBe(false);
-      expect(isAllowedFileExtension("document.backup.pdf")).toBe(true);
+      expect(isAllowedFileExtension("example.backup.pdf")).toBe(true);
+      expect(isAllowedFileExtension("document.old.exe")).toBe(false);
     });
   });
 
@@ -57,14 +53,10 @@ describe("fileValidation", () => {
       expect(isValidFileTypeForExtension("image.JPG", "image/jpeg")).toBe(true);
       expect(isValidFileTypeForExtension("image.jpg", "IMAGE/JPEG")).toBe(true);
     });
-
-    test("should return true for unknown extensions", () => {
-      expect(isValidFileTypeForExtension("data.xyz", "application/octet-stream")).toBe(true);
-    });
   });
 
   describe("validateFile", () => {
-    test("should return valid: false when file extension is blocked", () => {
+    test("should return valid: false when file extension is not allowed", () => {
       const result = validateFile("script.php", "application/php");
       expect(result.valid).toBe(false);
       expect(result.error).toContain("File type not allowed");
@@ -82,9 +74,15 @@ describe("fileValidation", () => {
       expect(result.error).toBeUndefined();
     });
 
-    test("should return valid: true for unknown file types that are not blocked", () => {
-      const result = validateFile("data.custom", "application/octet-stream");
-      expect(result.valid).toBe(true);
+    test("should return valid: true for allowed file types", () => {
+      Object.values(ZAllowedFileExtension.enum).forEach((ext) => {
+        // Skip testing extensions that don't have defined MIME types in the test
+        if (["jpg", "png", "pdf"].includes(ext)) {
+          const mimeType = ext === "jpg" ? "image/jpeg" : ext === "png" ? "image/png" : "application/pdf";
+          const result = validateFile(`file.${ext}`, mimeType);
+          expect(result.valid).toBe(true);
+        }
+      });
     });
 
     test("should return valid: false for files with no extension", () => {
@@ -95,20 +93,6 @@ describe("fileValidation", () => {
     test("should handle attempts to bypass with double extension", () => {
       const result = validateFile("malicious.jpg.php", "image/jpeg");
       expect(result.valid).toBe(false);
-    });
-  });
-
-  describe("BLOCKED_FILE_EXTENSIONS", () => {
-    test("should contain all expected blocked extensions", () => {
-      const expectedDangerousExtensions = ["exe", "php", "js", "html", "bat"];
-      for (const ext of expectedDangerousExtensions) {
-        expect(BLOCKED_FILE_EXTENSIONS).toContain(ext);
-      }
-    });
-
-    test("should be a non-empty array", () => {
-      expect(Array.isArray(BLOCKED_FILE_EXTENSIONS)).toBe(true);
-      expect(BLOCKED_FILE_EXTENSIONS.length).toBeGreaterThan(0);
     });
   });
 });
