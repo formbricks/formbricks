@@ -27,7 +27,6 @@ vi.mock("react-hot-toast", () => ({
 
 // Mock QuestionFormInput component to verify it receives correct props
 vi.mock("@/modules/survey/components/question-form-input", () => ({
-  //@ts-ignore // Ignore TypeScript error for the mock
   QuestionFormInput: ({
     id,
     value,
@@ -233,5 +232,81 @@ describe("FileUploadQuestionForm", () => {
 
     // Verify that the error toast WAS shown for the duplicate
     expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.this_extension_is_already_added");
+  });
+
+  test("shows an error toast when trying to add an empty extension", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <FileUploadQuestionForm
+        localSurvey={mockSurvey as any}
+        question={mockQuestion} // Starts with ["pdf", "jpg"]
+        questionIdx={0}
+        updateQuestion={mockUpdateQuestion}
+        selectedLanguageCode="en"
+        setSelectedLanguageCode={mockSetSelectedLanguageCode}
+        isInvalid={false}
+        isFormbricksCloud={false}
+        locale="en-US"
+        project={{} as any}
+      />
+    );
+
+    // Find the input field for adding extensions
+    const extensionInput = screen.getByTestId("input");
+    expect(extensionInput).toHaveValue(""); // Ensure it's initially empty
+
+    // Find and click the "Allow file type" button
+    const buttons = screen.getAllByTestId("button");
+    const addButton = buttons.find(
+      (button) => button.textContent === "environments.surveys.edit.allow_file_type"
+    );
+    expect(addButton).toBeTruthy();
+    await user.click(addButton!);
+
+    // Verify updateQuestion was NOT called
+    expect(mockUpdateQuestion).not.toHaveBeenCalled();
+
+    // Verify that the error toast WAS shown for the empty input
+    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.please_enter_a_file_extension");
+  });
+
+  test("shows an error toast when trying to add an unsupported file extension", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <FileUploadQuestionForm
+        localSurvey={mockSurvey as any}
+        question={mockQuestion} // Starts with ["pdf", "jpg"]
+        questionIdx={0}
+        updateQuestion={mockUpdateQuestion}
+        selectedLanguageCode="en"
+        setSelectedLanguageCode={mockSetSelectedLanguageCode}
+        isInvalid={false}
+        isFormbricksCloud={false}
+        locale="en-US"
+        project={{} as any}
+      />
+    );
+
+    // Find the input field for adding extensions
+    const extensionInput = screen.getByTestId("input");
+
+    // Type an unsupported extension
+    await user.type(extensionInput, "exe");
+
+    // Find and click the "Allow file type" button
+    const buttons = screen.getAllByTestId("button");
+    const addButton = buttons.find(
+      (button) => button.textContent === "environments.surveys.edit.allow_file_type"
+    );
+    expect(addButton).toBeTruthy();
+    await user.click(addButton!);
+
+    // Verify updateQuestion was NOT called
+    expect(mockUpdateQuestion).not.toHaveBeenCalled();
+
+    // Verify that the error toast WAS shown for the unsupported type
+    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.this_file_type_is_not_supported");
   });
 });

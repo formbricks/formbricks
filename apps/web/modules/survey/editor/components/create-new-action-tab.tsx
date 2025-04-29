@@ -40,8 +40,6 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),

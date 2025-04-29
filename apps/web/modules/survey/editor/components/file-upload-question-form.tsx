@@ -249,20 +249,19 @@ export const FileUploadQuestionForm = ({
           customContainerClass="p-0">
           <div className="p-4">
             <div className="flex flex-row flex-wrap gap-2">
-              {question.allowedFileExtensions &&
-                question.allowedFileExtensions.map((item, index) => (
-                  <div
-                    key={index}
-                    className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
-                    <p className="text-sm text-slate-800">{item}</p>
-                    <Button
-                      className="inline-flex px-0"
-                      variant="ghost"
-                      onClick={(e) => removeExtension(e, index)}>
-                      <XCircleIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+              {question.allowedFileExtensions?.map((item, index) => (
+                <div
+                  key={item}
+                  className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
+                  <p className="text-sm text-slate-800">{item}</p>
+                  <Button
+                    className="inline-flex px-0"
+                    variant="ghost"
+                    onClick={(e) => removeExtension(e, index)}>
+                    <XCircleIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
             <div className="flex items-center">
               <Input

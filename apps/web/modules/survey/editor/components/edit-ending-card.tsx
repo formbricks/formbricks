@@ -55,8 +55,6 @@ export const EditEndingCard = ({
   isFormbricksCloud,
   locale,
 }: EditEndingCardProps) => {
-  // [UseTusk]
-
   const endingCard = localSurvey.endings[endingCardIndex];
   const { t } = useTranslate();
   const isRedirectToUrlDisabled = isFormbricksCloud

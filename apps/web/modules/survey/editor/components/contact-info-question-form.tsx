@@ -33,8 +33,6 @@ export const ContactInfoQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: ContactInfoQuestionFormProps): JSX.Element => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
