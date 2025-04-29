@@ -1929,9 +1929,7 @@ const validateConditions = (
             });
           }
         }
-      }
-      // todo: @gupta-piyush19 please add the checks for the matrix question with row ID for zod super refine
-      else if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+      } else if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         const row = leftOperand.meta?.row;
         if (row === undefined) {
           if (rightOperand?.value !== undefined) {
