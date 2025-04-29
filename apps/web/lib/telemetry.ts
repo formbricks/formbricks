@@ -22,7 +22,7 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          api_key: "phc_SoIFUJ8b9ufDm0YOnoOxJf6PXyuHpO7N6RztxFdZTy",
+          api_key: env.TELEMETRY_API_KEY,
           event: eventName,
           properties: {
             distinct_id: getTelemetryId(),

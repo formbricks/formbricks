@@ -194,6 +194,7 @@
         "SURVEYS_PACKAGE_BUILD",
         "SURVEY_URL",
         "TELEMETRY_DISABLED",
+        "TELEMETRY_API_KEY",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
         "TERMS_URL",
