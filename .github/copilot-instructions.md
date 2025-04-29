@@ -10,8 +10,9 @@ When generating test files inside the "/app/web" path, follow these rules:
 - Follow the same test pattern used for other files in the package where the file is located
 - All imports should be at the top of the file, not inside individual tests
 - For mocking inside "test" blocks use "vi.mocked"
-- Add the original file path to the "test.coverage.include"array in the "apps/web/vite.config.mts" file
+- Add the original file path to the "test.coverage.include"array in the "apps/web/vite.config.mts" file. Do this only when the test file is created.
 - Don't mock functions that are already mocked in the "apps/web/vitestSetup.ts" file
+- When using "screen.getByText" check for the tolgee string if it is being used in the file.
   
 If it's a test for a ".tsx" file, follow these extra instructions:
 

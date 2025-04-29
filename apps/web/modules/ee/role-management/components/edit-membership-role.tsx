@@ -29,6 +29,7 @@ interface Role {
   inviteId?: string;
   doesOrgHaveMoreThanOneOwner?: boolean;
   isFormbricksCloud: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export function EditMembershipRole({
@@ -41,6 +42,7 @@ export function EditMembershipRole({
   inviteId,
   doesOrgHaveMoreThanOneOwner,
   isFormbricksCloud,
+  isUserManagementDisabledFromUi,
 }: Role) {
   const { t } = useTranslate();
   const router = useRouter();
@@ -50,6 +52,7 @@ export function EditMembershipRole({
   const isOwnerOrManager = isOwner || isManager;
 
   const disableRole =
+    isUserManagementDisabledFromUi ||
     memberId === userId ||
     (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
     (currentUserRole === "manager" && memberRole === "owner");
