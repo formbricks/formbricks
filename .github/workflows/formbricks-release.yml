@@ -31,3 +31,4 @@ jobs:
       - helm-chart-release
     with:
       VERSION: ${{ needs.docker-build.outputs.VERSION }}
+      ENVIRONMENT: "prod"
