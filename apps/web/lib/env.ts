@@ -7,12 +7,6 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
-    AI_AZURE_EMBEDDINGS_API_KEY: z.string().optional(),
-    AI_AZURE_LLM_API_KEY: z.string().optional(),
-    AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: z.string().optional(),
-    AI_AZURE_LLM_DEPLOYMENT_ID: z.string().optional(),
-    AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: z.string().optional(),
-    AI_AZURE_LLM_RESSOURCE_NAME: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
@@ -113,9 +107,6 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
-    LANGFUSE_SECRET_KEY: z.string().optional(),
-    LANGFUSE_PUBLIC_KEY: z.string().optional(),
-    LANGFUSE_BASEURL: z.string().optional(),
     UNKEY_ROOT_KEY: z.string().optional(),
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
@@ -129,15 +120,6 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
-    AI_AZURE_EMBEDDINGS_API_KEY: process.env.AI_AZURE_EMBEDDINGS_API_KEY,
-    AI_AZURE_LLM_API_KEY: process.env.AI_AZURE_LLM_API_KEY,
-    AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: process.env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID,
-    AI_AZURE_LLM_DEPLOYMENT_ID: process.env.AI_AZURE_LLM_DEPLOYMENT_ID,
-    AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: process.env.AI_AZURE_EMBEDDINGS_RESSOURCE_NAME,
-    AI_AZURE_LLM_RESSOURCE_NAME: process.env.AI_AZURE_LLM_RESSOURCE_NAME,
-    LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
-    LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
