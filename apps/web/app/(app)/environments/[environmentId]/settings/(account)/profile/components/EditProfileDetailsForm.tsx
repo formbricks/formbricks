@@ -51,70 +51,70 @@ export const EditProfileDetailsForm = ({
   const { isSubmitting, isDirty } = form.formState;
   const [showModal, setShowModal] = useState(false);
 
-  function getChangedFields(user: TUser, formValues: TEditProfileNameForm) {
-    const changedFields: Partial<TEditProfileNameForm> = {};
-
-    if (user.name !== formValues.name) changedFields.name = formValues.name;
-    if (user.locale !== formValues.locale) changedFields.locale = formValues.locale;
-    if (user.email !== formValues.email) changedFields.email = formValues.email;
-
-    return changedFields;
-  }
-
   const handleConfirmPassword = async (password: string) => {
-    try {
-      const values = form.getValues();
-      const changedFields = getChangedFields(user, values);
+  try {
+    const values = form.getValues();
+    const dirtyFields = form.formState.dirtyFields;
 
-      const emailChanged = !!changedFields.email;
-      const nameOrLocaleChanged = changedFields.name || changedFields.locale;
+    const emailChanged = 'email' in dirtyFields;
+    const nameChanged = 'name' in dirtyFields;
+    const localeChanged = 'locale' in dirtyFields;
 
-      if (emailChanged) {
-        const passwordCheckResult = await comparePasswordsAction({ password });
+    const name = values.name.trim();
+    const email = values.email.trim();
+    const locale = values.locale;
 
-        if (!passwordCheckResult?.data?.success) {
-          toast.error("Invalid password");
-          return;
-        }
-        if (!emailVerificationDisabled) {
-          if (nameOrLocaleChanged) {
-            await updateUserAction({
-              name: changedFields.name?.trim() ?? user.name,
-              locale: changedFields.locale ?? user.locale,
-            });
-          }
-          const response = await sendVerificationNewEmailAction({ email: values.email });
-          if (response?.data) {
-            toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
-          } else {
-            toast.error(getFormattedErrorMessage(response));
-          }
-        } else {
-          await updateUserAction({
-            name: changedFields.name?.trim() ?? user.name,
-            email: changedFields.email ?? user.email,
-            locale: changedFields.locale ?? user.locale,
-          });
-          toast.success(t("environments.settings.profile.profile_updated_successfully"));
-          await signOut({ redirect: false });
-          router.push(`/email-change-without-verification-success`);
-          return;
-        }
-      } else if (nameOrLocaleChanged) {
-        await updateUserAction({
-          name: changedFields.name?.trim() ?? user.name,
-          locale: changedFields.locale ?? user.locale,
-        });
-        toast.success(t("environments.settings.profile.profile_updated_successfully"));
+    if (emailChanged) {
+      const passwordCheckResult = await comparePasswordsAction({ password });
+
+      if (!passwordCheckResult?.data?.success) {
+        toast.error("Invalid password");
+        return;
       }
 
-      window.location.reload();
-      setShowModal(false);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`${t("common.error")}: ${errorMessage}`);
+      if (!emailVerificationDisabled) {
+        if (nameChanged || localeChanged) {
+          await updateUserAction({
+            name: nameChanged ? name : user.name,
+            locale: localeChanged ? locale : user.locale,
+          });
+        }
+
+        const response = await sendVerificationNewEmailAction({ email });
+        if (response?.data) {
+          toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
+        } else {
+          toast.error(getFormattedErrorMessage(response));
+        }
+      } else {
+        await updateUserAction({
+          name: nameChanged ? name : user.name,
+          email,
+          locale: localeChanged ? locale : user.locale,
+        });
+
+        toast.success(t("environments.settings.profile.profile_updated_successfully"));
+        await signOut({ redirect: false });
+        router.push(`/email-change-without-verification-success`);
+        return;
+      }
+    } else if (nameChanged || localeChanged) {
+      await updateUserAction({
+        name: nameChanged ? name : user.name,
+        locale: localeChanged ? locale : user.locale,
+      });
+
+      toast.success(t("environments.settings.profile.profile_updated_successfully"));
     }
-  };
+
+    window.location.reload();
+    setShowModal(false);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    toast.error(`${t("common.error")}: ${errorMessage}`);
+  }
+};
+
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     if (data.email !== user.email) {
