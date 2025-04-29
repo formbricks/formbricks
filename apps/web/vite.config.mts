@@ -93,8 +93,7 @@ export default defineConfig({
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/survey/follow-ups/components/follow-up-item.tsx",
-        "modules/ee/contacts/segments/lib/**/*.ts",
-        "modules/ee/contacts/segments/components/segment-settings.tsx",
+        "modules/ee/contacts/segments/*",
         "modules/survey/editor/lib/utils.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
@@ -110,9 +109,7 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
-        "lib/utils/billing.ts",
-        "survey/editor/lib/utils.tsx",
-        "modules/ui/components/card/index.tsx"
+        "modules/ui/components/card/index.tsx",
       ],
       exclude: [
         "**/.next/**",
