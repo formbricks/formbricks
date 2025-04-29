@@ -194,7 +194,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
                 type: "attribute",
                 onAddFilter,
                 setOpen,
-                contactAttributeKey: attributeKey.name ?? attributeKey.key,
+                contactAttributeKey: attributeKey.key,
               });
             }}
             onKeyDown={(e) => {
@@ -204,7 +204,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
                   type: "attribute",
                   onAddFilter,
                   setOpen,
-                  contactAttributeKey: attributeKey.name ?? attributeKey.key,
+                  contactAttributeKey: attributeKey.key,
                 });
               }
             }}>
