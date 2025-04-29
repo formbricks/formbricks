@@ -5,7 +5,7 @@ import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
-import { HTMLInputTypeAttribute } from "react";
+import { HTMLInputTypeAttribute, JSX } from "react";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -23,16 +23,64 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
+export const MAX_STRING_LENGTH = 2000;
+
+export const extractParts = (text: string): string[] => {
+  const parts: string[] = [];
+  let i = 0;
+
+  if (text.length > MAX_STRING_LENGTH) {
+    // If the text is unexpectedly too long, return it as a single part
+    parts.push(text);
+    return parts;
+  }
+
+  while (i < text.length) {
+    const start = text.indexOf("/", i);
+    if (start === -1) {
+      // No more `/`, push the rest and break
+      parts.push(text.slice(i));
+      break;
+    }
+    const end = text.indexOf("\\", start + 1);
+    if (end === -1) {
+      // No matching `\`, treat as plain text
+      parts.push(text.slice(i));
+      break;
+    }
+    // Add text before the match
+    if (start > i) {
+      parts.push(text.slice(i, start));
+    }
+    // Add the highlighted part (without `/` and `\`)
+    parts.push(text.slice(start + 1, end));
+    // Move past the `\`
+    i = end + 1;
+  }
+
+  if (parts.length === 0) {
+    parts.push(text);
+  }
+
+  return parts;
+};
+
 // formats the text to highlight specific parts of the text with slashes
-export const formatTextWithSlashes = (text: string) => {
-  const regex = /\/(.*?)\\/g;
-  const parts = text.split(regex);
+export const formatTextWithSlashes = (
+  text: string,
+  prefix: string = "",
+  classNames: string[] = ["text-xs"]
+): (string | JSX.Element)[] => {
+  const parts = extractParts(text);
 
   return parts.map((part, index) => {
     // Check if the part was inside slashes
     if (index % 2 !== 0) {
       return (
-        <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
+        <span
+          key={index}
+          className={`mx-1 rounded-md bg-slate-100 p-1 px-2${classNames ? ` ${classNames.join(" ")}` : ""}`}>
+          {prefix}
           {part}
         </span>
       );
@@ -64,6 +112,28 @@ export const getConditionValueOptions = (
   const questionOptions = questions
     .filter((_, idx) => idx <= currQuestionIdx)
     .map((question) => {
+      if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        const rows = question.rows.map((row, rowIdx) => ({
+          icon: getQuestionIconMapping(t)[question.type],
+          label: `${getLocalizedValue(question.headline, "default")}: ${getLocalizedValue(row, "default")}`,
+          value: `${question.id}.${rowIdx}`,
+          meta: {
+            type: "question",
+            rowIdx: rowIdx,
+          },
+        }));
+
+        const questionEntry = {
+          icon: getQuestionIconMapping(t)[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        };
+        return [questionEntry, ...rows];
+      }
+
       return {
         icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
@@ -72,7 +142,8 @@ export const getConditionValueOptions = (
           type: "question",
         },
       };
-    });
+    })
+    .flat();
 
   const variableOptions = variables.map((variable) => {
     return {
@@ -143,12 +214,20 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (question: TSurveyQuestion, t: TFnType): TComboboxOption[] => {
+const getQuestionOperatorOptions = (
+  question: TSurveyQuestion,
+  t: TFnType,
+  condition?: TSingleCondition
+): TComboboxOption[] => {
   let options: TLogicRuleOption;
 
   if (question.type === "openText") {
     const inputType = question.inputType === "number" ? "number" : "text";
     options = getLogicRules(t).question[`openText.${inputType}`].options;
+  } else if (question.type === TSurveyQuestionTypeEnum.Matrix && condition) {
+    const isMatrixRow =
+      condition.leftOperand.type === "question" && condition.leftOperand?.meta?.row !== undefined;
+    options = getLogicRules(t).question[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
     options = getLogicRules(t).question[question.type].options;
   }
@@ -183,11 +262,17 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t).hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     const questions = localSurvey.questions ?? [];
-    const question = questions.find((question) => question.id === condition.leftOperand.value);
+    const question = questions.find((question) => {
+      let leftOperandQuestionId = condition.leftOperand.value;
+      if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        leftOperandQuestionId = condition.leftOperand.value.split(".")[0];
+      }
+      return question.id === leftOperandQuestionId;
+    });
 
     if (!question) return [];
 
-    return getQuestionOperatorOptions(question, t);
+    return getQuestionOperatorOptions(question, t, condition);
   }
   return [];
 };
@@ -214,6 +299,8 @@ export const getMatchValueProps = (
       "isSubmitted",
       "isSet",
       "isNotSet",
+      "isEmpty",
+      "isNotEmpty",
     ].includes(condition.operator)
   ) {
     return { show: false, options: [] };
@@ -523,6 +610,22 @@ export const getMatchValueProps = (
         showInput: true,
         inputType: "date",
         options: groupedOptions,
+      };
+    } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Matrix) {
+      const choices = selectedQuestion.columns.map((column, colIdx) => {
+        return {
+          label: getLocalizedValue(column, "default"),
+          value: colIdx.toString(),
+          meta: {
+            type: "static",
+          },
+        };
+      });
+
+      return {
+        show: true,
+        showInput: false,
+        options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
     }
   } else if (condition.leftOperand.type === "variable") {
@@ -1077,7 +1180,8 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
 export const findOptionUsedInLogic = (
   survey: TSurvey,
   questionId: TSurveyQuestionId,
-  optionId: string
+  optionId: string,
+  checkInLeftOperand: boolean = false
 ): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
@@ -1091,7 +1195,15 @@ export const findOptionUsedInLogic = (
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
     if (condition.leftOperand.type === "question" && condition.leftOperand.value === questionId) {
-      if (condition.rightOperand && condition.rightOperand.type === "static") {
+      if (checkInLeftOperand) {
+        if (condition.leftOperand.meta && Object.entries(condition.leftOperand.meta).length > 0) {
+          const optionIdInMeta = Object.values(condition.leftOperand.meta).some(
+            (metaValue) => metaValue === optionId
+          );
+          return optionIdInMeta;
+        }
+      }
+      if (!checkInLeftOperand && condition.rightOperand && condition.rightOperand.type === "static") {
         if (Array.isArray(condition.rightOperand.value)) {
           return condition.rightOperand.value.includes(optionId);
         } else {

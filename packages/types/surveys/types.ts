@@ -1,7 +1,6 @@
 /* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
@@ -298,6 +297,9 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "isCompletelySubmitted",
   "isSet",
   "isNotSet",
+  "isEmpty",
+  "isNotEmpty",
+  "isAnyOf",
 ]);
 
 const operatorsWithoutRightOperand = [
@@ -310,6 +312,8 @@ const operatorsWithoutRightOperand = [
   ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
   ZSurveyLogicConditionsOperator.Enum.isSet,
   ZSurveyLogicConditionsOperator.Enum.isNotSet,
+  ZSurveyLogicConditionsOperator.Enum.isEmpty,
+  ZSurveyLogicConditionsOperator.Enum.isNotEmpty,
 ] as const;
 
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
@@ -325,6 +329,7 @@ export const ZActionNumberVariableCalculateOperator = z.enum(
 const ZDynamicQuestion = z.object({
   type: z.literal("question"),
   value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
+  meta: z.record(z.string()).optional(),
 });
 
 const ZDynamicVariable = z.object({
@@ -1465,7 +1470,18 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.Matrix:
-      if (!["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"].includes(operator)) {
+      if (
+        ![
+          "isPartiallySubmitted",
+          "isCompletelySubmitted",
+          "isSkipped",
+          "isEmpty",
+          "isNotEmpty",
+          "isAnyOf",
+          "equals",
+          "doesNotEqual",
+        ].includes(operator)
+      ) {
         isInvalidOperator = true;
       }
       break;
@@ -1599,6 +1615,8 @@ const validateConditions = (
           "isBooked",
           "isPartiallySubmitted",
           "isCompletelySubmitted",
+          "isEmpty",
+          "isNotEmpty",
         ].includes(operator)
       ) {
         if (rightOperand !== undefined) {
@@ -1908,6 +1926,49 @@ const validateConditions = (
               message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
+          }
+        }
+      } else if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        const row = leftOperand.meta?.row;
+        if (row === undefined) {
+          if (rightOperand?.value !== undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          if (rightOperand === undefined) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand is required in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+          if (rightOperand) {
+            if (rightOperand.type !== "static") {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Right operand should be a static value in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+            const rowIndex = Number(row);
+            if (rowIndex < 0 || rowIndex >= question.rows.length) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid row index in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
           }
         }
       }
@@ -2409,20 +2470,12 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
-  insights: z.array(
-    ZInsight.extend({
-      _count: z.object({
-        documentInsights: z.number(),
-      }),
-    })
-  ),
-  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
@@ -2444,7 +2497,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
             contact: z
               .object({
                 id: ZId,
-                userId: z.string(),
+                userId: z.string().optional(),
               })
               .nullable(),
             contactAttributes: ZContactAttributes.nullable(),
@@ -2562,7 +2615,7 @@ export const ZSurveyQuestionSummaryDate = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2584,7 +2637,7 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2641,7 +2694,7 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2663,7 +2716,7 @@ export const ZSurveyQuestionSummaryAddress = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2685,7 +2738,7 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
       contact: z
         .object({
           id: ZId,
-          userId: z.string(),
+          userId: z.string().optional(),
         })
         .nullable(),
       contactAttributes: ZContactAttributes.nullable(),
@@ -2711,7 +2764,7 @@ export const ZSurveyQuestionSummaryRanking = z.object({
             contact: z
               .object({
                 id: ZId,
-                userId: z.string(),
+                userId: z.string().optional(),
               })
               .nullable(),
             contactAttributes: ZContactAttributes.nullable(),

@@ -28,6 +28,9 @@ export const ZResponseFilterCondition = z.enum([
   "booked",
   "isCompletelySubmitted",
   "isPartiallySubmitted",
+  "isEmpty",
+  "isNotEmpty",
+  "isAnyOf",
 ]);
 
 export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
@@ -133,6 +136,19 @@ const ZResponseFilterCriteriaMatrix = z.object({
   value: z.record(z.string(), z.string()),
 });
 
+const ZResponseFilterCriteriaIsEmpty = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.isEmpty),
+});
+
+const ZResponseFilterCriteriaIsNotEmpty = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.isNotEmpty),
+});
+
+const ZResponseFilterCriteriaIsAnyOf = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.isAnyOf),
+  value: z.record(z.string(), z.array(z.string())),
+});
+
 const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
 });
@@ -174,6 +190,9 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataNotUploaded,
         ZResponseFilterCriteriaDataBooked,
         ZResponseFilterCriteriaMatrix,
+        ZResponseFilterCriteriaIsEmpty,
+        ZResponseFilterCriteriaIsNotEmpty,
+        ZResponseFilterCriteriaIsAnyOf,
         ZResponseFilterCriteriaFilledOut,
       ])
     )
@@ -207,7 +226,7 @@ export const ZResponseFilterCriteria = z.object({
 
 export const ZResponseContact = z.object({
   id: ZId,
-  userId: z.string(),
+  userId: z.string().optional(),
 });
 
 export type TResponseContact = z.infer<typeof ZResponseContact>;

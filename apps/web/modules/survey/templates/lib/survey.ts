@@ -1,8 +1,6 @@
 import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { surveyCache } from "@/lib/survey/cache";
-import { getInsightsEnabled } from "@/modules/survey/lib/utils";
-import { doesSurveyHasOpenTextQuestion } from "@/modules/survey/lib/utils";
 import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -13,30 +11,6 @@ export const createSurvey = async (
   surveyBody: Pick<Survey, "name" | "questions">
 ): Promise<{ id: string }> => {
   try {
-    if (doesSurveyHasOpenTextQuestion(surveyBody.questions ?? [])) {
-      const openTextQuestions =
-        surveyBody.questions?.filter((question) => question.type === "openText") ?? [];
-      const insightsEnabledValues = await Promise.all(
-        openTextQuestions.map(async (question) => {
-          const insightsEnabled = await getInsightsEnabled(question);
-
-          return { id: question.id, insightsEnabled };
-        })
-      );
-
-      surveyBody.questions = surveyBody.questions?.map((question) => {
-        const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-        if (index !== -1) {
-          return {
-            ...question,
-            insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-          };
-        }
-
-        return question;
-      });
-    }
-
     const survey = await prisma.survey.create({
       data: {
         ...surveyBody,

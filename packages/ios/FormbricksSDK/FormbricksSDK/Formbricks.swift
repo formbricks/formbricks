@@ -1,6 +1,14 @@
 import Foundation
 import Network
 
+/// Formbricks SDK delegate protocol. It contains the main methods to interact with the SDK.
+public protocol FormbricksDelegate: AnyObject {
+    func onSurveyStarted()
+    func onSurveyFinished()
+    func onSurveyClosed()
+    func onError(_ error: Error)
+}
+
 /// The main class of the Formbricks SDK. It contains the main methods to interact with the SDK.
 @objc(Formbricks) public class Formbricks: NSObject {
     
@@ -15,6 +23,7 @@ import Network
     static internal var apiQueue: OperationQueue? = OperationQueue()
     static internal var logger: Logger?
     static internal var service = FormbricksService()
+    public static weak var delegate: FormbricksDelegate?
     
     // make this class not instantiatable outside of the SDK
     internal override init() {
@@ -41,12 +50,16 @@ import Network
      */
     @objc public static func setup(with config: FormbricksConfig, force: Bool = false) {
         logger = Logger()
+        apiQueue = OperationQueue()
         
-        if (force == true) {
+        if force {
             isInitialized = false
         }
+        
         guard !isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsAlreadyInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsAlreadyInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
@@ -87,7 +100,9 @@ import Network
      */
     @objc public static func setUserId(_ userId: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+                        delegate?.onError(error)
+                        Formbricks.logger?.error(error.message)
             return
         }
         
@@ -110,7 +125,9 @@ import Network
      */
     @objc public static func setAttribute(_ attribute: String, forKey key: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
@@ -128,7 +145,9 @@ import Network
      */
     @objc public static func setAttributes(_ attributes: [String : String]) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
@@ -146,7 +165,9 @@ import Network
      */
     @objc public static func setLanguage(_ language: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
@@ -169,7 +190,9 @@ import Network
      */
     @objc public static func track(_ action: String) {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
@@ -194,7 +217,9 @@ import Network
      */
     @objc public static func logout() {
         guard Formbricks.isInitialized else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .sdkIsNotInitialized).message)
+            let error = FormbricksSDKError(type: .sdkIsNotInitialized)
+            delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
 
@@ -235,6 +260,7 @@ import Network
     }
 
     private static func performCleanup() {
+        userManager?.logout()
         userManager?.cleanupUpdateQueue()
         presentSurveyManager?.dismissView()
         presentSurveyManager = nil
