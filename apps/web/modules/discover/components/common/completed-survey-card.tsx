@@ -1,4 +1,4 @@
-import { getUserResponseAction } from "@/modules/discover/components/Surveys/actions";
+import { getUserResponseAction } from "@/modules/discover/components/Engagements/actions";
 import { SurveyInfoModal } from "@/modules/discover/components/common/survey-response-modal";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";

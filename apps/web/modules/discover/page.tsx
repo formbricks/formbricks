@@ -1,4 +1,4 @@
-import Surveys from "@/modules/discover/components/Surveys";
+import Engagements from "@/modules/discover/components/Engagements";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -9,7 +9,7 @@ export const DiscoverPage = async () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.discover")} />
-      <Surveys />
+      <Engagements />
     </PageContentWrapper>
   );
 };
