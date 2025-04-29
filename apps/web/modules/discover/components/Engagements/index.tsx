@@ -1,11 +1,13 @@
 "use client";
 
+import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
 import AvailableSurveys from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
 import { SearchSection } from "@/modules/discover/components/common/search-section";
+import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 
 export function Engagements({ className = "" }: { className?: string }): React.JSX.Element {
@@ -23,10 +25,40 @@ export function Engagements({ className = "" }: { className?: string }): React.J
   ];
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkCompletedSurveys = async () => {
+      setIsLoading(true);
+      try {
+        const completedSurveys = await getCompletedSurveysAction({
+          take: 1,
+          skip: 0,
+          searchQuery: "",
+        });
+
+        setShowWelcomeBanner(completedSurveys?.data?.length == 0);
+      } catch (error) {
+        console.error("Error checking completed surveys:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkCompletedSurveys();
+  }, []);
 
   return (
     <>
       <div className={cn("relative my-4 flex w-full flex-col gap-2", className)} id={"surveys"}>
+        {showWelcomeBanner && !isLoading && (
+          <WelcomeBanner
+            showWelcomeBanner={showWelcomeBanner}
+            isLoading={isLoading}
+            setShowWelcomeBanner={setShowWelcomeBanner}
+          />
+        )}
         <SearchSection setSearchQuery={setSearchQuery} />
         <TabBar
           tabs={tabs}
@@ -41,7 +73,7 @@ export function Engagements({ className = "" }: { className?: string }): React.J
               case "available-surveys":
                 return <AvailableSurveys searchQuery={searchQuery} />;
               case "completed-surveys":
-                return <CompletedSurveys searchQuery={searchQuery} />;
+                return <CompletedSurveys searchQuery={searchQuery} setActiveTab={setActiveTab} />;
               default:
                 return <AvailableSurveys searchQuery={searchQuery} />;
             }
