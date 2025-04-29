@@ -111,7 +111,8 @@ export default defineConfig({
         "lib/surveyLogic/utils.ts",
         "lib/utils/billing.ts",
         "survey/editor/lib/utils.tsx",
-        "modules/ui/components/card/index.tsx"
+        "modules/ui/components/card/index.tsx",
+        "modules/survey/editor/components/nps-question-form.tsx"
       ],
       exclude: [
         "**/.next/**",
