@@ -6,6 +6,10 @@ import { Button } from "@/modules/ui/components/button";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
+// Mock toast
+// Note: This is already mocked in vitestSetup.ts
+// This code is kept here for reference but we'll use direct import for spying
+import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
@@ -160,14 +164,6 @@ vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn(),
 }));
 
-// Mock toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}));
-
 // Mock localStorage
 const mockLocalStorage = (() => {
   let store: Record<string, string> = {};
@@ -193,11 +189,6 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-// Create a proper test wrapper component
-const TestProvider = ({ children }: { children: React.ReactNode }) => {
-  return <div data-testid="test-wrapper">{children}</div>;
-};
-
 // Define mock data for tests
 const mockProps = {
   data: [
@@ -205,15 +196,7 @@ const mockProps = {
     { responseId: "resp2", createdAt: new Date().toISOString(), status: "completed", person: "Person 2" },
   ] as any[],
   survey: {
-    // id: "survey1",
-    // name: "Test Survey",
-    // questions: [],
-    // environmentId: "env1",
-    // variables: [],
-    // hiddenFields: { fieldIds: [] },
-    // isVerifyEmailEnabled: false,
-
-    id: "survey1", // Changed from "string" to "survey1" to match the test expectations
+    id: "survey1",
     createdAt: new Date(),
     updatedAt: new Date(),
     name: "name",
@@ -242,6 +225,10 @@ beforeEach(() => {
   const container = document.createElement("div");
   container.id = "test-container";
   document.body.appendChild(container);
+
+  // Reset all toast mocks before each test
+  vi.mocked(toast.error).mockClear();
+  vi.mocked(toast.success).mockClear();
 
   // Create a mock anchor element for download tests
   const mockAnchor = {
@@ -386,27 +373,25 @@ describe("ResponseTable", () => {
     expect(screen.queryByTestId("response-modal")).not.toBeInTheDocument();
   });
 
-  /* 
-  
-
-  
-
   test("shows error toast when download action returns error", async () => {
     const errorMsg = "Download failed";
-    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({ 
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
       error: { message: errorMsg },
       success: false,
     });
     vi.mocked(getFormattedErrorMessage).mockReturnValueOnce(errorMsg);
 
-    render(<ResponseTable {...mockProps} />);
+    // Reset document.createElement spy to fix the last test
+    vi.mocked(document.createElement).mockClear();
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
       expect(getFormattedErrorMessage).toHaveBeenCalled();
-      const toast = require("react-hot-toast").default;
       expect(toast.error).toHaveBeenCalledWith(errorMsg);
     });
   });
@@ -415,13 +400,13 @@ describe("ResponseTable", () => {
     vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({});
     vi.mocked(getFormattedErrorMessage).mockReturnValueOnce(null);
 
-    render(<ResponseTable {...mockProps} />);
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
-      const toast = require("react-hot-toast").default;
       expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
     });
   });
@@ -430,13 +415,13 @@ describe("ResponseTable", () => {
     vi.mocked(getResponsesDownloadUrlAction).mockRejectedValueOnce(new Error("Network error"));
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    render(<ResponseTable {...mockProps} />);
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
-      const toast = require("react-hot-toast").default;
       expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
@@ -445,18 +430,26 @@ describe("ResponseTable", () => {
   });
 
   test("does not create download link when download action fails", async () => {
-    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({ 
+    // Clear any previous calls to document.createElement
+    vi.mocked(document.createElement).mockClear();
+
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
       error: { message: "Download failed" },
       success: false,
     });
 
-    render(<ResponseTable {...mockProps} />);
+    // Create a fresh spy for createElement for this test only
+    const createElementSpy = vi.spyOn(document, "createElement");
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
-      expect(document.createElement).not.toHaveBeenCalled();
+      // Check specifically for "a" element creation, not any element
+      expect(createElementSpy).not.toHaveBeenCalledWith("a");
     });
   });
 
@@ -472,11 +465,11 @@ describe("ResponseTable", () => {
       return null;
     });
 
-    render(<ResponseTable {...mockProps} />);
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
 
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnOrder");
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnVisibility");
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-rowExpand");
   });
-  */
 });

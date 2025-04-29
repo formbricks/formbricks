@@ -49,9 +49,7 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
-      } else if (type === "contact") {
+      if (type === "response" || type === "contact") {
         await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
       }
 

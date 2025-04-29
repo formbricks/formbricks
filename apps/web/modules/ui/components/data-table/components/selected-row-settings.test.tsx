@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import React from "react";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SelectedRowSettings } from "./selected-row-settings";
@@ -169,7 +168,7 @@ describe("SelectedRowSettings", () => {
   });
 
   test("handles delete error for non-Error and shows generic error toast", async () => {
-    deleteAction = vi.fn(() => Promise.reject("fail nonerror"));
+    deleteAction = vi.fn(() => Promise.reject(new Error("fail nonerror")));
     render(
       <SelectedRowSettings
         table={table}

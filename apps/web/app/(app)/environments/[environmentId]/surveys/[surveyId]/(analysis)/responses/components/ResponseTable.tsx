@@ -30,7 +30,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -198,15 +198,12 @@ export const ResponseTable = ({
         link.click();
         document.body.removeChild(link);
       } else {
-        toast.error(
-          getFormattedErrorMessage(downloadResponse) ||
-            t("environments.surveys.responses.error_downloading_responses")
-        );
+        const errorMessage = getFormattedErrorMessage(downloadResponse);
+        toast.error(errorMessage || t("environments.surveys.responses.error_downloading_responses"));
       }
     } catch (error) {
-      const toast = (await import("react-hot-toast")).default;
-      toast.error(t("environments.surveys.responses.error_downloading_responses"));
       console.error(error);
+      toast.error(t("environments.surveys.responses.error_downloading_responses"));
     }
   };
 
