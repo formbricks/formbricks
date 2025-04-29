@@ -14,6 +14,7 @@ import {
   type TActionClassPageUrlRule,
   type TTrackProperties,
 } from "@/types/survey";
+import { randomInt } from "node:crypto";
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date): number => {
@@ -184,7 +185,7 @@ export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: stri
 };
 
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boolean => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
+  const randomNum = randomInt(0, 10000) / 100;
   return randomNum <= displayPercentage;
 };
 

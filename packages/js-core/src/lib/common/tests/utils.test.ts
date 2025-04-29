@@ -24,6 +24,7 @@ import type {
   TUserState,
 } from "@/types/config";
 import { type TActionClassPageUrlRule } from "@/types/survey";
+import { randomInt } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockSurveyId1 = "e3kxlpnzmdp84op9qzxl9olj";
@@ -399,12 +400,12 @@ describe("utils.ts", () => {
   // ---------------------------------------------------------------------------------
   describe("shouldDisplayBasedOnPercentage()", () => {
     test("returns true if random number <= displayPercentage", () => {
-      // We'll mock Math.random to return something
-      const mockedRandom = vi.spyOn(Math, "random").mockReturnValue(0.2); // 0.2 => 20%
+      // We'll mock randomInt to return something
+      const mockedRandom = vi.spyOn({ randomInt }, "randomInt").mockImplementation(() => 2000); // 0.2 => 20%
       // displayPercentage = 30 => 30% => we should display
       expect(shouldDisplayBasedOnPercentage(30)).toBe(true);
 
-      mockedRandom.mockReturnValue(0.5); // 50%
+      mockedRandom.mockImplementation(() => 5000); // 50%
       expect(shouldDisplayBasedOnPercentage(30)).toBe(false);
 
       // restore

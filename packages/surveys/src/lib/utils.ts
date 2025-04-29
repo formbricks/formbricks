@@ -1,4 +1,5 @@
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
+import { randomInt } from "node:crypto";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
@@ -17,7 +18,7 @@ export const cn = (...classes: string[]) => {
 
 const shuffle = (array: unknown[]) => {
   for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = randomInt(i + 1); // Generates random integer in [0, i]
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
