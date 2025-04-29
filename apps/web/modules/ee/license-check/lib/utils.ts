@@ -3,7 +3,6 @@ import { cache, revalidateTag } from "@/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
-  IS_AI_CONFIGURED,
   IS_FORMBRICKS_CLOUD,
   PROJECT_FEATURE_KEYS,
 } from "@/lib/constants";
@@ -387,25 +386,6 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.sso && licenseFeatures.saml;
-};
-
-export const getIsOrganizationAIReady = async (billingPlan: Organization["billing"]["plan"]) => {
-  if (!IS_AI_CONFIGURED) return false;
-  if (E2E_TESTING) {
-    const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.ai : false;
-  }
-  const license = await getEnterpriseLicense();
-
-  if (IS_FORMBRICKS_CLOUD) {
-    return Boolean(license.features?.ai && billingPlan !== PROJECT_FEATURE_KEYS.FREE);
-  }
-
-  return Boolean(license.features?.ai);
-};
-
-export const getIsAIEnabled = async (organization: Pick<Organization, "isAIEnabled" | "billing">) => {
-  return organization.isAIEnabled && (await getIsOrganizationAIReady(organization.billing.plan));
 };
 
 export const getOrganizationProjectsLimit = async (
