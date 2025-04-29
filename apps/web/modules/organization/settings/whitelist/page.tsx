@@ -1,6 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
+import { WhitelistView } from "@/modules/organization/settings/whitelist/components/whitelist-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -16,7 +16,7 @@ export const WhitelistPage = async (props) => {
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar environmentId={params.environmentId} activeId="whitelist" />
       </PageHeader>
-      <MembersView
+      <WhitelistView
         membershipRole={currentUserMembership.role}
         organization={organization}
         currentUserId={session.user.id}

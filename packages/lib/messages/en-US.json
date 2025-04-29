@@ -1153,6 +1153,8 @@
         "logo_saved_successfully": "Logo saved successfully",
         "manage_members": "Manage members",
         "manage_members_description": "Add or remove members in your organization.",
+        "manage_whitelist": "Manage whitelist",
+        "manage_whitelist_description": "Add or remove whitelisted users in your organization.",
         "member_deleted_successfully": "Member deleted successfully",
         "member_invited_successfully": "Member invited successfully",
         "once_its_gone_its_gone": "Once it's gone, it's gone.",
