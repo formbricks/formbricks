@@ -7,9 +7,9 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -124,19 +124,16 @@ export const updateSurveyAction = authenticatedActionClient
 
     const { followUps } = parsedInput;
 
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission();
+    }
+
     if (followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
     }
 
     if (parsedInput.languages?.length) {
       await checkMultiLanguagePermission(organizationId);
-    }
-
-    if (parsedInput.recaptcha?.enabled) {
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-      if (!isSpamProtectionEnabled) {
-        throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
-      }
     }
 
     return await updateSurvey(parsedInput);

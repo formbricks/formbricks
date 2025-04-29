@@ -96,6 +96,13 @@ export const PUT = async (
       );
     }
 
+    if (surveyUpdate.recaptcha?.enabled) {
+      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+      if (!isSpamProtectionEnabled) {
+        return responses.forbiddenResponse("Spam protection is not enabled for this organization");
+      }
+    }
+
     if (surveyUpdate.followUps && surveyUpdate.followUps.length) {
       const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
       if (!isSurveyFollowUpsEnabled) {
@@ -107,13 +114,6 @@ export const PUT = async (
       const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
       if (!isMultiLanguageEnabled) {
         return responses.forbiddenResponse("Multi language is not enabled for this organization");
-      }
-    }
-
-    if (surveyUpdate.recaptcha?.enabled) {
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-      if (!isSpamProtectionEnabled) {
-        return responses.forbiddenResponse("Spam protection is not enabled for this organization");
       }
     }
 

@@ -3,10 +3,10 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -57,19 +57,16 @@ export const createSurveyAction = authenticatedActionClient
       ],
     });
 
+    if (parsedInput.surveyBody.recaptcha?.enabled) {
+      await checkSpamProtectionPermission();
+    }
+
     if (parsedInput.surveyBody.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
     }
 
     if (parsedInput.surveyBody.languages?.length) {
       await checkMultiLanguagePermission(organizationId);
-    }
-
-    if (parsedInput.surveyBody.recaptcha?.enabled) {
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-      if (!isSpamProtectionEnabled) {
-        throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
-      }
     }
 
     return await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);

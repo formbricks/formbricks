@@ -10,11 +10,11 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
@@ -62,19 +62,16 @@ export const updateSurveyAction = authenticatedActionClient
       ],
     });
 
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission();
+    }
+
     if (parsedInput.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
     }
 
     if (parsedInput.languages?.length) {
       await checkMultiLanguagePermission(organizationId);
-    }
-
-    if (parsedInput.recaptcha?.enabled) {
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-      if (!isSpamProtectionEnabled) {
-        throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
-      }
     }
 
     return await updateSurvey(parsedInput);

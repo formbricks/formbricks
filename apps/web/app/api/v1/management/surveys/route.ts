@@ -69,6 +69,13 @@ export const POST = async (request: Request): Promise<Response> => {
 
     const surveyData = { ...inputValidation.data, environmentId };
 
+    if (surveyData.recaptcha?.enabled) {
+      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+      if (!isSpamProtectionEnabled) {
+        return responses.forbiddenResponse("Spam protection is not enabled for this organization");
+      }
+    }
+
     if (surveyData.followUps?.length) {
       const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
       if (!isSurveyFollowUpsEnabled) {
@@ -80,13 +87,6 @@ export const POST = async (request: Request): Promise<Response> => {
       const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
       if (!isMultiLanguageEnabled) {
         return responses.forbiddenResponse("Multi language is not enabled for this organization");
-      }
-    }
-
-    if (surveyData.recaptcha?.enabled) {
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-      if (!isSpamProtectionEnabled) {
-        return responses.forbiddenResponse("Spam protection is not enabled for this organization");
       }
     }
 

@@ -40,6 +40,7 @@ export const verifyRecaptchaToken = async (token: string, threshold: number): Pr
 
     const data = await response.json();
 
+    console.log("reCAPTCHA verification response", data);
     // Check if verification was successful
     if (!data.success) {
       logger.error(data, "reCAPTCHA verification failed");
