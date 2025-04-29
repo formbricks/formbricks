@@ -110,7 +110,9 @@ export default defineConfig({
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
         "modules/ui/components/card/index.tsx",
-        "modules/survey/editor/components/nps-question-form.tsx"
+        "modules/survey/editor/components/nps-question-form.tsx",
+        "modules/survey/editor/components/create-new-action-tab.tsx",
+        "modules/survey/editor/components/logic-editor-actions.tsx",
       ],
       exclude: [
         "**/.next/**",
