@@ -1492,6 +1492,7 @@
         "no_hidden_fields_yet_add_first_one_below": "尚無隱藏欄位。在下方新增第一個隱藏欄位。",
         "no_images_found_for": "找不到「'{'query'}'」的圖片",
         "no_languages_found_add_first_one_to_get_started": "找不到語言。新增第一個語言以開始使用。",
+        "no_option_found": "找不到選項",
         "no_variables_yet_add_first_one_below": "尚無變數。在下方新增第一個變數。",
         "number": "數字",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "設定後，此問卷的預設語言只能藉由停用多語言選項並刪除所有翻譯來變更。",

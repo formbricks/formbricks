@@ -1492,6 +1492,7 @@
         "no_hidden_fields_yet_add_first_one_below": "No hidden fields yet. Add the first one below.",
         "no_images_found_for": "No images found for ''{query}\"",
         "no_languages_found_add_first_one_to_get_started": "No languages found. Add the first one to get started.",
+        "no_option_found": "No option found",
         "no_variables_yet_add_first_one_below": "No variables yet. Add the first one below.",
         "number": "Number",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Once set, the default language for this survey can only be changed by disabling the multi-language option and deleting all translations.",

@@ -1492,6 +1492,7 @@
         "no_hidden_fields_yet_add_first_one_below": "Ainda não há campos ocultos. Adicione o primeiro abaixo.",
         "no_images_found_for": "Não foram encontradas imagens para ''{query}\"",
         "no_languages_found_add_first_one_to_get_started": "Nenhuma língua encontrada. Adicione a primeira para começar.",
+        "no_option_found": "Nenhuma opção encontrada",
         "no_variables_yet_add_first_one_below": "Ainda não há variáveis. Adicione a primeira abaixo.",
         "number": "Número",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Depois de definido, o idioma padrão desta pesquisa só pode ser alterado desativando a opção de vários idiomas e eliminando todas as traduções.",
