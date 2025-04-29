@@ -378,7 +378,7 @@ describe("AddFilterModal", () => {
       await testFilterInteraction(
         () => screen.getByText("Email Address"),
         "attribute",
-        { contactAttributeKey: "Email Address" }, // Uses name in this tab
+        { contactAttributeKey: "email" },
         "equals",
         ""
       );
@@ -388,7 +388,7 @@ describe("AddFilterModal", () => {
       await testFilterInteraction(
         () => screen.getByText("Plan Type"),
         "attribute",
-        { contactAttributeKey: "Plan Type" }, // Uses name in this tab
+        { contactAttributeKey: "plan" },
         "equals",
         ""
       );
