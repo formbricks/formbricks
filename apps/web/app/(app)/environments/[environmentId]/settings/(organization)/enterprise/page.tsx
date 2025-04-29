@@ -59,11 +59,6 @@ const Page = async (props) => {
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.ai"),
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
       title: t("environments.settings.enterprise.audit_logs"),
       comingSoon: false,
       onRequest: true,

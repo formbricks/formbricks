@@ -1,7 +1,6 @@
 /* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
@@ -2477,14 +2476,6 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
-  insights: z.array(
-    ZInsight.extend({
-      _count: z.object({
-        documentInsights: z.number(),
-      }),
-    })
-  ),
-  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
