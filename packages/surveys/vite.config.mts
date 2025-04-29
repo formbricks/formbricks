@@ -24,6 +24,7 @@ const config = ({ mode }) => {
         reportsDirectory: "./coverage",
         include: [
           "src/lib/api-client.ts",
+          "src/lib/logic.ts",
           "src/components/buttons/*.tsx"
         ],
         exclude: ["dist/**", "node_modules/**"],

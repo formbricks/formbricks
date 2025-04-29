@@ -1,8 +1,13 @@
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyDropDownMenu } from "../survey-dropdown-menu";
+
+// Mock translation
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({ t: (key: string) => key }),
+}));
 
 // Mock constants
 vi.mock("@/lib/constants", () => ({
@@ -22,12 +27,6 @@ vi.mock("@/lib/constants", () => ({
   OIDC_DISPLAY_NAME: "mock-oidc-display-name",
   OIDC_SIGNING_ALGORITHM: "mock-oidc-signing-algorithm",
   WEBAPP_URL: "mock-webapp-url",
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-azure-llm-resource-name",
-  AI_AZURE_LLM_API_KEY: "mock-azure-llm-api-key",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-azure-embeddings-resource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-azure-embeddings-deployment-id",
   IS_PRODUCTION: true,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   SMTP_HOST: "mock-smtp-host",
@@ -39,13 +38,12 @@ vi.mock("@/modules/survey/lib/client-utils", () => ({
   copySurveyLink: vi.fn((url: string, suId?: string) => (suId ? `${url}?suId=${suId}` : url)),
 }));
 
-const fakeSurvey = {
-  id: "testSurvey",
-  name: "Test Survey",
-  status: "inProgress",
-  type: "link",
-  creator: { name: "Test User" },
-} as unknown as TSurvey;
+vi.mock("@/modules/survey/list/actions", () => ({
+  copySurveyToOtherEnvironmentAction: vi.fn(() => Promise.resolve({ data: { id: "duplicatedSurveyId" } })),
+  getSurveyAction: vi.fn(() =>
+    Promise.resolve({ data: { id: "duplicatedSurveyId", name: "Duplicated Survey" } })
+  ),
+}));
 
 describe("SurveyDropDownMenu", () => {
   afterEach(() => {
@@ -118,5 +116,128 @@ describe("SurveyDropDownMenu", () => {
 
     expect(editItem).toBeInTheDocument();
     expect(deleteItem).toBeInTheDocument();
+  });
+
+  const fakeSurvey = {
+    id: "testSurvey",
+    name: "Test Survey",
+    status: "inProgress",
+    type: "link",
+    responseCount: 5,
+  } as unknown as TSurvey;
+
+  test("handleEditforActiveSurvey opens EditPublicSurveyAlertDialog for active surveys", async () => {
+    render(
+      <SurveyDropDownMenu
+        environmentId="env123"
+        survey={fakeSurvey}
+        surveyDomain="http://survey.test"
+        refreshSingleUseId={vi.fn()}
+        duplicateSurvey={vi.fn()}
+        deleteSurvey={vi.fn()}
+      />
+    );
+
+    const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+    const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+    expect(triggerElement).toBeInTheDocument();
+    await userEvent.click(triggerElement);
+
+    const editButton = screen.getByText("common.edit");
+    await userEvent.click(editButton);
+
+    expect(screen.getByText("environments.surveys.edit.caution_edit_published_survey")).toBeInTheDocument();
+  });
+
+  test("handleEditforActiveSurvey does not open caution dialog for surveys with 0 response count", async () => {
+    render(
+      <SurveyDropDownMenu
+        environmentId="env123"
+        survey={{ ...fakeSurvey, responseCount: 0 }}
+        surveyDomain="http://survey.test"
+        refreshSingleUseId={vi.fn()}
+        duplicateSurvey={vi.fn()}
+        deleteSurvey={vi.fn()}
+      />
+    );
+
+    const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+    const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+    expect(triggerElement).toBeInTheDocument();
+    await userEvent.click(triggerElement);
+
+    const editButton = screen.getByText("common.edit");
+    await userEvent.click(editButton);
+
+    expect(
+      screen.queryByText("environments.surveys.edit.caution_edit_published_survey")
+    ).not.toBeInTheDocument();
+  });
+
+  test("<DropdownMenuItem> renders and triggers actions correctly", async () => {
+    const mockDuplicateSurvey = vi.fn();
+    render(
+      <SurveyDropDownMenu
+        environmentId="env123"
+        survey={fakeSurvey}
+        surveyDomain="http://survey.test"
+        refreshSingleUseId={vi.fn()}
+        duplicateSurvey={mockDuplicateSurvey}
+        deleteSurvey={vi.fn()}
+      />
+    );
+
+    const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+    const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+    expect(triggerElement).toBeInTheDocument();
+    await userEvent.click(triggerElement);
+
+    const duplicateButton = screen.getByText("common.duplicate");
+    expect(duplicateButton).toBeInTheDocument();
+    await userEvent.click(duplicateButton);
+
+    await waitFor(() => {
+      expect(mockDuplicateSurvey).toHaveBeenCalled();
+    });
+  });
+
+  test("<EditPublicSurveyAlertDialog> displays and handles actions correctly", async () => {
+    const mockDuplicateSurvey = vi.fn();
+    render(
+      <SurveyDropDownMenu
+        environmentId="env123"
+        survey={{ ...fakeSurvey, responseCount: 5 }}
+        surveyDomain="http://survey.test"
+        refreshSingleUseId={vi.fn()}
+        duplicateSurvey={mockDuplicateSurvey}
+        deleteSurvey={vi.fn()}
+      />
+    );
+
+    const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+    const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+    expect(triggerElement).toBeInTheDocument();
+    await userEvent.click(triggerElement);
+
+    const editButton = screen.getByText("common.edit");
+    expect(editButton).toBeInTheDocument();
+    await userEvent.click(editButton);
+
+    // Test that the dialog is shown
+    const dialogTitle = screen.getByText("environments.surveys.edit.caution_edit_published_survey");
+    expect(dialogTitle).toBeInTheDocument();
+
+    // Test that the dialog buttons work
+    const editButtonInDialog = screen.getByRole("button", { name: "common.edit" });
+    expect(editButtonInDialog).toBeInTheDocument();
+    await userEvent.click(editButtonInDialog);
+
+    const duplicateButton = screen.getByRole("button", { name: "common.duplicate" });
+    expect(duplicateButton).toBeInTheDocument();
+    await userEvent.click(duplicateButton);
+
+    await waitFor(() => {
+      expect(mockDuplicateSurvey).toHaveBeenCalled();
+    });
   });
 });
