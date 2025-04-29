@@ -34,36 +34,29 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   }
 
   // for status
-  if (filterCriteria?.status && filterCriteria?.status?.length) {
+  if (filterCriteria?.status?.length) {
     whereClause.push({ status: { in: filterCriteria.status } });
   }
 
   // for type
-  if (filterCriteria?.type && filterCriteria?.type?.length) {
+  if (filterCriteria?.type?.length) {
     whereClause.push({ type: { in: filterCriteria.type } });
   }
 
   // for createdBy
-  if (filterCriteria?.createdBy?.value && filterCriteria?.createdBy?.value?.length) {
-    if (filterCriteria.createdBy.value.length === 1) {
-      if (filterCriteria.createdBy.value[0] === "you") {
-        whereClause.push({ createdBy: filterCriteria.createdBy.userId });
-      }
-      if (filterCriteria.createdBy.value[0] === "others") {
-        whereClause.push({
-          OR: [
-            {
-              createdBy: {
-                not: filterCriteria.createdBy.userId,
-              },
-            },
-            {
-              createdBy: null,
-            },
-          ],
-        });
-      }
-    }
+  const createdByValue = filterCriteria?.createdBy?.value;
+  const userId = filterCriteria?.createdBy?.userId;
+  const isCreatedByYou = createdByValue?.length === 1 && createdByValue[0] === "you" && userId;
+  const isCreatedByOthers = createdByValue?.length === 1 && createdByValue[0] === "others" && userId;
+
+  if (isCreatedByYou) {
+    whereClause.push({ createdBy: userId });
+  }
+
+  if (isCreatedByOthers) {
+    whereClause.push({
+      OR: [{ createdBy: { not: userId } }, { createdBy: null }],
+    });
   }
 
   return { AND: whereClause };
