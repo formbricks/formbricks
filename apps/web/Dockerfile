@@ -1,4 +1,4 @@
-FROM node:22-alpine3.21 AS base
+FROM node:22-alpine3.22 AS base
 
 #
 ## step 1: Prune monorepo
@@ -22,23 +22,20 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3 \
+    # Add build dependencies for libxml2
+    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev
 
-# Build and install libxml2 2.14.1 with specific versioning
-WORKDIR /tmp/libxml2
-RUN wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
-    tar -xf libxml2-2.14.1.tar.xz && \
-    cd libxml2-2.14.1 && \
-    # Force library version to maintain compatibility
-    sed -i 's/LIBXML_MAJOR_VERSION=16/LIBXML_MAJOR_VERSION=2/g' configure && \
-    ./configure --prefix=/usr --with-python=no && \
-    make -j$(nproc) && \
-    make install && \
-    # Don't install Alpine's packages to avoid conflicts
-    cd .. && \
-    rm -rf /tmp/libxml2
-
-WORKDIR /app
+# Install libxml2 2.14.1 from source
+RUN cd /tmp && \
+wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
+tar -xf libxml2-2.14.1.tar.xz && \
+cd libxml2-2.14.1 && \
+./configure --prefix=/usr --without-python --without-lzma && \
+make -j$(nproc) && \
+make install && \
+cd .. && \
+rm -rf libxml2-2.14.1 libxml2-2.14.1.tar.xz
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -99,6 +96,14 @@ RUN apk add --no-cache curl \
     # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
+
+# Install runtime dependencies for libxml2 (zlib is needed)
+RUN apk add --no-cache zlib
+
+# Copy libxml2 from installer to runner
+COPY --from=installer /usr/lib/libxml2.so* /usr/lib/
+COPY --from=installer /usr/include/libxml2 /usr/include/libxml2
+COPY --from=installer /usr/bin/xml* /usr/bin/
 
 WORKDIR /home/nextjs
 
