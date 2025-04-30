@@ -46,7 +46,7 @@ RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
 
 # Install libxml2 2.14.1 from source
 RUN cd /tmp && \
-    wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
+    wget --no-check-certificate https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
     tar -xf libxml2-2.14.1.tar.xz && \
     cd libxml2-2.14.1 && \
     ./configure --prefix=/usr --without-python --without-lzma && \
