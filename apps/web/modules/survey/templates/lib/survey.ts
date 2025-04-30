@@ -1,6 +1,7 @@
 import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { surveyCache } from "@/lib/survey/cache";
+import { checkForInvalidImages } from "@/lib/survey/utils";
 import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -10,6 +11,8 @@ export const createSurvey = async (
   environmentId: string,
   surveyBody: Pick<Survey, "name" | "questions">
 ): Promise<{ id: string }> => {
+  checkForInvalidImages(surveyBody.questions);
+
   try {
     const survey = await prisma.survey.create({
       data: {

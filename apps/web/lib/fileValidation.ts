@@ -82,3 +82,14 @@ export const validateFileUploads = (data: TResponseData, questions?: TSurveyQues
 
   return true;
 };
+
+export const isValidImageFile = (fileUrl: string): boolean => {
+  const fileName = getOriginalFileNameFromUrl(fileUrl);
+  if (!fileName || fileName.endsWith(".")) return false;
+
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (!extension) return false;
+
+  const imageExtensions = ["png", "jpeg", "jpg", "webp", "heic"];
+  return imageExtensions.includes(extension);
+};

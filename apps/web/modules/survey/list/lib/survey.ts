@@ -5,6 +5,7 @@ import { segmentCache } from "@/lib/cache/segment";
 import { projectCache } from "@/lib/project/cache";
 import { responseCache } from "@/lib/response/cache";
 import { surveyCache } from "@/lib/survey/cache";
+import { checkForInvalidImages } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
@@ -528,6 +529,9 @@ export const copySurveyToOtherEnvironment = async (
     }
 
     const targetProjectLanguageCodes = targetProject.languages.map((language) => language.code);
+
+    if (surveyData.questions) checkForInvalidImages(surveyData.questions);
+
     const newSurvey = await prisma.survey.create({
       data: surveyData,
       select: {
