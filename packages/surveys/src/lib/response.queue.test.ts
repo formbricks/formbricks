@@ -178,6 +178,15 @@ describe("ResponseQueue", () => {
     }
   });
 
+  test("sendResponse handles unexpected errors", async () => {
+    apiMock.createResponse.mockRejectedValue(new Error("Unexpected error"));
+    const result = await queue.sendResponse(responseUpdate);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("internal_server_error");
+    }
+  });
+
   test("updateSurveyState updates surveyState", () => {
     const newState = getSurveyState();
     queue.updateSurveyState(newState);
