@@ -30,8 +30,6 @@ export const HiddenFieldsCard = ({
   setActiveQuestionId,
   setLocalSurvey,
 }: HiddenFieldsCardProps) => {
-  // [UseTusk]
-
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
   const { t } = useTranslate();

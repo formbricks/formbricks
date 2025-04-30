@@ -121,8 +121,6 @@ const defaultImages = [
 ];
 
 export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashSurveyBgProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const inputFocus = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
