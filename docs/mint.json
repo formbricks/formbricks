@@ -285,6 +285,18 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
+        {
+          "group": "Enterprise Features",
+          "icon": "building",
+          "pages": [
+            "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+            "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+            "self-hosting/advanced/enterprise-features/team-access",
+            "self-hosting/advanced/enterprise-features/contact-management-segments",
+            "self-hosting/advanced/enterprise-features/multi-language-surveys",
+            "self-hosting/advanced/enterprise-features/oauth-sso"
+          ]
+        },
         "self-hosting/advanced/rate-limiting"
       ]
     },
