@@ -86,6 +86,8 @@ export const QuestionsView = ({
   responseCount,
   setIsCautionDialogOpen,
 }: QuestionsViewProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {

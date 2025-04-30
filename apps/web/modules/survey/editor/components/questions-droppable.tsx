@@ -44,6 +44,8 @@ export const QuestionsDroppable = ({
   responseCount,
   onAlertTrigger,
 }: QuestionsDraggableProps) => {
+  // [UseTusk]
+
   const [parent] = useAutoAnimate();
 
   return (

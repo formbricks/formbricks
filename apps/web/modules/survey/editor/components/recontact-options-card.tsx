@@ -29,6 +29,8 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
 
   const displayOptions: DisplayOption[] = useMemo(
@@ -121,7 +123,7 @@ export const RecontactOptionsCard = ({
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
         id="recontactOptionsCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -256,7 +258,7 @@ export const RecontactOptionsCard = ({
                       id="inputDays"
                       value={inputDays === 0 ? 1 : inputDays}
                       onChange={handleRecontactDaysChange}
-                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                      className="mr-2 ml-2 inline w-16 bg-white text-center text-sm"
                     />
                     {t("environments.surveys.edit.days_before_showing_this_survey_again")}.
                   </p>

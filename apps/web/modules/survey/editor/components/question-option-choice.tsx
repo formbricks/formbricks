@@ -58,6 +58,8 @@ export const QuestionOptionChoice = ({
   updateQuestion,
   locale,
 }: ChoiceProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({

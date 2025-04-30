@@ -34,6 +34,8 @@ export const RatingQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: RatingQuestionFormProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
