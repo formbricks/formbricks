@@ -23,19 +23,37 @@ RUN corepack enable
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3 \
-    # Add build dependencies for libxml2
-    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev
+    # Add build dependencies for libxml2 and OpenSSL
+    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev perl linux-headers
+
+# Install OpenSSL 3.5.0 from source
+RUN cd /tmp && \
+    wget https://www.openssl.org/source/openssl-3.5.0.tar.gz && \
+    tar -zxf openssl-3.5.0.tar.gz && \
+    cd openssl-3.5.0 && \
+    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib && \
+    make -j$(nproc) && \
+    make install_sw && \
+    cd .. && \
+    rm -rf openssl-3.5.0 openssl-3.5.0.tar.gz && \
+    echo "/usr/local/ssl/lib64" > /etc/ld-musl-x86_64.path && \
+    echo "/usr/local/ssl/lib" >> /etc/ld-musl-x86_64.path
+
+# Create symlinks for OpenSSL binaries and libraries
+RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
+    ln -sf /usr/local/ssl/lib/libssl.so.3 /usr/lib/libssl.so.3 && \
+    ln -sf /usr/local/ssl/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
 
 # Install libxml2 2.14.1 from source
 RUN cd /tmp && \
-wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
-tar -xf libxml2-2.14.1.tar.xz && \
-cd libxml2-2.14.1 && \
-./configure --prefix=/usr --without-python --without-lzma && \
-make -j$(nproc) && \
-make install && \
-cd .. && \
-rm -rf libxml2-2.14.1 libxml2-2.14.1.tar.xz
+    wget https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
+    tar -xf libxml2-2.14.1.tar.xz && \
+    cd libxml2-2.14.1 && \
+    ./configure --prefix=/usr --without-python --without-lzma && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf libxml2-2.14.1 libxml2-2.14.1.tar.xz
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -97,8 +115,16 @@ RUN apk add --no-cache curl \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
-# Install runtime dependencies for libxml2 (zlib is needed)
-RUN apk add --no-cache zlib
+# Install runtime dependencies
+RUN apk add --no-cache zlib curl supercronic
+
+# Copy OpenSSL from installer to runner
+COPY --from=installer /usr/local/ssl /usr/local/ssl
+RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
+    ln -sf /usr/local/ssl/lib/libssl.so.3 /usr/lib/libssl.so.3 && \
+    ln -sf /usr/local/ssl/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3 && \
+    echo "/usr/local/ssl/lib64" > /etc/ld-musl-x86_64.path && \
+    echo "/usr/local/ssl/lib" >> /etc/ld-musl-x86_64.path
 
 # Copy libxml2 from installer to runner
 COPY --from=installer /usr/lib/libxml2.so* /usr/lib/
