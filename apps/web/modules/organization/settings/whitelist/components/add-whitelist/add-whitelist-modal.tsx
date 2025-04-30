@@ -25,7 +25,7 @@ export const AddWhitelistModal = ({
   environmentId,
   membershipRole,
 }: AddWhitelistModalProps) => {
-  const [type, setType] = useState<"individual" | "bulk">("individual");
+  const [type, setType] = useState<"individual">("individual");
 
   const { t } = useTranslate();
 

@@ -1277,6 +1277,9 @@
         "unlock_teams_title": "Unlock Teams with a higher plan.",
         "upgrade_plan_notice_message": "Unlock Organization Roles with a higher plan.",
         "you_are_a_member": "You're a member"
+      },
+      "whitelist": {
+        "add_user": "Add User"
       }
     },
     "surveys": {

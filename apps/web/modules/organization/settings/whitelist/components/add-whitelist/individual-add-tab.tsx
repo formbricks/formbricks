@@ -54,7 +54,8 @@ export const IndividualAddTab = ({ setOpen, onSubmit }: IndividualAddTabProps) =
     reset();
   };
 
-  // Add user searchable list here
+  // TODO: Add user search + dropdown with users here
+  // TODO: Add button to add
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(submitEventClass)} className="flex flex-col gap-6">

@@ -2,8 +2,8 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
-import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
+import { AddWhitelistModal } from "@/modules/organization/settings/whitelist/components/add-whitelist/add-whitelist-modal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { useTranslate } from "@tolgee/react";
@@ -38,7 +38,7 @@ export const OrganizationWhitelistActions = ({
   const router = useRouter();
   const { t } = useTranslate();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
-  const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
+  const [isAddWhitelistModalOpen, setAddWhitelistModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
@@ -126,15 +126,15 @@ export const OrganizationWhitelistActions = ({
             size="sm"
             variant="secondary"
             onClick={() => {
-              setInviteMemberModalOpen(true);
+              setAddWhitelistModalOpen(true);
             }}>
-            {t("environments.settings.teams.invite_member")}
+            {t("environments.settings.whitelist.add_user")}
           </Button>
         )}
       </div>
-      <InviteMemberModal
-        open={isInviteMemberModalOpen}
-        setOpen={setInviteMemberModalOpen}
+      <AddWhitelistModal
+        open={isAddWhitelistModalOpen}
+        setOpen={setAddWhitelistModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
         environmentId={environmentId}
