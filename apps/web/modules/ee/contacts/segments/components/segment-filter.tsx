@@ -525,7 +525,7 @@ function PersonSegmentFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id}>
+            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id} key={operator.id}>
               {operator.name}
             </SelectItem>
           ))}
