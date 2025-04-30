@@ -844,8 +844,8 @@ test.describe("Testing Survey with advanced logic", async () => {
         page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
       await page.locator("input[type=file]").setInputFiles({
-        name: "file.txt",
-        mimeType: "text/plain",
+        name: "file.doc",
+        mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
       await page.getByText("Uploading...").waitFor({ state: "hidden" });
