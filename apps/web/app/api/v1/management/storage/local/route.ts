@@ -69,7 +69,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   // Perform server-side file validation
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
-    return responses.badRequestResponse(fileValidation.error || "Invalid file");
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file");
   }
 
   // validate signature

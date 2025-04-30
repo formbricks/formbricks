@@ -91,7 +91,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   // This is crucial as attackers could bypass the initial validation and directly call this endpoint
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
-    return responses.badRequestResponse(fileValidation.error || "Invalid file", { fileName, fileType });
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file", { fileName, fileType });
   }
 
   // validate signature

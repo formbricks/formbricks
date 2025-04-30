@@ -40,7 +40,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   // Perform server-side file validation first to block dangerous file types
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
-    return responses.badRequestResponse(fileValidation.error || "Invalid file type");
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file type");
   }
 
   // Also perform client-specified allowed file extensions validation if provided

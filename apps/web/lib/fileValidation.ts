@@ -55,28 +55,23 @@ export const validateFile = (fileName: string, mimeType: string): { valid: boole
 };
 
 export const validateFileUploads = (data: TResponseData, questions?: TSurveyQuestion[]): boolean => {
+  const validateSingleFile = (fileUrl: string, allowedFileExtensions?: TAllowedFileExtension[]): boolean => {
+    const fileName = getOriginalFileNameFromUrl(fileUrl);
+    if (!fileName) return false;
+    const extension = fileName.split(".").pop();
+    if (!extension) return false;
+    return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
+  };
   for (const key of Object.keys(data)) {
     const question = questions?.find((q) => q.id === key);
     if (!question || question.type !== TSurveyQuestionTypeEnum.FileUpload) continue;
 
     const fileUrls = data[key];
 
-    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) {
-      return false;
-    }
-
-    const { allowedFileExtensions } = question;
+    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) return false;
 
     for (const fileUrl of fileUrls) {
-      const fileName = getOriginalFileNameFromUrl(fileUrl);
-      if (!fileName) return false;
-
-      const extension = fileName.split(".").pop();
-      if (!extension) return false;
-
-      if (allowedFileExtensions && !allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
-        return false;
-      }
+      if (!validateSingleFile(fileUrl, question.allowedFileExtensions)) return false;
     }
   }
 

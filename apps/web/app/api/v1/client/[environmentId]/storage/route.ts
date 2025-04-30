@@ -47,7 +47,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   // Perform server-side file validation
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
-    return responses.badRequestResponse(fileValidation.error || "Invalid file", { fileName, fileType }, true);
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file", { fileName, fileType }, true);
   }
 
   const [survey, organization] = await Promise.all([
