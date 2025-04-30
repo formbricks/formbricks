@@ -54,14 +54,15 @@ export const validateFile = (fileName: string, mimeType: string): { valid: boole
   return { valid: true };
 };
 
+const validateSingleFile = (fileUrl: string, allowedFileExtensions?: TAllowedFileExtension[]): boolean => {
+  const fileName = getOriginalFileNameFromUrl(fileUrl);
+  if (!fileName) return false;
+  const extension = fileName.split(".").pop();
+  if (!extension) return false;
+  return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
+};
+
 export const validateFileUploads = (data: TResponseData, questions?: TSurveyQuestion[]): boolean => {
-  const validateSingleFile = (fileUrl: string, allowedFileExtensions?: TAllowedFileExtension[]): boolean => {
-    const fileName = getOriginalFileNameFromUrl(fileUrl);
-    if (!fileName) return false;
-    const extension = fileName.split(".").pop();
-    if (!extension) return false;
-    return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
-  };
   for (const key of Object.keys(data)) {
     const question = questions?.find((q) => q.id === key);
     if (!question || question.type !== TSurveyQuestionTypeEnum.FileUpload) continue;

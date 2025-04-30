@@ -35,7 +35,7 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
   });
 };
 
-export const checkForInvalidImages = (questions: TSurveyQuestion[]) => {
+export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) => {
   questions.forEach((question, qIndex) => {
     if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
       throw new InvalidInputError(`Invalid image file in question ${String(qIndex + 1)}`);

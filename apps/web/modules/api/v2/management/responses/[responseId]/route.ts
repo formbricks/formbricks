@@ -128,6 +128,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       if (!questionsResponse.ok) {
         return handleApiError(request, questionsResponse.error);
       }
+
       if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
         return handleApiError(request, {
           type: "bad_request",

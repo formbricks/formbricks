@@ -1,7 +1,7 @@
 import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { surveyCache } from "@/lib/survey/cache";
-import { checkForInvalidImages } from "@/lib/survey/utils";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -64,7 +64,7 @@ export const createSurvey = async (
       delete data.followUps;
     }
 
-    if (data.questions) checkForInvalidImages(data.questions);
+    if (data.questions) checkForInvalidImagesInQuestions(data.questions);
 
     const survey = await prisma.survey.create({
       data: {

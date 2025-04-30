@@ -13,7 +13,9 @@ import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from
 export const updateUser = async (id: string, data: TUserUpdateInput) => {
   validateInputs([id, ZId], [data, ZUserUpdateInput.partial()]);
 
-  if (data.imageUrl && !isValidImageFile(data.imageUrl)) throw new InvalidInputError("Invalid image file");
+  if (data.imageUrl && !isValidImageFile(data.imageUrl)) {
+    throw new InvalidInputError("Invalid image file");
+  }
 
   try {
     const updatedUser = await prisma.user.update({

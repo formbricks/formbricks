@@ -18,7 +18,7 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { checkForInvalidImages, transformPrismaSurvey } from "./utils";
+import { checkForInvalidImagesInQuestions, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -337,7 +337,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
 
-    checkForInvalidImages(questions);
+    checkForInvalidImagesInQuestions(questions);
 
     if (languages) {
       // Process languages update logic here
@@ -679,7 +679,10 @@ export const createSurvey = async (
     } else {
       delete data.followUps;
     }
-    if (data.questions) checkForInvalidImages(data.questions);
+
+    if (data.questions) {
+      checkForInvalidImagesInQuestions(data.questions);
+    }
 
     const survey = await prisma.survey.create({
       data: {
