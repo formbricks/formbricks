@@ -21,10 +21,11 @@ FROM base AS installer
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Install necessary build tools and compilers
+# Install necessary build tools and compilers with all wget dependencies
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3 \
-    # Add build dependencies for libxml2 and OpenSSL
-    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev perl linux-headers
+    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev perl linux-headers \
+    # Add these specific dependencies for wget
+    pcre2 libidn2 zlib
 
 # Install OpenSSL 3.5.0 from source
 RUN cd /tmp && \
@@ -39,14 +40,9 @@ RUN cd /tmp && \
     echo "/usr/local/ssl/lib64" > /etc/ld-musl-x86_64.path && \
     echo "/usr/local/ssl/lib" >> /etc/ld-musl-x86_64.path
 
-# Create symlinks for OpenSSL binaries and libraries
-RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
-    ln -sf /usr/local/ssl/lib/libssl.so.3 /usr/lib/libssl.so.3 && \
-    ln -sf /usr/local/ssl/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-
-# Install libxml2 2.14.1 from source
+# Alternative approach: use curl instead of wget for libxml2 download
 RUN cd /tmp && \
-    wget --no-check-certificate https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
+    curl -k -L -o libxml2-2.14.1.tar.xz https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
     tar -xf libxml2-2.14.1.tar.xz && \
     cd libxml2-2.14.1 && \
     ./configure --prefix=/usr --without-python --without-lzma && \
