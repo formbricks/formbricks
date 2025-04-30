@@ -391,7 +391,7 @@ resource "kubernetes_manifest" "node_pool" {
         cpu = 1000
       }
       disruption = {
-        consolidationPolicy = "WhenEmpty"
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
         consolidateAfter    = "30s"
       }
     }
