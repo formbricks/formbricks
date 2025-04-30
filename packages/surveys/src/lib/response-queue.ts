@@ -91,8 +91,8 @@ export class ResponseQueue {
       }
       this.isRequestInProgress = false;
     } else {
-      if (responseUpdate.finished && this.config.onResponseSendingFinished) {
-        this.config.onResponseSendingFinished();
+      if (responseUpdate.finished) {
+        this.config.onResponseSendingFinished?.();
       }
       this.isRequestInProgress = false;
       this.processQueue(); // process the next item in the queue if any
