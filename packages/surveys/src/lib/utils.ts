@@ -15,7 +15,7 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const getSecureRandom = (): number => {
+export const getSecureRandom = (): number => {
   const u32 = new Uint32Array(1);
   crypto.getRandomValues(u32);
   return u32[0] / 2 ** 32; // Normalized to [0, 1)
