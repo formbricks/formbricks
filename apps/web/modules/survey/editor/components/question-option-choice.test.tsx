@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TLanguage } from "@formbricks/types/project";
+import { TSurvey, TSurveyLanguage, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { QuestionOptionChoice } from "./question-option-choice";
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
@@ -20,10 +21,6 @@ vi.mock("@/modules/ui/components/button", () => ({
       {children}
     </button>
   ),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
 }));
 
 describe("QuestionOptionChoice", () => {
@@ -50,15 +47,19 @@ describe("QuestionOptionChoice", () => {
         addChoice={vi.fn()}
         isInvalid={false}
         localSurvey={
-          { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+          {
+            languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+          } as unknown as TSurvey
         }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -91,16 +92,26 @@ describe("QuestionOptionChoice", () => {
         deleteChoice={deleteChoice}
         addChoice={vi.fn()}
         isInvalid={false}
-        localSurvey={{
-          languages: [{ code: "default", name: "Default", enabled: true, default: true }] as any,
-        }}
+        localSurvey={
+          {
+            languages: [
+              {
+                language: { code: "default" } as unknown as TLanguage,
+                enabled: true,
+                default: true,
+              } as unknown as TSurveyLanguage,
+            ],
+          } as unknown as TSurvey
+        }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -131,15 +142,19 @@ describe("QuestionOptionChoice", () => {
         addChoice={addChoice}
         isInvalid={false}
         localSurvey={
-          { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+          {
+            languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+          } as unknown as TSurvey
         }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -168,15 +183,19 @@ describe("QuestionOptionChoice", () => {
         addChoice={vi.fn()}
         isInvalid={false}
         localSurvey={
-          { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+          {
+            languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+          } as unknown as TSurvey
         }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -202,15 +221,19 @@ describe("QuestionOptionChoice", () => {
         addChoice={vi.fn()}
         isInvalid={false}
         localSurvey={
-          { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+          {
+            languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+          } as unknown as TSurvey
         }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -239,15 +262,19 @@ describe("QuestionOptionChoice", () => {
           addChoice={vi.fn()}
           isInvalid={false}
           localSurvey={
-            { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+            {
+              languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+            } as unknown as TSurvey
           }
           selectedLanguageCode="default"
           setSelectedLanguageCode={vi.fn()}
-          surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+          surveyLanguages={[
+            { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+          ]}
           question={question}
           updateQuestion={vi.fn()}
           surveyLanguageCodes={["default"]}
-          locale="en"
+          locale="en-US"
         />
       );
 
@@ -263,7 +290,7 @@ describe("QuestionOptionChoice", () => {
       choices: [choice],
     } as any;
 
-    const { rerender } = render(
+    render(
       <QuestionOptionChoice
         choice={choice}
         choiceIdx={0}
@@ -273,15 +300,19 @@ describe("QuestionOptionChoice", () => {
         addChoice={vi.fn()}
         isInvalid={false}
         localSurvey={
-          { languages: [{ code: "default", name: "Default", enabled: true, default: true }] } as any
+          {
+            languages: [{ code: "default", name: "Default", enabled: true, default: true }],
+          } as unknown as TSurvey
         }
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        surveyLanguages={[{ code: "default", name: "Default", enabled: true, default: true }]}
+        surveyLanguages={[
+          { language: { code: "default" } as unknown as TLanguage, enabled: true, default: true },
+        ]}
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
-        locale="en"
+        locale="en-US"
       />
     );
 
@@ -317,7 +348,7 @@ describe("QuestionOptionChoice", () => {
         question={question}
         updateQuestion={vi.fn()}
         surveyLanguageCodes={[]}
-        locale="en"
+        locale="en-US"
       />
     );
 

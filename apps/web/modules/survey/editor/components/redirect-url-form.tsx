@@ -15,8 +15,6 @@ interface RedirectUrlFormProps {
 }
 
 export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: RedirectUrlFormProps) => {
-  // [UseTusk]
-
   const selectedLanguageCode = "default";
   const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);

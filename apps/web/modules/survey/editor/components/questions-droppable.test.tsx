@@ -1,5 +1,4 @@
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Project } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";

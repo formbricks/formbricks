@@ -1,15 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useTranslate } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { RecontactOptionsCard } from "./recontact-options-card";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: vi.fn(() => ({
-    t: (key: string) => key,
-  })),
-}));
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -37,7 +30,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should render correctly when localSurvey.type is not 'link'", () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -45,7 +38,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -60,19 +52,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: null,
       displayLimit: null,
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -89,7 +75,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should not render when localSurvey.type is 'link'", () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -97,7 +83,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "link",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -112,19 +97,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: null,
       displayLimit: null,
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -141,7 +120,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should update recontactDays in localSurvey when handleRecontactDaysChange is called with a valid input", async () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -149,7 +128,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -164,19 +142,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: 1,
       displayLimit: null,
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -203,7 +175,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should update displayLimit in localSurvey when handleRecontactSessionDaysChange is called with a valid input", async () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -211,7 +183,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -226,19 +197,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: null,
       displayLimit: 1,
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -267,7 +232,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should update displayOption in localSurvey when a RadioGroup option is selected", async () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -275,7 +240,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -290,19 +254,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: null,
       displayLimit: null,
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -338,7 +296,7 @@ describe("RecontactOptionsCard", () => {
   });
 
   test("should initialize displayLimit when switching to 'displaySome' with undefined initial value", async () => {
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "test-survey",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -346,7 +304,6 @@ describe("RecontactOptionsCard", () => {
       status: "draft",
       environmentId: "test-env",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -361,19 +318,13 @@ describe("RecontactOptionsCard", () => {
       recontactDays: null,
       displayLimit: undefined, // Initial displayLimit is undefined
       runOnDate: null,
-      thankYouCard: {
-        enabled: true,
-        title: { default: "Thank you" },
-        buttonLabel: { default: "Close" },
-        buttonLink: "",
-      },
       questions: [],
       endings: [],
       hiddenFields: {
         enabled: false,
         fieldIds: [],
       },
-    };
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const environmentId = "test-env";
@@ -388,6 +339,11 @@ describe("RecontactOptionsCard", () => {
 
     // First click the card trigger to expand the content
     const cardTrigger = document.getElementById("recontactOptionsCardTrigger");
+
+    if (!cardTrigger) {
+      throw new Error("Card trigger not found");
+    }
+
     await userEvent.click(cardTrigger);
 
     const displaySomeRadio = screen.getByText("environments.surveys.edit.show_multiple_times"); // Find the 'displaySome' radio button

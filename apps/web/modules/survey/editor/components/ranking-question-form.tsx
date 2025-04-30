@@ -38,8 +38,6 @@ export const RankingQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: RankingQuestionFormProps): JSX.Element => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);

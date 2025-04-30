@@ -29,8 +29,6 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
 
   const displayOptions: DisplayOption[] = useMemo(

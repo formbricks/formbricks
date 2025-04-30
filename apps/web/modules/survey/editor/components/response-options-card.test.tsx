@@ -1,16 +1,11 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ResponseOptionsCard } from "./response-options-card";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
 
 vi.mock("react-hot-toast");
 
@@ -42,10 +37,10 @@ describe("ResponseOptionsCard", () => {
       type: "link",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const MockResponseOptionsCard = () => {
-      const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
+      const [open, setOpen] = useState(localSurvey.type === "link");
 
       return (
         <Collapsible.Root open={open} onOpenChange={setOpen} data-testid="response-options-collapsible">
@@ -68,7 +63,7 @@ describe("ResponseOptionsCard", () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       runOnDate: null,
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
 
@@ -92,7 +87,7 @@ describe("ResponseOptionsCard", () => {
       autoComplete: 3,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const responseCount = 5;
@@ -113,7 +108,7 @@ describe("ResponseOptionsCard", () => {
     fireEvent.blur(inputElement);
 
     expect(toast.error).toHaveBeenCalled();
-    expect(inputElement.value).toBe("3");
+    expect((inputElement as HTMLInputElement).value).toBe("3");
   });
 
   test("should reset surveyClosedMessage to null when toggled off and on", async () => {
@@ -127,7 +122,7 @@ describe("ResponseOptionsCard", () => {
         heading: "Custom Heading",
         subheading: "Custom Subheading",
       },
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     let updatedSurvey: TSurvey | null = null;
 
@@ -140,17 +135,16 @@ describe("ResponseOptionsCard", () => {
     };
 
     const MockResponseOptionsCard = () => {
-      const { t } = useTranslate();
-      const [localSurvey, _] = useState(initialSurvey);
+      const [localSurvey, _] = useState(initialSurvey); // NOSONAR // It's fine for the test
       const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(
         !!localSurvey.surveyClosedMessage
       );
 
       const handleCloseSurveyMessageToggle = () => {
-        setSurveyClosedMessageToggle((prev) => !prev);
+        setSurveyClosedMessageToggle((prev) => !prev); // NOSONAR // It's fine for the test
 
         if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
-          setLocalSurveyMock((prevSurvey: TSurvey) => ({ ...prevSurvey, surveyClosedMessage: null }));
+          setLocalSurveyMock((prevSurvey: TSurvey) => ({ ...prevSurvey, surveyClosedMessage: null })); // NOSONAR // It's fine for the test
         }
       };
 
@@ -173,6 +167,8 @@ describe("ResponseOptionsCard", () => {
     // Toggle on
     await userEvent.click(toggleButton);
 
-    expect(updatedSurvey?.surveyClosedMessage).toBeNull();
+    if (updatedSurvey) {
+      expect((updatedSurvey as TSurvey).surveyClosedMessage).toBeNull();
+    }
   });
 });

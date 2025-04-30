@@ -5,12 +5,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { RedirectUrlForm } from "./redirect-url-form";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("RedirectUrlForm", () => {
   afterEach(() => {
     cleanup();
@@ -27,7 +21,7 @@ describe("RedirectUrlForm", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       followUps: [],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",
@@ -62,7 +56,7 @@ describe("RedirectUrlForm", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       followUps: [],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",
@@ -97,7 +91,7 @@ describe("RedirectUrlForm", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       followUps: [],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",
@@ -133,19 +127,19 @@ describe("RedirectUrlForm", () => {
   });
 
   test("should handle gracefully when endingCard.url contains recall syntax referencing a question ID that doesn't exist in localSurvey", () => {
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "survey1",
       name: "Test Survey",
       questions: [],
       endings: [],
-      type: "nps",
+      type: "app",
       status: "draft",
       createdAt: new Date(),
       updatedAt: new Date(),
       followUps: [],
-      hiddenFields: { fieldIds: [] },
+      hiddenFields: { fieldIds: [], enabled: false },
       variables: [],
-    };
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",
@@ -182,7 +176,7 @@ describe("RedirectUrlForm", () => {
       updatedAt: new Date(),
       followUps: [],
       hiddenFields: [],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",
@@ -217,7 +211,7 @@ describe("RedirectUrlForm", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       followUps: [],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     const mockEndingCard: TSurveyRedirectUrlCard = {
       id: "ending1",

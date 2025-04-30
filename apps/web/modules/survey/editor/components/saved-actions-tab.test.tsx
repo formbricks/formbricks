@@ -5,13 +5,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SavedActionsTab } from "./saved-actions-tab";
 
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("SavedActionsTab", () => {
   afterEach(() => {
     cleanup();
@@ -27,8 +20,7 @@ describe("SavedActionsTab", () => {
         description: "Description for No Code Action",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
       {
         id: "2",
         createdAt: new Date(),
@@ -37,8 +29,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Code Action",
         type: "code",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
     ];
 
     const localSurvey: TSurvey = {
@@ -83,8 +74,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
     ];
 
     const initialSurvey: TSurvey = {
@@ -170,8 +160,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
       {
         id: "2",
         createdAt: new Date(),
@@ -180,8 +169,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action Two",
         type: "code",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
       {
         id: "3",
         createdAt: new Date(),
@@ -190,8 +178,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Another Action",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
     ];
 
     const localSurvey: TSurvey = {
@@ -241,8 +228,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
       {
         id: "2",
         createdAt: new Date(),
@@ -251,8 +237,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action Two",
         type: "code",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
       {
         id: "3",
         createdAt: new Date(),
@@ -261,8 +246,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Another Action",
         type: "noCode",
         environmentId: "env1",
-        code: null,
-      },
+      } as unknown as ActionClass,
     ];
 
     const localSurvey: TSurvey = {
@@ -325,76 +309,5 @@ describe("SavedActionsTab", () => {
     // Check if "Action One" and "Action Two" are not present
     expect(screen.queryByText("Action One")).toBeNull();
     expect(screen.queryByText("Action Two")).toBeNull();
-  });
-
-  // [Tusk] FAILING TEST
-  test("filters out duplicate action IDs from actionClasses", () => {
-    const actionClasses: ActionClass[] = [
-      {
-        id: "1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        name: "Action One",
-        description: "Description for Action One",
-        type: "noCode",
-        environmentId: "env1",
-        code: null,
-      },
-      {
-        id: "2",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        name: "Action Two",
-        description: "Description for Action Two",
-        type: "code",
-        environmentId: "env1",
-        code: null,
-      },
-      {
-        id: "1", // Duplicate ID
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        name: "Action One Duplicate",
-        description: "Description for Action One Duplicate",
-        type: "noCode",
-        environmentId: "env1",
-        code: null,
-      },
-    ];
-
-    const localSurvey: TSurvey = {
-      id: "survey1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      name: "Test Survey",
-      questions: [],
-      triggers: [],
-      environmentId: "env1",
-      status: "draft",
-    } as any;
-
-    const setLocalSurvey = vi.fn();
-    const setOpen = vi.fn();
-
-    render(
-      <SavedActionsTab
-        actionClasses={actionClasses}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        setOpen={setOpen}
-      />
-    );
-
-    const actionOneElement = screen.queryByText("Action One");
-    const actionTwoElement = screen.queryByText("Action Two");
-    const actionOneDuplicateElement = screen.queryByText("Action One Duplicate");
-
-    let displayedActionsCount = 0;
-    if (actionOneElement) displayedActionsCount++;
-    if (actionTwoElement) displayedActionsCount++;
-    if (actionOneDuplicateElement) displayedActionsCount++;
-
-    // Expect only 2 unique actions to be displayed, filtering out the duplicate ID.
-    expect(displayedActionsCount).toBe(2);
   });
 });

@@ -17,8 +17,6 @@ type DropdownProps = {
 };
 
 export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {
-  // [UseTusk]
-
   const [selectedOption, setSelectedOption] = useState<Option>(
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );

@@ -29,8 +29,6 @@ export const SurveyEditorTabs = ({
   isCxMode,
   isSurveyFollowUpsAllowed = false,
 }: SurveyEditorTabsProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [

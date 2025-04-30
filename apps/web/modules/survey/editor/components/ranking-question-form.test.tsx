@@ -1,18 +1,18 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyRankingQuestion, TUserLocale } from "@formbricks/types/surveys/types";
+import { TLanguage } from "@formbricks/types/project";
+import {
+  TSurvey,
+  TSurveyLanguage,
+  TSurveyQuestionTypeEnum,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 import { RankingQuestionForm } from "./ranking-question-form";
 
 // Place all mocks at the top of the file
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
@@ -53,28 +53,30 @@ describe("RankingQuestionForm", () => {
   test("should render the headline input field with the provided question headline", () => {
     const mockQuestion: TSurveyRankingQuestion = {
       id: "1",
-      type: "ranking",
+      type: TSurveyQuestionTypeEnum.Ranking,
       headline: { default: "Test Headline" },
       choices: [],
       required: false,
     };
 
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "123",
       name: "Test Survey",
       type: "link",
-      languages: [{ language: { code: "default", name: "Default" }, default: true }],
+      languages: [
+        {
+          language: { code: "default" } as unknown as TLanguage,
+          default: true,
+        } as unknown as TSurveyLanguage,
+      ],
       questions: [],
-      createdAt: "2024-01-01T00:00:00.000Z",
+      createdAt: new Date("2024-01-01T00:00:00.000Z"),
       environmentId: "env123",
-    };
+    } as unknown as TSurvey;
 
     const mockUpdateQuestion = vi.fn();
     const mockSetSelectedLanguageCode = vi.fn();
-    const mockLocale: TUserLocale = {
-      code: "en",
-      name: "English",
-    };
+    const mockLocale = "en-US";
 
     render(
       <RankingQuestionForm
@@ -86,6 +88,7 @@ describe("RankingQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
+        lastQuestion={false}
       />
     );
 
@@ -96,28 +99,30 @@ describe("RankingQuestionForm", () => {
   test("should add a new choice when the 'Add Option' button is clicked", async () => {
     const mockQuestion: TSurveyRankingQuestion = {
       id: "1",
-      type: "ranking",
+      type: TSurveyQuestionTypeEnum.Ranking,
       headline: { default: "Test Headline" },
       choices: [],
       required: false,
     };
 
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "123",
       name: "Test Survey",
       type: "link",
-      languages: [{ language: { code: "default", name: "Default" }, default: true }],
+      languages: [
+        {
+          language: { code: "default" } as unknown as TLanguage,
+          default: true,
+        } as unknown as TSurveyLanguage,
+      ],
       questions: [],
-      createdAt: "2024-01-01T00:00:00.000Z",
+      createdAt: new Date("2024-01-01T00:00:00.000Z"),
       environmentId: "env123",
-    };
+    } as unknown as TSurvey;
 
     const mockUpdateQuestion = vi.fn();
     const mockSetSelectedLanguageCode = vi.fn();
-    const mockLocale: TUserLocale = {
-      code: "en",
-      name: "English",
-    };
+    const mockLocale = "en-US";
 
     render(
       <RankingQuestionForm
@@ -129,6 +134,7 @@ describe("RankingQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
+        lastQuestion={false}
       />
     );
 
@@ -149,31 +155,28 @@ describe("RankingQuestionForm", () => {
   test("should initialize new choices with empty strings for all configured survey languages", async () => {
     const mockQuestion: TSurveyRankingQuestion = {
       id: "1",
-      type: "ranking",
+      type: TSurveyQuestionTypeEnum.Ranking,
       headline: { default: "Test Headline" },
       choices: [],
       required: false,
     };
 
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "123",
       name: "Test Survey",
       type: "link",
       languages: [
-        { language: { code: "en", name: "English" }, default: true },
-        { language: { code: "de", name: "German" }, default: false },
+        { language: { code: "en" } as unknown as TLanguage, default: true } as unknown as TSurveyLanguage,
+        { language: { code: "de" } as unknown as TLanguage, default: false } as unknown as TSurveyLanguage,
       ],
       questions: [],
-      createdAt: "2024-01-01T00:00:00.000Z",
+      createdAt: new Date("2024-01-01T00:00:00.000Z"),
       environmentId: "env123",
-    };
+    } as unknown as TSurvey;
 
     const mockUpdateQuestion = vi.fn();
     const mockSetSelectedLanguageCode = vi.fn();
-    const mockLocale: TUserLocale = {
-      code: "en",
-      name: "English",
-    };
+    const mockLocale = "en-US";
 
     render(
       <RankingQuestionForm
@@ -185,6 +188,7 @@ describe("RankingQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
+        lastQuestion={false}
       />
     );
 

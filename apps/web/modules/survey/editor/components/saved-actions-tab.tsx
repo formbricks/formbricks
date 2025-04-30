@@ -20,8 +20,6 @@ export const SavedActionsTab = ({
   setLocalSurvey,
   setOpen,
 }: SavedActionsTabProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)

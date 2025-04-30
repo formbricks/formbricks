@@ -3,12 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyEditorTabs } from "./survey-editor-tabs";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("SurveyEditorTabs", () => {
   afterEach(() => {
     cleanup();
