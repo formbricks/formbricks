@@ -7,6 +7,8 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getContact = reactCache((contactId: string) =>
+  // [UseTusk]
+
   cache(
     async () => {
       try {
@@ -37,6 +39,8 @@ export const getContactByUserId = reactCache(
     id: string;
     attributes: TContactAttributes;
   } | null> =>
+    // [UseTusk]
+
     cache(
       async () => {
         const contact = await prisma.contact.findFirst({

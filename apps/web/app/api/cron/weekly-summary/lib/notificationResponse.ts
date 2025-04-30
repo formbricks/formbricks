@@ -14,6 +14,8 @@ export const getNotificationResponse = (
   environment: TWeeklySummaryEnvironmentData,
   projectName: string
 ): TWeeklySummaryNotificationResponse => {
+  // [UseTusk]
+
   const insights = {
     totalCompletedResponses: 0,
     totalDisplays: 0,

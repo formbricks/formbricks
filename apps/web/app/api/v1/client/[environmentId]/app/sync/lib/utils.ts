@@ -3,6 +3,8 @@ import { TAttributes } from "@formbricks/types/attributes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {
+  // [UseTusk]
+
   const surveyTemp = structuredClone(survey);
   const languages = surveyTemp.languages
     .map((surveyLanguage) => {
