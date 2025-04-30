@@ -57,21 +57,13 @@ describe("Config", () => {
     expect(getItemMock).toHaveBeenCalledWith(JS_LOCAL_STORAGE_KEY);
   });
 
-  test("loadFromStorage() returns err if config is expired", () => {
-    const expiredConfig = {
-      ...mockConfig,
-      environment: {
-        ...mockConfig.environment,
-        expiresAt: new Date("2000-01-01T00:00:00Z"),
-      },
-    };
-
-    getItemMock.mockReturnValueOnce(JSON.stringify(expiredConfig));
+  test("loadFromStorage() returns err if config is not saved", () => {
+    getItemMock.mockReturnValueOnce(null);
 
     const result = configInstance.loadFromLocalStorage();
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toBe("Config in local storage has expired");
+      expect(result.error.message).toBe("No or invalid config in local storage");
     }
 
     expect(getItemMock).toHaveBeenCalledWith(JS_LOCAL_STORAGE_KEY);
