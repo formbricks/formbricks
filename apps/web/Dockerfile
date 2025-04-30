@@ -1,60 +1,124 @@
 FROM node:22-alpine3.21 AS base
 
-#
-## step 1: Prune monorepo
-#
-# FROM base AS builder
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
-# Set working directory
-# WORKDIR /app
-# RUN yarn global add turbo
-# COPY . .
-# RUN turbo prune @formbricks/web --docker
+# Add a new stage for building custom packages
+FROM alpine:3.21 AS package-builder
 
-#
-## step 2: Install & build
-#
+# Install build tools and dependencies
+RUN apk add --no-cache alpine-sdk build-base autoconf automake libtool cmake \
+    git python3-dev zlib-dev pkgconf bison flex perl linux-headers \
+    xz gzip tar ca-certificates curl wget meson ninja
+
+# Create directory for our custom packages
+WORKDIR /custom-packages
+RUN mkdir -p /repo/x86_64
+
+# Setup abuild for package signing
+RUN adduser -D builder && \
+    addgroup builder abuild && \
+    mkdir -p /var/cache/distfiles && \
+    chmod a+w /var/cache/distfiles && \
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Switch to builder user for abuild
+USER builder
+RUN abuild-keygen -a -n -i
+
+# 1. Build libxml2 2.14.1
+WORKDIR /custom-packages/libxml2
+RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
+    git checkout v2.14.1 && \
+    ./autogen.sh --prefix=/usr && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    DESTDIR=/tmp/libxml2 make install
+
+# 2. Build OpenSSL 3.5.0
+WORKDIR /custom-packages/openssl
+RUN wget https://www.openssl.org/source/openssl-3.5.0.tar.gz && \
+    tar -xf openssl-3.5.0.tar.gz && \
+    cd openssl-3.5.0 && \
+    ./config --prefix=/usr --openssldir=/etc/ssl && \
+    make -j$(nproc) && \
+    DESTDIR=/tmp/openssl make install_sw
+
+# 3. Build SQLite 3.49.1
+WORKDIR /custom-packages/sqlite
+RUN wget https://www.sqlite.org/2025/sqlite-autoconf-3491100.tar.gz && \
+    tar -xf sqlite-autoconf-3491100.tar.gz && \
+    cd sqlite-autoconf-3491100 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    DESTDIR=/tmp/sqlite make install
+
+# 4. Build GLib 2.84.1
+WORKDIR /custom-packages/glib
+RUN wget https://download.gnome.org/sources/glib/2.84/glib-2.84.1.tar.xz && \
+    tar -xf glib-2.84.1.tar.xz && \
+    cd glib-2.84.1 && \
+    mkdir build && cd build && \
+    meson setup --prefix=/usr .. && \
+    ninja && \
+    DESTDIR=/tmp/glib ninja install
+
+# 5. Build LCMS2 2.17
+WORKDIR /custom-packages/lcms2
+RUN wget https://sourceforge.net/projects/lcms/files/lcms/2.17/lcms2-2.17.tar.gz && \
+    tar -xf lcms2-2.17.tar.gz && \
+    cd lcms2-2.17 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    DESTDIR=/tmp/lcms2 make install
+
+# Switch back to root for creating packages
+USER root
+
+# Create APK packages from the built software
+WORKDIR /custom-packages
+RUN cd /tmp/libxml2 && tar -czf /repo/x86_64/libxml2-2.14.1-r0.apk . && \
+    cd /tmp/openssl && tar -czf /repo/x86_64/openssl-3.5.0-r0.apk . && \
+    cd /tmp/sqlite && tar -czf /repo/x86_64/sqlite-3.49.1-r0.apk . && \
+    cd /tmp/glib && tar -czf /repo/x86_64/glib-2.84.1-r0.apk . && \
+    cd /tmp/lcms2 && tar -czf /repo/x86_64/lcms2-2.17-r0.apk .
+
+# Create repository index
+WORKDIR /repo/x86_64
+RUN apk index -o APKINDEX.tar.gz *.apk && \
+    abuild-sign -k /home/builder/.abuild/*.rsa APKINDEX.tar.gz
+
+# Your original installer stage
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
 
+# Create directory for our custom repository
+RUN mkdir -p /var/lib/custom-repo/x86_64
+
+# Copy our custom packages and repository index
+COPY --from=package-builder /repo/x86_64/*.apk /var/lib/custom-repo/x86_64/
+COPY --from=package-builder /repo/x86_64/APKINDEX.tar.gz /var/lib/custom-repo/x86_64/
+COPY --from=package-builder /home/builder/.abuild/*.pub /etc/apk/keys/
+
+# Configure APK to use our custom repository first
+RUN echo "file:///var/lib/custom-repo/x86_64" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/community" >> /etc/apk/repositories
+
+# Update APK database
+RUN apk update
+
+# Install our custom packages and other dependencies
+RUN apk add --allow-untrusted --no-cache \
+    libxml2=2.14.1-r0 \
+    openssl=3.5.0-r0 \
+    sqlite=3.49.1-r0 \
+    glib=2.84.1-r0 \
+    lcms2=2.17-r0 \
+    cmake g++ gcc jq make python3
+
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3 \
-    build-base wget tar xz automake autoconf libtool pkgconfig zlib-dev perl linux-headers pcre2 libidn2 zlib
-    # Add these specific dependencies for wget
-
-
-# Install OpenSSL 3.5.0 from source
-RUN cd /tmp && \
-    wget https://www.openssl.org/source/openssl-3.5.0.tar.gz && \
-    tar -zxf openssl-3.5.0.tar.gz && \
-    cd openssl-3.5.0 && \
-    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib && \
-    make -j$(nproc) && \
-    make install_sw && \
-    cd .. && \
-    rm -rf openssl-3.5.0 openssl-3.5.0.tar.gz && \
-    echo "/usr/local/ssl/lib64" > /etc/ld-musl-x86_64.path && \
-    echo "/usr/local/ssl/lib" >> /etc/ld-musl-x86_64.path
-
-# Create symlinks for OpenSSL binaries and libraries
-RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
-    ln -sf /usr/local/ssl/lib/libssl.so.3 /usr/lib/libssl.so.3 && \
-    ln -sf /usr/local/ssl/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-
-# Install libxml2 2.14.1 from source
-RUN cd /tmp && \
-    wget --no-check-certificate https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.1.tar.xz && \
-    tar -xf libxml2-2.14.1.tar.xz && \
-    cd libxml2-2.14.1 && \
-    ./configure --prefix=/usr --without-python --without-lzma && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    rm -rf libxml2-2.14.1 libxml2-2.14.1.tar.xz
+RUN apk add --no-cache openssl-dev
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -80,11 +144,6 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 WORKDIR /app
 
 # Copy the package information
-# COPY .gitignore .gitignore
-# COPY --from=builder /app/out/json/ .
-# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-
-# Prepare the build
 COPY . .
 
 # Create a .env file
@@ -102,9 +161,7 @@ RUN --mount=type=secret,id=database_url \
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
 
-#
-## step 3: setup production runner
-#
+# Your original runner stage
 FROM base AS runner
 
 RUN npm install -g corepack@latest
@@ -112,25 +169,8 @@ RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
-    # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
-
-# Install runtime dependencies
-RUN apk add --no-cache zlib curl supercronic
-
-# Copy OpenSSL from installer to runner
-COPY --from=installer /usr/local/ssl /usr/local/ssl
-RUN ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl && \
-    ln -sf /usr/local/ssl/lib/libssl.so.3 /usr/lib/libssl.so.3 && \
-    ln -sf /usr/local/ssl/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3 && \
-    echo "/usr/local/ssl/lib64" > /etc/ld-musl-x86_64.path && \
-    echo "/usr/local/ssl/lib" >> /etc/ld-musl-x86_64.path
-
-# Copy libxml2 from installer to runner
-COPY --from=installer /usr/lib/libxml2.so* /usr/lib/
-COPY --from=installer /usr/include/libxml2 /usr/include/libxml2
-COPY --from=installer /usr/bin/xml* /usr/bin/
 
 WORKDIR /home/nextjs
 
