@@ -17,19 +17,20 @@ RUN apk update && \
     cp -av /usr/lib/libcrypto.so* /edge-packages/lib/ && \
     cp -av /usr/bin/openssl /edge-packages/bin/ && \
     cp -av /etc/ssl /edge-packages/etc/ && \
-    # Find and copy SQLite libs (search entire system)
+    # Find and copy SQLite libs
     echo "Finding SQLite libraries..." && \
     find / -name "libsqlite*.so*" 2>/dev/null && \
     find / -name "libsqlite*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No SQLite libraries found" && \
-    # Find and copy SQLite binary
     find / -name "sqlite3" -type f -exec cp -av {} /edge-packages/bin/ \; 2>/dev/null || echo "No SQLite binary found" && \
     # Find and copy GLib libs
     echo "Finding GLib libraries..." && \
     find / -name "libglib*.so*" 2>/dev/null && \
     find / -name "libglib*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No GLib libraries found" && \
-    # Also find and copy libpcre libraries that GLib depends on
+    # Also copy dependencies
     find / -name "libpcre*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No PCRE libraries found" && \
-    # List what was found
+    find / -name "libffi.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No FFI libraries found" && \
+    find / -name "libintl.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No INTL libraries found" && \
+    # Create list of copied files for verification
     echo "Contents of /edge-packages/lib:" && \
     ls -la /edge-packages/lib/ && \
     echo "Contents of /edge-packages/bin:" && \
@@ -139,29 +140,28 @@ COPY --from=edge-packages /edge-packages/lib /usr/lib
 COPY --from=edge-packages /edge-packages/bin /usr/bin
 COPY --from=edge-packages /edge-packages/etc /etc
 COPY --from=source-builder /built-libs /
-# Also copy the file list for reference
-COPY --from=edge-packages /edge-packages/lib-files.txt /tmp/lib-files.txt
 
-# Avoid installing packages that would override our custom versions
+# Avoid installing packages that would override our custom versions 
 RUN apk add --no-cache curl libxml2-utils supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
-# In the runner stage
+# Updated verification step
 RUN echo "Verifying package versions:" && \
     # Verify OpenSSL
     openssl version | grep "3.5.0" && \
     echo "OpenSSL verified ✓" && \
-    # Find and verify SQLite
-    echo "Looking for SQLite libraries..." && \
-    find / -name "libsqlite*.so*" 2>/dev/null && \
-    # Find and verify GLib
-    echo "Looking for GLib libraries..." && \
-    find / -name "libglib*.so*" 2>/dev/null && \
-    # Find and verify libxml2 
-    echo "Looking for libxml2 libraries..." && \
-    find / -name "libxml2.so*" 2>/dev/null && \
-    echo "Verification complete"
+    # Verify SQLite by checking binary
+    echo "Looking for SQLite..." && \
+    sqlite3 --version || echo "SQLite binary not working, checking library..." && \
+    find /usr/lib -name "libsqlite*" | grep -q "libsqlite" && \
+    echo "SQLite library found ✓" && \
+    # Verify GLib by checking library file
+    echo "Looking for GLib..." && \
+    find /usr/lib -name "libglib-2.0*" | grep -q "libglib-2.0" && \
+    echo "GLib library found ✓" && \
+    # Continue with your standard setup...
+    echo "All required libraries verified!"
 
 
 WORKDIR /home/nextjs
