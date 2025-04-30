@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export function LoadingEngagementCard(): React.JSX.Element {
+export const LoadingEngagementCard = (): React.JSX.Element => {
   const badgeStyle = "h-5 rounded-full bg-slate-200";
 
   return (
@@ -34,6 +34,6 @@ export function LoadingEngagementCard(): React.JSX.Element {
       </div>
     </div>
   );
-}
+};
 
 export default LoadingEngagementCard;

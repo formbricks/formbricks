@@ -2,15 +2,17 @@
 
 import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
 import { CompletedSurveyCard } from "@/modules/discover/components/common/completed-survey-card";
-import LoadingEngagementCard from "@/modules/discover/components/common/loading-card";
+import { LoadingEngagementCard } from "@/modules/discover/components/common/loading-card";
+import { NoCompletedEngagements } from "@/modules/discover/components/common/no-completed-engagements";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import React, { useEffect, useState } from "react";
 
 interface CompletedSurveysProps {
   searchQuery: string;
+  setActiveTab: (id: string) => void;
 }
 
-export function CompletedSurveys({ searchQuery }: CompletedSurveysProps): React.JSX.Element {
+export function CompletedSurveys({ searchQuery, setActiveTab }: CompletedSurveysProps): React.JSX.Element {
   const [completedSurveys, setCompletedSurveys] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -43,6 +45,10 @@ export function CompletedSurveys({ searchQuery }: CompletedSurveysProps): React.
         <LoadingEngagementCard />
       </>
     );
+  }
+
+  if (!completedSurveys || completedSurveys.length == 0) {
+    return <NoCompletedEngagements setActiveTab={setActiveTab} />;
   }
 
   return (

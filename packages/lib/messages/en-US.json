@@ -187,6 +187,7 @@
     "error_component_description": "This resource doesn't exist or you don't have the necessary rights to access it.",
     "error_component_title": "Error loading resources",
     "expand_rows": "Expand rows",
+    "find_out_more_and_mint": "Find out more and mint",
     "finish": "Finish",
     "follow_these": "Follow these",
     "formbricks_version": "Formbricks Version",
@@ -212,6 +213,7 @@
     "insights": "Insights",
     "integration": "integration",
     "integrations": "Integrations",
+    "interested_in_minting": "Interested in minting?",
     "intro": "Introduction",
     "invalid_file_type": "Invalid file type",
     "invite": "Invite",
@@ -589,8 +591,14 @@
       "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using"
     },
     "activity": {
+      "banner": {
+        "welcome_to_engage_hq_complete_your_first_task_to_earn_rewards": "Welcome to EngageHQ! Complete your first task to earn rewards."
+      },
       "card": {
+        "complete_your_first_engagement_to_earn_rewards": "Complete your first engagement to earn rewards",
+        "find_engagement": "Find Engagement",
         "hash": "Hash",
+        "no_completed_engagements": "No completed engagements",
         "response_info": "Response Info",
         "start_engagement": "Start Engagement",
         "submission_date": "Submission Date",
