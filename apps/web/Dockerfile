@@ -7,9 +7,9 @@ FROM alpine:edge AS edge-packages
 RUN apk update && \
     # Install the edge packages we need
     apk add --no-cache \
+        glib=2.84.1-r0 \
         openssl=3.5.0-r0 \
-        sqlite=3.49.1-r1 \
-        glib=2.84.1-r0 && \
+        sqlite=3.49.1-r1 && \
     # Create directory for package files
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
     # Copy libraries with error handling
@@ -33,9 +33,9 @@ RUN apk update && \
 FROM alpine:3.21 AS source-builder
 
 # Install build tools and dependencies
-RUN apk add --no-cache build-base autoconf automake libtool cmake \
-    git python3-dev zlib-dev pkgconf bison flex perl linux-headers \
-    xz gzip tar ca-certificates curl wget
+RUN apk add --no-cache autoconf automake bison build-base ca-certificates \
+    cmake curl flex git gzip libtool linux-headers perl pkgconf \
+    python3-dev tar wget xz zlib-dev
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
@@ -52,8 +52,7 @@ RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
 
 # 2. Build LCMS2 2.17
 WORKDIR /custom-packages/lcms2
-RUN wget https://sourceforge.net/projects/lcms/files/lcms/2.17/lcms2-2.17.tar.gz && \
-    tar -xf lcms2-2.17.tar.gz && \
+RUN wget --max-redirect=0 https://sourceforge.net/projects/lcms/files/lcms/2.17/lcms2-2.17.tar.gz && \    tar -xf lcms2-2.17.tar.gz && \
     cd lcms2-2.17 && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
