@@ -1,0 +1,89 @@
+---
+title: "Spam Protection"
+description: "Enable spam protection for your surveys using Google reCAPTCHA v3."
+icon: "shield"
+---
+
+## Overview
+
+Spam protection feature protects your Formbricks instance from spam and automated abuse by verifying that survey responses are submitted by real users. This guide explains how to enable and configure spam protection in your Formbricks instance using Google reCAPTCHA v3.
+
+<Note>
+  Spam protection is a paid feature. It is only available for users on paid plans or if you have [Enterprise
+  Edition](/self-hosting/advanced/license).
+</Note>
+
+## Key Generation
+
+To use spam protection, you need to generate a Site Key and Secret Key:
+
+1. Go to the [Google reCAPTCHA admin console](https://www.google.com/recaptcha/admin/create).
+2. Register a new site:
+   - **Label:** Any name (e.g., "Formbricks Self-Hosted")
+   - **reCAPTCHA type:** Select **reCAPTCHA v3**
+   - **Domains:** Add your domain (e.g., `yourdomain.com`). For local development, add `localhost`.
+   - Accept the terms and submit.
+3. Copy the generated **Site Key** and **Secret Key**.
+
+> **Note:** Keep your Secret Key private and never expose it in client-side code.
+
+## Configuration
+
+Add the following environment variables to your `.env` file or deployment environment:
+
+```bash
+RECAPTCHA_SITE_KEY=your_site_key_here
+RECAPTCHA_SECRET_KEY=your_secret_key_here
+```
+
+Restart your application after setting these variables.
+
+## Firewall & Network Requirements
+
+If your self-hosted Formbricks instance is behind a firewall or proxy, ensure it can reach the Google reCAPTCHA verification endpoint:
+
+- `https://www.google.com/recaptcha/api/siteverify`
+
+Allow outbound HTTPS (TCP port 443) traffic to this domain.
+
+## Steps to Enable Spam Protection
+
+You can enable Google reCAPTCHA v3 spam protection for your survey directly from the Formbricks Survey Editor. This helps prevent automated and spammy responses.
+
+<Steps>
+  <Step title="Open the Survey Editor">
+    Navigate to the Survey Editor.
+
+  </Step>
+
+  <Step title="Go to the Settings Tab">
+    Click on the **Settings** tab next to the Questions & Styling tab.
+
+  </Step>
+
+  <Step title="Find Spam Protection Option">
+    Scroll down to the **Response Options** and find the **Spam Protection** option.
+
+  </Step>
+
+  <Step title="Enable Spam Protection">
+    Toggle the **Spam Protection** option to activate spam protection for this survey.
+
+  </Step>
+
+  <Step title="Set the reCAPTCHA Threshold">
+    Adjust the **response threshold**. This is the score threshold for accepting or rejecting responses. A lower threshold (e.g., 0.1) is lenient, while a higher threshold (e.g., 0.9) is strict.
+
+![Set reCAPTCHA Threshold](/images/xm-and-surveys/surveys/general-features/spam-protection/spam-protection.webp)
+
+  </Step>
+
+  <Step title="Save Your Changes">
+    Click **Save** to apply spam protection settings to your survey.
+
+  </Step>
+</Steps>
+
+Once enabled, all survey responses will be checked using Google reCAPTCHA v3 before being accepted.
+
+For help, join the conversation on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
