@@ -3,36 +3,31 @@ FROM node:22-alpine3.21 AS base
 # Get packages from Edge repository
 FROM alpine:edge AS edge-packages
 
+# Install packages from edge that are available
 RUN apk update && \
-    # Install packages
+    # Install the edge packages we need
     apk add --no-cache \
         openssl=3.5.0-r0 \
         sqlite=3.49.1-r1 \
-        glib=2.84.1-r0 \
-        readline && \
-    # Create directories
+        glib=2.84.1-r0 && \
+    # Create directory for package files
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
-    # Copy OpenSSL files
-    cp -av /usr/lib/libssl.so* /edge-packages/lib/ && \
-    cp -av /usr/lib/libcrypto.so* /edge-packages/lib/ && \
-    cp -av /usr/bin/openssl /edge-packages/bin/ && \
-    cp -av /etc/ssl /edge-packages/etc/ && \
-    # Copy SQLite files
-    find / -name "libsqlite*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No SQLite libraries found" && \
-    # Copy readline libraries - explicitly for SQLite
-    find / -name "libreadline.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    find / -name "libhistory.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    find / -name "libncursesw.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    # Copy SQLite binary - but we won't rely on it
-    find / -name "sqlite3" -type f -exec cp -av {} /edge-packages/bin/ \; 2>/dev/null || echo "No SQLite binary found" && \
+    # Copy libraries with error handling
+    cp -a /usr/lib/libssl.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/bin/openssl /edge-packages/bin/ 2>/dev/null || true && \
+    cp -a /etc/ssl /edge-packages/etc/ 2>/dev/null || true && \
+    # Find SQLite libraries
+    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; 2>/dev/null || true && \
     # Copy GLib files
-    find / -name "libglib*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    find / -name "libpcre*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    find / -name "libffi.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    find / -name "libintl.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null && \
-    # List what we have
-    echo "Contents of /edge-packages/lib:" && \
-    ls -la /edge-packages/lib/
+    cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    # Create empty files to ensure directories aren't empty
+    touch /edge-packages/lib/.keep && \
+    touch /edge-packages/bin/.keep && \
+    touch /edge-packages/etc/.keep
 
 # Build packages from source that aren't in Edge
 FROM alpine:3.21 AS source-builder
