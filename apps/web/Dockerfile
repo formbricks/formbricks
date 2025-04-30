@@ -12,17 +12,22 @@ RUN apk update && \
         glib=2.84.1-r0 && \
     # Create directory for package files
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
-    # Copy OpenSSL files
-    cp -a /usr/lib/libssl.so* /usr/lib/libcrypto.so* /edge-packages/lib/ && \
-    cp -a /usr/bin/openssl /edge-packages/bin/ && \
-    cp -a /etc/ssl /edge-packages/etc/ && \
-    # Find and copy SQLite files - the location may vary
-    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; || echo "SQLite libraries not found" && \
-    # Copy GLib files with error handling
-    cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ || echo "Some glib libraries not found" && \
-    cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ || echo "Some gmodule libraries not found" && \
-    cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ || echo "Some gobject libraries not found" && \
-    cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ || echo "Some gio libraries not found"
+    # Find and copy all needed libraries
+    (cp -a /usr/lib/libssl.so* /edge-packages/lib/ || echo "OpenSSL libs not found") && \
+    (cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ || echo "Crypto libs not found") && \
+    (cp -a /usr/bin/openssl /edge-packages/bin/ || echo "OpenSSL binary not found") && \
+    (cp -a /etc/ssl /edge-packages/etc/ || echo "SSL config not found") && \
+    # Find SQLite libraries
+    (find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; || echo "SQLite libs not found") && \
+    # Copy GLib files
+    (cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ || echo "GLib libs not found") && \
+    (cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ || echo "GModule libs not found") && \
+    (cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ || echo "GObject libs not found") && \
+    (cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ || echo "GIO libs not found") && \
+    # Create a file to show directories were processed
+    touch /edge-packages/lib/copied && \
+    touch /edge-packages/bin/copied && \
+    touch /edge-packages/etc/copied
 
 # Build packages from source that aren't in Edge
 FROM alpine:3.21 AS source-builder
@@ -35,6 +40,7 @@ RUN apk add --no-cache build-base autoconf automake libtool cmake \
 # Create directory for our custom packages
 WORKDIR /custom-packages
 RUN mkdir -p /tmp/built-libs
+
 
 # 1. Build libxml2 2.14.1
 WORKDIR /custom-packages/libxml2
