@@ -129,10 +129,23 @@ FROM base AS runner
 RUN npm install -g corepack@latest
 RUN corepack enable
 
+COPY --from=edge-packages /edge-packages/lib /usr/lib
+COPY --from=edge-packages /edge-packages/bin /usr/bin
+COPY --from=edge-packages /edge-packages/etc /etc
+COPY --from=source-builder /built-libs /
+
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
+
+RUN echo "Verifying package versions:" && \
+    openssl version | grep "3.5.0" && \
+    sqlite3 --version | grep "3.49.1" && \
+    pkg-config --modversion glib-2.0 | grep "2.84.1" && \
+    xml2-config --version | grep "2.14.1" && \
+    echo "All package versions verified successfully!"
+
 
 WORKDIR /home/nextjs
 
