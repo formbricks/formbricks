@@ -80,6 +80,7 @@ export default defineConfig({
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "modules/ee/sso/lib/**/*.ts",
         "app/lib/**/*.ts",
+        "modules/ee/license-check/lib/utils.ts",
         "app/api/(internal)/insights/lib/**/*.ts",
         "app/api/(internal)/pipeline/lib/survey-follow-up.ts",
         "modules/ee/role-management/*.ts",

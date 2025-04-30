@@ -1,4 +1,3 @@
-import React from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { executeRecaptcha, loadRecaptchaScript } from "./recaptcha";
 
@@ -68,6 +67,31 @@ describe("loadRecaptchaScript", () => {
     vi.spyOn(document, "getElementById").mockReturnValue(null);
     await expect(loadRecaptchaScript(undefined)).rejects.toThrow("reCAPTCHA site key not found");
   });
+
+  test("loads script successfully and resolves", async () => {
+    vi.spyOn(document, "getElementById").mockReturnValue(null);
+
+    const appendChildSpy = vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
+      const script = element as HTMLScriptElement;
+      setTimeout(() => script.onload?.(new Event("load")), 0);
+      return element;
+    });
+
+    await expect(loadRecaptchaScript("valid-key")).resolves.toBeUndefined();
+    appendChildSpy.mockRestore();
+  });
+
+  test("rejects when script loading fails", async () => {
+    vi.spyOn(document, "getElementById").mockReturnValue(null);
+
+    vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
+      const script = element as HTMLScriptElement;
+      setTimeout(() => script.onerror?.(new Event("error")), 0);
+      return element;
+    });
+
+    await expect(loadRecaptchaScript("bad-key")).rejects.toThrow("Error loading reCAPTCHA script");
+  });
 });
 
 describe("executeRecaptcha", () => {
@@ -101,6 +125,13 @@ describe("executeRecaptcha", () => {
       ...window.grecaptcha,
       execute: vi.fn(() => Promise.reject(new Error("fail"))),
     };
+    const result = await executeRecaptcha(mockRecaptchaSiteKey);
+    expect(result).toBeUndefined();
+  });
+
+  test("logs and returns undefined if grecaptcha is not available", async () => {
+    // @ts-expect-error intentionally removing grecaptcha
+    delete window.grecaptcha;
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
     expect(result).toBeUndefined();
   });

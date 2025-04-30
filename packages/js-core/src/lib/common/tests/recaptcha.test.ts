@@ -33,6 +33,33 @@ describe("loadRecaptchaScript", () => {
     await expect(loadRecaptchaScript(undefined)).rejects.toThrow("reCAPTCHA site key not found");
     expect(loggerMock.debug).toHaveBeenCalledWith("reCAPTCHA site key not found");
   });
+
+  test("loads script successfully and resolves", async () => {
+    vi.spyOn(document, "getElementById").mockReturnValue(null);
+
+    const appendChildSpy = vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
+      const script = element as HTMLScriptElement;
+      setTimeout(() => script.onload?.(new Event("load")), 0);
+      return element;
+    });
+
+    await expect(loadRecaptchaScript("valid-key")).resolves.toBeUndefined();
+    expect(loggerMock.debug).toHaveBeenCalledWith("reCAPTCHA script loaded successfully");
+    appendChildSpy.mockRestore();
+  });
+
+  test("rejects when script loading fails", async () => {
+    vi.spyOn(document, "getElementById").mockReturnValue(null);
+
+    vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
+      const script = element as HTMLScriptElement;
+      setTimeout(() => script.onerror?.(new Event("error")), 0);
+      return element;
+    });
+
+    await expect(loadRecaptchaScript("bad-key")).rejects.toThrow("Error loading reCAPTCHA script");
+    expect(loggerMock.debug).toHaveBeenCalledWith("Error loading reCAPTCHA script:");
+  });
 });
 
 describe("executeRecaptcha", () => {
@@ -73,5 +100,13 @@ describe("executeRecaptcha", () => {
     expect(loggerMock.debug).toHaveBeenCalledWith(
       expect.stringContaining("Error during reCAPTCHA execution: Error: fail")
     );
+  });
+
+  test("logs and returns undefined if grecaptcha is not available", async () => {
+    // @ts-expect-error intentionally removing grecaptcha
+    delete window.grecaptcha;
+    const result = await executeRecaptcha(mockRecaptchaSiteKey);
+    expect(result).toBeUndefined();
+    expect(loggerMock.debug).toHaveBeenCalledWith("reCAPTCHA API not available");
   });
 });
