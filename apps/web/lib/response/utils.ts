@@ -23,433 +23,500 @@ export const calculateTtcTotal = (ttc: TResponseTtc) => {
 };
 
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
-  const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+  const whereClause: Prisma.ResponseWhereInput[] = [];
 
-  // For finished
-  if (filterCriteria?.finished !== undefined) {
-    whereClause.push({
-      finished: filterCriteria?.finished,
-    });
+  addFinishedFilter(whereClause, filterCriteria);
+  addDateRangeFilter(whereClause, filterCriteria);
+  addTagsFilter(whereClause, filterCriteria);
+  addContactAttributesFilter(whereClause, filterCriteria);
+  addMetaFilter(whereClause, filterCriteria);
+  addOthersFilter(whereClause, filterCriteria);
+  addDataFilter(whereClause, filterCriteria, survey);
+  addResponseIdsFilter(whereClause, filterCriteria);
+
+  return { AND: whereClause };
+};
+
+const addFinishedFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (filterCriteria?.finished === undefined) return;
+
+  whereClause.push({
+    finished: filterCriteria.finished,
+  });
+};
+
+const addDateRangeFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.createdAt) return;
+
+  const createdAt: { lte?: Date; gte?: Date } = {};
+
+  if (filterCriteria.createdAt.max) {
+    createdAt.lte = filterCriteria.createdAt.max;
   }
 
-  // For Date range
-  if (filterCriteria?.createdAt) {
-    const createdAt: { lte?: Date; gte?: Date } = {};
-    if (filterCriteria?.createdAt?.max) {
-      createdAt.lte = filterCriteria?.createdAt?.max;
-    }
-    if (filterCriteria?.createdAt?.min) {
-      createdAt.gte = filterCriteria?.createdAt?.min;
-    }
-
-    whereClause.push({
-      createdAt,
-    });
+  if (filterCriteria.createdAt.min) {
+    createdAt.gte = filterCriteria.createdAt.min;
   }
 
-  // For Tags
-  if (filterCriteria?.tags) {
-    const tags: Record<string, any>[] = [];
+  whereClause.push({ createdAt });
+};
 
-    if (filterCriteria?.tags?.applied) {
-      const appliedTags = filterCriteria.tags.applied.map((name) => ({
-        tags: {
-          some: {
-            tag: {
-              name,
+const addTagsFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.tags) return;
+
+  const tags: Record<string, any>[] = [];
+
+  if (filterCriteria.tags.applied) {
+    const appliedTags = filterCriteria.tags.applied.map((name) => ({
+      tags: {
+        some: {
+          tag: {
+            name,
+          },
+        },
+      },
+    }));
+    tags.push(...appliedTags);
+  }
+
+  if (filterCriteria.tags.notApplied) {
+    const notAppliedTags = {
+      tags: {
+        every: {
+          tag: {
+            name: {
+              notIn: filterCriteria.tags.notApplied,
             },
           },
         },
-      }));
-      tags.push(appliedTags);
-    }
+      },
+    };
 
-    if (filterCriteria?.tags?.notApplied) {
-      const notAppliedTags = {
-        tags: {
-          every: {
-            tag: {
-              name: {
-                notIn: filterCriteria.tags.notApplied,
-              },
-            },
-          },
-        },
-      };
-
-      tags.push(notAppliedTags);
-    }
-
-    whereClause.push({
-      AND: tags.flat(),
-    });
+    tags.push(notAppliedTags);
   }
 
-  // For Person Attributes
-  if (filterCriteria?.contactAttributes) {
-    const contactAttributes: Prisma.ResponseWhereInput[] = [];
-
-    Object.entries(filterCriteria.contactAttributes).forEach(([key, val]) => {
-      switch (val.op) {
-        case "equals":
-          contactAttributes.push({
-            contactAttributes: {
-              path: [key],
-              equals: val.value,
-            },
-          });
-          break;
-        case "notEquals":
-          contactAttributes.push({
-            contactAttributes: {
-              path: [key],
-              not: val.value,
-            },
-          });
-          break;
-      }
+  if (tags.length > 0) {
+    whereClause.push({
+      AND: tags,
     });
+  }
+};
 
+const addContactAttributesFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.contactAttributes) return;
+
+  const contactAttributes: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(filterCriteria.contactAttributes).forEach(([key, val]) => {
+    if (val.op === "equals") {
+      contactAttributes.push({
+        contactAttributes: {
+          path: [key],
+          equals: val.value,
+        },
+      });
+    } else if (val.op === "notEquals") {
+      contactAttributes.push({
+        contactAttributes: {
+          path: [key],
+          not: val.value,
+        },
+      });
+    }
+  });
+
+  if (contactAttributes.length > 0) {
     whereClause.push({
       AND: contactAttributes,
     });
   }
+};
 
-  // for meta
-  if (filterCriteria?.meta) {
-    const meta: Prisma.ResponseWhereInput[] = [];
+const addMetaFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.meta) return;
 
-    Object.entries(filterCriteria.meta).forEach(([key, val]) => {
-      let updatedKey: string[] = [];
-      if (["browser", "os", "device"].includes(key)) {
-        updatedKey = ["userAgent", key];
-      } else {
-        updatedKey = [key];
-      }
+  const meta: Prisma.ResponseWhereInput[] = [];
 
-      switch (val.op) {
-        case "equals":
-          meta.push({
-            meta: {
-              path: updatedKey,
-              equals: val.value,
-            },
-          });
-          break;
-        case "notEquals":
-          meta.push({
-            meta: {
-              path: updatedKey,
-              not: val.value,
-            },
-          });
-          break;
-      }
-    });
+  Object.entries(filterCriteria.meta).forEach(([key, val]) => {
+    const updatedKey: string[] = ["browser", "os", "device"].includes(key) ? ["userAgent", key] : [key];
 
+    if (val.op === "equals") {
+      meta.push({
+        meta: {
+          path: updatedKey,
+          equals: val.value,
+        },
+      });
+    } else if (val.op === "notEquals") {
+      meta.push({
+        meta: {
+          path: updatedKey,
+          not: val.value,
+        },
+      });
+    }
+  });
+
+  if (meta.length > 0) {
     whereClause.push({
       AND: meta,
     });
   }
+};
 
-  // For Language
-  if (filterCriteria?.others) {
-    const others: Prisma.ResponseWhereInput[] = [];
+const addOthersFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.others) return;
 
-    Object.entries(filterCriteria.others).forEach(([key, val]) => {
-      switch (val.op) {
-        case "equals":
-          others.push({
-            [key.toLocaleLowerCase()]: val.value,
-          });
-          break;
-        case "notEquals":
-          others.push({
-            [key.toLocaleLowerCase()]: {
-              not: val.value,
-            },
-          });
-          break;
-      }
-    });
+  const others: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(filterCriteria.others).forEach(([key, val]) => {
+    if (val.op === "equals") {
+      others.push({
+        [key.toLocaleLowerCase()]: val.value,
+      });
+    } else if (val.op === "notEquals") {
+      others.push({
+        [key.toLocaleLowerCase()]: {
+          not: val.value,
+        },
+      });
+    }
+  });
+
+  if (others.length > 0) {
     whereClause.push({
       AND: others,
     });
   }
+};
 
-  // For Questions Data
-  if (filterCriteria?.data) {
-    const data: Prisma.ResponseWhereInput[] = [];
+const handleIncludesOneOperation = (
+  key: string,
+  val: { value: any[] },
+  question: any,
+  data: Prisma.ResponseWhereInput[]
+): void => {
+  const values: string[] = val.value.map((v) => v.toString());
+  const otherChoice =
+    question && (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle")
+      ? question.choices.find((choice: any) => choice.id === "other")
+      : null;
 
-    Object.entries(filterCriteria.data).forEach(([key, val]) => {
-      const question = survey.questions.find((question) => question.id === key);
+  const hasOtherChoice =
+    question &&
+    (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") &&
+    question.choices.map((choice: any) => choice.id).includes("other") &&
+    otherChoice &&
+    values.includes(otherChoice.label.default);
 
-      switch (val.op) {
-        case "submitted":
-          data.push({
-            data: {
-              path: [key],
-              not: Prisma.DbNull,
-            },
-          });
-          break;
-        case "filledOut":
-          data.push({
-            data: {
-              path: [key],
-              not: [],
-            },
-          });
-          break;
-        case "skipped":
-          data.push({
-            OR: [
-              {
-                data: {
-                  path: [key],
-                  equals: Prisma.DbNull,
-                },
-              },
-              {
-                data: {
-                  path: [key],
-                  equals: "",
-                },
-              },
-              // For address question
-              {
-                data: {
-                  path: [key],
-                  equals: [],
-                },
-              },
-            ],
-          });
-          break;
-        case "equals":
-          data.push({
-            data: {
-              path: [key],
-              equals: val.value,
-            },
-          });
-          break;
-        case "notEquals":
-          data.push({
-            OR: [
-              {
-                // for value not equal to val.value
-                data: {
-                  path: [key],
-                  not: val.value,
-                },
-              },
-              {
-                // for not answered
-                data: {
-                  path: [key],
-                  equals: Prisma.DbNull,
-                },
-              },
-            ],
-          });
-          break;
-        case "lessThan":
-          data.push({
-            data: {
-              path: [key],
-              lt: val.value,
-            },
-          });
-          break;
-        case "lessEqual":
-          data.push({
-            data: {
-              path: [key],
-              lte: val.value,
-            },
-          });
-          break;
-        case "greaterThan":
-          data.push({
-            data: {
-              path: [key],
-              gt: val.value,
-            },
-          });
-          break;
-        case "greaterEqual":
-          data.push({
-            data: {
-              path: [key],
-              gte: val.value,
-            },
-          });
-          break;
-        case "includesAll":
-          data.push({
-            data: {
-              path: [key],
-              array_contains: val.value,
-            },
-          });
-          break;
-        case "includesOne":
-          // * If the question includes an 'other' choice and the user has selected it:
-          // *   - `predefinedLabels`: Collects labels from the question's choices that aren't selected by the user.
-          // *   - `subsets`: Generates all possible non-empty permutations of subsets of these predefined labels.
-          // *
-          // * Depending on the question type (multiple or single choice), the filter is constructed:
-          // *   - For "multipleChoiceMulti": Filters out any combinations of choices that match the subsets of predefined labels.
-          // *   - For "multipleChoiceSingle": Filters out any single predefined labels that match the user's selection.
-          const values: string[] = val.value.map((v) => v.toString());
-          const otherChoice =
-            question && (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle")
-              ? question.choices.find((choice) => choice.id === "other")
-              : null;
+  if (hasOtherChoice) {
+    const predefinedLabels: string[] = [];
 
-          if (
-            question &&
-            (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") &&
-            question.choices.map((choice) => choice.id).includes("other") &&
-            otherChoice &&
-            values.includes(otherChoice.label.default)
-          ) {
-            const predefinedLabels: string[] = [];
-
-            question.choices.forEach((choice) => {
-              Object.values(choice.label).forEach((label) => {
-                if (!values.includes(label)) {
-                  predefinedLabels.push(label);
-                }
-              });
-            });
-
-            const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
-            if (question.type === "multipleChoiceMulti") {
-              const subsetConditions = subsets.map((subset) => ({
-                data: { path: [key], equals: subset },
-              }));
-              data.push({
-                NOT: {
-                  OR: subsetConditions,
-                },
-              });
-            } else {
-              data.push(
-                // for MultipleChoiceSingle
-                {
-                  AND: predefinedLabels.map((label) => ({
-                    NOT: {
-                      data: {
-                        path: [key],
-                        equals: label,
-                      },
-                    },
-                  })),
-                }
-              );
-            }
-          } else {
-            data.push({
-              OR: val.value.map((value: string | number) => ({
-                OR: [
-                  // for MultipleChoiceMulti
-                  {
-                    data: {
-                      path: [key],
-                      array_contains: [value],
-                    },
-                  },
-                  // for MultipleChoiceSingle
-                  {
-                    data: {
-                      path: [key],
-                      equals: value,
-                    },
-                  },
-                ],
-              })),
-            });
-          }
-
-          break;
-        case "uploaded":
-          data.push({
-            data: {
-              path: [key],
-              not: "skipped",
-            },
-          });
-          break;
-        case "notUploaded":
-          data.push({
-            OR: [
-              {
-                // for skipped
-                data: {
-                  path: [key],
-                  equals: "skipped",
-                },
-              },
-              {
-                // for not answered
-                data: {
-                  path: [key],
-                  equals: Prisma.DbNull,
-                },
-              },
-            ],
-          });
-          break;
-        case "clicked":
-          data.push({
-            data: {
-              path: [key],
-              equals: "clicked",
-            },
-          });
-          break;
-        case "accepted":
-          data.push({
-            data: {
-              path: [key],
-              equals: "accepted",
-            },
-          });
-          break;
-        case "booked":
-          data.push({
-            data: {
-              path: [key],
-              equals: "booked",
-            },
-          });
-          break;
-        case "matrix":
-          const rowLabel = Object.keys(val.value)[0];
-          data.push({
-            data: {
-              path: [key, rowLabel],
-              equals: val.value[rowLabel],
-            },
-          });
-          break;
-      }
+    question.choices.forEach((choice: any) => {
+      Object.values(choice.label).forEach((label: any) => {
+        if (typeof label === "string" && !values.includes(label)) {
+          predefinedLabels.push(label);
+        }
+      });
     });
 
+    const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
+
+    if (question.type === "multipleChoiceMulti") {
+      const subsetConditions = subsets.map((subset) => ({
+        data: { path: [key], equals: subset },
+      }));
+      data.push({
+        NOT: {
+          OR: subsetConditions,
+        },
+      });
+    } else {
+      // for MultipleChoiceSingle
+      data.push({
+        AND: predefinedLabels.map((label) => ({
+          NOT: {
+            data: {
+              path: [key],
+              equals: label,
+            },
+          },
+        })),
+      });
+    }
+  } else {
+    data.push({
+      OR: val.value.map((value: string | number) => ({
+        OR: [
+          // for MultipleChoiceMulti
+          {
+            data: {
+              path: [key],
+              array_contains: [value],
+            },
+          },
+          // for MultipleChoiceSingle
+          {
+            data: {
+              path: [key],
+              equals: value,
+            },
+          },
+        ],
+      })),
+    });
+  }
+};
+
+const handleDataOperations = (
+  key: string,
+  val: { op: string; value?: any },
+  question: any,
+  data: Prisma.ResponseWhereInput[]
+): void => {
+  switch (val.op) {
+    case "submitted":
+      data.push({
+        data: {
+          path: [key],
+          not: Prisma.DbNull,
+        },
+      });
+      break;
+
+    case "filledOut":
+      data.push({
+        data: {
+          path: [key],
+          not: [],
+        },
+      });
+      break;
+
+    case "skipped": {
+      data.push({
+        OR: [
+          {
+            data: {
+              path: [key],
+              equals: Prisma.DbNull,
+            },
+          },
+          {
+            data: {
+              path: [key],
+              equals: "",
+            },
+          },
+          // For address question
+          {
+            data: {
+              path: [key],
+              equals: [],
+            },
+          },
+        ],
+      });
+      break;
+    }
+
+    case "equals":
+      data.push({
+        data: {
+          path: [key],
+          equals: val.value,
+        },
+      });
+      break;
+
+    case "notEquals":
+      data.push({
+        OR: [
+          {
+            // for value not equal to val.value
+            data: {
+              path: [key],
+              not: val.value,
+            },
+          },
+          {
+            // for not answered
+            data: {
+              path: [key],
+              equals: Prisma.DbNull,
+            },
+          },
+        ],
+      });
+      break;
+
+    case "lessThan":
+      data.push({
+        data: {
+          path: [key],
+          lt: val.value,
+        },
+      });
+      break;
+
+    case "lessEqual":
+      data.push({
+        data: {
+          path: [key],
+          lte: val.value,
+        },
+      });
+      break;
+
+    case "greaterThan":
+      data.push({
+        data: {
+          path: [key],
+          gt: val.value,
+        },
+      });
+      break;
+
+    case "greaterEqual":
+      data.push({
+        data: {
+          path: [key],
+          gte: val.value,
+        },
+      });
+      break;
+
+    case "includesAll":
+      data.push({
+        data: {
+          path: [key],
+          array_contains: val.value,
+        },
+      });
+      break;
+
+    case "includesOne":
+      handleIncludesOneOperation(key, val as { value: any[] }, question, data);
+      break;
+
+    case "uploaded":
+      data.push({
+        data: {
+          path: [key],
+          not: "skipped",
+        },
+      });
+      break;
+
+    case "notUploaded":
+      data.push({
+        OR: [
+          {
+            // for skipped
+            data: {
+              path: [key],
+              equals: "skipped",
+            },
+          },
+          {
+            // for not answered
+            data: {
+              path: [key],
+              equals: Prisma.DbNull,
+            },
+          },
+        ],
+      });
+      break;
+
+    case "clicked":
+      data.push({
+        data: {
+          path: [key],
+          equals: "clicked",
+        },
+      });
+      break;
+
+    case "accepted":
+      data.push({
+        data: {
+          path: [key],
+          equals: "accepted",
+        },
+      });
+      break;
+
+    case "booked":
+      data.push({
+        data: {
+          path: [key],
+          equals: "booked",
+        },
+      });
+      break;
+
+    case "matrix": {
+      const rowLabel = Object.keys(val.value)[0];
+      data.push({
+        data: {
+          path: [key, rowLabel],
+          equals: val.value[rowLabel],
+        },
+      });
+      break;
+    }
+  }
+};
+
+const addDataFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria,
+  survey?: TSurvey
+): void => {
+  if (!filterCriteria?.data || !survey) return;
+
+  const data: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(filterCriteria.data).forEach(([key, val]) => {
+    const question = survey.questions.find((question) => question.id === key);
+    handleDataOperations(key, val, question, data);
+  });
+
+  if (data.length > 0) {
     whereClause.push({
       AND: data,
     });
   }
+};
 
-  // filter by explicit response IDs
-  if (filterCriteria?.responseIds) {
-    whereClause.push({
-      id: { in: filterCriteria.responseIds },
-    });
-  }
-  return { AND: whereClause };
+const addResponseIdsFilter = (
+  whereClause: Prisma.ResponseWhereInput[],
+  filterCriteria?: TResponseFilterCriteria
+): void => {
+  if (!filterCriteria?.responseIds) return;
+
+  whereClause.push({
+    id: { in: filterCriteria.responseIds },
+  });
 };
 
 export const getResponsesFileName = (surveyName: string, extension: string) => {
