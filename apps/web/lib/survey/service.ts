@@ -337,6 +337,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
 
+    checkForInvalidImages(questions);
+
     if (languages) {
       // Process languages update logic here
       // Extract currentLanguageIds and updatedLanguageIds
@@ -550,7 +552,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             : undefined,
       };
     }
-    checkForInvalidImages(questions);
 
     data.questions = questions.map((question) => {
       const { isDraft, ...rest } = question;

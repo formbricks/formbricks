@@ -38,18 +38,18 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
 export const checkForInvalidImages = (questions: TSurveyQuestion[]) => {
   questions.forEach((question, qIndex) => {
     if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
-      throw new InvalidInputError(`Invalid image file in question at index ${qIndex}`);
+      throw new InvalidInputError(`Invalid image file in question ${String(qIndex + 1)}`);
     }
 
     if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
       if (!Array.isArray(question.choices)) {
-        throw new InvalidInputError(`Choices missing for picture selection question at index ${qIndex}`);
+        throw new InvalidInputError(`Choices missing for question ${String(qIndex + 1)}`);
       }
 
       question.choices.forEach((choice, cIndex) => {
         if (!isValidImageFile(choice.imageUrl)) {
           throw new InvalidInputError(
-            `Invalid image file for choice ${cIndex} in picture selection question at index ${qIndex}`
+            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}`
           );
         }
       });

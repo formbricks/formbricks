@@ -1,5 +1,6 @@
 import { segmentCache } from "@/lib/cache/segment";
 import { surveyCache } from "@/lib/survey/cache";
+import { checkForInvalidImages } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -25,6 +26,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
+
+    checkForInvalidImages(questions);
 
     if (languages) {
       // Process languages update logic here
