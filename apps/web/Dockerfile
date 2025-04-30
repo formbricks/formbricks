@@ -12,22 +12,22 @@ RUN apk update && \
         glib=2.84.1-r0 && \
     # Create directory for package files
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
-    # Find and copy all needed libraries
-    (cp -a /usr/lib/libssl.so* /edge-packages/lib/ || echo "OpenSSL libs not found") && \
-    (cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ || echo "Crypto libs not found") && \
-    (cp -a /usr/bin/openssl /edge-packages/bin/ || echo "OpenSSL binary not found") && \
-    (cp -a /etc/ssl /edge-packages/etc/ || echo "SSL config not found") && \
+    # Copy libraries with error handling
+    cp -a /usr/lib/libssl.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/bin/openssl /edge-packages/bin/ 2>/dev/null || true && \
+    cp -a /etc/ssl /edge-packages/etc/ 2>/dev/null || true && \
     # Find SQLite libraries
-    (find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; || echo "SQLite libs not found") && \
+    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; 2>/dev/null || true && \
     # Copy GLib files
-    (cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ || echo "GLib libs not found") && \
-    (cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ || echo "GModule libs not found") && \
-    (cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ || echo "GObject libs not found") && \
-    (cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ || echo "GIO libs not found") && \
-    # Create a file to show directories were processed
-    touch /edge-packages/lib/copied && \
-    touch /edge-packages/bin/copied && \
-    touch /edge-packages/etc/copied
+    cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
+    # Create empty files to ensure directories aren't empty
+    touch /edge-packages/lib/.keep && \
+    touch /edge-packages/bin/.keep && \
+    touch /edge-packages/etc/.keep
 
 # Build packages from source that aren't in Edge
 FROM alpine:3.21 AS source-builder
@@ -39,8 +39,7 @@ RUN apk add --no-cache build-base autoconf automake libtool cmake \
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
-RUN mkdir -p /tmp/built-libs
-
+RUN mkdir -p /built-libs/bin /built-libs/lib /built-libs/include
 
 # 1. Build libxml2 2.14.1
 WORKDIR /custom-packages/libxml2
@@ -49,7 +48,7 @@ RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
     ./autogen.sh --prefix=/usr && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
-    DESTDIR=/tmp/built-libs/libxml2 make install
+    make install DESTDIR=/built-libs
 
 # 2. Build LCMS2 2.17
 WORKDIR /custom-packages/lcms2
@@ -58,7 +57,7 @@ RUN wget https://sourceforge.net/projects/lcms/files/lcms/2.17/lcms2-2.17.tar.gz
     cd lcms2-2.17 && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
-    DESTDIR=/tmp/built-libs/lcms2 make install
+    make install DESTDIR=/built-libs
 
 # Installer stage
 FROM base AS installer
@@ -67,17 +66,20 @@ FROM base AS installer
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Copy packages from Edge
-COPY --from=edge-packages /edge-packages/lib/* /usr/lib/ || true
-COPY --from=edge-packages /edge-packages/bin/* /usr/bin/ || true
-COPY --from=edge-packages /edge-packages/etc/ssl /etc/ssl/ || true
+# Create directories to ensure they exist
+RUN mkdir -p /usr/lib /usr/bin /etc/ssl
 
-# Copy packages built from source
-COPY --from=source-builder /tmp/built-libs/libxml2/* /
-COPY --from=source-builder /tmp/built-libs/lcms2/* /
+# Copy edge packages - fixed syntax
+COPY --from=edge-packages /edge-packages/lib /usr/lib
+COPY --from=edge-packages /edge-packages/bin /usr/bin
+COPY --from=edge-packages /edge-packages/etc /etc
+
+# Copy source-built packages
+COPY --from=source-builder /built-libs /
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
+
 
 # The rest of your Dockerfile remains the same
 # BuildKit secret handling without hardcoded fallback values
