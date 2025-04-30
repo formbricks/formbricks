@@ -62,14 +62,17 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (
-          <div className="cursor-pointer hover:opacity-80" key={group} onClick={() => applyFilter(group)}>
+          <button
+            className="w-full cursor-pointer hover:opacity-80"
+            key={group}
+            onClick={() => applyFilter(group)}>
             <div
               className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
               <div className="mr-8 flex space-x-1">
                 <p
-                  className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
+                  className={`font-semibold text-slate-700 capitalize ${group === "dismissed" ? "" : "text-slate-700"}`}>
                   {group}
                 </p>
                 <div>
@@ -87,11 +90,11 @@ export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryPro
               barColor={group === "dismissed" ? "bg-slate-600" : "bg-brand-dark"}
               progress={questionSummary[group]?.percentage / 100}
             />
-          </div>
+          </button>
         ))}
       </div>
 
-      <div className="flex justify-center pb-4 pt-4">
+      <div className="flex justify-center pt-4 pb-4">
         <HalfCircle value={questionSummary.score} />
       </div>
     </div>

@@ -43,10 +43,10 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {results.map((result, index) => (
-          <div
-            className="cursor-pointer hover:opacity-80"
+          <button
+            className="w-full cursor-pointer hover:opacity-80"
             key={result.id}
             onClick={() =>
               setFilter(
@@ -79,7 +79,7 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
               </p>
             </div>
             <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100 || 0} />
-          </div>
+          </button>
         ))}
       </div>
     </div>
