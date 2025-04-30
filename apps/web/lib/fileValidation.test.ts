@@ -9,6 +9,7 @@ import {
   isValidImageFile,
   validateFile,
   validateFileUploads,
+  validateSingleFile,
 } from "./fileValidation";
 
 // Mock getOriginalFileNameFromUrl function
@@ -111,6 +112,33 @@ describe("fileValidation", () => {
     test("should handle attempts to bypass with double extension", () => {
       const result = validateFile("malicious.jpg.php", "image/jpeg");
       expect(result.valid).toBe(false);
+    });
+  });
+
+  describe("validateSingleFile", () => {
+    test("should return true for allowed file extension", () => {
+      vi.mocked(storageUtils.getOriginalFileNameFromUrl).mockReturnValueOnce("image.jpg");
+      expect(validateSingleFile("https://example.com/image.jpg", ["jpg", "png"])).toBe(true);
+    });
+
+    test("should return false for disallowed file extension", () => {
+      vi.mocked(storageUtils.getOriginalFileNameFromUrl).mockReturnValueOnce("malicious.exe");
+      expect(validateSingleFile("https://example.com/malicious.exe", ["jpg", "png"])).toBe(false);
+    });
+
+    test("should return true when no allowed extensions are specified", () => {
+      vi.mocked(storageUtils.getOriginalFileNameFromUrl).mockReturnValueOnce("image.jpg");
+      expect(validateSingleFile("https://example.com/image.jpg")).toBe(true);
+    });
+
+    test("should return false when file name cannot be extracted", () => {
+      vi.mocked(storageUtils.getOriginalFileNameFromUrl).mockReturnValueOnce(undefined);
+      expect(validateSingleFile("https://example.com/unknown")).toBe(false);
+    });
+
+    test("should return false when file has no extension", () => {
+      vi.mocked(storageUtils.getOriginalFileNameFromUrl).mockReturnValueOnce("filewithoutextension");
+      expect(validateSingleFile("https://example.com/filewithoutextension", ["jpg"])).toBe(false);
     });
   });
 

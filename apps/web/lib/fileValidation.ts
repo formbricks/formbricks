@@ -54,7 +54,10 @@ export const validateFile = (fileName: string, mimeType: string): { valid: boole
   return { valid: true };
 };
 
-const validateSingleFile = (fileUrl: string, allowedFileExtensions?: TAllowedFileExtension[]): boolean => {
+export const validateSingleFile = (
+  fileUrl: string,
+  allowedFileExtensions?: TAllowedFileExtension[]
+): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName) return false;
   const extension = fileName.split(".").pop();
