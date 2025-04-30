@@ -4,33 +4,35 @@ FROM node:22-alpine3.21 AS base
 FROM alpine:edge AS edge-packages
 
 RUN apk update && \
-    # Install the edge packages we need
+    # Install packages
     apk add --no-cache \
         openssl=3.5.0-r0 \
         sqlite=3.49.1-r1 \
         glib=2.84.1-r0 \
         readline && \
-    # Debug installation
-    echo "Installed packages in edge:" && \
-    apk info && \
-    # Create directory for package files
+    # Create directories
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
-    # Copy libraries with better error handling
-    echo "Copying OpenSSL files..." && \
+    # Copy OpenSSL files
     cp -av /usr/lib/libssl.so* /edge-packages/lib/ && \
     cp -av /usr/lib/libcrypto.so* /edge-packages/lib/ && \
     cp -av /usr/bin/openssl /edge-packages/bin/ && \
     cp -av /etc/ssl /edge-packages/etc/ && \
-    # Copy SQLite files with better error handling
-    echo "Copying SQLite files..." && \
-    cp -av /usr/lib/libsqlite*.so* /edge-packages/lib/ && \
-    # Copy GLib files with better error handling
-    echo "Copying GLib files..." && \
-    cp -av /usr/lib/libglib*.so* /edge-packages/lib/ && \
-    # Debug what was copied
-    echo "Files copied to edge-packages/lib:" && \
+    # Find and copy SQLite libs (search entire system)
+    echo "Finding SQLite libraries..." && \
+    find / -name "libsqlite*.so*" 2>/dev/null && \
+    find / -name "libsqlite*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No SQLite libraries found" && \
+    # Find and copy SQLite binary
+    find / -name "sqlite3" -type f -exec cp -av {} /edge-packages/bin/ \; 2>/dev/null || echo "No SQLite binary found" && \
+    # Find and copy GLib libs
+    echo "Finding GLib libraries..." && \
+    find / -name "libglib*.so*" 2>/dev/null && \
+    find / -name "libglib*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No GLib libraries found" && \
+    # Also find and copy libpcre libraries that GLib depends on
+    find / -name "libpcre*.so*" -exec cp -av {} /edge-packages/lib/ \; 2>/dev/null || echo "No PCRE libraries found" && \
+    # List what was found
+    echo "Contents of /edge-packages/lib:" && \
     ls -la /edge-packages/lib/ && \
-    echo "Files copied to edge-packages/bin:" && \
+    echo "Contents of /edge-packages/bin:" && \
     ls -la /edge-packages/bin/
 
 # Build packages from source that aren't in Edge
@@ -145,24 +147,20 @@ RUN apk add --no-cache curl libxml2-utils supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
+# In the runner stage
 RUN echo "Verifying package versions:" && \
-    # List all libraries for debugging
-    echo "=== Library inventory ===" && \
-    find /usr/lib -type f -name "*.so*" | sort && \
-    echo "=== End inventory ===" && \
     # Verify OpenSSL
     openssl version | grep "3.5.0" && \
     echo "OpenSSL verified ✓" && \
-    # Check if sqlite libraries exist, don't fail if not found
+    # Find and verify SQLite
     echo "Looking for SQLite libraries..." && \
-    (find /usr/lib -name "libsqlite*.so*" || echo "No SQLite libraries found") && \
-    # Check if glib libraries exist, don't fail if not found
+    find / -name "libsqlite*.so*" 2>/dev/null && \
+    # Find and verify GLib
     echo "Looking for GLib libraries..." && \
-    (find /usr/lib -name "libglib*.so*" || echo "No GLib libraries found") && \
-    # Check if libxml2 libraries exist, don't fail if not found  
+    find / -name "libglib*.so*" 2>/dev/null && \
+    # Find and verify libxml2 
     echo "Looking for libxml2 libraries..." && \
-    (find /usr/lib -name "libxml2*.so*" || echo "No libxml2 libraries found") && \
-    # Verify at least one library is found
+    find / -name "libxml2.so*" 2>/dev/null && \
     echo "Verification complete"
 
 
