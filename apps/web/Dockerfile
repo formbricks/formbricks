@@ -4,30 +4,31 @@ FROM node:22-alpine3.21 AS base
 FROM alpine:edge AS edge-packages
 
 RUN apk update && \
-    # Install the edge packages we need
+    # Add readline to fix SQLite dependencies
     apk add --no-cache \
         openssl=3.5.0-r0 \
         sqlite=3.49.1-r1 \
-        glib=2.84.1-r0 && \
-    # Create directory for package files
+        glib=2.84.1-r0 \
+        readline && \
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
     # Copy libraries with error handling
     cp -a /usr/lib/libssl.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/bin/openssl /edge-packages/bin/ 2>/dev/null || true && \
     cp -a /etc/ssl /edge-packages/etc/ 2>/dev/null || true && \
-    # Find SQLite libraries and binary
-    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; 2>/dev/null || true && \
-    cp -a /usr/bin/sqlite3 /edge-packages/bin/ 2>/dev/null || true && \
+    # Copy SQLite files - be more specific about paths
+    cp -a /usr/lib/libsqlite*.so* /edge-packages/lib/ 2>/dev/null || true && \
+    # Copy readline dependencies for SQLite
+    cp -a /usr/lib/libreadline.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libhistory.so* /edge-packages/lib/ 2>/dev/null || true && \
+    cp -a /usr/lib/libncursesw.so* /edge-packages/lib/ 2>/dev/null || true && \
     # Copy GLib files
     cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
-    # Create empty files to ensure directories aren't empty
-    touch /edge-packages/lib/.keep && \
-    touch /edge-packages/bin/.keep && \
-    touch /edge-packages/etc/.keep
+    # List all library files to verify they were copied
+    find /edge-packages/lib -type f | sort > /edge-packages/lib-files.txt
 
 # Build packages from source that aren't in Edge
 FROM alpine:3.21 AS source-builder
@@ -128,29 +129,37 @@ FROM base AS runner
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Copy both libraries AND binaries from previous stages
+# Copy from previous stages
 COPY --from=edge-packages /edge-packages/lib /usr/lib
 COPY --from=edge-packages /edge-packages/bin /usr/bin
 COPY --from=edge-packages /edge-packages/etc /etc
 COPY --from=source-builder /built-libs /
+# Also copy the file list for reference
+COPY --from=edge-packages /edge-packages/lib-files.txt /tmp/lib-files.txt
 
-# Modify apk to avoid overriding our special versions
+# Avoid installing packages that would override our custom versions
 RUN apk add --no-cache curl libxml2-utils supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
-# Modified verification step with better error handling
+# More robust verification that doesn't rely on binary execution
 RUN echo "Verifying package versions:" && \
+    # Verify OpenSSL
     openssl version | grep "3.5.0" && \
     echo "OpenSSL verified ✓" && \
-    (sqlite3 --version | grep "3.49.1" || (echo "sqlite3 command not found, checking library..." && \
-    ls -la /usr/lib/libsqlite3.so* | grep "libsqlite3.so")) && \
-    echo "SQLite verified ✓" && \
-    (pkg-config --modversion glib-2.0 | grep "2.84" || ls -la /usr/lib/libglib-2.0.so* | grep "libglib-2.0.so") && \
-    echo "GLib verified ✓" && \
-    (xml2-config --version | grep "2.14" || ls -la /usr/lib/libxml2.so* | grep "libxml2.so") && \
-    echo "libxml2 verified ✓" && \
-    echo "All package versions verified successfully!"
+    # Verify SQLite by checking the library file directly
+    find /usr/lib -name "libsqlite*.so*" | grep -q "libsqlite" && \
+    ls -la $(find /usr/lib -name "libsqlite*.so*" | head -1) && \
+    echo "SQLite library found ✓" && \
+    # Verify GLib by checking the library file directly
+    find /usr/lib -name "libglib-2.0.so*" | grep -q "libglib-2.0.so" && \
+    ls -la $(find /usr/lib -name "libglib-2.0.so*" | head -1) && \
+    echo "GLib library found ✓" && \
+    # Verify libxml2 by checking the library file directly
+    find /usr/lib -name "libxml2.so*" | grep -q "libxml2.so" && \
+    ls -la $(find /usr/lib -name "libxml2.so*" | head -1) && \
+    echo "libxml2 library found ✓" && \
+    echo "All libraries verified successfully!"
 
 
 WORKDIR /home/nextjs
