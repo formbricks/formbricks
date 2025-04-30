@@ -399,24 +399,27 @@ describe("utils.ts", () => {
   // ---------------------------------------------------------------------------------
   describe("shouldDisplayBasedOnPercentage()", () => {
     test("returns true if random number <= displayPercentage", () => {
-      const originalGetRandomValues = crypto.getRandomValues.bind(crypto);
-      // Mock implementation
-      const mockGetRandomValues = vi.fn((array: Uint32Array) => {
-        array[0] = Math.floor((20 / 100) * 2 ** 32);
-        return array;
-      });
-      // @ts-expect-error: Overriding readonly property for testing
-      crypto.getRandomValues = mockGetRandomValues;
+      const mockGetRandomValues = vi
+        .spyOn(crypto, "getRandomValues")
+        .mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+          if (array instanceof Uint32Array) {
+            array[0] = Math.floor((20 / 100) * 2 ** 32);
+            return array;
+          }
+          return array;
+        });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(true);
 
-      mockGetRandomValues.mockImplementation((array: Uint32Array) => {
-        array[0] = Math.floor((80 / 100) * 2 ** 32);
+      mockGetRandomValues.mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+        if (array instanceof Uint32Array) {
+          array[0] = Math.floor((80 / 100) * 2 ** 32);
+          return array;
+        }
         return array;
       });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(false);
 
-      // Restore original
-      crypto.getRandomValues = originalGetRandomValues;
+      mockGetRandomValues.mockRestore();
     });
   });
 

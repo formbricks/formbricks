@@ -15,13 +15,13 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const shuffle = (array: unknown[]) => {
-  const getSecureRandom = (): number => {
-    const u32 = new Uint32Array(1);
-    crypto.getRandomValues(u32);
-    return u32[0] / 2 ** 32; // Normalized to [0, 1)
-  };
+const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
 
+const shuffle = (array: unknown[]) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(getSecureRandom() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
