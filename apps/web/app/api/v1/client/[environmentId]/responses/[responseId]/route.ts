@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { validateFileUploads } from "@/lib/fileValidation";
 import { updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { logger } from "@formbricks/logger";
@@ -69,6 +70,9 @@ export const PUT = async (
       );
       return responses.internalServerErrorResponse(error.message);
     }
+  }
+  if (!validateFileUploads(response.data, survey.questions)) {
+    return responses.badRequestResponse("Invalid file upload response");
   }
 
   // send response update to pipeline

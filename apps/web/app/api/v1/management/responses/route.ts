@@ -1,6 +1,7 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -93,6 +94,10 @@ export const POST = async (request: Request): Promise<Response> => {
         },
         true
       );
+    }
+
+    if (!validateFileUploads(responseInput.data, survey.questions)) {
+      return responses.badRequestResponse("Invalid file upload response");
     }
 
     // if there is a createdAt but no updatedAt, set updatedAt to createdAt

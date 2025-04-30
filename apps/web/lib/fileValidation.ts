@@ -1,4 +1,7 @@
+import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 /**
  * Validates if the file extension is allowed
@@ -49,4 +52,33 @@ export const validateFile = (fileName: string, mimeType: string): { valid: boole
   }
 
   return { valid: true };
+};
+
+export const validateFileUploads = (data: TResponseData, questions?: TSurveyQuestion[]): boolean => {
+  for (const key of Object.keys(data)) {
+    const question = questions?.find((q) => q.id === key);
+    if (!question || question.type !== "fileUpload") continue;
+
+    const fileUrls = data[key];
+
+    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) {
+      return false;
+    }
+
+    const allowedExtensions = question.allowedFileExtensions;
+
+    for (const fileUrl of fileUrls) {
+      const fileName = getOriginalFileNameFromUrl(fileUrl);
+      if (!fileName) return false;
+
+      const extension = fileName.split(".").pop();
+      if (!extension) return false;
+
+      if (allowedExtensions && !allowedExtensions.includes(extension as TAllowedFileExtension)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 };
