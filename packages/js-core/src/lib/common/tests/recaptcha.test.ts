@@ -39,8 +39,10 @@ describe("loadRecaptchaScript", () => {
 
     const appendChildSpy = vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
       const script = element as HTMLScriptElement;
-      setTimeout(() => script.onload?.(new Event("load")), 0);
-      return element;
+      setTimeout((): void => {
+        script.onload?.(new Event("load"));
+      }, 0);
+      return script; // Return the specific node type
     });
 
     await expect(loadRecaptchaScript("valid-key")).resolves.toBeUndefined();
@@ -53,8 +55,10 @@ describe("loadRecaptchaScript", () => {
 
     vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
       const script = element as HTMLScriptElement;
-      setTimeout(() => script.onerror?.(new Event("error")), 0);
-      return element;
+      setTimeout((): void => {
+        script.onerror?.(new Event("error"));
+      }, 0);
+      return script; // Return the specific node type
     });
 
     await expect(loadRecaptchaScript("bad-key")).rejects.toThrow("Error loading reCAPTCHA script");
