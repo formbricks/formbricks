@@ -25,6 +25,7 @@ const responseSelection = {
   identityProvider: true,
   objective: true,
   notificationSettings: true,
+  whitelist: true,
   locale: true,
 };
 

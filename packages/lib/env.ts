@@ -103,6 +103,7 @@ export const env = createEnv({
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     ALCHEMY_API_KEY: z.string().optional(),
+    WHITELIST_DISABLED: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -215,5 +216,6 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     ALCHEMY_API_KEY: process.env.ALCHEMY_API_KEY,
+    WHITELIST_DISABLED: process.env.WHITELIST_DISABLED,
   },
 });

@@ -59,6 +59,7 @@ export const OrganizationWhitelistActions = ({
     }
   };
 
+  // TODO: Change this to add whitelist
   const handleAddMembers = async (data: TInvitee[]) => {
     if (data.length === 1) {
       // Individual invite
