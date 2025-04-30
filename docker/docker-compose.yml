@@ -87,7 +87,6 @@ x-environment: &environment
     # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
     # SENTRY_AUTH_TOKEN:
 
-
     ################################################### OPTIONAL (STORAGE) ###################################################
 
     # Set the below to set a custom Upload Directory
@@ -188,6 +187,9 @@ x-environment: &environment
     # Set the below to automatically assign new users to a specific team, insert an existing team id
     # (Role Management is an Enterprise feature)
     # AUTH_SSO_DEFAULT_TEAM_ID=
+
+    # Set the below to 1 to disable the user management UI
+    # DISABLE_USER_MANAGEMENT: 0
 
 services:
   postgres:
