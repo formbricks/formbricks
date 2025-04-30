@@ -1,39 +1,37 @@
 FROM node:22-alpine3.21 AS base
 
-# Add a new stage for building custom packages
-FROM alpine:3.21 AS package-builder
+# Get packages from Edge repository
+FROM alpine:edge AS edge-packages
 
-# Install build tools and dependencies, including doas
-RUN apk add --no-cache alpine-sdk build-base autoconf automake libtool cmake \
+# Install packages from edge that are available
+RUN apk update && \
+    # Install the edge packages we need
+    apk add --no-cache \
+        openssl=3.5.0-r0 \
+        sqlite=3.49.1-r0 \
+        glib=2.84.1-r0 && \
+    # Create directory for package files
+    mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
+    # Copy OpenSSL files
+    cp -a /usr/lib/libssl.so* /usr/lib/libcrypto.so* /edge-packages/lib/ && \
+    cp -a /usr/bin/openssl /edge-packages/bin/ && \
+    cp -a /etc/ssl /edge-packages/etc/ && \
+    # Copy SQLite files
+    cp -a /usr/lib/libsqlite3.so* /edge-packages/lib/ && \
+    # Copy GLib files
+    cp -a /usr/lib/libglib-2.0.so* /usr/lib/libgmodule-2.0.so* /usr/lib/libgobject-2.0.so* /usr/lib/libgio-2.0.so* /edge-packages/lib/
+
+# Build packages from source that aren't in Edge
+FROM alpine:3.21 AS source-builder
+
+# Install build tools and dependencies
+RUN apk add --no-cache build-base autoconf automake libtool cmake \
     git python3-dev zlib-dev pkgconf bison flex perl linux-headers \
-    xz gzip tar ca-certificates curl wget meson ninja doas
+    xz gzip tar ca-certificates curl wget
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
-RUN mkdir -p /repo/x86_64
-
-# Setup abuild for package signing - modified approach
-RUN adduser -D builder && \
-    addgroup builder abuild && \
-    mkdir -p /var/cache/distfiles && \
-    chmod a+w /var/cache/distfiles && \
-    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    # Setup doas configuration
-    echo "permit nopass builder as root" > /etc/doas.d/builder.conf && \
-    chmod 600 /etc/doas.d/builder.conf
-
-# Switch to builder user for abuild
-USER builder
-RUN abuild-keygen -a -n
-
-# Alternative approach - generate keys without relying on doas/sudo
-USER root
-RUN mkdir -p /etc/apk/keys && \
-    cp /home/builder/.abuild/*.pub /etc/apk/keys/
-
-USER builder
-# Continue with the rest of your build steps...
-RUN abuild-keygen -a -n -i
+RUN mkdir -p /tmp/built-libs
 
 # 1. Build libxml2 2.14.1
 WORKDIR /custom-packages/libxml2
@@ -42,95 +40,35 @@ RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
     ./autogen.sh --prefix=/usr && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
-    DESTDIR=/tmp/libxml2 make install
+    DESTDIR=/tmp/built-libs/libxml2 make install
 
-# 2. Build OpenSSL 3.5.0
-WORKDIR /custom-packages/openssl
-RUN wget https://www.openssl.org/source/openssl-3.5.0.tar.gz && \
-    tar -xf openssl-3.5.0.tar.gz && \
-    cd openssl-3.5.0 && \
-    ./config --prefix=/usr --openssldir=/etc/ssl && \
-    make -j$(nproc) && \
-    DESTDIR=/tmp/openssl make install_sw
-
-# 3. Build SQLite 3.49.1
-WORKDIR /custom-packages/sqlite
-RUN wget https://www.sqlite.org/2025/sqlite-autoconf-3491100.tar.gz && \
-    tar -xf sqlite-autoconf-3491100.tar.gz && \
-    cd sqlite-autoconf-3491100 && \
-    ./configure --prefix=/usr && \
-    make -j$(nproc) && \
-    DESTDIR=/tmp/sqlite make install
-
-# 4. Build GLib 2.84.1
-WORKDIR /custom-packages/glib
-RUN wget https://download.gnome.org/sources/glib/2.84/glib-2.84.1.tar.xz && \
-    tar -xf glib-2.84.1.tar.xz && \
-    cd glib-2.84.1 && \
-    mkdir build && cd build && \
-    meson setup --prefix=/usr .. && \
-    ninja && \
-    DESTDIR=/tmp/glib ninja install
-
-# 5. Build LCMS2 2.17
+# 2. Build LCMS2 2.17
 WORKDIR /custom-packages/lcms2
 RUN wget https://sourceforge.net/projects/lcms/files/lcms/2.17/lcms2-2.17.tar.gz && \
     tar -xf lcms2-2.17.tar.gz && \
     cd lcms2-2.17 && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
-    DESTDIR=/tmp/lcms2 make install
+    DESTDIR=/tmp/built-libs/lcms2 make install
 
-# Switch back to root for creating packages
-USER root
-
-# Create APK packages from the built software
-WORKDIR /custom-packages
-RUN cd /tmp/libxml2 && tar -czf /repo/x86_64/libxml2-2.14.1-r0.apk . && \
-    cd /tmp/openssl && tar -czf /repo/x86_64/openssl-3.5.0-r0.apk . && \
-    cd /tmp/sqlite && tar -czf /repo/x86_64/sqlite-3.49.1-r0.apk . && \
-    cd /tmp/glib && tar -czf /repo/x86_64/glib-2.84.1-r0.apk . && \
-    cd /tmp/lcms2 && tar -czf /repo/x86_64/lcms2-2.17-r0.apk .
-
-# Create repository index
-WORKDIR /repo/x86_64
-RUN apk index -o APKINDEX.tar.gz *.apk && \
-    abuild-sign -k /home/builder/.abuild/*.rsa APKINDEX.tar.gz
-
-# Your original installer stage
+# Installer stage
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Create directory for our custom repository
-RUN mkdir -p /var/lib/custom-repo/x86_64
+# Copy packages from Edge
+COPY --from=edge-packages /edge-packages/lib/* /usr/lib/
+COPY --from=edge-packages /edge-packages/bin/* /usr/bin/
+COPY --from=edge-packages /edge-packages/etc/ssl /etc/ssl/
 
-# Copy our custom packages and repository index
-COPY --from=package-builder /repo/x86_64/*.apk /var/lib/custom-repo/x86_64/
-COPY --from=package-builder /repo/x86_64/APKINDEX.tar.gz /var/lib/custom-repo/x86_64/
-COPY --from=package-builder /home/builder/.abuild/*.pub /etc/apk/keys/
-
-# Configure APK to use our custom repository first
-RUN echo "file:///var/lib/custom-repo/x86_64" > /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/main" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/community" >> /etc/apk/repositories
-
-# Update APK database
-RUN apk update
-
-# Install our custom packages and other dependencies
-RUN apk add --allow-untrusted --no-cache \
-    libxml2=2.14.1-r0 \
-    openssl=3.5.0-r0 \
-    sqlite=3.49.1-r0 \
-    glib=2.84.1-r0 \
-    lcms2=2.17-r0 \
-    cmake g++ gcc jq make python3
+# Copy packages built from source
+COPY --from=source-builder /tmp/built-libs/libxml2/* /
+COPY --from=source-builder /tmp/built-libs/lcms2/* /
 
 # Install necessary build tools and compilers
-RUN apk add --no-cache openssl-dev
+RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -173,7 +111,7 @@ RUN --mount=type=secret,id=database_url \
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
 
-# Your original runner stage
+# Runner stage
 FROM base AS runner
 
 RUN npm install -g corepack@latest
