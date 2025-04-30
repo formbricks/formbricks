@@ -3,12 +3,14 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { responseSelection } from "@formbricks/lib/response/service";
 import {
   AuthorizationError,
   DatabaseError,
   InvalidInputError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
 
 export const addUserToWhitelist = async ({
   email,
@@ -84,6 +86,29 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
     });
 
     return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getNonWhitelistedUsers = async (): Promise<TUser[] | null> => {
+  try {
+    const nonWhitelistedUsers = await prisma.user.findMany({
+      where: {
+        whitelist: false,
+      },
+      select: responseSelection,
+    });
+
+    if (!nonWhitelistedUsers) {
+      return null;
+    }
+
+    return nonWhitelistedUsers;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

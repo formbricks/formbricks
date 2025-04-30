@@ -2,12 +2,11 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { sendInviteMemberEmail } from "@/modules/email";
 import { addUserToWhitelist } from "@/modules/organization/settings/whitelist/lib/whitelist";
 import { z } from "zod";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { WHITELIST_DISABLED } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { ZId, ZUuid } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
 
@@ -20,8 +19,8 @@ const ZAddWhitelistAction = z.object({
 export const addWhitelistAction = authenticatedActionClient
   .schema(ZAddWhitelistAction)
   .action(async ({ parsedInput, ctx }) => {
-    if (INVITE_DISABLED) {
-      throw new AuthenticationError("Invite disabled");
+    if (WHITELIST_DISABLED) {
+      throw new AuthenticationError("Whitelist disabled");
     }
 
     const currentUserMembership = await getMembershipByUserIdOrganizationId(
@@ -50,6 +49,7 @@ export const addWhitelistAction = authenticatedActionClient
     });
 
     if (whitelistedUserId) {
+      // TODO: Change or remove this and simply change above line to await addUser
       alert("Whitelisted user");
     }
 
