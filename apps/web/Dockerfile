@@ -8,7 +8,7 @@ RUN apk update && \
     # Install the edge packages we need
     apk add --no-cache \
         openssl=3.5.0-r0 \
-        sqlite=3.49.1-r0 \
+        sqlite=3.49.1-r1 \
         glib=2.84.1-r0 && \
     # Create directory for package files
     mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
