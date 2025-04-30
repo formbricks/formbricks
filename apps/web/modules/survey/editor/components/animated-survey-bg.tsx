@@ -7,8 +7,6 @@ interface AnimatedSurveyBgProps {
 }
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
-  // [UseTusk]
-
   const [animation, setAnimation] = useState(background);
 
   const animationFiles = {
