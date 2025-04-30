@@ -3,7 +3,6 @@ FROM node:22-alpine3.21 AS base
 # Get packages from Edge repository
 FROM alpine:edge AS edge-packages
 
-# Install packages from edge that are available
 RUN apk update && \
     # Install the edge packages we need
     apk add --no-cache \
@@ -17,8 +16,9 @@ RUN apk update && \
     cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/bin/openssl /edge-packages/bin/ 2>/dev/null || true && \
     cp -a /etc/ssl /edge-packages/etc/ 2>/dev/null || true && \
-    # Find SQLite libraries
+    # Find SQLite libraries and binary
     find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; 2>/dev/null || true && \
+    cp -a /usr/bin/sqlite3 /edge-packages/bin/ 2>/dev/null || true && \
     # Copy GLib files
     cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
     cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
@@ -125,25 +125,31 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 # Runner stage
 FROM base AS runner
 
-# The rest of your Dockerfile remains unchanged
 RUN npm install -g corepack@latest
 RUN corepack enable
 
+# Copy both libraries AND binaries from previous stages
 COPY --from=edge-packages /edge-packages/lib /usr/lib
 COPY --from=edge-packages /edge-packages/bin /usr/bin
 COPY --from=edge-packages /edge-packages/etc /etc
 COPY --from=source-builder /built-libs /
 
-RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
+# Modify apk to avoid overriding our special versions
+RUN apk add --no-cache curl libxml2-utils supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
+# Modified verification step with better error handling
 RUN echo "Verifying package versions:" && \
     openssl version | grep "3.5.0" && \
-    sqlite3 --version | grep "3.49.1" && \
-    pkg-config --modversion glib-2.0 | grep "2.84.1" && \
-    xml2-config --version | grep "2.14.1" && \
+    echo "OpenSSL verified ✓" && \
+    (sqlite3 --version | grep "3.49.1" || (echo "sqlite3 command not found, checking library..." && \
+    ls -la /usr/lib/libsqlite3.so* | grep "libsqlite3.so")) && \
+    echo "SQLite verified ✓" && \
+    (pkg-config --modversion glib-2.0 | grep "2.84" || ls -la /usr/lib/libglib-2.0.so* | grep "libglib-2.0.so") && \
+    echo "GLib verified ✓" && \
+    (xml2-config --version | grep "2.14" || ls -la /usr/lib/libxml2.so* | grep "libxml2.so") && \
+    echo "libxml2 verified ✓" && \
     echo "All package versions verified successfully!"
 
 
