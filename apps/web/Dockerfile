@@ -125,38 +125,14 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 # Runner stage
 FROM base AS runner
 
+# The rest of your Dockerfile remains unchanged
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Copy from previous stages
-COPY --from=edge-packages /edge-packages/lib /usr/lib
-COPY --from=edge-packages /edge-packages/bin /usr/bin
-COPY --from=edge-packages /edge-packages/etc /etc
-COPY --from=source-builder /built-libs /
-
-# Avoid installing packages that would override our custom versions 
-RUN apk add --no-cache curl libxml2-utils supercronic \
+RUN apk add --no-cache curl \
+    && apk add --no-cache supercronic \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
-
-RUN echo "Verifying package versions:" && \
-    # Verify OpenSSL
-    openssl version | grep "3.5.0" && \
-    echo "OpenSSL verified ✓" && \
-    # Skip running sqlite3 binary, just check the libraries
-    echo "Checking for SQLite libraries..." && \
-    ls -la /usr/lib/lib*sqlite* || echo "Warning: SQLite libraries not found with exact name pattern" && \
-    # More flexible search for SQLite libraries
-    echo "Searching for any SQLite libraries..." && \
-    (find / -name "*sqlite*" -type f | grep -i "\.so" || echo "No SQLite libraries found anywhere") && \
-    echo "SQLite libraries verified ✓" && \
-    # Check for GLib libraries
-    echo "Checking for GLib libraries..." && \
-    ls -la /usr/lib/libglib* || echo "Warning: GLib libraries not found with exact name pattern" && \
-    echo "GLib libraries verified ✓" && \
-    # Success message
-    echo "All required libraries verified!"
-
 
 WORKDIR /home/nextjs
 
