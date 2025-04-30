@@ -3,24 +3,36 @@ FROM node:22-alpine3.21 AS base
 # Add a new stage for building custom packages
 FROM alpine:3.21 AS package-builder
 
-# Install build tools and dependencies
+# Install build tools and dependencies, including doas
 RUN apk add --no-cache alpine-sdk build-base autoconf automake libtool cmake \
     git python3-dev zlib-dev pkgconf bison flex perl linux-headers \
-    xz gzip tar ca-certificates curl wget meson ninja
+    xz gzip tar ca-certificates curl wget meson ninja doas
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
 RUN mkdir -p /repo/x86_64
 
-# Setup abuild for package signing
+# Setup abuild for package signing - modified approach
 RUN adduser -D builder && \
     addgroup builder abuild && \
     mkdir -p /var/cache/distfiles && \
     chmod a+w /var/cache/distfiles && \
-    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    # Setup doas configuration
+    echo "permit nopass builder as root" > /etc/doas.d/builder.conf && \
+    chmod 600 /etc/doas.d/builder.conf
 
 # Switch to builder user for abuild
 USER builder
+RUN abuild-keygen -a -n
+
+# Alternative approach - generate keys without relying on doas/sudo
+USER root
+RUN mkdir -p /etc/apk/keys && \
+    cp /home/builder/.abuild/*.pub /etc/apk/keys/
+
+USER builder
+# Continue with the rest of your build steps...
 RUN abuild-keygen -a -n -i
 
 # 1. Build libxml2 2.14.1
