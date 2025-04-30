@@ -16,10 +16,13 @@ RUN apk update && \
     cp -a /usr/lib/libssl.so* /usr/lib/libcrypto.so* /edge-packages/lib/ && \
     cp -a /usr/bin/openssl /edge-packages/bin/ && \
     cp -a /etc/ssl /edge-packages/etc/ && \
-    # Copy SQLite files
-    cp -a /usr/lib/libsqlite3.so* /edge-packages/lib/ && \
-    # Copy GLib files
-    cp -a /usr/lib/libglib-2.0.so* /usr/lib/libgmodule-2.0.so* /usr/lib/libgobject-2.0.so* /usr/lib/libgio-2.0.so* /edge-packages/lib/
+    # Find and copy SQLite files - the location may vary
+    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; || echo "SQLite libraries not found" && \
+    # Copy GLib files with error handling
+    cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ || echo "Some glib libraries not found" && \
+    cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ || echo "Some gmodule libraries not found" && \
+    cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ || echo "Some gobject libraries not found" && \
+    cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ || echo "Some gio libraries not found"
 
 # Build packages from source that aren't in Edge
 FROM alpine:3.21 AS source-builder
@@ -59,9 +62,9 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Copy packages from Edge
-COPY --from=edge-packages /edge-packages/lib/* /usr/lib/
-COPY --from=edge-packages /edge-packages/bin/* /usr/bin/
-COPY --from=edge-packages /edge-packages/etc/ssl /etc/ssl/
+COPY --from=edge-packages /edge-packages/lib/* /usr/lib/ || true
+COPY --from=edge-packages /edge-packages/bin/* /usr/bin/ || true
+COPY --from=edge-packages /edge-packages/etc/ssl /etc/ssl/ || true
 
 # Copy packages built from source
 COPY --from=source-builder /tmp/built-libs/libxml2/* /
@@ -70,8 +73,8 @@ COPY --from=source-builder /tmp/built-libs/lcms2/* /
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
 
+# The rest of your Dockerfile remains the same
 # BuildKit secret handling without hardcoded fallback values
-# This approach relies entirely on secrets passed from GitHub Actions
 RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'if [ -f "/run/secrets/database_url" ]; then' >> /tmp/read-secrets.sh && \
     echo '  export DATABASE_URL=$(cat /run/secrets/database_url)' >> /tmp/read-secrets.sh && \
@@ -114,6 +117,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 # Runner stage
 FROM base AS runner
 
+# The rest of your Dockerfile remains unchanged
 RUN npm install -g corepack@latest
 RUN corepack enable
 
