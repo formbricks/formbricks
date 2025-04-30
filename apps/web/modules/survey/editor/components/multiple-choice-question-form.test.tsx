@@ -1,14 +1,7 @@
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { cleanup, render, screen } from "@testing-library/react";
-import { useTranslate } from "@tolgee/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 import { MultipleChoiceQuestionForm } from "./multiple-choice-question-form";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
   QuestionFormInput: vi.fn((props) => (
@@ -63,7 +56,7 @@ describe("MultipleChoiceQuestionForm", () => {
       type: "multipleChoiceSingle",
       headline: { default: "Test Headline" },
       choices: [],
-    };
+    } as unknown as TSurveyMultipleChoiceQuestion;
     const localSurvey = {
       id: "survey1",
       languages: [{ language: { code: "default" }, default: true }],
@@ -78,7 +71,8 @@ describe("MultipleChoiceQuestionForm", () => {
         isInvalid={false}
         selectedLanguageCode="default"
         setSelectedLanguageCode={vi.fn()}
-        locale="en"
+        locale="en-US"
+        lastQuestion={false}
       />
     );
 

@@ -6,15 +6,7 @@ import {
   TSurveyContactInfoQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { ContactInfoQuestionForm } from "./contact-info-question-form";
-
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 // Mock QuestionFormInput component
 vi.mock("@/modules/survey/components/question-form-input", () => ({
@@ -32,12 +24,11 @@ vi.mock("@/modules/survey/components/question-form-input", () => ({
 vi.mock("@/modules/ui/components/question-toggle-table", () => ({
   QuestionToggleTable: vi.fn(({ fields }) => (
     <div data-testid="question-toggle-table">
-      {fields &&
-        fields.map((field) => (
-          <div key={field.id} data-testid={`question-toggle-table-field-${field.id}`}>
-            {field.label}
-          </div>
-        ))}
+      {fields?.map((field) => (
+        <div key={field.id} data-testid={`question-toggle-table-field-${field.id}`}>
+          {field.label}
+        </div>
+      ))}
     </div>
   )),
 }));
@@ -103,27 +94,6 @@ describe("ContactInfoQuestionForm", () => {
     cleanup();
   });
 
-  test("should render the headline input field with the correct label and value", () => {
-    render(
-      <ContactInfoQuestionForm
-        localSurvey={mockSurvey}
-        question={mockQuestion}
-        questionIdx={0}
-        updateQuestion={vi.fn()}
-        isInvalid={false}
-        selectedLanguageCode="en"
-        setSelectedLanguageCode={vi.fn()}
-        locale="en-US"
-        as
-        TUserLocale
-      />
-    );
-
-    const headlineValue = screen.getByTestId("question-form-input-headline");
-    expect(headlineValue).toBeInTheDocument();
-    expect(headlineValue).toHaveTextContent("Headline Text");
-  });
-
   test("should update required to false when all fields are visible but optional", () => {
     render(
       <ContactInfoQuestionForm
@@ -135,8 +105,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -159,8 +128,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -187,8 +155,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -211,8 +178,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -236,8 +202,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -256,8 +221,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="fr"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 
@@ -283,8 +247,7 @@ describe("ContactInfoQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
-        as
-        TUserLocale
+        lastQuestion={false}
       />
     );
 

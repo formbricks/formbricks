@@ -1,12 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useTranslate } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EditorCardMenu } from "./editor-card-menu";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
 
 describe("EditorCardMenu", () => {
   afterEach(() => {

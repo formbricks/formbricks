@@ -37,6 +37,7 @@ export const HiddenFieldsCard = ({
   const { t } = useTranslate();
   const setOpen = (open: boolean) => {
     if (open) {
+      // NOSONAR typescript:S2301 // the function usage is clear
       setActiveQuestionId("hidden");
     } else {
       setActiveQuestionId(null);

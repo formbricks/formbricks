@@ -23,6 +23,8 @@ export const SurveyVariablesCard = ({
   activeQuestionId,
   setActiveQuestionId,
 }: SurveyVariablesCardProps) => {
+  // [UseTusk]
+
   const open = activeQuestionId === variablesCardId;
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();

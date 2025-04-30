@@ -57,8 +57,6 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 

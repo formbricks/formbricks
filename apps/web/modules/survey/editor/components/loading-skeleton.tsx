@@ -1,6 +1,4 @@
 export const LoadingSkeleton = () => (
-  // [UseTusk]
-
   <div className="flex h-full w-full flex-col items-center justify-between p-6">
     {/* Top Part - Loading Navbar */}
     <div className="flex h-[10vh] w-full animate-pulse rounded-lg bg-slate-200 font-medium text-slate-900"></div>

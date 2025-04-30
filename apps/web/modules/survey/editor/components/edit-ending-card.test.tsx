@@ -1,17 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TLanguage } from "@formbricks/types/project";
+import { TSurvey, TSurveyEndScreenCard, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { EditEndingCard } from "./edit-ending-card";
-
-const mockUseTranslate = vi.fn(() => ({
-  t: (key: string) => key,
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => mockUseTranslate(),
-}));
 
 vi.mock("./end-screen-form", () => ({
   EndScreenForm: vi.fn(() => <div data-testid="end-screen-form">EndScreenForm</div>),
@@ -24,10 +17,12 @@ describe("EditEndingCard", () => {
 
   test("should render the EndScreenForm when the ending card type is 'endScreen'", () => {
     const endingCardId = "ending1";
-    const localSurvey: TSurvey = {
+    const localSurvey = {
       id: "testSurvey",
       name: "Test Survey",
-      languages: [{ code: "en", name: "English" }],
+      languages: [
+        { language: { code: "en", name: "English" } as unknown as TLanguage } as unknown as TSurveyLanguage,
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "link",
@@ -40,8 +35,8 @@ describe("EditEndingCard", () => {
         } as TSurveyEndScreenCard,
       ],
       followUps: [],
-      welcomeCard: { enabled: false, headline: { en: "" } },
-    };
+      welcomeCard: { enabled: false, headline: { en: "" } } as unknown as TSurvey["welcomeCard"],
+    } as unknown as TSurvey;
 
     const setLocalSurvey = vi.fn();
     const setActiveQuestionId = vi.fn();

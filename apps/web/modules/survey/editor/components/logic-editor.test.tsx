@@ -1,8 +1,6 @@
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { cleanup, render, screen } from "@testing-library/react";
-import { useTranslate } from "@tolgee/react";
-import { ReactElement } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   TSurvey,
@@ -21,13 +19,6 @@ vi.mock("@/modules/survey/editor/components/logic-editor-actions", () => ({
   LogicEditorActions: vi.fn(() => <div data-testid="logic-editor-actions"></div>),
 }));
 
-// Mock useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: vi.fn(() => ({
-    t: (key: string) => key,
-  })),
-}));
-
 // Mock getQuestionIconMap function
 vi.mock("@/modules/survey/lib/questions", () => ({
   getQuestionIconMap: vi.fn(() => ({
@@ -41,7 +32,7 @@ describe("LogicEditor", () => {
   });
 
   test("renders LogicEditorConditions and LogicEditorActions with correct props", () => {
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "survey1",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -49,7 +40,6 @@ describe("LogicEditor", () => {
       status: "draft",
       environmentId: "env1",
       type: "app",
-      responsive: true,
       welcomeCard: {
         enabled: false,
         headline: { default: "" },
@@ -57,7 +47,6 @@ describe("LogicEditor", () => {
         showResponseCount: false,
         timeToFinish: false,
       },
-      thankYouCard: { enabled: false, title: { default: "" }, buttonLabel: { default: "" }, buttonLink: "" },
       questions: [
         {
           id: "q1",
@@ -75,7 +64,7 @@ describe("LogicEditor", () => {
       endings: [],
       hiddenFields: { enabled: false, fieldIds: [] },
       variables: [],
-    };
+    } as unknown as TSurvey;
     const mockLogicItem: TSurveyLogic = {
       id: "logic1",
       conditions: { id: "cond1", connector: "and", conditions: [] },

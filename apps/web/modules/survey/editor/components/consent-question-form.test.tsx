@@ -1,14 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyConsentQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { ConsentQuestionForm } from "./consent-question-form";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
   QuestionFormInput: ({ label }: { label: string }) => <div data-testid="question-form-input">{label}</div>,
@@ -28,15 +22,15 @@ describe("ConsentQuestionForm", () => {
   });
 
   test("renders the form with headline, description, and checkbox label when provided valid props", () => {
-    const mockQuestion: TSurveyConsentQuestion = {
+    const mockQuestion = {
       id: "consent1",
-      type: "consent",
+      type: TSurveyQuestionTypeEnum.Consent,
       headline: { en: "Consent Headline" },
       html: { en: "Consent Description" },
       label: { en: "Consent Checkbox Label" },
-    };
+    } as unknown as TSurveyConsentQuestion;
 
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "survey1",
       name: "Test Survey",
       type: "link",
@@ -46,11 +40,11 @@ describe("ConsentQuestionForm", () => {
       status: "draft",
       questions: [],
       languages: [],
-    } as any;
+    } as unknown as TSurvey;
 
     const mockUpdateQuestion = vi.fn();
     const mockSetSelectedLanguageCode = vi.fn();
-    const mockLocale: TUserLocale = { code: "en", name: "English" };
+    const mockLocale: TUserLocale = "en-US";
 
     render(
       <ConsentQuestionForm

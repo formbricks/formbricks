@@ -1,15 +1,8 @@
 import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
+import { TSurvey, TSurveyCTAQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { CTAQuestionForm } from "./cta-question-form";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],
@@ -35,7 +28,7 @@ describe("CTAQuestionForm", () => {
   test("renders all required fields and components when provided with valid props", () => {
     const mockQuestion: TSurveyCTAQuestion = {
       id: "test-question",
-      type: "cta",
+      type: TSurveyQuestionTypeEnum.CTA,
       headline: createI18nString("Test Headline", ["en"]),
       buttonLabel: createI18nString("Next", ["en"]),
       backButtonLabel: createI18nString("Back", ["en"]),
@@ -44,7 +37,7 @@ describe("CTAQuestionForm", () => {
       required: true,
     };
 
-    const mockLocalSurvey: TSurvey = {
+    const mockLocalSurvey = {
       id: "test-survey",
       name: "Test Survey",
       type: "link",
@@ -54,11 +47,11 @@ describe("CTAQuestionForm", () => {
       status: "draft",
       questions: [],
       languages: [],
-    } as any;
+    } as unknown as TSurvey;
 
     const mockUpdateQuestion = vi.fn();
     const mockSetSelectedLanguageCode = vi.fn();
-    const mockLocale: TUserLocale = { code: "en", name: "English" };
+    const mockLocale = "en-US";
 
     render(
       <CTAQuestionForm

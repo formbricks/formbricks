@@ -9,12 +9,6 @@ import {
 } from "@formbricks/types/surveys/types";
 import { ConditionalLogic } from "./conditional-logic";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock @formkit/auto-animate - simplify implementation
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],
@@ -64,7 +58,7 @@ describe("ConditionalLogic", () => {
         enabled: false,
       },
     };
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "testSurveyId",
       name: "Test Survey",
       type: "link",
@@ -74,7 +68,7 @@ describe("ConditionalLogic", () => {
       status: "inProgress",
       questions: [mockQuestion],
       endings: [],
-    };
+    } as unknown as TSurvey;
 
     render(
       <ConditionalLogic
@@ -136,7 +130,7 @@ describe("ConditionalLogic", () => {
       },
       logic: [initialLogic],
     };
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "testSurveyId",
       name: "Test Survey",
       type: "link",
@@ -146,7 +140,7 @@ describe("ConditionalLogic", () => {
       status: "inProgress",
       questions: [mockQuestion],
       endings: [],
-    };
+    } as unknown as TSurvey;
 
     render(
       <ConditionalLogic
@@ -159,7 +153,6 @@ describe("ConditionalLogic", () => {
 
     // First click the ellipsis menu button to open the dropdown
     const menuButton = screen.getByRole("button", {
-      "aria-haspopup": "menu",
       name: "", // The button has no text content, just an icon
     });
     await userEvent.click(menuButton);
@@ -214,7 +207,7 @@ describe("ConditionalLogic", () => {
       },
       logic: mockLogic,
     };
-    const mockSurvey: TSurvey = {
+    const mockSurvey = {
       id: "testSurveyId",
       name: "Test Survey",
       type: "link",
@@ -224,7 +217,7 @@ describe("ConditionalLogic", () => {
       status: "inProgress",
       questions: [mockQuestion],
       endings: [],
-    };
+    } as unknown as TSurvey;
 
     render(
       <ConditionalLogic

@@ -1,22 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useTranslate } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   TConditionGroup,
-  TSingleCondition,
   TSurvey,
   TSurveyLogic,
+  TSurveyLogicAction,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import { getDefaultOperatorForQuestion } from "../lib/utils";
 import { LogicEditorConditions } from "./logic-editor-conditions";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: vi.fn(() => ({
-    t: (key: string) => key,
-  })),
-}));
 
 vi.mock("../lib/utils", () => ({
   getDefaultOperatorForQuestion: vi.fn(() => "equals" as any),
@@ -62,8 +54,7 @@ describe("LogicEditorConditions", () => {
 
     const logicItem: TSurveyLogic = {
       id: "logic1",
-      action: "jumpToQuestion",
-      destination: "q2",
+      actions: [{ objective: "jumpToQuestion" } as TSurveyLogicAction],
       conditions: initialConditions,
     };
 
@@ -72,7 +63,7 @@ describe("LogicEditorConditions", () => {
       logic: [logicItem],
     };
 
-    render(
+    const { container } = render(
       <LogicEditorConditions
         conditions={initialConditions}
         updateQuestion={updateQuestion}
@@ -84,7 +75,11 @@ describe("LogicEditorConditions", () => {
     );
 
     // Find the dropdown menu trigger for the condition
-    const dropdownTrigger = screen.getByRole("button", { id: "condition-0-0-dropdown" });
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const dropdownTrigger = container.querySelector<HTMLButtonElement>("#condition-0-0-dropdown");
+    if (!dropdownTrigger) {
+      throw new Error("Dropdown trigger not found");
+    }
 
     // Open the dropdown menu
     await userEvent.click(dropdownTrigger);
