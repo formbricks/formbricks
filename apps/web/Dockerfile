@@ -52,8 +52,8 @@ RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
 
 # 2. Build LCMS2 2.17
 WORKDIR /custom-packages/lcms2
-RUN wget https://github.com/mm2/Little-CMS/archive/refs/tags/lcms2.17.tar.gz && \
-    tar -xf lcms2.17.tar.gz && \
+ADD https://github.com/mm2/Little-CMS/archive/refs/tags/lcms2.17.tar.gz lcms2.17.tar.gz
+RUN tar -xf lcms2.17.tar.gz && \
     cd Little-CMS-lcms2.17 && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
