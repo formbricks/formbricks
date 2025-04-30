@@ -396,7 +396,7 @@ export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
 
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.spamProtection : false;
+    return previousResult?.features ? previousResult.features.spamProtection : false;
   }
   if (IS_FORMBRICKS_CLOUD) {
     return false;

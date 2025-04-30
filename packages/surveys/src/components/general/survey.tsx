@@ -432,9 +432,7 @@ export function Survey({
 
       // Skip response creation in preview mode but still trigger the onResponseCreated callback
       if (isPreviewMode) {
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -468,9 +466,7 @@ export function Survey({
           hiddenFields: hiddenFieldsRecord,
         });
 
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
       }
     },
     [

@@ -2457,6 +2457,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
+export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];

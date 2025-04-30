@@ -53,8 +53,7 @@ export class ResponseQueue {
   }
 
   async processQueue() {
-    if (this.isRequestInProgress) return;
-    if (this.queue.length === 0) return;
+    if (this.isRequestInProgress || this.queue.length === 0) return;
 
     this.isRequestInProgress = true;
 
@@ -113,7 +112,7 @@ export class ResponseQueue {
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
-          recaptchaToken: this.responseRecaptchaToken ? this.responseRecaptchaToken : undefined,
+          recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
 
         if (!response.ok) {
@@ -127,6 +126,7 @@ export class ResponseQueue {
       }
       return ok(true);
     } catch (error) {
+      console.error("Formbricks: Error sending response", error);
       return err({
         code: "internal_server_error",
         message: "An error occurred while sending the response.",
