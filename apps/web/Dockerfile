@@ -80,8 +80,6 @@ COPY --from=source-builder /built-libs /
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
 
-
-# The rest of your Dockerfile remains the same
 # BuildKit secret handling without hardcoded fallback values
 RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'if [ -f "/run/secrets/database_url" ]; then' >> /tmp/read-secrets.sh && \
@@ -122,10 +120,11 @@ RUN --mount=type=secret,id=database_url \
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
 
-# Runner stage
+#
+## step 3: setup production runner
+#
 FROM base AS runner
 
-# The rest of your Dockerfile remains unchanged
 RUN npm install -g corepack@latest
 RUN corepack enable
 
