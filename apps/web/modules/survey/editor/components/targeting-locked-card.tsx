@@ -12,8 +12,6 @@ interface TargetingLockedCardProps {
 }
 
 export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: TargetingLockedCardProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 

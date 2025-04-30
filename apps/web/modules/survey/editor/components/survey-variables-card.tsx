@@ -31,6 +31,7 @@ export const SurveyVariablesCard = ({
 
   const setOpenState = (state: boolean) => {
     if (state) {
+      // NOSONAR // This is ok for setOpenState
       setActiveQuestionId(variablesCardId);
     } else {
       setActiveQuestionId(null);

@@ -22,8 +22,6 @@ export const UpdateQuestionId = ({
   questionIdx,
   updateQuestion,
 }: UpdateQuestionIdProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);

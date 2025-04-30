@@ -34,8 +34,6 @@ export const SurveyVariablesCardItem = ({
   setLocalSurvey,
   mode,
 }: SurveyVariablesCardItemProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {

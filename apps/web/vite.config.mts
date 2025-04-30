@@ -110,6 +110,14 @@ export default defineConfig({
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
         "modules/ui/components/card/index.tsx",
+        "modules/survey/editor/components/address-question-form.tsx",
+        "modules/survey/editor/components/animated-survey-bg.tsx",
+        "modules/survey/editor/components/hidden-fields-card.ts",
+        "modules/survey/editor/components/survey-variables-card-item.tsx",
+        "modules/survey/editor/components/targeting-locked-card.tsx",
+        "modules/survey/editor/components/unsplash-images.tsx",
+        "modules/survey/editor/components/update-question-id.tsx",
+        "modules/survey/editor/components/when-to-send-card.tsx",
       ],
       exclude: [
         "**/.next/**",
@@ -119,7 +127,7 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
-      ],
+      ],  
     },
   },
   plugins: [tsconfigPaths(), react() as PluginOption],
