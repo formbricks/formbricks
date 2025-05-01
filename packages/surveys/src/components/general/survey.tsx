@@ -491,7 +491,7 @@ export function Survey({
   useEffect(() => {
     if (isPreviewMode || !survey.recaptcha?.enabled) return;
 
-    if (!recaptchaSiteKey || !isSpamProtectionEnabled) {
+    if (!isSpamProtectionEnabled) {
       setShowError(true);
       setErrorType(TResponseErrorCodesEnum.InvalidDeviceError);
     }

@@ -24,30 +24,31 @@ export const checkSurveyValidity = async (
   }
 
   if (survey.recaptcha?.enabled) {
+    if (!responseInput.recaptchaToken) {
+      logger.error("Missing recaptcha token");
+      return responses.badRequestResponse(
+        "Missing recaptcha token",
+        {
+          code: RECAPTCHA_VERIFICATION_ERROR_CODE,
+        },
+        true
+      );
+    }
     const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
-    if (isSpamProtectionEnabled) {
-      if (!responseInput.recaptchaToken) {
-        logger.error("Missing recaptcha token");
-        return responses.badRequestResponse(
-          "Missing recaptcha token",
-          {
-            code: RECAPTCHA_VERIFICATION_ERROR_CODE,
-          },
-          true
-        );
-      }
-      const isPassed = await verifyRecaptchaToken(responseInput.recaptchaToken, survey.recaptcha.threshold);
-      if (!isPassed) {
-        return responses.badRequestResponse(
-          "reCAPTCHA verification failed",
-          {
-            code: RECAPTCHA_VERIFICATION_ERROR_CODE,
-          },
-          true
-        );
-      }
-    } else {
+
+    if (!isSpamProtectionEnabled) {
       logger.error("Spam protection is not enabled for this organization");
+    }
+
+    const isPassed = await verifyRecaptchaToken(responseInput.recaptchaToken, survey.recaptcha.threshold);
+    if (!isPassed) {
+      return responses.badRequestResponse(
+        "reCAPTCHA verification failed",
+        {
+          code: RECAPTCHA_VERIFICATION_ERROR_CODE,
+        },
+        true
+      );
     }
   }
 

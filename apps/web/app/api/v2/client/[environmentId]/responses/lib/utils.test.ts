@@ -101,7 +101,11 @@ describe("checkSurveyValidity", () => {
   test("should return null if recaptcha is enabled but spam protection is disabled", async () => {
     const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false);
-    const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
+    vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      recaptchaToken: "test-token",
+    });
     expect(result).toBeNull();
     expect(logger.error).toHaveBeenCalledWith("Spam protection is not enabled for this organization");
   });

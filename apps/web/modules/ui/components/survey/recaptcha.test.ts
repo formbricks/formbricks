@@ -110,7 +110,7 @@ describe("executeRecaptcha", () => {
 
   test("returns undefined if site key is missing", async () => {
     const result = await executeRecaptcha(undefined);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 
   test("returns token on success", async () => {
@@ -126,13 +126,13 @@ describe("executeRecaptcha", () => {
       execute: vi.fn(() => Promise.reject(new Error("fail"))),
     };
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 
   test("logs and returns undefined if grecaptcha is not available", async () => {
     // @ts-expect-error intentionally removing grecaptcha
     delete window.grecaptcha;
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 });
