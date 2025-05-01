@@ -1,3 +1,4 @@
+import { ChainProvider } from "@/modules/discover/context/chain-context";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,7 +9,7 @@ export const DiscoverLayout = async (props) => {
   const { children } = props;
 
   try {
-    return children;
+    return <ChainProvider>{children}</ChainProvider>;
   } catch (error) {
     // The error boundary will catch this
     throw error;

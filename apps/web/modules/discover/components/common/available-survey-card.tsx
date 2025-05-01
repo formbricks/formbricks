@@ -1,10 +1,12 @@
+import { ChainContext } from "@/modules/discover/context/chain-context";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { formatDistance } from "date-fns";
-import { ArrowRightIcon, UsersIcon } from "lucide-react";
+import { ArrowRightIcon, Sparkles, UsersIcon } from "lucide-react";
 import { Clock } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 
 interface AvailableSurveyCardProps {
   survey: TExtendedSurvey;
@@ -14,10 +16,21 @@ interface AvailableSurveyCardProps {
 export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
   const { t } = useTranslate();
   const surveyTypeLabel = t("common.engagement");
+  const chains = useContext(ChainContext);
+  const [chainName, setChainName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (chains && survey.reward?.chainId) {
+      const chain = chains.find((chain) => chain.chainId === survey.reward?.chainId);
+      if (chain) {
+        setChainName(chain.name);
+      }
+    }
+  }, [chains, survey.reward?.chainId]);
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="min-h-[170px] p-6">
+      <div className="min-h-[190px] p-6">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
@@ -45,6 +58,24 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
         <div className="flex-1">
           <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
           <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
+          {chainName && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-blue-400">
+                <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+                <span className="font-bold">
+                  {survey.reward?.amount} {survey.reward?.symbol}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* <a className="flex items-center hover:underline" href="#"> */}
+                <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
+                  <div className="mx-auto w-80 bg-slate-500" />
+                </span>
+                <span className="text-xs text-slate-500">{chainName}</span>
+                {/* </a> */}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="p-6 pt-0">
