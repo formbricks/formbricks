@@ -4,6 +4,7 @@ import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
   IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
   PROJECT_FEATURE_KEYS,
 } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -89,6 +90,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           projects: 3,
           whitelabel: true,
           removeBranding: true,
+          spamProtection: true,
           ai: true,
           saml: true,
         },
@@ -158,6 +160,7 @@ export const getEnterpriseLicense = async (): Promise<{
           contacts: false,
           ai: false,
           saml: false,
+          spamProtection: false,
         },
         lastChecked: new Date(),
       };
@@ -386,6 +389,18 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.sso && licenseFeatures.saml;
+};
+
+export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
+  if (!IS_RECAPTCHA_CONFIGURED) return false;
+
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult?.features ? previousResult.features.spamProtection : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.spamProtection;
 };
 
 export const getOrganizationProjectsLimit = async (

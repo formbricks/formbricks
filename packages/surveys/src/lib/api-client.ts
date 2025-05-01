@@ -29,7 +29,10 @@ export class ApiClient {
   }
 
   async createResponse(
-    responseInput: Omit<TResponseInput, "environmentId"> & { contactId: string | null }
+    responseInput: Omit<TResponseInput, "environmentId"> & {
+      contactId: string | null;
+      recaptchaToken?: string;
+    }
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
     const fromV1 = !!responseInput.userId;
 

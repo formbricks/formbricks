@@ -20,6 +20,7 @@ export type TEnvironmentStateSurvey = Pick<
   | "delay"
   | "projectOverwrites"
   | "isBackButtonHidden"
+  | "recaptcha"
 > & {
   languages: (SurveyLanguage & { language: Language })[];
   triggers: { actionClass: ActionClass }[];
@@ -44,6 +45,7 @@ export interface TEnvironmentState {
     surveys: TEnvironmentStateSurvey[];
     actionClasses: TEnvironmentStateActionClass[];
     project: TEnvironmentStateProject;
+    recaptchaSiteKey?: string;
   };
 }
 

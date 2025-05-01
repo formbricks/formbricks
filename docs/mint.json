@@ -49,7 +49,8 @@
             "xm-and-surveys/surveys/general-features/metadata",
             "xm-and-surveys/surveys/general-features/variables",
             "xm-and-surveys/surveys/general-features/hide-back-button",
-            "xm-and-surveys/surveys/general-features/email-followups"
+            "xm-and-surveys/surveys/general-features/email-followups",
+            "xm-and-surveys/surveys/general-features/spam-protection"
           ]
         },
         {
