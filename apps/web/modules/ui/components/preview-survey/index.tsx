@@ -240,10 +240,10 @@ export const PreviewSurvey = ({
         className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
-            <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+            <p className="absolute top-0 left-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
               Preview
             </p>
-            <div className="absolute right-0 top-0 m-2">
+            <div className="absolute top-0 right-0 m-2">
               <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
             <MediaBackground
@@ -273,11 +273,12 @@ export const PreviewSurvey = ({
                       setQuestionId = f;
                     }}
                     onFinished={onFinished}
+                    isSpamProtectionEnabled={survey.recaptcha?.enabled}
                   />
                 </Modal>
               ) : (
                 <div className="flex h-full w-full flex-col justify-center px-1">
-                  <div className="absolute left-5 top-5">
+                  <div className="absolute top-5 left-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
@@ -293,6 +294,7 @@ export const PreviewSurvey = ({
                       getSetQuestionId={(f: (value: string) => void) => {
                         setQuestionId = f;
                       }}
+                      isSpamProtectionEnabled={survey.recaptcha?.enabled}
                     />
                   </div>
                 </div>
@@ -375,6 +377,7 @@ export const PreviewSurvey = ({
                     setQuestionId = f;
                   }}
                   onFinished={onFinished}
+                  isSpamProtectionEnabled={survey.recaptcha?.enabled}
                 />
               </Modal>
             ) : (
@@ -383,7 +386,7 @@ export const PreviewSurvey = ({
                 styling={styling}
                 ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
                 isEditorView>
-                <div className="absolute left-5 top-5">
+                <div className="absolute top-5 left-5">
                   {!styling.isLogoHidden && (
                     <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
@@ -400,6 +403,7 @@ export const PreviewSurvey = ({
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
+                    isSpamProtectionEnabled={survey.recaptcha?.enabled}
                   />
                 </div>
               </MediaBackground>

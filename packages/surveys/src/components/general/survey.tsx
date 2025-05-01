@@ -3,6 +3,7 @@ import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
+import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { RecaptchaErrorComponent } from "@/components/general/recaptcha-error-component";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
@@ -705,7 +706,10 @@ export function Survey({
             {content()}
           </div>
           <div className="fb-space-y-4">
-            {isBrandingEnabled ? <FormbricksBranding /> : null}
+            <div className="space-y-2">
+              {isBrandingEnabled ? <FormbricksBranding /> : null}
+              {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
+            </div>
             {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>
         </div>
