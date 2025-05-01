@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "@/lib/cache";
+import { isValidImageFile } from "@/lib/fileValidation";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -7,7 +8,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
@@ -97,6 +98,7 @@ export const getUserByEmail = reactCache(
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
   validateInputs([personId, ZId], [data, ZUserUpdateInput.partial()]);
+  if (data.imageUrl && !isValidImageFile(data.imageUrl)) throw new InvalidInputError("Invalid image file");
 
   try {
     const updatedUser = await prisma.user.update({

@@ -110,6 +110,11 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
+        "lib/utils/billing.ts",
+        "modules/ui/components/card/index.tsx",
+        "lib/fileValidation.ts",
+        "survey/editor/lib/utils.tsx",
+        "modules/ui/components/card/index.tsx",
         "modules/ui/components/card/index.tsx",
       ],
       exclude: [
