@@ -1,7 +1,7 @@
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
 interface ErrorComponentProps {
-  errorType: TResponseErrorCodesEnum.RecaptchaError | TResponseErrorCodesEnum.InvalidDeviceError;
+  readonly errorType: TResponseErrorCodesEnum.RecaptchaError | TResponseErrorCodesEnum.InvalidDeviceError;
 }
 
 export function ErrorComponent({ errorType }: ErrorComponentProps) {
