@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -427,6 +428,9 @@ export const ResponseOptionsCard = ({
                     <p className="mx-2 text-xs text-slate-500">Strict</p>
                   </div>
                 </div>
+                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm">
+                  <AlertTitle>{t("environments.surveys.edit.spam_protection_note")}</AlertTitle>
+                </Alert>
               </div>
             </AdvancedOptionToggle>
           )}

@@ -1,10 +1,10 @@
 import { EndingCard } from "@/components/general/ending-card";
+import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
 import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
-import { RecaptchaErrorComponent } from "@/components/general/recaptcha-error-component";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -75,6 +75,7 @@ export function Survey({
   isWebEnvironment = true,
   getRecaptchaToken,
   isSpamProtectionEnabled,
+  recaptchaSiteKey,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -488,6 +489,17 @@ export function Survey({
   );
 
   useEffect(() => {
+    if (isPreviewMode || !survey.recaptcha?.enabled) return;
+
+    if (!recaptchaSiteKey || !isSpamProtectionEnabled) {
+      setShowError(true);
+      setErrorType(TResponseErrorCodesEnum.InvalidDeviceError);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- this is a one-time effect
+  }, []);
+
+  useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
@@ -592,6 +604,7 @@ export function Survey({
             />
           );
         case TResponseErrorCodesEnum.RecaptchaError:
+        case TResponseErrorCodesEnum.InvalidDeviceError:
           return (
             <>
               {localSurvey.type !== "link" ? (
@@ -599,7 +612,7 @@ export function Survey({
                   <SurveyCloseButton onClose={onClose} />
                 </div>
               ) : null}
-              <RecaptchaErrorComponent />
+              <ErrorComponent errorType={errorType} />
             </>
           );
       }
