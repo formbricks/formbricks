@@ -34,7 +34,9 @@ export const WalletModal = ({ address, open, setOpen }: WalletModalProps) => {
 
   //Currently resolving the issue of QR code not being generated. Temporarily used setTimeout to generate the QR code.
   useEffect(() => {
-    if (!open || activeTab !== "deposit" || !address) return;
+    if (!open || activeTab != "deposit" || !address) return;
+
+    // console.log("address", address);
 
     const timer = setTimeout(() => {
       if (qrCodeRef.current) {

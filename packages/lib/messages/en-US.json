@@ -1946,6 +1946,9 @@
           "sent_to": "Sent to",
           "token_minted": "Token Minted"
         },
+        "common": {
+          "your_transaction_history_is_empty": "Your transaction history is empty"
+        },
         "tag": {
           "survey_reward": "Survey Reward",
           "token_transfer": "Token Transfer",

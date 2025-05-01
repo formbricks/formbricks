@@ -61,7 +61,9 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
           {t("common.transaction_history")}
         </h3>
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <h3 className="mt-4 text-lg font-medium text-slate-900">Your transaction history is empty</h3>
+          <h3 className="mt-4 text-lg font-medium text-slate-900">
+            {t("environments.wallet.transaction.common.your_transaction_history_is_empty")}
+          </h3>
         </div>
       </div>
     );
