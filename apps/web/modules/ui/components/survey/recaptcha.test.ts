@@ -108,7 +108,7 @@ describe("executeRecaptcha", () => {
     vi.restoreAllMocks();
   });
 
-  test("returns undefined if site key is missing", async () => {
+  test("returns null if site key is missing", async () => {
     const result = await executeRecaptcha(undefined);
     expect(result).toBeNull();
   });
@@ -120,7 +120,7 @@ describe("executeRecaptcha", () => {
     expect(window.grecaptcha.execute).toHaveBeenCalledWith("test-site-key", { action: "my-action" });
   });
 
-  test("logs and returns undefined on error during execution", async () => {
+  test("logs and returns null on error during execution", async () => {
     window.grecaptcha = {
       ...window.grecaptcha,
       execute: vi.fn(() => Promise.reject(new Error("fail"))),
@@ -129,7 +129,7 @@ describe("executeRecaptcha", () => {
     expect(result).toBeNull();
   });
 
-  test("logs and returns undefined if grecaptcha is not available", async () => {
+  test("logs and returns null if grecaptcha is not available", async () => {
     // @ts-expect-error intentionally removing grecaptcha
     delete window.grecaptcha;
     const result = await executeRecaptcha(mockRecaptchaSiteKey);

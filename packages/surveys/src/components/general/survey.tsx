@@ -75,7 +75,6 @@ export function Survey({
   isWebEnvironment = true,
   getRecaptchaToken,
   isSpamProtectionEnabled,
-  recaptchaSiteKey,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 

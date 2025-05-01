@@ -81,9 +81,9 @@ describe("executeRecaptcha", () => {
     loggerMock.debug.mockClear();
   });
 
-  test("returns undefined if site key is missing", async () => {
+  test("returns null if site key is missing", async () => {
     const result = await executeRecaptcha(undefined);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
     expect(loggerMock.debug).toHaveBeenCalledWith("reCAPTCHA site key not found");
   });
 
@@ -94,23 +94,23 @@ describe("executeRecaptcha", () => {
     expect(window.grecaptcha.execute).toHaveBeenCalledWith("test-site-key", { action: "my-action" });
   });
 
-  test("logs and returns undefined on error during execution", async () => {
+  test("logs and returns null on error during execution", async () => {
     window.grecaptcha = {
       ...window.grecaptcha,
       execute: vi.fn(() => Promise.reject(new Error("fail"))),
     };
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
     expect(loggerMock.debug).toHaveBeenCalledWith(
       expect.stringContaining("Error during reCAPTCHA execution: Error: fail")
     );
   });
 
-  test("logs and returns undefined if grecaptcha is not available", async () => {
+  test("logs and returns null if grecaptcha is not available", async () => {
     // @ts-expect-error intentionally removing grecaptcha
     delete window.grecaptcha;
     const result = await executeRecaptcha(mockRecaptchaSiteKey);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
     expect(loggerMock.debug).toHaveBeenCalledWith("reCAPTCHA API not available");
   });
 });
