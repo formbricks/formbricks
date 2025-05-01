@@ -1,3 +1,4 @@
+import { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/lib/constants";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponse } from "@formbricks/types/errors";
@@ -68,7 +69,7 @@ export class ResponseQueue {
         break; // exit the retry loop
       }
 
-      if (res.error.details?.code === "recaptcha_verification_failed") {
+      if (res.error.details?.code === RECAPTCHA_VERIFICATION_ERROR_CODE) {
         this.isRequestInProgress = false;
 
         if (this.config.onResponseSendingFailed) {

@@ -62,5 +62,5 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   isWebEnvironment?: boolean;
   isSpamProtectionEnabled?: boolean;
   recaptchaSiteKey?: string;
-  getRecaptchaToken?: () => Promise<string | undefined>;
+  getRecaptchaToken?: () => Promise<string | null>;
 }

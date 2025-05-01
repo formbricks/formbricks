@@ -1,3 +1,4 @@
+import { RECAPTCHA_SCRIPT_ID } from "@/lib/common/constants";
 import { Logger } from "./logger";
 
 declare global {
@@ -21,7 +22,7 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 
   return new Promise((resolve, reject) => {
     // Check if script already exists
-    if (document.getElementById("formbricks-recaptcha-script")) {
+    if (document.getElementById(RECAPTCHA_SCRIPT_ID)) {
       logger.debug("reCAPTCHA script already loaded");
       resolve();
       return;
@@ -36,7 +37,7 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 
     // Create script element
     const script = document.createElement("script");
-    script.id = "formbricks-recaptcha-script";
+    script.id = RECAPTCHA_SCRIPT_ID;
     script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
     script.async = true;
     script.defer = true;
@@ -64,12 +65,12 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 export const executeRecaptcha = async (
   recaptchaSiteKey?: string,
   action = "submit_response"
-): Promise<string | undefined> => {
+): Promise<string | null> => {
   const logger = Logger.getInstance();
 
   if (!recaptchaSiteKey) {
     logger.debug("reCAPTCHA site key not found");
-    return;
+    return null;
   }
 
   try {
@@ -79,7 +80,7 @@ export const executeRecaptcha = async (
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- grecaptcha is a global variable and may not be defined
     if (!window.grecaptcha) {
       logger.debug("reCAPTCHA API not available");
-      return;
+      return null;
     }
 
     return await new Promise<string>((resolve, reject) => {
@@ -95,5 +96,6 @@ export const executeRecaptcha = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logger.debug(`Error during reCAPTCHA execution: ${message}`);
+    return null;
   }
 };

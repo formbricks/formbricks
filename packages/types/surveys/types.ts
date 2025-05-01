@@ -258,7 +258,7 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export const ZSurveyRecaptcha = z
   .object({
     enabled: z.boolean(),
-    threshold: z.number().min(0).max(1),
+    threshold: z.number().min(0.1).max(0.9).step(0.1),
   })
   .nullable();
 

@@ -256,6 +256,7 @@ export const SurveyEditor = ({
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
+            isSpamProtectionAllowed={isSpamProtectionAllowed}
           />
         </aside>
       </div>

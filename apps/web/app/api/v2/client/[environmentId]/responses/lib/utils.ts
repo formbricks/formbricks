@@ -5,6 +5,8 @@ import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
+export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
+
 export const checkSurveyValidity = async (
   survey: TSurvey,
   environmentId: string,
@@ -29,7 +31,7 @@ export const checkSurveyValidity = async (
         return responses.badRequestResponse(
           "Missing recaptcha token",
           {
-            code: "recaptcha_verification_failed",
+            code: RECAPTCHA_VERIFICATION_ERROR_CODE,
           },
           true
         );
@@ -39,7 +41,7 @@ export const checkSurveyValidity = async (
         return responses.badRequestResponse(
           "reCAPTCHA verification failed",
           {
-            code: "recaptcha_verification_failed",
+            code: RECAPTCHA_VERIFICATION_ERROR_CODE,
           },
           true
         );

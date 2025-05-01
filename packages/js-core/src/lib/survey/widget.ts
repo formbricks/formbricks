@@ -92,7 +92,7 @@ export const renderWidget = async (
   const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
 
-  const getRecaptchaToken = (): Promise<string | undefined> => {
+  const getRecaptchaToken = (): Promise<string | null> => {
     return executeRecaptcha(recaptchaSiteKey);
   };
 

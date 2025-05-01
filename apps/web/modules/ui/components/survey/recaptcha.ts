@@ -56,9 +56,9 @@ export const loadRecaptchaScript = (recaptchaSiteKey?: string): Promise<void> =>
 export const executeRecaptcha = async (
   recaptchaSiteKey?: string,
   action = "submit_response"
-): Promise<string | undefined> => {
+): Promise<string | null> => {
   if (!recaptchaSiteKey) {
-    return;
+    return null;
   }
 
   try {
@@ -66,7 +66,7 @@ export const executeRecaptcha = async (
 
     // Check if grecaptcha is available
     if (!window.grecaptcha) {
-      return;
+      return null;
     }
 
     const val = await new Promise((resolve, reject) => {
@@ -83,6 +83,6 @@ export const executeRecaptcha = async (
     return val as string;
   } catch (error) {
     console.error(`Error loading reCAPTCHA script: ${error}`);
-    return;
+    return null;
   }
 };

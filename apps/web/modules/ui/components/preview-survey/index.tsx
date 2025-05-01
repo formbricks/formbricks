@@ -23,6 +23,7 @@ interface PreviewSurveyProps {
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
+  isSpamProtectionAllowed: boolean;
 }
 
 let surveyNameTemp: string;
@@ -63,6 +64,7 @@ export const PreviewSurvey = ({
   project,
   environment,
   languageCode,
+  isSpamProtectionAllowed,
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -196,6 +198,10 @@ export const PreviewSurvey = ({
     }
   }, [environment]);
 
+  const isSpamProtectionEnabled = useMemo(() => {
+    return isSpamProtectionAllowed && survey.recaptcha?.enabled;
+  }, [survey.recaptcha?.enabled, isSpamProtectionAllowed]);
+
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
@@ -273,7 +279,7 @@ export const PreviewSurvey = ({
                       setQuestionId = f;
                     }}
                     onFinished={onFinished}
-                    isSpamProtectionEnabled={survey.recaptcha?.enabled}
+                    isSpamProtectionEnabled={isSpamProtectionEnabled}
                   />
                 </Modal>
               ) : (
@@ -294,7 +300,7 @@ export const PreviewSurvey = ({
                       getSetQuestionId={(f: (value: string) => void) => {
                         setQuestionId = f;
                       }}
-                      isSpamProtectionEnabled={survey.recaptcha?.enabled}
+                      isSpamProtectionEnabled={isSpamProtectionEnabled}
                     />
                   </div>
                 </div>
@@ -377,7 +383,7 @@ export const PreviewSurvey = ({
                     setQuestionId = f;
                   }}
                   onFinished={onFinished}
-                  isSpamProtectionEnabled={survey.recaptcha?.enabled}
+                  isSpamProtectionEnabled={isSpamProtectionEnabled}
                 />
               </Modal>
             ) : (
@@ -403,7 +409,7 @@ export const PreviewSurvey = ({
                     getSetQuestionId={(f: (value: string) => void) => {
                       setQuestionId = f;
                     }}
-                    isSpamProtectionEnabled={survey.recaptcha?.enabled}
+                    isSpamProtectionEnabled={isSpamProtectionEnabled}
                   />
                 </div>
               </MediaBackground>
