@@ -1571,6 +1571,7 @@
         "simple": "簡單",
         "single_use_survey_links": "單次使用問卷連結",
         "single_use_survey_links_description": "每個問卷連結只允許 1 個回應。",
+        "six_points": "6 分",
         "skip_button_label": "「跳過」按鈕標籤",
         "smiley": "表情符號",
         "spam_protection_threshold_description": "設置值在 0 和 1 之間，低於此值的回應將被拒絕。",

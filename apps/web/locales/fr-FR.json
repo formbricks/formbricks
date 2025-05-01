@@ -1571,6 +1571,7 @@
         "simple": "Simple",
         "single_use_survey_links": "Liens d'enquête à usage unique",
         "single_use_survey_links_description": "Autoriser uniquement 1 réponse par lien d'enquête.",
+        "six_points": "6 points",
         "skip_button_label": "Étiquette du bouton Ignorer",
         "smiley": "Sourire",
         "spam_protection_threshold_description": "Définir une valeur entre 0 et 1, les réponses en dessous de cette valeur seront rejetées.",
