@@ -63,7 +63,7 @@ export const updateSurveyAction = authenticatedActionClient
     });
 
     if (parsedInput.recaptcha?.enabled) {
-      await checkSpamProtectionPermission();
+      await checkSpamProtectionPermission(organizationId);
     }
 
     if (parsedInput.followUps?.length) {

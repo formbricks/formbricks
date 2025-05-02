@@ -8,7 +8,6 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -48,6 +47,8 @@ vi.mock("./survey");
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true, // Default to false, override in specific tests
   RECAPTCHA_SITE_KEY: "mock_recaptcha_site_key",
+  RECAPTCHA_SECRET_KEY: "mock_recaptcha_secret_key",
+  IS_RECAPTCHA_CONFIGURED: true,
   IS_PRODUCTION: true,
   IS_POSTHOG_CONFIGURED: false,
   ENTERPRISE_LICENSE_KEY: "mock_enterprise_license_key",
@@ -255,7 +256,6 @@ describe("getEnvironmentState", () => {
     vi.mocked(getProjectForEnvironmentState).mockResolvedValue(mockProject);
     vi.mocked(getSurveysForEnvironmentState).mockResolvedValue(mockSurveys);
     vi.mocked(getActionClassesForEnvironmentState).mockResolvedValue(mockActionClasses);
-    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false); // Default to false
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50); // Default below limit
   });
 
@@ -267,6 +267,7 @@ describe("getEnvironmentState", () => {
     const result = await getEnvironmentState(environmentId);
 
     const expectedData: TJsEnvironmentState["data"] = {
+      recaptchaSiteKey: "mock_recaptcha_site_key",
       surveys: [mockSurveys[0]], // Only app, inProgress survey
       actionClasses: mockActionClasses,
       project: mockProject,
@@ -279,7 +280,6 @@ describe("getEnvironmentState", () => {
     expect(getProjectForEnvironmentState).toHaveBeenCalledWith(environmentId);
     expect(getSurveysForEnvironmentState).toHaveBeenCalledWith(environmentId);
     expect(getActionClassesForEnvironmentState).toHaveBeenCalledWith(environmentId);
-    expect(getIsSpamProtectionEnabled).toHaveBeenCalled();
     expect(prisma.environment.update).not.toHaveBeenCalled();
     expect(capturePosthogEnvironmentEvent).not.toHaveBeenCalled();
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalled(); // Not cloud
@@ -358,20 +358,10 @@ describe("getEnvironmentState", () => {
     );
   });
 
-  test("should include recaptchaSiteKey if spam protection is enabled", async () => {
-    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
-
+  test("should include recaptchaSiteKey if recaptcha variables are set", async () => {
     const result = await getEnvironmentState(environmentId);
 
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
-  });
-
-  test("should not include recaptchaSiteKey if spam protection is disabled", async () => {
-    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false);
-
-    const result = await getEnvironmentState(environmentId);
-
-    expect(result.data.recaptchaSiteKey).toBeUndefined();
   });
 
   test("should filter surveys correctly (only app type and inProgress status)", async () => {

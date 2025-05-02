@@ -9,7 +9,7 @@ export const checkFeaturePermissions = async (
   organization: TOrganization
 ): Promise<Response | null> => {
   if (surveyData.recaptcha?.enabled) {
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organization.billing.plan);
     if (!isSpamProtectionEnabled) {
       return responses.forbiddenResponse("Spam protection is not enabled for this organization");
     }

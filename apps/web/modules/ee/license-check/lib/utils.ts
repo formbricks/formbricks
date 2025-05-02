@@ -391,13 +391,18 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   return licenseFeatures.sso && licenseFeatures.saml;
 };
 
-export const getIsSpamProtectionEnabled = async (): Promise<boolean> => {
+export const getIsSpamProtectionEnabled = async (
+  billingPlan: Organization["billing"]["plan"]
+): Promise<boolean> => {
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
     return previousResult?.features ? previousResult.features.spamProtection : false;
   }
+  if (IS_FORMBRICKS_CLOUD)
+    return billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE;
+
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.spamProtection;
