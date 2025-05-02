@@ -74,8 +74,6 @@ export const SurveyEditor = ({
   userEmail,
   teamMemberDetails,
 }: SurveyEditorProps) => {
-  // [UseTusk]
-
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));

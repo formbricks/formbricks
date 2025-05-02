@@ -40,8 +40,6 @@ export const SettingsView = ({
   projectPermission,
   isFormbricksCloud,
 }: SettingsViewProps) => {
-  // [UseTusk]
-
   const isAppSurvey = localSurvey.type === "app";
 
   return (

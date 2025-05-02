@@ -58,8 +58,6 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
 }: SurveyMenuBarProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);

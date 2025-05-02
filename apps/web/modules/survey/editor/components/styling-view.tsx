@@ -52,8 +52,6 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
 
   const form = useForm<TSurveyStyling>({
