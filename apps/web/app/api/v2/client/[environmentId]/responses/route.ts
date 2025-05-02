@@ -1,3 +1,4 @@
+import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -74,18 +75,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
   // get and check survey
   const survey = await getSurvey(responseInputData.surveyId);
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
+    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
-  if (survey.environmentId !== environmentId) {
-    return responses.badRequestResponse(
-      "Survey is part of another environment",
-      {
-        "survey.environmentId": survey.environmentId,
-        environmentId,
-      },
-      true
-    );
-  }
+  const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
+  if (surveyCheckResult) return surveyCheckResult;
 
   let response: TResponse;
   try {
@@ -108,15 +101,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
-    } else {
-      logger.error({ error, url: request.url }, "Error creating response");
-      return responses.internalServerErrorResponse(error.message);
     }
+    logger.error({ error, url: request.url }, "Error creating response");
+    return responses.internalServerErrorResponse(error.message);
   }
 
   sendToPipeline({
     event: "responseCreated",
-    environmentId: survey.environmentId,
+    environmentId,
     surveyId: response.surveyId,
     response: response,
   });
@@ -124,13 +116,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (responseInput.finished) {
     sendToPipeline({
       event: "responseFinished",
-      environmentId: survey.environmentId,
+      environmentId,
       surveyId: response.surveyId,
       response: response,
     });
   }
 
-  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+  await capturePosthogEnvironmentEvent(environmentId, "response created", {
     surveyId: response.surveyId,
     surveyType: survey.type,
   });

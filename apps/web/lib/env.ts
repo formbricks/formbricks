@@ -102,6 +102,8 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     TURNSTILE_SECRET_KEY: z.string().optional(),
     TURNSTILE_SITE_KEY: z.string().optional(),
+    RECAPTCHA_SITE_KEY: z.string().optional(),
+    RECAPTCHA_SECRET_KEY: z.string().optional(),
     UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
@@ -110,6 +112,7 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
+    DISABLE_USER_MANAGEMENT: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -197,6 +200,8 @@ export const env = createEnv({
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
+    RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
+    RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,
     UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,
@@ -206,5 +211,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
+    DISABLE_USER_MANAGEMENT: process.env.DISABLE_USER_MANAGEMENT,
   },
 });

@@ -187,6 +187,8 @@
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
+        "RECAPTCHA_SITE_KEY",
+        "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -196,7 +198,8 @@
         "UNSPLASH_ACCESS_KEY",
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
-        "PROMETHEUS_EXPORTER_PORT"
+        "PROMETHEUS_EXPORTER_PORT",
+        "DISABLE_USER_MANAGEMENT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

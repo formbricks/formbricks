@@ -188,9 +188,7 @@ export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boole
   return randomNum <= displayPercentage;
 };
 
-export const isNowExpired = (expirationDate: Date): boolean => {
-  return new Date() >= expirationDate;
-};
+export const isNowExpired = (expirationDate: Date): boolean => new Date() >= expirationDate;
 
 export const checkUrlMatch = (
   url: string,

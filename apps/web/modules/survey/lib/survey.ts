@@ -41,6 +41,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   isBackButtonHidden: true,
   languages: {
     select: {
