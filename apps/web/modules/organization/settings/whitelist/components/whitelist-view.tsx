@@ -56,7 +56,7 @@ export const WhitelistView = async ({
 
       {membershipRole && (
         <Suspense fallback={<WhitelistLoading />}>
-          <EditWhitelist organization={organization} currentUserId={currentUserId} role={membershipRole} />
+          <EditWhitelist organization={organization} role={membershipRole} />
         </Suspense>
       )}
     </SettingsCard>

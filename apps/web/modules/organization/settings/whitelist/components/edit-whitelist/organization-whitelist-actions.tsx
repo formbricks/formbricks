@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
+import { addUserToWhitelistAction } from "@/modules/organization/settings/whitelist/actions";
 import { AddWhitelistModal } from "@/modules/organization/settings/whitelist/components/add-whitelist/add-whitelist-modal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
@@ -59,55 +60,21 @@ export const OrganizationWhitelistActions = ({
     }
   };
 
-  // TODO: Change this to add whitelist
-  const handleAddMembers = async (data: TInvitee[]) => {
+  // TODO: Fix error and success messages for all whitelist components
+  const handleAddUserToWhitelist = async (data: { email: string }[]) => {
+    console.log("data", data);
+    // Individual invite
     if (data.length === 1) {
-      // Individual invite
-      const inviteUserActionResult = await inviteUserAction({
+      const addUserToWhitelistActionResult = await addUserToWhitelistAction({
         organizationId: organization.id,
         email: data[0].email.toLowerCase(),
-        name: data[0].name,
-        role: "manager",
-        teamIds: data[0].teamIds,
+        role: membershipRole ?? "member",
       });
-      if (inviteUserActionResult?.data) {
+      if (addUserToWhitelistActionResult?.data) {
         toast.success(t("environments.settings.general.member_invited_successfully"));
       } else {
-        const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
+        const errorMessage = getFormattedErrorMessage(addUserToWhitelistActionResult);
         toast.error(errorMessage);
-      }
-    } else {
-      const invitePromises = await Promise.all(
-        data.map(async ({ name, email, role, teamIds }) => {
-          const inviteUserActionResult = await inviteUserAction({
-            organizationId: organization.id,
-            email: email.toLowerCase(),
-            name,
-            role,
-            teamIds,
-          });
-          return {
-            email,
-            success: Boolean(inviteUserActionResult?.data),
-          };
-        })
-      );
-      let failedInvites: string[] = [];
-      let successInvites: string[] = [];
-      invitePromises.forEach((invite) => {
-        if (!invite.success) {
-          failedInvites.push(invite.email);
-        } else {
-          successInvites.push(invite.email);
-        }
-      });
-      if (failedInvites.length > 0) {
-        toast.error(`${failedInvites.length} ${t("environments.settings.general.invites_failed")}`);
-      }
-      if (successInvites.length > 0) {
-        toast.success(
-          `${successInvites.length} ${t("environments.settings.general.member_invited_successfully")}`
-        );
       }
     }
   };
@@ -136,9 +103,10 @@ export const OrganizationWhitelistActions = ({
       <AddWhitelistModal
         open={isAddWhitelistModalOpen}
         setOpen={setAddWhitelistModalOpen}
-        onSubmit={handleAddMembers}
+        onSubmit={handleAddUserToWhitelist}
         membershipRole={membershipRole}
         environmentId={environmentId}
+        organizationId={organization.id}
       />
 
       <CustomDialog

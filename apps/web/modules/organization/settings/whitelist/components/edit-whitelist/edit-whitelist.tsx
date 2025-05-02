@@ -1,19 +1,18 @@
-import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
-import { getEditMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { WhitelistInfo } from "@/modules/organization/settings/whitelist/components/edit-whitelist/whitelist-info";
+import { getWhitelistedUsers } from "@/modules/organization/settings/whitelist/lib/whitelist";
 import { getTranslate } from "@/tolgee/server";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TUserWhitelistInfo } from "@formbricks/types/user";
 
 interface EditWhitelistProps {
   organization: TOrganization;
-  currentUserId: string;
   role: TOrganizationRole;
 }
 
-export const EditWhitelist = async ({ organization, currentUserId, role }: EditWhitelistProps) => {
-  const members = await getEditMembershipByOrganizationId(organization.id);
-  const invites = await getInvitesByOrganizationId(organization.id);
+// Todo: add remove button, fix dropdown ui, review logic and cleanup code
+export const EditWhitelist = async ({ organization, role }: EditWhitelistProps) => {
+  const whitelistedUsers: TUserWhitelistInfo[] = (await getWhitelistedUsers()) ?? [];
   const t = await getTranslate();
 
   return (
@@ -29,9 +28,7 @@ export const EditWhitelist = async ({ organization, currentUserId, role }: EditW
         {role && (
           <WhitelistInfo
             organization={organization}
-            currentUserId={currentUserId}
-            invites={invites ?? []}
-            members={members ?? []}
+            whitelistedUsers={whitelistedUsers}
             currentUserRole={role}
           />
         )}
