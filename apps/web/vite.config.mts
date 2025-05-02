@@ -118,6 +118,7 @@ export default defineConfig({
         "lib/utils/billing.ts",
         "modules/ui/components/card/index.tsx",
         "lib/fileValidation.ts",
+        "lib/fileUpload.ts",
         "survey/editor/lib/utils.tsx",
         "modules/ui/components/card/index.tsx",
         "modules/ui/components/card/index.tsx",
