@@ -1,13 +1,14 @@
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
   PRIVACY_URL,
   RECAPTCHA_SITE_KEY,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
-import { getIsSpamProtectionEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -57,8 +58,7 @@ export const renderSurvey = async ({
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
 
-  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled();
-  const isSpamProtectionEnabled = Boolean(isSpamProtectionAllowed && survey.recaptcha?.enabled);
+  const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
