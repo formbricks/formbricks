@@ -38,6 +38,7 @@ export default defineConfig({
         "modules/ui/components/environmentId-base-layout/*.tsx",
         "modules/ui/components/survey/recaptcha.ts",
         "app/api/v2/client/**/responses/lib/recaptcha.ts",
+        "app/api/v2/client/**/responses/lib/organization.ts",
         "app/api/v2/client/**/responses/lib/utils.ts",
         "modules/ui/components/progress-bar/index.tsx",
         "app/(app)/environments/**/layout.tsx",
