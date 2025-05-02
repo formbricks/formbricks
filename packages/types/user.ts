@@ -72,7 +72,6 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
-  whitelist: z.boolean(),
   locale: ZUserLocale.optional(),
 });
 
