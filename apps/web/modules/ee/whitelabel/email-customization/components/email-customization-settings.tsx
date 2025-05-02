@@ -205,7 +205,7 @@ export const EmailCustomizationSettings = ({
                         data-testid="replace-logo-button"
                         variant="secondary"
                         onClick={() => inputRef.current?.click()}
-                        disabled={isReadOnly}>
+                        disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
                         {t("environments.settings.general.replace_logo")}
                       </Button>
@@ -213,7 +213,7 @@ export const EmailCustomizationSettings = ({
                         data-testid="remove-logo-button"
                         onClick={removeLogo}
                         variant="outline"
-                        disabled={isReadOnly}>
+                        disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="h-4 w-4" />
                         {t("environments.settings.general.remove_logo")}
                       </Button>
@@ -241,7 +241,7 @@ export const EmailCustomizationSettings = ({
                 <Button
                   data-testid="send-test-email-button"
                   variant="secondary"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || isSaving}
                   onClick={sendTestEmail}>
                   {t("common.send_test_email")}
                 </Button>
