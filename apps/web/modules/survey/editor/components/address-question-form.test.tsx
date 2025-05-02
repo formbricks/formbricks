@@ -102,7 +102,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -158,7 +157,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -224,7 +222,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -278,7 +275,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -297,7 +293,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -348,7 +343,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 
@@ -407,7 +401,6 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
-        lastQuestion={false}
       />
     );
 

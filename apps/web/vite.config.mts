@@ -153,6 +153,10 @@ export default defineConfig({
         "modules/survey/editor/components/file-upload-question-form.tsx",
         "modules/survey/editor/components/how-to-send-card.tsx",
         "modules/survey/editor/components/image-survey-bg.tsx",
+        "modules/survey/editor/components/edit-welcome-card.tsx",
+        "modules/survey/editor/components/questions-view.tsx",
+        "modules/survey/editor/components/settings-view.tsx",
+        "modules/survey/editor/components/styling-view.tsx",
       ],
       exclude: [
         "**/.next/**",
