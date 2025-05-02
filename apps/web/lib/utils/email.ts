@@ -1,4 +1,5 @@
-export const isValidEmail = (email): boolean => {
-  const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+export const isValidEmail = (email: string): boolean => {
+  // This regex comes from zod
+  const regex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
   return regex.test(email);
 };
