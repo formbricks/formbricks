@@ -255,6 +255,15 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
+export const ZSurveyRecaptcha = z
+  .object({
+    enabled: z.boolean(),
+    threshold: z.number().min(0.1).max(0.9).step(0.1),
+  })
+  .nullable();
+
+export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
+
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
@@ -615,7 +624,7 @@ export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
-  range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
+  range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
   isColorCodingEnabled: z.boolean().optional().default(false),
@@ -872,6 +881,7 @@ export const ZSurvey = z
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
     isVerifyEmailEnabled: z.boolean(),
+    recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),
     isBackButtonHidden: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
@@ -2447,6 +2457,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
+export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
