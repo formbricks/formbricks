@@ -14,6 +14,7 @@ import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-survey
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
@@ -60,6 +61,10 @@ export const updateSurveyAction = authenticatedActionClient
         },
       ],
     });
+
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission(organizationId);
+    }
 
     if (parsedInput.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
