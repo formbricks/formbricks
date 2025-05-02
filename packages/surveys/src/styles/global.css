@@ -125,3 +125,7 @@ p.fb-editor-paragraph {
     background: transparent !important;
   }
 }
+
+.grecaptcha-badge {
+  visibility: hidden;
+}

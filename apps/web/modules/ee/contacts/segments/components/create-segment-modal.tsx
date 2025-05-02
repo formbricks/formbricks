@@ -84,12 +84,14 @@ export function CreateSegmentModal({
 
       if (createSegmentResponse?.data) {
         toast.success(t("environments.segments.segment_saved_successfully"));
+        handleResetState();
+        router.refresh();
+        setIsCreatingSegment(false);
       } else {
         const errorMessage = getFormattedErrorMessage(createSegmentResponse);
         toast.error(errorMessage);
+        setIsCreatingSegment(false);
       }
-
-      setIsCreatingSegment(false);
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
@@ -101,10 +103,6 @@ export function CreateSegmentModal({
       setIsCreatingSegment(false);
       return;
     }
-
-    handleResetState();
-    setIsCreatingSegment(false);
-    router.refresh();
   };
 
   const isSaveDisabled = useMemo(() => {

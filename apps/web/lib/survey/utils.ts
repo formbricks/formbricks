@@ -1,10 +1,9 @@
 import "server-only";
-import { generateObject } from "ai";
-import { z } from "zod";
+import { isValidImageFile } from "@/lib/fileValidation";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyQuestion, TSurveyQuestions } from "@formbricks/types/surveys/types";
-import { llmModel } from "../aiModels";
+import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
   surveyPrisma: any
@@ -36,23 +35,24 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
   });
 };
 
-export const doesSurveyHasOpenTextQuestion = (questions: TSurveyQuestions): boolean => {
-  return questions.some((question) => question.type === "openText");
-};
+export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) => {
+  questions.forEach((question, qIndex) => {
+    if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
+      throw new InvalidInputError(`Invalid image file in question ${String(qIndex + 1)}`);
+    }
 
-export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boolean> => {
-  try {
-    const { object } = await generateObject({
-      model: llmModel,
-      schema: z.object({
-        insightsEnabled: z.boolean(),
-      }),
-      prompt: `We extract insights (e.g. feature requests, complaints, other) from survey questions. Can we find them in this question?: ${question.headline.default}`,
-      experimental_telemetry: { isEnabled: true },
-    });
+    if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
+      if (!Array.isArray(question.choices)) {
+        throw new InvalidInputError(`Choices missing for question ${String(qIndex + 1)}`);
+      }
 
-    return object.insightsEnabled;
-  } catch (error) {
-    throw error;
-  }
+      question.choices.forEach((choice, cIndex) => {
+        if (!isValidImageFile(choice.imageUrl)) {
+          throw new InvalidInputError(
+            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}`
+          );
+        }
+      });
+    }
+  });
 };

@@ -205,7 +205,7 @@ export function SegmentEditor({
 
               <div className="flex items-center gap-2 p-4">
                 <DropdownMenu>
-                  <DropdownMenuTrigger disabled={viewOnly}>
+                  <DropdownMenuTrigger data-testid="segment-editor-group-menu-trigger" disabled={viewOnly}>
                     <MoreVertical className="h-4 w-4" />
                   </DropdownMenuTrigger>
 
@@ -246,6 +246,7 @@ export function SegmentEditor({
 
                 <Button
                   className="p-0"
+                  data-testid="delete-resource"
                   disabled={viewOnly}
                   onClick={() => {
                     if (viewOnly) return;

@@ -1,6 +1,6 @@
 "use server";
 
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -32,6 +32,8 @@ const ZUpdateInviteAction = z.object({
   organizationId: ZId,
   data: ZInviteUpdateInput,
 });
+
+export type TUpdateInviteAction = z.infer<typeof ZUpdateInviteAction>;
 
 export const updateInviteAction = authenticatedActionClient
   .schema(ZUpdateInviteAction)
@@ -85,6 +87,9 @@ export const updateMembershipAction = authenticatedActionClient
     );
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
+    }
+    if (DISABLE_USER_MANAGEMENT) {
+      throw new OperationNotAllowedError("User management is disabled");
     }
 
     await checkAuthorizationUpdated({
