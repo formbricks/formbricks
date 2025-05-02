@@ -22,32 +22,24 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
   useEffect(() => {
     if (chains && survey.reward?.chainId) {
       const chain = chains.find((chain) => chain.chainId === survey.reward?.chainId);
-      if (chain) {
-        setChainName(chain.name);
-      }
+      if (chain) setChainName(chain.name);
     }
   }, [chains, survey.reward?.chainId]);
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="min-h-[190px] p-6">
+      <div className="flex min-h-[200px] flex-col justify-between p-6">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
-
             {survey.responseCount != undefined && (
               <div className="flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                 <UsersIcon className="mr-1 h-3 w-3" />
-                <div>
-                  <div className="flex items-center gap-1">
-                    <span>{survey.responseCount}</span>
-                    <span>{survey.responseCount <= 1 ? t("common.response") : t("common.responses")}</span>
-                  </div>
-                </div>
+                <span>{survey.responseCount}</span>
+                <span>{survey.responseCount <= 1 ? t("common.response") : t("common.responses")}</span>
               </div>
             )}
           </div>
-
           {survey.closeOnDate && (
             <div className="mt-1 flex items-center text-xs text-slate-500">
               <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
@@ -55,29 +47,30 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
             </div>
           )}
         </div>
+
         <div className="flex-1">
           <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
           <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
-          {chainName && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-blue-400">
-                <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-                <span className="font-bold">
-                  {survey.reward?.amount} {survey.reward?.symbol}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* <a className="flex items-center hover:underline" href="#"> */}
-                <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
-                  <div className="mx-auto w-80 bg-slate-500" />
-                </span>
-                <span className="text-xs text-slate-500">{chainName}</span>
-                {/* </a> */}
-              </div>
-            </div>
-          )}
         </div>
+
+        {chainName && (
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center gap-1 text-blue-400">
+              <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+              <span className="font-bold">
+                {survey.reward?.amount} {survey.reward?.symbol}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
+                <div className="mx-auto w-80 bg-slate-500" />
+              </span>
+              <span className="text-xs text-slate-500">{chainName}</span>
+            </div>
+          </div>
+        )}
       </div>
+
       <div className="p-6 pt-0">
         {survey.creator && (
           <div className="mb-4 flex items-center">
