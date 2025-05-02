@@ -17,7 +17,7 @@ export const cn = (...classes: string[]) => {
 
 const shuffle = (array: unknown[]) => {
   for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1)); // NOSONAR typescript:S2245 // Math.random() is not used in a security context
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
