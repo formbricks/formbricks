@@ -96,7 +96,7 @@ export const removeUserFromWhitelist = async ({
     }
 
     // Remove user from whitelist
-    const unWhitelistedUser = await prisma.user.update({
+    const userRemovedFromWhitelist = await prisma.user.update({
       where: {
         id: userToRemoveFromWhitelist.id,
       },
@@ -105,7 +105,7 @@ export const removeUserFromWhitelist = async ({
       },
     });
 
-    return unWhitelistedUser.id;
+    return userRemovedFromWhitelist.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

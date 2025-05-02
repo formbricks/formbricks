@@ -1,8 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
-import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
+import { leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { addUserToWhitelistAction } from "@/modules/organization/settings/whitelist/actions";
 import { AddWhitelistModal } from "@/modules/organization/settings/whitelist/components/add-whitelist/add-whitelist-modal";
 import { Button } from "@/modules/ui/components/button";
@@ -62,8 +61,6 @@ export const OrganizationWhitelistActions = ({
 
   // TODO: Fix error and success messages for all whitelist components
   const handleAddUserToWhitelist = async (data: { email: string }[]) => {
-    console.log("data", data);
-    // Individual invite
     if (data.length === 1) {
       const addUserToWhitelistActionResult = await addUserToWhitelistAction({
         organizationId: organization.id,

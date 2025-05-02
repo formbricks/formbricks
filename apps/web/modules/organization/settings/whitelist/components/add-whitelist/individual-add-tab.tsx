@@ -49,8 +49,6 @@ export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: Individua
 
   const submitEventClass = async () => {
     const data = getValues();
-    console.log("Submit data", data);
-    // data.role = data.role || OrganizationRole.owner;
     onSubmit([data]);
     setOpen(false);
     reset();
