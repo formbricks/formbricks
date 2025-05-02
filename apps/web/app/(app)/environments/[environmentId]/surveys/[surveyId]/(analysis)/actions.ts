@@ -1,6 +1,5 @@
 "use server";
 
-import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -107,32 +106,4 @@ export const getResponseCountAction = authenticatedActionClient
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
-  });
-
-const ZGenerateInsightsForSurveyAction = z.object({
-  surveyId: ZId,
-});
-
-export const generateInsightsForSurveyAction = authenticatedActionClient
-  .schema(ZGenerateInsightsForSurveyAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          schema: ZGenerateInsightsForSurveyAction,
-          data: parsedInput,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
-    });
-
-    generateInsightsForSurvey(parsedInput.surveyId);
   });

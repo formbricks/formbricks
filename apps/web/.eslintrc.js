@@ -3,13 +3,13 @@ module.exports = {
   ignorePatterns: ["**/package.json", "**/tsconfig.json"],
   overrides: [
     {
-      files: ["lib/messages/**/*.json"],
+      files: ["locales/*.json"],
       plugins: ["i18n-json"],
       rules: {
         "i18n-json/identical-keys": [
           "error",
           {
-            filePath: require("path").join(__dirname, "messages", "en-US.json"),
+            filePath: require("path").join(__dirname, "locales", "en-US.json"),
             checkExtraKeys: false,
             checkMissingKeys: true,
           },
