@@ -125,7 +125,7 @@ export const updateSurveyAction = authenticatedActionClient
     const { followUps } = parsedInput;
 
     if (parsedInput.recaptcha?.enabled) {
-      await checkSpamProtectionPermission();
+      await checkSpamProtectionPermission(organizationId);
     }
 
     if (followUps?.length) {

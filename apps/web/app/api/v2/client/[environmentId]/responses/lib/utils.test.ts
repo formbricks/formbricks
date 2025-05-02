@@ -1,9 +1,11 @@
+import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
-import { describe, expect, test, vi } from "vitest";
+import { Organization } from "@prisma/client";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -14,11 +16,16 @@ vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/recaptcha", () => ({
 vi.mock("@/app/lib/api/response", () => ({
   responses: {
     badRequestResponse: vi.fn((message) => new Response(message, { status: 400 })),
+    notFoundResponse: vi.fn((message) => new Response(message, { status: 404 })),
   },
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSpamProtectionEnabled: vi.fn(),
+}));
+
+vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/organization", () => ({
+  getOrganizationBillingByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -76,7 +83,22 @@ const mockResponseInput: TResponseInputV2 = {
   meta: {},
 };
 
+const mockBillingData: Organization["billing"] = {
+  limits: {
+    monthly: { miu: 0, responses: 0 },
+    projects: 3,
+  },
+  period: "monthly",
+  periodStart: new Date(),
+  plan: "scale",
+  stripeCustomerId: "mock-stripe-customer-id",
+};
+
 describe("checkSurveyValidity", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
   test("should return badRequestResponse if survey environmentId does not match", async () => {
     const survey = { ...mockSurvey, environmentId: "env-2" };
     const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
@@ -98,18 +120,6 @@ describe("checkSurveyValidity", () => {
     expect(result).toBeNull();
   });
 
-  test("should return null if recaptcha is enabled but spam protection is disabled", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
-    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false);
-    vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
-    const result = await checkSurveyValidity(survey, "env-1", {
-      ...mockResponseInput,
-      recaptchaToken: "test-token",
-    });
-    expect(result).toBeNull();
-    expect(logger.error).toHaveBeenCalledWith("Spam protection is not enabled for this organization");
-  });
-
   test("should return badRequestResponse if recaptcha enabled, spam protection enabled, but token is missing", async () => {
     const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
@@ -127,11 +137,40 @@ describe("checkSurveyValidity", () => {
     );
   });
 
+  test("should return not found response if billing data is not found", async () => {
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
+    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(null);
+
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      recaptchaToken: "test-token",
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(404);
+    expect(responses.notFoundResponse).toHaveBeenCalledWith("Organization", null);
+    expect(getOrganizationBillingByEnvironmentId).toHaveBeenCalledWith("env-1");
+  });
+
+  test("should return null if recaptcha is enabled but spam protection is disabled", async () => {
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false);
+    vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
+    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      recaptchaToken: "test-token",
+    });
+    expect(result).toBeNull();
+    expect(logger.error).toHaveBeenCalledWith("Spam protection is not enabled for this organization");
+  });
+
   test("should return badRequestResponse if recaptcha verification fails", async () => {
     const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
     const responseInputWithToken = { ...mockResponseInput, recaptchaToken: "test-token" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(verifyRecaptchaToken).mockResolvedValue(false);
+    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
 
     const result = await checkSurveyValidity(survey, "env-1", responseInputWithToken);
     expect(result).toBeInstanceOf(Response);
@@ -149,6 +188,7 @@ describe("checkSurveyValidity", () => {
     const responseInputWithToken = { ...mockResponseInput, recaptchaToken: "test-token" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
+    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
 
     const result = await checkSurveyValidity(survey, "env-1", responseInputWithToken);
     expect(result).toBeNull();
