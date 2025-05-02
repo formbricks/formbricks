@@ -6,6 +6,7 @@ import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } fro
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -55,6 +56,10 @@ export const createSurveyAction = authenticatedActionClient
         },
       ],
     });
+
+    if (parsedInput.surveyBody.recaptcha?.enabled) {
+      await checkSpamProtectionPermission();
+    }
 
     if (parsedInput.surveyBody.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);

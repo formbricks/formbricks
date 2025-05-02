@@ -1,6 +1,6 @@
 "use client";
 
-import { getDefaultEndingCard } from "@/app/lib/templates";
+import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";

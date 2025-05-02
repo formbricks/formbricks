@@ -1,4 +1,4 @@
-import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/templates";
+import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/survey-builder";
 import { TFnType } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -31,6 +31,7 @@ export const getMinimalSurvey = (t: TFnType): TSurvey => ({
     enabled: false,
   },
   projectOverwrites: null,
+  recaptcha: null,
   singleUse: null,
   styling: null,
   resultShareKey: null,

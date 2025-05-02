@@ -1,6 +1,6 @@
 "use client";
 
-import { getDefaultEndingCard } from "@/app/lib/templates";
+import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
@@ -63,6 +63,8 @@ interface QuestionsViewProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
+  responseCount: number;
+  setIsCautionDialogOpen: (open: boolean) => void;
 }
 
 export const QuestionsView = ({
@@ -81,6 +83,8 @@ export const QuestionsView = ({
   plan,
   isCxMode,
   locale,
+  responseCount,
+  setIsCautionDialogOpen,
 }: QuestionsViewProps) => {
   const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
@@ -460,6 +464,8 @@ export const QuestionsView = ({
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
           locale={locale}
+          responseCount={responseCount}
+          onAlertTrigger={() => setIsCautionDialogOpen(true)}
         />
       </DndContext>
 

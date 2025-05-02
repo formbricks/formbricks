@@ -117,6 +117,7 @@ export const RatingQuestionForm = ({
                 { label: t("environments.surveys.edit.five_points_recommended"), value: 5 },
                 { label: t("environments.surveys.edit.three_points"), value: 3 },
                 { label: t("environments.surveys.edit.four_points"), value: 4 },
+                { label: t("environments.surveys.edit.six_points"), value: 6 },
                 { label: t("environments.surveys.edit.seven_points"), value: 7 },
                 { label: t("environments.surveys.edit.ten_points"), value: 10 },
               ]}
