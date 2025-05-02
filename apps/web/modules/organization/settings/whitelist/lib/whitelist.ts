@@ -1,17 +1,16 @@
-import { inviteCache } from "@/lib/cache/invite";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { responseSelection } from "@formbricks/lib/response/service";
-import {
-  AuthorizationError,
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
-import { TUser } from "@formbricks/types/user";
+import { AuthorizationError, DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { TUserWhitelistInfo } from "@formbricks/types/user";
 
+const whitelistSelection = {
+  id: true,
+  email: true,
+  name: true,
+  whitelist: true,
+};
 export const addUserToWhitelist = async ({
   email,
   organizationId,
@@ -64,28 +63,49 @@ export const addUserToWhitelist = async ({
   }
 };
 
-export const deleteInvite = async (inviteId: string): Promise<boolean> => {
+export const removeUserFromWhitelist = async ({
+  email,
+  organizationId,
+  currentUserId,
+}: {
+  email: string;
+  organizationId: string;
+  currentUserId: string;
+}): Promise<string> => {
   try {
-    const invite = await prisma.invite.delete({
-      where: {
-        id: inviteId,
-      },
-      select: {
-        id: true,
-        organizationId: true,
-      },
+    // Check if current user is owner or manager
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(currentUserId, organizationId);
+    const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
+    const isOwnerOrManager = isOwner || isManager;
+
+    if (!isOwnerOrManager) {
+      throw new AuthorizationError("Current user does not have permissions to remove from whitelist");
+    }
+    const userToRemoveFromWhitelist = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, whitelist: true },
     });
 
-    if (!invite) {
-      throw new ResourceNotFoundError("Invite", inviteId);
+    // Check if user does not exist or already whitelisted
+    if (!userToRemoveFromWhitelist) {
+      throw new InvalidInputError("User with such email does not exist!");
     }
 
-    inviteCache.revalidate({
-      id: invite.id,
-      organizationId: invite.organizationId,
+    if (!userToRemoveFromWhitelist.whitelist) {
+      throw new InvalidInputError("User is already not whitelisted");
+    }
+
+    // Remove user from whitelist
+    const unWhitelistedUser = await prisma.user.update({
+      where: {
+        id: userToRemoveFromWhitelist.id,
+      },
+      data: {
+        whitelist: false,
+      },
     });
 
-    return true;
+    return unWhitelistedUser.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -95,25 +115,36 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
   }
 };
 
-export const getNonWhitelistedUsers = async (): Promise<TUser[] | null> => {
+export const getNonWhitelistedUsers = async (): Promise<TUserWhitelistInfo[]> => {
   try {
     const nonWhitelistedUsers = await prisma.user.findMany({
       where: {
         whitelist: false,
       },
-      select: responseSelection,
+      select: whitelistSelection,
     });
-
-    if (!nonWhitelistedUsers) {
-      return null;
-    }
-
     return nonWhitelistedUsers;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
+    return [];
+  }
+};
 
-    throw error;
+export const getWhitelistedUsers = async (): Promise<TUserWhitelistInfo[]> => {
+  try {
+    const whitelistedUsers = await prisma.user.findMany({
+      where: {
+        whitelist: true,
+      },
+      select: whitelistSelection,
+    });
+    return whitelistedUsers;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    return [];
   }
 };

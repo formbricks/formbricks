@@ -91,3 +91,12 @@ export const ZUserCreateInput = z.object({
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserWhitelistInfo = z.object({
+  id: z.string(),
+  email: ZUserEmail,
+  name: ZUserName,
+  whitelist: z.boolean(),
+});
+
+export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;

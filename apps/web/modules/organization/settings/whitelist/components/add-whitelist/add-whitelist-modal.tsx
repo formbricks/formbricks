@@ -16,6 +16,7 @@ interface AddWhitelistModalProps {
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   environmentId: string;
   membershipRole?: TOrganizationRole;
+  organizationId: string;
 }
 
 export const AddWhitelistModal = ({
@@ -24,6 +25,7 @@ export const AddWhitelistModal = ({
   onSubmit,
   environmentId,
   membershipRole,
+  organizationId,
 }: AddWhitelistModalProps) => {
   const [type, setType] = useState<"individual">("individual");
 
@@ -36,6 +38,7 @@ export const AddWhitelistModal = ({
         environmentId={environmentId}
         onSubmit={onSubmit}
         membershipRole={membershipRole}
+        organizationId={organizationId}
       />
     ),
   };
@@ -64,9 +67,9 @@ export const AddWhitelistModal = ({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div>
-                <H4>{t("environments.settings.teams.invite_member")}</H4>
+                <H4>Whitelist users for survey deployment</H4>
                 <Muted className="text-slate-500">
-                  {t("environments.settings.teams.invite_member_description")}
+                  Add users to the whitelist to show their surveys globally
                 </Muted>
               </div>
             </div>

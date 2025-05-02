@@ -2,7 +2,12 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { addUserToWhitelist } from "@/modules/organization/settings/whitelist/lib/whitelist";
+import {
+  addUserToWhitelist,
+  getNonWhitelistedUsers,
+  getWhitelistedUsers,
+  removeUserFromWhitelist,
+} from "@/modules/organization/settings/whitelist/lib/whitelist";
 import { z } from "zod";
 import { WHITELIST_DISABLED } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -10,14 +15,14 @@ import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
 
-const ZAddWhitelistAction = z.object({
+const ZAddUserToWhitelistAction = z.object({
   email: z.string(),
   organizationId: ZId,
   role: ZOrganizationRole,
 });
 
-export const addWhitelistAction = authenticatedActionClient
-  .schema(ZAddWhitelistAction)
+export const addUserToWhitelistAction = authenticatedActionClient
+  .schema(ZAddUserToWhitelistAction)
   .action(async ({ parsedInput, ctx }) => {
     if (WHITELIST_DISABLED) {
       throw new AuthenticationError("Whitelist disabled");
@@ -50,8 +55,127 @@ export const addWhitelistAction = authenticatedActionClient
 
     if (whitelistedUserId) {
       // TODO: Change or remove this and simply change above line to await addUser
-      alert("Whitelisted user");
+      console.log("Successfully whitelisted");
     }
 
     return whitelistedUserId;
+  });
+
+const ZRemoveUserFromWhitelistAction = z.object({
+  email: z.string(),
+  organizationId: ZId,
+});
+
+export const removeUserFromWhitelistAction = authenticatedActionClient
+  .schema(ZRemoveUserFromWhitelistAction)
+  .action(async ({ parsedInput, ctx }) => {
+    if (WHITELIST_DISABLED) {
+      throw new AuthenticationError("Whitelist disabled");
+    }
+
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(
+      ctx.user.id,
+      parsedInput.organizationId
+    );
+    if (!currentUserMembership) {
+      throw new AuthenticationError("User not a member of this organization");
+    }
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const whitelistedUserId = await removeUserFromWhitelist({
+      email: parsedInput.email,
+      organizationId: parsedInput.organizationId,
+      currentUserId: ctx.user.id,
+    });
+
+    if (whitelistedUserId) {
+      // TODO: Change or remove this and simply change above line to await removeUser
+      console.log("Successfully removed user from whitelist");
+    }
+
+    return whitelistedUserId;
+  });
+
+const ZGetNonWhitelistedUsersAction = z.object({
+  take: z.number(),
+  skip: z.number(),
+  searchQuery: z.string().optional(),
+  organizationId: ZId,
+});
+
+export const getNonWhitelistedUsersAction = authenticatedActionClient
+  .schema(ZGetNonWhitelistedUsersAction)
+  .action(async ({}) => {
+    //parsedInput, ctx
+
+    // Verify user is an owner or manager
+    // const currentUserMembership = await getMembershipByUserIdOrganizationId(
+    //   ctx.user.id,
+    //   parsedInput.organizationId
+    // );
+    // if (!currentUserMembership) {
+    //   throw new AuthenticationError("User not a member of this organization");
+    // }
+
+    // await checkAuthorizationUpdated({
+    //   userId: ctx.user.id,
+    //   organizationId: parsedInput.organizationId,
+    //   access: [
+    //     {
+    //       type: "organization",
+    //       roles: ["owner", "manager"],
+    //     },
+    //   ],
+    // });
+
+    const nonWhitelistedUsers = await getNonWhitelistedUsers();
+
+    return nonWhitelistedUsers;
+  });
+
+const ZGetWhitelistedUsersAction = z.object({
+  take: z.number(),
+  skip: z.number(),
+  searchQuery: z.string().optional(),
+  organizationId: ZId,
+});
+
+export const getWhitelistedUsersAction = authenticatedActionClient
+  .schema(ZGetWhitelistedUsersAction)
+  .action(async ({}) => {
+    //parsedInput, ctx
+
+    // Verify user is an owner or manager
+    // const currentUserMembership = await getMembershipByUserIdOrganizationId(
+    //   ctx.user.id,
+    //   parsedInput.organizationId
+    // );
+    // if (!currentUserMembership) {
+    //   throw new AuthenticationError("User not a member of this organization");
+    // }
+
+    // await checkAuthorizationUpdated({
+    //   userId: ctx.user.id,
+    //   organizationId: parsedInput.organizationId,
+    //   access: [
+    //     {
+    //       type: "organization",
+    //       roles: ["owner", "manager"],
+    //     },
+    //   ],
+    // });
+
+    const whitelistedUsers = await getWhitelistedUsers();
+
+    return whitelistedUsers;
   });
