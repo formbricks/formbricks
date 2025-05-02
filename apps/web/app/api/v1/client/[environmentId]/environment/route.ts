@@ -1,8 +1,8 @@
 import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { environmentCache } from "@/lib/environment/cache";
 import { NextRequest } from "next/server";
-import { environmentCache } from "@formbricks/lib/environment/cache";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsSyncInput } from "@formbricks/types/js";

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +8,6 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import React from "react";
 import { z } from "zod";
-import { cn } from "@formbricks/lib/cn";
 
 const ZBadgeSelectOptionSchema = z.object({
   text: z.string(),
@@ -90,8 +90,8 @@ export const BadgeSelect: React.FC<TBadgeSelectProps & { isLoading?: boolean }> 
       <DropdownMenuTrigger asChild>
         <span
           className={cn(
-            "inline-flex items-center rounded-full border border-opacity-50 font-medium",
-            options && !isLoading ? "cursor-pointer hover:border-opacity-100" : "pointer-events-none",
+            "border-opacity-50 inline-flex items-center rounded-full border font-medium",
+            options && !isLoading ? "hover:border-opacity-100 cursor-pointer" : "pointer-events-none",
             bgColor[currentOption.type],
             borderColor[currentOption.type],
             textColor[currentOption.type],

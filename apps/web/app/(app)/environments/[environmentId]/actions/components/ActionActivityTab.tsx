@@ -1,7 +1,9 @@
 "use client";
 
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { convertDateTimeStringShort } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
@@ -10,8 +12,6 @@ import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { getActiveInactiveSurveysAction } from "../actions";

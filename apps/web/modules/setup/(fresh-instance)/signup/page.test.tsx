@@ -1,14 +1,14 @@
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SignupPage } from "./page";
 
 // Mock dependencies
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -59,7 +59,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
@@ -84,7 +84,7 @@ describe("SignupPage", () => {
     vi.mocked(getTranslate).mockResolvedValue((key) => key);
   });
 
-  it("renders the signup page correctly", async () => {
+  test("renders the signup page correctly", async () => {
     const page = await SignupPage();
     render(page);
 

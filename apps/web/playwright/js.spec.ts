@@ -121,7 +121,7 @@ test.describe("JS Package Test", async () => {
     await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
     await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
     await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
-    await page.getByRole("button", { name: "Finish" }).click();
+    await page.locator("#questionCard-5").getByRole("button", { name: "Next" }).click();
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");

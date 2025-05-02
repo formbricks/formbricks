@@ -1,5 +1,6 @@
 "use server";
 
+import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -13,9 +14,9 @@ import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-survey
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
-import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurvey } from "@formbricks/types/surveys/types";
@@ -60,6 +61,10 @@ export const updateSurveyAction = authenticatedActionClient
         },
       ],
     });
+
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission(organizationId);
+    }
 
     if (parsedInput.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);

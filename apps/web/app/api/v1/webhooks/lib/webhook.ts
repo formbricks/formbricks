@@ -1,10 +1,10 @@
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
+import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 

@@ -15,6 +15,9 @@ import {
   mockUpdatedMembership,
   mockUser,
 } from "./__mocks__/actions.mock";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import "@/lib/utils/action-client-middleware";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
@@ -22,9 +25,6 @@ import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { getServerSession } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { checkRoleManagementPermission } from "../actions";
 import { updateInviteAction, updateMembershipAction } from "../actions";
@@ -38,7 +38,7 @@ vi.mock("@/modules/ee/role-management/lib/invite", () => ({
   updateInvite: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
@@ -46,11 +46,11 @@ vi.mock("@/modules/ee/role-management/lib/membership", () => ({
   updateMembership: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   getOrganization: vi.fn(),
 }));
 
@@ -63,7 +63,7 @@ vi.mock("next-auth", () => ({
 }));
 
 // Mock constants without importing the actual module
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_MULTI_ORG_ENABLED: true,
   ENCRYPTION_KEY: "test-encryption-key",
@@ -83,12 +83,13 @@ vi.mock("@formbricks/lib/constants", () => ({
   SAML_DATABASE_URL: "test-saml-db-url",
   NEXTAUTH_SECRET: "test-nextauth-secret",
   WEBAPP_URL: "http://localhost:3000",
+  DISABLE_USER_MANAGEMENT: false,
 }));
 
 vi.mock("@/lib/utils/action-client-middleware", () => ({
   checkAuthorizationUpdated: vi.fn(),
 }));
-vi.mock("@formbricks/lib/errors", () => ({
+vi.mock("@/lib/errors", () => ({
   OperationNotAllowedError: vi.fn(),
   ValidationError: vi.fn(),
 }));

@@ -1,17 +1,13 @@
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getUser } from "@/lib/user/service";
+import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getUser } from "@formbricks/lib/user/service";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import Page from "./page";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
@@ -33,12 +29,6 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "mock-webapp-url",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-ai-azure-llm-ressource-name",
-  AI_AZURE_LLM_API_KEY: "mock-ai",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-ai-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-ai-azure-embeddings-ressource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-ai-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-ai-azure-embeddings-deployment-id",
 }));
 
 vi.mock("next-auth", () => ({
@@ -49,7 +39,7 @@ vi.mock("@/tolgee/server", () => ({
   getTranslate: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
@@ -59,7 +49,6 @@ vi.mock("@/modules/environments/lib/utils", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsMultiOrgEnabled: vi.fn(),
-  getIsOrganizationAIReady: vi.fn(),
   getWhiteLabelPermission: vi.fn(),
 }));
 
@@ -80,11 +69,10 @@ describe("Page", () => {
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getIsOrganizationAIReady).mockResolvedValue(true);
     vi.mocked(getWhiteLabelPermission).mockResolvedValue(true);
   });
 
-  it("renders the page with organization settings", async () => {
+  test("renders the page with organization settings", async () => {
     const props = {
       params: Promise.resolve({ environmentId: "env-123" }),
     };
@@ -94,7 +82,7 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("renders if session user id empty", async () => {
+  test("renders if session user id empty", async () => {
     mockEnvironmentAuth.session.user.id = "";
 
     vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
@@ -108,7 +96,7 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("handles getEnvironmentAuth error", async () => {
+  test("handles getEnvironmentAuth error", async () => {
     vi.mocked(getEnvironmentAuth).mockRejectedValue(new Error("Authentication error"));
 
     const props = {

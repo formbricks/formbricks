@@ -1,5 +1,8 @@
 "use server";
 
+import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
@@ -7,9 +10,6 @@ import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { z } from "zod";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -32,6 +32,8 @@ const ZUpdateInviteAction = z.object({
   organizationId: ZId,
   data: ZInviteUpdateInput,
 });
+
+export type TUpdateInviteAction = z.infer<typeof ZUpdateInviteAction>;
 
 export const updateInviteAction = authenticatedActionClient
   .schema(ZUpdateInviteAction)
@@ -85,6 +87,9 @@ export const updateMembershipAction = authenticatedActionClient
     );
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
+    }
+    if (DISABLE_USER_MANAGEMENT) {
+      throw new OperationNotAllowedError("User management is disabled");
     }
 
     await checkAuthorizationUpdated({

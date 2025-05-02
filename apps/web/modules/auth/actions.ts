@@ -1,9 +1,9 @@
 "use server";
 
+import { createEmailToken } from "@/lib/jwt";
+import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import { createEmailToken } from "@formbricks/lib/jwt";
-import { getUserByEmail } from "@formbricks/lib/user/service";
 import { InvalidInputError } from "@formbricks/types/errors";
 
 const ZCreateEmailTokenAction = z.object({

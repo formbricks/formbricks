@@ -3,10 +3,14 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
-import { createApiKey, deleteApiKey } from "@/modules/organization/settings/api-keys/lib/api-key";
+import {
+  createApiKey,
+  deleteApiKey,
+  updateApiKey,
+} from "@/modules/organization/settings/api-keys/lib/api-key";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZApiKeyCreateInput } from "./types/api-keys";
+import { ZApiKeyCreateInput, ZApiKeyUpdateInput } from "./types/api-keys";
 
 const ZDeleteApiKeyAction = z.object({
   id: ZId,
@@ -21,7 +25,7 @@ export const deleteApiKeyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
@@ -43,10 +47,32 @@ export const createApiKeyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
 
     return await createApiKey(parsedInput.organizationId, ctx.user.id, parsedInput.apiKeyData);
+  });
+
+const ZUpdateApiKeyAction = z.object({
+  apiKeyId: ZId,
+  apiKeyData: ZApiKeyUpdateInput,
+});
+
+export const updateApiKeyAction = authenticatedActionClient
+  .schema(ZUpdateApiKeyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromApiKeyId(parsedInput.apiKeyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner"],
+        },
+      ],
+    });
+
+    return await updateApiKey(parsedInput.apiKeyId, parsedInput.apiKeyData);
   });

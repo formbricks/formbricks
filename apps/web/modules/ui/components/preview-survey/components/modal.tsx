@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
 import { getPlacementStyle } from "../lib/utils";
 

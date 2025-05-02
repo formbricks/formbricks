@@ -8,7 +8,9 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -21,8 +23,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -255,7 +255,7 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">

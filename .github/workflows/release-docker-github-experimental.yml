@@ -51,7 +51,7 @@ jobs:
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -82,8 +82,6 @@ jobs:
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker

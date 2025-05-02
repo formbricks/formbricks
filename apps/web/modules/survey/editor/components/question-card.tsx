@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
@@ -19,6 +21,7 @@ import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
@@ -29,8 +32,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
   TSurvey,
@@ -59,6 +60,8 @@ interface QuestionCardProps {
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
+  responseCount: number;
+  onAlertTrigger: () => void;
 }
 
 export const QuestionCard = ({
@@ -80,6 +83,8 @@ export const QuestionCard = ({
   isFormbricksCloud,
   isCxMode,
   locale,
+  responseCount,
+  onAlertTrigger,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -191,7 +196,7 @@ export const QuestionCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
 
-        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
+        <button className="opacity-0 group-hover:opacity-100 hover:cursor-move">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
@@ -257,6 +262,21 @@ export const QuestionCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
+          {responseCount > 0 &&
+          [
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+            TSurveyQuestionTypeEnum.PictureSelection,
+            TSurveyQuestionTypeEnum.Rating,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Ranking,
+            TSurveyQuestionTypeEnum.Matrix,
+          ].includes(question.type) ? (
+            <Alert variant="warning" size="small" className="w-fill">
+              <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+              <AlertButton onClick={() => onAlertTrigger()}>{t("common.learn_more")}</AlertButton>
+            </Alert>
+          ) : null}
           {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
@@ -346,7 +366,6 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
@@ -371,7 +390,6 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
@@ -408,7 +426,6 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}

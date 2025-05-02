@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   addFilterBelow,
   addFilterInGroup,
@@ -19,8 +21,6 @@ import {
 import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { AddFilterModal } from "./add-filter-modal";
@@ -205,7 +205,7 @@ export function SegmentEditor({
 
               <div className="flex items-center gap-2 p-4">
                 <DropdownMenu>
-                  <DropdownMenuTrigger disabled={viewOnly}>
+                  <DropdownMenuTrigger data-testid="segment-editor-group-menu-trigger" disabled={viewOnly}>
                     <MoreVertical className="h-4 w-4" />
                   </DropdownMenuTrigger>
 
@@ -246,6 +246,7 @@ export function SegmentEditor({
 
                 <Button
                   className="p-0"
+                  data-testid="delete-resource"
                   disabled={viewOnly}
                   onClick={() => {
                     if (viewOnly) return;

@@ -1,5 +1,6 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
@@ -7,7 +8,6 @@ import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/util
 import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
 import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 

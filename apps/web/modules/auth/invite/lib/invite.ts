@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
 import { inviteCache } from "@/lib/cache/invite";
 import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const deleteInvite = async (inviteId: string): Promise<boolean> => {

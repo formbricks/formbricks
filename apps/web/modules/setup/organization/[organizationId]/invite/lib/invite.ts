@@ -1,8 +1,8 @@
 import { inviteCache } from "@/lib/cache/invite";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { TInvitee } from "@/modules/setup/organization/[organizationId]/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const inviteUser = async ({

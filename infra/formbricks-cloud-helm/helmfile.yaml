@@ -15,3 +15,19 @@ releases:
         value: v{{ requiredEnv "VERSION" }}
       - name: deployment.image.repository
         value: {{ requiredEnv "REPOSITORY" }}
+    labels:
+      environment: prod
+  - name: formbricks-stage
+    namespace: formbricks-stage
+    chart: helm-charts/formbricks
+    version: ^3.0.0
+    values:
+      - values-staging.yaml.gotmpl
+    createNamespace: true
+    set:
+      - name: deployment.image.tag
+        value: v{{ requiredEnv "VERSION" }}
+      - name: deployment.image.repository
+        value: {{ requiredEnv "REPOSITORY" }}
+    labels:
+      environment: stage
