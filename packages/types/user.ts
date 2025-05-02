@@ -57,6 +57,7 @@ export const ZUser = z.object({
   role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
+  whitelist: z.boolean(),
   locale: ZUserLocale,
 });
 
@@ -71,6 +72,7 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
+  whitelist: z.boolean(),
   locale: ZUserLocale.optional(),
 });
 
@@ -89,3 +91,12 @@ export const ZUserCreateInput = z.object({
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserWhitelistInfo = z.object({
+  id: z.string(),
+  email: ZUserEmail,
+  name: ZUserName,
+  whitelist: z.boolean(),
+});
+
+export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;
