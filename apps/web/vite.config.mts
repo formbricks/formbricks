@@ -157,6 +157,10 @@ export default defineConfig({
         "modules/survey/editor/components/questions-view.tsx",
         "modules/survey/editor/components/settings-view.tsx",
         "modules/survey/editor/components/styling-view.tsx",
+        "modules/survey/editor/components/survey-editor.tsx",
+        "modules/survey/editor/components/survey-menu-bar.tsx",
+        "modules/survey/editor/components/survey-placement-card.tsx",
+        "modules/survey/editor/components/survey-variables-card.tsx",
       ],
       exclude: [
         "**/.next/**",
