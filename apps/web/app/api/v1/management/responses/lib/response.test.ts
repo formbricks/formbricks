@@ -19,14 +19,14 @@ import { getContactByUserId } from "./contact";
 import { createResponse, getResponsesByEnvironmentIds } from "./response";
 
 // Mock Data
-export const environmentId = "test-environment-id";
-export const organizationId = "test-organization-id";
-export const mockUserId = "test-user-id";
-export const surveyId = "test-survey-id";
-export const displayId = "test-display-id";
-export const responseId = "test-response-id";
+const environmentId = "test-environment-id";
+const organizationId = "test-organization-id";
+const mockUserId = "test-user-id";
+const surveyId = "test-survey-id";
+const displayId = "test-display-id";
+const responseId = "test-response-id";
 
-export const mockOrganization = {
+const mockOrganization = {
   id: organizationId,
   name: "Test Org",
   createdAt: new Date(),
@@ -34,7 +34,7 @@ export const mockOrganization = {
   billing: { plan: "free", limits: { monthly: { responses: null } } } as any, // Default no limit
 } as unknown as Organization;
 
-export const mockResponseInput: TResponseInput = {
+const mockResponseInput: TResponseInput = {
   environmentId,
   surveyId,
   displayId,
@@ -45,13 +45,13 @@ export const mockResponseInput: TResponseInput = {
   language: "en",
 };
 
-export const mockResponseInputWithUserId: TResponseInput = {
+const mockResponseInputWithUserId: TResponseInput = {
   ...mockResponseInput,
   userId: mockUserId,
 };
 
 // Prisma response structure (simplified)
-export const mockResponsePrisma = {
+const mockResponsePrisma = {
   id: responseId,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -71,7 +71,7 @@ export const mockResponsePrisma = {
   notes: [], // Prisma relation
 } as unknown as ResponsePrisma & { contact: any; tags: any[]; notes: any[] }; // Adjust type as needed
 
-export const mockResponse: TResponse = {
+const mockResponse: TResponse = {
   id: responseId,
   createdAt: mockResponsePrisma.createdAt,
   updatedAt: mockResponsePrisma.updatedAt,
@@ -91,12 +91,12 @@ export const mockResponse: TResponse = {
   notes: [], // Transformed structure
 };
 
-export const mockEnvironmentIds = [environmentId, "env-2"];
-export const mockLimit = 10;
-export const mockOffset = 5;
+const mockEnvironmentIds = [environmentId, "env-2"];
+const mockLimit = 10;
+const mockOffset = 5;
 
-export const mockResponsesPrisma = [mockResponsePrisma, { ...mockResponsePrisma, id: "response-2" }];
-export const mockTransformedResponses = [mockResponse, { ...mockResponse, id: "response-2" }];
+const mockResponsesPrisma = [mockResponsePrisma, { ...mockResponsePrisma, id: "response-2" }];
+const mockTransformedResponses = [mockResponse, { ...mockResponse, id: "response-2" }];
 
 // Mock dependencies
 vi.mock("@/lib/cache");
