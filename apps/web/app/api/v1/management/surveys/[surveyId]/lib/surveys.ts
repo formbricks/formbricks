@@ -9,6 +9,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const deleteSurvey = async (surveyId: string) => {
+  // [UseTusk]
   validateInputs([surveyId, z.string().cuid2()]);
 
   try {
