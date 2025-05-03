@@ -187,6 +187,8 @@
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
+        "RECAPTCHA_SITE_KEY",
+        "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",

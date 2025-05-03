@@ -309,6 +309,7 @@ export const mockSurvey: TSurvey = {
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
   styling: null,
+  recaptcha: null,
   surveyClosedMessage: null,
   singleUse: {
     enabled: false,
