@@ -10,8 +10,6 @@ export const getContactByUserId = reactCache(
   ): Promise<{
     id: string;
   } | null> =>
-    // [UseTusk]
-
     cache(
       async () => {
         const contact = await prisma.contact.findFirst({

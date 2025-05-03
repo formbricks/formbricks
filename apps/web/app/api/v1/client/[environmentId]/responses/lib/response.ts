@@ -73,8 +73,6 @@ export const responseSelection = {
 } satisfies Prisma.ResponseSelect;
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  // [UseTusk]
-
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 

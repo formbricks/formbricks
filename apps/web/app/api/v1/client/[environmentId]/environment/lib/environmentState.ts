@@ -31,8 +31,6 @@ import { getSurveysForEnvironmentState } from "./survey";
 export const getEnvironmentState = async (
   environmentId: string
 ): Promise<{ data: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
-  // [UseTusk]
-
   cache(
     async () => {
       let revalidateEnvironment = false;

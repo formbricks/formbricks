@@ -9,8 +9,6 @@ import { TJsEnvironmentStateActionClass } from "@formbricks/types/js";
 
 export const getActionClassesForEnvironmentState = reactCache(
   async (environmentId: string): Promise<TJsEnvironmentStateActionClass[]> =>
-    // [UseTusk]
-
     cache(
       async () => {
         validateInputs([environmentId, ZId]);

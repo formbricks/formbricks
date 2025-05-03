@@ -4,8 +4,6 @@ import { TWeeklySummaryProjectData } from "@formbricks/types/weekly-summary";
 export const getProjectsByOrganizationId = async (
   organizationId: string
 ): Promise<TWeeklySummaryProjectData[]> => {
-  // [UseTusk]
-
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

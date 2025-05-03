@@ -20,8 +20,6 @@ import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
-  // [UseTusk]
-
   let result: string[] = [];
   if (metadata.source) result.push(`Source: ${metadata.source}`);
   if (metadata.url) result.push(`URL: ${metadata.url}`);
@@ -77,8 +75,6 @@ export const handleIntegrations = async (
   data: TPipelineInput,
   survey: TSurvey
 ) => {
-  // [UseTusk]
-
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
@@ -122,8 +118,6 @@ const handleAirtableIntegration = async (
   data: TPipelineInput,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
-  // [UseTusk]
-
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -160,8 +154,6 @@ const handleGoogleSheetsIntegration = async (
   data: TPipelineInput,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
-  // [UseTusk]
-
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -203,8 +195,6 @@ const handleSlackIntegration = async (
   data: TPipelineInput,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
-  // [UseTusk]
-
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -242,8 +232,6 @@ const extractResponses = async (
   questionIds: string[],
   survey: TSurvey
 ): Promise<string[][]> => {
-  // [UseTusk]
-
   const responses: string[] = [];
   const questions: string[] = [];
 
@@ -302,8 +290,6 @@ const handleNotionIntegration = async (
   data: TPipelineInput,
   surveyData: TSurvey
 ): Promise<Result<void, Error>> => {
-  // [UseTusk]
-
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -331,8 +317,6 @@ const buildNotionPayloadProperties = (
   data: TPipelineInput,
   surveyData: TSurvey
 ) => {
-  // [UseTusk]
-
   const properties: any = {};
   const responses = data.response.data;
 
@@ -374,8 +358,6 @@ const buildNotionPayloadProperties = (
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
 const getValue = (colType: string, value: string | string[] | Date | number | Record<string, string>) => {
-  // [UseTusk]
-
   try {
     switch (colType) {
       case "select":

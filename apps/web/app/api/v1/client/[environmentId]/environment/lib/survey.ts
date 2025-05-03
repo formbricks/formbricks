@@ -12,8 +12,6 @@ import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
 export const getSurveysForEnvironmentState = reactCache(
   async (environmentId: string): Promise<TJsEnvironmentStateSurvey[]> =>
-    // [UseTusk]
-
     cache(
       async () => {
         validateInputs([environmentId, ZId]);

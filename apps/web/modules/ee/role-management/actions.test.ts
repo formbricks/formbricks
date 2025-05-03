@@ -4,7 +4,6 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import {
   TUpdateInviteAction,
-  TUpdateMembershipAction,
   checkRoleManagementPermission,
   updateInviteAction,
   updateMembershipAction,
@@ -215,7 +214,7 @@ describe("Role Management Actions", () => {
             organizationId: "org-123",
             data: { role: "member" },
           },
-        } as unknown as TUpdateMembershipAction)
+        } as any)
       ).rejects.toThrow(new AuthenticationError("User not a member of this organization"));
     });
 
@@ -231,7 +230,7 @@ describe("Role Management Actions", () => {
             organizationId: "org-123",
             data: { role: "member" },
           },
-        } as unknown as TUpdateMembershipAction)
+        } as any)
       ).rejects.toThrow(new OperationNotAllowedError("User management is disabled"));
     });
 
@@ -248,7 +247,7 @@ describe("Role Management Actions", () => {
             organizationId: "org-123",
             data: { role: "billing" },
           },
-        } as unknown as TUpdateMembershipAction)
+        } as any)
       ).rejects.toThrow(new ValidationError("Billing role is not allowed"));
     });
 
@@ -268,7 +267,7 @@ describe("Role Management Actions", () => {
           organizationId: "org-123",
           data: { role: "billing" },
         },
-      } as unknown as TUpdateMembershipAction);
+      } as any);
 
       expect(result).toEqual({ id: "membership-123", role: "billing" });
     });
@@ -286,7 +285,7 @@ describe("Role Management Actions", () => {
             organizationId: "org-123",
             data: { role: "owner" },
           },
-        } as unknown as TUpdateMembershipAction)
+        } as any)
       ).rejects.toThrow(new OperationNotAllowedError("Managers can only assign users to the member role"));
     });
 
@@ -305,7 +304,7 @@ describe("Role Management Actions", () => {
           organizationId: "org-123",
           data: { role: "member" },
         },
-      } as unknown as TUpdateMembershipAction);
+      } as any);
 
       expect(result).toEqual({ id: "membership-123", role: "member" });
       expect(updateMembership).toHaveBeenCalledWith("user-456", "org-123", { role: "member" });
@@ -326,7 +325,7 @@ describe("Role Management Actions", () => {
           organizationId: "org-123",
           data: { role: "member" },
         },
-      } as unknown as TUpdateMembershipAction);
+      } as any);
 
       expect(result).toEqual({ id: "membership-123", role: "member" });
       expect(updateMembership).toHaveBeenCalledWith("user-456", "org-123", { role: "member" });
