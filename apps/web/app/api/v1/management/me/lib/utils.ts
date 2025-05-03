@@ -4,7 +4,6 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 
 export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse) => {
-  // [UseTusk]
   // check for session (browser usage)
   let session: Session | null;
   if (req && res) {

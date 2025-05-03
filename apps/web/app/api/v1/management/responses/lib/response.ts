@@ -78,7 +78,6 @@ export const responseSelection = {
 } satisfies Prisma.ResponseSelect;
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  // [UseTusk]
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -202,7 +201,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
 export const getResponsesByEnvironmentIds = reactCache(
   async (environmentIds: string[], limit?: number, offset?: number): Promise<TResponse[]> =>
-    // [UseTusk]
     cache(
       async () => {
         validateInputs([environmentIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);

@@ -9,7 +9,6 @@ import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhook> => {
-  // [UseTusk]
   validateInputs([webhookInput, ZWebhookInput]);
 
   try {

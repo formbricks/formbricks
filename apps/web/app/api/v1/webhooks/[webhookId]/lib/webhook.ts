@@ -9,7 +9,6 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const deleteWebhook = async (id: string): Promise<Webhook> => {
-  // [UseTusk]
   validateInputs([id, ZId]);
 
   try {
