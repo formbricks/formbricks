@@ -72,9 +72,9 @@ export const PUT = async (
 
   // Validate response data for "other" options exceeding character limit
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
-    responseData: response.data,
+    responseData: inputValidation.data.data,
     survey,
-    responseLanguage: response.language ?? undefined,
+    responseLanguage: inputValidation.data.language,
   });
 
   if (otherResponseInvalidQuestionId) {

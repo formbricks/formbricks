@@ -1,6 +1,9 @@
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
-import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
+import {
+  checkSurveyValidity,
+  validateOtherOptionLengthForMultipleChoice,
+} from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
@@ -8,7 +11,7 @@ import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils
 import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateOtherOptionLength } from "./utils";
 
@@ -244,5 +247,84 @@ describe("checkSurveyValidity", () => {
     const survey = { ...mockSurvey }; // Recaptcha disabled by default in mock
     const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
     expect(result).toBeNull();
+  });
+});
+
+describe("validateOtherOptionLengthForMultipleChoice", () => {
+  const mockChoices: TSurveyQuestionChoice[] = [
+    { id: "1", label: { default: "Option 1" } },
+    { id: "2", label: { default: "Option 2" } },
+  ];
+
+  const baseSurvey = {
+    ...mockSurvey,
+    questions: [
+      {
+        id: "q1",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        choices: mockChoices,
+      },
+      {
+        id: "q2",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        choices: mockChoices,
+      },
+    ],
+  } as unknown as TSurvey;
+
+  test("returns undefined for single choice that matches a valid option", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { q1: "Option 1" },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test("returns undefined for multi-select with all valid options", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { q2: ["Option 1", "Option 2"] },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test("returns questionId for single choice with long 'other' option", () => {
+    const longText = "X".repeat(MAX_OTHER_OPTION_LENGTH + 1);
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { q1: longText },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBe("q1");
+  });
+
+  test("returns questionId for multi-select with one long 'other' option", () => {
+    const longText = "Y".repeat(MAX_OTHER_OPTION_LENGTH + 1);
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { q2: [longText] },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBe("q2");
+  });
+
+  test("ignores non-matching or unrelated question IDs", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { unrelated: "Other: something" },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test("returns undefined if answer is not string or array", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { q1: 123 as any },
+      survey: baseSurvey,
+    });
+
+    expect(result).toBeUndefined();
   });
 });

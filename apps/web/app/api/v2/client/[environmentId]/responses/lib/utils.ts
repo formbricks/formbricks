@@ -59,7 +59,15 @@ export const validateOtherOptionLengthForMultipleChoice = ({
       else if (Array.isArray(answer)) {
         for (const item of answer) {
           if (typeof item === "string") {
-            return validateOtherOptionLength(item, question.choices, questionId, responseLanguage);
+            const validatedOtherOption = validateOtherOptionLength(
+              item,
+              question.choices,
+              questionId,
+              responseLanguage
+            );
+            if (validatedOtherOption) {
+              return validatedOtherOption;
+            }
           }
         }
       }
