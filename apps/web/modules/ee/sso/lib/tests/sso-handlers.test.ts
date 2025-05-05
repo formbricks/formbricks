@@ -1,10 +1,8 @@
-import { createAccount } from "@/lib/account/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
-import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/auth/signup/lib/team";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import {
   getIsMultiOrgEnabled,
@@ -12,6 +10,7 @@ import {
   getRoleManagementPermission,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TUser } from "@formbricks/types/user";
@@ -57,7 +56,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/modules/auth/signup/lib/team", () => ({
+vi.mock("@/modules/ee/sso/lib/team", () => ({
   getOrganizationByTeamId: vi.fn(),
   createDefaultTeamMembership: vi.fn(),
 }));

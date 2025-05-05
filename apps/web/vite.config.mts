@@ -104,6 +104,7 @@ export default defineConfig({
         "modules/survey/editor/lib/utils.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
         "modules/ee/sso/components/**/*.tsx",
+        "modules/ee/sso/lib/team.ts",
         "app/global-error.tsx",
         "app/error.tsx",
         "modules/survey/lib/permission.ts",
