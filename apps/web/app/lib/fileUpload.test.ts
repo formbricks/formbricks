@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { FileUploadError, handleFileUpload } from "./fileUpload";
+import { FileUploadError, handleFileUpload, toBase64 } from "./fileUpload";
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -183,5 +183,51 @@ describe("fileUpload", () => {
     const result = await handleFileUpload(file, "test-env");
     expect(result.error).toBe("Upload failed. Please try again.");
     expect(result.url).toBe("");
+  });
+});
+
+describe("toBase64", () => {
+  test("resolves with base64 string when FileReader succeeds", async () => {
+    const dummyFile = new File(["hello"], "hello.txt", { type: "text/plain" });
+
+    // Mock FileReader
+    const mockReadAsDataURL = vi.fn();
+    const mockFileReaderInstance = {
+      readAsDataURL: mockReadAsDataURL,
+      onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null,
+      onerror: null,
+      result: "data:text/plain;base64,aGVsbG8=",
+    };
+
+    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+
+    const promise = toBase64(dummyFile);
+
+    // Trigger the onload manually
+    mockFileReaderInstance.onload?.call(mockFileReaderInstance as unknown as FileReader, new Error("load"));
+
+    const result = await promise;
+    expect(result).toBe("data:text/plain;base64,aGVsbG8=");
+  });
+
+  test("rejects when FileReader errors", async () => {
+    const dummyFile = new File(["oops"], "oops.txt", { type: "text/plain" });
+
+    const mockReadAsDataURL = vi.fn();
+    const mockFileReaderInstance = {
+      readAsDataURL: mockReadAsDataURL,
+      onload: null,
+      onerror: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null,
+      result: null,
+    };
+
+    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+
+    const promise = toBase64(dummyFile);
+
+    // Simulate error
+    mockFileReaderInstance.onerror?.call(mockFileReaderInstance as unknown as FileReader, new Error("error"));
+
+    await expect(promise).rejects.toThrow();
   });
 });
