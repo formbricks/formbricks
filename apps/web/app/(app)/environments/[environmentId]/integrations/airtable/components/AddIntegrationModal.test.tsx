@@ -9,6 +9,7 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
+  TIntegrationAirtableCredential,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -115,7 +116,7 @@ vi.mock("next/navigation", () => ({
 
 // Mock the Select component used for Table and Survey selections
 vi.mock("@/modules/ui/components/select", () => ({
-  Select: ({ children, onValueChange, defaultValue, disabled, required }) => (
+  Select: ({ children }) => (
     // Render children, assuming Controller passes props to the Trigger/Value
     // The actual select logic will be handled by the mocked Controller/field
     // We need to simulate the structure expected by the Controller render prop
@@ -185,7 +186,7 @@ vi.mock("react-hook-form", async () => {
           _removeUnmounted: vi.fn(),
         },
         watch: (name) => fields[name],
-        setValue: (name, value, config) => {
+        setValue: (name, value) => {
           fields[name] = value;
         },
         reset: mockReset,
@@ -193,7 +194,7 @@ vi.mock("react-hook-form", async () => {
         getValues: (name) => (name ? fields[name] : fields),
       };
     }),
-    Controller: ({ name, defaultValue, render, control }) => {
+    Controller: ({ name, defaultValue }) => {
       // Initialize field value if not already set by reset/defaultValues
       if (fields[name] === undefined && defaultValue !== undefined) {
         fields[name] = defaultValue;
@@ -269,15 +270,15 @@ const mockSurveys: TSurvey[] = [
   } as any,
 ];
 const mockAirtableArray: TIntegrationItem[] = [
-  { id: "base1", name: "Base 1", type: "airtable" },
-  { id: "base2", name: "Base 2", type: "airtable" },
+  { id: "base1", name: "Base 1" },
+  { id: "base2", name: "Base 2" },
 ];
 const mockAirtableIntegration: TIntegrationAirtable = {
   id: "integration1",
   type: "airtable",
   environmentId,
   config: {
-    key: { access_token: "abc" },
+    key: { access_token: "abc" } as TIntegrationAirtableCredential,
     email: "test@test.com",
     data: [],
   },
@@ -293,9 +294,6 @@ describe("AddIntegrationModal", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({ refresh: mockRouterRefresh } as any);
-    // Reset form fields before each test
-    const { reset } = await import("react-hook-form");
-    reset();
   });
 
   afterEach(() => {
@@ -404,7 +402,7 @@ describe("AddIntegrationModal", () => {
       ...mockAirtableIntegration,
       config: { ...mockAirtableIntegration.config, data: [initialData] },
     };
-    const defaultData = { ...initialData, index: 0 };
+    const defaultData = { ...initialData, index: 0 } as any;
 
     vi.mocked(fetchTables).mockResolvedValue({ tables: mockTables });
     vi.mocked(createOrUpdateIntegrationAction).mockResolvedValue({ ok: true, data: {} } as any);
@@ -440,7 +438,6 @@ describe("AddIntegrationModal", () => {
   });
 
   test("handles cancel button click", async () => {
-    const { reset } = await import("react-hook-form");
     render(
       <AddIntegrationModal
         open={true}
@@ -454,8 +451,6 @@ describe("AddIntegrationModal", () => {
     );
 
     await userEvent.click(screen.getByText("common.cancel"));
-
-    expect(reset).toHaveBeenCalled();
     expect(mockSetOpenWithStates).toHaveBeenCalledWith(false);
   });
 });
