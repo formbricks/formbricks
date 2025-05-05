@@ -16,6 +16,7 @@ export const mockUser: TUser = {
     weeklySummary: {},
     unsubscribedOrganizationIds: [],
   },
+  whitelist: false,
   role: "other",
   locale: "en-US",
 };
