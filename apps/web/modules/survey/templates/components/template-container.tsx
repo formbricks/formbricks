@@ -70,6 +70,7 @@ export const TemplateContainerWithPreview = ({
               project={project}
               environment={environment}
               languageCode={"default"}
+              isSpamProtectionAllowed={false} // setting it to false as this is a template
             />
           )}
         </aside>

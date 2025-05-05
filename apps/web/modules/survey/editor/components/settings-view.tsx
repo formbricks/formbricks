@@ -21,6 +21,7 @@ interface SettingsViewProps {
   responseCount: number;
   membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
+  isSpamProtectionAllowed: boolean;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
 }
@@ -35,6 +36,7 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
+  isSpamProtectionAllowed,
   projectPermission,
   isFormbricksCloud,
 }: SettingsViewProps) => {
@@ -79,6 +81,7 @@ export const SettingsView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
+        isSpamProtectionAllowed={isSpamProtectionAllowed}
       />
 
       <RecontactOptionsCard
