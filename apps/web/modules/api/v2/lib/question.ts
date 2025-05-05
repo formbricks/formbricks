@@ -52,7 +52,7 @@ export const validateOtherOptionLengthForMultipleChoice = ({
       }
 
       // Handle multi-select responses
-      else if (Array.isArray(answer)) {
+      if (Array.isArray(answer)) {
         for (const item of answer) {
           if (typeof item === "string") {
             const validatedOtherOption = validateOtherOptionLength(
