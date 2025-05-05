@@ -7,8 +7,6 @@ export const uploadPrivateFile = async (
   fileType: string,
   isBiggerFileUploadAllowed: boolean = false
 ) => {
-  // [UseTusk]
-
   const accessType = "private"; // private files are only accessible by the user who has access to the environment
   // if s3 is not configured, we'll upload to a local folder named uploads
 
