@@ -96,8 +96,8 @@ RUN corepack enable
 # Create directories to ensure they exist
 RUN mkdir -p /usr/lib /usr/bin /etc/ssl
 
-# Copy source-built packages
-COPY --from=source-builder /built-libs /
+# Copy source-built packages from base stage
+COPY --from=base /built-libs /
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
