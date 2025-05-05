@@ -31,6 +31,8 @@ export const GoogleSheetWrapper = ({
   webAppUrl,
   locale,
 }: GoogleSheetWrapperProps) => {
+  // [UseTusk]
+
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );

@@ -14,6 +14,8 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
 const Page = async (props) => {
+  // [UseTusk]
+
   const params = await props.params;
   const t = await getTranslate();
   const isEnabled = !!AIRTABLE_CLIENT_ID;

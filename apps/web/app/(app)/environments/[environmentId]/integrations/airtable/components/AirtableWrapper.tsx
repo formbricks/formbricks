@@ -32,6 +32,8 @@ export const AirtableWrapper = ({
   webAppUrl,
   locale,
 }: AirtableWrapperProps) => {
+  // [UseTusk]
+
   const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
   );

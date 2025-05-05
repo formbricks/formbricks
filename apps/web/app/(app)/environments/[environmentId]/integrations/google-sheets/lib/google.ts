@@ -1,6 +1,8 @@
 import { logger } from "@formbricks/logger";
 
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
+  // [UseTusk]
+
   const res = await fetch(`${apiHost}/api/google-sheet`, {
     method: "GET",
     headers: { environmentId: environmentId },
