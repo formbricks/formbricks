@@ -37,36 +37,41 @@ export const validateOtherOptionLengthForMultipleChoice = ({
   surveyQuestions: TSurveyQuestion[];
   responseLanguage?: string;
 }): string | undefined => {
-  // Validate response data for "other" options exceeding character limit
-  for (const questionId of Object.keys(responseData)) {
+  for (const [questionId, answer] of Object.entries(responseData)) {
     const question = surveyQuestions.find((q) => q.id === questionId);
-    if (
-      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-    ) {
-      const answer = responseData[questionId];
+    if (!question) continue;
 
-      // Handle single choice responses
-      if (typeof answer === "string") {
-        return validateOtherOptionLength(answer, question.choices, questionId, responseLanguage);
-      }
+    const isMultiChoice =
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle;
 
-      // Handle multi-select responses
-      if (Array.isArray(answer)) {
-        for (const item of answer) {
-          if (typeof item === "string") {
-            const validatedOtherOption = validateOtherOptionLength(
-              item,
-              question.choices,
-              questionId,
-              responseLanguage
-            );
-            if (validatedOtherOption) {
-              return validatedOtherOption;
-            }
-          }
-        }
+    if (!isMultiChoice) continue;
+
+    const error = validateAnswer(answer, question.choices, questionId, responseLanguage);
+    if (error) return error;
+  }
+
+  return undefined;
+};
+
+function validateAnswer(
+  answer: unknown,
+  choices: TSurveyQuestionChoice[],
+  questionId: string,
+  language?: string
+): string | undefined {
+  if (typeof answer === "string") {
+    return validateOtherOptionLength(answer, choices, questionId, language);
+  }
+
+  if (Array.isArray(answer)) {
+    for (const item of answer) {
+      if (typeof item === "string") {
+        const result = validateOtherOptionLength(item, choices, questionId, language);
+        if (result) return result;
       }
     }
   }
-};
+
+  return undefined;
+}
