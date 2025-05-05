@@ -1,12 +1,10 @@
-import {
-  checkSurveyValidity,
-  validateOtherOptionLengthForMultipleChoice,
-} from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
+import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
@@ -86,7 +84,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   // Validate response data for "other" options exceeding character limit
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseInputData.data,
-    survey,
+    surveyQuestions: survey.questions,
     responseLanguage: responseInputData.language,
   });
 

@@ -1,10 +1,10 @@
-import { validateOtherOptionLengthForMultipleChoice } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
@@ -73,7 +73,7 @@ export const PUT = async (
   // Validate response data for "other" options exceeding character limit
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: inputValidation.data.data,
-    survey,
+    surveyQuestions: survey.questions,
     responseLanguage: inputValidation.data.language,
   });
 
