@@ -79,7 +79,6 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
     # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
@@ -129,8 +128,7 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 COPY --from=installer /prisma_version.txt .
 RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
-COPY /docker/cronjobs /app/docker/cronjobs
-RUN chmod -R 755 /app/docker/cronjobs
+
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
@@ -156,12 +154,6 @@ VOLUME /home/nextjs/apps/web/uploads/
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
-CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
-      echo "Starting cron jobs..."; \
-      supercronic -quiet /app/docker/cronjobs & \
-    else \
-      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
-    fi; \
-    (cd packages/database && npm run db:migrate:deploy) && \
+CMD (cd packages/database && npm run db:migrate:deploy) && \
     (cd packages/database && npm run db:create-saml-database:deploy) && \
     exec node apps/web/server.js
