@@ -2,7 +2,6 @@
 
 import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -392,7 +391,6 @@ export const MainNavigation = ({
                     onClick={async () => {
                       const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
                       router.push(route.url);
-                      await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}
