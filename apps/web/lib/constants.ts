@@ -7,6 +7,12 @@ export const FORMBRICKS_API_HOST = env.FORMBRICKS_API_HOST;
 export const FORMBRICKS_ENVIRONMENT_ID = env.FORMBRICKS_ENVIRONMENT_ID;
 export const IS_FORMBRICKS_ENABLED = !!(env.FORMBRICKS_API_HOST && env.FORMBRICKS_ENVIRONMENT_ID);
 
+export const IS_PRODUCTION = env.NODE_ENV === "production";
+
+export const IS_DEVELOPMENT = env.NODE_ENV === "development";
+
+export const E2E_TESTING = env.E2E_TESTING === "1";
+
 // URLs
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
@@ -58,7 +64,7 @@ export const SAML_PRODUCT = "formbricks";
 export const SAML_AUDIENCE = "https://saml.formbricks.com";
 export const SAML_PATH = "/api/auth/saml/callback";
 
-export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
+export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTING;
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
@@ -97,8 +103,8 @@ export const DOCUMENTS_PER_PAGE = 10;
 export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const MAX_OTHER_OPTION_LENGTH = 250;
 
-export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
-export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
+export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
+export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
 export const SLACK_MESSAGE_LIMIT = 2995;
 export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
@@ -196,7 +202,6 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
 };
 
 export const DEBUG = env.DEBUG === "1";
-export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
@@ -276,10 +281,6 @@ export const IS_TURNSTILE_CONFIGURED = Boolean(env.TURNSTILE_SITE_KEY && TURNSTI
 export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
-
-export const IS_PRODUCTION = env.NODE_ENV === "production";
-
-export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 
 export const SENTRY_DSN = env.SENTRY_DSN;
 
