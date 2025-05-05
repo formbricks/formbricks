@@ -27,8 +27,6 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
-  FORMBRICKS_API_HOST: "test-formbricks-api-host",
-  FORMBRICKS_ENVIRONMENT_ID: "test-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
 }));
 

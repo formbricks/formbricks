@@ -26,7 +26,6 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@formbricks/database": "workspace:*",
-    "@formbricks/js": "workspace:*",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/surveys": "workspace:*",

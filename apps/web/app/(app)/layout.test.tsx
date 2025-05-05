@@ -36,7 +36,6 @@ vi.mock("@/lib/constants", () => ({
   IS_POSTHOG_CONFIGURED: true,
   POSTHOG_API_HOST: "test-posthog-api-host",
   POSTHOG_API_KEY: "test-posthog-api-key",
-  FORMBRICKS_API_HOST: "mock-formbricks-api-host",
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
 }));
