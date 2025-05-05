@@ -58,7 +58,7 @@ export const createSurveyAction = authenticatedActionClient
     });
 
     if (parsedInput.surveyBody.recaptcha?.enabled) {
-      await checkSpamProtectionPermission();
+      await checkSpamProtectionPermission(organizationId);
     }
 
     if (parsedInput.surveyBody.followUps?.length) {

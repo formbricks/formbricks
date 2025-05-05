@@ -67,7 +67,7 @@ export const SurveyEditorPage = async (props) => {
   const isUserTargetingAllowed = await getIsContactsEnabled();
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
-  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled();
+  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled(organizationBilling.plan);
 
   const userEmail = await getUserEmail(session.user.id);
   const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);

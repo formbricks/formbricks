@@ -1,3 +1,4 @@
+import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
@@ -34,7 +35,13 @@ export const checkSurveyValidity = async (
         true
       );
     }
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
+    const billing = await getOrganizationBillingByEnvironmentId(environmentId);
+
+    if (!billing) {
+      return responses.notFoundResponse("Organization", null);
+    }
+
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(billing.plan);
 
     if (!isSpamProtectionEnabled) {
       logger.error("Spam protection is not enabled for this organization");

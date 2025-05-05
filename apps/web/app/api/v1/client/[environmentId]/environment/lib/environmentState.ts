@@ -1,6 +1,6 @@
 import { actionClassCache } from "@/lib/actionClass/cache";
 import { cache } from "@/lib/cache";
-import { IS_FORMBRICKS_CLOUD, RECAPTCHA_SITE_KEY } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { environmentCache } from "@/lib/environment/cache";
 import { getEnvironment } from "@/lib/environment/service";
 import { organizationCache } from "@/lib/organization/cache";
@@ -14,7 +14,6 @@ import {
 } from "@/lib/posthogServer";
 import { projectCache } from "@/lib/project/cache";
 import { surveyCache } from "@/lib/survey/cache";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -99,7 +98,6 @@ export const getEnvironmentState = async (
         getSurveysForEnvironmentState(environmentId),
         getActionClassesForEnvironmentState(environmentId),
       ]);
-      const isSpamProtectionEnabled = await getIsSpamProtectionEnabled();
 
       const filteredSurveys = surveys.filter(
         (survey) => survey.type === "app" && survey.status === "inProgress"
@@ -109,7 +107,7 @@ export const getEnvironmentState = async (
         surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
         actionClasses,
         project: project,
-        ...(isSpamProtectionEnabled ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
+        ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       };
 
       return {
