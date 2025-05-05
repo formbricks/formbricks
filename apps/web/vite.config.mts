@@ -172,6 +172,7 @@ export default defineConfig({
         "modules/**/types/**", // Exclude types
         "**/actions.ts", // Exclude action files
         "**/stories.tsx" // Exclude story files
+      ],
     },
   },
   plugins: [tsconfigPaths(), react() as PluginOption],
