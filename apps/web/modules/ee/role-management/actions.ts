@@ -11,8 +11,7 @@ import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { AuthenticationError } from "@formbricks/types/errors";
+import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 
 export const checkRoleManagementPermission = async (organizationId: string) => {
