@@ -1,7 +1,10 @@
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { describe, expect, test, vi } from "vitest";
-import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { validateOtherOptionLength, validateOtherOptionLengthForMultipleChoice } from "../question";
 
 vi.mock("@/lib/i18n/utils", () => ({
@@ -35,6 +38,24 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+const mockChoices: TSurveyQuestionChoice[] = [
+  { id: "1", label: { default: "Option 1" } },
+  { id: "2", label: { default: "Option 2" } },
+];
+
+const surveyQuestions = [
+  {
+    id: "q1",
+    type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+    choices: mockChoices,
+  },
+  {
+    id: "q2",
+    type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+    choices: mockChoices,
+  },
+] as unknown as TSurveyQuestion[];
+
 describe("validateOtherOptionLength", () => {
   const mockChoices: TSurveyQuestionChoice[] = [
     { id: "1", label: { default: "Option 1", fr: "Option one" } },
@@ -66,77 +87,15 @@ describe("validateOtherOptionLength", () => {
   test("returns bad request response when other option exceeds length limit", () => {
     const longValue = "A".repeat(MAX_OTHER_OPTION_LENGTH + 1);
     const result = validateOtherOptionLength(longValue, mockChoices, "q1");
-
-    expect(result).toBeTruthy;
+    expect(result).toBeTruthy();
   });
 });
 
-const mockSurvey: TSurvey = {
-  id: "survey-1",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "Test Survey",
-  environmentId: "env-1",
-  type: "link",
-  status: "inProgress",
-  questions: [],
-  displayOption: "displayOnce",
-  recontactDays: null,
-  autoClose: null,
-  closeOnDate: null,
-  delay: 0,
-  displayPercentage: null,
-  autoComplete: null,
-  singleUse: null,
-  triggers: [],
-  languages: [],
-  pin: null,
-  resultShareKey: null,
-  segment: null,
-  styling: null,
-  surveyClosedMessage: null,
-  hiddenFields: { enabled: false },
-  welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
-  variables: [],
-  createdBy: null,
-  recaptcha: { enabled: false, threshold: 0.5 },
-  displayLimit: null,
-  endings: [],
-  followUps: [],
-  isBackButtonHidden: false,
-  isSingleResponsePerEmailEnabled: false,
-  isVerifyEmailEnabled: false,
-  projectOverwrites: null,
-  runOnDate: null,
-  showLanguageSwitch: false,
-};
-
 describe("validateOtherOptionLengthForMultipleChoice", () => {
-  const mockChoices: TSurveyQuestionChoice[] = [
-    { id: "1", label: { default: "Option 1" } },
-    { id: "2", label: { default: "Option 2" } },
-  ];
-
-  const baseSurvey = {
-    ...mockSurvey,
-    questions: [
-      {
-        id: "q1",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-        choices: mockChoices,
-      },
-      {
-        id: "q2",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-        choices: mockChoices,
-      },
-    ],
-  } as unknown as TSurvey;
-
   test("returns undefined for single choice that matches a valid option", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { q1: "Option 1" },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBeUndefined();
@@ -145,7 +104,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
   test("returns undefined for multi-select with all valid options", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { q2: ["Option 1", "Option 2"] },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBeUndefined();
@@ -155,7 +114,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
     const longText = "X".repeat(MAX_OTHER_OPTION_LENGTH + 1);
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { q1: longText },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBe("q1");
@@ -165,7 +124,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
     const longText = "Y".repeat(MAX_OTHER_OPTION_LENGTH + 1);
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { q2: [longText] },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBe("q2");
@@ -174,7 +133,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
   test("ignores non-matching or unrelated question IDs", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { unrelated: "Other: something" },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBeUndefined();
@@ -183,7 +142,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
   test("returns undefined if answer is not string or array", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { q1: 123 as any },
-      survey: baseSurvey,
+      surveyQuestions,
     });
 
     expect(result).toBeUndefined();
