@@ -1,42 +1,5 @@
 FROM node:22-alpine3.21 AS base
 
-# Get packages from Edge repository
-FROM alpine:edge AS edge-packages
-
-# Install packages from edge that are available
-RUN apk update && \
-    # Install the edge packages we need
-    apk add --no-cache \
-        glib=2.84.1-r0 \
-        openssl=3.5.0-r0 \
-        sqlite=3.49.1-r1 && \
-    # Create directory for package files
-    mkdir -p /edge-packages/lib /edge-packages/bin /edge-packages/etc && \
-    # Copy libraries with error handling
-    cp -a /usr/lib/libssl.so* /edge-packages/lib/ 2>/dev/null || true && \
-    cp -a /usr/lib/libcrypto.so* /edge-packages/lib/ 2>/dev/null || true && \
-    cp -a /usr/bin/openssl /edge-packages/bin/ 2>/dev/null || true && \
-    cp -a /etc/ssl /edge-packages/etc/ 2>/dev/null || true && \
-    # Find SQLite libraries
-    find /usr -name "libsqlite*.so*" -exec cp -a {} /edge-packages/lib/ \; 2>/dev/null || true && \
-    # Copy GLib files
-    cp -a /usr/lib/libglib-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
-    cp -a /usr/lib/libgmodule-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
-    cp -a /usr/lib/libgobject-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
-    cp -a /usr/lib/libgio-2.0.so* /edge-packages/lib/ 2>/dev/null || true && \
-    # Create empty files to ensure directories aren't empty
-    touch /edge-packages/lib/.keep && \
-    touch /edge-packages/bin/.keep && \
-    touch /edge-packages/etc/.keep
-
-# Build packages from source that aren't in Edge
-FROM alpine:3.21 AS source-builder
-
-# Install build tools and dependencies
-RUN apk add --no-cache autoconf automake bison build-base ca-certificates \
-    cmake curl flex git gzip libtool linux-headers perl pkgconf \
-    python3-dev tar wget xz zlib-dev
-
 # Create directory for our custom packages
 WORKDIR /custom-packages
 RUN mkdir -p /built-libs/bin /built-libs/lib /built-libs/include
@@ -58,6 +21,70 @@ RUN tar -xf lcms2.17.tar.gz && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \
     make install DESTDIR=/built-libs
+
+# 3. Build c-ares 1.3.0
+WORKDIR /custom-packages/c-ares
+ADD https://github.com/c-ares/c-ares/releases/download/cares-1_3_0/c-ares-1.3.0.tar.gz c-ares-1.3.0.tar.gz
+RUN tar -xf c-ares-1.3.0.tar.gz && \
+    cd c-ares-1.3.0 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install DESTDIR=/built-libs
+
+# 4. Build libarchive 3.7.9
+WORKDIR /custom-packages/libarchive
+ADD https://github.com/libarchive/libarchive/releases/download/v3.7.9/libarchive-3.7.9.tar.gz libarchive-3.7.9.tar.gz
+RUN tar -xf libarchive-3.7.9.tar.gz && \
+    cd libarchive-3.7.9 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install DESTDIR=/built-libs
+
+# 5. Build sqlite 3.49.1
+WORKDIR /custom-packages/sqlite
+ADD https://www.sqlite.org/2024/sqlite-autoconf-3490100.tar.gz sqlite-autoconf-3490100.tar.gz
+RUN tar -xf sqlite-autoconf-3490100.tar.gz && \
+    cd sqlite-autoconf-3490100 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install DESTDIR=/built-libs
+
+# 6. Build v8 12.9.66680202-pgo
+WORKDIR /custom-packages/v8
+RUN apk add --no-cache git python3 ninja && \
+    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git && \
+    export PATH="$PWD/depot_tools:$PATH" && \
+    fetch v8 && \
+    cd v8 && \
+    git checkout 12.9.66680202 && \
+    gclient sync && \
+    gn gen out/Release --args='is_debug=false is_component_build=false v8_use_external_startup_data=false v8_enable_i18n_support=false v8_static_library=true use_custom_libcxx=false use_custom_libcxx_for_host=false use_sysroot=false symbol_level=0 v8_enable_pointer_compression=false' && \
+    ninja -C out/Release v8_monolith && \
+    mkdir -p /built-libs/usr/lib /built-libs/usr/include/v8 && \
+    cp out/Release/obj/libv8_monolith.a /built-libs/usr/lib/ && \
+    cp -r include/* /built-libs/usr/include/v8/
+
+# 7. Build zstd 1.5.6.7
+WORKDIR /custom-packages/zstd
+ADD https://github.com/facebook/zstd/releases/download/v1.5.6.7/zstd-1.5.6.7.tar.gz zstd-1.5.6.7.tar.gz
+RUN tar -xf zstd-1.5.6.7.tar.gz && \
+    cd zstd-1.5.6.7 && \
+    make -j$(nproc) && \
+    make install PREFIX=/usr DESTDIR=/built-libs
+
+# 8. Build glib 2.84.1
+WORKDIR /custom-packages/glib
+RUN apk add --no-cache meson pkgconf && \
+    git clone https://gitlab.gnome.org/GNOME/glib.git . && \
+    git checkout 2.84.1 && \
+    meson setup builddir --prefix=/usr && \
+    meson compile -C builddir && \
+    DESTDIR=/built-libs meson install -C builddir
+
+# 9. Install Go 1.24.2
+WORKDIR /custom-packages/go
+ADD https://go.dev/dl/go1.24.2.linux-amd64.tar.gz go1.24.2.linux-amd64.tar.gz
+RUN tar -C /built-libs/usr -xzf go1.24.2.linux-amd64.tar.gz
 
 # Installer stage
 FROM base AS installer
