@@ -3,9 +3,6 @@ import { TUserLocale } from "@formbricks/types/user";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
-export const FORMBRICKS_API_HOST = env.FORMBRICKS_API_HOST;
-export const FORMBRICKS_ENVIRONMENT_ID = env.FORMBRICKS_ENVIRONMENT_ID;
-export const IS_FORMBRICKS_ENABLED = !!(env.FORMBRICKS_API_HOST && env.FORMBRICKS_ENVIRONMENT_ID);
 
 export const IS_PRODUCTION = env.NODE_ENV === "production";
 

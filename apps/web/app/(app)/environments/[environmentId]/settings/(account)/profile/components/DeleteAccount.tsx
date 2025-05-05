@@ -1,6 +1,5 @@
 "use client";
 
-import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -37,7 +36,6 @@ export const DeleteAccount = ({
         setOpen={setModalOpen}
         user={user}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        formbricksLogout={formbricksLogout}
         organizationsWithSingleOwner={organizationsWithSingleOwner}
       />
       <p className="text-sm text-slate-700">
