@@ -66,9 +66,9 @@ RUN apk add --no-cache git python3 ninja && \
 
 # 7. Build zstd 1.5.6.7
 WORKDIR /custom-packages/zstd
-ADD https://github.com/facebook/zstd/releases/download/v1.5.6.7/zstd-1.5.6.7.tar.gz zstd-1.5.6.7.tar.gz
-RUN tar -xf zstd-1.5.6.7.tar.gz && \
-    cd zstd-1.5.6.7 && \
+ADD https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz zstd-1.5.7.tar.gz
+RUN tar -xf zstd-1.5.7.tar.gz && \
+    cd zstd-1.5.7 && \
     make -j$(nproc) && \
     make install PREFIX=/usr DESTDIR=/built-libs
 
