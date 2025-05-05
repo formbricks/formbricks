@@ -66,7 +66,7 @@ export const PUT = async (
     return handleDatabaseError(error, request.url, endpoint, responseId);
   }
 
-  if (!validateFileUploads(response.data, survey.questions)) {
+  if (!validateFileUploads(inputValidation.data.data, survey.questions)) {
     return responses.badRequestResponse("Invalid file upload response", undefined, true);
   }
 
