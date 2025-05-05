@@ -31,6 +31,8 @@ export const ActionDetailModal = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
+  // [UseTusk]
+
   const { t } = useTranslate();
   const tabs = [
     {

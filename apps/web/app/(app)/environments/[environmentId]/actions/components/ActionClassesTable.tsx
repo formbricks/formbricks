@@ -24,6 +24,8 @@ export const ActionClassesTable = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionClassesTableProps) => {
+  // [UseTusk]
+
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>();

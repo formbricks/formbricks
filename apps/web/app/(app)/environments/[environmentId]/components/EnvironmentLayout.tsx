@@ -27,6 +27,8 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
+  // [UseTusk]
+
   const t = await getTranslate();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
