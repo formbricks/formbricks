@@ -197,6 +197,7 @@ export const checkForYoutubePrivacyMode = (url: string): boolean => {
     const parsedUrl = new URL(url);
     return parsedUrl.host === "www.youtube-nocookie.com";
   } catch (e) {
+    console.error("Invalid URL", e);
     return false;
   }
 };

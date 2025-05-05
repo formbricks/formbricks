@@ -122,6 +122,7 @@ export default defineConfig({
         "survey/editor/lib/utils.tsx",
         "modules/ui/components/card/index.tsx",
         "modules/ui/components/card/index.tsx",
+        "modules/ui/components/file-input/lib/utils.ts",
         "modules/survey/editor/lib/utils.tsx",
         "modules/survey/editor/components/add-action-modal.tsx",
         "modules/survey/editor/components/add-ending-card-button.tsx",
