@@ -5,8 +5,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   return (
     <>

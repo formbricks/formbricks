@@ -17,8 +17,6 @@ export const metadata: Metadata = {
 };
 
 const Page = async (props) => {
-  // [UseTusk]
-
   const params = await props.params;
 
   const { isReadOnly, project, isBilling, environment } = await getEnvironmentAuth(params.environmentId);

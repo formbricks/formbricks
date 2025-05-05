@@ -82,8 +82,6 @@ export const MainNavigation = ({
   isLicenseActive,
   isDevelopment,
 }: NavigationProps) => {
-  // [UseTusk]
-
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();

@@ -14,8 +14,6 @@ interface EnvironmentSwitchProps {
 }
 
 export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwitchProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const router = useRouter();
   const [isEnvSwitchChecked, setIsEnvSwitchChecked] = useState(environment?.type === "development");

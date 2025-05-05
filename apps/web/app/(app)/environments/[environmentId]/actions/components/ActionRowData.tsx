@@ -10,8 +10,6 @@ export const ActionClassDataRow = ({
   actionClass: TActionClass;
   locale: TUserLocale;
 }) => {
-  // [UseTusk]
-
   return (
     <div className="m-2 grid h-16 grid-cols-6 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-4 flex items-center pl-6 text-sm">

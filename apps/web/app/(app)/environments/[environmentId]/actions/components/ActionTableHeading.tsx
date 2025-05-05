@@ -1,8 +1,6 @@
 import { getTranslate } from "@/tolgee/server";
 
 export const ActionTableHeading = async () => {
-  // [UseTusk]
-
   const t = await getTranslate();
   return (
     <>

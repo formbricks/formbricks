@@ -8,8 +8,6 @@ interface EnvironmentStorageHandlerProps {
 }
 
 const EnvironmentStorageHandler = ({ environmentId }: EnvironmentStorageHandlerProps) => {
-  // [UseTusk]
-
   useEffect(() => {
     localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, environmentId);
   }, [environmentId]);

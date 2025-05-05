@@ -35,8 +35,6 @@ export const ActionSettingsTab = ({
   setOpen,
   isReadOnly,
 }: ActionSettingsTabProps) => {
-  // [UseTusk]
-
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
