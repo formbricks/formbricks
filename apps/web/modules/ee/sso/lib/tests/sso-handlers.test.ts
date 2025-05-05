@@ -52,6 +52,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
       findFirst: vi.fn(),
+      count: vi.fn(), // Add count mock for user
     },
   },
 }));
@@ -498,8 +499,6 @@ describe("handleSsoCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 
-      // const constants = await vi.importActual("@formbricks/lib/constants");
-
       const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
@@ -508,135 +507,6 @@ describe("handleSsoCallback", () => {
 
       expect(result).toBe(false);
     });
-
-    // it("should handle valid invite token in callback URL", async () => {
-    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
-    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-    //   vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-
-    //   // Mock SKIP_INVITE_FOR_SSO as false
-    //   vi.doMock("@formbricks/lib/constants", () => ({
-    //     SKIP_INVITE_FOR_SSO: 0,
-    //     DEFAULT_TEAM_ID: "team-123",
-    //   }));
-
-    //   // Mock verify token
-    //   vi.mocked(verifyInviteToken).mockReturnValue({
-    //     email: mockUser.email,
-    //     inviteId: "invite-123",
-    //   });
-
-    //   vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
-
-    //   const result = await handleSsoCallback({
-    //     user: mockUser,
-    //     account: mockAccount,
-    //     callbackUrl: "http://localhost:3000?token=valid-token&source=invite",
-    //   });
-
-    //   expect(result).toBe(true);
-    //   expect(verifyInviteToken).toHaveBeenCalledWith("valid-token");
-    //   expect(getIsValidInviteToken).toHaveBeenCalledWith("invite-123");
-    // });
-
-    // it("should return false when invite token email doesn't match user email", async () => {
-    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
-    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-
-    //   // Mock SKIP_INVITE_FOR_SSO as false
-    //   vi.doMock("@formbricks/lib/constants", () => ({
-    //     SKIP_INVITE_FOR_SSO: 0,
-    //     DEFAULT_TEAM_ID: "team-123",
-    //   }));
-
-    //   // Mock verify token
-    //   vi.mocked(verifyInviteToken).mockReturnValue({
-    //     email: "different@example.com",
-    //     inviteId: "invite-123",
-    //   });
-
-    //   const result = await handleSsoCallback({
-    //     user: mockUser,
-    //     account: mockAccount,
-    //     callbackUrl: "http://localhost:3000?token=valid-token&source=invite",
-    //   });
-
-    //   expect(result).toBe(false);
-    // });
-
-    // it("should return false when signin source without an invite token", async () => {
-    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
-    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-
-    //   // Mock SKIP_INVITE_FOR_SSO as false
-    //   vi.doMock("@formbricks/lib/constants", () => ({
-    //     SKIP_INVITE_FOR_SSO: 0,
-    //     DEFAULT_TEAM_ID: "team-123",
-    //   }));
-
-    //   const result = await handleSsoCallback({
-    //     user: mockUser,
-    //     account: mockAccount,
-    //     callbackUrl: "http://localhost:3000?source=signin",
-    //   });
-
-    //   expect(result).toBe(false);
-    // });
-
-    // it("should return false when invite token is invalid", async () => {
-    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
-    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-
-    //   // Mock SKIP_INVITE_FOR_SSO as false
-    //   vi.doMock("@formbricks/lib/constants", () => ({
-    //     SKIP_INVITE_FOR_SSO: 0,
-    //     DEFAULT_TEAM_ID: "team-123",
-    //   }));
-
-    //   // Mock verify token
-    //   vi.mocked(verifyInviteToken).mockReturnValue({
-    //     email: mockUser.email,
-    //     inviteId: "invite-123",
-    //   });
-
-    //   vi.mocked(getIsValidInviteToken).mockResolvedValue(false);
-
-    //   const result = await handleSsoCallback({
-    //     user: mockUser,
-    //     account: mockAccount,
-    //     callbackUrl: "http://localhost:3000?token=invalid-token&source=invite",
-    //   });
-
-    //   expect(result).toBe(false);
-    // });
-
-    // it("should log error and return false for invalid callback URL", async () => {
-    //   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    //   vi.mocked(getUserByEmail).mockResolvedValue(null);
-    //   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-
-    //   // Mock SKIP_INVITE_FOR_SSO as false
-    //   vi.doMock("@formbricks/lib/constants", () => ({
-    //     SKIP_INVITE_FOR_SSO: 0,
-    //     DEFAULT_TEAM_ID: "team-123",
-    //   }));
-
-    //   const result = await handleSsoCallback({
-    //     user: mockUser,
-    //     account: mockAccount,
-    //     callbackUrl: "invalid-url",
-    //   });
-
-    //   expect(result).toBe(false);
-    //   expect(vi.mocked(require("@formbricks/logger").logger.error)).toHaveBeenCalledWith(
-    //     expect.any(Error),
-    //     "Invalid callbackUrl"
-    //   );
-    // });
   });
 
   describe("Error handling", () => {
