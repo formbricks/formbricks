@@ -22,14 +22,6 @@ RUN tar -xf lcms2.17.tar.gz && \
     make -j$(nproc) && \
     make install DESTDIR=/built-libs
 
-# 3. Build c-ares 1.3.0
-WORKDIR /custom-packages/c-ares
-ADD https://github.com/c-ares/c-ares/releases/download/cares-1_3_0/c-ares-1.3.0.tar.gz c-ares-1.3.0.tar.gz
-RUN tar -xf c-ares-1.3.0.tar.gz && \
-    cd c-ares-1.3.0 && \
-    ./configure --prefix=/usr && \
-    make -j$(nproc) && \
-    make install DESTDIR=/built-libs
 
 # 4. Build libarchive 3.7.9
 WORKDIR /custom-packages/libarchive
@@ -42,7 +34,7 @@ RUN tar -xf libarchive-3.7.9.tar.gz && \
 
 # 5. Build sqlite 3.49.1
 WORKDIR /custom-packages/sqlite
-ADD https://www.sqlite.org/2024/sqlite-autoconf-3490100.tar.gz sqlite-autoconf-3490100.tar.gz
+ADD https://www.sqlite.org/2025/sqlite-autoconf-3490100.tar.gz sqlite-autoconf-3490100.tar.gz
 RUN tar -xf sqlite-autoconf-3490100.tar.gz && \
     cd sqlite-autoconf-3490100 && \
     ./configure --prefix=/usr && \
