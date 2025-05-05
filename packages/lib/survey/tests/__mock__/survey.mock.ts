@@ -135,6 +135,7 @@ export const mockUser: TUser = {
   },
   role: "other",
   locale: "en-US",
+  whitelist: false,
 };
 
 export const mockPrismaPerson: Prisma.ContactGetPayload<{

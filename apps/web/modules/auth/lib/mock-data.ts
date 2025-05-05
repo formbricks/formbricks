@@ -19,4 +19,5 @@ export const mockUser: TUser = {
   whitelist: false,
   role: "other",
   locale: "en-US",
+  whitelist: false,
 };

@@ -39,6 +39,7 @@ export const mockUser: TUser = {
   locale: "en-US",
   imageUrl: null,
   role: null,
+  whitelist: false,
 };
 
 // Mock session

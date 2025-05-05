@@ -8,19 +8,25 @@ export class SurveyState {
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {}, variables: {} };
   singleUseId: string | null;
+  dataHash: string | null = null;
+  transactionHash: string | null = null;
 
   constructor(
     surveyId: string,
     singleUseId?: string | null,
     responseId?: string | null,
     userId?: string | null,
-    contactId?: string | null
+    contactId?: string | null,
+    dataHash?: string | null,
+    transactionHash?: string | null
   ) {
     this.surveyId = surveyId;
     this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
     this.contactId = contactId ?? null;
+    this.dataHash = dataHash ?? null;
+    this.transactionHash = transactionHash ?? null;
   }
 
   /**
@@ -31,6 +37,23 @@ export class SurveyState {
     this.surveyId = id;
     this.clear(); // Reset the state when setting a new surveyId
   }
+
+  /**
+   * Update the dataHash
+   * @param dataHash - The dataHash
+   */
+  updateDataHash(dataHash: string) {
+    this.dataHash = dataHash;
+  }
+
+  /**
+   * Update the dataHash
+   * @param transactionHash - The dataHash
+   */
+  updateTransactionHash(transactionHash: string) {
+    this.transactionHash = transactionHash;
+  }
+
   /**
    * Get a copy of the current state
    */
@@ -40,7 +63,9 @@ export class SurveyState {
       this.singleUseId ?? undefined,
       this.responseId ?? undefined,
       this.userId ?? undefined,
-      this.contactId ?? undefined
+      this.contactId ?? undefined,
+      this.dataHash ?? undefined,
+      this.transactionHash ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;

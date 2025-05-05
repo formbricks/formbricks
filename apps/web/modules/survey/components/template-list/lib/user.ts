@@ -27,6 +27,7 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
         objective: true,
         notificationSettings: true,
         locale: true,
+        whitelist: true,
       },
     });
 
