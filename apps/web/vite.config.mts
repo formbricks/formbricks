@@ -50,6 +50,7 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
+        "app/api/v2/client/**/responses/lib/utils.ts",
         "app/intercom/*.tsx",
         "app/sentry/*.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ConsentSummary.tsx",
@@ -114,6 +115,7 @@ export default defineConfig({
         "modules/survey/editor/components/end-screen-form.tsx",
         "modules/survey/editor/components/matrix-question-form.tsx",
         "lib/utils/billing.ts",
+        "modules/survey/list/components/copy-survey-form.tsx",
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
         "lib/utils/billing.ts",
@@ -164,6 +166,7 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
+        "**/stories.tsx" // Exclude story files
       ],
     },
   },
