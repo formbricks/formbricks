@@ -15,7 +15,8 @@ import {
   getRoleManagementPermission,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import type { IdentityProvider } from "@prisma/client";
+import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
+import type { IdentityProvider, Organization } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -158,6 +159,24 @@ export const handleSsoCallback = async ({
       }
     }
 
+    let organization: Organization | null = null;
+
+    if (!isMultiOrgEnabled) {
+      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+        organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
+      } else {
+        organization = await getFirstOrganization();
+      }
+
+      if (!organization) {
+        return false;
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+
+      if (!canDoRoleManagement) return false;
+    }
+
     const userProfile = await createUser({
       name:
         userName ||
@@ -175,17 +194,10 @@ export const handleSsoCallback = async ({
     // send new user to brevo
     createBrevoCustomer({ id: user.id, email: user.email });
 
+    if (isMultiOrgEnabled) return true;
+
     // Default organization assignment if env variable is set
-    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-      // check if organization exists
-      const organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
-
-      if (!organization) return true;
-
-      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
-      if (!canDoRoleManagement) return true;
-
+    if (organization) {
       await createMembership(organization.id, userProfile.id, { role: "member", accepted: true });
       await createAccount({
         ...account,
