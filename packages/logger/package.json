@@ -40,9 +40,9 @@
     "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
-    "vite": "^6.2.4",
+    "vite": "6.3.5",
     "@formbricks/config-typescript": "workspace:*",
-    "vitest": "3.1.1",
+    "vitest": "3.1.3",
     "@formbricks/eslint-config": "workspace:*",
     "vite-plugin-dts": "4.5.3"
   }
