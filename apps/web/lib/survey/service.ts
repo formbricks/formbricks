@@ -63,6 +63,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   languages: {
     select: {
       default: true,

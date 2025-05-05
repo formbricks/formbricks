@@ -1,7 +1,7 @@
 import { createI18nString } from "@/lib/i18n/utils";
 import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyEndScreenCard, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { EndScreenForm } from "./end-screen-form";
@@ -114,7 +114,7 @@ describe("EndScreenForm", () => {
     vi.clearAllMocks();
   });
 
-  it("renders add description button when subheader is undefined", async () => {
+  test("renders add description button when subheader is undefined", async () => {
     const propsWithoutSubheader = {
       ...defaultProps,
       endingCard: {
@@ -141,7 +141,7 @@ describe("EndScreenForm", () => {
     }
   });
 
-  it("renders subheader input when subheader is defined", () => {
+  test("renders subheader input when subheader is defined", () => {
     const propsWithSubheader = {
       ...defaultProps,
       endingCard: {
@@ -157,7 +157,7 @@ describe("EndScreenForm", () => {
     expect(subheaderLabel).toBeInTheDocument();
   });
 
-  it("toggles CTA button visibility", async () => {
+  test("toggles CTA button visibility", async () => {
     const { container } = render(<EndScreenForm {...defaultProps} />);
 
     // Use ID selector instead of role to get the specific switch we need
@@ -181,7 +181,7 @@ describe("EndScreenForm", () => {
     }
   });
 
-  it("shows CTA options when enabled", async () => {
+  test("shows CTA options when enabled", async () => {
     const propsWithCTA = {
       ...defaultProps,
       endingCard: {
@@ -202,7 +202,7 @@ describe("EndScreenForm", () => {
     expect(buttonLinkField).toBeInTheDocument();
   });
 
-  it("updates buttonLink when input changes", async () => {
+  test("updates buttonLink when input changes", async () => {
     const propsWithCTA = {
       ...defaultProps,
       endingCard: {
@@ -226,7 +226,7 @@ describe("EndScreenForm", () => {
     }
   });
 
-  it("handles focus on buttonLink input when onAddFallback is triggered", async () => {
+  test("handles focus on buttonLink input when onAddFallback is triggered", async () => {
     const propsWithCTA = {
       ...defaultProps,
       endingCard: {
@@ -252,7 +252,7 @@ describe("EndScreenForm", () => {
     }
   });
 
-  it("initializes with showEndingCardCTA true when buttonLabel or buttonLink exists", () => {
+  test("initializes with showEndingCardCTA true when buttonLabel or buttonLink exists", () => {
     const propsWithCTA = {
       ...defaultProps,
       endingCard: {

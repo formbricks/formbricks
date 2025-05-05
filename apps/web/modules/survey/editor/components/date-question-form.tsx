@@ -17,7 +17,6 @@ interface IDateQuestionFormProps {
   question: TSurveyDateQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
