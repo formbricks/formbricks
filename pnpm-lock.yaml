@@ -139,6 +139,9 @@ importers:
       '@formbricks/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
+      '@formbricks/js-core':
+        specifier: workspace:*
+        version: link:../../packages/js-core
       '@formbricks/logger':
         specifier: workspace:*
         version: link:../../packages/logger
