@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { handleFileUpload } from "./fileUpload";
+import { FileUploadError, handleFileUpload } from "./fileUpload";
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -36,7 +36,7 @@ describe("fileUpload", () => {
 
   test("should return error when no file is provided", async () => {
     const result = await handleFileUpload(null as any, "test-env");
-    expect(result.error).toBe("No file provided");
+    expect(result.error).toBe(FileUploadError.NO_FILE);
     expect(result.url).toBe("");
   });
 

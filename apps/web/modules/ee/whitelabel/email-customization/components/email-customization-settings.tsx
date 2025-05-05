@@ -1,6 +1,7 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -11,7 +12,6 @@ import {
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
-import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
@@ -120,7 +120,13 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
+    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+
+    if (error) {
+      toast.error(error);
+      setIsSaving(false);
+      return;
+    }
 
     const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
       organizationId: organization.id,

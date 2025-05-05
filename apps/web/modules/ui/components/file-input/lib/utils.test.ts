@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { convertHeicToJpegAction } from "./actions";
-import { checkForYoutubePrivacyMode, getAllowedFiles, uploadFile } from "./utils";
+import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 
 // Mock FileReader
 class MockFileReader {
@@ -37,54 +37,6 @@ vi.mock("./actions", () => ({
 describe("File Input Utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("uploadFile", () => {
-    test("should throw error for invalid file type", async () => {
-      const invalidFile = "not-a-file" as unknown as File;
-      await expect(uploadFile(invalidFile, [], "env-123")).rejects.toThrow("Invalid file type");
-    });
-
-    test("should throw error for file larger than 10MB", async () => {
-      const largeFile = new File(["x".repeat(11 * 1024 * 1024)], "large.txt", { type: "text/plain" });
-      await expect(uploadFile(largeFile, [], "env-123")).rejects.toThrow("File size is greater than 10MB");
-    });
-
-    test("should successfully upload a valid file", async () => {
-      const mockFile = new File(["test"], "test.txt", { type: "text/plain" });
-      const mockResponse = {
-        data: {
-          signedUrl: "https://example.com/upload",
-          fileUrl: "https://example.com/file.txt",
-          signingData: {
-            signature: "test-signature",
-            timestamp: 1234567890,
-            uuid: "test-uuid",
-          },
-        },
-      };
-
-      global.fetch = vi
-        .fn()
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(mockResponse),
-          })
-        )
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            ok: true,
-          })
-        );
-
-      const result = await uploadFile(mockFile, ["txt"], "env-123");
-
-      expect(result).toEqual({
-        uploaded: true,
-        url: "https://example.com/file.txt",
-      });
-    }, 10000); // Increase timeout for this test
   });
 
   describe("getAllowedFiles", () => {
