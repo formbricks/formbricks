@@ -1,102 +1,31 @@
-FROM node:22-alpine3.21 AS base
+FROM node:23-alpine3.21 AS base
 
-# Install git and other build dependencies needed for all steps
-RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3 python3-dev bash
+#
+## step 1: Prune monorepo
+#
+# FROM base AS builder
+# RUN apk add --no-cache libc6-compat
+# RUN apk update
+# Set working directory
+# WORKDIR /app
+# RUN yarn global add turbo
+# COPY . .
+# RUN turbo prune @formbricks/web --docker
 
-# Create directory for our custom packages
-WORKDIR /custom-packages
-RUN mkdir -p /built-libs/bin /built-libs/lib /built-libs/include
-
-# 1. Build libxml2 2.14.1
-WORKDIR /custom-packages/libxml2
-RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
-    git checkout v2.14.1 && \
-    ./autogen.sh --prefix=/usr && \
-    PYTHON_CFLAGS="-I/usr/include/python3.12" PYTHON_LIBS="-lpython3.12" ./configure --prefix=/usr --with-python=no && \
-    make -j$(nproc) && \
-    make install DESTDIR=/built-libs
-
-# 2. Build LCMS2 2.17
-WORKDIR /custom-packages/lcms2
-ADD https://github.com/mm2/Little-CMS/archive/refs/tags/lcms2.17.tar.gz lcms2.17.tar.gz
-RUN tar -xf lcms2.17.tar.gz && \
-    cd Little-CMS-lcms2.17 && \
-    ./configure --prefix=/usr && \
-    make -j$(nproc) && \
-    make install DESTDIR=/built-libs
-
-# 4. Build libarchive 3.7.9
-WORKDIR /custom-packages/libarchive
-ADD https://github.com/libarchive/libarchive/releases/download/v3.7.9/libarchive-3.7.9.tar.gz libarchive-3.7.9.tar.gz
-RUN tar -xf libarchive-3.7.9.tar.gz && \
-    cd libarchive-3.7.9 && \
-    ./configure --prefix=/usr && \
-    make -j$(nproc) && \
-    make install DESTDIR=/built-libs
-
-# 5. Build sqlite 3.49.1
-WORKDIR /custom-packages/sqlite
-ADD https://www.sqlite.org/2025/sqlite-autoconf-3490100.tar.gz sqlite-autoconf-3490100.tar.gz
-RUN tar -xf sqlite-autoconf-3490100.tar.gz && \
-    cd sqlite-autoconf-3490100 && \
-    ./configure --prefix=/usr && \
-    make -j$(nproc) && \
-    make install DESTDIR=/built-libs
-
-# 6. Build v8 12.9.66680202-pgo
-WORKDIR /custom-packages/v8
-RUN apk add --no-cache ninja && \
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git && \
-    export PATH="$PWD/depot_tools:$PATH" && \
-    fetch v8 && \
-    cd v8 && \
-    git checkout 12.9.66680202 && \
-    gclient sync && \
-    gn gen out/Release --args='is_debug=false is_component_build=false v8_use_external_startup_data=false v8_enable_i18n_support=false v8_static_library=true use_custom_libcxx=false use_custom_libcxx_for_host=false use_sysroot=false symbol_level=0 v8_enable_pointer_compression=false' && \
-    ninja -C out/Release v8_monolith && \
-    mkdir -p /built-libs/usr/lib /built-libs/usr/include/v8 && \
-    cp out/Release/obj/libv8_monolith.a /built-libs/usr/lib/ && \
-    cp -r include/* /built-libs/usr/include/v8/
-
-# 7. Build zstd 1.5.6.7
-WORKDIR /custom-packages/zstd
-ADD https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz zstd-1.5.7.tar.gz
-RUN tar -xf zstd-1.5.7.tar.gz && \
-    cd zstd-1.5.7 && \
-    make -j$(nproc) && \
-    make install PREFIX=/usr DESTDIR=/built-libs
-
-# 8. Build glib 2.84.1
-WORKDIR /custom-packages/glib
-RUN apk add --no-cache meson pkgconf && \
-    git clone https://gitlab.gnome.org/GNOME/glib.git . && \
-    git checkout 2.84.1 && \
-    meson setup builddir --prefix=/usr && \
-    meson compile -C builddir && \
-    DESTDIR=/built-libs meson install -C builddir
-
-# 9. Install Go 1.24.2
-WORKDIR /custom-packages/go
-ADD https://go.dev/dl/go1.24.2.linux-amd64.tar.gz go1.24.2.linux-amd64.tar.gz
-RUN tar -C /built-libs/usr -xzf go1.24.2.linux-amd64.tar.gz
-
-# Installer stage
+#
+## step 2: Install & build
+#
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Create directories to ensure they exist
-RUN mkdir -p /usr/lib /usr/bin /etc/ssl
-
-# Copy source-built packages from base stage
-COPY --from=base /built-libs /
-
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make python3
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # BuildKit secret handling without hardcoded fallback values
+# This approach relies entirely on secrets passed from GitHub Actions
 RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'if [ -f "/run/secrets/database_url" ]; then' >> /tmp/read-secrets.sh && \
     echo '  export DATABASE_URL=$(cat /run/secrets/database_url)' >> /tmp/read-secrets.sh && \
@@ -119,6 +48,11 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 WORKDIR /app
 
 # Copy the package information
+# COPY .gitignore .gitignore
+# COPY --from=builder /app/out/json/ .
+# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Prepare the build
 COPY . .
 
 # Create a .env file
@@ -146,6 +80,7 @@ RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
+    # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
