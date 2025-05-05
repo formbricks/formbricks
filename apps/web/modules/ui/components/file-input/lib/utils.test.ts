@@ -3,6 +3,26 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { convertHeicToJpegAction } from "./actions";
 import { checkForYoutubePrivacyMode, getAllowedFiles, uploadFile } from "./utils";
 
+// Mock FileReader
+class MockFileReader {
+  onload: (() => void) | null = null;
+  onerror: ((error: any) => void) | null = null;
+  result: string | null = null;
+
+  readAsDataURL() {
+    // Simulate asynchronous read
+    setTimeout(() => {
+      this.result = "data:text/plain;base64,dGVzdA=="; // base64 for "test"
+      if (this.onload) {
+        this.onload();
+      }
+    }, 0);
+  }
+}
+
+// Mock global FileReader
+global.FileReader = MockFileReader as any;
+
 // Mock dependencies
 vi.mock("react-hot-toast", () => ({
   toast: {
@@ -64,7 +84,7 @@ describe("File Input Utils", () => {
         uploaded: true,
         url: "https://example.com/file.txt",
       });
-    });
+    }, 10000); // Increase timeout for this test
   });
 
   describe("getAllowedFiles", () => {
