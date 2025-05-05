@@ -155,6 +155,8 @@ export default defineConfig({
         "modules/survey/editor/components/file-upload-question-form.tsx",
         "modules/survey/editor/components/how-to-send-card.tsx",
         "modules/survey/editor/components/image-survey-bg.tsx",
+        "modules/ee/teams/**/*.ts",
+        "modules/ee/teams/**/*.tsx",
       ],
       exclude: [
         "**/.next/**",
