@@ -11,6 +11,8 @@ export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 
+export const E2E_TESTING = env.E2E_TESTING === "1";
+
 // URLs
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
@@ -64,7 +66,7 @@ export const SAML_PRODUCT = "formbricks";
 export const SAML_AUDIENCE = "https://saml.formbricks.com";
 export const SAML_PATH = "/api/auth/saml/callback";
 
-export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT;
+export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTING;
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
@@ -200,7 +202,6 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
 };
 
 export const DEBUG = env.DEBUG === "1";
-export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
