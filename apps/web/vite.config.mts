@@ -80,6 +80,7 @@ export default defineConfig({
         "app/(app)/environments/**/surveys/**/(analysis)/responses/components/ResponseTableCell.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "modules/ee/sso/lib/**/*.ts",
+        "modules/ee/sso/lib/organization.ts",
         "app/lib/**/*.ts",
         "modules/ee/license-check/lib/utils.ts",
         "app/api/(internal)/insights/lib/**/*.ts",
