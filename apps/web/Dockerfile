@@ -96,11 +96,6 @@ RUN corepack enable
 # Create directories to ensure they exist
 RUN mkdir -p /usr/lib /usr/bin /etc/ssl
 
-# Copy edge packages - fixed syntax
-COPY --from=edge-packages /edge-packages/lib /usr/lib
-COPY --from=edge-packages /edge-packages/bin /usr/bin
-COPY --from=edge-packages /edge-packages/etc /etc
-
 # Copy source-built packages
 COPY --from=source-builder /built-libs /
 
