@@ -9,7 +9,7 @@ export const IS_FORMBRICKS_ENABLED = !!(env.FORMBRICKS_API_HOST && env.FORMBRICK
 
 // URLs
 export const WEBAPP_URL =
-  env.WEBAPP_URL ?? (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) ?? "http://localhost:3000";
+  env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
 export const SURVEY_URL = env.SURVEY_URL;
 
