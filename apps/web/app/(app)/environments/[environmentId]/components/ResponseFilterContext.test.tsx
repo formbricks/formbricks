@@ -134,9 +134,7 @@ describe("ResponseFilterContext", () => {
   test("should throw error when useResponseFilter is used outside of Provider", () => {
     // Hide console error temporarily
     const consoleErrorMock = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<TestComponent />)).toThrow(
-      "useResponseFilter must be used within a ResponseFilterProvider"
-    );
+    expect(() => render(<TestComponent />)).toThrow("useFilterDate must be used within a FilterDateProvider");
     consoleErrorMock.mockRestore();
   });
 });

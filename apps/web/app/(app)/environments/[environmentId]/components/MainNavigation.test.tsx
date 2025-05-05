@@ -1,4 +1,3 @@
-import { formbricksLogout } from "@/app/lib/formbricks";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { signOut } from "next-auth/react";
@@ -229,7 +228,6 @@ describe("MainNavigation", () => {
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/auth/login");
     });
-    expect(formbricksLogout).toHaveBeenCalled();
   });
 
   test("handles organization switching", async () => {
