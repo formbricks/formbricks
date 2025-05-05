@@ -1,20 +1,16 @@
 "use server";
 
 import { hashPassword } from "@/lib/auth";
-import { DEFAULT_TEAM_ID, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
-import {
-  createDefaultTeamMembership,
-  createTeamMembership,
-  getOrganizationByTeamId,
-} from "@/modules/auth/signup/lib/team";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
 import { UnknownError } from "@formbricks/types/errors";
@@ -111,30 +107,6 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
           ),
         },
       });
-    }
-  }
-
-  if (DEFAULT_TEAM_ID) {
-    const organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
-
-    if (organization) {
-      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
-      if (canDoRoleManagement) {
-        await createMembership(organization.id, user.id, { role: "member", accepted: true });
-        await updateUser(user.id, {
-          notificationSettings: {
-            ...user.notificationSettings,
-            alert: { ...user.notificationSettings?.alert },
-            weeklySummary: { ...user.notificationSettings?.weeklySummary },
-            unsubscribedOrganizationIds: Array.from(
-              new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
-            ),
-          },
-        });
-
-        await createDefaultTeamMembership(user.id);
-      }
     }
   }
 

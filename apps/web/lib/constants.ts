@@ -101,7 +101,7 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 export const INSIGHTS_PER_PAGE = 10;
 export const DOCUMENTS_PER_PAGE = 10;
 
-export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO;
+export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
 export const SLACK_MESSAGE_LIMIT = 2995;

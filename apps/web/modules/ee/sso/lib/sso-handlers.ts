@@ -1,5 +1,6 @@
 import { createAccount } from "@/lib/account/service";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -122,8 +123,10 @@ export const handleSsoCallback = async ({
     // Get multi-org license status
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
+    const isFirstUser = await getIsFreshInstance();
+
     // Additional security checks for self-hosted instances without auto-provisioning and no multi-org enabled
-    if (!SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
+    if (!isFirstUser && !SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
       if (!callbackUrl) {
         return false;
       }
@@ -160,7 +163,7 @@ export const handleSsoCallback = async ({
 
     let organization: Organization | null = null;
 
-    if (!isMultiOrgEnabled) {
+    if (!isFirstUser && !isMultiOrgEnabled) {
       if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
         organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
       } else {
@@ -202,7 +205,9 @@ export const handleSsoCallback = async ({
         userId: userProfile.id,
       });
 
-      await createDefaultTeamMembership(userProfile.id);
+      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+        await createDefaultTeamMembership(userProfile.id);
+      }
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...userProfile.notificationSettings,
