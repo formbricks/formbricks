@@ -5,8 +5,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   return (
     <div className="mt-6 p-6">

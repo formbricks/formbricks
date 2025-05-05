@@ -17,8 +17,6 @@ import { redirect } from "next/navigation";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 const Page = async (props) => {
-  // [UseTusk]
-
   const params = await props.params;
   const t = await getTranslate();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);

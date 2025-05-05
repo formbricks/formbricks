@@ -47,8 +47,6 @@ export const AddIntegrationModal = ({
   googleSheetIntegration,
   selectedIntegration,
 }: AddIntegrationModalProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",

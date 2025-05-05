@@ -30,8 +30,6 @@ export const BaseSelectDropdown = ({
   setValue,
   defaultValue,
 }: BaseSelectProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   return (
     <div className="flex w-full flex-col">
