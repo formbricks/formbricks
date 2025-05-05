@@ -91,7 +91,7 @@ export const SurveyPlacementCard = ({
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"

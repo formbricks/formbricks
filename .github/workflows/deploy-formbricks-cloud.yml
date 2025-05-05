@@ -12,6 +12,13 @@ on:
         required: false
         type: string
         default: 'ghcr.io/formbricks/formbricks'
+      ENVIRONMENT:
+        description: 'The environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
   workflow_call:
     inputs:
       VERSION:
@@ -23,6 +30,10 @@ on:
         required: false
         type: string
         default: 'ghcr.io/formbricks/formbricks'
+      ENVIRONMENT:
+        description: 'The environment to deploy to'
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -34,6 +45,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
+
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
@@ -48,6 +66,8 @@ jobs:
           AWS_REGION: eu-central-1
 
       - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Prod
+        if: (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch') && github.event.inputs.ENVIRONMENT == 'prod'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -58,7 +78,23 @@ jobs:
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
-          helmfile-args: apply
+          helmfile-args: apply -l environment=prod
+          helmfile-auto-init: "false"
+          helmfile-workdirectory: infra/formbricks-cloud-helm
+
+      - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Stage
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.ENVIRONMENT == 'stage'
+        env:
+          VERSION: ${{ inputs.VERSION }}
+          REPOSITORY: ${{ inputs.REPOSITORY }}
+          FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
+          FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
+        with:
+          helm-plugins: >
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
+          helmfile-args: apply -l environment=stage
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
