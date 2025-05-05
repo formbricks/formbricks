@@ -53,11 +53,6 @@ export const addUserToWhitelistAction = authenticatedActionClient
       currentUserId: ctx.user.id,
     });
 
-    if (whitelistedUserId) {
-      // TODO: Change or remove this and simply change above line to await addUser
-      console.log("Successfully whitelisted");
-    }
-
     return whitelistedUserId;
   });
 
@@ -97,11 +92,6 @@ export const removeUserFromWhitelistAction = authenticatedActionClient
       organizationId: parsedInput.organizationId,
       currentUserId: ctx.user.id,
     });
-
-    if (whitelistedUserId) {
-      // TODO: Change or remove this and simply change above line to await removeUser
-      console.log("Successfully removed user from whitelist");
-    }
 
     return whitelistedUserId;
   });
