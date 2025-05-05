@@ -1,7 +1,7 @@
 FROM node:22-alpine3.21 AS base
 
 # Install git and other build dependencies needed for all steps
-RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3 python3-dev
+RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3 python3-dev bash
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
