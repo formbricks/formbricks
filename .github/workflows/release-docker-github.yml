@@ -102,6 +102,7 @@ jobs:
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+          no-cache: true
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
