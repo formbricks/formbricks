@@ -162,6 +162,7 @@
     "date": "Date",
     "default": "Default",
     "delete": "Delete",
+    "deposit": "Deposit",
     "description": "Description",
     "dev_env": "Dev Environment",
     "development_environment_banner": "You're in a development environment. Set it up to test engagements, actions and attributes.",
@@ -243,6 +244,7 @@
     "membership_not_found": "Membership not found",
     "metadata": "Metadata",
     "minimum": "Minimum",
+    "mint": "Mint",
     "mint_now": "Mint Now!",
     "mint_tokens": "Mint Tokens!",
     "mobile_overlay_text": "EngageHQ is not available for devices with smaller resolutions.",
@@ -597,11 +599,12 @@
       "card": {
         "complete_your_first_engagement_to_earn_rewards": "Complete your first engagement to earn rewards",
         "find_engagement": "Find Engagement",
-        "hash": "Hash",
         "no_completed_engagements": "No completed engagements",
         "response_info": "Response Info",
         "start_engagement": "Start Engagement",
         "submission_date": "Submission Date",
+        "this_address_is_immutable_because_its_on_chain": "This address is immutable because it's on chain",
+        "verified_hash": "VERIFIED HASH",
         "view": "View",
         "view_info": "View Info"
       },
@@ -1911,7 +1914,9 @@
         "balance_unavailable": "Balance Unavailable",
         "external_link": "External link",
         "pending_rewards": "Pending Rewards",
-        "wallet_address": "Wallet Address"
+        "scan_qr_to_deposit": "Scan QR to deposit",
+        "wallet_address": "Wallet Address",
+        "you_dont_have_any_tokens_in_your_wallet_yet": "You don't have any tokens in your wallet yet."
       },
       "button": {
         "loading": "Loading...",
@@ -1945,6 +1950,9 @@
           "sent_or_received": "Sent/Received",
           "sent_to": "Sent to",
           "token_minted": "Token Minted"
+        },
+        "common": {
+          "your_transaction_history_is_empty": "Your transaction history is empty"
         },
         "tag": {
           "survey_reward": "Survey Reward",
