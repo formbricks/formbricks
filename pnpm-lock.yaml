@@ -415,7 +415,7 @@ importers:
         version: 15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-auth:
         specifier: 4.24.11
-        version: 4.24.11(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 4.24.11(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@7.0.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-safe-action:
         specifier: 7.10.5
         version: 7.10.5(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(zod@3.24.1)
@@ -423,8 +423,8 @@ importers:
         specifier: 3.3.2
         version: 3.3.2
       nodemailer:
-        specifier: 6.10.0
-        version: 6.10.0
+        specifier: 7.0.2
+        version: 7.0.2
       otplib:
         specifier: 12.0.1
         version: 12.0.1
@@ -5264,6 +5264,9 @@ packages:
   axios@1.8.4:
     resolution: {integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==}
 
+  axios@1.9.0:
+    resolution: {integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==}
+
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
     engines: {node: '>= 0.4'}
@@ -7352,8 +7355,8 @@ packages:
   lexical@0.30.0:
     resolution: {integrity: sha512-6gxYeXaJiAcreJD0whCofvO0MuJmnWoIgIl1w7L5FTigfhnEohuCx2SoI/oywzfzXE9gzZnyr3rVvZrMItPL8A==}
 
-  lib0@0.2.104:
-    resolution: {integrity: sha512-1tqKRANSPTcjs/yjPoKh52oRM2u5AYdd8jie8sDiN8/5kpWWiQSHUGgtB4VEXLw1chVL3QPSPp8q9RWqzSn2FA==}
+  lib0@0.2.107:
+    resolution: {integrity: sha512-2xih/AugT0dJSgeSfsW/bqIPILlsqzEtmw8hXzWEnMLrOz12DTK5z9rjNgUT21/HkBjHSznOQBr67bcZdc8Ltg==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -8002,8 +8005,8 @@ packages:
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
 
-  nodemailer@6.10.0:
-    resolution: {integrity: sha512-SQ3wZCExjeSatLE/HBaXS5vqUOQk6GtBdIIKxiFdmm01mOQZX/POJkO3SUX1wDiYcwUOJwT23scFSC9fY2H8IA==}
+  nodemailer@7.0.2:
+    resolution: {integrity: sha512-SYsisPeLFYli5Q+BCGSyHT5CVvezPmQjHgINV9KVvVLV1aktuoD4E0Np9Q3ND9I481qIHzUQzVT+Tl/Tw7Ivdg==}
     engines: {node: '>=6.0.0'}
 
   nopt@5.0.0:
@@ -10284,6 +10287,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.18.2:
+    resolution: {integrity: sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xlsx@0.18.5:
     resolution: {integrity: sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==}
     engines: {node: '>=0.8'}
@@ -11874,10 +11889,10 @@ snapshots:
       '@types/ws': 8.18.1
       duplexify: 3.7.1
       inherits: 2.0.4
-      isomorphic-ws: 4.0.1(ws@8.18.1)
+      isomorphic-ws: 4.0.1(ws@8.18.2)
       readable-stream: 2.3.8
       safe-buffer: 5.2.1
-      ws: 8.18.1
+      ws: 8.18.2
       xtend: 4.0.2
     transitivePeerDependencies:
       - bufferutil
@@ -15975,7 +15990,7 @@ snapshots:
     dependencies:
       '@aws-sdk/util-utf8-browser': 3.259.0
       '@httptoolkit/websocket-stream': 6.0.1
-      axios: 1.8.4
+      axios: 1.9.0
       buffer: 6.0.3
       crypto-js: 4.2.0
       mqtt: 4.3.8
@@ -15998,6 +16013,15 @@ snapshots:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+
+  axios@1.9.0:
+    dependencies:
+      follow-redirects: 1.15.9
+      form-data: 4.0.2
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    optional: true
 
   axobject-query@4.1.0: {}
 
@@ -18117,9 +18141,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  isomorphic-ws@4.0.1(ws@8.18.1):
+  isomorphic-ws@4.0.1(ws@8.18.2):
     dependencies:
-      ws: 8.18.1
+      ws: 8.18.2
     optional: true
 
   isomorphic.js@0.2.5: {}
@@ -18349,7 +18373,7 @@ snapshots:
 
   lexical@0.30.0: {}
 
-  lib0@0.2.104:
+  lib0@0.2.107:
     dependencies:
       isomorphic.js: 0.2.5
 
@@ -18874,7 +18898,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-auth@4.24.11(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  next-auth@4.24.11(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@7.0.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@babel/runtime': 7.27.0
       '@panva/hkdf': 1.2.1
@@ -18889,7 +18913,7 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
       uuid: 8.3.2
     optionalDependencies:
-      nodemailer: 6.10.0
+      nodemailer: 7.0.2
 
   next-safe-action@7.10.5(next@15.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(zod@3.24.1):
     dependencies:
@@ -18999,7 +19023,7 @@ snapshots:
 
   node-releases@2.0.19: {}
 
-  nodemailer@6.10.0: {}
+  nodemailer@7.0.2: {}
 
   nopt@5.0.0:
     dependencies:
@@ -21503,6 +21527,9 @@ snapshots:
 
   ws@8.18.1: {}
 
+  ws@8.18.2:
+    optional: true
+
   xlsx@0.18.5:
     dependencies:
       adler-32: 1.3.1
@@ -21592,7 +21619,7 @@ snapshots:
 
   yjs@13.6.26:
     dependencies:
-      lib0: 0.2.104
+      lib0: 0.2.107
 
   yn@3.1.1: {}
 
