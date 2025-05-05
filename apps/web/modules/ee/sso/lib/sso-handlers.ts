@@ -122,13 +122,12 @@ export const handleSsoCallback = async ({
     // Get multi-org license status
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-    // Reject if auto-provisioning on SSO is disabled and no callback URL(invite link) and no multi-org enabled
-    if (!SKIP_INVITE_FOR_SSO && !callbackUrl && !isMultiOrgEnabled) {
-      return false;
-    }
-
     // Additional security checks for self-hosted instances without auto-provisioning and no multi-org enabled
     if (!SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
+      if (!callbackUrl) {
+        return false;
+      }
+
       try {
         // Parse and validate the callback URL
         const isValidCallbackUrl = new URL(callbackUrl);
@@ -173,8 +172,7 @@ export const handleSsoCallback = async ({
       }
 
       const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
-      if (!canDoRoleManagement) return false;
+      if (!canDoRoleManagement && !callbackUrl) return false;
     }
 
     const userProfile = await createUser({
