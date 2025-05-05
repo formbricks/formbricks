@@ -138,7 +138,7 @@
     "uuid": "11.1.0",
     "webpack": "5.99.7",
     "xlsx": "0.18.5",
-    "zod": "3.24.1",
+    "zod": "3.24.4",
     "zod-openapi": "4.2.4"
   },
   "devDependencies": {
