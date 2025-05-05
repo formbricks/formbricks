@@ -1,7 +1,7 @@
 FROM node:22-alpine3.21 AS base
 
 # Install git and other build dependencies needed for all steps
-RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3
+RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3 python3-dev
 
 # Create directory for our custom packages
 WORKDIR /custom-packages
@@ -12,7 +12,7 @@ WORKDIR /custom-packages/libxml2
 RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
     git checkout v2.14.1 && \
     ./autogen.sh --prefix=/usr && \
-    ./configure --prefix=/usr --without-python && \
+    PYTHON_CFLAGS="-I/usr/include/python3.12" PYTHON_LIBS="-lpython3.12" ./configure --prefix=/usr --with-python=no && \
     make -j$(nproc) && \
     make install DESTDIR=/built-libs
 
