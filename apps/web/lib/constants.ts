@@ -30,12 +30,11 @@ export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
-export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? true : false;
-export const GITHUB_OAUTH_ENABLED = env.GITHUB_ID && env.GITHUB_SECRET ? true : false;
-export const AZURE_OAUTH_ENABLED = env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET ? true : false;
-export const OIDC_OAUTH_ENABLED =
-  env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
-export const SAML_OAUTH_ENABLED = env.SAML_DATABASE_URL ? true : false;
+export const GOOGLE_OAUTH_ENABLED = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+export const GITHUB_OAUTH_ENABLED = !!(env.GITHUB_ID && env.GITHUB_SECRET);
+export const AZURE_OAUTH_ENABLED = !!(env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET);
+export const OIDC_OAUTH_ENABLED = !!(env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER);
+export const SAML_OAUTH_ENABLED = !!env.SAML_DATABASE_URL;
 export const SAML_XML_DIR = "./saml-connection";
 
 export const GITHUB_ID = env.GITHUB_ID;
