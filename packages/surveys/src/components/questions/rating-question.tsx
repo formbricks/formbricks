@@ -353,6 +353,7 @@ export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSm
   let iconsIdx: number[] = [];
   if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
+  else if (range === 6) iconsIdx = [0, 2, 4, 5, 7, 9];
   else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
   else if (range === 4) iconsIdx = [4, 5, 6, 7];
   else if (range === 3) iconsIdx = [4, 5, 7];

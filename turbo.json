@@ -90,15 +90,6 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "AI_AZURE_EMBEDDINGS_API_KEY",
-        "AI_AZURE_LLM_API_KEY",
-        "AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID",
-        "AI_AZURE_EMBEDDINGS_RESSOURCE_NAME",
-        "AI_AZURE_LLM_DEPLOYMENT_ID",
-        "AI_AZURE_LLM_RESSOURCE_NAME",
-        "LANGFUSE_SECRET_KEY",
-        "LANGFUSE_PUBLIC_KEY",
-        "LANGFUSE_BASEURL",
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",
@@ -196,6 +187,8 @@
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
+        "RECAPTCHA_SITE_KEY",
+        "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -205,7 +198,8 @@
         "UNSPLASH_ACCESS_KEY",
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
-        "PROMETHEUS_EXPORTER_PORT"
+        "PROMETHEUS_EXPORTER_PORT",
+        "DISABLE_USER_MANAGEMENT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

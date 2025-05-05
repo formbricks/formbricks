@@ -171,7 +171,6 @@ describe("SummaryPage", () => {
     surveyId: "survey-123",
     webAppUrl: "https://app.example.com",
     totalResponseCount: 50,
-    isAIEnabled: true,
     locale,
     isReadOnly: false,
   };

@@ -17,6 +17,7 @@ interface MembersViewProps {
   currentUserId: string;
   environmentId: string;
   canDoRoleManagement: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 const MembersLoading = () => (
@@ -35,6 +36,7 @@ export const MembersView = async ({
   currentUserId,
   environmentId,
   canDoRoleManagement,
+  isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
   const t = await getTranslate();
 
@@ -68,6 +70,7 @@ export const MembersView = async ({
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
+          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
         />
       )}
 
@@ -78,6 +81,7 @@ export const MembersView = async ({
             organization={organization}
             currentUserId={currentUserId}
             role={membershipRole}
+            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           />
         </Suspense>
       )}
