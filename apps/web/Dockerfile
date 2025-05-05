@@ -1,5 +1,8 @@
 FROM node:22-alpine3.21 AS base
 
+# Install git and other build dependencies needed for all steps
+RUN apk update && apk add --no-cache git autoconf automake libtool pkgconfig make gcc g++ python3
+
 # Create directory for our custom packages
 WORKDIR /custom-packages
 RUN mkdir -p /built-libs/bin /built-libs/lib /built-libs/include
@@ -22,7 +25,6 @@ RUN tar -xf lcms2.17.tar.gz && \
     make -j$(nproc) && \
     make install DESTDIR=/built-libs
 
-
 # 4. Build libarchive 3.7.9
 WORKDIR /custom-packages/libarchive
 ADD https://github.com/libarchive/libarchive/releases/download/v3.7.9/libarchive-3.7.9.tar.gz libarchive-3.7.9.tar.gz
@@ -43,7 +45,7 @@ RUN tar -xf sqlite-autoconf-3490100.tar.gz && \
 
 # 6. Build v8 12.9.66680202-pgo
 WORKDIR /custom-packages/v8
-RUN apk add --no-cache git python3 ninja && \
+RUN apk add --no-cache ninja && \
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git && \
     export PATH="$PWD/depot_tools:$PATH" && \
     fetch v8 && \
