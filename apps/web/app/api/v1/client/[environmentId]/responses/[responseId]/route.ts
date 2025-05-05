@@ -1,7 +1,8 @@
+import { validateOtherOptionLengthForMultipleChoice } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { updateResponse } from "@/lib/response/service";
+import { getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -34,10 +35,9 @@ export const PUT = async (
     );
   }
 
-  // update response
   let response;
   try {
-    response = await updateResponse(responseId, inputValidation.data);
+    response = await getResponse(responseId);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       return responses.notFoundResponse("Response", responseId, true);
@@ -71,23 +71,60 @@ export const PUT = async (
     }
   }
 
+  // Validate response data for "other" options exceeding character limit
+  const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+    responseData: response.data,
+    survey,
+    responseLanguage: response.language ?? undefined,
+  });
+
+  if (otherResponseInvalidQuestionId) {
+    return responses.badRequestResponse(
+      `Response exceeds character limit`,
+      {
+        questionId: otherResponseInvalidQuestionId,
+      },
+      true
+    );
+  }
+
+  // update response
+  let updatedResponse;
+  try {
+    updatedResponse = await updateResponse(responseId, inputValidation.data);
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse("Response", responseId, true);
+    }
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      logger.error(
+        { error, url: request.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
+      return responses.internalServerErrorResponse(error.message);
+    }
+  }
+
   // send response update to pipeline
   // don't await to not block the response
   sendToPipeline({
     event: "responseUpdated",
     environmentId: survey.environmentId,
     surveyId: survey.id,
-    response,
+    response: updatedResponse,
   });
 
-  if (response.finished) {
+  if (updatedResponse.finished) {
     // send response to pipeline
     // don't await to not block the response
     sendToPipeline({
       event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: survey.id,
-      response: response,
+      response: updatedResponse,
     });
   }
   return responses.successResponse({}, true);

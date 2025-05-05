@@ -1,4 +1,4 @@
-import { validateOtherOptionLength } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
+import { validateOtherOptionLengthForMultipleChoice } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -11,7 +11,6 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { createResponse } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
@@ -90,39 +89,20 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   // Validate response data for "other" options exceeding character limit
-  for (const questionId of Object.keys(responseInputData.data)) {
-    const question = survey.questions.find((q) => q.id === questionId);
-    if (
-      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-      question?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-    ) {
-      const answer = responseInputData.data[questionId];
+  const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+    responseData: responseInputData.data,
+    survey,
+    responseLanguage: responseInputData.language,
+  });
 
-      // Handle single choice responses
-      if (typeof answer === "string") {
-        const validationResult = validateOtherOptionLength(
-          answer,
-          question.choices,
-          questionId,
-          responseInputData.language
-        );
-        if (validationResult) return validationResult;
-      }
-      // Handle multi-select responses
-      else if (Array.isArray(answer)) {
-        for (const item of answer) {
-          if (typeof item === "string") {
-            const validationResult = validateOtherOptionLength(
-              item,
-              question.choices,
-              questionId,
-              responseInputData.language
-            );
-            if (validationResult) return validationResult;
-          }
-        }
-      }
-    }
+  if (otherResponseInvalidQuestionId) {
+    return responses.badRequestResponse(
+      `Response exceeds character limit`,
+      {
+        questionId: otherResponseInvalidQuestionId,
+      },
+      true
+    );
   }
 
   let response: TResponse;
