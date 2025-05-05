@@ -287,11 +287,11 @@ importers:
         specifier: 2.10.2
         version: 2.10.2(jiti@2.4.2)(typescript@5.8.3)
       '@tolgee/format-icu':
-        specifier: 6.2.5
-        version: 6.2.5
+        specifier: 6.2.4
+        version: 6.2.4
       '@tolgee/react':
-        specifier: 6.2.5
-        version: 6.2.5(react@19.1.0)
+        specifier: 6.2.4
+        version: 6.2.4(react@19.1.0)
       '@ungap/structured-clone':
         specifier: 1.3.0
         version: 1.3.0
@@ -4090,19 +4090,19 @@ packages:
       jiti:
         optional: true
 
-  '@tolgee/core@6.2.5':
-    resolution: {integrity: sha512-9+B73ig2k7RkR1379SosJCTsneUs/kAL0efOjVfw+pyegm1cpX6gUTDJXvcSpHHbYRDkv1kvCCi5JDnHHP7Wjw==}
+  '@tolgee/core@6.2.4':
+    resolution: {integrity: sha512-k9s2SOSNSFkT9VISeuh9ZtBvSO0hiSzXu3jdgRmgM6JcWQonfdynprdNWPkPO75WtjaXcGRb9NFb7+mD7cHiaQ==}
 
-  '@tolgee/format-icu@6.2.5':
-    resolution: {integrity: sha512-VDM1WwudISeYmNu/Sdu9JWbE5X+lpEXJi5yocro1Rf45zbO7sYOMqgNBGrCu031NDUppmQFiH9pY4Q55n9csng==}
+  '@tolgee/format-icu@6.2.4':
+    resolution: {integrity: sha512-i+JjvhpxGwdejONjWswu/b2gyVWwjyy5YZ1tFK+dWpleC6Bp4otphVPilQscHYEVU9jDc3MKVo8ks7sTQsDfJg==}
 
-  '@tolgee/react@6.2.5':
-    resolution: {integrity: sha512-m4COuw4w0CeShH668hnnf1caOkVUQHOAKY7bZCagqiU0S1ZNqoQP6guxlQMRsS/mAmxQS6qxB7FMf2s6jreRHQ==}
+  '@tolgee/react@6.2.4':
+    resolution: {integrity: sha512-6iigshkDzz9NYjcW4rGHyodZZWTFxkV/9UCLPIWjjxmOSj5vjlg7WPltBqAfvzkc1uXnY96xGiT7KbpfNmOQFg==}
     peerDependencies:
       react: ^16.14.0 || ^17.0.1 || ^18.1.0 || ^19
 
-  '@tolgee/web@6.2.5':
-    resolution: {integrity: sha512-cWa/JbsWZfshN2UKvvCzubm2Gnkdm+GZQN4oUzSRrpjpcUrVDlVU9MCQjowq1vuE+ivUmcbAQ8Z4Q3Kg3+UUIQ==}
+  '@tolgee/web@6.2.4':
+    resolution: {integrity: sha512-uDHawHxN76VovJ1lUD6exaUUwgOQDWUpFYF2hQiChg4+OpHnUHbxXyH/MOYllDq5Vab9VWkZPYIqzq7lMnncHg==}
 
   '@tootallnate/once@1.1.2':
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
@@ -14455,18 +14455,18 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@tolgee/core@6.2.5': {}
+  '@tolgee/core@6.2.4': {}
 
-  '@tolgee/format-icu@6.2.5': {}
+  '@tolgee/format-icu@6.2.4': {}
 
-  '@tolgee/react@6.2.5(react@19.1.0)':
+  '@tolgee/react@6.2.4(react@19.1.0)':
     dependencies:
-      '@tolgee/web': 6.2.5
+      '@tolgee/web': 6.2.4
       react: 19.1.0
 
-  '@tolgee/web@6.2.5':
+  '@tolgee/web@6.2.4':
     dependencies:
-      '@tolgee/core': 6.2.5
+      '@tolgee/core': 6.2.4
 
   '@tootallnate/once@1.1.2':
     optional: true
