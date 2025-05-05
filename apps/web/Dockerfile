@@ -12,7 +12,7 @@ WORKDIR /custom-packages/libxml2
 RUN git clone https://gitlab.gnome.org/GNOME/libxml2.git . && \
     git checkout v2.14.1 && \
     ./autogen.sh --prefix=/usr && \
-    ./configure --prefix=/usr && \
+    ./configure --prefix=/usr --without-python && \
     make -j$(nproc) && \
     make install DESTDIR=/built-libs
 
