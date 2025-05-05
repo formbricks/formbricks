@@ -50,6 +50,7 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
+        "app/api/v2/client/**/responses/lib/utils.ts",
         "app/intercom/*.tsx",
         "app/sentry/*.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ConsentSummary.tsx",

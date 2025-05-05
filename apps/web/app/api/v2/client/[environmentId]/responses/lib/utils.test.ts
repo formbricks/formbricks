@@ -9,6 +9,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
+vi.mock("@/lib/i18n/utils", () => ({
+  getLocalizedValue: vi.fn().mockImplementation((value, language) => {
+    return typeof value === "string" ? value : value[language] || value["default"] || "";
+  }),
+}));
+
 vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/recaptcha", () => ({
   verifyRecaptchaToken: vi.fn(),
 }));
