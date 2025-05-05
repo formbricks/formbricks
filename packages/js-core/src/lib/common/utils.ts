@@ -184,7 +184,7 @@ export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: stri
 };
 
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boolean => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
+  const randomNum = Math.floor(Math.random() * 10000) / 100; // NOSONAR typescript:S2245 // Math.random() is not used in a security context
   return randomNum <= displayPercentage;
 };
 
