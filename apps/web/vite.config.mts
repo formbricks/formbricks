@@ -137,12 +137,26 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "**/types/**", // Exclude types
-        "modules/**/types/**", // Exclude types
         "**/types.ts", // Exclude types
         "**/actions.ts",
         "**/action.ts",
-        "**/stories.tsx", // Exclude story files
         "**/*.mock.*",
+        "**/*.json",
+        "**/*.test.*",
+        "**/*.mdx",
+        "**/*.config.mts",
+        "**/*.config.ts",
+        "**/stories.*",
+        "**/mocks/**",
+        "**/__mocks__/**",
+        "**/instrumentation.ts",
+        "scripts/merge-client-endpoints.ts",
+        "**/playwright/**",
+        "**/Dockerfile",
+        "**/*.config.cjs",
+        "**/*.css",
+        "**/templates.ts",
+        "apps/web/modules/ui/components/icons/*"
       ],
     },
   },
