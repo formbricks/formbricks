@@ -91,7 +91,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
-        'modules/survey/list/lib/project.ts',
+        "modules/survey/list/lib/project.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -141,7 +141,12 @@ export default defineConfig({
         "**/types/**", // Exclude types
         "modules/**/types/**", // Exclude types
         "**/actions.ts", // Exclude action files
-        "**/stories.tsx" // Exclude story files
+        "**/stories.tsx", // Exclude story files
+        "vitestSetup.ts", // Exclude Vitest setup file
+        "tailwind.config.js", // Exclude Tailwind CSS config file
+        "postcss.config.js", // Exclude PostCSS config file
+        "next.config.mjs", // Exclude Next.js config file
+        "scripts/**", // Exclude scripts folder (development scripts)
       ],
     },
   },

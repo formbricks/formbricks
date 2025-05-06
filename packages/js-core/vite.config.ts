@@ -44,7 +44,7 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "./coverage",
       include: ["src/lib/**/*.ts"],
-      exclude: ["src/lib/**/*.mock.ts"],
+      exclude: ["src/lib/**/*.mock.ts", "vitest.setup.ts"],
     },
   },
 });
