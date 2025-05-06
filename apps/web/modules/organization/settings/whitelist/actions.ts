@@ -99,15 +99,13 @@ export const removeUserFromWhitelistAction = authenticatedActionClient
 const ZGetNonWhitelistedUsersAction = z.object({
   take: z.number(),
   skip: z.number(),
-  searchQuery: z.string().optional(),
+  query: z.string().optional(),
   organizationId: ZId,
 });
 
 export const getNonWhitelistedUsersAction = authenticatedActionClient
   .schema(ZGetNonWhitelistedUsersAction)
-  .action(async ({}) => {
-    //parsedInput, ctx
-
+  .action(async ({ parsedInput, ctx }) => {
     // Verify user is an owner or manager
     // const currentUserMembership = await getMembershipByUserIdOrganizationId(
     //   ctx.user.id,
@@ -128,7 +126,7 @@ export const getNonWhitelistedUsersAction = authenticatedActionClient
     //   ],
     // });
 
-    const nonWhitelistedUsers = await getNonWhitelistedUsers();
+    const nonWhitelistedUsers = await getNonWhitelistedUsers({ query: parsedInput.query });
 
     return nonWhitelistedUsers;
   });
@@ -136,7 +134,7 @@ export const getNonWhitelistedUsersAction = authenticatedActionClient
 const ZGetWhitelistedUsersAction = z.object({
   take: z.number(),
   skip: z.number(),
-  searchQuery: z.string().optional(),
+  query: z.string().optional(),
   organizationId: ZId,
 });
 

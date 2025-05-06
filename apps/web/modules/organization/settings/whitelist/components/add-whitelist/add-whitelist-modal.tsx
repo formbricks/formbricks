@@ -1,12 +1,12 @@
 "use client";
 
-import { IndividualAddTab } from "@/modules/organization/settings/whitelist/components/add-whitelist/individual-add-tab";
+import { IndividualAddToWhitelistTab } from "@/modules/organization/settings/whitelist/components/add-whitelist/individual-add-to-whitelist-tab";
 import { Modal } from "@/modules/ui/components/modal";
-import { TabToggle } from "@/modules/ui/components/tab-toggle";
+// import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { H4, Muted } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useState } from "react";
+// import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
@@ -27,21 +27,21 @@ export const AddWhitelistModal = ({
   membershipRole,
   organizationId,
 }: AddWhitelistModalProps) => {
-  const [type, setType] = useState<"individual">("individual");
+  // const [type, setType] = useState<"individual">("individual");
 
   const { t } = useTranslate();
 
-  const tabs = {
-    individual: (
-      <IndividualAddTab
-        setOpen={setOpen}
-        environmentId={environmentId}
-        onSubmit={onSubmit}
-        membershipRole={membershipRole}
-        organizationId={organizationId}
-      />
-    ),
-  };
+  // const tabs = {
+  //   individual: (
+  //     <IndividualAddToWhitelistTab
+  //       setOpen={setOpen}
+  //       environmentId={environmentId}
+  //       onSubmit={onSubmit}
+  //       membershipRole={membershipRole}
+  //       organizationId={organizationId}
+  //     />
+  //   ),
+  // };
 
   return (
     <Modal
@@ -77,13 +77,20 @@ export const AddWhitelistModal = ({
         </div>
       </div>
       <div className="flex flex-col gap-6 p-6">
-        <TabToggle
+        <IndividualAddToWhitelistTab
+          setOpen={setOpen}
+          environmentId={environmentId}
+          onSubmit={onSubmit}
+          membershipRole={membershipRole}
+          organizationId={organizationId}
+        />
+        {/* <TabToggle
           id="type"
           options={[{ value: "individual", label: t("environments.settings.teams.individual") }]}
           onChange={(inviteType) => setType(inviteType)}
           defaultSelected={type}
         />
-        {tabs[type]}
+        {tabs[type]} */}
       </div>
     </Modal>
   );

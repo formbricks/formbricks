@@ -1,6 +1,6 @@
 "use client";
 
-import NoTokensCTAButton from "@/modules/alchemy-wallet/components/common/no-tokens-cta-button";
+import NoTokensCTALink from "@/modules/alchemy-wallet/components/common/no-tokens-cta-link";
 import {
   FormControl,
   FormDescription,
@@ -171,8 +171,8 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
                             </div>
                           </SelectItem>
                         ))}
-                        <div className="my-1">
-                          <NoTokensCTAButton />
+                        <div className="w-full py-1 hover:bg-slate-100">
+                          <NoTokensCTALink className="w-full text-black" />
                         </div>
                       </SelectContent>
                     </Select>
