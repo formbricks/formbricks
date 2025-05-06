@@ -1,4 +1,6 @@
+import { validateFileUploads } from "@/lib/fileValidation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
@@ -7,6 +9,7 @@ import {
   getResponse,
   updateResponse,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
+import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
@@ -112,6 +115,47 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "PUT")) {
         return handleApiError(request, {
           type: "unauthorized",
+        });
+      }
+
+      const existingResponse = await getResponse(params.responseId);
+
+      if (!existingResponse.ok) {
+        return handleApiError(request, existingResponse.error);
+      }
+
+      const questionsResponse = await getSurveyQuestions(existingResponse.data.surveyId);
+
+      if (!questionsResponse.ok) {
+        return handleApiError(request, questionsResponse.error);
+      }
+
+      if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "response", issue: "Invalid file upload response" }],
+        });
+      }
+
+      // Validate response data for "other" options exceeding character limit
+      const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+        responseData: body.data,
+        surveyQuestions: questionsResponse.data.questions,
+        responseLanguage: body.language ?? undefined,
+      });
+
+      if (otherResponseInvalidQuestionId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [
+            {
+              field: "response",
+              issue: `Response for question ${otherResponseInvalidQuestionId} exceeds character limit`,
+              meta: {
+                questionId: otherResponseInvalidQuestionId,
+              },
+            },
+          ],
         });
       }
 

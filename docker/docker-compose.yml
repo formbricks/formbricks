@@ -78,10 +78,6 @@ x-environment: &environment
     # Set the below to your Survey Domain(default is WEBAPP_URL)
     # SURVEY_URL:
 
-    # Configure Formbricks usage within Formbricks.
-    # FORMBRICKS_API_HOST:
-    # FORMBRICKS_ENVIRONMENT_ID:
-
     # The SENTRY_DSN is used for error tracking and performance monitoring with Sentry.
     # SENTRY_DSN:
     # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
@@ -109,6 +105,10 @@ x-environment: &environment
     # Set the below from Cloudflare Turnstile if you want to enable turnstile in signups
     # TURNSTILE_SITE_KEY:
     # TURNSTILE_SECRET_KEY:
+
+    # Set the below keys to enable recaptcha V3 for survey responses bot protection(only available in the Enterprise Edition)
+    # RECAPTCHA_SITE_KEY=
+    # RECAPTCHA_SECRET_KEY=
 
     # Set the below from GitHub if you want to enable GitHub OAuth
     # GITHUB_ID:
@@ -182,11 +182,11 @@ x-environment: &environment
 
     ############################################# OPTIONAL (OTHER) #############################################
 
-    # Set the below to automatically assign new users to a specific organization and role within that organization
-    # Insert an existing organization id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
+    # signup is disabled by default for self-hosted instances, users can only signup using an invite link, in order to allow signup from SSO(without invite), set the below to 1
+    # AUTH_SKIP_INVITE_FOR_SSO=1
+    # Set the below to automatically assign new users to a specific team, insert an existing team id
     # (Role Management is an Enterprise feature)
-    # DEFAULT_ORGANIZATION_ID:
-    # DEFAULT_ORGANIZATION_ROLE: owner
+    # AUTH_SSO_DEFAULT_TEAM_ID=
 
     # Set the below to 1 to disable the user management UI
     # DISABLE_USER_MANAGEMENT: 0

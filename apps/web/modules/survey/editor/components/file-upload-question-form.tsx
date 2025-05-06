@@ -1,7 +1,6 @@
 "use client";
 
-import { extractLanguageCodes } from "@/lib/i18n/utils";
-import { createI18nString } from "@/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -24,7 +23,6 @@ interface FileUploadFormProps {
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
@@ -62,37 +60,39 @@ export const FileUploadQuestionForm = ({
     event.preventDefault();
     event.stopPropagation();
 
-    let modifiedExtension = extension.trim() as TAllowedFileExtension;
+    let rawExtension = extension.trim();
 
     // Remove the dot at the start if it exists
-    if (modifiedExtension.startsWith(".")) {
-      modifiedExtension = modifiedExtension.substring(1) as TAllowedFileExtension;
+    if (rawExtension.startsWith(".")) {
+      rawExtension = rawExtension.substring(1);
     }
 
-    if (!modifiedExtension) {
+    if (!rawExtension) {
       toast.error(t("environments.surveys.edit.please_enter_a_file_extension"));
       return;
     }
 
+    // Convert to lowercase before validation and adding
+    const modifiedExtension = rawExtension.toLowerCase() as TAllowedFileExtension;
+
     const parsedExtensionResult = ZAllowedFileExtension.safeParse(modifiedExtension);
 
     if (!parsedExtensionResult.success) {
+      // This error should now be less likely unless the extension itself is invalid (e.g., "exe")
       toast.error(t("environments.surveys.edit.this_file_type_is_not_supported"));
       return;
     }
 
-    if (question.allowedFileExtensions) {
-      if (!question.allowedFileExtensions.includes(modifiedExtension as TAllowedFileExtension)) {
-        updateQuestion(questionIdx, {
-          allowedFileExtensions: [...question.allowedFileExtensions, modifiedExtension],
-        });
-        setExtension("");
-      } else {
-        toast.error(t("environments.surveys.edit.this_extension_is_already_added"));
-      }
+    const currentExtensions = question.allowedFileExtensions || [];
+
+    // Check if the lowercase extension already exists
+    if (!currentExtensions.includes(modifiedExtension)) {
+      updateQuestion(questionIdx, {
+        allowedFileExtensions: [...currentExtensions, modifiedExtension],
+      });
+      setExtension(""); // Clear the input field
     } else {
-      updateQuestion(questionIdx, { allowedFileExtensions: [modifiedExtension] });
-      setExtension("");
+      toast.error(t("environments.surveys.edit.this_extension_is_already_added"));
     }
   };
 
@@ -101,7 +101,10 @@ export const FileUploadQuestionForm = ({
     if (question.allowedFileExtensions) {
       const updatedExtensions = [...question?.allowedFileExtensions];
       updatedExtensions.splice(index, 1);
-      updateQuestion(questionIdx, { allowedFileExtensions: updatedExtensions });
+      // Ensure array is set to undefined if empty, matching toggle behavior
+      updateQuestion(questionIdx, {
+        allowedFileExtensions: updatedExtensions.length > 0 ? updatedExtensions : undefined,
+      });
     }
   };
 
@@ -246,18 +249,19 @@ export const FileUploadQuestionForm = ({
           customContainerClass="p-0">
           <div className="p-4">
             <div className="flex flex-row flex-wrap gap-2">
-              {question.allowedFileExtensions &&
-                question.allowedFileExtensions.map((item, index) => (
-                  <div className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
-                    <p className="text-sm text-slate-800">{item}</p>
-                    <Button
-                      className="inline-flex px-0"
-                      variant="ghost"
-                      onClick={(e) => removeExtension(e, index)}>
-                      <XCircleIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+              {question.allowedFileExtensions?.map((item, index) => (
+                <div
+                  key={item}
+                  className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
+                  <p className="text-sm text-slate-800">{item}</p>
+                  <Button
+                    className="inline-flex px-0"
+                    variant="ghost"
+                    onClick={(e) => removeExtension(e, index)}>
+                    <XCircleIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
             <div className="flex items-center">
               <Input
