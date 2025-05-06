@@ -121,7 +121,7 @@ const createInitialUser = async (
   });
 };
 
-const initEnvironment = async (): Promise<boolean> => {
+const initialUserSetup = async (): Promise<boolean> => {
   try {
     logger.info("Checking if initial environment setup is needed...");
     if (!validateEnvironmentVariables()) {
@@ -163,7 +163,7 @@ You can now log in with the credentials provided in the environment variables.
   }
 };
 
-initEnvironment()
+initialUserSetup()
   .then(() => {
     process.exit(0);
   })
