@@ -84,11 +84,11 @@ RUN apk add --no-cache curl \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
-RUN go version && \
-    # If multiple Go versions exist, ensure only 1.23.8+ remains
-    apk add --no-cache go>=1.23.8 && \
-    # Remove any older versions if they exist
-    find / -name 'go1.23.7' -type d -exec rm -rf {} +
+# In the runner stage
+RUN apk update && \
+    apk upgrade && \
+    # This explicitly removes old package versions
+    rm -rf /var/cache/apk/*
 
 WORKDIR /home/nextjs
 
