@@ -166,7 +166,7 @@ export const SurveyVariablesCardItem = ({
                       {...field}
                       isInvalid={isNameError}
                       placeholder={t("environments.surveys.edit.field_name_eg_score_price")}
-                      onBlur={() => form.handleSubmit(editSurveyVariable)()}
+                      onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}
                     />
                   </FormControl>
                 </FormItem>
@@ -178,22 +178,23 @@ export const SurveyVariablesCardItem = ({
               control={form.control}
               name="type"
               render={({ field }) => (
-                <Select
-                  {...field}
-                  onValueChange={(value) => {
-                    form.setValue("value", value === "number" ? 0 : "");
-                    field.onChange(value);
-                  }}
-                  // onBlur={() => form.handleSubmit(editSurveyVariable)()}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder={t("environments.surveys.edit.select_type")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="number">{t("common.number")}</SelectItem>
-                    <SelectItem value="text">{t("common.text")}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormItem
+                  onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}>
+                  <Select
+                    {...field}
+                    onValueChange={(value) => {
+                      form.setValue("value", value === "number" ? 0 : "");
+                      field.onChange(value);
+                    }}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder={t("environments.surveys.edit.select_type")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="number">{t("common.number")}</SelectItem>
+                      <SelectItem value="text">{t("common.text")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
               )}
             />
 
@@ -213,7 +214,7 @@ export const SurveyVariablesCardItem = ({
                       }
                       placeholder={t("environments.surveys.edit.initial_value")}
                       type={variableType === "number" ? "number" : "text"}
-                      onBlur={() => form.handleSubmit(editSurveyVariable)()}
+                      onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}
                     />
                   </FormControl>
                 </FormItem>
