@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { ZUserEmail, ZUserPassword } from "@formbricks/types/user";
 
 export const env = createEnv({
   /*
@@ -113,6 +114,10 @@ export const env = createEnv({
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     DISABLE_USER_MANAGEMENT: z.enum(["1", "0"]).optional(),
+    INITIAL_USER_EMAIL: ZUserEmail.optional(),
+    INITIAL_USER_PASSWORD: ZUserPassword.optional(),
+    INITIAL_ORGANIZATION_NAME: z.string().optional(),
+    INITIAL_PROJECT_NAME: z.string().optional(),
   },
 
   /*
@@ -212,5 +217,9 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     DISABLE_USER_MANAGEMENT: process.env.DISABLE_USER_MANAGEMENT,
+    INITIAL_USER_EMAIL: process.env.INITIAL_USER_EMAIL,
+    INITIAL_USER_PASSWORD: process.env.INITIAL_USER_PASSWORD,
+    INITIAL_ORGANIZATION_NAME: process.env.INITIAL_ORGANIZATION_NAME,
+    INITIAL_PROJECT_NAME: process.env.INITIAL_PROJECT_NAME,
   },
 });

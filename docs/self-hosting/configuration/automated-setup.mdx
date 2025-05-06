@@ -1,0 +1,85 @@
+---
+title: "Automated Setup"
+description: "Automatically create the first user and organization with environment variables"
+icon: "robot"
+---
+
+# Automated Setup
+
+When deploying Formbricks in production environments, it's often useful to automate the initial setup process. This guide explains how to use environment variables to automatically create the first user, organization, and project during startup.
+
+## Overview
+
+Formbricks supports automatic creation of the initial administrator user on first startup through environment variables. This is particularly useful for:
+
+- Automating deployments of multiple instances
+- Setting up Formbricks in Docker or Kubernetes environments
+- Integrating with infrastructure as code tools
+- Streamlining CI/CD pipelines
+
+## Configuration
+
+To enable automated setup, set the following environment variables before starting Formbricks:
+
+### Required Variables
+
+| Variable | Description | Example |
+| --- | --- | --- |
+| `INITIAL_USER_EMAIL` | The email address for the admin user | `admin@example.com` |
+| `INITIAL_USER_PASSWORD` | The password for the admin user | `your-secure-password` |
+
+### Optional Variables
+
+| Variable | Description | Default Value | Example |
+| --- | --- | --- | --- |
+| `INITIAL_ORGANIZATION_NAME` | The name of the initial organization | `My Organization` | `Acme Corp` |
+| `INITIAL_PROJECT_NAME` | The name of the initial project | *none* | `Customer Feedback` |
+
+## How It Works
+
+When Formbricks starts up, it checks if these environment variables are defined and if the database is empty (no users exist). If both conditions are met, it will:
+
+1. Create an administrator user with the provided email and password
+2. Create an organization with the provided or default name
+3. Create a project if `INITIAL_PROJECT_NAME` is provided
+4. Set up both development and production environments for the project
+
+After successful setup, you'll be able to log in with the provided credentials immediately.
+
+## Example Docker Compose Configuration
+
+Here's an example of how to configure these variables in a Docker Compose file:
+
+```yaml
+version: "3.3"
+services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    environment:
+      # Required environment variables
+      WEBAPP_URL: "https://formbricks.example.com"
+      NEXTAUTH_URL: "https://formbricks.example.com"
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+      NEXTAUTH_SECRET: "your-nextauth-secret"
+      ENCRYPTION_KEY: "your-encryption-key"
+      CRON_SECRET: "your-cron-secret"
+      
+      # Automated setup variables
+      INITIAL_USER_EMAIL: "admin@example.com"
+      INITIAL_USER_PASSWORD: "your-secure-password"
+      INITIAL_ORGANIZATION_NAME: "Acme Corp"
+      INITIAL_PROJECT_NAME: "Customer Feedback"
+```
+
+## Security Considerations
+
+- Use a strong, unique password for the admin user
+- Consider removing or changing the environment variables after the initial setup
+- In production environments, ensure these variables are securely managed and not exposed in logs or configuration files
+- Use Docker secrets or environment variable management systems in container orchestration platforms
+
+## Limitations
+
+- The automated setup only works if no users exist in the database
+- If the setup process is interrupted, you may need to manually clean up the database before retrying
+- The feature cannot be used to create additional users after the first user exists
