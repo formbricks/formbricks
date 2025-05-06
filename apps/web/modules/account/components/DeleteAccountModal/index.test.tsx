@@ -26,7 +26,6 @@ describe("DeleteAccountModal", () => {
   const mockOrgs: TOrganization[] = [{ name: "Org1" }, { name: "Org2" }] as TOrganization[];
 
   const mockSetOpen = vi.fn();
-  const mockLogout = vi.fn();
 
   afterEach(() => {
     cleanup();
@@ -40,7 +39,6 @@ describe("DeleteAccountModal", () => {
         user={mockUser}
         isFormbricksCloud={false}
         organizationsWithSingleOwner={mockOrgs}
-        formbricksLogout={mockLogout}
       />
     );
 
@@ -56,7 +54,6 @@ describe("DeleteAccountModal", () => {
         user={mockUser}
         isFormbricksCloud={false}
         organizationsWithSingleOwner={[]}
-        formbricksLogout={mockLogout}
       />
     );
 
@@ -78,7 +75,6 @@ describe("DeleteAccountModal", () => {
         user={mockUser}
         isFormbricksCloud={false}
         organizationsWithSingleOwner={[]}
-        formbricksLogout={mockLogout}
       />
     );
 
@@ -90,7 +86,6 @@ describe("DeleteAccountModal", () => {
 
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
-      expect(mockLogout).toHaveBeenCalled();
       expect(signOut).toHaveBeenCalledWith({ callbackUrl: "/auth/login" });
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
@@ -114,7 +109,6 @@ describe("DeleteAccountModal", () => {
         user={mockUser}
         isFormbricksCloud={true}
         organizationsWithSingleOwner={[]}
-        formbricksLogout={mockLogout}
       />
     );
 
@@ -126,7 +120,6 @@ describe("DeleteAccountModal", () => {
 
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
-      expect(mockLogout).toHaveBeenCalled();
       expect(signOut).toHaveBeenCalledWith({ redirect: true });
       expect(window.location.replace).toHaveBeenCalled();
       expect(mockSetOpen).toHaveBeenCalledWith(false);
@@ -143,7 +136,6 @@ describe("DeleteAccountModal", () => {
         user={mockUser}
         isFormbricksCloud={false}
         organizationsWithSingleOwner={[]}
-        formbricksLogout={mockLogout}
       />
     );
 

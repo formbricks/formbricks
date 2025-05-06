@@ -365,7 +365,7 @@ export const AddApiKeyModal = ({
 
                     {Object.keys(selectedOrganizationAccess).map((key) => (
                       <Fragment key={key}>
-                        <div className="py-1 text-sm">{t(getOrganizationAccessKeyDisplayName(key))}</div>
+                        <div className="py-1 text-sm">{getOrganizationAccessKeyDisplayName(key, t)}</div>
                         <div className="flex items-center justify-center py-1">
                           <Switch
                             data-testid={`organization-access-${key}-read`}
