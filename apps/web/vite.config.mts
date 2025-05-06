@@ -15,155 +15,36 @@ export default defineConfig({
       provider: "v8", // Use V8 as the coverage provider
       reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
-      include: [
-        "modules/api/v2/**/*.ts",
-        "modules/api/v2/**/*.tsx",
-        "modules/auth/lib/**/*.ts",
-        "modules/auth/signup/components/signup-form.tsx",
-        "modules/auth/signup/page.tsx",
-        "modules/signup/lib/**/*.ts",
-        "modules/auth/signup/lib/**/*.ts",
-        "modules/auth/signup/**/*.tsx",
-        "modules/ee/whitelabel/email-customization/components/*.tsx",
-        "modules/ee/sso/lib/**/*.ts",
-        "modules/email/components/email-template.tsx",
-        "modules/email/emails/survey/follow-up.tsx",
-        "modules/email/emails/lib/*.tsx",
-        "modules/environments/lib/**/*.ts",
-        "modules/ui/components/post-hog-client/*.tsx",
-        "modules/ee/role-management/components/*.tsx",
-        "modules/ee/role-management/actions.ts",
-        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
-        "modules/ui/components/alert/*.tsx",
-        "modules/ui/components/environmentId-base-layout/*.tsx",
-        "modules/ui/components/survey/recaptcha.ts",
-        "modules/ui/components/progress-bar/index.tsx",
-        "app/(app)/environments/**/layout.tsx",
-        "app/(app)/environments/**/settings/(organization)/general/page.tsx",
-        "app/(app)/environments/**/components/PosthogIdentify.tsx",
-        "app/(app)/(onboarding)/organizations/**/layout.tsx",
-        "app/(app)/(survey-editor)/environments/**/layout.tsx",
-        "app/(auth)/layout.tsx",
-        "app/(app)/layout.tsx",
-        "app/layout.tsx",
-        "app/api/v2/client/**/responses/lib/utils.ts",
-        "app/intercom/*.tsx",
-        "app/sentry/*.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ConsentSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/MatrixQuestionSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/MultipleChoiceSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/NPSSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/PictureChoiceSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/RatingSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryMetadata.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/FileUploadSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/AddressSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/CalSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/ContactInfoSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/CTASummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/DateQuestionSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryDropOffs.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SummaryPage.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/RankingSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/OpenTextSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/HiddenFieldsSummary.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/QuestionSummaryHeader.tsx",
-        "app/(app)/environments/**/surveys/**/components/QuestionFilterComboBox.tsx",
-        "app/(app)/environments/**/surveys/**/components/QuestionsComboBox.tsx",
-        "app/(app)/environments/**/integrations/airtable/components/ManageIntegration.tsx",
-        "app/(app)/environments/**/integrations/google-sheets/components/ManageIntegration.tsx",
-        "apps/web/app/(app)/environments/**/integrations/notion/components/ManageIntegration.tsx",
-        "app/(app)/environments/**/integrations/slack/components/ManageIntegration.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/responses/components/ResponseTableCell.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
-        "modules/ee/sso/lib/**/*.ts",
-        "modules/ee/sso/lib/organization.ts",
-        "app/lib/**/*.ts",
-        "modules/ee/license-check/lib/utils.ts",
-        "modules/ee/role-management/*.ts",
-        "modules/organization/settings/teams/actions.ts",
-        "modules/organization/settings/api-keys/lib/**/*.ts",
-        "app/api/**/*.ts",
-        "modules/api/v2/management/auth/*.ts",
-        "modules/organization/settings/api-keys/components/*.tsx",
-        "modules/survey/hooks/*.tsx",
-        "modules/survey/components/question-form-input/index.tsx",
-        "modules/survey/components/template-list/components/template-tags.tsx",
-        "modules/survey/lib/client-utils.ts",
-        "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
-        "modules/survey/list/lib/project.ts",
-        "modules/survey/list/components/survey-card.tsx",
-        "modules/survey/list/components/survey-dropdown-menu.tsx",
-        "modules/auth/signup/**/*.ts",
-        "modules/survey/follow-ups/components/follow-up-item.tsx",
-        "modules/ee/contacts/segments/*",
-        "modules/survey/editor/lib/utils.tsx",
-        "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
-        "modules/ee/sso/components/**/*.tsx",
-        "modules/ee/sso/lib/team.ts",
-        "app/global-error.tsx",
-        "app/error.tsx",
-        "modules/survey/lib/permission.ts",
-        "modules/account/**/*.tsx",
-        "modules/account/**/*.ts",
-        "modules/analysis/**/*.tsx",
-        "modules/analysis/**/*.ts",
-        "app/lib/survey-builder.ts",
-        "lib/utils/billing.ts",
-        "modules/survey/list/components/copy-survey-form.tsx",
-        "lib/crypto.ts",
-        "lib/surveyLogic/utils.ts",
-        "lib/utils/billing.ts",
-        "modules/ui/components/card/index.tsx",
-        "modules/survey/editor/components/*.tsx",
-        "lib/fileValidation.ts",
-        "modules/survey/editor/components/add-action-modal.tsx",
-        "modules/survey/editor/components/add-ending-card-button.tsx",
-        "modules/survey/editor/components/add-question-button.tsx",
-        "modules/survey/editor/components/advanced-settings.tsx",
-        "modules/survey/editor/components/color-survey-bg.tsx",
-        "modules/survey/editor/components/date-question-form.tsx",
-        "modules/survey/editor/components/file-upload-question-form.tsx",
-        "modules/survey/editor/components/how-to-send-card.tsx",
-        "modules/survey/editor/components/image-survey-bg.tsx",
-        "modules/ee/teams/**/*.ts",
-        "modules/ee/teams/**/*.tsx",
-        "app/(app)/environments/**/*.tsx",
-        "app/(app)/environments/**/*.ts",
-      ],
+      include: ["app/**/*.{ts,tsx}", "modules/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
       exclude: [
-        "**/.next/**",
-        "**/*.spec.*", // Excludes .spec files from coverage
-        "**/*.test.*", // Exclude .test files from coverage
-        "**/constants.ts", // Exclude constants files
-        "**/route.ts", // Exclude route files
-        "**/openapi.ts", // Exclude openapi configuration files
-        "**/openapi-document.ts", // Exclude openapi document files
-        "**/types/**", // Exclude types
-        "**/types.ts", // Exclude types
-        "**/actions.ts",
-        "**/action.ts",
-        "**/*.mock.*",
-        "**/*.json",
-        "**/*.test.*",
-        "**/*.mdx",
-        "**/*.config.mts",
-        "**/*.config.ts",
-        "**/stories.*",
-        "**/mocks/**",
-        "**/__mocks__/**",
-        "**/instrumentation.ts",
-        "**/playwright/**",
-        "**/Dockerfile",
-        "**/*.config.cjs",
-        "**/*.css",
-        "**/templates.ts",
-        "apps/web/modules/ui/components/icons/*",
-        "vitestSetup.ts", // Exclude Vitest setup file
-        "tailwind.config.js", // Exclude Tailwind CSS config file
-        "postcss.config.js", // Exclude PostCSS config file
-        "next.config.mjs", // Exclude Next.js config file
-        "scripts/**", // Exclude scripts folder (development scripts)
+        "**/.next/**", // Next.js build output
+        "**/*.spec.*", // Test files
+        "**/*.test.*", // Test files
+        "**/*.mock.*", // Mock files
+        "**/mocks/**", // Mock directories
+        "**/__mocks__/**", // Jest-style mock directories
+        "**/constants.ts", // Constants files
+        "**/route.ts", // Next.js API routes
+        "**/openapi.ts", // OpenAPI spec files
+        "**/openapi-document.ts", // OpenAPI-related document files
+        "**/types/**", // Type definition folders
+        "modules/**/types/**", // Specific type folders within modules
+        "**/types.ts", // Files named 'types.ts'
+        "**/actions.ts", // Server actions (plural)
+        "**/action.ts", // Server actions (singular)
+        "**/stories.*", // Storybook files (e.g., .stories.tsx)
+        "**/*.config.{js,ts,mjs,mts,cjs}", // All configuration files
+        "**/middleware.ts", // Next.js middleware
+        "**/instrumentation.ts", // Next.js instrumentation files
+        "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
+        "**/vitestSetup.ts", // Vitest setup files
+        "**/*.json", // JSON files
+        "**/*.mdx", // MDX files
+        "**/playwright/**", // Playwright E2E test files
+        "**/Dockerfile", // Dockerfiles
+        "**/*.css", // CSS files
+        "**/templates.ts", // Project-specific template files
+        "scripts/**", // Utility scripts
       ],
     },
   },
