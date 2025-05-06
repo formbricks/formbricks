@@ -51,7 +51,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     const loadScript = async () => {
       if (!window.formbricksSurveys) {
         try {
-          if (props.isSpamProtectionEnabled) {
+          if (props.isSpamProtectionEnabled && props.recaptchaSiteKey) {
             await loadRecaptchaScript(props.recaptchaSiteKey);
           }
           await loadSurveyScript();
