@@ -67,9 +67,9 @@ export const AddWhitelistModal = ({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div>
-                <H4>Whitelist users for survey deployment</H4>
+                <H4>{t("environments.settings.whitelist.whitelist_users_for_survey_deployment")}</H4>
                 <Muted className="text-slate-500">
-                  Add users to the whitelist to show their surveys globally
+                  {t("environments.settings.add_users_to_the_whitelist_to_show_their_surveys_globally")}
                 </Muted>
               </div>
             </div>

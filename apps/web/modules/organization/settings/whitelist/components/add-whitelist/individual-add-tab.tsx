@@ -24,9 +24,6 @@ interface IndividualAddTabProps {
 export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: IndividualAddTabProps) => {
   const [nonWhitelistedUsers, setNonWhitelistedUsers] = useState<TUserWhitelistInfo[]>([]);
   const ZFormSchema = z.object({
-    // name: ZUserName,
-    // email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
-    // role: ZOrganizationRole,
     email: z.string(),
   });
 
@@ -38,12 +35,10 @@ export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: Individua
   });
 
   const {
-    // register,
     getValues,
     handleSubmit,
     setValue,
     reset,
-    // watch,
     formState: { isSubmitting }, //, errors
   } = form;
 
@@ -79,11 +74,7 @@ export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: Individua
             name="email"
             control={form.control}
             rules={{
-              required: t("environments.wallet.form.error.address_required"),
-              pattern: {
-                value: /^0x[a-fA-F0-9]{40}$/,
-                message: t("environments.wallet.form.error.invalid_eth_address"),
-              },
+              required: t("environments.whitelist.form.error.email_required"),
             }}
             render={({ field }) => (
               <InputCombobox

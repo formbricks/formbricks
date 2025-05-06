@@ -15,8 +15,6 @@ interface WhitelistInfoProps {
 }
 
 export const WhitelistInfo = ({ organization, currentUserRole, whitelistedUsers }: WhitelistInfoProps) => {
-  // const { t } = useTranslate();
-
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
 

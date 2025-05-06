@@ -9,7 +9,7 @@ export const WhitelistPage = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, organization, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
+  const { organization, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
 
   return (
     <PageContentWrapper>
@@ -19,7 +19,6 @@ export const WhitelistPage = async (props) => {
       <WhitelistView
         membershipRole={currentUserMembership.role}
         organization={organization}
-        currentUserId={session.user.id}
         environmentId={params.environmentId}
       />
     </PageContentWrapper>

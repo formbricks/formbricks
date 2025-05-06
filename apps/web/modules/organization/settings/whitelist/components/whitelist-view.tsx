@@ -1,17 +1,15 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import { EditWhitelist } from "@/modules/organization/settings/whitelist/components/edit-whitelist/edit-whitelist";
 import { OrganizationWhitelistActions } from "@/modules/organization/settings/whitelist/components/edit-whitelist/organization-whitelist-actions";
 import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { WHITELIST_DISABLED } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface WhitelistViewProps {
   membershipRole: TOrganizationRole;
   organization: TOrganization;
-  currentUserId: string;
   environmentId: string;
 }
 
@@ -25,18 +23,8 @@ const WhitelistLoading = () => (
   </div>
 );
 
-export const WhitelistView = async ({
-  membershipRole,
-  organization,
-  currentUserId,
-  environmentId,
-}: WhitelistViewProps) => {
+export const WhitelistView = async ({ membershipRole, organization, environmentId }: WhitelistViewProps) => {
   const t = await getTranslate();
-
-  const userMemberships = await getMembershipsByUserId(currentUserId);
-  const isLeaveOrganizationDisabled = userMemberships.length <= 1;
-
-  const isMultiOrgEnabled = false;
 
   return (
     <SettingsCard
@@ -46,11 +34,8 @@ export const WhitelistView = async ({
         <OrganizationWhitelistActions
           organization={organization}
           membershipRole={membershipRole}
-          role={membershipRole}
-          isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
-          isInviteDisabled={INVITE_DISABLED}
+          isWhitelistDisabled={WHITELIST_DISABLED}
           environmentId={environmentId}
-          isMultiOrgEnabled={isMultiOrgEnabled}
         />
       )}
 

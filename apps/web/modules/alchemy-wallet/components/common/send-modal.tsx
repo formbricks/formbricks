@@ -18,6 +18,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { TransactionLike } from "zksync-ethers/build/types";
 import { useSendERC20 } from "@formbricks/web3/src/hooks/useSendERC20";
 
 type FormValues = {
@@ -29,7 +30,7 @@ type FormValues = {
 type Props = {
   balances: TokenBalance[];
   onSelectBalance: (TokenBalance) => void;
-  onModalSubmit?: (string) => void;
+  onModalSubmit?: (TransactionLike) => void;
   balance: TokenBalance | null;
   open: boolean;
   setOpen: (boolean) => void;
@@ -78,7 +79,7 @@ export function SendModal({
       const tx = await send(address, amount);
       toast.success(`Tokens sent successfully!`);
       if (onModalSubmit && tx) {
-        onModalSubmit(JSON.stringify(tx));
+        onModalSubmit(tx);
       }
     } catch (err) {
       console.error("Send failed", err);

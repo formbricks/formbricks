@@ -10,6 +10,7 @@ import { SendIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { TransactionLike } from "zksync-ethers/build/types";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -131,9 +132,10 @@ export const SingleResponseCard = ({
     }
   };
 
-  const handlePayReward = useCallback(async (tx: string) => {
+  const handlePayReward = useCallback(async (tx: TransactionLike) => {
     try {
-      await createResponseNoteAction({ responseId: response.id, text: tx });
+      const noteText = `${t("environments.surveys.responses.paid_reward_to")} ${tx.to}\n${t("environments.surveys.responses.transaction_hash")} ${tx.hash}`;
+      await createResponseNoteAction({ responseId: response.id, text: noteText });
       await updateFetchedResponses();
     } catch (e) {
       toast.error(t("environments.surveys.responses.an_error_occurred_creating_a_new_note"));

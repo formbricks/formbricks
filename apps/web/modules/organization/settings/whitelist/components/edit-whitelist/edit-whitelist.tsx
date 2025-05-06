@@ -10,7 +10,6 @@ interface EditWhitelistProps {
   role: TOrganizationRole;
 }
 
-// Todo: add remove button, fix dropdown ui, review logic and cleanup code
 export const EditWhitelist = async ({ organization, role }: EditWhitelistProps) => {
   const whitelistedUsers: TUserWhitelistInfo[] = (await getWhitelistedUsers()) ?? [];
   const t = await getTranslate();

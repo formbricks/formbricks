@@ -1282,7 +1282,10 @@
         "you_are_a_member": "You're a member"
       },
       "whitelist": {
-        "add_user": "Add User"
+        "add_user": "Add User",
+        "add_users_to_the_whitelist_to_show_their_surveys_globally": "Add users to the whitelist to show their surveys globally",
+        "user_successfully_added_to_whitelist": "User successfully added to whitelist",
+        "whitelist_users_for_survey_deployemnt": "Whitelist users for survey deployment"
       }
     },
     "surveys": {
@@ -1743,11 +1746,13 @@
         "last_name": "Last Name",
         "not_completed": "Not Completed ⏳",
         "os": "OS",
+        "paid_reward_to": "Paid reward to",
         "person_attributes": "Person attributes",
         "phone": "Phone",
         "resolve": "Resolve",
         "respondent_skipped_questions": "Respondent skipped these questions.",
         "response_deleted_successfully": "Response deleted successfully.",
+        "reward_transaction_message": "Paid reward to {{to}}\nTransaction Hash: {{hash}}",
         "single_use_id": "SingleUse ID",
         "source": "Source",
         "state_region": "State / Region",
@@ -1757,6 +1762,7 @@
         "token_name": "Token Name",
         "token_symbol": "Token Symbol",
         "transaction_details": "Transaction Details",
+        "transaction_hash": "Transaction Hash:",
         "zip_post_code": "ZIP / Post code"
       },
       "results_unpublished_successfully": "Results unpublished successfully.",
@@ -1958,6 +1964,13 @@
           "survey_reward": "Survey Reward",
           "token_transfer": "Token Transfer",
           "token_transfer_to_self": "Token Transfer to self"
+        }
+      }
+    },
+    "whitelist": {
+      "form": {
+        "error": {
+          "email_required": "Email is required"
         }
       }
     },
