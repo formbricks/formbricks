@@ -16,8 +16,8 @@ const getCancellationDate = (subscription: Stripe.Subscription): Date | null => 
     return new Date(subscription.cancel_at * 1000);
   }
   // Fallback for cancel_at_period_end if cancel_at is not set, use current_period_end
-  if (subscription.cancel_at_period_end && subscription.items?.data?.[0]?.current_period_end) {
-    return new Date(subscription.items.data[0].current_period_end * 1000);
+  if (subscription.cancel_at_period_end && subscription.current_period_end) {
+    return new Date(subscription.current_period_end * 1000);
   }
   return null;
 };

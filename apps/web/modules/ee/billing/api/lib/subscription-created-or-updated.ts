@@ -236,7 +236,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
         stripeCustomerId: stripeSubscriptionObject.customer as string,
         plan: updatedBillingPlan,
         period,
-        periodStart: new Date(stripeSubscriptionObject.items.data[0].current_period_start * 1000),
+        periodStart: new Date(stripeSubscriptionObject.current_period_start * 1000),
         limits: {
           projects,
           monthly: {
