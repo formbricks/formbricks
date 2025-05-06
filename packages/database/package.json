@@ -34,8 +34,8 @@
     "@formbricks/eslint-config": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "prisma": "6.7.0",
-    "prisma-json-types-generator": "3.2.3",
+    "prisma-json-types-generator": "3.3.1",
     "ts-node": "10.9.2",
-    "zod": "3.24.1"
+    "zod": "3.24.4"
   }
 }
