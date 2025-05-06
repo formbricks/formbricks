@@ -13,7 +13,7 @@ export default defineConfig({
     env: loadEnv("", process.cwd(), ""),
     coverage: {
       provider: "v8", // Use V8 as the coverage provider
-      reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
+      reporter: ["text", "json", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: [
         "modules/api/v2/**/*.ts",
@@ -131,6 +131,7 @@ export default defineConfig({
         "modules/survey/editor/components/response-options-card.tsx",
         "modules/survey/editor/components/saved-actions-tab.tsx",
         "modules/survey/editor/components/survey-editor-tabs.tsx",
+        "modules/survey/editor/components/survey-variables-card-item.tsx",
         "modules/survey/editor/components/nps-question-form.tsx",
         "modules/survey/editor/components/create-new-action-tab.tsx",
         "modules/survey/editor/components/logic-editor-actions.tsx",
