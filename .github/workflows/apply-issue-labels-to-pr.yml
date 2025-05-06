@@ -24,7 +24,7 @@ jobs:
           egress-policy: audit
 
       - name: Apply labels from linked issue to PR
-        uses: actions/github-script@211cb3fefb35a799baa5156f9321bb774fe56294 # v5.2.0
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
