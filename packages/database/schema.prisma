@@ -12,10 +12,6 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
-// generator dbml {
-//  provider = "prisma-dbml-generator"
-// }
-
 generator json {
   provider = "prisma-json-types-generator"
 }
@@ -418,6 +414,8 @@ model Survey {
   showLanguageSwitch              Boolean?
   documents                       Document[]
   followUps                       SurveyFollowUp[]
+  /// [SurveyRecaptcha]
+  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

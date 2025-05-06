@@ -9,6 +9,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -122,6 +123,10 @@ export const updateSurveyAction = authenticatedActionClient
     });
 
     const { followUps } = parsedInput;
+
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission(organizationId);
+    }
 
     if (followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);

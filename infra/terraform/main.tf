@@ -137,7 +137,7 @@ module "eks" {
   cluster_version = "1.32"
 
   enable_cluster_creator_admin_permissions = false
-  cluster_endpoint_public_access           = true
+  cluster_endpoint_public_access           = false
   cloudwatch_log_group_retention_in_days   = 365
 
   cluster_addons = {
@@ -157,6 +157,17 @@ module "eks" {
     }
     vpc-cni = {
       most_recent = true
+    }
+  }
+
+  cluster_security_group_additional_rules = {
+    ingress_from_vpc_cidr = {
+      description = "Allow all traffic from the VPC CIDR"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      type        = "ingress"
+      cidr_blocks = [local.vpc_cidr]
     }
   }
 
@@ -380,7 +391,7 @@ resource "kubernetes_manifest" "node_pool" {
         cpu = 1000
       }
       disruption = {
-        consolidationPolicy = "WhenEmpty"
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
         consolidateAfter    = "30s"
       }
     }

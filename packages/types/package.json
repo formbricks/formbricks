@@ -13,8 +13,7 @@
     "@formbricks/database": "workspace:*"
   },
   "dependencies": {
-    "@prisma/client": "6.6.0",
-    "zod": "3.24.1",
-    "zod-openapi": "4.2.4"
+    "@prisma/client": "6.7.0",
+    "zod": "3.24.1"
   }
 }

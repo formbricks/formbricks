@@ -19,7 +19,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
@@ -45,8 +44,6 @@ interface SignupFormProps {
   userLocale: TUserLocale;
   emailFromSearchParams?: string;
   emailVerificationDisabled: boolean;
-  defaultOrganizationId?: string;
-  defaultOrganizationRole?: TOrganizationRole;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
@@ -68,8 +65,6 @@ export const SignupForm = ({
   userLocale,
   emailFromSearchParams,
   emailVerificationDisabled,
-  defaultOrganizationId,
-  defaultOrganizationRole,
   isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
@@ -116,8 +111,6 @@ export const SignupForm = ({
         userLocale,
         inviteToken: inviteToken || "",
         emailVerificationDisabled,
-        defaultOrganizationId,
-        defaultOrganizationRole,
         turnstileToken,
       });
 

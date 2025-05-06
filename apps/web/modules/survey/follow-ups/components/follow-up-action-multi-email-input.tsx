@@ -1,3 +1,4 @@
+import { isValidEmail } from "@/lib/utils/email";
 import { cn } from "@/modules/ui/lib/utils";
 import React, { useState } from "react";
 
@@ -15,15 +16,12 @@ const FollowUpActionMultiEmailInput = ({
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
 
-  // Email validation regex
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   const handleAddEmail = () => {
     const email = inputValue.trim();
 
     if (!email) return;
 
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       setError("Please enter a valid email address");
       return;
     }
@@ -77,7 +75,7 @@ const FollowUpActionMultiEmailInput = ({
             <span className="text-slate-900">{email}</span>
             <button
               onClick={() => removeEmail(index)}
-              className="px-1 text-lg font-medium leading-none text-slate-500">
+              className="px-1 text-lg leading-none font-medium text-slate-500">
               ×
             </button>
           </div>
