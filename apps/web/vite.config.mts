@@ -160,6 +160,8 @@ export default defineConfig({
         "modules/survey/editor/components/file-upload-question-form.tsx",
         "modules/survey/editor/components/how-to-send-card.tsx",
         "modules/survey/editor/components/image-survey-bg.tsx",
+        "app/(app)/environments/**/*.tsx",
+        "app/(app)/environments/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
@@ -169,7 +171,8 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
-        "**/stories.tsx", // Exclude story files
+        "**/actions.ts", // Exclude action files
+        "**/stories.tsx" // Exclude story files
       ],
     },
   },
