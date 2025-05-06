@@ -117,6 +117,8 @@ export default defineConfig({
         "modules/ui/components/card/index.tsx",
         "modules/survey/editor/components/*.tsx",
         "lib/fileValidation.ts",
+        "modules/ee/teams/**/*.ts",
+        "modules/ee/teams/**/*.tsx",
         "app/(app)/environments/**/*.tsx",
         "app/(app)/environments/**/*.ts",
       ],
