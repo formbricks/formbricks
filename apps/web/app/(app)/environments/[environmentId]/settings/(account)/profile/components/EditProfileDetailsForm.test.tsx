@@ -6,14 +6,6 @@ import { TUser } from "@formbricks/types/user";
 import { updateUserAction } from "../actions";
 import { EditProfileDetailsForm } from "./EditProfileDetailsForm";
 
-vi.mock("../actions", async () => {
-  const actual = await vi.importActual("../actions");
-  return {
-    ...actual,
-    updateUserAction: vi.fn(),
-  };
-});
-
 const mockUser = {
   id: "test-user-id",
   name: "Old Name",

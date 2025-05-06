@@ -6,14 +6,14 @@ import { AppTab } from "./AppTab";
 vi.mock("@/modules/ui/components/options-switch", () => ({
   OptionsSwitch: (props: {
     options: Array<{ value: string; label: string }>;
-    handleOptionChange: (option: { value: string; label: string }) => void;
+    handleOptionChange: (value: string) => void;
   }) => (
     <div data-testid="options-switch">
       {props.options.map((option) => (
         <button
           key={option.value}
           data-testid={`option-${option.value}`}
-          onClick={() => props.handleOptionChange(option)}>
+          onClick={() => props.handleOptionChange(option.value)}>
           {option.label}
         </button>
       ))}

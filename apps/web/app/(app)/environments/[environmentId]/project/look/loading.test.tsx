@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import ProjectLookSettingsLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export
-vi.mock("@/modules/ee/languages/loading", () => ({
+vi.mock("@/modules/projects/settings/look/loading", () => ({
   ProjectLookSettingsLoading: () => (
     <div data-testid="mock-project-look-settings-loading">Mock ProjectLookSettingsLoading</div>
   ),
