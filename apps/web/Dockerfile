@@ -78,7 +78,6 @@ FROM base AS runner
 
 RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
-RUN corepack prepare pnpm@10.10.0 --activate
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
