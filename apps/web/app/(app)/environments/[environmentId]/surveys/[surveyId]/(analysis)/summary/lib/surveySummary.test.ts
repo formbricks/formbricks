@@ -71,14 +71,11 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock(
-  "/Users/victordossantos/Documents/formbricks/apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils",
-  () => ({
-    convertFloatTo2Decimal: vi.fn((num) =>
-      num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
-    ),
-  })
-);
+vi.mock("./utils", () => ({
+  convertFloatTo2Decimal: vi.fn((num) =>
+    num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
+  ),
+}));
 
 const mockSurveyId = "survey_123";
 
