@@ -21,6 +21,7 @@ interface EndingCardProps {
   languageCode: string;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  deployTokenResponse?: string;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
@@ -34,6 +35,7 @@ export function EndingCard({
   languageCode,
   responseData,
   variablesData,
+  deployTokenResponse,
   onOpenExternalURL,
 }: EndingCardProps) {
   const media =
@@ -59,6 +61,22 @@ export function EndingCard({
       <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]" />
     </div>
   );
+
+  const getParseTokenDeploymentDetails = () => {
+    if (!deployTokenResponse) {
+      return null;
+    }
+
+    try {
+      const parsed: { transactionHash: string; tokenAddress: string } = JSON.parse(deployTokenResponse);
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse deployTokenResponse:", error);
+      return null;
+    }
+  };
+
+  const tokenDeploymentDetails = getParseTokenDeploymentDetails();
 
   const processAndRedirect = (urlString: string) => {
     try {
@@ -139,6 +157,17 @@ export function EndingCard({
                 }
                 questionId="EndingCard"
               />
+              {tokenDeploymentDetails && tokenDeploymentDetails.tokenAddress && (
+                <div className="mb-1 text-sm">
+                  <span className="font-medium">Token Address:</span>{" "}
+                  <a
+                    href={`https://explorer.testnet.wonderchain.org/address/${tokenDeploymentDetails.tokenAddress}`}
+                    target="_blank"
+                    className="text-blue-600 underline">
+                    {tokenDeploymentDetails.tokenAddress}
+                  </a>
+                </div>
+              )}
               {endingCard.type === "endScreen" && endingCard.buttonLabel ? (
                 <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
                   <SubmitButton

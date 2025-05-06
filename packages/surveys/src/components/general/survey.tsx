@@ -439,6 +439,7 @@ export function Survey({
         return;
       }
 
+      // console.log("survey-responseUpdate=>add()", responseUpdate);
       if (surveyState && responseQueue) {
         if (contactId) {
           surveyState.updateContactId(contactId);
@@ -599,6 +600,21 @@ export function Survey({
         const endingCard = localSurvey.endings.find((ending) => {
           return ending.id === questionId;
         });
+
+        //TSurveyQuestionTypeEnum.DeployToken;
+        const deployTokenQuestion = localSurvey.questions.find((q) => q.type == "deployToken");
+        let deployTokenResponse = undefined;
+        if (deployTokenQuestion && responseData && responseData[deployTokenQuestion.id]) {
+          const valueArr = responseData[deployTokenQuestion.id];
+          if (Array.isArray(valueArr) && valueArr[3]) {
+            if (valueArr[3]) {
+              deployTokenResponse = valueArr[3];
+            } else {
+              console.error("Transaction details not found in deployToken response");
+            }
+          }
+        }
+        // console.log("deployTokenResponse", deployTokenResponse);
         if (endingCard) {
           return (
             <EndingCard
@@ -612,6 +628,7 @@ export function Survey({
               responseData={responseData}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
+              deployTokenResponse={deployTokenResponse}
             />
           );
         }
@@ -639,6 +656,7 @@ export function Survey({
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
+              setIsResponseSendingFinished={setIsResponseSendingFinished}
             />
           )
         );

@@ -64,6 +64,8 @@ export class ResponseQueue {
     const responseUpdate = this.queue[0];
     let attempts = 0;
 
+    // console.log("add().responseUpdate", responseUpdate);
+
     while (attempts < this.config.retryAttempts) {
       const success = await this.sendResponse(responseUpdate);
       if (success) {
@@ -92,6 +94,32 @@ export class ResponseQueue {
     }
   }
 
+  /** 
+   responseUpdate example
+    {
+      "data": {
+          "djew2zxpd9zonx3jkh03qz3s": [
+              "T8",
+              "T8",
+              "8000",
+              "{\"transactionHash\":\"0x172b753b199c1bbb94d3385d6f164b06788c3af3c8151c3e92ebe290f324317c\"}"
+          ]
+      },
+      "ttc": {
+          "djew2zxpd9zonx3jkh03qz3s": 13383.5
+      },
+      "finished": true,
+      "meta": {
+          "url": "http://localhost:3000/s/cma1bsx490003vx3rtx4j8cbl"
+      },
+      "variables": {},
+      "displayId": "cmad05oab000fvx9jvw48iwv2",
+      "hiddenFields": {
+          "verifiedEmail": "vexadeh133@javbing.com",
+          "verifiedAddress": "0xe06361aD485f09C7918DdF607F3FC5aFD91e2512"
+      }
+    }
+    **/
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (!responseUpdate.hiddenFields) {
@@ -103,7 +131,49 @@ export class ResponseQueue {
         ...responseUpdate.data,
         ...responseUpdate.hiddenFields,
       };
-      if (responseUpdate.finished && this.signer) {
+
+      // console.log("this.response", this.response);
+      /** this.response example
+      { "djew2zxpd9zonx3jkh03qz3s": [
+          "T2",
+          "T2",
+          "1000",
+          "{\"transactionHash\":\"0xbc77ced5f6f1482ac498ee2b0a77456a833621498e100377452907a26469d04e\"}"
+          ],
+        "verifiedEmail": "vexadeh133@javbing.com",
+        "verifiedAddress": "0xe06361aD485f09C7918DdF607F3FC5aFD91e2512"
+      }
+       */
+
+      let existingTransactionHash = this.response["transactionHash"];
+
+      if (!existingTransactionHash) {
+        for (const key in this.response) {
+          const value = this.response[key];
+
+          if (Array.isArray(value) && value.length > 3) {
+            const txDetailsString = value[3];
+
+            if (txDetailsString.includes("transactionHash")) {
+              try {
+                const parsed = JSON.parse(txDetailsString);
+                // console.log("JSON parsed txDetailsString", parsed);
+                if (parsed && parsed.transactionHash) {
+                  existingTransactionHash = parsed.transactionHash;
+
+                  // update this.response
+                  this.response["transactionHash"] = parsed.transactionHash;
+                  break;
+                }
+              } catch (e) {
+                console.log(`Error parsing transaction detail string`, e);
+              }
+            }
+          }
+        }
+      }
+
+      if (responseUpdate.finished && this.signer && !existingTransactionHash) {
         const recorder = await getRecorder(this.provider);
         if (recorder) {
           delete this.response["dataHash"];

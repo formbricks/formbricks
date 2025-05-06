@@ -28,6 +28,7 @@ interface DeployTokenQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
+  setIsResponseSendingFinished?: (finish: boolean) => void;
 }
 
 export function DeployTokenQuestion({
@@ -44,9 +45,12 @@ export function DeployTokenQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
+  setIsResponseSendingFinished,
 }: DeployTokenQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
+  // const [isDeploying, setIsDeploying] = useState(false);
+  const isDeployingRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { deploy } = useDeployERC20();
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -92,22 +96,43 @@ export function DeployTokenQuestion({
     // @ts-ignore
     // Check here for token deployed first, if token deploy loading
     e.preventDefault();
-    const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-    setTtc(updatedTtc);
+    if (isDeployingRef.current) return;
 
-    const txResp = await deployToken();
-    const txDetails = JSON.stringify(txResp);
-    const finalValue = fields.map((field) => {
-      if (field.id === "transactionDetails") return txDetails;
-      const index = fields.findIndex((f) => f.id === field.id);
-      return safeValue[index] || "";
-    });
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    try {
+      isDeployingRef.current = true;
+      // setIsDeploying(true);
 
-    // Update the value
-    onChange({ [question.id]: finalValue });
+      const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtc);
 
-    onSubmit({ [question.id]: finalValue }, updatedTtc);
+      const deploymentResult = await deployToken();
+
+      const txDetails = JSON.stringify({
+        transactionHash: deploymentResult?.transactionHash?.hash,
+        tokenAddress: deploymentResult?.tokenAddress,
+      });
+      const finalValue = fields.map((field) => {
+        if (field.id === "transactionDetails") return txDetails;
+        const index = fields.findIndex((f) => f.id === field.id);
+        return safeValue[index] || "";
+      });
+
+      // Update the value
+      onChange({ [question.id]: finalValue });
+
+      onSubmit({ [question.id]: finalValue }, updatedTtc);
+      if (setIsResponseSendingFinished) {
+        //giving extra room for the response to be sent
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        setIsResponseSendingFinished(true);
+      }
+    } catch (error) {
+      console.error("Error deploying token:", error);
+      return;
+    } finally {
+      isDeployingRef.current = false;
+      // setIsDeploying(false);
+    }
   };
 
   const DeployTokenRef = useCallback(
@@ -133,6 +158,8 @@ export function DeployTokenQuestion({
     const txResp = await deploy(tokenName, tokenSymbol, initialSupply);
     return txResp;
   };
+
+  // console.log("isDeploying", isDeploying);
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
@@ -202,6 +229,8 @@ export function DeployTokenQuestion({
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          // buttonLabel={isDeploying ? "Deploying..." : getLocalizedValue(question.buttonLabel, languageCode)}
+          // disabled={isDeploying}
           isLastQuestion={isLastQuestion}
         />
       </div>
