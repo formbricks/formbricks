@@ -88,7 +88,6 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     SURVEY_URL: z.string().optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
-    TELEMETRY_API_KEY: z.string().optional(),
     TERMS_URL: z
       .string()
       .url()
@@ -189,7 +188,6 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     SURVEY_URL: process.env.SURVEY_URL,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
-    TELEMETRY_API_KEY: process.env.TELEMETRY_API_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
     RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
