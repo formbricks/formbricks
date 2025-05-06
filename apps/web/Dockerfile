@@ -1,7 +1,7 @@
 FROM node:22-alpine3.21 AS base
 
 # Step 2: Explicitly upgrade/install Golang to a fixed version
-RUN apk add --no-cache --upgrade go=1.23.8
+RUN apk add --no-cache --upgrade go=1.23.8-r0
 
 #
 ## step 1: Prune monorepo
