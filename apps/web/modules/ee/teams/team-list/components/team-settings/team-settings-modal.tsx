@@ -230,7 +230,7 @@ export const TeamSettingsModal = ({
           </div>
         </div>
       </div>
-      <FormProvider {...form}>
+      <FormProvider {...form} data-testid="FormProvider">
         <form className="w-full" onSubmit={handleSubmit(handleUpdateTeam)}>
           <div className="flex flex-col gap-6 p-6">
             <div className="max-h-[500px] space-y-6 overflow-y-auto">
@@ -343,6 +343,7 @@ export const TeamSettingsModal = ({
                                   type="button"
                                   variant="secondary"
                                   className="shrink-0"
+                                  data-testid={`delete-member-${index}`}
                                   disabled={
                                     !isOwnerOrManager &&
                                     (!isTeamAdminMember || member.userId === currentUserId)
