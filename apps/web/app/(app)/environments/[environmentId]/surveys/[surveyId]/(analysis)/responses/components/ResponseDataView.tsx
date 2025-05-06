@@ -24,7 +24,8 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
 }
 
-const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
+// Export for testing
+export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   return Array.isArray(responseValue)
     ? responseValue.reduce((acc, curr, index) => {
@@ -34,7 +35,8 @@ const formatAddressData = (responseValue: TResponseDataValue): Record<string, st
     : {};
 };
 
-const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
+// Export for testing
+export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["firstName", "lastName", "email", "phone", "company"];
   return Array.isArray(responseValue)
     ? responseValue.reduce((acc, curr, index) => {
@@ -44,7 +46,8 @@ const formatContactInfoData = (responseValue: TResponseDataValue): Record<string
     : {};
 };
 
-const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
+// Export for testing
+export const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
   let responseData: Record<string, any> = {};
 
   survey.questions.forEach((question) => {
@@ -73,7 +76,8 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
   return responseData;
 };
 
-const mapResponsesToTableData = (
+// Export for testing
+export const mapResponsesToTableData = (
   responses: TResponse[],
   survey: TSurvey,
   t: TFnType

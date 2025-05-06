@@ -41,7 +41,7 @@
     "@playwright/test": "1.52.0",
     "eslint": "8.57.0",
     "husky": "9.1.7",
-    "lint-staged": "15.5.1",
+    "lint-staged": "15.5.2",
     "rimraf": "6.0.1",
     "tsx": "4.19.4",
     "turbo": "2.5.2"
@@ -60,7 +60,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@9.15.9",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
