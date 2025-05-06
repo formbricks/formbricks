@@ -184,7 +184,8 @@ export const SurveyVariablesCardItem = ({
                     form.setValue("value", value === "number" ? 0 : "");
                     field.onChange(value);
                   }}
-                  onBlur={() => form.handleSubmit(editSurveyVariable)()}>
+                  // onBlur={() => form.handleSubmit(editSurveyVariable)()}
+                >
                   <SelectTrigger className="w-24">
                     <SelectValue placeholder={t("environments.surveys.edit.select_type")} />
                   </SelectTrigger>
