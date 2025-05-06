@@ -138,8 +138,11 @@ export default defineConfig({
         "**/openapi-document.ts", // Exclude openapi document files
         "**/types/**", // Exclude types
         "modules/**/types/**", // Exclude types
-        "**/actions.ts", // Exclude action files
-        "**/stories.tsx" // Exclude story files
+        "**/types.ts", // Exclude types
+        "**/actions.ts",
+        "**/action.ts",
+        "**/stories.tsx", // Exclude story files
+        "**/*.mock.*",
       ],
     },
   },
