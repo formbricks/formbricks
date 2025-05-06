@@ -1,13 +1,7 @@
-import { STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
-});
-
-export const handleInvoiceFinalized = async (event: Stripe.Event) => {
+export const handleInvoiceFinalized = async (event: Stripe.Event, stripe: Stripe) => {
   const invoice = event.data.object as Stripe.Invoice;
 
   const customerId = invoice.customer as string;

@@ -7,15 +7,16 @@ import { handleSubscriptionDeleted } from "@/modules/ee/billing/api/lib/subscrip
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
+  apiVersion: STRIPE_API_VERSION,
+});
+
 const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
 
   try {
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-      apiVersion: STRIPE_API_VERSION,
-    });
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -26,7 +27,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   if (event.type === "checkout.session.completed") {
     await handleCheckoutSessionCompleted(event);
   } else if (event.type === "invoice.finalized") {
-    await handleInvoiceFinalized(event);
+    await handleInvoiceFinalized(event, stripe);
   } else if (
     event.type === "customer.subscription.created" ||
     event.type === "customer.subscription.updated"
