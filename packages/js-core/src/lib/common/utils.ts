@@ -276,7 +276,9 @@ export const evaluateNoCodeConfigClick = (
 
   if (cssSelector) {
     // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelector.split(/\s*(?=[.#])/);
+    const individualSelectors = cssSelector
+      .split(/(?=[.#])/) // split before each . or #
+      .map((sel) => sel.trim()); // remove leftover whitespace
     for (const selector of individualSelectors) {
       if (!targetElement.matches(selector)) {
         return false;

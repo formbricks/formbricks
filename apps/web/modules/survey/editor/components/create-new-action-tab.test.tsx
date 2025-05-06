@@ -16,8 +16,6 @@ vi.mock("@/modules/ui/components/code-action-form", () => ({
 // Mock constants
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
-  FORMBRICKS_API_HOST: "http://localhost:3000",
-  FORMBRICKS_ENVIRONMENT_ID: "test-env-id",
 }));
 
 // Mock the createActionClassAction function
