@@ -32,6 +32,7 @@ export const OrganizationWhitelistActions = ({
   const isOwnerOrManager = isOwner || isManager;
   // TODO: Fix error and success messages for all whitelist components
   const handleAddUserToWhitelist = async (data: { email: string }[]) => {
+    if (loading) return;
     setLoading(true);
     if (data.length === 1) {
       const addUserToWhitelistActionResult = await addUserToWhitelistAction({

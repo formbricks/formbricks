@@ -17,7 +17,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, environment } = await getEnvironmentAuth(params.environmentId);
 
   const surveyId = params.surveyId;
 
@@ -56,7 +56,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isReadOnly={isReadOnly}
+            isReadOnly={false}
             user={user}
             surveyDomain={surveyDomain}
           />
@@ -76,7 +76,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         user={user}
         totalResponseCount={totalResponseCount}
         documentsPerPage={DOCUMENTS_PER_PAGE}
-        isReadOnly={isReadOnly}
+        isReadOnly={false}
       />
 
       <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
