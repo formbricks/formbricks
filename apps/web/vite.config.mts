@@ -133,7 +133,8 @@ export default defineConfig({
       ],
       exclude: [
         "**/.next/**",
-        "**/*.spec.*",
+        "**/*.spec.*", // Excludes .spec files from coverage
+        "**/*.test.*", // Exclude .test files from coverage
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
         "**/openapi.ts", // Exclude openapi configuration files
