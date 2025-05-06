@@ -36,7 +36,7 @@ export const isSubscriptionCancelled = async (
       if (subscription.cancel_at_period_end) {
         return {
           cancelled: true,
-          date: new Date(subscription.current_period_end * 1000),
+          date: new Date(subscription.items.data[0].current_period_end * 1000),
         };
       }
     }
