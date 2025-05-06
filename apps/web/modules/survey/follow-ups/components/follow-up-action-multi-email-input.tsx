@@ -75,7 +75,7 @@ const FollowUpActionMultiEmailInput = ({
             <span className="text-slate-900">{email}</span>
             <button
               onClick={() => removeEmail(index)}
-              className="px-1 text-lg font-medium leading-none text-slate-500">
+              className="px-1 text-lg leading-none font-medium text-slate-500">
               ×
             </button>
           </div>

@@ -318,7 +318,7 @@ export const ResponseOptionsCard = ({
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -356,7 +356,7 @@ export const ResponseOptionsCard = ({
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
                   onBlur={handleInputResponseBlur}
-                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                  className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                 />
                 {t("environments.surveys.edit.completed_responses")}
               </p>
@@ -451,7 +451,7 @@ export const ResponseOptionsCard = ({
                     <Input
                       autoFocus
                       id="heading"
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 mb-4 bg-white"
                       name="heading"
                       defaultValue={surveyClosedMessage.heading}
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
@@ -506,7 +506,7 @@ export const ResponseOptionsCard = ({
                     <Input
                       autoFocus
                       id="heading"
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 mb-4 bg-white"
                       name="heading"
                       value={singleUseMessage.heading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
@@ -514,7 +514,7 @@ export const ResponseOptionsCard = ({
 
                     <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
                     <Input
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 mb-4 bg-white"
                       id="subheading"
                       name="subheading"
                       value={singleUseMessage.subheading}

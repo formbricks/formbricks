@@ -164,7 +164,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={t("common.search") + "..."}
-            className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+            className="h-5 border-none border-transparent p-0 shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
           />
         )}
         <div>

@@ -140,9 +140,25 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "**/types/**", // Exclude types
-        "modules/**/types/**", // Exclude types
-        "**/actions.ts", // Exclude action files
-        "**/stories.tsx", // Exclude story files
+        "**/types.ts", // Exclude types
+        "**/actions.ts",
+        "**/action.ts",
+        "**/*.mock.*",
+        "**/*.json",
+        "**/*.test.*",
+        "**/*.mdx",
+        "**/*.config.mts",
+        "**/*.config.ts",
+        "**/stories.*",
+        "**/mocks/**",
+        "**/__mocks__/**",
+        "**/instrumentation.ts",
+        "**/playwright/**",
+        "**/Dockerfile",
+        "**/*.config.cjs",
+        "**/*.css",
+        "**/templates.ts",
+        "apps/web/modules/ui/components/icons/*",
         "vitestSetup.ts", // Exclude Vitest setup file
         "tailwind.config.js", // Exclude Tailwind CSS config file
         "postcss.config.js", // Exclude PostCSS config file

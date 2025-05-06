@@ -41,7 +41,7 @@ export const SurveyVariablesCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
         )}>
         <div className="flex w-full justify-center">
           <FileDigitIcon className="h-4 w-4" />
@@ -75,7 +75,7 @@ export const SurveyVariablesCard = ({
                 />
               ))
             ) : (
-              <p className="mt-2 text-sm italic text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 italic">
                 {t("environments.surveys.edit.no_variables_yet_add_first_one_below")}
               </p>
             )}
