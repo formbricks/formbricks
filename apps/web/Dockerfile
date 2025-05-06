@@ -22,7 +22,7 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache jq
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -78,11 +78,15 @@ FROM base AS runner
 RUN npm install -g corepack@latest
 RUN corepack enable
 
+# Install curl and create a non-root user
 RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
-    # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
+
+# Install supercronic directly from GitHub with a fixed version
+# This uses a newer version built with Go 1.23.8 or later
+RUN curl -fsSL -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.28/supercronic-linux-amd64 \
+    && chmod +x /usr/local/bin/supercronic
 
 WORKDIR /home/nextjs
 
