@@ -48,7 +48,6 @@ export const TeamsView = async ({
     },
   ];
 
-  console.log("teams", teams);
   return (
     <SettingsCard
       title={t("environments.settings.teams.teams")}

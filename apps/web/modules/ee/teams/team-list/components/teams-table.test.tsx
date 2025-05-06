@@ -23,7 +23,7 @@ vi.mock("@/modules/ee/teams/team-list/components/team-settings/team-settings-mod
   TeamSettingsModal: (props: any) => <div data-testid="TeamSettingsModal">{props.team?.name}</div>,
 }));
 
-vi.mock("@/modules/ee/teams/team-list/action", () => ({
+vi.mock("@/modules/ee/teams/team-list/actions", () => ({
   getTeamDetailsAction: vi.fn(),
   getTeamRoleAction: vi.fn(),
 }));

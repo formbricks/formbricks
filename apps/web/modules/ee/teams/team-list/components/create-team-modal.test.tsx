@@ -10,7 +10,7 @@ vi.mock("@/modules/ui/components/modal", () => ({
   Modal: ({ children }: any) => <div data-testid="Modal">{children}</div>,
 }));
 
-vi.mock("@/modules/ee/teams/team-list/action", () => ({
+vi.mock("@/modules/ee/teams/team-list/actions", () => ({
   createTeamAction: vi.fn(),
 }));
 vi.mock("@/lib/utils/helper", () => ({

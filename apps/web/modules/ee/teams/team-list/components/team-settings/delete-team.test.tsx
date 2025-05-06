@@ -40,7 +40,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
-vi.mock("@/modules/ee/teams/team-list/action", () => ({
+vi.mock("@/modules/ee/teams/team-list/actions", () => ({
   deleteTeamAction: vi.fn(),
 }));
 

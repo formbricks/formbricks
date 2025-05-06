@@ -14,7 +14,7 @@ vi.mock("@/modules/ui/components/modal", () => ({
 vi.mock("@/modules/ee/teams/team-list/components/team-settings/delete-team", () => ({
   DeleteTeam: () => <div data-testid="DeleteTeam" />,
 }));
-vi.mock("@/modules/ee/teams/team-list/action", () => ({
+vi.mock("@/modules/ee/teams/team-list/actions", () => ({
   updateTeamDetailsAction: vi.fn(),
 }));
 
