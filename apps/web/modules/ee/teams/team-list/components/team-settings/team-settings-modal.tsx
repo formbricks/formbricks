@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {

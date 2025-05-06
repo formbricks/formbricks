@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { SurveyAnalysisCTA } from "../SurveyAnalysisCTA";
+import { SurveyAnalysisCTA } from "./SurveyAnalysisCTA";
 
 // Mock constants
 vi.mock("@/lib/constants", () => ({

@@ -38,8 +38,6 @@ export default defineConfig({
         "modules/ui/components/environmentId-base-layout/*.tsx",
         "modules/ui/components/survey/recaptcha.ts",
         "modules/ui/components/progress-bar/index.tsx",
-        "app/(app)/environments/**/*.tsx",
-        "app/(app)/environments/**/*.ts",
         "app/(app)/(onboarding)/organizations/**/layout.tsx",
         "app/(app)/(survey-editor)/environments/**/layout.tsx",
         "app/(auth)/layout.tsx",
@@ -63,7 +61,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
-        'modules/survey/list/lib/project.ts',
+        "modules/survey/list/lib/project.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -98,17 +96,50 @@ export default defineConfig({
         "modules/survey/editor/components/file-upload-question-form.tsx",
         "modules/survey/editor/components/how-to-send-card.tsx",
         "modules/survey/editor/components/image-survey-bg.tsx",
+        "modules/ee/teams/**/*.ts",
+        "modules/ee/teams/**/*.tsx",
+        "app/(app)/environments/**/*.tsx",
+        "app/(app)/environments/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
-        "**/*.spec.*",
+        "**/*.spec.*", // Excludes .spec files from coverage
+        "**/*.test.*", // Exclude .test files from coverage
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "**/actions.ts", // Exclude actions files
         "**/types/**", // Exclude types
-        "**/stories.tsx" // Exclude story files
+        "**/types.ts", // Exclude types
+        "**/actions.ts",
+        "**/action.ts",
+        "**/*.mock.*",
+        "**/*.json",
+        "**/*.test.*",
+        "**/*.mdx",
+        "**/*.config.mts",
+        "**/*.config.ts",
+        "**/stories.*",
+        "**/mocks/**",
+        "**/__mocks__/**",
+        "**/instrumentation.ts",
+        "**/playwright/**",
+        "**/Dockerfile",
+        "**/*.config.cjs",
+        "**/*.css",
+        "**/templates.ts",
+        "apps/web/modules/ui/components/icons/*",
+        "vitestSetup.ts", // Exclude Vitest setup file
+        "tailwind.config.js", // Exclude Tailwind CSS config file
+        "postcss.config.js", // Exclude PostCSS config file
+        "next.config.mjs", // Exclude Next.js config file
+        "scripts/**", // Exclude scripts folder (development scripts)
+        "**/cache.ts", // Exclude cache files
+        "packages/surveys/src/components/general/smileys.tsx",
+        "apps/web/modules/auth/lib/mock-data.ts", // Exclude mock data files
+        "apps/web/modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
+        "**/*.mjs"
       ],
     },
   },
