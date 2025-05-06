@@ -85,3 +85,7 @@ RUN apk add --no-cache curl \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
+
+# Ensure no write permissions are assigned to the copied resources
+COPY --from=installer /app/apps/web/.next/standalone ./
+RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
