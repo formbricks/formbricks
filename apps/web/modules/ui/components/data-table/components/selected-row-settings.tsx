@@ -90,17 +90,17 @@ export const SelectedRowSettings = <T,>({
         </div>
         <Separator />
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+          className="h-6 border-none px-2"
           onClick={() => handleToggleAllRowsSelection(true)}>
           {t("common.select_all")}
         </Button>
-        <Separator />
+
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-foreground hover:bg-secondary/50 h-6 gap-1 px-2"
+          className="h-6 border-none px-2"
           onClick={() => handleToggleAllRowsSelection(false)}>
           {t("common.clear_selection")}
         </Button>
@@ -108,7 +108,7 @@ export const SelectedRowSettings = <T,>({
         {downloadRows && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="sm" className="h-6 gap-1 px-2">
+              <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">
                 {t("common.download")}
                 <ArrowDownToLineIcon />
               </Button>
@@ -130,7 +130,7 @@ export const SelectedRowSettings = <T,>({
           </DropdownMenu>
         )}
         <Button
-          variant="destructive"
+          variant="secondary"
           size="sm"
           className="h-6 gap-1 px-2"
           onClick={() => setIsDeleteDialogOpen(true)}>
