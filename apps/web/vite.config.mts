@@ -85,6 +85,7 @@ export default defineConfig({
         "modules/organization/settings/teams/actions.ts",
         "modules/organization/settings/api-keys/lib/**/*.ts",
         "modules/ui/components/data-table/components/selected-row-settings.tsx",
+        "modules/ui/components/data-table/components/data-table-toolbar.tsx",
         "app/api/**/*.ts",
         "modules/api/v2/management/auth/*.ts",
         "modules/organization/settings/api-keys/components/*.tsx",

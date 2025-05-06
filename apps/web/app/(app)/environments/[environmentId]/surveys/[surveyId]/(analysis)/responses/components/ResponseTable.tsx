@@ -194,6 +194,8 @@ export const ResponseTable = ({
       if (downloadResponse?.data) {
         const link = document.createElement("a");
         link.href = downloadResponse.data;
+        link.download = "";
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
