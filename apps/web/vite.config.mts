@@ -91,7 +91,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
-        'modules/survey/list/lib/project.ts',
+        "modules/survey/list/lib/project.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -126,12 +126,15 @@ export default defineConfig({
         "modules/survey/editor/components/file-upload-question-form.tsx",
         "modules/survey/editor/components/how-to-send-card.tsx",
         "modules/survey/editor/components/image-survey-bg.tsx",
+        "modules/ee/teams/**/*.ts",
+        "modules/ee/teams/**/*.tsx",
         "app/(app)/environments/**/*.tsx",
         "app/(app)/environments/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
-        "**/*.spec.*",
+        "**/*.spec.*", // Excludes .spec files from coverage
+        "**/*.test.*", // Exclude .test files from coverage
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
         "**/openapi.ts", // Exclude openapi configuration files
@@ -150,13 +153,17 @@ export default defineConfig({
         "**/mocks/**",
         "**/__mocks__/**",
         "**/instrumentation.ts",
-        "scripts/merge-client-endpoints.ts",
         "**/playwright/**",
         "**/Dockerfile",
         "**/*.config.cjs",
         "**/*.css",
         "**/templates.ts",
-        "apps/web/modules/ui/components/icons/*"
+        "apps/web/modules/ui/components/icons/*",
+        "vitestSetup.ts", // Exclude Vitest setup file
+        "tailwind.config.js", // Exclude Tailwind CSS config file
+        "postcss.config.js", // Exclude PostCSS config file
+        "next.config.mjs", // Exclude Next.js config file
+        "scripts/**", // Exclude scripts folder (development scripts)
       ],
     },
   },

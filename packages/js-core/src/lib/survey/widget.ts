@@ -96,7 +96,7 @@ export const renderWidget = async (
     return executeRecaptcha(recaptchaSiteKey);
   };
 
-  if (isSpamProtectionEnabled) {
+  if (isSpamProtectionEnabled && recaptchaSiteKey) {
     await loadRecaptchaScript(recaptchaSiteKey);
   }
 
