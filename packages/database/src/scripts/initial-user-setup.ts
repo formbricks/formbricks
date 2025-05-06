@@ -168,5 +168,5 @@ initialUserSetup()
     process.exit(0);
   })
   .catch((error: unknown) => {
-    logger.error(error, "Error creating SAML database");
+    logger.error(error, "Error during initial user setup");
   });
