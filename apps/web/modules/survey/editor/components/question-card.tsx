@@ -196,7 +196,7 @@ export const QuestionCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
 
-        <button className="opacity-0 group-hover:opacity-100 hover:cursor-move">
+        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
