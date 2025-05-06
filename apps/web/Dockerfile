@@ -74,3 +74,14 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
+
+RUN npm install -g corepack@latest
+RUN corepack enable
+
+RUN apk add --no-cache curl \
+    && apk add --no-cache supercronic \
+    # && addgroup --system --gid 1001 nodejs \
+    && addgroup -S nextjs \
+    && adduser -S -u 1001 -G nextjs nextjs
+
+WORKDIR /home/nextjs
