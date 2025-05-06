@@ -2,14 +2,14 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
-import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -40,6 +40,7 @@ interface SurveyMenuBarProps {
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
+  setIsCautionDialogOpen: (open: boolean) => void;
 }
 
 export const SurveyMenuBar = ({
@@ -55,6 +56,7 @@ export const SurveyMenuBar = ({
   selectedLanguageCode,
   isCxMode,
   locale,
+  setIsCautionDialogOpen,
 }: SurveyMenuBarProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -63,7 +65,6 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const cautionText = t("environments.surveys.edit.caution_text");
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -303,111 +304,100 @@ export const SurveyMenuBar = ({
   };
 
   return (
-    <>
-      <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
-        <div className="flex h-full items-center space-x-2 whitespace-nowrap">
-          {!isCxMode && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="h-full"
-              onClick={() => {
-                handleBack();
-              }}>
-              <ArrowLeftIcon />
-              {t("common.back")}
-            </Button>
-          )}
-          <p className="hidden pl-4 font-semibold md:block">{project.name} / </p>
-          <Input
-            defaultValue={localSurvey.name}
-            onChange={(e) => {
-              const updatedSurvey = { ...localSurvey, name: e.target.value };
-              setLocalSurvey(updatedSurvey);
-            }}
-            className="h-8 w-72 border-white py-0 hover:border-slate-200"
-          />
-        </div>
-        {responseCount > 0 && (
-          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
-            <TooltipProvider delayDuration={50}>
-              <Tooltip>
-                <TooltipTrigger>
-                  <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
-                </TooltipTrigger>
-                <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <p className="hidden pl-1.5 text-xs text-ellipsis whitespace-nowrap md:text-sm lg:block">
-              {cautionText}
-            </p>
-          </div>
+    <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
+      <div className="flex h-full items-center space-x-2 whitespace-nowrap">
+        {!isCxMode && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-full"
+            onClick={() => {
+              handleBack();
+            }}>
+            <ArrowLeftIcon />
+            {t("common.back")}
+          </Button>
         )}
-        <div className="mt-3 flex sm:mt-0 sm:ml-4">
-          {!isCxMode && (
-            <Button
-              disabled={disableSave}
-              variant="secondary"
-              size="sm"
-              className="mr-3"
-              loading={isSurveySaving}
-              onClick={() => handleSurveySave()}
-              type="submit">
-              {t("common.save")}
-            </Button>
-          )}
-
-          {localSurvey.status !== "draft" && (
-            <Button
-              disabled={disableSave}
-              className="mr-3"
-              size="sm"
-              loading={isSurveySaving}
-              onClick={() => handleSaveAndGoBack()}>
-              {t("environments.surveys.edit.save_and_close")}
-            </Button>
-          )}
-          {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
-            <Button
-              size="sm"
-              onClick={() => {
-                setAudiencePrompt(false);
-                setActiveId("settings");
-              }}>
-              {t("environments.surveys.edit.continue_to_settings")}
-              <SettingsIcon />
-            </Button>
-          )}
-          {/* Always display Publish button for link surveys for better CR */}
-          {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
-            <Button
-              size="sm"
-              disabled={isSurveySaving || containsEmptyTriggers}
-              loading={isSurveyPublishing}
-              onClick={handleSurveyPublish}>
-              {isCxMode
-                ? t("environments.surveys.edit.save_and_close")
-                : t("environments.surveys.edit.publish")}
-            </Button>
-          )}
-        </div>
-        <AlertDialog
-          headerText={t("environments.surveys.edit.confirm_survey_changes")}
-          open={isConfirmDialogOpen}
-          setOpen={setConfirmDialogOpen}
-          mainText={t("environments.surveys.edit.unsaved_changes_warning")}
-          confirmBtnLabel={t("common.save")}
-          declineBtnLabel={t("common.discard")}
-          declineBtnVariant="destructive"
-          onDecline={() => {
-            setConfirmDialogOpen(false);
-            router.back();
+        <p className="hidden pl-4 font-semibold md:block">{project.name} / </p>
+        <Input
+          defaultValue={localSurvey.name}
+          onChange={(e) => {
+            const updatedSurvey = { ...localSurvey, name: e.target.value };
+            setLocalSurvey(updatedSurvey);
           }}
-          onConfirm={() => handleSaveAndGoBack()}
+          className="h-8 w-72 border-white py-0 hover:border-slate-200"
         />
       </div>
-    </>
+
+      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        {responseCount > 0 && (
+          <div>
+            <Alert variant="warning" size="small">
+              <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+              <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
+            </Alert>
+          </div>
+        )}
+        {!isCxMode && (
+          <Button
+            disabled={disableSave}
+            variant="secondary"
+            size="sm"
+            loading={isSurveySaving}
+            onClick={() => handleSurveySave()}
+            type="submit">
+            {t("common.save")}
+          </Button>
+        )}
+
+        {localSurvey.status !== "draft" && (
+          <Button
+            disabled={disableSave}
+            className="mr-3"
+            size="sm"
+            loading={isSurveySaving}
+            onClick={() => handleSaveAndGoBack()}>
+            {t("environments.surveys.edit.save_and_close")}
+          </Button>
+        )}
+        {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
+          <Button
+            size="sm"
+            onClick={() => {
+              setAudiencePrompt(false);
+              setActiveId("settings");
+            }}>
+            {t("environments.surveys.edit.continue_to_settings")}
+            <SettingsIcon />
+          </Button>
+        )}
+        {/* Always display Publish button for link surveys for better CR */}
+        {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
+          <Button
+            size="sm"
+            disabled={isSurveySaving || containsEmptyTriggers}
+            loading={isSurveyPublishing}
+            onClick={handleSurveyPublish}>
+            {isCxMode
+              ? t("environments.surveys.edit.save_and_close")
+              : t("environments.surveys.edit.publish")}
+          </Button>
+        )}
+      </div>
+      <AlertDialog
+        headerText={t("environments.surveys.edit.confirm_survey_changes")}
+        open={isConfirmDialogOpen}
+        setOpen={setConfirmDialogOpen}
+        mainText={t("environments.surveys.edit.unsaved_changes_warning")}
+        confirmBtnLabel={t("common.save")}
+        declineBtnLabel={t("common.discard")}
+        declineBtnVariant="destructive"
+        onDecline={() => {
+          setConfirmDialogOpen(false);
+          router.back();
+        }}
+        onConfirm={handleSaveAndGoBack}
+      />
+    </div>
   );
 };

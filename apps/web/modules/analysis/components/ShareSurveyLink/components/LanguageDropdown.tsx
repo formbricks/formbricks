@@ -28,7 +28,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
             className="absolute top-12 z-30 w-fit rounded-lg border bg-slate-900 p-1 text-sm text-white"
             ref={languageDropdownRef}>
             {enabledLanguages.map((surveyLanguage) => (
-              <div
+              <button
                 key={surveyLanguage.language.code}
                 className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"
                 onClick={() => {
@@ -36,7 +36,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
                   setShowLanguageSelect(false);
                 }}>
                 {getLanguageLabel(surveyLanguage.language.code, locale)}
-              </div>
+              </button>
             ))}
           </div>
         )}

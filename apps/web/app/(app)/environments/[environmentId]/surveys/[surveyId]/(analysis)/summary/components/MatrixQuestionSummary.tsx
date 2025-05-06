@@ -81,7 +81,7 @@ export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: Ma
                         percentage,
                         questionSummary.data[rowIndex].totalResponsesForRow
                       )}>
-                      <div
+                      <button
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
                         className="hover:outline-brand-dark m-1 flex h-full w-40 cursor-pointer items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline"
                         onClick={() =>
@@ -94,7 +94,7 @@ export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: Ma
                           )
                         }>
                         {percentage}
-                      </div>
+                      </button>
                     </TooltipRenderer>
                   </td>
                 ))}

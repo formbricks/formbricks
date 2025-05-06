@@ -9,25 +9,16 @@ import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { ZOptionalNumber } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyCreateInput,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestions,
-  ZSurvey,
-  ZSurveyCreateInput,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getIsAIEnabled } from "../utils/ai";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled, transformPrismaSurvey } from "./utils";
+import { checkForInvalidImagesInQuestions, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -72,6 +63,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   languages: {
     select: {
       default: true,
@@ -346,6 +338,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
 
+    checkForInvalidImagesInQuestions(questions);
+
     if (languages) {
       // Process languages update logic here
       // Extract currentLanguageIds and updatedLanguageIds
@@ -434,7 +428,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           });
 
           segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
-          updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+          updatedSegment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
           logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
@@ -570,71 +564,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
-          (question) => question.type === "openText"
-        );
-
-        // find the questions that have been updated or added
-        const questionsToCheckForInsights: TSurveyQuestions = [];
-
-        for (const question of openTextQuestions) {
-          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
-            | TSurveyOpenTextQuestion
-            | undefined;
-          const isExistingQuestion = !!existingQuestion;
-
-          if (
-            isExistingQuestion &&
-            question.headline.default === existingQuestion.headline.default &&
-            existingQuestion.insightsEnabled !== undefined
-          ) {
-            continue;
-          } else {
-            questionsToCheckForInsights.push(question);
-          }
-        }
-
-        if (questionsToCheckForInsights.length > 0) {
-          const insightsEnabledValues = await Promise.all(
-            questionsToCheckForInsights.map(async (question) => {
-              const insightsEnabled = await getInsightsEnabled(question);
-
-              return { id: question.id, insightsEnabled };
-            })
-          );
-
-          data.questions = data.questions?.map((question) => {
-            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-            if (index !== -1) {
-              return {
-                ...question,
-                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-              };
-            }
-
-            return question;
-          });
-        }
-      }
-    } else {
-      // check if an existing question got changed that had insights enabled
-      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText" && question.insightsEnabled !== undefined
-      );
-      // if question headline changed, remove insightsEnabled
-      for (const question of insightsEnabledOpenTextQuestions) {
-        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
-        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
-          updatedQuestion.insightsEnabled = undefined;
-        }
-      }
-    }
-
     surveyData.updatedAt = new Date();
 
     data = {
@@ -739,33 +668,6 @@ export const createSurvey = async (
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const insightsEnabledValues = await Promise.all(
-          openTextQuestions.map(async (question) => {
-            const insightsEnabled = await getInsightsEnabled(question);
-
-            return { id: question.id, insightsEnabled };
-          })
-        );
-
-        data.questions = data.questions?.map((question) => {
-          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-          if (index !== -1) {
-            return {
-              ...question,
-              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-            };
-          }
-
-          return question;
-        });
-      }
-    }
-
     // Survey follow-ups
     if (restSurveyBody.followUps?.length) {
       data.followUps = {
@@ -777,6 +679,10 @@ export const createSurvey = async (
       };
     } else {
       delete data.followUps;
+    }
+
+    if (data.questions) {
+      checkForInvalidImagesInQuestions(data.questions);
     }
 
     const survey = await prisma.survey.create({
@@ -959,7 +865,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       });
 
       segmentCache.revalidate({ id: currentSurveySegment.id });
-      segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+      segment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
       surveyCache.revalidate({ environmentId: segment.environmentId });
     }
 

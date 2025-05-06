@@ -1,4 +1,11 @@
-import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@/lib/constants";
+import {
+  IMPRINT_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
+  PRIVACY_URL,
+  RECAPTCHA_SITE_KEY,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
@@ -50,6 +57,8 @@ export const renderSurvey = async ({
     throw new Error("Organization not found");
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
+
+  const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
@@ -120,6 +129,8 @@ export const renderSurvey = async ({
         locale={locale}
         isPreview={isPreview}
         contactId={contactId}
+        recaptchaSiteKey={RECAPTCHA_SITE_KEY}
+        isSpamProtectionEnabled={isSpamProtectionEnabled}
       />
     );
   }
@@ -143,6 +154,8 @@ export const renderSurvey = async ({
       locale={locale}
       isPreview={isPreview}
       contactId={contactId}
+      recaptchaSiteKey={RECAPTCHA_SITE_KEY}
+      isSpamProtectionEnabled={isSpamProtectionEnabled}
     />
   );
 };

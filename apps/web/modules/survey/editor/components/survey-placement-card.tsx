@@ -35,7 +35,7 @@ export const SurveyPlacementCard = ({
 
   const togglePlacement = () => {
     if (setProjectOverwrites) {
-      if (!!placement) {
+      if (placement) {
         setProjectOverwrites(null);
       } else {
         setProjectOverwrites({

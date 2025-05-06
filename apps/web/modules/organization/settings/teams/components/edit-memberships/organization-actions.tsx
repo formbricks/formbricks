@@ -28,6 +28,7 @@ interface OrganizationActionsProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export const OrganizationActions = ({
@@ -41,6 +42,7 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
+  isUserManagementDisabledFromUi,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslate();
@@ -128,7 +130,7 @@ export const OrganizationActions = ({
           </Button>
         )}
 
-        {!isInviteDisabled && isOwnerOrManager && (
+        {!isInviteDisabled && isOwnerOrManager && !isUserManagementDisabledFromUi && (
           <Button
             size="sm"
             variant="secondary"
