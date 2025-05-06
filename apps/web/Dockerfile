@@ -24,8 +24,6 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
-RUN apk add --no-cache go@1.23.8-r0
-
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
 RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
@@ -86,8 +84,11 @@ RUN apk add --no-cache curl \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
-RUN apk add --no-cache go@1.23.8-r0
-
+RUN go version && \
+    # If multiple Go versions exist, ensure only 1.23.8+ remains
+    apk add --no-cache go>=1.23.8 && \
+    # Remove any older versions if they exist
+    find / -name 'go1.23.7' -type d -exec rm -rf {} +
 
 WORKDIR /home/nextjs
 
