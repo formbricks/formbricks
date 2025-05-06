@@ -51,16 +51,6 @@ export class Config {
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
         const parsedConfig = JSON.parse(savedConfig) as TConfig;
-
-        // check if the config has expired
-        if (
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environment
-          parsedConfig.environment?.expiresAt &&
-          new Date(parsedConfig.environment.expiresAt) <= new Date()
-        ) {
-          return err(new Error("Config in local storage has expired"));
-        }
-
         return ok(parsedConfig);
       }
     }

@@ -130,6 +130,7 @@ describe("Survey Logic", () => {
     displayLimit: 0,
     displayOption: "displayMultiple",
     displayPercentage: 0,
+    recaptcha: { enabled: false, threshold: 0.5 },
     isBackButtonHidden: false,
     segment: null,
     welcomeCard: {

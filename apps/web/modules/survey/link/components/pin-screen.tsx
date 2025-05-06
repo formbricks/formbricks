@@ -27,6 +27,8 @@ interface PinScreenProps {
   locale: string;
   isPreview: boolean;
   contactId?: string;
+  recaptchaSiteKey?: string;
+  isSpamProtectionEnabled?: boolean;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -47,6 +49,8 @@ export const PinScreen = (props: PinScreenProps) => {
     locale,
     isPreview,
     contactId,
+    recaptchaSiteKey,
+    isSpamProtectionEnabled = false,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -131,6 +135,8 @@ export const PinScreen = (props: PinScreenProps) => {
       locale={locale}
       isPreview={isPreview}
       contactId={contactId}
+      recaptchaSiteKey={recaptchaSiteKey}
+      isSpamProtectionEnabled={isSpamProtectionEnabled}
     />
   );
 };
