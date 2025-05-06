@@ -1,5 +1,5 @@
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { TOrganizationMember, TTeamDetails, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

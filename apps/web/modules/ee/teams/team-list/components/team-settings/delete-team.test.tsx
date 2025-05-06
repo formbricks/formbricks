@@ -1,4 +1,4 @@
-import { deleteTeamAction } from "@/modules/ee/teams/team-list/action";
+import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

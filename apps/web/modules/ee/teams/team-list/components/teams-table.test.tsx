@@ -1,4 +1,4 @@
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/action";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
 import { TOrganizationMember, TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

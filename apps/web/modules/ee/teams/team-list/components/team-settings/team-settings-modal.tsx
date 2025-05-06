@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
@@ -230,7 +230,7 @@ export const TeamSettingsModal = ({
           </div>
         </div>
       </div>
-      <FormProvider {...form} data-testid="FormProvider">
+      <FormProvider {...form}>
         <form className="w-full" onSubmit={handleSubmit(handleUpdateTeam)}>
           <div className="flex flex-col gap-6 p-6">
             <div className="max-h-[500px] space-y-6 overflow-y-auto">
@@ -343,7 +343,6 @@ export const TeamSettingsModal = ({
                                   type="button"
                                   variant="secondary"
                                   className="shrink-0"
-                                  data-testid={`delete-member-${index}`}
                                   disabled={
                                     !isOwnerOrManager &&
                                     (!isTeamAdminMember || member.userId === currentUserId)

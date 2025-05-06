@@ -1,5 +1,5 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createTeamAction } from "@/modules/ee/teams/team-list/action";
+import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
