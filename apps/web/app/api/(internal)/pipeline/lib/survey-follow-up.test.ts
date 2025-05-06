@@ -8,14 +8,14 @@ import {
   mockResponseWithContactQuestion,
   mockSurvey,
   mockSurveyWithContactQuestion,
-} from "@/app/api/(internal)/pipeline/lib/tests/__mocks__/survey-follow-up.mock";
+} from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
 import { sendFollowUpEmail } from "@/modules/email";
 import { describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { evaluateFollowUp, sendSurveyFollowUps } from "../survey-follow-up";
+import { evaluateFollowUp, sendSurveyFollowUps } from "./survey-follow-up";
 
 // Mock dependencies
 vi.mock("@/modules/email", () => ({
