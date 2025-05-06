@@ -1,12 +1,5 @@
 FROM node:22-alpine3.21 AS base
 
-# Add minimal Go installation for security patching
-FROM base AS go-installer
-RUN apk add --no-cache curl && \
-    curl -sSL https://go.dev/dl/go1.23.8.linux-amd64.tar.gz -o go.tar.gz && \
-    tar -C /usr/local -xzf go.tar.gz && \
-    rm go.tar.gz
-
 #
 ## step 1: Prune monorepo
 #
@@ -82,27 +75,13 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-# Copy Go from go-installer to ensure we have a secure Go version for any Go-based binaries
-COPY --from=go-installer /usr/local/go /usr/local/go
-ENV PATH="/usr/local/go/bin:${PATH}"
-
 RUN npm install -g corepack@latest
 RUN corepack enable
 
-# Install curl and create a non-root user
 RUN apk add --no-cache curl \
+    # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
-
-# Install supercronic directly from GitHub with a fixed version
-# Building it with our secure Go version
-RUN curl -fsSL -o /tmp/supercronic.tar.gz https://github.com/aptible/supercronic/archive/refs/tags/v0.2.28.tar.gz \
-    && mkdir -p /tmp/supercronic \
-    && tar -xzf /tmp/supercronic.tar.gz -C /tmp/supercronic --strip-components=1 \
-    && cd /tmp/supercronic \
-    && go build -o /usr/local/bin/supercronic \
-    && chmod +x /usr/local/bin/supercronic \
-    && rm -rf /tmp/supercronic /tmp/supercronic.tar.gz
 
 WORKDIR /home/nextjs
 
@@ -161,9 +140,6 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-# Address protobuf vulnerability by installing a version from Go 1.23.8
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
 RUN npm install -g tsx typescript prisma pino-pretty
 
 EXPOSE 3000
@@ -178,13 +154,3 @@ VOLUME /home/nextjs/apps/web/uploads/
 # Prepare volume for SAML preloaded connection
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
-
-CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
-      echo "Starting cron jobs..."; \
-      supercronic -quiet /app/docker/cronjobs & \
-    else \
-      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
-    fi; \
-    (cd packages/database && npm run db:migrate:deploy) && \
-    (cd packages/database && npm run db:create-saml-database:deploy) && \
-    exec node apps/web/server.js
