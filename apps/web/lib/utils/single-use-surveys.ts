@@ -31,6 +31,7 @@ export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean):
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
   try {
     let decryptedCuid: string | null = null;
+    console.log(env.ENCRYPTION_KEY);
 
     if (!env.ENCRYPTION_KEY) {
       throw new Error("ENCRYPTION_KEY is not set");

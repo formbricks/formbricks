@@ -21,7 +21,7 @@ export const checkForYoutubeUrl = (url: string): boolean => {
   }
 };
 
-const checkForVimeoUrl = (url: string): boolean => {
+export const checkForVimeoUrl = (url: string): boolean => {
   try {
     const vimeoUrl = new URL(url);
 
@@ -37,7 +37,7 @@ const checkForVimeoUrl = (url: string): boolean => {
   }
 };
 
-const checkForLoomUrl = (url: string): boolean => {
+export const checkForLoomUrl = (url: string): boolean => {
   try {
     const loomUrl = new URL(url);
 
@@ -76,7 +76,7 @@ export const extractYoutubeId = (url: string): string | null => {
   return id || null;
 };
 
-const extractVimeoId = (url: string): string | null => {
+export const extractVimeoId = (url: string): string | null => {
   const regExp = /vimeo\.com\/(\d+)/;
   const match = url.match(regExp);
 
@@ -86,7 +86,7 @@ const extractVimeoId = (url: string): string | null => {
   return null;
 };
 
-const extractLoomId = (url: string): string | null => {
+export const extractLoomId = (url: string): string | null => {
   const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
   const match = url.match(regExp);
 

@@ -97,7 +97,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
-        'modules/survey/list/lib/project.ts',
+        "modules/survey/list/lib/project.ts",
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -122,6 +122,7 @@ export default defineConfig({
         "lib/crypto.ts",
         "lib/surveyLogic/utils.ts",
         "lib/utils/billing.ts",
+        "lib/utils/*.ts",
         "modules/ui/components/card/index.tsx",
         "modules/survey/editor/components/open-question-form.tsx",
         "modules/survey/editor/components/picture-selection-form.tsx",
@@ -172,7 +173,7 @@ export default defineConfig({
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
         "**/actions.ts", // Exclude action files
-        "**/stories.tsx" // Exclude story files
+        "**/stories.tsx", // Exclude story files
       ],
     },
   },
