@@ -22,7 +22,7 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+RUN apk update && apk add --no-cache cmake g++ jq make openssl-dev python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -79,6 +79,7 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 RUN apk add --no-cache curl \
+    && apk add --no-cache supercronic \
     # && addgroup --system --gid 1001 nodejs \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
@@ -154,3 +155,13 @@ VOLUME /home/nextjs/apps/web/uploads/
 # Prepare volume for SAML preloaded connection
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
+
+CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
+      echo "Starting cron jobs..."; \
+      supercronic -quiet /app/docker/cronjobs & \
+    else \
+      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
+    fi; \
+    (cd packages/database && npm run db:migrate:deploy) && \
+    (cd packages/database && npm run db:create-saml-database:deploy) && \
+    exec node apps/web/server.js
