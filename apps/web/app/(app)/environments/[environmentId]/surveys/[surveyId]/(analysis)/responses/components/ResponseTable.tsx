@@ -3,6 +3,8 @@
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -28,12 +30,12 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
-import { TUserLocale } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponseTableProps {
   data: TResponseTableData[];
@@ -180,6 +182,33 @@ export const ResponseTable = ({
     await deleteResponseAction({ responseId });
   };
 
+  // Handle downloading selected responses
+  const downloadSelectedRows = async (responseIds: string[], format: "csv" | "xlsx") => {
+    try {
+      const downloadResponse = await getResponsesDownloadUrlAction({
+        surveyId: survey.id,
+        format: format,
+        filterCriteria: { responseIds },
+      });
+
+      if (downloadResponse?.data) {
+        const link = document.createElement("a");
+        link.href = downloadResponse.data;
+        link.download = "";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        const errorMessage = getFormattedErrorMessage(downloadResponse);
+        toast.error(errorMessage || t("environments.surveys.responses.error_downloading_responses"));
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(t("environments.surveys.responses.error_downloading_responses"));
+    }
+  };
+
   return (
     <div>
       <DndContext
@@ -196,6 +225,7 @@ export const ResponseTable = ({
           deleteRows={deleteResponses}
           type="response"
           deleteAction={deleteResponse}
+          downloadRows={downloadSelectedRows}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

@@ -155,6 +155,7 @@ const ZResponseFilterCriteriaFilledOut = z.object({
 
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
+  responseIds: z.array(ZId).optional(),
   createdAt: z
     .object({
       min: z.date().optional(),
