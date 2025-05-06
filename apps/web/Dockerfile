@@ -143,8 +143,6 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma pino-pretty
-
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 ENV NODE_ENV="production"
