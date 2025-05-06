@@ -13,7 +13,7 @@ export default defineConfig({
     env: loadEnv("", process.cwd(), ""),
     coverage: {
       provider: "v8", // Use V8 as the coverage provider
-      reporter: ["text", "json", "html", "lcov"], // Generate text summary and HTML reports
+      reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: [
         "modules/api/v2/**/*.ts",

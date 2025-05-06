@@ -173,7 +173,6 @@ export const SurveyVariablesCardItem = ({
               )}
             />
 
-            {/* Type field: update on blur */}
             <FormField
               control={form.control}
               name="type"

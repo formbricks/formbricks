@@ -88,6 +88,62 @@ describe("SurveyVariablesCardItem", () => {
     );
   });
 
+  test("should not create a new survey variable when mode is 'create' and the form input is invalid", async () => {
+    const mockSetLocalSurvey = vi.fn();
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      closeOnDate: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      runOnDate: null,
+      questions: [],
+      endings: [],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [],
+    } as unknown as TSurvey;
+
+    render(
+      <TestWrapper>
+        <SurveyVariablesCardItem
+          mode="create"
+          localSurvey={initialSurvey}
+          setLocalSurvey={mockSetLocalSurvey}
+        />
+      </TestWrapper>
+    );
+
+    const nameInput = screen.getByPlaceholderText("environments.surveys.edit.field_name_eg_score_price");
+    const valueInput = screen.getByPlaceholderText("environments.surveys.edit.initial_value");
+    const addButton = screen.getByRole("button", { name: "environments.surveys.edit.add_variable" });
+
+    await userEvent.type(nameInput, "1invalidvariablename");
+    await userEvent.type(valueInput, "10");
+    await userEvent.click(addButton);
+
+    const errorMessage = screen.getByText("environments.surveys.edit.variable_name_must_start_with_a_letter");
+    expect(errorMessage).toBeVisible();
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
+
   test("should display an error message when the variable name is invalid", async () => {
     const mockSetLocalSurvey = vi.fn();
     const initialSurvey = {
@@ -243,5 +299,133 @@ describe("SurveyVariablesCardItem", () => {
     expect(
       screen.getByText("environments.surveys.edit.variable_name_is_already_taken_please_choose_another")
     ).toBeVisible();
+  });
+
+  test("should show error toast if trying to delete a variable used in logic and not call setLocalSurvey", async () => {
+    const variableUsedInLogic = {
+      id: "logicVarId",
+      name: "logic_variable",
+      type: "text",
+      value: "test_value",
+    } as TSurveyVariable;
+
+    const mockSetLocalSurvey = vi.fn();
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      closeOnDate: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      runOnDate: null,
+      questions: [
+        {
+          id: "q1WithLogic",
+          type: "openText",
+          headline: { default: "Question with logic" },
+          required: false,
+          logic: [{ condition: "equals", value: "logicVarId", destination: "q2" }],
+        },
+        { id: "q2", type: "openText", headline: { default: "Q2" }, required: false },
+      ],
+      endings: [],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [variableUsedInLogic],
+    } as unknown as TSurvey;
+
+    render(
+      <TestWrapper>
+        <SurveyVariablesCardItem
+          mode="edit"
+          localSurvey={initialSurvey}
+          setLocalSurvey={mockSetLocalSurvey}
+          variable={variableUsedInLogic}
+        />
+      </TestWrapper>
+    );
+
+    const deleteButton = screen.getByRole("button");
+    await userEvent.click(deleteButton);
+
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
+
+  test("should delete variable and remove recall info when not used in logic", async () => {
+    const variableToDelete = {
+      id: "recallVarId",
+      name: "recall_variable",
+      type: "text",
+      value: "recall_value",
+    } as TSurveyVariable;
+
+    const mockSetLocalSurvey = vi.fn();
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      closeOnDate: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      runOnDate: null,
+      questions: [],
+      endings: [],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [],
+    } as unknown as TSurvey;
+
+    render(
+      <TestWrapper>
+        <SurveyVariablesCardItem
+          mode="edit"
+          localSurvey={initialSurvey}
+          setLocalSurvey={mockSetLocalSurvey}
+          variable={variableToDelete}
+        />
+      </TestWrapper>
+    );
+
+    const deleteButton = screen.getByRole("button");
+    await userEvent.click(deleteButton);
+
+    expect(mockSetLocalSurvey).toHaveBeenCalledTimes(1);
+
+    const setStateFunction = mockSetLocalSurvey.mock.calls[0][0];
+    const updatedSurvey = setStateFunction(initialSurvey);
+
+    expect(updatedSurvey.variables.find((v) => v.id === variableToDelete.id)).toBeUndefined();
   });
 });
