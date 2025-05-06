@@ -4,6 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
@@ -79,6 +80,23 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
   const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
   if (surveyCheckResult) return surveyCheckResult;
+
+  // Validate response data for "other" options exceeding character limit
+  const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+    responseData: responseInputData.data,
+    surveyQuestions: survey.questions,
+    responseLanguage: responseInputData.language,
+  });
+
+  if (otherResponseInvalidQuestionId) {
+    return responses.badRequestResponse(
+      `Response exceeds character limit`,
+      {
+        questionId: otherResponseInvalidQuestionId,
+      },
+      true
+    );
+  }
 
   let response: TResponse;
   try {
