@@ -50,9 +50,8 @@ describe("SelectedRowSettings", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    cleanup();
   });
-  // cleanup DOM after each testcle
-  afterEach(() => cleanup());
 
   test("renders selected count and handles select all/clear selection", () => {
     render(
