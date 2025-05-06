@@ -4,15 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AccessTable } from "./access-table";
 
-// vi.mock("@/modules/ui/components/table", () => ({
-//   Table: ({ children }: any) => <table data-testid="Table">{children}</table>,
-//   TableBody: ({ children }: any) => <tbody data-testid="TableBody">{children}</tbody>,
-//   TableCell: ({ children, ...props }: any) => <td {...props}>{children}</td>,
-//   TableHead: ({ children, ...props }: any) => <th {...props}>{children}</th>,
-//   TableHeader: ({ children }: any) => <thead data-testid="TableHeader">{children}</thead>,
-//   TableRow: ({ children, ...props }: any) => <tr {...props}>{children}</tr>,
-// }));
-
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({ t: (k: string) => k }),
 }));
