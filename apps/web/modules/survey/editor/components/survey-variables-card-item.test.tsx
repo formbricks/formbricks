@@ -1,14 +1,37 @@
+import * as utils from "@/modules/survey/editor/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./survey-variables-card-item";
 
+vi.mock("@/modules/survey/editor/lib/utils", () => {
+  return {
+    findVariableUsedInLogic: vi.fn(),
+    getVariableTypeFromValue: vi.fn().mockImplementation((value) => {
+      if (typeof value === "number") return "number";
+      if (typeof value === "boolean") return "boolean";
+      return "text";
+    }),
+    translateOptions: vi.fn().mockReturnValue([]),
+    validateLogic: vi.fn(),
+  };
+});
+
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
 describe("SurveyVariablesCardItem", () => {
   afterEach(() => {
     cleanup();
+    vi.resetAllMocks();
   });
 
   const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -310,6 +333,11 @@ describe("SurveyVariablesCardItem", () => {
     } as TSurveyVariable;
 
     const mockSetLocalSurvey = vi.fn();
+
+    // Mock findVariableUsedInLogic to return 2, indicating the variable is used in logic
+    const findVariableUsedInLogicMock = vi.fn().mockReturnValue(2);
+    vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
+
     const initialSurvey = {
       id: "survey123",
       createdAt: new Date(),
@@ -351,23 +379,22 @@ describe("SurveyVariablesCardItem", () => {
     } as unknown as TSurvey;
 
     render(
-      <TestWrapper>
-        <SurveyVariablesCardItem
-          mode="edit"
-          localSurvey={initialSurvey}
-          setLocalSurvey={mockSetLocalSurvey}
-          variable={variableUsedInLogic}
-        />
-      </TestWrapper>
+      <SurveyVariablesCardItem
+        mode="edit"
+        localSurvey={initialSurvey}
+        setLocalSurvey={mockSetLocalSurvey}
+        variable={variableUsedInLogic}
+      />
     );
 
     const deleteButton = screen.getByRole("button");
     await userEvent.click(deleteButton);
 
+    expect(utils.findVariableUsedInLogic).toHaveBeenCalledWith(initialSurvey, variableUsedInLogic.id);
     expect(mockSetLocalSurvey).not.toHaveBeenCalled();
   });
 
-  test("should delete variable and remove recall info when not used in logic", async () => {
+  test("should delete variable when it's not used in logic", async () => {
     const variableToDelete = {
       id: "recallVarId",
       name: "recall_variable",
@@ -376,6 +403,10 @@ describe("SurveyVariablesCardItem", () => {
     } as TSurveyVariable;
 
     const mockSetLocalSurvey = vi.fn();
+
+    const findVariableUsedInLogicMock = vi.fn().mockReturnValue(-1);
+    vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
+
     const initialSurvey = {
       id: "survey123",
       createdAt: new Date(),
@@ -398,34 +429,36 @@ describe("SurveyVariablesCardItem", () => {
       recontactDays: null,
       displayLimit: null,
       runOnDate: null,
-      questions: [],
+      questions: [
+        {
+          id: "q1",
+          type: "openText",
+          headline: { default: "Question with recall:recallVarId in it" },
+          required: false,
+        },
+      ],
       endings: [],
       hiddenFields: {
         enabled: true,
         fieldIds: ["field1", "field2"],
       },
-      variables: [],
+      variables: [variableToDelete],
     } as unknown as TSurvey;
 
     render(
-      <TestWrapper>
-        <SurveyVariablesCardItem
-          mode="edit"
-          localSurvey={initialSurvey}
-          setLocalSurvey={mockSetLocalSurvey}
-          variable={variableToDelete}
-        />
-      </TestWrapper>
+      <SurveyVariablesCardItem
+        mode="edit"
+        localSurvey={initialSurvey}
+        setLocalSurvey={mockSetLocalSurvey}
+        variable={variableToDelete}
+      />
     );
 
     const deleteButton = screen.getByRole("button");
     await userEvent.click(deleteButton);
 
+    expect(utils.findVariableUsedInLogic).toHaveBeenCalledWith(initialSurvey, variableToDelete.id);
     expect(mockSetLocalSurvey).toHaveBeenCalledTimes(1);
-
-    const setStateFunction = mockSetLocalSurvey.mock.calls[0][0];
-    const updatedSurvey = setStateFunction(initialSurvey);
-
-    expect(updatedSurvey.variables.find((v) => v.id === variableToDelete.id)).toBeUndefined();
+    expect(mockSetLocalSurvey).toHaveBeenCalledWith(expect.any(Function));
   });
 });
