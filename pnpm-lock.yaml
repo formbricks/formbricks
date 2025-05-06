@@ -623,6 +623,9 @@ importers:
       '@prisma/extension-accelerate':
         specifier: 1.3.0
         version: 1.3.0(@prisma/client@6.7.0(prisma@6.7.0(typescript@5.8.3))(typescript@5.8.3))
+      bcryptjs:
+        specifier: 3.0.2
+        version: 3.0.2
       dotenv-cli:
         specifier: 8.0.0
         version: 8.0.0

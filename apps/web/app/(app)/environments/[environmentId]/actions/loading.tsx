@@ -33,7 +33,7 @@ const Loading = () => {
                   </div>
                 </div>
               </div>
-              <div className="col-span-2 my-auto flex justify-center text-center text-sm whitespace-nowrap text-slate-500">
+              <div className="col-span-2 my-auto flex justify-center whitespace-nowrap text-center text-sm text-slate-500">
                 <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200"></div>
               </div>
             </div>

@@ -164,4 +164,6 @@ CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
     fi; \
     (cd packages/database && npm run db:migrate:deploy) && \
     (cd packages/database && npm run db:create-saml-database:deploy) && \
+    (cd packages/database && npm run db:initial-user-setup:deploy) && \
+
     exec node apps/web/server.js

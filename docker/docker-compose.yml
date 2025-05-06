@@ -29,6 +29,14 @@ x-environment: &environment
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
+    ############################################# OPTIONAL (AUTOMATIC SETUP) #############################################
+
+    # Set these to automatically create the initial admin user on first startup
+    # INITIAL_USER_EMAIL: admin@example.com
+    # INITIAL_USER_PASSWORD: your-secure-password
+    # INITIAL_ORGANIZATION_NAME: My Organization
+    # INITIAL_PROJECT_NAME: My First Project
+
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
     # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
