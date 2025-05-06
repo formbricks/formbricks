@@ -27,12 +27,13 @@
     "@formbricks/logger": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "@prisma/client": "6.7.0",
-    "zod-openapi": "4.2.4",
-    "zod": "3.24.4"
+    "zod": "3.24.4",
+    "zod-openapi": "4.2.4"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "dotenv-cli": "8.0.0",
     "prisma": "6.7.0",
     "prisma-json-types-generator": "3.3.1",
     "ts-node": "10.9.2"
