@@ -97,6 +97,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
+        'modules/survey/list/lib/project.ts',
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -161,6 +162,8 @@ export default defineConfig({
         "modules/survey/editor/components/image-survey-bg.tsx",
         "modules/ee/teams/**/*.ts",
         "modules/ee/teams/**/*.tsx",
+        "app/(app)/environments/**/*.tsx",
+        "app/(app)/environments/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
@@ -170,7 +173,8 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
-        "**/stories.tsx", // Exclude story files
+        "**/actions.ts", // Exclude action files
+        "**/stories.tsx" // Exclude story files
       ],
     },
   },
