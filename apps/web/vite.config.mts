@@ -91,6 +91,7 @@ export default defineConfig({
         "modules/survey/components/template-list/components/template-tags.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/components/edit-public-survey-alert-dialog/index.tsx",
+        'modules/survey/list/lib/project.ts',
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/auth/signup/**/*.ts",
@@ -116,6 +117,17 @@ export default defineConfig({
         "modules/ui/components/card/index.tsx",
         "modules/survey/editor/components/*.tsx",
         "lib/fileValidation.ts",
+        "modules/survey/editor/components/add-action-modal.tsx",
+        "modules/survey/editor/components/add-ending-card-button.tsx",
+        "modules/survey/editor/components/add-question-button.tsx",
+        "modules/survey/editor/components/advanced-settings.tsx",
+        "modules/survey/editor/components/color-survey-bg.tsx",
+        "modules/survey/editor/components/date-question-form.tsx",
+        "modules/survey/editor/components/file-upload-question-form.tsx",
+        "modules/survey/editor/components/how-to-send-card.tsx",
+        "modules/survey/editor/components/image-survey-bg.tsx",
+        "app/(app)/environments/**/*.tsx",
+        "app/(app)/environments/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
@@ -125,6 +137,8 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "**/types/**", // Exclude types
+        "modules/**/types/**", // Exclude types
+        "**/actions.ts", // Exclude action files
         "**/stories.tsx" // Exclude story files
       ],
     },
