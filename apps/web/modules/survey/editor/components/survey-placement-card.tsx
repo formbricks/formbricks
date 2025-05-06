@@ -23,8 +23,6 @@ export const SurveyPlacementCard = ({
   setLocalSurvey,
   environmentId,
 }: SurveyPlacementCardProps) => {
-  // [UseTusk]
-
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
