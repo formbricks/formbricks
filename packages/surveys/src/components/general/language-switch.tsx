@@ -41,16 +41,16 @@ export function LanguageSwitch({
   });
 
   return (
-    <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center even:fb-pr-1">
+    <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center fb-mr-1">
       <button
         title="Language switch"
         type="button"
-        className="fb-text-heading fb-relative fb-h-5 fb-w-5 fb-rounded-md hover:fb-bg-black/5 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
+        className="fb-text-heading fb-relative fb-h-6 fb-w-6 fb-rounded-md hover:fb-bg-black/5 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
         onClick={toggleDropdown}
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        <GlobeIcon className="fb-text-heading fb-h-5 fb-w-5 fb-p-0.5" />
+        <GlobeIcon className="fb-text-heading fb-h-6 fb-w-6 fb-p-0.5" />
       </button>
       {showLanguageDropdown ? (
         <div
