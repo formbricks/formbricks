@@ -177,23 +177,15 @@ export const authOptions: NextAuthOptions = {
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-      },
-    },
-  },
   session: {
     maxAge: 3600,
   },
   callbacks: {
     async jwt({ token }) {
       const existingUser = await getUserByEmail(token?.email!);
+
+      console.log("JWT: ", JSON.stringify(token, null, 2));
+      console.log("JWT USER: ", JSON.stringify(existingUser, null, 2));
 
       if (!existingUser) {
         return token;
