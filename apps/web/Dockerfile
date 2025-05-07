@@ -110,4 +110,4 @@ VOLUME /home/nextjs/apps/web/uploads/
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
-CMD exec node apps/web/server.js
+CMD ["node", "apps/web/server.js"]
