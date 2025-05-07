@@ -28,7 +28,6 @@ export default defineConfig({
         "**/openapi.ts", // OpenAPI spec files
         "**/openapi-document.ts", // OpenAPI-related document files
         "**/types/**", // Type definition folders
-        "modules/**/types/**", // Specific type folders within modules
         "**/types.ts", // Files named 'types.ts'
         "**/actions.ts", // Server actions (plural)
         "**/action.ts", // Server actions (singular)
@@ -44,13 +43,37 @@ export default defineConfig({
         "**/Dockerfile", // Dockerfiles
         "**/*.css", // CSS files
         "**/templates.ts", // Project-specific template files
-        "scripts/**", // Utility scripts
-        "apps/web/modules/ui/components/icons/*",
+        "**/*.setup.*", // Setup files
+        "**/scripts/**", // Utility scripts
+        "modules/ui/components/icons/*",
         "**/cache.ts", // Exclude cache files
         "packages/surveys/src/components/general/smileys.tsx",
-        "apps/web/modules/auth/lib/mock-data.ts", // Exclude mock data files
-        "apps/web/modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
+        "modules/auth/lib/mock-data.ts", // Exclude mock data files
+        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
         "**/*.mjs",
+        "app/**/billing-confirmation/**",
+        "modules/ee/billing/**",
+        "modules/ee/multi-language-surveys/**",
+        "modules/email/**",
+        "modules/integrations/**",
+        "modules/setup/**/intro/**",
+        "modules/setup/**/signup/**",
+        "modules/setup/**/layout.tsx",
+        "modules/survey/follow-ups/**",
+        "app/share/**",
+        "lib/shortUrl/**",
+        "modules/ee/contacts/[contactId]/**",
+        "modules/ee/contacts/components/**",
+        "modules/ee/two-factor-auth/**",
+        "lib/posthogServer.ts",
+        "lib/slack/**",
+        "lib/notion/**",
+        "lib/googleSheet/**",
+        "app/api/google-sheet/**",
+        "app/api/billing/**",
+        "lib/airtable/**",
+        "app/api/v1/integrations/**",
+        "lib/env.ts",
       ],
     },
   },
