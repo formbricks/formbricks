@@ -75,6 +75,7 @@ jobs:
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.FORMBRICKS_ROLE_ARN }}
         with:
+          helmfile-version: 'v1.0.0'
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
@@ -91,6 +92,7 @@ jobs:
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
         with:
+          helmfile-version: 'v1.0.0'
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
