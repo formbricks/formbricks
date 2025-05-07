@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       VERSION:
-        description: 'The version of the Docker image to release'
+        description: 'The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0.'
         required: true
         type: string
       REPOSITORY:

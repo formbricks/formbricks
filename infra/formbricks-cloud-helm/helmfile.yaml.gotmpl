@@ -26,7 +26,7 @@ releases:
     createNamespace: true
     set:
       - name: deployment.image.tag
-        value: v{{ requiredEnv "VERSION" }}
+        value: {{ requiredEnv "VERSION" }}
       - name: deployment.image.repository
         value: {{ requiredEnv "REPOSITORY" }}
     labels:
