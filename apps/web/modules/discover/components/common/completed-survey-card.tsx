@@ -60,7 +60,9 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
                 <div>
                   <div className="flex items-center gap-1">
                     <span>{survey.responseCount}</span>
-                    <span>{survey.responseCount <= 1 ? t("common.response") : t("common.responses")}</span>
+                    <span>
+                      {survey.responseCount <= 1 ? t("common.participant") : t("common.participants")}
+                    </span>
                   </div>
                 </div>
               </div>

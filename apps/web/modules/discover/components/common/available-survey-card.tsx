@@ -35,8 +35,12 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
             {survey.responseCount != undefined && (
               <div className="flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                 <UsersIcon className="mr-1 h-3 w-3" />
-                <span>{survey.responseCount}</span>
-                <span>{survey.responseCount <= 1 ? t("common.response") : t("common.responses")}</span>
+                <div className="flex items-center gap-1">
+                  <span>{survey.responseCount}</span>
+                  <span>
+                    {survey.responseCount <= 1 ? t("common.participant") : t("common.participants")}
+                  </span>
+                </div>
               </div>
             )}
           </div>

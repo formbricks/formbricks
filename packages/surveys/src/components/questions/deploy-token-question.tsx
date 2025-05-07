@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { ErrorCard } from "src/components/general/error-card";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
@@ -49,7 +50,9 @@ export function DeployTokenQuestion({
 }: DeployTokenQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-  // const [isDeploying, setIsDeploying] = useState(false);
+  const [isDeploying, setIsDeploying] = useState<boolean>(false);
+  const [isDeployFailed, setIsDeployFailed] = useState<boolean>(true);
+
   const isDeployingRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { deploy } = useDeployERC20();
@@ -99,8 +102,9 @@ export function DeployTokenQuestion({
     if (isDeployingRef.current) return;
 
     try {
+      setIsDeployFailed(false);
       isDeployingRef.current = true;
-      // setIsDeploying(true);
+      setIsDeploying(true);
 
       const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
       setTtc(updatedTtc);
@@ -127,11 +131,11 @@ export function DeployTokenQuestion({
         setIsResponseSendingFinished(true);
       }
     } catch (error) {
-      console.error("Error deploying token:", error);
+      setIsDeployFailed(true);
       return;
     } finally {
       isDeployingRef.current = false;
-      // setIsDeploying(false);
+      setIsDeploying(false);
     }
   };
 
@@ -159,7 +163,9 @@ export function DeployTokenQuestion({
     return txResp;
   };
 
-  // console.log("isDeploying", isDeploying);
+  if (isDeployFailed) {
+    return <ErrorCard />;
+  }
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
@@ -228,9 +234,13 @@ export function DeployTokenQuestion({
         <div />
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          // buttonLabel={isDeploying ? "Deploying..." : getLocalizedValue(question.buttonLabel, languageCode)}
-          // disabled={isDeploying}
+          buttonLabel={isDeploying ? "Deploying" : getLocalizedValue(question.buttonLabel, languageCode)}
+          disabled={isDeploying}
+          className={
+            isDeploying
+              ? "animate-pulse cursor-not-allowed bg-slate-400 opacity-70 transition-all duration-300"
+              : ""
+          }
           isLastQuestion={isLastQuestion}
         />
       </div>
