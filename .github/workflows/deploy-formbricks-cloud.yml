@@ -67,7 +67,7 @@ jobs:
 
       - uses: helmfile/helmfile-action@v2
         name: Deploy Formbricks Cloud Prod
-        if: (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch') && github.event.inputs.ENVIRONMENT == 'prod'
+        if: inputs.ENVIRONMENT == 'prod'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -85,7 +85,7 @@ jobs:
 
       - uses: helmfile/helmfile-action@v2
         name: Deploy Formbricks Cloud Stage
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.ENVIRONMENT == 'stage'
+        if: inputs.ENVIRONMENT == 'stage'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
