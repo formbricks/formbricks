@@ -172,5 +172,6 @@ describe("ProjectSwitcher", () => {
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(mockPush).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/organizations/org1/projects/new/mode");
   });
 });

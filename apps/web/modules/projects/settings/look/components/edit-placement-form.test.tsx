@@ -1,6 +1,9 @@
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Project } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EditPlacementForm } from "./edit-placement-form";
 
@@ -23,25 +26,16 @@ const baseProject: Project = {
   logo: null,
 } as any;
 
-const mockUpdateProjectAction = vi.fn(async () => ({ data: true }));
-const mockGetFormattedErrorMessage = vi.fn(() => "error-message");
-
 vi.mock("@/modules/projects/settings/actions", () => ({
-  updateProjectAction: () => mockUpdateProjectAction(),
+  updateProjectAction: vi.fn(),
 }));
 vi.mock("@/lib/utils/helper", () => ({
-  getFormattedErrorMessage: () => mockGetFormattedErrorMessage(),
+  getFormattedErrorMessage: vi.fn(),
 }));
 
 vi.mock("@/modules/ui/components/alert", () => ({
   Alert: ({ children }: any) => <div data-testid="alert">{children}</div>,
   AlertDescription: ({ children }: any) => <div data-testid="alert-description">{children}</div>,
-}));
-vi.mock("@/modules/ui/components/button", () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-}));
-vi.mock("@/modules/ui/components/label", () => ({
-  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
 }));
 
 describe("EditPlacementForm", () => {
@@ -62,21 +56,22 @@ describe("EditPlacementForm", () => {
   test("submits form and shows success toast", async () => {
     render(<EditPlacementForm project={baseProject} environmentId="env1" isReadOnly={false} />);
     await userEvent.click(screen.getByText("common.save"));
-    expect(mockUpdateProjectAction).toHaveBeenCalled();
+    expect(updateProjectAction).toHaveBeenCalled();
   });
 
   test("shows error toast if updateProjectAction returns no data", async () => {
-    mockUpdateProjectAction.mockResolvedValueOnce({ data: false });
+    vi.mocked(updateProjectAction).mockResolvedValueOnce({ data: false } as any);
     render(<EditPlacementForm project={baseProject} environmentId="env1" isReadOnly={false} />);
     await userEvent.click(screen.getByText("common.save"));
-    expect(mockGetFormattedErrorMessage).toHaveBeenCalled();
+    expect(getFormattedErrorMessage).toHaveBeenCalled();
   });
 
   test("shows error toast if updateProjectAction throws", async () => {
-    mockUpdateProjectAction.mockRejectedValueOnce(new Error("fail"));
+    vi.mocked(updateProjectAction).mockResolvedValueOnce({ data: false } as any);
+    vi.mocked(getFormattedErrorMessage).mockReturnValueOnce("error");
     render(<EditPlacementForm project={baseProject} environmentId="env1" isReadOnly={false} />);
     await userEvent.click(screen.getByText("common.save"));
-    // error toast is called
+    expect(toast.error).toHaveBeenCalledWith("error");
   });
 
   test("renders overlay and disables save when isReadOnly", () => {

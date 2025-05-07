@@ -83,6 +83,7 @@ describe("/modules/projects/settings/general/components/delete-project.tsx", () 
   });
 
   test("renders DeleteProjectRender with delete disabled if only one project", async () => {
+    vi.mocked(getUserProjects).mockResolvedValue([mockProject]);
     const result = await DeleteProject({
       environmentId: "env-1",
       currentProject: mockProject,
@@ -92,7 +93,7 @@ describe("/modules/projects/settings/general/components/delete-project.tsx", () 
     render(result);
     const el = screen.getByTestId("delete-project-render");
     expect(el).toBeInTheDocument();
-    expect(screen.getByText("isDeleteDisabled: false")).toBeInTheDocument();
+    expect(screen.getByText("isDeleteDisabled: true")).toBeInTheDocument();
   });
 
   test("renders DeleteProjectRender with delete disabled if not owner or manager", async () => {

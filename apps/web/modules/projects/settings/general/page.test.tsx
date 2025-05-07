@@ -3,7 +3,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import { GeneralSettingsPage } from "./page";
 
 vi.mock("@/modules/projects/settings/components/project-config-navigation", () => ({
@@ -89,7 +88,7 @@ describe("GeneralSettingsPage", () => {
   });
 
   test("renders all tolgee strings and main UI elements", async () => {
-    const props = { params: Promise.resolve({ environmentId: "env1" }) };
+    const props = { params: { environmentId: "env1" } } as any;
 
     vi.mocked(getProjects).mockResolvedValue([mockProject]);
     vi.mocked(getEnvironmentAuth).mockResolvedValue({

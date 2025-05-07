@@ -40,9 +40,9 @@ vi.mock("@/modules/projects/settings/tags/components/merge-tags-combobox", () =>
 const mockRouter = { refresh: vi.fn() };
 
 vi.mock("@/modules/projects/settings/tags/actions", () => ({
-  updateTagNameAction: vi.fn(),
-  deleteTagAction: vi.fn(),
-  mergeTagsAction: vi.fn(),
+  updateTagNameAction: vi.fn(() => Promise.resolve({ data: {} })),
+  deleteTagAction: vi.fn(() => Promise.resolve({ data: {} })),
+  mergeTagsAction: vi.fn(() => Promise.resolve({ data: {} })),
 }));
 vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn(),
@@ -107,10 +107,13 @@ describe("SingleTag", () => {
   });
 
   test("shows merge tags combobox and calls mergeTagsAction", async () => {
+    vi.mocked(mergeTagsAction).mockImplementationOnce(() => Promise.resolve({ data: undefined }));
+    vi.mocked(getFormattedErrorMessage).mockReturnValue("Error occurred");
     render(<SingleTag tagId={baseTag.id} tagName={baseTag.name} environmentTags={environmentTags} />);
     const mergeBtn = screen.getByText("Tag 2");
     await userEvent.click(mergeBtn);
     expect(mergeTagsAction).toHaveBeenCalledWith({ originalTagId: baseTag.id, newTagId: "tag2" });
+    expect(getFormattedErrorMessage).toHaveBeenCalled();
   });
 
   test("shows error toast if mergeTagsAction fails", async () => {
