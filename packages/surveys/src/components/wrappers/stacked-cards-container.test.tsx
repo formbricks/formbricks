@@ -1,5 +1,5 @@
 // Import jest-dom matchers explicitly for Vitest
-import { toBeInTheDocument, toHaveClass, toHaveStyle } from "@testing-library/jest-dom/matchers";
+import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Import after mocks
@@ -8,9 +8,6 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyQuestionId, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { StackedCardsContainer } from "./stacked-cards-container";
-
-// Add the matchers to Vitest's expect
-expect.extend({ toBeInTheDocument, toHaveClass, toHaveStyle });
 
 // Create a mock for StackedCard - must be defined before the mock
 const mockStackedCardFn = vi.fn();
@@ -22,10 +19,10 @@ vi.mock("@/lib/utils", () => ({
 
 // Mock the StackedCard component
 vi.mock("./stacked-card", () => ({
-  StackedCard: (props) => {
+  StackedCard: (props: any) => {
     mockStackedCardFn(props);
 
-    const ref = (el) => {
+    const ref = (el: HTMLDivElement | null) => {
       if (props.cardRefs?.current) {
         props.cardRefs.current[props.dynamicQuestionIndex] = el;
       }
