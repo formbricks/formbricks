@@ -72,7 +72,6 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               defaultValue={tagName}
               onBlur={(e) => {
                 updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
-                  console.log("updateTagNameResponse", updateTagNameResponse);
                   if (updateTagNameResponse?.data) {
                     setUpdateTagError(false);
                     toast.success(t("environments.project.tags.tag_updated"));
