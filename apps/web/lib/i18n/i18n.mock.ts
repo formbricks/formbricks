@@ -1,4 +1,4 @@
-import { mockSurveyLanguages } from "@/lib/survey/tests/__mock__/survey.mock";
+import { mockSurveyLanguages } from "@/lib/survey/__mock__/survey.mock";
 import {
   TSurvey,
   TSurveyCTAQuestion,

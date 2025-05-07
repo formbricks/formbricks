@@ -124,6 +124,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls && recalls.some((recall) => !extractFallbackValue(recall));
   };
+
   for (const question of survey.questions) {
     if (
       findRecalls(getLocalizedValue(question.headline, language)) ||
