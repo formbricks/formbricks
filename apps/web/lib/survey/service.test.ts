@@ -82,8 +82,8 @@ vi.mock("@/lib/actionClass/service", () => ({
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
-  vi.clearAllMocks();
 });
+
 describe("evaluateLogic with mockSurveyWithLogic", () => {
   test("should return true when q1 answer is blue", () => {
     const data = { q1: "blue" };
