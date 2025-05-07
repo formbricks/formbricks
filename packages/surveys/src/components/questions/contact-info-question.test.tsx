@@ -170,9 +170,7 @@ describe("ContactInfoQuestion", () => {
     const user = userEvent.setup();
     vi.mocked(getUpdatedTtc).mockReturnValueOnce({ "contact-info-q": 100 });
 
-    const { rerender } = render(
-      <ContactInfoQuestion {...defaultProps} value={["John", "Doe", "john@example.com", "", ""]} />
-    );
+    render(<ContactInfoQuestion {...defaultProps} value={["John", "Doe", "john@example.com", "", ""]} />);
 
     const submitButton = screen.getByTestId("submit-button");
     await user.click(submitButton);
