@@ -13,21 +13,8 @@ describe("datetime utils", () => {
     // Using noon ensures the date won't change in most timezones
     const date = new Date(Date.UTC(2025, 4, 6, 12, 0, 0));
 
-    // Mock the Date's toLocaleDateString to return a consistent value regardless of timezone
-    const toLocaleDateStringSpy = vi.spyOn(Date.prototype, "toLocaleDateString");
-    toLocaleDateStringSpy.mockImplementation(function (this: Date) {
-      if (this.getUTCDate() === 6 && this.getUTCMonth() === 4 && this.getUTCFullYear() === 2025) {
-        return "Tuesday, May 6, 2025";
-      }
-      // For any other date, call the original method
-      return toLocaleDateStringSpy.getMockImplementation()!.call(this);
-    });
-
     // Test the function
     expect(formatDateWithOrdinal(date)).toBe("Tuesday, May 6th, 2025");
-
-    // Restore the original method
-    toLocaleDateStringSpy.mockRestore();
   });
 
   test("isValidDateString validates correct date strings", () => {
