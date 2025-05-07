@@ -9,8 +9,6 @@ import { QuestionFormInput } from "./index";
 // Mock all the modules that might cause server-side environment variable access issues
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
-  FORMBRICKS_API_HOST: "http://localhost:3000",
-  FORMBRICKS_ENVIRONMENT_ID: "test-env-id",
   ENCRYPTION_KEY: "test-encryption-key",
   WEBAPP_URL: "http://localhost:3000",
   DEFAULT_BRAND_COLOR: "#64748b",
@@ -45,8 +43,6 @@ vi.mock("@/lib/constants", () => ({
 vi.mock("@/lib/env", () => ({
   env: {
     IS_FORMBRICKS_CLOUD: "0",
-    FORMBRICKS_API_HOST: "http://localhost:3000",
-    FORMBRICKS_ENVIRONMENT_ID: "test-env-id",
     ENCRYPTION_KEY: "test-encryption-key",
     NODE_ENV: "test",
     ENTERPRISE_LICENSE_KEY: "test-license-key",

@@ -202,7 +202,7 @@ const baseSurveyProperties = {
   autoComplete: 7,
   runOnDate: null,
   closeOnDate: currentDate,
-  redirectUrl: "http://github.com/formbricks/formbricks",
+  redirectUrl: "https://github.com/formbricks/formbricks",
   recontactDays: 3,
   displayLimit: 3,
   welcomeCard: mockWelcomeCard,

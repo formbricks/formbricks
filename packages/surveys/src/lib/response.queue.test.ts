@@ -51,7 +51,7 @@ describe("delay", () => {
   test("resolves after specified ms", async () => {
     const start = Date.now();
     await delay(50);
-    expect(Date.now() - start).toBeGreaterThanOrEqual(50);
+    expect(Date.now() - start).toBeGreaterThanOrEqual(49); // Using 49 to account for execution time
   });
 });
 

@@ -409,7 +409,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             value: label,
             count,
@@ -508,7 +508,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             rating: parseInt(label),
             count,

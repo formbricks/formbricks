@@ -1,5 +1,6 @@
 "use client";
 
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import { cn } from "@/lib/cn";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
@@ -11,7 +12,7 @@ import toast from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { Uploader } from "./components/uploader";
 import { VideoSettings } from "./components/video-settings";
-import { getAllowedFiles, uploadFile } from "./lib/utils";
+import { getAllowedFiles } from "./lib/utils";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
@@ -21,7 +22,7 @@ const isImage = (name: string) => {
 interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtension[];
-  environmentId: string | undefined;
+  environmentId: string;
   onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
   fileUrl?: string | string[];
   videoUrl?: string;
@@ -78,14 +79,11 @@ export const FileInput = ({
       allowedFiles.map((file) => ({ url: URL.createObjectURL(file), name: file.name, uploaded: false }))
     );
 
-    const uploadedFiles = await Promise.allSettled(
-      allowedFiles.map((file) => uploadFile(file, allowedFileExtensions, environmentId))
+    const uploadedFiles = await Promise.all(
+      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
     );
 
-    if (
-      uploadedFiles.length < allowedFiles.length ||
-      uploadedFiles.some((file) => file.status === "rejected")
-    ) {
+    if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
       if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
       } else {
@@ -95,8 +93,8 @@ export const FileInput = ({
 
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
-      if (file.status === "fulfilled") {
-        uploadedUrls.push(encodeURI(file.value.url));
+      if (file.url) {
+        uploadedUrls.push(encodeURI(file.url));
       }
     });
 
@@ -147,14 +145,11 @@ export const FileInput = ({
       ...allowedFiles.map((file) => ({ url: URL.createObjectURL(file), name: file.name, uploaded: false })),
     ]);
 
-    const uploadedFiles = await Promise.allSettled(
-      allowedFiles.map((file) => uploadFile(file, allowedFileExtensions, environmentId))
+    const uploadedFiles = await Promise.all(
+      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
     );
 
-    if (
-      uploadedFiles.length < allowedFiles.length ||
-      uploadedFiles.some((file) => file.status === "rejected")
-    ) {
+    if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
       if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
       } else {
@@ -164,8 +159,8 @@ export const FileInput = ({
 
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
-      if (file.status === "fulfilled") {
-        uploadedUrls.push(encodeURI(file.value.url));
+      if (file.url) {
+        uploadedUrls.push(encodeURI(file.url));
       }
     });
 
@@ -242,7 +237,7 @@ export const FileInput = ({
                             />
                             {file.uploaded ? (
                               <div
-                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -260,7 +255,7 @@ export const FileInput = ({
                             </p>
                             {file.uploaded ? (
                               <div
-                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -300,7 +295,7 @@ export const FileInput = ({
                         />
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>
@@ -316,7 +311,7 @@ export const FileInput = ({
                         </p>
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>
