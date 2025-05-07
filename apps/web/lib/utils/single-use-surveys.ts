@@ -1,4 +1,4 @@
-import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { symmetricEncrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import cuid2 from "@paralleldrive/cuid2";
 
@@ -25,25 +25,4 @@ export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean):
   }
 
   return singleUseIds;
-};
-
-// validate the survey single use id
-export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
-  try {
-    let decryptedCuid: string | null = null;
-
-    if (!env.ENCRYPTION_KEY) {
-      throw new Error("ENCRYPTION_KEY is not set");
-    }
-
-    decryptedCuid = symmetricDecrypt(surveySingleUseId, env.ENCRYPTION_KEY);
-
-    if (cuid2.isCuid(decryptedCuid)) {
-      return decryptedCuid;
-    } else {
-      return undefined;
-    }
-  } catch (error) {
-    return undefined;
-  }
 };
