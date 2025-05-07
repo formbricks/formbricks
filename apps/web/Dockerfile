@@ -76,13 +76,7 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-RUN npm install --ignore-scripts -g corepack@latest 
-RUN corepack enable
-
-RUN apk add --no-cache curl \
-    && apk add --no-cache supercronic \
-    # && addgroup --system --gid 1001 nodejs \
-    && addgroup -S nextjs \
+RUN addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
@@ -103,48 +97,6 @@ RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.n
 COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
-COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
-RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
-
-COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
-RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
-
-COPY --from=installer /app/packages/database/migration ./packages/database/migration
-RUN chown -R nextjs:nextjs ./packages/database/migration && chmod -R 755 ./packages/database/migration
-
-COPY --from=installer /app/packages/database/src ./packages/database/src
-RUN chown -R nextjs:nextjs ./packages/database/src && chmod -R 755 ./packages/database/src
-
-COPY --from=installer /app/packages/database/node_modules ./packages/database/node_modules
-RUN chown -R nextjs:nextjs ./packages/database/node_modules && chmod -R 755 ./packages/database/node_modules
-
-COPY --from=installer /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
-RUN chown -R nextjs:nextjs ./packages/database/node_modules/@formbricks/logger/dist && chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
-
-COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
-
-COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
-RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
-
-COPY --from=installer /prisma_version.txt .
-RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
-
-COPY /docker/cronjobs /app/docker/cronjobs
-RUN chmod -R 755 /app/docker/cronjobs
-
-COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
-RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
-
-COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
-RUN chmod -R 755 ./node_modules/@noble/hashes
-
-COPY --from=installer /app/node_modules/zod ./node_modules/zod
-RUN chmod -R 755 ./node_modules/zod
-
-RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
-RUN npm install -g prisma
-
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 ENV NODE_ENV="production"
@@ -158,12 +110,4 @@ VOLUME /home/nextjs/apps/web/uploads/
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
-CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
-      echo "Starting cron jobs..."; \
-      supercronic -quiet /app/docker/cronjobs & \
-    else \
-      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
-    fi; \
-    (cd packages/database && npm run db:migrate:deploy) && \
-    (cd packages/database && npm run db:create-saml-database:deploy) && \
-    exec node apps/web/server.js
+CMD exec node apps/web/server.js
