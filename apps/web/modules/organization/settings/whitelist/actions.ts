@@ -105,7 +105,7 @@ const ZGetNonWhitelistedUsersAction = z.object({
 
 export const getNonWhitelistedUsersAction = authenticatedActionClient
   .schema(ZGetNonWhitelistedUsersAction)
-  .action(async ({ parsedInput, ctx }) => {
+  .action(async ({ parsedInput }) => {
     // Verify user is an owner or manager
     // const currentUserMembership = await getMembershipByUserIdOrganizationId(
     //   ctx.user.id,

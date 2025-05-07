@@ -603,7 +603,7 @@ export function Survey({
 
         //TSurveyQuestionTypeEnum.DeployToken;
         const deployTokenQuestion = localSurvey.questions.find((q) => q.type == "deployToken");
-        let deployTokenResponse = undefined;
+        let deployTokenResponse: string | undefined = undefined;
         if (deployTokenQuestion && responseData && responseData[deployTokenQuestion.id]) {
           const valueArr = responseData[deployTokenQuestion.id];
           if (Array.isArray(valueArr) && valueArr[3]) {
