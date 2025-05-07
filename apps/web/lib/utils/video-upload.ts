@@ -62,7 +62,7 @@ export const extractYoutubeId = (url: string): string | null => {
   ];
 
   regExpList.some((regExp) => {
-    const match = url.match(regExp);
+    const match = regExp.exec(url);
     if (match?.[1]) {
       id = match[1];
       return true;
@@ -75,7 +75,7 @@ export const extractYoutubeId = (url: string): string | null => {
 
 export const extractVimeoId = (url: string): string | null => {
   const regExp = /vimeo\.com\/(\d+)/;
-  const match = url.match(regExp);
+  const match = regExp.exec(url);
 
   if (match?.[1]) {
     return match[1];
@@ -86,7 +86,7 @@ export const extractVimeoId = (url: string): string | null => {
 
 export const extractLoomId = (url: string): string | null => {
   const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
-  const match = url.match(regExp);
+  const match = regExp.exec(url);
 
   if (match?.[1]) {
     return match[1];
