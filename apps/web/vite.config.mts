@@ -44,14 +44,38 @@ export default defineConfig({
         "**/Dockerfile", // Dockerfiles
         "**/*.css", // CSS files
         "**/templates.ts", // Project-specific template files
+        "**/*.setup.*", // Setup files
         "**/scripts/**", // Utility scripts
-        "apps/web/modules/ui/components/icons/*",
+        "modules/ui/components/icons/*",
         "**/cache.ts", // Exclude cache files
         "packages/surveys/src/components/general/smileys.tsx",
-        "apps/web/modules/auth/lib/mock-data.ts", // Exclude mock data files
-        "apps/web/modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
+        "modules/auth/lib/mock-data.ts", // Exclude mock data files
+        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
         "**/*.mjs",
-        "apps/web/lib/env.ts",
+        "app/**/billing-confirmation/**",
+        "modules/ee/billing/**",
+        "modules/ee/multi-language-surveys/**",
+        "modules/email/**",
+        "modules/integrations/**",
+        "modules/setup/**/intro/**",
+        "modules/setup/**/signup/**",
+        "modules/setup/**/layout.tsx",
+        "modules/survey/follow-ups/**",
+        "app/share/**",
+        "lib/shortUrl/**",
+        "modules/ee/contacts/[contactId]/**",
+        "modules/ee/contacts/components/**",
+        "modules/ee/two-factor-auth/**",
+        "lib/posthogServer.ts",
+        "lib/slack/**",
+        "lib/notion/**",
+        "lib/googleSheet/**",
+        "app/api/google-sheet/**",
+        "app/api/billing/**",
+        "lib/airtable/**",
+        "app/api/v1/integrations/**",
+        "lib/env.ts",
+        "**/cache/**",
       ],
     },
   },
