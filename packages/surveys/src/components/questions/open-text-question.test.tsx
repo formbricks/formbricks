@@ -22,7 +22,11 @@ vi.mock("@/lib/ttc", () => ({
 vi.mock("@/lib/i18n", () => ({
   getLocalizedValue: vi
     .fn()
-    .mockImplementation((value) => (typeof value === "string" ? value : value.en || value.default)),
+    .mockImplementation((value) => (typeof value === "string" ? value : (value.en ?? value.default))),
+}));
+
+vi.mock("@/components/general/question-media", () => ({
+  QuestionMedia: () => <div data-testid="question-media">Media Component</div>,
 }));
 
 describe("OpenTextQuestion", () => {
@@ -131,12 +135,7 @@ describe("OpenTextQuestion", () => {
   });
 
   test("renders with media when available", () => {
-    vi.mock("@/components/general/question-media", () => ({
-      QuestionMedia: () => <div data-testid="question-media">Media Component</div>,
-    }));
-
     render(<OpenTextQuestion {...defaultProps} question={{ ...defaultQuestion, imageUrl: "test.jpg" }} />);
-
     expect(screen.getByTestId("question-media")).toBeInTheDocument();
   });
 

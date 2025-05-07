@@ -95,7 +95,7 @@ describe("DateQuestion", () => {
     await user.click(screen.getByText("Back"));
 
     expect(defaultProps.onBack).toHaveBeenCalledTimes(1);
-    expect(defaultProps.setTtc).toHaveBeenCalledTimes(2); // Updated to 2 calls
+    expect(defaultProps.setTtc).toHaveBeenCalledTimes(2);
   });
 
   test("does not render back button when isFirstQuestion is true", () => {
