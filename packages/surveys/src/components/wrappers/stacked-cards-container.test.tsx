@@ -1,7 +1,7 @@
 // Import jest-dom matchers explicitly for Vitest
 import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Import after mocks
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TProjectStyling } from "@formbricks/types/project";
@@ -53,6 +53,7 @@ const mockObserve = vi.fn();
 const mockDisconnect = vi.fn();
 const mockUnobserve = vi.fn();
 
+const originalResizeObserver = global.ResizeObserver;
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: mockObserve,
   unobserve: mockUnobserve,
@@ -186,6 +187,7 @@ describe("StackedCardsContainer", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.useRealTimers();
     // Reset ResizeObserver mocks explicitly if they maintain state across tests
     mockObserve.mockClear();
     mockDisconnect.mockClear();
@@ -205,6 +207,10 @@ describe("StackedCardsContainer", () => {
         Content for Q{questionIdxTemp}, Offset {offset}
       </div>
     ));
+  });
+
+  afterAll(() => {
+    global.ResizeObserver = originalResizeObserver;
   });
 
   test("renders simple arrangement correctly", () => {
