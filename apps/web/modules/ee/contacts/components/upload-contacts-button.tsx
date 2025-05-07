@@ -297,7 +297,7 @@ export const UploadContactsCSVButton = ({
         <div className="sticky top-0 flex h-full flex-col rounded-lg">
           <button
             className={cn(
-              "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
+              "absolute top-0 right-0 hidden pt-4 pr-4 text-slate-400 hover:text-slate-500 focus:ring-0 focus:outline-none sm:block"
             )}
             onClick={() => {
               resetState(true);
@@ -343,7 +343,7 @@ export const UploadContactsCSVButton = ({
                     )}
                     onDragOver={(e) => handleDragOver(e)}
                     onDrop={(e) => handleDrop(e)}>
-                    <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                       <p className={cn("mt-2 text-center text-sm text-slate-500")}>
                         <span className="font-semibold">{t("common.upload_input_description")}</span>

@@ -73,7 +73,7 @@ export const PricingTable = ({
     const manageSubscriptionResponse = await manageSubscriptionAction({
       environmentId,
     });
-    if (manageSubscriptionResponse?.data) {
+    if (manageSubscriptionResponse?.data && typeof manageSubscriptionResponse.data === "string") {
       router.push(manageSubscriptionResponse.data);
     }
   };

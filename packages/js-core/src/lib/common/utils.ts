@@ -183,8 +183,14 @@ export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: stri
   return selectedLanguage.language.code;
 };
 
+export const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
+
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boolean => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100; // NOSONAR typescript:S2245 // Math.random() is not used in a security context
+  const randomNum = Math.floor(getSecureRandom() * 10000) / 100;
   return randomNum <= displayPercentage;
 };
 
