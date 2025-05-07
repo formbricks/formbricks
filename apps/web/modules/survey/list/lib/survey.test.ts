@@ -160,6 +160,13 @@ const resetMocks = () => {
   vi.mocked(logger.error).mockClear();
 };
 
+const makePrismaKnownError = () =>
+  new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+    code: "P2001",
+    clientVersion: "test",
+    meta: {},
+  });
+
 // Sample data
 const environmentId = "env_1";
 const surveyId = "survey_1";
@@ -194,11 +201,7 @@ describe("getSurveyCount", () => {
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.count).mockRejectedValue(prismaError);
     await expect(getSurveyCount(environmentId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey count");
@@ -238,11 +241,7 @@ describe("getSurvey", () => {
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.findUnique).mockRejectedValue(prismaError);
     await expect(getSurvey(surveyId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
@@ -319,11 +318,7 @@ describe("getSurveys", () => {
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
     await expect(getSurveys(environmentId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting surveys");
@@ -395,11 +390,7 @@ describe("getSurveysSortedByRelevance", () => {
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.count).mockRejectedValue(prismaError);
     await expect(getSurveysSortedByRelevance(environmentId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting surveys sorted by relevance");
@@ -464,11 +455,7 @@ describe("deleteSurvey", () => {
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.delete).mockRejectedValue(prismaError);
     await expect(deleteSurvey(surveyId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error deleting survey");
@@ -780,11 +767,7 @@ describe("copySurveyToOtherEnvironment", () => {
   });
 
   test("should throw DatabaseError on Prisma create error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-      code: "P2001",
-      clientVersion: "test",
-      meta: {},
-    });
+    const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.create).mockRejectedValue(prismaError);
     await expect(
       copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId)
