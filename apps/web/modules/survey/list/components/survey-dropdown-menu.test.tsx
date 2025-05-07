@@ -2,7 +2,7 @@ import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { SurveyDropDownMenu } from "../survey-dropdown-menu";
+import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 // Mock translation
 vi.mock("@tolgee/react", () => ({
