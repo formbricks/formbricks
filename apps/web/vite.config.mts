@@ -45,6 +45,12 @@ export default defineConfig({
         "**/*.css", // CSS files
         "**/templates.ts", // Project-specific template files
         "scripts/**", // Utility scripts
+        "apps/web/modules/ui/components/icons/*",
+        "**/cache.ts", // Exclude cache files
+        "packages/surveys/src/components/general/smileys.tsx",
+        "apps/web/modules/auth/lib/mock-data.ts", // Exclude mock data files
+        "apps/web/modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
+        "**/*.mjs"
       ],
     },
   },
