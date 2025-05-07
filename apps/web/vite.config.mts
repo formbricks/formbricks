@@ -24,7 +24,7 @@ export default defineConfig({
         "**/mocks/**", // Mock directories
         "**/__mocks__/**", // Jest-style mock directories
         "**/constants.ts", // Constants files
-        "**/route.ts", // Next.js API routes
+        "**/route.{ts,tsx}", // Next.js API routes
         "**/openapi.ts", // OpenAPI spec files
         "**/openapi-document.ts", // OpenAPI-related document files
         "**/types/**", // Type definition folders
