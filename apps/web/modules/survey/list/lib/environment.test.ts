@@ -1,10 +1,9 @@
 // Retain only vitest import here
 // Import modules after mocks
 import { cache as libCacheImport } from "@/lib/cache";
-import { environmentCache } from "@/lib/environment/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
