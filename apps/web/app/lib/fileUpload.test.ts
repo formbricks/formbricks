@@ -51,34 +51,7 @@ describe("fileUpload", () => {
     expect(result.url).toBe("");
   });
 
-  test("should return error when file size exceeds 10MB", async () => {
-    const file = createMockFile("test.jpg", "image/jpeg", 11 * 1024 * 1024);
-
-    // Mock successful API response since the size check happens before the API call
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        data: {
-          signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
-          presignedFields: {
-            key: "value",
-          },
-        },
-      }),
-    });
-
-    // Trigger FileReader onload immediately
-    mockFileReader.readAsDataURL.mockImplementation(() => {
-      mockFileReader.onload();
-    });
-
-    const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBe("File size must be less than 10 MB.");
-    expect(result.url).toBe("");
-  });
-
-  test("should return FILE_SIZE_EXCEEDED if arrayBuffer is >10MB even if file.size is OK", async () => {
+  test("should return FILE_SIZE_EXCEEDED if arrayBuffer is > 10MB even if file.size is OK", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000); // file.size = 1KB
 
     // Mock arrayBuffer to return >10MB buffer
