@@ -1,6 +1,10 @@
 import { processResponseData } from "@/lib/responses";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { cleanup } from "@testing-library/react";
+import { AnyActionArg } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseNote, TResponseNoteUser, TResponseTableData } from "@formbricks/types/responses";
 import {
@@ -255,5 +259,240 @@ describe("generateResponseTableColumns", () => {
     expect(notesCol).toBeDefined();
     (notesCol?.cell as any)?.({ row: { original: mockResponseData } } as any);
     expect(vi.mocked(processResponseData)).toHaveBeenCalledWith(["This is a note"]);
+  });
+});
+
+describe("ResponseTableColumns", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("includes verifiedEmailColumn when isVerifyEmailEnabled is true", () => {
+    // Arrange
+    const mockSurvey = {
+      questions: [],
+      variables: [],
+      hiddenFields: { fieldIds: [] },
+      isVerifyEmailEnabled: true,
+    } as unknown as TSurvey;
+
+    const mockT = vi.fn((key) => key);
+    const isExpanded = false;
+    const isReadOnly = false;
+
+    // Act
+    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT);
+
+    // Assert
+    const verifiedEmailColumn: any = columns.find((col: any) => col.accessorKey === "verifiedEmail");
+    expect(verifiedEmailColumn).toBeDefined();
+    expect(verifiedEmailColumn?.accessorKey).toBe("verifiedEmail");
+
+    // Call the header function to trigger the t function call with "common.verified_email"
+    if (verifiedEmailColumn && typeof verifiedEmailColumn.header === "function") {
+      verifiedEmailColumn.header();
+      expect(mockT).toHaveBeenCalledWith("common.verified_email");
+    }
+  });
+
+  test("excludes verifiedEmailColumn when isVerifyEmailEnabled is false", () => {
+    // Arrange
+    const mockSurvey = {
+      questions: [],
+      variables: [],
+      hiddenFields: { fieldIds: [] },
+      isVerifyEmailEnabled: false,
+    } as unknown as TSurvey;
+
+    const mockT = vi.fn((key) => key);
+    const isExpanded = false;
+    const isReadOnly = false;
+
+    // Act
+    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT);
+
+    // Assert
+    const verifiedEmailColumn = columns.find((col: any) => col.accessorKey === "verifiedEmail");
+    expect(verifiedEmailColumn).toBeUndefined();
+  });
+});
+
+describe("ResponseTableColumns - Column Implementations", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("dateColumn renders with formatted date", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const dateColumn: any = columns.find((col) => (col as any).accessorKey === "createdAt");
+    expect(dateColumn).toBeDefined();
+
+    // Call the header function to test it returns the expected value
+    expect(dateColumn?.header?.()).toBe("common.date");
+
+    // Mock a response with a date to test the cell function
+    const mockRow = {
+      original: { createdAt: "2023-01-01T12:00:00Z" },
+    } as any;
+
+    // Call the cell function and check the formatted date
+    dateColumn?.cell?.({ row: mockRow } as any);
+    expect(vi.mocked(getFormattedDateTimeString)).toHaveBeenCalledWith(new Date("2023-01-01T12:00:00Z"));
+  });
+
+  test("personColumn renders anonymous when person is null", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const personColumn: any = columns.find((col) => (col as any).accessorKey === "personId");
+    expect(personColumn).toBeDefined();
+
+    // Test header content
+    const headerResult = personColumn?.header?.();
+    expect(headerResult).toBeDefined();
+
+    // Mock a response with no person
+    const mockRow = {
+      original: { person: null },
+    } as any;
+
+    // Mock the t function for this specific call
+    t.mockReturnValueOnce("Anonymous User");
+
+    // Call the cell function and check it returns "Anonymous"
+    const cellResult = personColumn?.cell?.({ row: mockRow } as any);
+    expect(t).toHaveBeenCalledWith("common.anonymous");
+    expect(cellResult?.props?.children).toBe("Anonymous User");
+  });
+
+  test("personColumn renders person identifier when person exists", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const personColumn: any = columns.find((col) => (col as any).accessorKey === "personId");
+    expect(personColumn).toBeDefined();
+
+    // Mock a response with a person
+    const mockRow = {
+      original: {
+        person: { id: "123", attributes: { email: "test@example.com" } },
+        contactAttributes: { name: "John Doe" },
+      },
+    } as any;
+
+    // Call the cell function
+    personColumn?.cell?.({ row: mockRow } as any);
+    expect(vi.mocked(getContactIdentifier)).toHaveBeenCalledWith(
+      mockRow.original.person,
+      mockRow.original.contactAttributes
+    );
+  });
+
+  test("tagsColumn returns undefined when tags is not an array", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const tagsColumn: any = columns.find((col) => (col as any).accessorKey === "tags");
+    expect(tagsColumn).toBeDefined();
+
+    // Mock a response with no tags
+    const mockRow = {
+      original: { tags: null },
+    } as any;
+
+    // Call the cell function
+    const cellResult = tagsColumn?.cell?.({ row: mockRow } as any);
+    expect(cellResult).toBeUndefined();
+  });
+
+  test("notesColumn renders when notes is an array", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const notesColumn: any = columns.find((col) => (col as any).accessorKey === "notes");
+    expect(notesColumn).toBeDefined();
+
+    // Mock a response with notes
+    const mockRow = {
+      original: { notes: [{ text: "Note 1" }, { text: "Note 2" }] },
+    } as any;
+
+    // Call the cell function
+    notesColumn?.cell?.({ row: mockRow } as any);
+    expect(vi.mocked(processResponseData)).toHaveBeenCalledWith(["Note 1", "Note 2"]);
+  });
+
+  test("notesColumn returns undefined when notes is not an array", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const notesColumn: any = columns.find((col) => (col as any).accessorKey === "notes");
+    expect(notesColumn).toBeDefined();
+
+    // Mock a response with no notes
+    const mockRow = {
+      original: { notes: null },
+    } as any;
+
+    // Call the cell function
+    const cellResult = notesColumn?.cell?.({ row: mockRow } as any);
+    expect(cellResult).toBeUndefined();
+  });
+
+  test("variableColumns render variable values correctly", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+
+    // Find the variable column for var1
+    const var1Column: any = columns.find((col) => (col as any).accessorKey === "var1");
+    expect(var1Column).toBeDefined();
+
+    // Test the header
+    const headerResult = var1Column?.header?.();
+    expect(headerResult).toBeDefined();
+
+    // Mock a response with a string variable
+    const mockRow = {
+      original: { variables: { var1: "Test Value" } },
+    } as any;
+
+    // Call the cell function
+    const cellResult = var1Column?.cell?.({ row: mockRow } as any);
+    expect(cellResult?.props.children).toBe("Test Value");
+
+    // Test with a number variable
+    const var2Column: any = columns.find((col) => (col as any).accessorKey === "var2");
+    expect(var2Column).toBeDefined();
+
+    const mockRowNumber = {
+      original: { variables: { var2: 42 } },
+    } as any;
+
+    const cellResultNumber = var2Column?.cell?.({ row: mockRowNumber } as any);
+    expect(cellResultNumber?.props.children).toBe(42);
+  });
+
+  test("hiddenFieldColumns render when fieldIds exist", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+
+    // Find the hidden field column
+    const hfColumn: any = columns.find((col) => (col as any).accessorKey === "hf1");
+    expect(hfColumn).toBeDefined();
+
+    // Test the header
+    const headerResult = hfColumn?.header?.();
+    expect(headerResult).toBeDefined();
+
+    // Mock a response with a hidden field value
+    const mockRow = {
+      original: { responseData: { hf1: "Hidden Value" } },
+    } as any;
+
+    // Call the cell function
+    const cellResult = hfColumn?.cell?.({ row: mockRow } as any);
+    expect(cellResult?.props.children).toBe("Hidden Value");
+  });
+
+  test("hiddenFieldColumns are empty when fieldIds don't exist", () => {
+    // Create a survey with no hidden field IDs
+    const surveyWithNoHiddenFields = {
+      ...mockSurvey,
+      hiddenFields: { enabled: true }, // no fieldIds
+    };
+
+    const columns = generateResponseTableColumns(surveyWithNoHiddenFields, false, true, t as any);
+
+    // Check that no hidden field columns were created
+    const hfColumn = columns.find((col) => (col as any).accessorKey === "hf1");
+    expect(hfColumn).toBeUndefined();
   });
 });

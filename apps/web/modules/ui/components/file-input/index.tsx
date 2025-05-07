@@ -237,7 +237,7 @@ export const FileInput = ({
                             />
                             {file.uploaded ? (
                               <div
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -255,7 +255,7 @@ export const FileInput = ({
                             </p>
                             {file.uploaded ? (
                               <div
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={() => handleRemove(idx)}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                               </div>
@@ -295,7 +295,7 @@ export const FileInput = ({
                         />
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>
@@ -311,7 +311,7 @@ export const FileInput = ({
                         </p>
                         {selectedFiles[0].uploaded ? (
                           <div
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={() => handleRemove(0)}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                           </div>
