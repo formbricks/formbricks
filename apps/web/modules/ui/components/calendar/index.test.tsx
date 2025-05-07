@@ -35,7 +35,6 @@ describe("Calendar", () => {
 
   test("renders DayPicker with default props", () => {
     render(<Calendar />);
-
     expect(screen.getByTestId("mock-day-picker")).toBeInTheDocument();
     expect(screen.getByTestId("mock-day-picker")).toHaveAttribute("data-show-outside-days", "true");
     expect(screen.getByTestId("mock-day-picker")).toHaveClass("p-3");
@@ -43,26 +42,21 @@ describe("Calendar", () => {
 
   test("passes custom className to DayPicker", () => {
     render(<Calendar className="custom-calendar" />);
-
     expect(screen.getByTestId("mock-day-picker")).toHaveClass("custom-calendar");
     expect(screen.getByTestId("mock-day-picker")).toHaveClass("p-3");
   });
 
   test("allows configuring showOutsideDays prop", () => {
     render(<Calendar showOutsideDays={false} />);
-
     expect(screen.getByTestId("mock-day-picker")).toHaveAttribute("data-show-outside-days", "false");
   });
 
   test("passes navigation components correctly", async () => {
     const onMonthChange = vi.fn();
     const user = userEvent.setup();
-
     render(<Calendar onMonthChange={onMonthChange} />);
-
     await user.click(screen.getByTestId("mock-nav-previous"));
     expect(onMonthChange).toHaveBeenCalledWith(new Date(2023, 0, 1));
-
     await user.click(screen.getByTestId("mock-nav-next"));
     expect(onMonthChange).toHaveBeenCalledWith(new Date(2023, 2, 1));
   });
@@ -70,9 +64,7 @@ describe("Calendar", () => {
   test("passes day click handler correctly", async () => {
     const onDayClick = vi.fn();
     const user = userEvent.setup();
-
     render(<Calendar onDayClick={onDayClick} />);
-
     await user.click(screen.getByTestId("mock-day"));
     expect(onDayClick).toHaveBeenCalledWith(new Date(2023, 1, 15));
   });
@@ -82,17 +74,17 @@ describe("Calendar", () => {
   });
 
   test("provides custom Chevron component", () => {
-    const { container } = render(<Calendar />);
+    render(<Calendar />);
 
-    // The actual implementation of DayPicker in our test doesn't use the components prop,
-    // so we'll check that DayPicker was called with a components object containing Chevron
-    expect(DayPicker).toHaveBeenCalledWith(
-      expect.objectContaining({
-        components: expect.objectContaining({
-          Chevron: expect.any(Function),
-        }),
-      }),
-      expect.anything()
-    );
+    // Check that DayPicker was called at least once
+    expect(DayPicker).toHaveBeenCalled();
+
+    // Get the first call arguments
+    const firstCallArgs = vi.mocked(DayPicker).mock.calls[0][0];
+
+    // Verify components prop exists and has a Chevron function
+    expect(firstCallArgs).toHaveProperty("components");
+    expect(firstCallArgs.components).toHaveProperty("Chevron");
+    expect(typeof firstCallArgs.components.Chevron).toBe("function");
   });
 });

@@ -1,5 +1,6 @@
 import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TAllowedFileExtension } from "@formbricks/types/common";
 import { convertHeicToJpegAction } from "./actions";
 import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 
@@ -80,6 +81,34 @@ describe("File Input Utils", () => {
       expect(result[0].name).toBe("test.jpg");
       expect(result[0].type).toBe("image/jpeg");
     });
+
+    test("returns empty array when no files are provided", async () => {
+      const result = await getAllowedFiles([], ["jpg"] as TAllowedFileExtension[]);
+      expect(result).toEqual([]);
+    });
+
+    test("returns only allowed files based on extensions", async () => {
+      const jpgFile = new File(["jpg content"], "test.jpg", { type: "image/jpeg" });
+      const pdfFile = new File(["pdf content"], "test.pdf", { type: "application/pdf" });
+      const txtFile = new File(["txt content"], "test.txt", { type: "text/plain" });
+
+      const allowedExtensions = ["jpg", "pdf"] as TAllowedFileExtension[];
+      const filesToFilter = [jpgFile, pdfFile, txtFile];
+
+      const result = await getAllowedFiles(filesToFilter, allowedExtensions);
+
+      expect(result).toHaveLength(2);
+      expect(result.map((file) => file.name)).toContain("test.jpg");
+      expect(result.map((file) => file.name)).toContain("test.pdf");
+      expect(result.map((file) => file.name)).not.toContain("test.txt");
+    });
+
+    test("handles files without extensions", async () => {
+      const noExtensionFile = new File(["content"], "testfile", { type: "application/octet-stream" });
+
+      const result = await getAllowedFiles([noExtensionFile], ["jpg"] as TAllowedFileExtension[]);
+      expect(result).toHaveLength(0);
+    });
   });
 
   describe("checkForYoutubePrivacyMode", () => {
@@ -96,6 +125,18 @@ describe("File Input Utils", () => {
     test("should return false for invalid URLs", () => {
       const url = "not-a-url";
       expect(checkForYoutubePrivacyMode(url)).toBe(false);
+    });
+
+    test("returns true for youtube-nocookie.com URLs", () => {
+      expect(checkForYoutubePrivacyMode("https://www.youtube-nocookie.com/embed/123")).toBe(true);
+    });
+
+    test("returns false for regular youtube.com URLs", () => {
+      expect(checkForYoutubePrivacyMode("https://www.youtube.com/watch?v=123")).toBe(false);
+    });
+
+    test("returns false for non-YouTube URLs", () => {
+      expect(checkForYoutubePrivacyMode("https://www.example.com")).toBe(false);
     });
   });
 });
