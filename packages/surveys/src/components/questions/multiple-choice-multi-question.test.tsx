@@ -2,7 +2,6 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 import { MultipleChoiceMultiQuestion } from "./multiple-choice-multi-question";
 
@@ -10,7 +9,7 @@ import { MultipleChoiceMultiQuestion } from "./multiple-choice-multi-question";
 vi.mock("@/components/buttons/back-button", () => ({
   BackButton: ({ onClick, backButtonLabel }: { onClick: () => void; backButtonLabel?: string }) => (
     <button onClick={onClick} data-testid="back-button">
-      {backButtonLabel || "Back"}
+      {backButtonLabel ?? "Back"}
     </button>
   ),
 }));
@@ -18,7 +17,7 @@ vi.mock("@/components/buttons/back-button", () => ({
 vi.mock("@/components/buttons/submit-button", () => ({
   SubmitButton: ({ buttonLabel }: { buttonLabel?: string }) => (
     <button type="submit" data-testid="submit-button">
-      {buttonLabel || "Submit"}
+      {buttonLabel ?? "Submit"}
     </button>
   ),
 }));
@@ -49,7 +48,7 @@ vi.mock("@/lib/ttc", () => ({
 vi.mock("@/lib/i18n", () => ({
   getLocalizedValue: (_value: any, _languageCode: string) => {
     if (typeof _value === "string") return _value;
-    return _value?.["en"] || "";
+    return _value?.["en"] ?? _value?.default ?? "";
   },
 }));
 
@@ -109,35 +108,62 @@ describe("MultipleChoiceMultiQuestion", () => {
   });
 
   test("handles selecting options", async () => {
-    render(<MultipleChoiceMultiQuestion {...defaultProps} />);
-
+    // Test selecting first option (starting with empty array)
+    const onChange1 = vi.fn();
+    const { unmount } = render(
+      <MultipleChoiceMultiQuestion {...defaultProps} value={[]} onChange={onChange1} />
+    );
     await userEvent.click(screen.getByLabelText("Option 1"));
-    expect(defaultProps.onChange).toHaveBeenCalledWith({ q1: ["Option 1"] });
+    expect(onChange1).toHaveBeenCalledWith({ q1: ["Option 1"] });
+    unmount();
 
+    // Test selecting second option (already having first option selected)
+    const onChange2 = vi.fn();
+    const { unmount: unmount2 } = render(
+      <MultipleChoiceMultiQuestion {...defaultProps} value={["Option 1"]} onChange={onChange2} />
+    );
     await userEvent.click(screen.getByLabelText("Option 2"));
-    expect(defaultProps.onChange).toHaveBeenCalledWith({ q1: ["Option 1", "Option 2"] });
+    expect(onChange2).toHaveBeenCalledWith({ q1: ["Option 1", "Option 2"] });
+    unmount2();
 
-    // Test unselecting an option
+    // Test deselecting an option
+    const onChange3 = vi.fn();
+    render(
+      <MultipleChoiceMultiQuestion {...defaultProps} value={["Option 1", "Option 2"]} onChange={onChange3} />
+    );
     await userEvent.click(screen.getByLabelText("Option 1"));
-    expect(defaultProps.onChange).toHaveBeenCalledWith({ q1: ["Option 2"] });
+    expect(onChange3).toHaveBeenCalledWith({ q1: ["Option 2"] });
   });
 
   test("handles 'Other' option correctly", async () => {
-    render(<MultipleChoiceMultiQuestion {...defaultProps} />);
+    const onChange = vi.fn();
+    render(<MultipleChoiceMultiQuestion {...defaultProps} onChange={onChange} />);
 
+    // When clicking Other, it calls onChange with an empty string first
     await userEvent.click(screen.getByLabelText("Other"));
     expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith({ q1: [""] });
 
-    await userEvent.type(screen.getByPlaceholderText("Please specify"), "Custom response");
-    expect(defaultProps.onChange).toHaveBeenCalledWith({ q1: ["Custom response"] });
+    // Clear the mock to focus on typing behavior
+    onChange.mockClear();
+
+    // Enter text in the field and use fireEvent directly which doesn't trigger onChange for each character
+    const otherInput = screen.getByPlaceholderText("Please specify");
+    fireEvent.change(otherInput, { target: { value: "Custom response" } });
+
+    expect(onChange).toHaveBeenCalledWith({ q1: ["Custom response"] });
   });
 
   test("handles form submission", async () => {
     const onSubmit = vi.fn();
-    render(<MultipleChoiceMultiQuestion {...defaultProps} onSubmit={onSubmit} />);
+    const { container } = render(
+      <MultipleChoiceMultiQuestion {...defaultProps} value={["Option 1"]} onSubmit={onSubmit} />
+    );
 
-    await userEvent.click(screen.getByLabelText("Option 1"));
-    await userEvent.click(screen.getByTestId("submit-button"));
+    // Get the form directly and submit it
+    const form = container.querySelector("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
 
     expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
   });
@@ -174,7 +200,7 @@ describe("MultipleChoiceMultiQuestion", () => {
     const shuffledQuestion = {
       ...defaultProps.question,
       shuffleOption: "all",
-    };
+    } as TSurveyMultipleChoiceQuestion;
 
     render(<MultipleChoiceMultiQuestion {...defaultProps} question={shuffledQuestion} />);
     expect(screen.getByLabelText("Option 1")).toBeInTheDocument();
