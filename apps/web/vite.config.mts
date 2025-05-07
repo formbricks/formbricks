@@ -28,7 +28,6 @@ export default defineConfig({
         "**/openapi.ts", // OpenAPI spec files
         "**/openapi-document.ts", // OpenAPI-related document files
         "**/types/**", // Type definition folders
-        "modules/**/types/**", // Specific type folders within modules
         "**/types.ts", // Files named 'types.ts'
         "**/actions.ts", // Server actions (plural)
         "**/action.ts", // Server actions (singular)
@@ -38,19 +37,21 @@ export default defineConfig({
         "**/instrumentation.ts", // Next.js instrumentation files
         "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
         "**/vitestSetup.ts", // Vitest setup files
+        "**/*.setup.*", // Vitest setup files
         "**/*.json", // JSON files
         "**/*.mdx", // MDX files
         "**/playwright/**", // Playwright E2E test files
         "**/Dockerfile", // Dockerfiles
         "**/*.css", // CSS files
         "**/templates.ts", // Project-specific template files
-        "scripts/**", // Utility scripts
+        "**/scripts/**", // Utility scripts
         "apps/web/modules/ui/components/icons/*",
         "**/cache.ts", // Exclude cache files
         "packages/surveys/src/components/general/smileys.tsx",
         "apps/web/modules/auth/lib/mock-data.ts", // Exclude mock data files
         "apps/web/modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
         "**/*.mjs",
+        "apps/web/lib/env.ts",
       ],
     },
   },
