@@ -13,7 +13,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { selectSurvey } from "../../service";
+import { selectSurvey } from "../service";
 
 const selectContact = {
   id: true,
