@@ -43,6 +43,7 @@ interface QuestionConditionalProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  setIsResponseSendingFinished?: (finish: boolean) => void;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
@@ -64,6 +65,7 @@ export function QuestionConditional({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  setIsResponseSendingFinished,
   onOpenExternalURL,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
@@ -351,6 +353,7 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       autoFocusEnabled={autoFocusEnabled}
       isBackButtonHidden={isBackButtonHidden}
+      setIsResponseSendingFinished={setIsResponseSendingFinished}
     />
   ) : null;
 }
