@@ -206,6 +206,8 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
+      console.log("SESSION: ", JSON.stringify(session, null, 2));
+      console.log("TOKEN: ", JSON.stringify(token, null, 2));
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
@@ -216,6 +218,9 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: { user: TUser; account: Account }) {
+      console.log("SIGN IN CB: ", JSON.stringify(user, null, 2));
+      console.log("SIGN IN CB ACCOUNT: ", JSON.stringify(account, null, 2));
+
       const cookieStore = await cookies();
 
       const callbackUrl = cookieStore.get("next-auth.callback-url")?.value || "";
@@ -230,6 +235,8 @@ export const authOptions: NextAuthOptions = {
       }
       if (ENTERPRISE_LICENSE_KEY) {
         const result = await handleSsoCallback({ user, account, callbackUrl });
+        console.log("SIGN IN RESULT: ", result);
+
         if (result) {
           await updateUserLastLoginAt(user.email);
         }
