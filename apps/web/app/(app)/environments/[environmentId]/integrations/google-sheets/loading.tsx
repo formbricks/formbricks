@@ -10,7 +10,7 @@ const Loading = () => {
     <div className="mt-6 p-6">
       <GoBackButton />
       <div className="mb-6 text-right">
-        <Button className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
+        <Button className="pointer-events-none animate-pulse cursor-not-allowed bg-slate-200 select-none">
           {t("environments.integrations.google_sheets.link_new_sheet")}
         </Button>
       </div>
@@ -51,7 +51,7 @@ const Loading = () => {
                   <div className="mt-0 h-4 w-24 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
               </div>
-              <div className="col-span-2 my-auto flex items-center justify-center whitespace-nowrap text-center text-sm text-slate-500">
+              <div className="col-span-2 my-auto flex items-center justify-center text-center text-sm whitespace-nowrap text-slate-500">
                 <div className="h-4 w-16 animate-pulse rounded-full bg-slate-200"></div>
               </div>
               <div className="text-center"></div>
