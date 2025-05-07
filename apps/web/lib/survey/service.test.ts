@@ -1,12 +1,22 @@
 import { prisma } from "@/lib/__mocks__/database";
+import { getActionClasses } from "@/lib/actionClass/service";
 import { segmentCache } from "@/lib/cache/segment";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { surveyCache } from "@/lib/survey/cache";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
-import { Prisma } from "@prisma/client";
+import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   mockActionClass,
   mockId,
@@ -318,18 +328,18 @@ describe("Tests for getSurveys", () => {
 
 describe("Tests for updateSurvey", () => {
   beforeEach(() => {
-    prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
   });
 
-  // describe("Happy Path", () => {
-  // test("Updates a survey successfully", async () => {
-  //   prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-  //   prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
-  //   prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
-  //   const updatedSurvey = await updateSurvey(updateSurveyInput);
-  //   expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
-  // });
-  // });
+  describe("Happy Path", () => {
+    test("Updates a survey successfully", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+      const updatedSurvey = await updateSurvey(updateSurveyInput);
+      expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
+    });
+  });
 
   describe("Sad Path", () => {
     testInputValidation(updateSurvey, "123#");
@@ -341,17 +351,16 @@ describe("Tests for updateSurvey", () => {
       await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(ResourceNotFoundError);
     });
 
-    // test("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
-    //   const mockErrorMessage = "Mock error message";
-    //   const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-    //     code: PrismaErrorType.UniqueConstraintViolation,
-    //     clientVersion: "0.0.1",
-    //   });
-    //   prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-    //   prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
-    //   prisma.survey.update.mockRejectedValue(errToThrow);
-    //   await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(DatabaseError);
-    // });
+    test("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      });
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockRejectedValue(errToThrow);
+      await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(DatabaseError);
+    });
 
     test("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
@@ -429,7 +438,7 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "test-action-1",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
     const currentTriggers = [];
 
     const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
@@ -451,7 +460,7 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "test-action-1",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
 
     const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
@@ -471,7 +480,8 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "test-action-2",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
+
     const currentTriggers = [
       {
         actionClass: {
@@ -482,7 +492,7 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "test-action-1",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
 
     const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
@@ -494,6 +504,7 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 
   test("returns empty object when no triggers provided", () => {
+    // @ts-expect-error -- This is a test case to check the empty input
     const result = handleTriggerUpdates(undefined, [], mockActionClasses);
     expect(result).toEqual({});
   });
@@ -509,7 +520,8 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "invalid-action",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
+
     const currentTriggers = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
@@ -537,7 +549,7 @@ describe("Tests for handleTriggerUpdates", () => {
           key: "test-action-1",
         },
       },
-    ];
+    ] as TSurvey["triggers"];
     const currentTriggers = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
@@ -546,165 +558,224 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 });
 
-// describe("Tests for createSurvey", () => {
-//   const mockEnvironmentId = "env-123";
-//   const mockUserId = "user-123";
+describe("Tests for createSurvey", () => {
+  const mockEnvironmentId = "env123";
+  const mockUserId = "user123";
 
-//   const mockCreateSurveyInput = {
-//     name: "Test Survey",
-//     type: "app",
-//     createdBy: mockUserId,
-//     status: "inProgress",
-//     welcomeCard: {
-//       enabled: true,
-//       headline: "Welcome",
-//       html: "<p>Welcome to our survey</p>",
-//     },
-//     questions: [],
-//     endings: [],
-//     displayOption: "respondMultiple",
-//     languages: [],
-//   };
+  const mockCreateSurveyInput = {
+    name: "Test Survey",
+    type: "app" as const,
+    createdBy: mockUserId,
+    status: "inProgress" as const,
+    welcomeCard: {
+      enabled: true,
+      headline: { default: "Welcome" },
+      html: { default: "<p>Welcome to our survey</p>" },
+    },
+    questions: [
+      {
+        id: "q1",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        inputType: "text",
+        headline: { default: "What is your favorite color?" },
+        required: true,
+        charLimit: {
+          enabled: false,
+        },
+      },
+      {
+        id: "q2",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        inputType: "text",
+        headline: { default: "What is your favorite food?" },
+        required: true,
+        charLimit: {
+          enabled: false,
+        },
+      },
+      {
+        id: "q3",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        inputType: "text",
+        headline: { default: "What is your favorite movie?" },
+        required: true,
+        charLimit: {
+          enabled: false,
+        },
+      },
+      {
+        id: "q4",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Select a number:" },
+        choices: [
+          { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
+          { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
+          { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
+          { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
+        ],
+        required: true,
+      },
+      {
+        id: "q5",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        inputType: "number",
+        headline: { default: "Select your age group:" },
+        required: true,
+        charLimit: {
+          enabled: false,
+        },
+      },
+      {
+        id: "q6",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Select your age group:" },
+        required: true,
+        choices: [
+          { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
+          { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
+          { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
+          { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
+        ],
+      },
+    ],
+    variables: [],
+    hiddenFields: { enabled: false, fieldIds: [] },
+    endings: [],
+    displayOption: "respondMultiple" as const,
+    languages: [],
+  } as TSurveyCreateInput;
 
-//   const mockActionClasses = [
-//     {
-//       id: "action-123",
-//       createdAt: new Date(),
-//       updatedAt: new Date(),
-//       environmentId: mockEnvironmentId,
-//       name: "Test Action",
-//       description: "Test action description",
-//       type: "code",
-//       key: "test-action",
-//       noCodeConfig: null,
-//     },
-//   ];
+  const mockActionClasses = [
+    {
+      id: "action-123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      environmentId: mockEnvironmentId,
+      name: "Test Action",
+      description: "Test action description",
+      type: "code",
+      key: "test-action",
+      noCodeConfig: null,
+    },
+  ];
 
-//   beforeEach(() => {
-//     vi.mocked(require("@/lib/actionClass/service").getActionClasses).mockResolvedValue(mockActionClasses);
-//   });
+  beforeEach(() => {
+    vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
+  });
 
-//   describe("Happy Path", () => {
-//     test("creates a survey successfully", async () => {
-//       prisma.survey.create.mockResolvedValueOnce({
-//         ...mockSurveyOutput,
-//         triggers: [],
-//         segment: null,
-//       });
+  describe("Happy Path", () => {
+    test("creates a survey successfully", async () => {
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
 
-//       const result = await createSurvey(mockEnvironmentId, mockCreateSurveyInput);
+      const result = await createSurvey(mockEnvironmentId, mockCreateSurveyInput);
 
-//       expect(prisma.survey.create).toHaveBeenCalled();
-//       expect(result).toEqual(
-//         expect.objectContaining({
-//           id: mockSurveyOutput.id,
-//           name: mockCreateSurveyInput.name,
-//         })
-//       );
-//       expect(
-//         require("@/lib/organization/service").subscribeOrganizationMembersToSurveyResponses
-//       ).toHaveBeenCalled();
-//       expect(require("@/lib/posthogServer").capturePosthogEnvironmentEvent).toHaveBeenCalled();
-//     });
+      expect(prisma.survey.create).toHaveBeenCalled();
+      expect(result.name).toEqual(mockSurveyOutput.name);
+      expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+      expect(capturePosthogEnvironmentEvent).toHaveBeenCalled();
+    });
 
-//     test("creates a private segment for app surveys", async () => {
-//       prisma.survey.create.mockResolvedValueOnce({
-//         ...mockSurveyOutput,
-//         type: "app",
-//         triggers: [],
-//         segment: null,
-//       });
+    test("creates a private segment for app surveys", async () => {
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        type: "app",
+      });
 
-//       prisma.segment.create.mockResolvedValueOnce({
-//         id: "segment-123",
-//         environmentId: mockEnvironmentId,
-//         title: mockSurveyOutput.id,
-//         isPrivate: true,
-//         filters: [],
-//         createdAt: new Date(),
-//         updatedAt: new Date(),
-//       });
+      prisma.segment.create.mockResolvedValueOnce({
+        id: "segment-123",
+        environmentId: mockEnvironmentId,
+        title: mockSurveyOutput.id,
+        isPrivate: true,
+        filters: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as TSegment);
 
-//       await createSurvey(mockEnvironmentId, {
-//         ...mockCreateSurveyInput,
-//         type: "app",
-//       });
+      await createSurvey(mockEnvironmentId, {
+        ...mockCreateSurveyInput,
+        type: "app",
+      });
 
-//       expect(prisma.segment.create).toHaveBeenCalled();
-//       expect(prisma.survey.update).toHaveBeenCalled();
-//       expect(segmentCache.revalidate).toHaveBeenCalled();
-//     });
+      expect(prisma.segment.create).toHaveBeenCalled();
+      expect(prisma.survey.update).toHaveBeenCalled();
+      expect(segmentCache.revalidate).toHaveBeenCalled();
+    });
 
-//     test("creates survey with follow-ups", async () => {
-//       const surveyWithFollowUps = {
-//         ...mockCreateSurveyInput,
-//         followUps: [
-//           {
-//             id: "followup-1",
-//             name: "Follow up 1",
-//             trigger: { type: "responseNew" },
-//             action: { type: "email", email: { to: "test@example.com" } },
-//             deleted: false,
-//           },
-//         ],
-//       };
+    test("creates survey with follow-ups", async () => {
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      const followUp = {
+        id: "followup1",
+        name: "Follow up 1",
+        trigger: { type: "response", properties: null },
+        action: {
+          type: "send-email",
+          properties: {
+            to: "abc@example.com",
+            attachResponseData: true,
+            body: "Hello",
+            from: "hello@exmaple.com",
+            replyTo: ["hello@example.com"],
+            subject: "Follow up",
+          },
+        },
+        surveyId: mockSurveyOutput.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as TSurveyFollowUp;
 
-//       prisma.survey.create.mockResolvedValueOnce({
-//         ...mockSurveyOutput,
-//         triggers: [],
-//         segment: null,
-//         followUps: [
-//           {
-//             id: "followup-1",
-//             name: "Follow up 1",
-//             trigger: { type: "responseNew" },
-//             action: { type: "email", email: { to: "test@example.com" } },
-//           },
-//         ],
-//       });
+      const surveyWithFollowUps = {
+        ...mockCreateSurveyInput,
+        followUps: [followUp],
+      };
 
-//       await createSurvey(mockEnvironmentId, surveyWithFollowUps);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
 
-//       expect(prisma.survey.create).toHaveBeenCalledWith(
-//         expect.objectContaining({
-//           data: expect.objectContaining({
-//             followUps: {
-//               create: [
-//                 expect.objectContaining({
-//                   name: "Follow up 1",
-//                 }),
-//               ],
-//             },
-//           }),
-//         })
-//       );
-//     });
-//   });
+      await createSurvey(mockEnvironmentId, surveyWithFollowUps);
 
-//   describe("Sad Path", () => {
-//     testInputValidation(createSurvey, "123#", mockCreateSurveyInput);
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            followUps: {
+              create: [
+                expect.objectContaining({
+                  name: "Follow up 1",
+                }),
+              ],
+            },
+          }),
+        })
+      );
+    });
+  });
 
-//     test("throws ResourceNotFoundError if organization not found", async () => {
-//       vi.mocked(require("@/lib/organization/service").getOrganizationByEnvironmentId).mockResolvedValueOnce(
-//         null
-//       );
+  describe("Sad Path", () => {
+    testInputValidation(createSurvey, "123#", mockCreateSurveyInput);
 
-//       await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(
-//         ResourceNotFoundError
-//       );
-//     });
+    test("throws ResourceNotFoundError if organization not found", async () => {
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
+      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
 
-//     test("throws DatabaseError if there is a Prisma error", async () => {
-//       const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
-//         code: PrismaErrorType.UniqueConstraintViolation,
-//         clientVersion: "1.0.0",
-//       });
-//       prisma.survey.create.mockRejectedValueOnce(mockError);
+    test("throws DatabaseError if there is a Prisma error", async () => {
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "1.0.0",
+      });
+      prisma.survey.create.mockRejectedValueOnce(mockError);
 
-//       await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
-//     });
-//   });
-// });
+      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+    });
+  });
+});
 
 describe("Tests for getSurveyIdByResultShareKey", () => {
   const mockResultShareKey = "share-key-123";
@@ -713,7 +784,7 @@ describe("Tests for getSurveyIdByResultShareKey", () => {
     test("returns survey ID when found", async () => {
       prisma.survey.findFirst.mockResolvedValueOnce({
         id: mockId,
-      });
+      } as Survey);
 
       const result = await getSurveyIdByResultShareKey(mockResultShareKey);
 
@@ -753,159 +824,165 @@ describe("Tests for getSurveyIdByResultShareKey", () => {
 });
 
 describe("Tests for loadNewSegmentInSurvey", () => {
-  const mockSurveyId = "survey-123";
-  const mockNewSegmentId = "segment-456";
+  const mockSurveyId = mockId;
+  const mockNewSegmentId = "segment456";
   const mockCurrentSegmentId = "segment-123";
   const mockEnvironmentId = "env-123";
 
-  // describe("Happy Path", () => {
-  // test("loads new segment successfully", async () => {
-  //   // Set up mocks for existing survey
-  //   prisma.survey.findUnique.mockResolvedValueOnce({
-  //     ...mockSurveyOutput,
-  //     segment: null,
-  //     triggers: [],
-  //   });
-  //   // Mock segment exists
-  //   prisma.segment.findUnique.mockResolvedValueOnce({
-  //     id: mockNewSegmentId,
-  //     environmentId: mockEnvironmentId,
-  //   });
-  //   // Mock survey update
-  //   prisma.survey.update.mockResolvedValueOnce({
-  //     ...mockSurveyOutput,
-  //     segment: {
-  //       id: mockNewSegmentId,
-  //       environmentId: mockEnvironmentId,
-  //       title: "Test Segment",
-  //       isPrivate: false,
-  //       filters: [],
-  //       surveys: [{ id: mockSurveyId }],
-  //     },
-  //     triggers: [],
-  //   });
-  //   const result = await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
-  //   expect(prisma.survey.update).toHaveBeenCalledWith({
-  //     where: { id: mockSurveyId },
-  //     data: {
-  //       segment: {
-  //         connect: {
-  //           id: mockNewSegmentId,
-  //         },
-  //       },
-  //     },
-  //     select: expect.anything(),
-  //   });
-  //   expect(result).toEqual(
-  //     expect.objectContaining({
-  //       segment: expect.objectContaining({
-  //         id: mockNewSegmentId,
-  //       }),
-  //     })
-  //   );
-  //   expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: mockSurveyId });
-  //   expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockNewSegmentId });
-  // });
-  // test("deletes private segment when changing to a new segment", async () => {
-  //   // Set up mocks for existing survey with private segment
-  //   prisma.survey.findUnique.mockResolvedValueOnce({
-  //     ...mockSurveyOutput,
-  //     segment: {
-  //       id: mockCurrentSegmentId,
-  //       environmentId: mockEnvironmentId,
-  //       title: mockSurveyId, // Private segments have title = surveyId
-  //       isPrivate: true,
-  //       filters: [],
-  //       surveys: [{ id: mockSurveyId }],
-  //     },
-  //     triggers: [],
-  //   });
-  //   // Mock segment exists
-  //   prisma.segment.findUnique.mockResolvedValueOnce({
-  //     id: mockNewSegmentId,
-  //     environmentId: mockEnvironmentId,
-  //   });
-  //   // Mock survey update
-  //   prisma.survey.update.mockResolvedValueOnce({
-  //     ...mockSurveyOutput,
-  //     segment: {
-  //       id: mockNewSegmentId,
-  //       environmentId: mockEnvironmentId,
-  //       title: "Test Segment",
-  //       isPrivate: false,
-  //       filters: [],
-  //       surveys: [{ id: mockSurveyId }],
-  //     },
-  //     triggers: [],
-  //   });
-  //   // Mock segment delete
-  //   prisma.segment.delete.mockResolvedValueOnce({
-  //     id: mockCurrentSegmentId,
-  //     environmentId: mockEnvironmentId,
-  //     surveys: [{ id: mockSurveyId }],
-  //   });
-  //   await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
-  //   // Verify the private segment was deleted
-  //   expect(prisma.segment.delete).toHaveBeenCalledWith({
-  //     where: { id: mockCurrentSegmentId },
-  //     select: expect.anything(),
-  //   });
-  //   // Verify the cache was invalidated
-  //   expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockCurrentSegmentId });
-  // });
-  // });
+  describe("Happy Path", () => {
+    test("loads new segment successfully", async () => {
+      // Set up mocks for existing survey
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+      // Mock segment exists
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        id: mockNewSegmentId,
+        environmentId: mockEnvironmentId,
+        filters: [],
+        title: "Test Segment",
+        isPrivate: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "Test Segment Description",
+      });
+      // Mock survey update
+      prisma.survey.update.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        segmentId: mockNewSegmentId,
+      });
+      const result = await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
+      expect(prisma.survey.update).toHaveBeenCalledWith({
+        where: { id: mockSurveyId },
+        data: {
+          segment: {
+            connect: {
+              id: mockNewSegmentId,
+            },
+          },
+        },
+        select: expect.anything(),
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          segmentId: mockNewSegmentId,
+        })
+      );
+      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: mockSurveyId });
+      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockNewSegmentId });
+    });
+
+    test("deletes private segment when changing to a new segment", async () => {
+      const mockSegment = {
+        id: mockCurrentSegmentId,
+        environmentId: mockEnvironmentId,
+        title: mockId, // Private segments have title = surveyId
+        isPrivate: true,
+        filters: [],
+        surveys: [mockSurveyId],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "Test Segment Description",
+      };
+
+      // Set up mocks for existing survey with private segment
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        segment: mockSegment,
+      } as Survey);
+
+      // Mock segment exists
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        ...mockSegment,
+        id: mockNewSegmentId,
+        environmentId: mockEnvironmentId,
+      });
+
+      // Mock survey update
+      prisma.survey.update.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        segment: {
+          id: mockNewSegmentId,
+          environmentId: mockEnvironmentId,
+          title: "Test Segment",
+          isPrivate: false,
+          filters: [],
+          surveys: [{ id: mockSurveyId }],
+        },
+      } as Survey);
+
+      // Mock segment delete
+      prisma.segment.delete.mockResolvedValueOnce({
+        id: mockCurrentSegmentId,
+        environmentId: mockEnvironmentId,
+        surveys: [{ id: mockSurveyId }],
+      } as unknown as TSegment);
+
+      await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
+
+      // Verify the private segment was deleted
+      expect(prisma.segment.delete).toHaveBeenCalledWith({
+        where: { id: mockCurrentSegmentId },
+        select: expect.anything(),
+      });
+      // Verify the cache was invalidated
+      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockCurrentSegmentId });
+    });
+  });
 
   describe("Sad Path", () => {
     testInputValidation(loadNewSegmentInSurvey, "123#", "123#");
 
-    // test("throws ResourceNotFoundError when survey not found", async () => {
-    //   prisma.survey.findUnique.mockResolvedValueOnce(null);
+    test("throws ResourceNotFoundError when survey not found", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(null);
 
-    //   await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
-    //     ResourceNotFoundError
-    //   );
-    // });
+      await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
 
-    // test("throws ResourceNotFoundError when segment not found", async () => {
-    //   // Set up mock for existing survey
-    //   prisma.survey.findUnique.mockResolvedValueOnce({
-    //     ...mockSurveyOutput,
-    //     segment: null,
-    //     triggers: [],
-    //   });
+    test("throws ResourceNotFoundError when segment not found", async () => {
+      // Set up mock for existing survey
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
 
-    //   // Segment not found
-    //   prisma.segment.findUnique.mockResolvedValueOnce(null);
+      // Segment not found
+      prisma.segment.findUnique.mockResolvedValueOnce(null);
 
-    //   await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
-    //     ResourceNotFoundError
-    //   );
-    // });
+      await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
 
-    // test("throws DatabaseError on Prisma error", async () => {
-    //   // Set up mock for existing survey
-    //   prisma.survey.findUnique.mockResolvedValueOnce({
-    //     ...mockSurveyOutput,
-    //     segment: null,
-    //     triggers: [],
-    //   });
+    test("throws DatabaseError on Prisma error", async () => {
+      // Set up mock for existing survey
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
 
-    //   // Mock segment exists
-    //   prisma.segment.findUnique.mockResolvedValueOnce({
-    //     id: mockNewSegmentId,
-    //     environmentId: mockEnvironmentId,
-    //   });
+      //   // Mock segment exists
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        id: mockNewSegmentId,
+        environmentId: mockEnvironmentId,
+        filters: [],
+        title: "Test Segment",
+        isPrivate: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "Test Segment Description",
+      });
 
-    //   // Mock Prisma error on update
-    //   const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
-    //     code: PrismaErrorType.UniqueConstraintViolation,
-    //     clientVersion: "1.0.0",
-    //   });
+      // Mock Prisma error on update
+      const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "1.0.0",
+      });
 
-    //   prisma.survey.update.mockRejectedValueOnce(mockError);
+      prisma.survey.update.mockRejectedValueOnce(mockError);
 
-    //   await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(DatabaseError);
-    // });
+      await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(DatabaseError);
+    });
   });
 });
 
@@ -914,13 +991,7 @@ describe("Tests for getSurveysBySegmentId", () => {
 
   describe("Happy Path", () => {
     test("returns surveys associated with a segment", async () => {
-      prisma.survey.findMany.mockResolvedValueOnce([
-        {
-          ...mockSurveyOutput,
-          triggers: [],
-          segment: null,
-        },
-      ]);
+      prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
 
       const result = await getSurveysBySegmentId(mockSegmentId);
 
