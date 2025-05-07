@@ -15,8 +15,7 @@ export const checkForYoutubeUrl = (url: string): boolean => {
     const hostname = youtubeUrl.hostname;
 
     return youtubeDomains.includes(hostname);
-  } catch (err) {
-    // invalid URL
+  } catch {
     return false;
   }
 };
@@ -31,8 +30,7 @@ export const checkForVimeoUrl = (url: string): boolean => {
     const hostname = vimeoUrl.hostname;
 
     return vimeoDomains.includes(hostname);
-  } catch (err) {
-    // invalid URL
+  } catch {
     return false;
   }
 };
@@ -47,8 +45,7 @@ export const checkForLoomUrl = (url: string): boolean => {
     const hostname = loomUrl.hostname;
 
     return loomDomains.includes(hostname);
-  } catch (err) {
-    // invalid URL
+  } catch {
     return false;
   }
 };
@@ -66,7 +63,7 @@ export const extractYoutubeId = (url: string): string | null => {
 
   regExpList.some((regExp) => {
     const match = url.match(regExp);
-    if (match && match[1]) {
+    if (match?.[1]) {
       id = match[1];
       return true;
     }
@@ -80,9 +77,10 @@ export const extractVimeoId = (url: string): string | null => {
   const regExp = /vimeo\.com\/(\d+)/;
   const match = url.match(regExp);
 
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
+
   return null;
 };
 
@@ -90,9 +88,10 @@ export const extractLoomId = (url: string): string | null => {
   const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
   const match = url.match(regExp);
 
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
+
   return null;
 };
 

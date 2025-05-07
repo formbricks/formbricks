@@ -2,11 +2,7 @@ import * as crypto from "@/lib/crypto";
 import { env } from "@/lib/env";
 import cuid2 from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  generateSurveySingleUseId,
-  generateSurveySingleUseIds,
-  validateSurveySingleUseId,
-} from "./single-use-surveys";
+import { generateSurveySingleUseId, generateSurveySingleUseIds } from "./single-use-surveys";
 
 vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
@@ -114,63 +110,6 @@ describe("Single Use Surveys", () => {
 
       expect(result).toEqual([]);
       expect(createIdMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("validateSurveySingleUseId", () => {
-    beforeEach(() => {
-      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
-    });
-
-    test("returns decrypted ID when input is valid", () => {
-      const isCuidMock = vi.spyOn(cuid2, "isCuid");
-      const symmetricDecryptMock = vi.spyOn(crypto, "symmetricDecrypt");
-      symmetricDecryptMock.mockReturnValueOnce("decrypted-cuid");
-      isCuidMock.mockReturnValueOnce(true);
-
-      const result = validateSurveySingleUseId("encrypted-id");
-
-      expect(result).toBe("decrypted-cuid");
-      expect(symmetricDecryptMock).toHaveBeenCalledWith("encrypted-id", env.ENCRYPTION_KEY);
-      expect(isCuidMock).toHaveBeenCalledWith("decrypted-cuid");
-    });
-
-    test("returns undefined when decrypted ID is not a valid cuid", () => {
-      const symmetricDecryptMock = vi.spyOn(crypto, "symmetricDecrypt");
-      symmetricDecryptMock.mockReturnValueOnce("Not-a-cuid");
-
-      const isCuidMock = vi.spyOn(cuid2, "isCuid");
-      isCuidMock.mockReturnValueOnce(false);
-
-      const result = validateSurveySingleUseId("encrypted-id");
-
-      expect(result).toBeUndefined();
-      expect(symmetricDecryptMock).toHaveBeenCalledWith("encrypted-id", env.ENCRYPTION_KEY);
-      expect(isCuidMock).toHaveBeenCalledWith("Not-a-cuid");
-    });
-
-    test("returns undefined when decryption fails", () => {
-      vi.mocked(crypto.symmetricDecrypt).mockImplementationOnce(() => {
-        throw new Error("Decryption failed");
-      });
-
-      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
-
-      const result = validateSurveySingleUseId("encrypted-id");
-
-      expect(result).toBeUndefined();
-      expect(crypto.symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", env.ENCRYPTION_KEY);
-    });
-
-    test("throws error when encryption key is missing", () => {
-      vi.mocked(env).ENCRYPTION_KEY = "";
-
-      const result = validateSurveySingleUseId("encrypted-id");
-
-      expect(result).toBeUndefined();
-
-      // Restore encryption key for subsequent tests
-      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
     });
   });
 });
