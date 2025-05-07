@@ -16,7 +16,7 @@ export const toBase64 = (file: File) =>
   });
 
 export const handleFileUpload = async (
-  file: File | Blob,
+  file: File,
   environmentId: string,
   allowedFileExtensions?: string[]
 ): Promise<{
@@ -24,7 +24,7 @@ export const handleFileUpload = async (
   url: string;
 }> => {
   try {
-    if (!(file instanceof Blob) || !(file instanceof File)) {
+    if (!(file instanceof File)) {
       return {
         error: FileUploadError.NO_FILE,
         url: "",
@@ -33,13 +33,6 @@ export const handleFileUpload = async (
 
     if (!file.type.startsWith("image/")) {
       return { error: FileUploadError.INVALID_FILE_TYPE, url: "" };
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      return {
-        error: FileUploadError.FILE_SIZE_EXCEEDED,
-        url: "",
-      };
     }
 
     const fileBuffer = await file.arrayBuffer();
