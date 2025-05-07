@@ -1,6 +1,5 @@
 import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 import { cleanup, fireEvent, render } from "@testing-library/preact";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AutoCloseWrapper } from "./auto-close-wrapper";
 

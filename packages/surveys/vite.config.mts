@@ -26,7 +26,8 @@ const config = ({ mode }) => {
           "src/lib/api-client.ts",
           "src/lib/response-queue.ts",
           "src/lib/logic.ts",
-          "src/components/buttons/*.tsx"
+          "src/components/buttons/*.tsx",
+          "src/components/wrappers/*.tsx"
         ],
         exclude: ["dist/**", "node_modules/**"],
       },
