@@ -4,7 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CopySurveyForm } from "../copy-survey-form";
+import { CopySurveyForm } from "./copy-survey-form";
 
 // Mock dependencies
 vi.mock("@/modules/survey/list/actions", () => ({
