@@ -13,7 +13,7 @@ import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 
-interface IndividualAddTabProps {
+interface IndividualAddToWhitelistTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { email: string }[]) => void;
   environmentId: string;
@@ -21,8 +21,13 @@ interface IndividualAddTabProps {
   organizationId: string;
 }
 
-export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: IndividualAddTabProps) => {
+export const IndividualAddToWhitelistTab = ({
+  setOpen,
+  onSubmit,
+  environmentId,
+}: IndividualAddToWhitelistTabProps) => {
   const [nonWhitelistedUsers, setNonWhitelistedUsers] = useState<TUserWhitelistInfo[]>([]);
+  // const [searchQuery, setSearchQuery] = useState("");
   const ZFormSchema = z.object({
     email: z.string(),
   });
@@ -53,7 +58,6 @@ export const IndividualAddTab = ({ setOpen, onSubmit, environmentId }: Individua
     const data = await getNonWhitelistedUsersAction({
       take: 10,
       skip: 0,
-      searchQuery: "",
       organizationId: environmentId,
     });
     if (data && data.data) {
