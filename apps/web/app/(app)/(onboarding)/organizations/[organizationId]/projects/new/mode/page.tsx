@@ -18,10 +18,8 @@ const Page = async (props: ModePageProps) => {
   const params = await props.params;
 
   const { session } = await getOrganizationAuth(params.organizationId);
-  console.log("from mode page: ", JSON.stringify(session, null, 2));
 
   if (!session?.user) {
-    console.log("session is not valid");
     return redirect(`/auth/login`);
   }
 
