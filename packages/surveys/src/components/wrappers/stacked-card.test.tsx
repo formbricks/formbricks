@@ -58,11 +58,13 @@ const defaultProps = {
 
 describe("StackedCard", () => {
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
     vi.clearAllMocks();
   });
 
   beforeEach(() => {
+    vi.useFakeTimers();
     // Reset mocks before each test
     mockGetCardContent.mockImplementation(
       (questionIdxTemp: number, offset: number): JSX.Element => (
@@ -76,11 +78,14 @@ describe("StackedCard", () => {
 
   test("renders with basic props and displays content when offset is 0", () => {
     render(<StackedCard {...defaultProps} />);
-    // Check for card content after delay for opacity transition
-    setTimeout(() => {
-      expect(screen.getByTestId("card-content")).toBeInTheDocument();
-      expect(screen.getByText("Question 0, Offset 0")).toBeInTheDocument();
-    }, 300);
+
+    // Use act with vi.advanceTimersByTime to properly control the timing
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(screen.getByTestId("card-content")).toBeInTheDocument();
+    expect(screen.getByText("Question 0, Offset 0")).toBeInTheDocument();
   });
 
   test("renders dummy content when offset is not 0", () => {
