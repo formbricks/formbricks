@@ -56,7 +56,7 @@ export const getUserState = async ({
 
       const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
 
-      const sortedContactDisplays = contactDisplays?.sort(
+      const sortedContactDisplaysDate = contactDisplays?.toSorted(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
       )[0]?.createdAt;
 
@@ -71,7 +71,7 @@ export const getUserState = async ({
             createdAt: display.createdAt,
           })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        lastDisplayAt: contactDisplays?.length > 0 ? sortedContactDisplays : null,
+        lastDisplayAt: contactDisplays?.length > 0 ? sortedContactDisplaysDate : null,
       };
 
       return userState;
