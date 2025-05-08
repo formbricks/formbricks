@@ -177,17 +177,6 @@ export const authOptions: NextAuthOptions = {
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-      },
-    },
-  },
   session: {
     maxAge: 3600,
   },
@@ -230,6 +219,7 @@ export const authOptions: NextAuthOptions = {
       }
       if (ENTERPRISE_LICENSE_KEY) {
         const result = await handleSsoCallback({ user, account, callbackUrl });
+
         if (result) {
           await updateUserLastLoginAt(user.email);
         }

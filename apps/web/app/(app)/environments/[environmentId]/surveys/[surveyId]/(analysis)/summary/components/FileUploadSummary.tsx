@@ -80,7 +80,7 @@ export const FileUploadSummary = ({
                       return (
                         <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
                           <a href={fileUrl} key={fileUrl} target="_blank" rel="noopener noreferrer">
-                            <div className="absolute right-0 top-0 m-2">
+                            <div className="absolute top-0 right-0 m-2">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                                 <DownloadIcon className="h-6 text-slate-500" />
                               </div>

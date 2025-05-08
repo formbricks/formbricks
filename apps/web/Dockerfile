@@ -18,9 +18,9 @@ FROM node:22-alpine3.21 AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install -g corepack@latest
+RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
-RUN corepack prepare pnpm@9.15.0 --activate
+RUN corepack prepare pnpm@9.15.9 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -60,7 +60,7 @@ COPY . .
 RUN touch apps/web/.env
 
 # Install the dependencies
-RUN pnpm install
+RUN pnpm install --ignore-scripts
 
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
@@ -76,9 +76,8 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-RUN npm install -g corepack@latest
+RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
-RUN corepack prepare pnpm@9.15.0 --activate
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
@@ -143,7 +142,8 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma pino-pretty
+RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
+RUN npm install -g prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
