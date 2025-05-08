@@ -1,6 +1,6 @@
 "use client";
 
-import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@/lib/utils/videoUpload";
+import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@/lib/utils/video-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
