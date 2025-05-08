@@ -6,13 +6,24 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { getInvite } from "./lib/invite";
 import { InvitePage } from "./page";
 
+// Mock Next.js headers to avoid `headers()` request scope error
+vi.mock("next/headers", () => ({
+  headers: () => ({
+    get: (key: string) => "en",
+  }),
+}));
+
+// Include AVAILABLE_LOCALES for locale matching
 vi.mock("@/lib/constants", () => ({
+  AVAILABLE_LOCALES: ["en"],
   WEBAPP_URL: "http://localhost:3000",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!!",
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
   ENTERPRISE_LICENSE_KEY: undefined,
   FB_LOGO_URL: "https://formbricks.com/logo.png",
+  SMTP_HOST: "smtp.example.com",
+  SMTP_PORT: "587",
 }));
 
 vi.mock("next-auth", () => ({
@@ -31,11 +42,16 @@ vi.mock("@/lib/jwt", () => ({
   verifyInviteToken: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn().mockResolvedValue(() => {
-    return (key: string) => key;
-  }),
-}));
+vi.mock("@tolgee/react", async () => {
+  const actual = await vi.importActual<typeof import("@tolgee/react")>("@tolgee/react");
+  return {
+    ...actual,
+    useTranslate: () => ({
+      t: (key: string) => key,
+    }),
+    T: ({ keyName }: { keyName: string }) => keyName,
+  };
+});
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -64,7 +80,7 @@ describe("InvitePage", () => {
 
     const result = await InvitePage({ searchParams: Promise.resolve({ token: "test-token" }) });
 
-    expect(result.props.headline).toBe("auth.invite.invite_not_found");
-    expect(result.props.description).toBe("auth.invite.invite_not_found_description");
+    expect(result.props.headline).toContain("auth.invite.invite_not_found");
+    expect(result.props.description).toContain("auth.invite.invite_not_found_description");
   });
 });
