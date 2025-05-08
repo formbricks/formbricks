@@ -114,7 +114,7 @@ describe("getShuffledRowIndices", () => {
   it("should handle n=0 or n=1", () => {
     expect(getShuffledRowIndices(0, "all")).toEqual([]);
     expect(getShuffledRowIndices(1, "all")).toEqual([0]);
-    expect(getShuffledRowIndices(1, "exceptLast")).toEqual([]); // Adjusted expectation based on actual behavior
+    expect(getShuffledRowIndices(1, "exceptLast")).toEqual([0]);
   });
 });
 
