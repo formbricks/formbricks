@@ -77,7 +77,6 @@
         "BREVO_LIST_ID",
         "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
-        "CUSTOM_CACHE_DISABLED",
         "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",

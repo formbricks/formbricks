@@ -1,79 +1,110 @@
-import { CacheHandler } from "@neshca/cache-handler";
-import createLruHandler from "@neshca/cache-handler/local-lru";
-import createRedisHandler from "@neshca/cache-handler/redis-strings";
-import { createClient } from "redis";
+// This cache handler follows the @fortedigital/nextjs-cache-handler example
+// Read more at: https://github.com/fortedigital/nextjs-cache-handler
 
-// Function to create a timeout promise
-const createTimeoutPromise = (ms, rejectReason) => {
-  return new Promise((_, reject) => setTimeout(() => reject(new Error(rejectReason)), ms));
-};
+// @neshca/cache-handler dependencies
+const { CacheHandler } = require("@neshca/cache-handler");
+const createLruHandler = require("@neshca/cache-handler/local-lru").default;
 
-CacheHandler.onCreation(async () => {
-  let client;
+// Next/Redis dependencies
+const { createClient } = require("redis");
+const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 
-  if (process.env.REDIS_URL) {
-    try {
-      // Create a Redis client.
-      client = createClient({
-        url: process.env.REDIS_URL,
-      });
+// @fortedigital/nextjs-cache-handler dependencies
+const createCompositeHandler = require("@fortedigital/nextjs-cache-handler/composite").default;
+const createRedisHandler = require("@fortedigital/nextjs-cache-handler/redis-strings").default;
+const createBufferStringHandler =
+  require("@fortedigital/nextjs-cache-handler/buffer-string-decorator").default;
+const { Next15CacheHandler } = require("@fortedigital/nextjs-cache-handler/next-15-cache-handler");
 
-      // Redis won't work without error handling.
-      client.on("error", () => {});
-    } catch (error) {
-      console.warn("Failed to create Redis client:", error);
-    }
+// Usual onCreation from @neshca/cache-handler
+CacheHandler.onCreation(() => {
+  // Important - It's recommended to use global scope to ensure only one Redis connection is made
+  // This ensures only one instance get created
+  if (global.cacheHandlerConfig) {
+    return global.cacheHandlerConfig;
+  }
 
-    if (client) {
+  // Important - It's recommended to use global scope to ensure only one Redis connection is made
+  // This ensures new instances are not created in a race condition
+  if (global.cacheHandlerConfigPromise) {
+    return global.cacheHandlerConfigPromise;
+  }
+
+  // You may need to ignore Redis locally, remove this block otherwise
+  if (process.env.NODE_ENV === "development") {
+    const lruCache = createLruHandler();
+    return { handlers: [lruCache] };
+  }
+
+  // Main promise initializing the handler
+  global.cacheHandlerConfigPromise = (async () => {
+    /** @type {import("redis").RedisClientType | null} */
+    let redisClient = null;
+    // eslint-disable-next-line turbo/no-undeclared-env-vars -- Next.js will inject this variable
+    if (PHASE_PRODUCTION_BUILD !== process.env.NEXT_PHASE) {
+      const settings = {
+        url: process.env.REDIS_URL, // Make sure you configure this variable
+        pingInterval: 10000,
+      };
+
       try {
-        // Wait for the client to connect with a timeout of 5000ms.
-        const connectPromise = client.connect();
-        const timeoutPromise = createTimeoutPromise(5000, "Redis connection timed out"); // 5000ms timeout
-        await Promise.race([connectPromise, timeoutPromise]);
+        redisClient = createClient(settings);
+        redisClient.on("error", (e) => {
+          console.error("Redis error", e);
+          global.cacheHandlerConfig = null;
+          global.cacheHandlerConfigPromise = null;
+        });
       } catch (error) {
-        console.warn("Failed to connect Redis client:", error);
-
-        console.warn("Disconnecting the Redis client...");
-        // Try to disconnect the client to stop it from reconnecting.
-        client
-          .disconnect()
-          .then(() => {
-            console.info("Redis client disconnected.");
-          })
-          .catch(() => {
-            console.warn("Failed to quit the Redis client after failing to connect.");
-          });
+        console.error("Failed to create Redis client:", error);
       }
     }
-  }
 
-  /** @type {import("@neshca/cache-handler").Handler | null} */
-  let handler;
+    if (redisClient) {
+      try {
+        console.info("Connecting Redis client...");
+        await redisClient.connect();
+        console.info("Redis client connected.");
+      } catch (error) {
+        console.error("Failed to connect Redis client:", error);
+        await redisClient
+          .disconnect()
+          .catch(() => console.error("Failed to quit the Redis client after failing to connect."));
+      }
+    }
+    const lruCache = createLruHandler();
 
-  if (client?.isReady) {
-    const redisHandlerOptions = {
-      client,
-      keyPrefix: "fb:",
-      timeoutMs: 1000,
+    if (!redisClient?.isReady) {
+      console.error("Failed to initialize caching layer.");
+      global.cacheHandlerConfigPromise = null;
+      global.cacheHandlerConfig = { handlers: [lruCache] };
+      return global.cacheHandlerConfig;
+    }
+
+    const redisCacheHandler = createRedisHandler({
+      client: redisClient,
+      keyPrefix: "nextjs:",
+    });
+
+    global.cacheHandlerConfigPromise = null;
+
+    // This example uses composite handler to switch from Redis to LRU cache if tags contains `memory-cache` tag.
+    // You can skip composite and use Redis or LRU only.
+    global.cacheHandlerConfig = {
+      handlers: [
+        createCompositeHandler({
+          handlers: [
+            lruCache,
+            createBufferStringHandler(redisCacheHandler), // Use `createBufferStringHandler` in Next15 and ignore it in Next14 or below
+          ],
+          setStrategy: (ctx) => (ctx?.tags.includes("memory-cache") ? 0 : 1), // You can adjust strategy for deciding which cache should the composite use
+        }),
+      ],
     };
 
-    // Create the `redis-stack` Handler if the client is available and connected.
-    handler = await createRedisHandler(redisHandlerOptions);
-  } else {
-    // Fallback to LRU handler if Redis client is not available.
-    // The application will still work, but the cache will be in memory only and not shared.
-    handler = createLruHandler();
-    console.log("Using LRU handler for caching.");
-  }
+    return global.cacheHandlerConfig;
+  })();
 
-  return {
-    handlers: [handler],
-    ttl: {
-      // We set the stale and the expire age to the same value, because the stale age is determined by the unstable_cache revalidation.
-      defaultStaleAge: (process.env.REDIS_URL && Number(process.env.REDIS_DEFAULT_TTL)) || 86400,
-      estimateExpireAge: (staleAge) => staleAge,
-    },
-  };
+  return global.cacheHandlerConfigPromise;
 });
 
-export default CacheHandler;
+module.exports = new Next15CacheHandler();
