@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EnvironmentIdBaseLayout } from "./index";
