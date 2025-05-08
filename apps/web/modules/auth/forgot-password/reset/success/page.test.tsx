@@ -21,7 +21,7 @@ describe("ResetPasswordSuccessPage", () => {
   });
 
   test("renders success page with correct translations", async () => {
-    const { container } = render(await ResetPasswordSuccessPage());
+    render(await ResetPasswordSuccessPage());
 
     expect(screen.getByText("auth.forgot-password.reset.success.heading")).toBeInTheDocument();
     expect(screen.getByText("auth.forgot-password.reset.success.text")).toBeInTheDocument();

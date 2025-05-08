@@ -9,7 +9,7 @@ import { InvitePage } from "./page";
 // Mock Next.js headers to avoid `headers()` request scope error
 vi.mock("next/headers", () => ({
   headers: () => ({
-    get: (key: string) => "en",
+    get: () => "en",
   }),
 }));
 
