@@ -107,6 +107,7 @@ describe("OrganizationActions Component", () => {
     isFormbricksCloud: false,
     environmentId: "env-123",
     isMultiOrgEnabled: true,
+    isUserManagementDisabledFromUi: false,
   };
 
   beforeEach(() => {
@@ -238,5 +239,46 @@ describe("OrganizationActions Component", () => {
   test("cannot leave organization when only one organization is present", () => {
     render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
     expect(screen.queryByText("environments.settings.general.leave_organization")).not.toBeInTheDocument();
+  });
+
+  test("invite member modal closes on close button click", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole="owner" />);
+    fireEvent.click(screen.getByText("environments.settings.teams.invite_member"));
+    expect(screen.getByTestId("invite-member-modal")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("invite-close-btn"));
+    expect(screen.queryByTestId("invite-member-modal")).not.toBeInTheDocument();
+  });
+
+  test("leave organization modal closes on cancel", () => {
+    render(<OrganizationActions {...defaultProps} />);
+    fireEvent.click(screen.getByText("environments.settings.general.leave_organization"));
+    expect(screen.getByTestId("leave-org-modal")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("leave-org-cancel-btn"));
+    expect(screen.queryByTestId("leave-org-modal")).not.toBeInTheDocument();
+  });
+
+  test("leave organization button is disabled and warning shown when isLeaveOrganizationDisabled is true", () => {
+    render(<OrganizationActions {...defaultProps} isLeaveOrganizationDisabled={true} />);
+    fireEvent.click(screen.getByText("environments.settings.general.leave_organization"));
+    expect(screen.getByTestId("leave-org-modal")).toBeInTheDocument();
+  });
+
+  test("invite button is hidden when isUserManagementDisabledFromUi is true", () => {
+    render(
+      <OrganizationActions {...defaultProps} membershipRole="owner" isUserManagementDisabledFromUi={true} />
+    );
+    expect(screen.queryByText("environments.settings.teams.invite_member")).not.toBeInTheDocument();
+  });
+
+  test("invite button is hidden when membershipRole is undefined", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole={undefined} />);
+    expect(screen.queryByText("environments.settings.teams.invite_member")).not.toBeInTheDocument();
+  });
+
+  test("invite member modal receives correct props", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole="owner" />);
+    fireEvent.click(screen.getByText("environments.settings.teams.invite_member"));
+    const modal = screen.getByTestId("invite-member-modal");
+    expect(modal).toBeInTheDocument();
   });
 });

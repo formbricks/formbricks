@@ -37,7 +37,7 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
+export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
   const whereClause: Prisma.ContactWhereInput = { environmentId };
 
   if (search) {
