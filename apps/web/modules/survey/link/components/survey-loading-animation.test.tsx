@@ -24,6 +24,7 @@ describe("SurveyLoadingAnimation", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   beforeEach(() => {
@@ -82,10 +83,6 @@ describe("SurveyLoadingAnimation", () => {
     }));
 
     // The generic Element.prototype.getElementsByTagName mock that was causing issues is now removed.
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   test("renders loading animation with branding when enabled", () => {
