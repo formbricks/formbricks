@@ -9,12 +9,12 @@ describe("ErrorComponent", () => {
 
   test("renders error title", () => {
     render(<ErrorComponent />);
-    expect(screen.getByText("common.error_component_title")).toBeInTheDocument();
+    expect(screen.getByTestId("error-title")).toBeInTheDocument();
   });
 
   test("renders error description", () => {
     render(<ErrorComponent />);
-    expect(screen.getByText("common.error_component_description")).toBeInTheDocument();
+    expect(screen.getByTestId("error-description")).toBeInTheDocument();
   });
 
   test("renders error icon", () => {

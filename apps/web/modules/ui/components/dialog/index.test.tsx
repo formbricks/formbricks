@@ -120,7 +120,7 @@ describe("Dialog Components", () => {
       </DialogContent>
     );
 
-    expect(screen.getByTestId("dialog-close")).toBeInTheDocument();
+    expect(screen.queryByTestId("dialog-close")).toBeInTheDocument();
     expect(screen.queryByTestId("x-icon")).not.toBeInTheDocument();
   });
 

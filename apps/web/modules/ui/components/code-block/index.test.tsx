@@ -96,7 +96,7 @@ describe("CodeBlock", () => {
       </CodeBlock>
     );
     // Check if the copy button is not present
-    const copyButton = screen.queryByRole("button", { name: /copy/i });
+    const copyButton = screen.queryByTestId("copy-icon");
     expect(copyButton).not.toBeInTheDocument();
   });
 

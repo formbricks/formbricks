@@ -25,7 +25,12 @@ vi.mock("@/lib/utils/videoUpload", () => ({
 
 vi.mock("../lib/utils", () => ({
   checkForYoutubePrivacyMode: vi.fn().mockImplementation((url) => {
-    return url.includes("youtube-nocookie.com");
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.host === "youtube-nocookie.com";
+    } catch (e) {
+      return false; // Return false if the URL is invalid
+    }
   }),
 }));
 

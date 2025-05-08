@@ -77,4 +77,24 @@ describe("PlaygroundAutoLinkPlugin", () => {
       expect(result.url).toBe(`mailto:${testEmail}`);
     }
   });
+
+  test("does not match invalid URLs", () => {
+    const invalidUrls = ["not a url", "http://", "www.", "example"];
+    const urlMatcher = matchers[0];
+
+    for (const invalidUrl of invalidUrls) {
+      const result = urlMatcher(invalidUrl);
+      expect(result).toBeFalsy();
+    }
+  });
+
+  test("does not match invalid emails", () => {
+    const invalidEmails = ["not an email", "@example.com", "test@", "test@example"];
+    const emailMatcher = matchers[1];
+
+    for (const invalidEmail of invalidEmails) {
+      const result = emailMatcher(invalidEmail);
+      expect(result).toBeFalsy();
+    }
+  });
 });

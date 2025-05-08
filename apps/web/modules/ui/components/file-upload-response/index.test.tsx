@@ -15,6 +15,10 @@ vi.mock("@/lib/storage/utils", () => ({
   }),
 }));
 
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({ t: (key: string) => (key === "common.skipped" ? "Skipped" : key) }),
+}));
+
 describe("FileUploadResponse", () => {
   afterEach(() => {
     cleanup();
@@ -22,7 +26,7 @@ describe("FileUploadResponse", () => {
 
   test("renders skipped message when no files are selected", () => {
     render(<FileUploadResponse selected={[]} />);
-    expect(screen.getByText("common.skipped")).toBeInTheDocument();
+    expect(screen.getByText("Skipped")).toBeInTheDocument();
   });
 
   test("renders 'Download' when filename cannot be extracted", () => {
