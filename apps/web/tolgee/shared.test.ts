@@ -1,6 +1,3 @@
-import { FormatIcu } from "@tolgee/format-icu";
-import { Tolgee } from "@tolgee/web";
-import { DevTools } from "@tolgee/web";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ALL_LANGUAGES, DEFAULT_LANGUAGE, TolgeeBase } from "./shared";
 

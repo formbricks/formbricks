@@ -13,6 +13,7 @@ describe("useDocumentVisibility", () => {
       value: "visible",
       writable: true,
     });
+    vi.clearAllMocks();
   });
 
   test("should call the callback when document becomes visible", () => {
