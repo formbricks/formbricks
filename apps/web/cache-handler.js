@@ -10,10 +10,7 @@ const { createClient } = require("redis");
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 
 // @fortedigital/nextjs-cache-handler dependencies
-const createCompositeHandler = require("@fortedigital/nextjs-cache-handler/composite").default;
 const createRedisHandler = require("@fortedigital/nextjs-cache-handler/redis-strings").default;
-const createBufferStringHandler =
-  require("@fortedigital/nextjs-cache-handler/buffer-string-decorator").default;
 const { Next15CacheHandler } = require("@fortedigital/nextjs-cache-handler/next-15-cache-handler");
 
 // Usual onCreation from @neshca/cache-handler
@@ -30,7 +27,7 @@ CacheHandler.onCreation(() => {
     return global.cacheHandlerConfigPromise;
   }
 
-  // You may need to ignore Redis locally, remove this block otherwise
+  // If REDIS_URL is not set, we will use LRU cache only
   if (!process.env.REDIS_URL) {
     const lruCache = createLruHandler();
     return { handlers: [lruCache] };
@@ -86,20 +83,6 @@ CacheHandler.onCreation(() => {
     });
 
     global.cacheHandlerConfigPromise = null;
-
-    // This example uses composite handler to switch from Redis to LRU cache if tags contains `memory-cache` tag.
-    // You can skip composite and use Redis or LRU only.
-    global.cacheHandlerConfig = {
-      handlers: [
-        createCompositeHandler({
-          handlers: [
-            lruCache,
-            createBufferStringHandler(redisCacheHandler), // Use `createBufferStringHandler` in Next15 and ignore it in Next14 or below
-          ],
-          setStrategy: (ctx) => (ctx?.tags?.includes("memory-cache") ? 0 : 1), // You can adjust strategy for deciding which cache should the composite use
-        }),
-      ],
-    };
 
     return global.cacheHandlerConfig;
   })();
