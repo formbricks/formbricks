@@ -23,9 +23,8 @@ const config = ({ mode }) => {
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",
         include: [
-          "src/lib/*.ts",
-          "src/components/buttons/*.tsx",
-          "src/components/general/*.tsx",
+          "src/lib/**/*.{ts,tsx}",
+          "src/components/**/*.{ts,tsx}"
         ],
       },
     },
