@@ -94,10 +94,10 @@ export const sendSurveyFollowUps = async (
   organization: TOrganization
 ): Promise<FollowUpResult[]> => {
   // check for permission in Formbricks Cloud
-  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization.billing.plan);
+  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization.billing?.plan);
   if (!isSurveyFollowUpsAllowed) {
     logger.warn(
-      `Survey follow-ups are not allowed for the current billing plan "${organization.billing.plan}". Skipping sending follow-ups.`
+      `Survey follow-ups are not allowed for the current billing plan "${organization.billing?.plan}". Skipping sending follow-ups.`
     );
     return [];
   }
