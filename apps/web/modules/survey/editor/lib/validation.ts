@@ -248,7 +248,7 @@ export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: 
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
         t("environments.surveys.edit.invalid_targeting");
       toast.error(errMsg);
-      return;
+      return false;
     }
   }
 
