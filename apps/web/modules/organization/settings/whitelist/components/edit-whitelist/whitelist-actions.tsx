@@ -25,7 +25,6 @@ export const WhitelistActions = ({ organization, user, showDeleteButton }: White
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleRemoveUserFromWhitelist = async () => {
-    // TODO: Review logic here and error messages
     try {
       setIsDeleting(true);
 
@@ -33,7 +32,7 @@ export const WhitelistActions = ({ organization, user, showDeleteButton }: White
         organizationId: organization.id,
         email: user.email,
       });
-      toast.success(t("environments.settings.general.member_deleted_successfully"));
+      toast.success(t("environments.settings.general.removed_user_from_whitelist_successfully"));
 
       setIsDeleting(false);
       router.refresh();
@@ -62,7 +61,7 @@ export const WhitelistActions = ({ organization, user, showDeleteButton }: White
       <DeleteDialog
         open={isDeleteMemberModalOpen}
         setOpen={setDeleteMemberModalOpen}
-        deleteWhat={`${user.name} ${t("environments.settings.general.from_your_organization")}`}
+        deleteWhat={`${user.name ? user.name : user.email} ${t("environments.settings.general.from_the_whitelist")}`}
         onDelete={handleRemoveUserFromWhitelist}
         isDeleting={isDeleting}
       />

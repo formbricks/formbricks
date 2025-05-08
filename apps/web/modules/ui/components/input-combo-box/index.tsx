@@ -46,6 +46,9 @@ export interface InputComboboxProps {
   showCheckIcon?: boolean;
   comboboxClasses?: string;
   emptyDropdownText?: string;
+  searchQuery?: string;
+  setSearchQuery?: (string) => void;
+  loading?: boolean;
 }
 
 export const InputCombobox = ({
@@ -63,6 +66,9 @@ export const InputCombobox = ({
   showCheckIcon = false,
   comboboxClasses,
   emptyDropdownText = "environments.surveys.edit.no_option_found",
+  searchQuery,
+  setSearchQuery,
+  loading,
 }: InputComboboxProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
@@ -258,18 +264,40 @@ export const InputCombobox = ({
           className={cn("h-full w-auto max-w-[400px] truncate p-0", {
             "px-2 pt-2": showSearch,
           })}>
-          <Command className="h-full max-h-[400px] overflow-y-auto">
-            {showSearch && (
-              <CommandInput
-                placeholder={searchPlaceholder}
-                className="h-8 border-slate-400 bg-white placeholder-slate-300"
-              />
-            )}
+          <Command
+            {...(searchQuery !== undefined && setSearchQuery
+              ? { filter: () => 1 } // disable internal filtering
+              : {})}
+            className="h-full max-h-[400px] overflow-y-auto">
+            {showSearch &&
+              (searchQuery !== undefined && setSearchQuery ? (
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  value={searchQuery}
+                  onChangeCapture={(e) => {
+                    setSearchQuery(e.currentTarget.value);
+                  }}
+                  className="h-8 border-slate-400 bg-white placeholder-slate-300"
+                />
+              ) : (
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  className="h-8 border-slate-400 bg-white placeholder-slate-300"
+                />
+              ))}
             <CommandList className="m-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {t(emptyDropdownText)}
               </CommandEmpty>
-              {options && options.length > 0 && (
+              {loading && (
+                <>
+                  <CommandItem className="my-1 h-4 w-full animate-pulse truncate rounded bg-slate-200" />
+                  <CommandItem className="my-1 h-4 w-full animate-pulse truncate rounded bg-slate-200" />
+                  <CommandItem className="my-1 h-4 w-full animate-pulse truncate rounded bg-slate-200" />
+                  <CommandItem className="my-1 h-4 w-full animate-pulse truncate rounded bg-slate-200" />
+                </>
+              )}
+              {!loading && options && options.length > 0 && (
                 <CommandGroup>
                   {options.map((option) => (
                     <CommandItem

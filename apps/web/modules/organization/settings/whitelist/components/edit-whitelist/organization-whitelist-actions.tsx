@@ -5,6 +5,7 @@ import { addUserToWhitelistAction } from "@/modules/organization/settings/whitel
 import { AddWhitelistModal } from "@/modules/organization/settings/whitelist/components/add-whitelist/add-whitelist-modal";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -15,22 +16,20 @@ interface OrganizationWhitelistActionsProps {
   membershipRole?: TOrganizationRole;
   organization: TOrganization;
   isWhitelistDisabled: boolean;
-  environmentId: string;
 }
 
 export const OrganizationWhitelistActions = ({
   organization,
   membershipRole,
   isWhitelistDisabled,
-  environmentId,
 }: OrganizationWhitelistActionsProps) => {
   const { t } = useTranslate();
   const [isAddWhitelistModalOpen, setAddWhitelistModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const router = useRouter();
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
-  // TODO: Fix error and success messages for all whitelist components
+
   const handleAddUserToWhitelist = async (data: { email: string }[]) => {
     if (loading) return;
     setLoading(true);
@@ -47,6 +46,7 @@ export const OrganizationWhitelistActions = ({
         toast.error(errorMessage);
       }
     }
+    router.refresh();
     setLoading(false);
   };
 
@@ -69,7 +69,6 @@ export const OrganizationWhitelistActions = ({
         setOpen={setAddWhitelistModalOpen}
         onSubmit={handleAddUserToWhitelist}
         membershipRole={membershipRole}
-        environmentId={environmentId}
         organizationId={organization.id}
       />
     </>

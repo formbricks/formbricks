@@ -10,7 +10,6 @@ import { TOrganization } from "@formbricks/types/organizations";
 interface WhitelistViewProps {
   membershipRole: TOrganizationRole;
   organization: TOrganization;
-  environmentId: string;
 }
 
 const WhitelistLoading = () => (
@@ -23,7 +22,7 @@ const WhitelistLoading = () => (
   </div>
 );
 
-export const WhitelistView = async ({ membershipRole, organization, environmentId }: WhitelistViewProps) => {
+export const WhitelistView = async ({ membershipRole, organization }: WhitelistViewProps) => {
   const t = await getTranslate();
 
   return (
@@ -35,7 +34,6 @@ export const WhitelistView = async ({ membershipRole, organization, environmentI
           organization={organization}
           membershipRole={membershipRole}
           isWhitelistDisabled={WHITELIST_DISABLED}
-          environmentId={environmentId}
         />
       )}
 

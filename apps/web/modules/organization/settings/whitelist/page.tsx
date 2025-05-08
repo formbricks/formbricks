@@ -16,11 +16,7 @@ export const WhitelistPage = async (props) => {
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar environmentId={params.environmentId} activeId="whitelist" />
       </PageHeader>
-      <WhitelistView
-        membershipRole={currentUserMembership.role}
-        organization={organization}
-        environmentId={params.environmentId}
-      />
+      <WhitelistView membershipRole={currentUserMembership.role} organization={organization} />
     </PageContentWrapper>
   );
 };

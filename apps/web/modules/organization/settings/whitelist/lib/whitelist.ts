@@ -11,6 +11,7 @@ const whitelistSelection = {
   name: true,
   whitelist: true,
 };
+
 export const addUserToWhitelist = async ({
   email,
   organizationId,
