@@ -63,8 +63,9 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
+          data-testid="column-resize-handle"
           className={cn(
-            "absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
+            "absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
             header.column.getIsResizing() ? "bg-black" : "bg-slate-500",
             !header.column.getCanResize() ? "hidden" : "group-hover:block"
           )}

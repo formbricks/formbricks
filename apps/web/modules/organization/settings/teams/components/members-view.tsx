@@ -20,7 +20,7 @@ interface MembersViewProps {
   isUserManagementDisabledFromUi: boolean;
 }
 
-const MembersLoading = () => (
+export const MembersLoading = () => (
   <div className="px-2">
     {Array.from(Array(2)).map((_, index) => (
       <div key={index} className="mt-4">
@@ -49,9 +49,6 @@ export const MembersView = async ({
 
   if (canDoRoleManagement) {
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
-    if (!teams) {
-      throw new Error(t("common.teams_not_found"));
-    }
   }
 
   return (

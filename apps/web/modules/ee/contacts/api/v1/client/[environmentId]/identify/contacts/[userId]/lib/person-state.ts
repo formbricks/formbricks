@@ -86,7 +86,7 @@ export const getPersonState = async ({
         },
       });
 
-      const contactDisplayes = await prisma.display.findMany({
+      const contactDisplays = await prisma.display.findMany({
         where: {
           contactId: contact.id,
         },
@@ -98,21 +98,22 @@ export const getPersonState = async ({
 
       const segments = await getPersonSegmentIds(environmentId, contact.id, userId, device);
 
+      const sortedContactDisplaysDate = contactDisplays?.toSorted(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      )[0]?.createdAt;
+
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
         contactId: contact.id,
         userId,
         segments,
         displays:
-          contactDisplayes?.map((display) => ({
+          contactDisplays?.map((display) => ({
             surveyId: display.surveyId,
             createdAt: display.createdAt,
           })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        lastDisplayAt:
-          contactDisplayes.length > 0
-            ? contactDisplayes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
-            : null,
+        lastDisplayAt: contactDisplays?.length > 0 ? sortedContactDisplaysDate : null,
       };
 
       return {
