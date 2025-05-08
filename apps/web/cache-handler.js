@@ -31,7 +31,7 @@ CacheHandler.onCreation(() => {
   }
 
   // You may need to ignore Redis locally, remove this block otherwise
-  if (process.env.NODE_ENV === "development") {
+  if (!process.env.REDIS_URL) {
     const lruCache = createLruHandler();
     return { handlers: [lruCache] };
   }
