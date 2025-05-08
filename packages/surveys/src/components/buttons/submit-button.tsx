@@ -2,12 +2,14 @@
 import { ButtonHTMLAttributes, useRef } from "react";
 import { useCallback, useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { LoadingSpinner } from "../general/loading-spinner";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel: string | undefined;
   isLastQuestion: boolean;
   focus?: boolean;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function SubmitButton({
@@ -19,13 +21,14 @@ export function SubmitButton({
   disabled,
   type,
   className = "",
+  isLoading = false,
   ...props
 }: SubmitButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isLoading) {
         event.preventDefault();
         const button = buttonRef.current;
         if (button) {
@@ -33,7 +36,7 @@ export function SubmitButton({
         }
       }
     },
-    [disabled]
+    [disabled, isLoading]
   );
 
   useEffect(() => {
@@ -59,11 +62,12 @@ export function SubmitButton({
       autoFocus={focus}
       className={cn(
         "bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom flex items-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2",
+        isLoading ? "cursor-not-allowed" : "",
         className
       )}
       onClick={onClick}
-      disabled={disabled}>
-      {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
+      disabled={disabled || isLoading}>
+      {isLoading ? <LoadingSpinner size="sm" /> : buttonLabel || isLastQuestion ? "Finish" : "Next"}
     </button>
   );
 }

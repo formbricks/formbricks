@@ -1,5 +1,4 @@
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
-import { ErrorCard } from "src/components/general/error-card";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
@@ -7,6 +6,7 @@ import { getLocalizedValue } from "../../lib/i18n";
 import { getUpdatedTtc, useTtc } from "../../lib/ttc";
 import { BackButton } from "../buttons/back-button";
 import { SubmitButton } from "../buttons/submit-button";
+import { ErrorCard } from "../general/error-card";
 import { Headline } from "../general/headline";
 import { Input } from "../general/input";
 import { Label } from "../general/label";
@@ -37,15 +37,12 @@ export function DeployTokenQuestion({
   value,
   onChange,
   onSubmit,
-  onBack,
-  isFirstQuestion,
   isLastQuestion,
   languageCode,
   ttc,
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-  isBackButtonHidden,
   setIsResponseSendingFinished,
 }: DeployTokenQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
@@ -218,30 +215,20 @@ export function DeployTokenQuestion({
       </ScrollableContainer>
 
       <div className="flex w-full flex-row-reverse justify-between px-6 py-4">
-        {!isFirstQuestion && !isBackButtonHidden ? (
-          <BackButton
-            tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedttc);
-              onBack();
-            }}
-          />
-        ) : (
-          <div />
-        )}
-        <div />
+        <BackButton
+          tabIndex={isCurrent ? 0 : -1}
+          isLoading={isDeploying}
+          backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+          onClick={() => {
+            window.location.href = window.location.origin;
+          }}
+        />
+
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={isDeploying ? "Deploying" : getLocalizedValue(question.buttonLabel, languageCode)}
-          disabled={isDeploying}
-          className={
-            isDeploying
-              ? "animate-pulse cursor-not-allowed bg-slate-400 opacity-70 transition-all duration-300"
-              : ""
-          }
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
+          isLoading={isDeploying}
         />
       </div>
     </form>
