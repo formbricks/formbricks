@@ -2,9 +2,9 @@
    and how we can improve it. All data including the IP address is collected anonymously
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
-import { env } from "@/lib/env";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION } from "./constants";
+import { env } from "./env";
 
 const crypto = require("crypto");
 
