@@ -98,8 +98,8 @@ describe("getUserState", () => {
       userId: mockUserId,
       segments: ["segment2", "segment3"],
       displays: [
-        { surveyId: "survey4", createdAt: mockDate2 },
         { surveyId: "survey3", createdAt: mockDate1 },
+        { surveyId: "survey4", createdAt: mockDate2 },
       ],
       responses: ["survey1", "survey2"],
       lastDisplayAt: mockDate2,
