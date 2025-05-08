@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import { useConfig } from "@formbricks/web3/src/hooks/useConfig";
 import { getLocalizedValue } from "../../lib/i18n";
 import { replaceRecallInfo } from "../../lib/recall";
 import { SubmitButton } from "../buttons/submit-button";
@@ -38,6 +39,8 @@ export function EndingCard({
   deployTokenResponse,
   onOpenExternalURL,
 }: EndingCardProps) {
+  const { config } = useConfig();
+
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
@@ -161,7 +164,7 @@ export function EndingCard({
                 <div className="mb-1 text-sm">
                   <span className="font-medium">Token Address:</span>{" "}
                   <a
-                    href={`https://explorer.testnet.wonderchain.org/address/${tokenDeploymentDetails.tokenAddress}`}
+                    href={`${config.URLS.EXPLORER}/address/${tokenDeploymentDetails.tokenAddress}`}
                     target="_blank"
                     className="text-blue-600 underline">
                     {tokenDeploymentDetails.tokenAddress}

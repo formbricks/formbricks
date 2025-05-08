@@ -1,10 +1,10 @@
+import EngagementLogo from "@/images/logo.svg";
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
 import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
-import footerLogo from "../lib/footerlogo.svg";
 
 export const SurveyInactive = async ({
   status,
@@ -36,7 +36,7 @@ export const SurveyInactive = async ({
         <h1 className="text-4xl font-bold text-slate-800">
           {status === "completed" && surveyClosedMessage
             ? surveyClosedMessage.heading
-            : `${t("common.survey")} ${status}.`}
+            : `${t("common.engagement")} ${status}.`}
         </h1>
         <p className="text-lg leading-10 text-slate-500">
           {status === "completed" && surveyClosedMessage
@@ -47,13 +47,13 @@ export const SurveyInactive = async ({
           status !== "link invalid" &&
           status !== "response submitted" && (
             <Button className="mt-2" asChild>
-              <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
+              <Link href="https://www.engagehq.xyz/">{t("s.create_your_own")}</Link>
             </Button>
           )}
       </div>
       <div>
-        <Link href="https://formbricks.com">
-          <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
+        <Link href="https://www.engagehq.xyz/">
+          <Image src={EngagementLogo as string} alt="Brand logo" className="mx-auto w-40" />
         </Link>
       </div>
     </div>
