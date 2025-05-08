@@ -68,7 +68,7 @@ export const getUserState = async ({
           })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
         lastDisplayAt:
-          contactDisplays.length > 0
+          contactDisplays?.length > 0
             ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
             : null,
       };
