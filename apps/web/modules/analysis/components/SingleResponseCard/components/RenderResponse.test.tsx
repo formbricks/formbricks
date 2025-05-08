@@ -25,7 +25,7 @@ vi.mock("@/modules/ui/components/response-badges", () => ({
   ResponseBadges: ({ items }: any) => <div data-testid="ResponseBadges">{items.join(",")}</div>,
 }));
 vi.mock("@/modules/ui/components/ranking-response", () => ({
-  RankingRespone: ({ value }: any) => <div data-testid="RankingRespone">{value.join(",")}</div>,
+  RankingResponse: ({ value }: any) => <div data-testid="RankingResponse">{value.join(",")}</div>,
 }));
 vi.mock("@/modules/analysis/utils", () => ({
   renderHyperlinkedContent: vi.fn((text: string) => "hyper:" + text),
@@ -236,7 +236,7 @@ describe("RenderResponse", () => {
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("9");
   });
 
-  test("renders RankingRespone for 'Ranking' question", () => {
+  test("renders RankingResponse for 'Ranking' question", () => {
     const question = { ...defaultQuestion, type: "ranking" };
     render(
       <RenderResponse
@@ -246,7 +246,7 @@ describe("RenderResponse", () => {
         language={dummyLanguage}
       />
     );
-    expect(screen.getByTestId("RankingRespone")).toHaveTextContent("first,second");
+    expect(screen.getByTestId("RankingResponse")).toHaveTextContent("first,second");
   });
 
   test("renders default branch for unknown question type with string", () => {

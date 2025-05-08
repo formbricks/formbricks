@@ -8,7 +8,7 @@ export const ArrayResponse = ({ value }: ArrayResponseProps) => {
       {value.map(
         (item, index) =>
           item && (
-            <div key={index}>
+            <div key={`${index}-${item}`}>
               {item}
               <br />
             </div>
