@@ -51,6 +51,7 @@ export const BackgroundStylingCard = ({
       <Collapsible.CollapsibleTrigger
         asChild
         disabled={disabled}
+        data-testid="background-styling-card-trigger"
         className={cn(
           "w-full cursor-pointer rounded-lg hover:bg-slate-50",
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
