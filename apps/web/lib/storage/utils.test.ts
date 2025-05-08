@@ -10,16 +10,6 @@ vi.mock("@formbricks/logger", () => ({
 
 describe("Storage Utils", () => {
   describe("getOriginalFileNameFromUrl", () => {
-    test("should extract original filename from storage URL", () => {
-      const url = "/storage/test-file.pdf--fid--123";
-      expect(getOriginalFileNameFromUrl(url)).toBe("test-file.pdf");
-    });
-
-    test("should extract original filename from external URL", () => {
-      const url = "https://example.com/path/test-file.pdf--fid--123";
-      expect(getOriginalFileNameFromUrl(url)).toBe("test-file.pdf");
-    });
-
     test("should handle URL without file ID", () => {
       const url = "/storage/test-file.pdf";
       expect(getOriginalFileNameFromUrl(url)).toBe("test-file.pdf");

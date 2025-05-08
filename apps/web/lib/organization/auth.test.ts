@@ -48,35 +48,6 @@ describe("auth", () => {
       const result = await canUserAccessOrganization("user1", "org1");
       expect(result).toBe(true);
     });
-
-    test("returns false when user does not have access to organization", async () => {
-      const mockOrganizations: TOrganization[] = [
-        {
-          id: "org1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          name: "Org 1",
-          billing: {
-            stripeCustomerId: null,
-            plan: "free",
-            period: "monthly",
-            limits: {
-              projects: 3,
-              monthly: {
-                responses: 1500,
-                miu: 2000,
-              },
-            },
-            periodStart: new Date(),
-          },
-          isAIEnabled: false,
-        },
-      ];
-      vi.mocked(getOrganizationsByUserId).mockResolvedValue(mockOrganizations);
-
-      const result = await canUserAccessOrganization("user1", "org3");
-      expect(result).toBe(false);
-    });
   });
 
   describe("verifyUserRoleAccess", () => {

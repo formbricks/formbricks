@@ -6,14 +6,17 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
       ? fileURL.split("/").pop()
       : new URL(fileURL).pathname.split("/").pop();
 
-    if (!fileNameFromURL) return "";
+    const fileExt = fileNameFromURL?.split(".").pop() ?? "";
+    const originalFileName = fileNameFromURL?.split("--fid--")[0] ?? "";
+    const fileId = fileNameFromURL?.split("--fid--")[1] ?? "";
 
-    const parts = fileNameFromURL.split("--fid--");
-    const originalFileName = parts[0];
+    if (!fileId) {
+      const fileName = originalFileName ? decodeURIComponent(originalFileName || "") : "";
+      return fileName;
+    }
 
-    if (!originalFileName) return "";
-
-    return decodeURIComponent(originalFileName);
+    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
+    return fileName;
   } catch (error) {
     logger.error(error, "Error parsing file URL");
   }
