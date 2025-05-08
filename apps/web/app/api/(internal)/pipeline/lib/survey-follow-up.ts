@@ -1,4 +1,5 @@
 import { sendFollowUpEmail } from "@/modules/email";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { z } from "zod";
 import { TSurveyFollowUpAction } from "@formbricks/database/types/survey-follow-up";
 import { logger } from "@formbricks/logger";
@@ -92,6 +93,14 @@ export const sendSurveyFollowUps = async (
   response: TResponse,
   organization: TOrganization
 ): Promise<FollowUpResult[]> => {
+  // check for permission in Formbricks Cloud
+  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization.billing.plan);
+  if (!isSurveyFollowUpsAllowed) {
+    logger.warn(
+      `Survey follow-ups are not allowed for the current billing plan "${organization.billing.plan}". Skipping sending follow-ups.`
+    );
+    return [];
+  }
   const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
     const { trigger } = followUp;
 
