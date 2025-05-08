@@ -29,7 +29,6 @@ describe("getUpdatedTtc", () => {
 describe("useTtc", () => {
   let mockSetTtc: ReturnType<typeof vi.fn>;
   let mockSetStartTime: ReturnType<typeof vi.fn>;
-  let mockPerformanceNow: ReturnType<typeof vi.spyOn>;
   let currentTime = 0;
   let initialProps: {
     questionId: TSurveyQuestionId;
@@ -44,7 +43,7 @@ describe("useTtc", () => {
     mockSetTtc = vi.fn();
     mockSetStartTime = vi.fn();
     currentTime = 1000; // Initial mock time
-    mockPerformanceNow = vi.spyOn(performance, "now").mockImplementation(() => currentTime);
+    vi.spyOn(performance, "now").mockImplementation(() => currentTime);
     vi.spyOn(document, "addEventListener");
     vi.spyOn(document, "removeEventListener");
 
@@ -114,9 +113,9 @@ describe("useTtc", () => {
       useTtc(
         initialProps.questionId,
         initialProps.ttc,
-        initialProps.setTtc,
+        mockSetTtc,
         initialProps.startTime,
-        initialProps.setStartTime,
+        mockSetStartTime,
         false
       )
     );
