@@ -93,13 +93,6 @@ describe("MembersView", () => {
     );
   });
 
-  test("throws error if teams is null when canDoRoleManagement", async () => {
-    vi.mocked(getMembershipsByUserId).mockResolvedValue([mockMembership]);
-    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getTeamsByOrganizationId).mockResolvedValue([]);
-    await expect(MembersView(baseProps)).rejects.toThrow("common.teams_not_found");
-  });
-
   test("does not render OrganizationActions or EditMemberships if no membershipRole", async () => {
     vi.mocked(getMembershipsByUserId).mockResolvedValue([mockMembership]);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);

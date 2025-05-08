@@ -49,9 +49,6 @@ export const MembersView = async ({
 
   if (canDoRoleManagement) {
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
-    if (!teams.length) {
-      throw new Error(t("common.teams_not_found"));
-    }
   }
 
   return (
