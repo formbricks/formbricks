@@ -225,13 +225,13 @@ export const updateOrganization = async (
 
     return organization;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
-        throw new ResourceNotFoundError("Organization", organizationId);
-      }
-      throw new DatabaseError(error.message);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
+      throw new ResourceNotFoundError("Organization", organizationId);
     }
-    throw error;
+    throw error; // Re-throw any other errors
   }
 };
 

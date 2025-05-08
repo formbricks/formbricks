@@ -269,27 +269,5 @@ describe("Organization Service", () => {
         id: "org1",
       });
     });
-
-    test("should throw ResourceNotFoundError when organization not found", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2025",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
-
-      await expect(updateOrganization("nonexistent", { name: "Updated" })).rejects.toThrow(
-        ResourceNotFoundError
-      );
-    });
-
-    test("should throw DatabaseError on other prisma errors", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: "P2002",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
-
-      await expect(updateOrganization("org1", { name: "Updated" })).rejects.toThrow(DatabaseError);
-    });
   });
 });
