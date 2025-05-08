@@ -16,9 +16,9 @@ export const canUserAccessOrganization = (userId: string, organizationId: string
         const userOrganizations = await getOrganizationsByUserId(userId);
 
         const givenOrganizationExists = userOrganizations.filter(
-          (organization) => (organization.id = organizationId)
+          (organization) => organization.id === organizationId
         );
-        if (!givenOrganizationExists) {
+        if (!givenOrganizationExists.length) {
           return false;
         }
         return true;
