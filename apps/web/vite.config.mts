@@ -61,6 +61,7 @@ export default defineConfig({
         "modules/setup/**/signup/**",
         "modules/setup/**/layout.tsx",
         "modules/survey/follow-ups/**",
+        "modules/ui/components/icons/**",
         "app/share/**",
         "lib/shortUrl/**",
         "modules/ee/contacts/[contactId]/**",
