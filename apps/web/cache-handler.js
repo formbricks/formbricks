@@ -96,7 +96,7 @@ CacheHandler.onCreation(() => {
             lruCache,
             createBufferStringHandler(redisCacheHandler), // Use `createBufferStringHandler` in Next15 and ignore it in Next14 or below
           ],
-          setStrategy: (ctx) => (ctx?.tags.includes("memory-cache") ? 0 : 1), // You can adjust strategy for deciding which cache should the composite use
+          setStrategy: (ctx) => (ctx?.tags?.includes("memory-cache") ? 0 : 1), // You can adjust strategy for deciding which cache should the composite use
         }),
       ],
     };
