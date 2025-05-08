@@ -1,9 +1,12 @@
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { cleanup, render, screen } from "@testing-library/react";
+import { getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getUserProjects } from "@/lib/project/service";
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/preact";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import OnboardingLayout from "./layout";
+import LandingLayout from "./layout";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -87,58 +90,95 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "RS256",
 }));
 
-vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
-}));
+vi.mock("@/lib/environment/service");
+vi.mock("@/lib/membership/service");
+vi.mock("@/lib/project/service");
+vi.mock("next-auth");
+vi.mock("next/navigation");
 
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
-}));
+afterEach(() => {
+  cleanup();
+});
 
-vi.mock("@/lib/environment/auth", () => ({
-  hasUserEnvironmentAccess: vi.fn(),
-}));
+describe("LandingLayout", () => {
+  test("redirects to login if no session exists", async () => {
+    vi.mocked(getServerSession).mockResolvedValue(null);
 
-describe("OnboardingLayout", () => {
-  afterEach(() => {
-    cleanup();
-    vi.clearAllMocks();
+    const props = { params: { organizationId: "org-123" }, children: <div>Child Content</div> };
+
+    await LandingLayout(props);
+
+    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/auth/login");
   });
 
-  test("redirects to login if session is missing", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+  test("returns notFound if no membership is found", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-123" } });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
 
-    await OnboardingLayout({
-      params: { environmentId: "env1" },
-      children: <div>Test Content</div>,
+    const props = { params: { organizationId: "org-123" }, children: <div>Child Content</div> };
+
+    await LandingLayout(props);
+
+    expect(vi.mocked(notFound)).toHaveBeenCalled();
+  });
+
+  test("redirects to production environment if available", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-123" } });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
+      organizationId: "org-123",
+      userId: "user-123",
+      accepted: true,
+      role: "owner",
     });
+    vi.mocked(getUserProjects).mockResolvedValue([
+      {
+        id: "proj-123",
+        organizationId: "org-123",
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2023-01-02"),
+        name: "Project 1",
+        styling: { allowStyleOverwrite: true },
+        recontactDays: 30,
+        inAppSurveyBranding: true,
+        linkSurveyBranding: true,
+      } as any,
+    ]);
+    vi.mocked(getEnvironments).mockResolvedValue([
+      {
+        id: "env-123",
+        type: "production",
+        projectId: "proj-123",
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2023-01-02"),
+        appSetupCompleted: true,
+      },
+    ]);
 
-    expect(redirect).toHaveBeenCalledWith("/auth/login");
+    const props = { params: { organizationId: "org-123" }, children: <div>Child Content</div> };
+
+    await LandingLayout(props);
+
+    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/environments/env-123/");
   });
 
-  test("throws AuthorizationError if user lacks access", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user1" } });
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(false);
-
-    await expect(
-      OnboardingLayout({
-        params: { environmentId: "env1" },
-        children: <div>Test Content</div>,
-      })
-    ).rejects.toThrow("User is not authorized to access this environment");
-  });
-
-  test("renders children if user has access", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user1" } });
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(true);
-
-    const result = await OnboardingLayout({
-      params: { environmentId: "env1" },
-      children: <div data-testid="child">Test Content</div>,
+  test("renders children if no projects or production environment exist", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-123" } });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
+      organizationId: "org-123",
+      userId: "user-123",
+      accepted: true,
+      role: "owner",
     });
+    vi.mocked(getUserProjects).mockResolvedValue([]);
 
-    render(result);
+    const props = { params: { organizationId: "org-123" }, children: <div>Child Content</div> };
 
-    expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
+    const result = await LandingLayout(props);
+
+    expect(result).toEqual(
+      <>
+        <div>Child Content</div>
+      </>
+    );
   });
 });

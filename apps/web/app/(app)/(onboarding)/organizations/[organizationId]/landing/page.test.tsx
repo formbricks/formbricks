@@ -1,9 +1,13 @@
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { getTranslate } from "@/tolgee/server";
+import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import OnboardingLayout from "./layout";
+import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -87,58 +91,63 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "RS256",
 }));
 
+vi.mock("@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar", () => ({
+  LandingSidebar: () => <div data-testid="landing-sidebar" />,
+}));
+vi.mock("@/modules/organization/lib/utils");
+vi.mock("@/lib/user/service");
+vi.mock("@/lib/organization/service");
+vi.mock("@/modules/ee/license-check/lib/utils");
+vi.mock("@/tolgee/server");
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
+  redirect: vi.fn(() => "REDIRECT_STUB"),
+  notFound: vi.fn(() => "NOT_FOUND_STUB"),
 }));
 
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
-}));
-
-vi.mock("@/lib/environment/auth", () => ({
-  hasUserEnvironmentAccess: vi.fn(),
-}));
-
-describe("OnboardingLayout", () => {
+describe("Page component", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
   });
 
-  test("redirects to login if session is missing", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+  test("redirects to login if no user session", async () => {
+    vi.mocked(getOrganizationAuth).mockResolvedValue({ session: {}, organization: {} } as any);
 
-    await OnboardingLayout({
-      params: { environmentId: "env1" },
-      children: <div>Test Content</div>,
-    });
+    const result = await Page({ params: { organizationId: "org1" } });
 
     expect(redirect).toHaveBeenCalledWith("/auth/login");
+    expect(result).toBe("REDIRECT_STUB");
   });
 
-  test("throws AuthorizationError if user lacks access", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user1" } });
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(false);
+  test("returns notFound if user does not exist", async () => {
+    vi.mocked(getOrganizationAuth).mockResolvedValue({
+      session: { user: { id: "user1" } },
+      organization: {},
+    } as any);
+    vi.mocked(getUser).mockResolvedValue(null);
 
-    await expect(
-      OnboardingLayout({
-        params: { environmentId: "env1" },
-        children: <div>Test Content</div>,
-      })
-    ).rejects.toThrow("User is not authorized to access this environment");
+    const result = await Page({ params: { organizationId: "org1" } });
+
+    expect(notFound).toHaveBeenCalled();
+    expect(result).toBe("NOT_FOUND_STUB");
   });
 
-  test("renders children if user has access", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: "user1" } });
-    vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(true);
+  test("renders header and sidebar for authenticated user", async () => {
+    vi.mocked(getOrganizationAuth).mockResolvedValue({
+      session: { user: { id: "user1" } },
+      organization: { id: "org1" },
+    } as any);
+    vi.mocked(getUser).mockResolvedValue({ id: "user1", name: "Test User" } as any);
+    vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org1", name: "Org One" } as any]);
+    vi.mocked(getEnterpriseLicense).mockResolvedValue({ features: { isMultiOrgEnabled: true } } as any);
+    vi.mocked(getTranslate).mockResolvedValue((props: any) =>
+      typeof props === "string" ? props : props.key || ""
+    );
 
-    const result = await OnboardingLayout({
-      params: { environmentId: "env1" },
-      children: <div data-testid="child">Test Content</div>,
-    });
+    const element = await Page({ params: { organizationId: "org1" } });
+    render(element as React.ReactElement);
 
-    render(result);
-
-    expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
+    expect(screen.getByTestId("landing-sidebar")).toBeInTheDocument();
+    expect(screen.getByText("organizations.landing.no_projects_warning_title")).toBeInTheDocument();
+    expect(screen.getByText("organizations.landing.no_projects_warning_subtitle")).toBeInTheDocument();
   });
 });
