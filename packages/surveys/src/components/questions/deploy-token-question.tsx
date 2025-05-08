@@ -51,7 +51,7 @@ export function DeployTokenQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
-  const [isDeployFailed, setIsDeployFailed] = useState<boolean>(true);
+  const [isDeployFailed, setIsDeployFailed] = useState<boolean>(false);
 
   const isDeployingRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
