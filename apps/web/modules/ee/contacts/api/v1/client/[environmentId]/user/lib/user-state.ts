@@ -56,6 +56,10 @@ export const getUserState = async ({
 
       const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
 
+      const sortedContactDisplays = contactDisplays?.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      )[0]?.createdAt;
+
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
         contactId,
@@ -67,10 +71,7 @@ export const getUserState = async ({
             createdAt: display.createdAt,
           })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        lastDisplayAt:
-          contactDisplays?.length > 0
-            ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
-            : null,
+        lastDisplayAt: contactDisplays?.length > 0 ? sortedContactDisplays : null,
       };
 
       return userState;

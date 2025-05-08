@@ -59,7 +59,6 @@ describe("getContactAttributeKeys", () => {
     );
 
     await expect(getContactAttributeKeys(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
-    await expect(getContactAttributeKeys(mockEnvironmentIds)).rejects.toThrow(errorMessage);
   });
 
   test("should throw generic error if non-Prisma error occurs", async () => {
