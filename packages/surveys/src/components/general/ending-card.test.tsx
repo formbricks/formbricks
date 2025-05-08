@@ -121,7 +121,7 @@ describe("EndingCard", () => {
       />
     );
 
-    expect(screen.getByText("Respondants will not see this card")).toBeInTheDocument();
+    expect(screen.getByText("Respondents will not see this card")).toBeInTheDocument();
     expect(screen.getByText("They will be redirected immediately")).toBeInTheDocument();
   });
 
