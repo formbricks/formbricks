@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
-import { RankingRespone } from "./index";
+import { RankingResponse } from "./index";
 
 describe("RankingResponse", () => {
   afterEach(() => {
@@ -11,7 +11,7 @@ describe("RankingResponse", () => {
   test("renders ranked items correctly", () => {
     const rankedItems = ["Apple", "Banana", "Cherry"];
 
-    render(<RankingRespone value={rankedItems} isExpanded={true} />);
+    render(<RankingResponse value={rankedItems} isExpanded={true} />);
 
     expect(screen.getByText("#1")).toBeInTheDocument();
     expect(screen.getByText("#2")).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe("RankingResponse", () => {
   test("applies expanded layout", () => {
     const rankedItems = ["Apple", "Banana"];
 
-    const { container } = render(<RankingRespone value={rankedItems} isExpanded={true} />);
+    const { container } = render(<RankingResponse value={rankedItems} isExpanded={true} />);
 
     const parentDiv = container.firstChild;
     expect(parentDiv).not.toHaveClass("flex");
@@ -34,7 +34,7 @@ describe("RankingResponse", () => {
   test("applies non-expanded layout", () => {
     const rankedItems = ["Apple", "Banana"];
 
-    const { container } = render(<RankingRespone value={rankedItems} isExpanded={false} />);
+    const { container } = render(<RankingResponse value={rankedItems} isExpanded={false} />);
 
     const parentDiv = container.firstChild;
     expect(parentDiv).toHaveClass("flex");
@@ -44,7 +44,7 @@ describe("RankingResponse", () => {
   test("handles empty values", () => {
     const rankedItems = ["Apple", "", "Cherry"];
 
-    render(<RankingRespone value={rankedItems} isExpanded={true} />);
+    render(<RankingResponse value={rankedItems} isExpanded={true} />);
 
     expect(screen.getByText("#1")).toBeInTheDocument();
     expect(screen.getByText("#3")).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("RankingResponse", () => {
   test("displays items in the correct order", () => {
     const rankedItems = ["First", "Second", "Third"];
 
-    render(<RankingRespone value={rankedItems} isExpanded={true} />);
+    render(<RankingResponse value={rankedItems} isExpanded={true} />);
 
     const rankNumbers = screen.getAllByText(/^#\d$/);
     const rankItems = screen.getAllByText(/(First|Second|Third)/);
@@ -74,7 +74,7 @@ describe("RankingResponse", () => {
   test("renders with RTL support", () => {
     const rankedItems = ["תפוח", "בננה", "דובדבן"];
 
-    const { container } = render(<RankingRespone value={rankedItems} isExpanded={true} />);
+    const { container } = render(<RankingResponse value={rankedItems} isExpanded={true} />);
 
     const parentDiv = container.firstChild as HTMLElement;
     expect(parentDiv).toHaveAttribute("dir", "auto");

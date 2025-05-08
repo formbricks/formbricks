@@ -19,7 +19,7 @@ describe("StackedCardsContainer", () => {
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 
-  test("renders with 'none' arrangement", () => {
+  test("renders with 'simple' arrangement", () => {
     const { container } = render(
       <StackedCardsContainer cardArrangement="simple">
         <div>Test Content</div>
@@ -87,7 +87,7 @@ describe("StackedCardsContainer", () => {
     expect(shadowCards[1]).toHaveClass("-translate-y-4");
   });
 
-  test("falls back to 'none' arrangement for unknown type", () => {
+  test("falls back to 'simple' arrangement for unknown type", () => {
     // @ts-ignore - Testing with invalid input
     const { container } = render(
       <StackedCardsContainer cardArrangement="simple">

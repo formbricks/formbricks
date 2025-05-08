@@ -221,19 +221,6 @@ describe("PreviewSurvey", () => {
 
   test("resets survey progress when reset button is clicked", async () => {
     // Add the modal component to the DOM even after click
-    vi.mock("./components/modal", () => ({
-      Modal: ({ children, isOpen, placement, darkOverlay, clickOutsideClose, previewMode }: any) => (
-        <div
-          data-testid="survey-modal"
-          data-placement={placement}
-          data-is-open={isOpen}
-          data-dark-overlay={darkOverlay ? "true" : "false"}
-          data-click-outside-close={clickOutsideClose ? "true" : "false"}
-          data-preview-mode={previewMode}>
-          {children}
-        </div>
-      ),
-    }));
 
     const user = userEvent.setup();
 
@@ -252,27 +239,13 @@ describe("PreviewSurvey", () => {
     await user.click(resetButton);
 
     // Wait for component to update
-    await new Promise((r) => setTimeout(r, 100));
-
-    // Verify we can find survey elements after reset
-    expect(screen.queryByTestId("survey-inline")).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(screen.queryByTestId("survey-inline")).toBeInTheDocument();
+    });
   });
 
   test("handles survey completion", async () => {
     // Add the modal component to the DOM even after click
-    vi.mock("./components/modal", () => ({
-      Modal: ({ children, isOpen, placement, darkOverlay, clickOutsideClose, previewMode }: any) => (
-        <div
-          data-testid="survey-modal"
-          data-placement={placement}
-          data-is-open={isOpen}
-          data-dark-overlay={darkOverlay ? "true" : "false"}
-          data-click-outside-close={clickOutsideClose ? "true" : "false"}
-          data-preview-mode={previewMode}>
-          {children}
-        </div>
-      ),
-    }));
 
     const user = userEvent.setup();
 
