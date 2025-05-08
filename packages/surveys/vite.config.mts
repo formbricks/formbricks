@@ -28,8 +28,6 @@ const config = ({ mode }) => {
           "src/lib/logic.ts",
           "src/components/buttons/*.tsx",
           "src/components/general/*.tsx",
-          "src/lib/**/*.{ts,tsx}",
-          "src/components/**/*.{ts,tsx}"
         ],
       },
     },
