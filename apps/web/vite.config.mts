@@ -7,10 +7,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/*.test.tsx", "jsdom"],
-      ["**/*.test.ts", "jsdom"], // All lib tests use jsdom since they often need browser APIs
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
