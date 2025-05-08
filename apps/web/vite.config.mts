@@ -24,7 +24,7 @@ export default defineConfig({
         "**/mocks/**", // Mock directories
         "**/__mocks__/**", // Jest-style mock directories
         "**/constants.ts", // Constants files
-        "**/route.ts", // Next.js API routes
+        "**/route.{ts,tsx}", // Next.js API routes
         "**/openapi.ts", // OpenAPI spec files
         "**/openapi-document.ts", // OpenAPI-related document files
         "**/types/**", // Type definition folders
@@ -37,6 +37,7 @@ export default defineConfig({
         "**/instrumentation.ts", // Next.js instrumentation files
         "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
         "**/vitestSetup.ts", // Vitest setup files
+        "**/*.setup.*", // Vitest setup files
         "**/*.json", // JSON files
         "**/*.mdx", // MDX files
         "**/playwright/**", // Playwright E2E test files
@@ -74,6 +75,7 @@ export default defineConfig({
         "lib/airtable/**",
         "app/api/v1/integrations/**",
         "lib/env.ts",
+        "**/cache/**",
       ],
     },
   },

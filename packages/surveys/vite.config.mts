@@ -27,9 +27,10 @@ const config = ({ mode }) => {
           "src/lib/response-queue.ts",
           "src/lib/logic.ts",
           "src/components/buttons/*.tsx",
-          "src/components/general/*.tsx"
+          "src/components/general/*.tsx",
+          "src/lib/**/*.{ts,tsx}",
+          "src/components/**/*.{ts,tsx}"
         ],
-        exclude: ["dist/**", "node_modules/**"],
       },
     },
     define: {

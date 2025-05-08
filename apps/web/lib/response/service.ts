@@ -22,7 +22,7 @@ import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
-import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
+import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
