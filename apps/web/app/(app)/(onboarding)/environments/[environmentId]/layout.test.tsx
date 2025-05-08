@@ -126,7 +126,7 @@ describe("OnboardingLayout", () => {
         params: { environmentId: "env1" },
         children: <div>Test Content</div>,
       })
-    ).rejects.toThrow(new AuthorizationError("User is not authorized to access this environment"));
+    ).rejects.toThrowErrorMatchingMessage("User is not authorized to access this environment");
   });
 
   test("renders children if user has access", async () => {
