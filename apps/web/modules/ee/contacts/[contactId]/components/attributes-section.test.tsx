@@ -90,7 +90,7 @@ describe("AttributesSection", () => {
     vi.mocked(getContactAttributes).mockResolvedValue(mockAttributes);
     vi.mocked(getResponsesByContactId).mockResolvedValue(mockResponses);
 
-    const { container } = render(<AttributesSection contactId="test-contact-id" />);
+    const { container } = render(await AttributesSection({ contactId: "test-contact-id" }));
 
     expect(screen.getByText("common.attributes")).toBeInTheDocument();
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
