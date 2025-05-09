@@ -84,6 +84,7 @@ export const ZUserCreateInput = z.object({
   emailVerified: z.date().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
+  imageUrl: z.string().nullish(),
   identityProvider: ZUserIdentityProvider.optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),

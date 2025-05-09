@@ -1,11 +1,13 @@
+import RewardIcon from "@/images/reward.svg";
 import { ChainContext } from "@/modules/discover/context/chain-context";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { formatDistance } from "date-fns";
-import { ArrowRightIcon, Sparkles, UsersIcon } from "lucide-react";
+import { ArrowRightIcon, UsersIcon } from "lucide-react";
 import { Clock } from "lucide-react";
+import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 
 interface AvailableSurveyCardProps {
@@ -28,13 +30,16 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex min-h-[200px] flex-col justify-between p-6">
+      <div className="flex min-h-[200px] flex-col justify-between p-6 pb-3">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
+          </div>
+
+          <div className="flex items-center gap-1 text-slate-700">
             {survey.responseCount != undefined && (
-              <div className="flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                <UsersIcon className="mr-1 h-3 w-3" />
+              <div className="flex items-center py-0.5 text-xs">
+                <UsersIcon className="mr-1 h-4 w-4" strokeWidth={3} />
                 <div className="flex items-center gap-1">
                   <span>{survey.responseCount}</span>
                   <span>
@@ -43,13 +48,15 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
                 </div>
               </div>
             )}
+            <span className="mx-1 -mt-1">|</span>
+
+            {survey.closeOnDate && (
+              <div className="flex items-center text-xs">
+                <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
+                {formatDistance(new Date(survey.closeOnDate), new Date(), { addSuffix: false })}
+              </div>
+            )}
           </div>
-          {survey.closeOnDate && (
-            <div className="mt-1 flex items-center text-xs text-slate-500">
-              <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
-              {formatDistance(new Date(survey.closeOnDate), new Date(), { addSuffix: false })}
-            </div>
-          )}
         </div>
 
         <div className="flex-1">
@@ -59,18 +66,24 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
 
         {chainName && (
           <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-blue-400">
-              <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-              <span className="font-bold">
-                {survey.reward?.amount} {survey.reward?.symbol}
-              </span>
-            </div>
             <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-md bg-purple-100 px-1.5 py-1">
+                <Image src={RewardIcon as string} className="h-5 w-5" alt="reward icon" />
+                <div className="text-sm text-slate-600">
+                  <span className="mr-1 font-medium">Reward:</span>
+                  <span className="font-bold">
+                    {survey.reward?.amount} {survey.reward?.symbol}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* <div className="flex items-center gap-2">
               <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
                 <div className="mx-auto w-80 bg-slate-500" />
               </span>
               <span className="text-xs text-slate-500">{chainName}</span>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
