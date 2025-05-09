@@ -77,12 +77,16 @@ CacheHandler.onCreation(() => {
       return global.cacheHandlerConfig;
     }
 
-    createRedisHandler({
+    const redisCacheHandler = createRedisHandler({
       client: redisClient,
       keyPrefix: "nextjs:",
     });
 
     global.cacheHandlerConfigPromise = null;
+
+    global.cacheHandlerConfig = {
+      handlers: [redisCacheHandler],
+    };
 
     return global.cacheHandlerConfig;
   })();
