@@ -67,24 +67,24 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   return null;
 };
 
-const applyRateLimiting = (request: NextRequest, ip: string) => {
+const applyRateLimiting = async (request: NextRequest, ip: string) => {
   if (isLoginRoute(request.nextUrl.pathname)) {
-    loginLimiter(`login-${ip}`);
+    await loginLimiter(`login-${ip}`);
   } else if (isSignupRoute(request.nextUrl.pathname)) {
-    signupLimiter(`signup-${ip}`);
+    await signupLimiter(`signup-${ip}`);
   } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
-    verifyEmailLimiter(`verify-email-${ip}`);
+    await verifyEmailLimiter(`verify-email-${ip}`);
   } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
-    forgotPasswordLimiter(`forgot-password-${ip}`);
+    await forgotPasswordLimiter(`forgot-password-${ip}`);
   } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
-    clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
+    await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
     const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
     if (envIdAndUserId) {
       const { environmentId, userId } = envIdAndUserId;
-      syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
+      await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
     }
   } else if (isShareUrlRoute(request.nextUrl.pathname)) {
-    shareUrlLimiter(`share-${ip}`);
+    await shareUrlLimiter(`share-${ip}`);
   }
 };
 

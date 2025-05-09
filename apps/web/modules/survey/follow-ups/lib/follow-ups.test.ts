@@ -15,7 +15,7 @@ import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { evaluateFollowUp, sendSurveyFollowUps } from "./survey-follow-up";
+import { evaluateFollowUp, sendSurveyFollowUps } from "./follow-ups";
 
 // Mock dependencies
 vi.mock("@/modules/email", () => ({
