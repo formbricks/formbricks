@@ -316,7 +316,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 };
 
-const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
+export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
   if (!triggers) return;
 
   // check if all the triggers are valid
@@ -334,7 +334,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: Act
   }
 };
 
-const handleTriggerUpdates = (
+export const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
   actionClasses: ActionClass[]

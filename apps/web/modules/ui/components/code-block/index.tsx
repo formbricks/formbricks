@@ -34,6 +34,7 @@ export const CodeBlock = ({
       {showCopyToClipboard && (
         <div className="absolute top-2 right-2 z-20 flex cursor-pointer items-center justify-center p-1.5 text-slate-500 hover:text-slate-900">
           <CopyIcon
+            data-testid="copy-icon"
             onClick={() => {
               const childText = children?.toString() || "";
               navigator.clipboard.writeText(childText);

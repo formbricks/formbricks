@@ -7,7 +7,7 @@ import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
 import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
-import { RankingRespone } from "@/modules/ui/components/ranking-response";
+import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
@@ -161,7 +161,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Ranking:
       if (Array.isArray(responseData)) {
-        return <RankingRespone value={responseData} isExpanded={isExpanded} />;
+        return <RankingResponse value={responseData} isExpanded={isExpanded} />;
       }
     default:
       if (

@@ -2,7 +2,7 @@ import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { getSurvey } from "@/lib/survey/service";
-import { generateSurveySingleUseIds } from "@/lib/utils/singleUseSurveys";
+import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 

@@ -36,7 +36,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
     shuffle(array);
   } else if (shuffleOption === "exceptLast") {
     const lastElement = array.pop();
-    if (lastElement) {
+    if (lastElement !== undefined) {
       shuffle(array);
       array.push(lastElement);
     }

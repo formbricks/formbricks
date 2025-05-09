@@ -274,6 +274,8 @@ export const ZSurveyPictureChoice = z.object({
   imageUrl: z.string(),
 });
 
+export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
+
 export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
 // Logic types
