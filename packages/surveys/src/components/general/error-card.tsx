@@ -2,7 +2,7 @@
 
 import { useTranslate } from "@tolgee/react";
 import { XCircleIcon } from "lucide-react";
-import { SubmitButton } from "src/components/buttons/submit-button";
+import { SubmitButton } from "../buttons/submit-button";
 
 export const ErrorCard: React.FC = () => {
   const { t } = useTranslate();
