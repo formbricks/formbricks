@@ -48,13 +48,15 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
                 </div>
               </div>
             )}
-            <span className="mx-1 -mt-1">|</span>
-
             {survey.closeOnDate && (
-              <div className="flex items-center text-xs">
-                <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
-                {formatDistance(new Date(survey.closeOnDate), new Date(), { addSuffix: false })}
-              </div>
+              <>
+                <span className="mx-1 -mt-1">|</span>
+
+                <div className="flex items-center text-xs">
+                  <Clock className="mr-1 h-4 w-4" strokeWidth={1.5} />
+                  {formatDistance(new Date(survey.closeOnDate), new Date(), { addSuffix: false })}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -70,7 +72,7 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
               <div className="flex items-center gap-2 rounded-md bg-purple-100 px-1.5 py-1">
                 <Image src={RewardIcon as string} className="h-5 w-5" alt="reward icon" />
                 <div className="text-sm text-slate-600">
-                  <span className="mr-1 font-medium">Reward:</span>
+                  <span className="mr-1 font-medium">{t("common.reward")}:</span>
                   <span className="font-bold">
                     {survey.reward?.amount} {survey.reward?.symbol}
                   </span>

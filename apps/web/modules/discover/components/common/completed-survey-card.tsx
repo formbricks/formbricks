@@ -1,3 +1,4 @@
+import RewardIcon from "@/images/reward.svg";
 import { getUserResponseAction } from "@/modules/discover/components/Engagements/actions";
 import { SurveyInfoModal } from "@/modules/discover/components/common/survey-response-modal";
 import { ChainContext } from "@/modules/discover/context/chain-context";
@@ -5,7 +6,8 @@ import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { ArrowRightIcon, CheckCircleIcon, Sparkles, UsersIcon } from "lucide-react";
+import { ArrowRightIcon, CheckCircleIcon, UsersIcon } from "lucide-react";
+import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 import { TResponse } from "@formbricks/types/responses";
 
@@ -50,48 +52,56 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="min-h-[190px] p-6">
+      <div className="flex min-h-[200px] flex-col justify-between p-6 pb-3">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge size="tiny" type="gray" text={surveyTypeLabel} />
+          </div>
+          <div className="flex items-center gap-1 text-slate-700">
             {survey.responseCount != undefined && (
-              <div className="flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                <UsersIcon className="mr-1 h-3 w-3" />
-                <div>
-                  <div className="flex items-center gap-1">
-                    <span>{survey.responseCount}</span>
-                    <span>
-                      {survey.responseCount <= 1 ? t("common.participant") : t("common.participants")}
-                    </span>
-                  </div>
+              <div className="flex items-center py-0.5 text-xs">
+                <UsersIcon className="mr-1 h-4 w-4" strokeWidth={3} />
+                <div className="flex items-center gap-1">
+                  <span>{survey.responseCount}</span>
+                  <span>
+                    {survey.responseCount <= 1 ? t("common.participant") : t("common.participants")}
+                  </span>
+                  <span className="mx-1 -mt-1">|</span>
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
-            <CheckCircleIcon className="mr-1 h-3 w-3" />
-            {t("common.completed")}
+            <div className="flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+              <CheckCircleIcon className="mr-1 h-3 w-3" />
+              {t("common.completed")}
+            </div>
           </div>
         </div>
+
         <div className="flex-1">
           <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
           <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
+
         {chainName && (
           <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-blue-400">
-              <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-              <span className="font-bold">
-                {survey.reward?.amount} {survey.reward?.symbol}
-              </span>
-            </div>
             <div className="flex items-center gap-2">
-              <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
-                <div className="mx-auto w-80 bg-slate-500" />
-              </span>
-              <span className="text-xs text-slate-500">{chainName}</span>
+              <div className="flex items-center gap-2 rounded-md bg-purple-100 px-1.5 py-1">
+                <Image src={RewardIcon as string} className="h-5 w-5" alt="reward icon" />
+                <div className="text-sm text-slate-600">
+                  <span className="mr-1 font-medium">{t("common.reward")}:</span>
+                  <span className="font-bold">
+                    {survey.reward?.amount} {survey.reward?.symbol}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* <div className="flex items-center gap-2">
+                      <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
+                        <div className="mx-auto w-80 bg-slate-500" />
+                      </span>
+                      <span className="text-xs text-slate-500">{chainName}</span>
+                    </div> */}
           </div>
         )}
       </div>

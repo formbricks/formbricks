@@ -164,7 +164,7 @@ export function EndingCard({
                 <div className="mb-1 text-sm">
                   <span className="font-medium">Token Address:</span>{" "}
                   <a
-                    href={`${config.URLS.EXPLORER}/address/${tokenDeploymentDetails.tokenAddress}`}
+                    href={`${config.URLS.EXPLORER}/token/${tokenDeploymentDetails.tokenAddress}`}
                     target="_blank"
                     className="text-blue-600 underline">
                     {tokenDeploymentDetails.tokenAddress}

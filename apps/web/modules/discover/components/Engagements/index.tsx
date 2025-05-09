@@ -3,14 +3,20 @@
 import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
 import AvailableSurveys from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
-import { SearchSection } from "@/modules/discover/components/common/search-section";
+// import { SearchSection } from "@/modules/discover/components/common/search-section";
 import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 
-export function Engagements({ className = "" }: { className?: string }): React.JSX.Element {
+interface EngagementsProps {
+  searchQuery: string;
+  // setSearchQuery: (query: string) => void;
+  className?: string;
+}
+
+export function Engagements({ searchQuery, className = "" }: EngagementsProps): React.JSX.Element {
   const tabs = [
     {
       id: "available-surveys",
@@ -24,7 +30,6 @@ export function Engagements({ className = "" }: { className?: string }): React.J
     },
   ];
   const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,7 +64,6 @@ export function Engagements({ className = "" }: { className?: string }): React.J
             setShowWelcomeBanner={setShowWelcomeBanner}
           />
         )}
-        <SearchSection setSearchQuery={setSearchQuery} />
         <TabBar
           tabs={tabs}
           activeId={activeTab}
