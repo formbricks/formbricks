@@ -15,7 +15,6 @@ import {
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import { after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -65,9 +64,8 @@ const setPreviousResult = async (previousResult: {
     }
   )();
 
-  after(() => {
-    revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
-  });
+  // Revalidate the cache tag immediately
+  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
 };
 
 const fetchLicenseForE2ETesting = async (): Promise<{

@@ -21,17 +21,18 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
-  outputFileTracingIncludes: {
-    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+  experimental: {
+    serverComponentsExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+    outputFileTracingIncludes: {
+      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
+      "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+    },
   },
   i18n: {
     locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
     remotePatterns: [

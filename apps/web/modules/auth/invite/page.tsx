@@ -10,7 +10,6 @@ import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
-import { after } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ContentLayout } from "./components/content-layout";
 
@@ -118,9 +117,8 @@ export const InvitePage = async (props: InvitePageProps) => {
       });
     };
 
-    after(async () => {
-      await createMembershipAction();
-    });
+    // Execute the server action immediately
+    await createMembershipAction();
 
     return (
       <ContentLayout
