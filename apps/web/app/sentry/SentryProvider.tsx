@@ -6,11 +6,12 @@ import { useEffect } from "react";
 interface SentryProviderProps {
   children: React.ReactNode;
   sentryDsn?: string;
+  isEnabled?: boolean;
 }
 
-export const SentryProvider = ({ children, sentryDsn }: SentryProviderProps) => {
+export const SentryProvider = ({ children, sentryDsn, isEnabled }: SentryProviderProps) => {
   useEffect(() => {
-    if (sentryDsn) {
+    if (sentryDsn && isEnabled) {
       Sentry.init({
         dsn: sentryDsn,
 
@@ -47,6 +48,8 @@ export const SentryProvider = ({ children, sentryDsn }: SentryProviderProps) => 
         },
       });
     }
+    // We only want to run this once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

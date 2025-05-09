@@ -1,6 +1,8 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { handleFileUpload } from "@/app/lib/fileUpload";
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationEmailLogoUrlAction,
@@ -10,7 +12,6 @@ import {
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
-import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
@@ -19,7 +20,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -120,7 +120,13 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
+    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+
+    if (error) {
+      toast.error(error);
+      setIsSaving(false);
+      return;
+    }
 
     const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
       organizationId: organization.id,
@@ -205,7 +211,7 @@ export const EmailCustomizationSettings = ({
                         data-testid="replace-logo-button"
                         variant="secondary"
                         onClick={() => inputRef.current?.click()}
-                        disabled={isReadOnly}>
+                        disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
                         {t("environments.settings.general.replace_logo")}
                       </Button>
@@ -213,7 +219,7 @@ export const EmailCustomizationSettings = ({
                         data-testid="remove-logo-button"
                         onClick={removeLogo}
                         variant="outline"
-                        disabled={isReadOnly}>
+                        disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="h-4 w-4" />
                         {t("environments.settings.general.remove_logo")}
                       </Button>
@@ -241,7 +247,7 @@ export const EmailCustomizationSettings = ({
                 <Button
                   data-testid="send-test-email-button"
                   variant="secondary"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || isSaving}
                   onClick={sendTestEmail}>
                   {t("common.send_test_email")}
                 </Button>

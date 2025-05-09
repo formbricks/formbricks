@@ -1,8 +1,8 @@
 "use client";
 
+import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
 import { useTranslate } from "@tolgee/react";
 import { DownloadIcon } from "lucide-react";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 
 interface FileUploadResponseProps {
   selected: string[];

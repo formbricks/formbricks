@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import { Text } from "@react-email/components";
-import { cn } from "@formbricks/lib/cn";
 
 interface QuestionHeaderProps {
   headline: string;

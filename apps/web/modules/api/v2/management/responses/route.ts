@@ -1,7 +1,10 @@
+import { validateFileUploads } from "@/lib/fileValidation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Response } from "@prisma/client";
@@ -76,11 +79,45 @@ export const POST = async (request: Request) =>
         body.updatedAt = body.createdAt;
       }
 
+      const surveyQuestions = await getSurveyQuestions(body.surveyId);
+      if (!surveyQuestions.ok) {
+        return handleApiError(request, surveyQuestions.error);
+      }
+
+      if (!validateFileUploads(body.data, surveyQuestions.data.questions)) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "response", issue: "Invalid file upload response" }],
+        });
+      }
+
+      // Validate response data for "other" options exceeding character limit
+      const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+        responseData: body.data,
+        surveyQuestions: surveyQuestions.data.questions,
+        responseLanguage: body.language ?? undefined,
+      });
+
+      if (otherResponseInvalidQuestionId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [
+            {
+              field: "response",
+              issue: `Response for question ${otherResponseInvalidQuestionId} exceeds character limit`,
+              meta: {
+                questionId: otherResponseInvalidQuestionId,
+              },
+            },
+          ],
+        });
+      }
+
       const createResponseResult = await createResponse(environmentId, body);
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error);
       }
 
-      return responses.successResponse({ data: createResponseResult.data });
+      return responses.createdResponse({ data: createResponseResult.data });
     },
   });

@@ -1,0 +1,40 @@
+{
+  "name": "@formbricks/i18n-utils",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "homepage": "https://formbricks.com",
+  "license": "MIT",
+  "description": "Utility functions for multilingual support in Formbricks projects",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "keywords": [
+    "Formbricks",
+    "i18n",
+    "internationalization",
+    "localization"
+  ],
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "go": "vite build --watch --mode dev",
+    "clean": "rimraf .turbo node_modules coverage dist",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "build": "tsc && vite build"
+  },
+  "devDependencies": {
+    "vite": "6.3.5",
+    "@formbricks/config-typescript": "workspace:*",
+    "vitest": "3.1.3",
+    "@formbricks/eslint-config": "workspace:*",
+    "vite-plugin-dts": "4.5.3"
+  }
+}

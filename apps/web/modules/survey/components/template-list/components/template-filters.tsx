@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { useTranslate } from "@tolgee/react";
-import { cn } from "@formbricks/lib/cn";
 import { TTemplateFilter } from "@formbricks/types/templates";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 

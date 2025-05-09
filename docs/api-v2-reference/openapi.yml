@@ -4,7 +4,7 @@ info:
   description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api/v2/management
+  - url: https://app.formbricks.com/api/v2
     description: Formbricks Cloud
 tags:
   - name: Roles
@@ -622,6 +622,9 @@ paths:
                         - projectId
                         - projectName
   /responses:
+    servers: &a6
+      - url: https://app.formbricks.com/api/v2/management
+        description: Formbricks Management API
     get:
       operationId: getResponses
       summary: Get responses
@@ -651,7 +654,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: &a6
+            enum: &a7
               - createdAt
               - updatedAt
             default: createdAt
@@ -661,7 +664,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: &a7
+            enum: &a8
               - asc
               - desc
             default: desc
@@ -1058,6 +1061,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /responses/{id}:
+    servers: *a6
     get:
       operationId: getResponse
       summary: Get a response
@@ -1523,6 +1527,7 @@ paths:
                       - "null"
                     description: The display ID of the response
   /contacts/bulk:
+    servers: *a6
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
@@ -1622,301 +1627,8 @@ paths:
                       - skippedContacts
                 required:
                   - data
-  /contacts:
-    get:
-      operationId: getContacts
-      summary: Get contacts
-      description: Gets contacts from the database.
-      tags:
-        - Management API > Contacts
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: number
-            minimum: 1
-            maximum: 100
-            default: 10
-        - in: query
-          name: skip
-          schema:
-            type: number
-            minimum: 0
-            default: 0
-        - in: query
-          name: sortBy
-          schema:
-            type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
-        - in: query
-          name: order
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-        - in: query
-          name: startDate
-          schema:
-            type: string
-        - in: query
-          name: endDate
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Contacts retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/contact"
-    post:
-      operationId: createContact
-      summary: Create a contact
-      description: Creates a contact in the database.
-      tags:
-        - Management API > Contacts
-      requestBody:
-        required: true
-        description: The contact to create
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/contactCreate"
-      responses:
-        "201":
-          description: Contact created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contact"
-  /contacts/{id}:
-    get:
-      operationId: getContact
-      summary: Get a contact
-      description: Gets a contact from the database.
-      tags:
-        - Management API > Contacts
-      parameters:
-        - in: path
-          name: contactId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Contact retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contact"
-    put:
-      operationId: updateContact
-      summary: Update a contact
-      description: Updates a contact in the database.
-      tags:
-        - Management API > Contacts
-      parameters:
-        - in: path
-          name: contactId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        required: true
-        description: The response to update
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/contactCreate"
-      responses:
-        "200":
-          description: Response updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contact"
-    delete:
-      operationId: deleteContact
-      summary: Delete a contact
-      description: Deletes a contact from the database.
-      tags:
-        - Management API > Contacts
-      parameters:
-        - in: path
-          name: contactId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Contact deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contact"
-  /contact-attributes:
-    get:
-      operationId: getContactAttributes
-      summary: Get contact attributes
-      description: Gets contact attributes from the database.
-      tags:
-        - Management API > Contact Attributes
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: number
-            minimum: 1
-            maximum: 100
-            default: 10
-        - in: query
-          name: skip
-          schema:
-            type: number
-            minimum: 0
-            default: 0
-        - in: query
-          name: sortBy
-          schema:
-            type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
-        - in: query
-          name: order
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-        - in: query
-          name: startDate
-          schema:
-            type: string
-        - in: query
-          name: endDate
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Contact attributes retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    createdAt:
-                      type: string
-                    updatedAt:
-                      type: string
-                    attributeKeyId:
-                      type: string
-                    contactId:
-                      type: string
-                    value:
-                      type: string
-                  required:
-                    - id
-                    - createdAt
-                    - updatedAt
-                    - attributeKeyId
-                    - contactId
-                    - value
-    post:
-      operationId: createContactAttribute
-      summary: Create a contact attribute
-      description: Creates a contact attribute in the database.
-      tags:
-        - Management API > Contact Attributes
-      requestBody:
-        required: true
-        description: The contact attribute to create
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/contactAttributeInput"
-      responses:
-        "201":
-          description: Contact attribute created successfully.
-  /contact-attributes/{id}:
-    get:
-      operationId: getContactAttribute
-      summary: Get a contact attribute
-      description: Gets a contact attribute from the database.
-      tags:
-        - Management API > Contact Attributes
-      parameters:
-        - in: path
-          name: contactAttributeId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Contact retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contactAttribute"
-    put:
-      operationId: updateContactAttribute
-      summary: Update a contact attribute
-      description: Updates a contact attribute in the database.
-      tags:
-        - Management API > Contact Attributes
-      parameters:
-        - in: path
-          name: contactAttributeId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        required: true
-        description: The response to update
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/contactAttributeInput"
-      responses:
-        "200":
-          description: Response updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contactAttribute"
-    delete:
-      operationId: deleteContactAttribute
-      summary: Delete a contact attribute
-      description: Deletes a contact attribute from the database.
-      tags:
-        - Management API > Contact Attributes
-      parameters:
-        - in: path
-          name: contactAttributeId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Contact deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
+    servers: *a6
     get:
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
@@ -1926,87 +1638,118 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
+            enum: *a7
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
-            enum:
-              - asc
-              - desc
+            enum: *a8
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
+        - in: query
+          name: environmentId
+          description: The environment ID to filter by
+          schema:
+            type: string
+            description: The environment ID to filter by
       responses:
         "200":
           description: Contact attribute keys retrieved successfully.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    createdAt:
-                      type: string
-                    updatedAt:
-                      type: string
-                    isUnique:
-                      type: boolean
-                      default: false
-                    key:
-                      type: string
-                    name:
-                      type:
-                        - string
-                        - "null"
-                    description:
-                      type:
-                        - string
-                        - "null"
-                    type:
-                      type: string
-                      enum:
-                        - default
-                        - custom
-                    environmentId:
-                      type: string
-                  required:
-                    - id
-                    - createdAt
-                    - updatedAt
-                    - isUnique
-                    - key
-                    - name
-                    - description
-                    - type
-                    - environmentId
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the contact attribute key
+                        createdAt:
+                          type: string
+                          description: The date and time the contact attribute key was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the contact attribute key was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        isUnique:
+                          type: boolean
+                          description: Whether the attribute must have unique values across contacts
+                          example: false
+                        key:
+                          type: string
+                          description: The attribute identifier used in the system
+                          example: email
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: Display name for the attribute
+                          example: Email Address
+                        description:
+                          type:
+                            - string
+                            - "null"
+                          description: Description of the attribute
+                          example: The user's email address
+                        type:
+                          type: string
+                          enum:
+                            - default
+                            - custom
+                          description: Whether this is a default or custom attribute
+                          example: custom
+                        environmentId:
+                          type: string
+                          description: The ID of the environment this attribute belongs to
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
@@ -2023,7 +1766,54 @@ paths:
       responses:
         "201":
           description: Contact attribute key created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
   /contact-attribute-keys/{id}:
+    servers: *a6
     get:
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
@@ -2032,9 +1822,10 @@ paths:
         - Management API > Contact Attribute Keys
       parameters:
         - in: path
-          name: contactAttributeKeyId
+          name: id
+          description: The ID of the contact attribute key
           schema:
-            type: string
+            $ref: "#/components/schemas/contactAttributeKeyId"
           required: true
       responses:
         "200":
@@ -2042,7 +1833,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/contactAttributeKey"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
     put:
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
@@ -2051,9 +1884,10 @@ paths:
         - Management API > Contact Attribute Keys
       parameters:
         - in: path
-          name: contactAttributeKeyId
+          name: id
+          description: The ID of the contact attribute key
           schema:
-            type: string
+            $ref: "#/components/schemas/contactAttributeKeyId"
           required: true
       requestBody:
         required: true
@@ -2061,14 +1895,56 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/contactAttributeKeyInput"
+              $ref: "#/components/schemas/contactAttributeKeyUpdate"
       responses:
         "200":
           description: Contact attribute key updated successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/contactAttributeKey"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
     delete:
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
@@ -2077,9 +1953,10 @@ paths:
         - Management API > Contact Attribute Keys
       parameters:
         - in: path
-          name: contactAttributeId
+          name: id
+          description: The ID of the contact attribute key
           schema:
-            type: string
+            $ref: "#/components/schemas/contactAttributeKeyId"
           required: true
       responses:
         "200":
@@ -2087,167 +1964,90 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/contactAttributeKey"
-  /surveys:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the contact attribute key
+                  createdAt:
+                    type: string
+                    description: The date and time the contact attribute key was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the contact attribute key was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  isUnique:
+                    type: boolean
+                    description: Whether the attribute must have unique values across contacts
+                    example: false
+                  key:
+                    type: string
+                    description: The attribute identifier used in the system
+                    example: email
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: Display name for the attribute
+                    example: Email Address
+                  description:
+                    type:
+                      - string
+                      - "null"
+                    description: Description of the attribute
+                    example: The user's email address
+                  type:
+                    type: string
+                    enum:
+                      - default
+                      - custom
+                    description: Whether this is a default or custom attribute
+                    example: custom
+                  environmentId:
+                    type: string
+                    description: The ID of the environment this attribute belongs to
+  /surveys/{surveyId}/contact-links/contacts/{contactId}/:
+    servers: *a6
     get:
-      operationId: getSurveys
-      summary: Get surveys
-      description: Gets surveys from the database.
+      operationId: getPersonalizedSurveyLink
+      summary: Get personalized survey link for a contact
+      description: Retrieves a personalized link for a specific survey.
       tags:
-        - Management API > Surveys
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: number
-            minimum: 1
-            maximum: 100
-            default: 10
-        - in: query
-          name: skip
-          schema:
-            type: number
-            minimum: 0
-            default: 0
-        - in: query
-          name: sortBy
-          schema:
-            type: string
-            enum:
-              - createdAt
-              - updatedAt
-            default: createdAt
-        - in: query
-          name: order
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-        - in: query
-          name: startDate
-          schema:
-            type: string
-        - in: query
-          name: endDate
-          schema:
-            type: string
-        - in: query
-          name: surveyType
-          schema:
-            type: string
-            enum:
-              - link
-              - app
-        - in: query
-          name: surveyStatus
-          schema:
-            type: string
-            enum:
-              - draft
-              - scheduled
-              - inProgress
-              - paused
-              - completed
-      responses:
-        "200":
-          description: Surveys retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/survey"
-    post:
-      operationId: createSurvey
-      summary: Create a survey
-      description: Creates a survey in the database.
-      tags:
-        - Management API > Surveys
-      requestBody:
-        required: true
-        description: The survey to create
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/surveyInput"
-      responses:
-        "201":
-          description: Survey created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/survey"
-  /surveys/{id}:
-    get:
-      operationId: getSurvey
-      summary: Get a survey
-      description: Gets a survey from the database.
-      tags:
-        - Management API > Surveys
+        - Management API > Surveys > Contact Links
       parameters:
         - in: path
-          name: id
+          name: surveyId
           description: The ID of the survey
           schema:
-            $ref: "#/components/schemas/surveyId"
+            type: string
+            description: The ID of the survey
+          required: true
+        - in: path
+          name: contactId
+          description: The ID of the contact
+          schema:
+            type: string
+            description: The ID of the contact
           required: true
       responses:
         "200":
-          description: Response retrieved successfully.
+          description: Personalized survey link retrieved successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/survey"
-    put:
-      operationId: updateSurvey
-      summary: Update a survey
-      description: Updates a survey in the database.
-      tags:
-        - Management API >  Surveys
-      parameters:
-        - in: path
-          name: id
-          description: The ID of the survey
-          schema:
-            $ref: "#/components/schemas/surveyId"
-          required: true
-      requestBody:
-        required: true
-        description: The survey to update
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/surveyInput"
-      responses:
-        "200":
-          description: Response updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/survey"
-    delete:
-      operationId: deleteSurvey
-      summary: Delete a survey
-      description: Deletes a survey from the database.
-      tags:
-        - Management API > Surveys
-      parameters:
-        - in: path
-          name: id
-          description: The ID of the survey
-          schema:
-            $ref: "#/components/schemas/surveyId"
-          required: true
-      responses:
-        "200":
-          description: Response deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/survey"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      surveyUrl:
+                        type: string
+                        format: uri
+                    required:
+                      - surveyUrl
   /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    servers: *a6
     get:
       operationId: getContactLinksBySegment
       summary: Get survey links for contacts in a segment
@@ -2312,42 +2112,41 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          contactId:
-                            type: string
-                            description: The ID of the contact
-                          surveyUrl:
-                            type: string
-                            format: uri
-                            description: Personalized survey link
-                          expiresAt:
-                            type:
-                              - string
-                              - "null"
-                            description: The date and time the link expires, null if no expiration
-                          attributes:
-                            type: object
-                            additionalProperties:
-                              type: string
-                            description: The attributes of the contact
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        contactId:
+                          type: string
+                          description: The ID of the contact
+                        surveyUrl:
+                          type: string
+                          format: uri
+                          description: Personalized survey link
+                        expiresAt:
+                          type:
+                            - string
+                            - "null"
+                          description: The date and time the link expires, null if no expiration
+                        attributes:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: The attributes of the contact
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
   /webhooks:
+    servers: *a6
     get:
       operationId: getWebhooks
       summary: Get webhooks
@@ -2377,7 +2176,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -2385,7 +2184,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -2441,7 +2240,7 @@ paths:
                           description: The URL of the webhook
                         source:
                           type: string
-                          enum: &a8
+                          enum: &a9
                             - user
                             - zapier
                             - make
@@ -2454,7 +2253,7 @@ paths:
                           type: array
                           items:
                             type: string
-                            enum: &a9
+                            enum: &a10
                               - responseFinished
                               - responseCreated
                               - responseUpdated
@@ -2498,7 +2297,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2507,7 +2306,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2551,7 +2350,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2560,7 +2359,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2568,6 +2367,7 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /webhooks/{id}:
+    servers: *a6
     get:
       operationId: getWebhook
       summary: Get a webhook
@@ -2611,7 +2411,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2620,7 +2420,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2659,7 +2459,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a8
+                  enum: *a9
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2668,7 +2468,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a9
+                    enum: *a10
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2712,7 +2512,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2721,7 +2521,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2771,7 +2571,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a8
+                    enum: *a9
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2780,7 +2580,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a9
+                      enum: *a10
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2788,9 +2588,9 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /{organizationId}/teams:
-    servers: &a10
+    servers: &a11
       - url: https://app.formbricks.com/api/v2/organizations
-        description: Formbricks Cloud
+        description: Formbricks Organizations API
     get:
       operationId: getTeams
       summary: Get teams
@@ -2826,7 +2626,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -2834,7 +2634,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -2943,7 +2743,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/teams/{id}:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getTeam
       summary: Get a team
@@ -3094,7 +2894,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /{organizationId}/project-teams:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getProjectTeams
       summary: Get project teams
@@ -3130,7 +2930,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -3138,7 +2938,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -3391,7 +3191,7 @@ paths:
                       - manage
                     description: Level of access granted to the project
   /{organizationId}/users:
-    servers: *a10
+    servers: *a11
     get:
       operationId: getUsers
       summary: Get users
@@ -3428,7 +3228,7 @@ paths:
           description: Sort by field
           schema:
             type: string
-            enum: *a6
+            enum: *a7
             default: createdAt
             description: Sort by field
         - in: query
@@ -3436,7 +3236,7 @@ paths:
           description: Sort order
           schema:
             type: string
-            enum: *a7
+            enum: *a8
             default: desc
             description: Sort order
         - in: query
@@ -3505,7 +3305,7 @@ paths:
                           example: example@example.com
                         role:
                           type: string
-                          enum: &a11
+                          enum: &a12
                             - owner
                             - manager
                             - member
@@ -3516,7 +3316,7 @@ paths:
                           items:
                             type: string
                           description: The list of teams the user is a member of
-                          example: &a12
+                          example: &a13
                             - team1
                             - team2
                   meta:
@@ -3568,7 +3368,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3576,7 +3376,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - name
                 - email
@@ -3622,7 +3422,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3630,7 +3430,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
     patch:
       operationId: updateUser
       summary: Update a user
@@ -3669,7 +3469,7 @@ paths:
                   example: example@example.com
                 role:
                   type: string
-                  enum: *a11
+                  enum: *a12
                   description: The role of the user in the organization
                   example: member
                 teams:
@@ -3677,7 +3477,7 @@ paths:
                   items:
                     type: string
                   description: The list of teams the user is a member of
-                  example: *a12
+                  example: *a13
               required:
                 - email
       responses:
@@ -3721,7 +3521,7 @@ paths:
                     example: example@example.com
                   role:
                     type: string
-                    enum: *a11
+                    enum: *a12
                     description: The role of the user in the organization
                     example: member
                   teams:
@@ -3729,7 +3529,7 @@ paths:
                     items:
                       type: string
                     description: The list of teams the user is a member of
-                    example: *a12
+                    example: *a13
 components:
   securitySchemes:
     apiKeyAuth:
@@ -4201,7 +4001,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a14 []
+          default: []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -4269,7 +4069,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a15
+          enum:
             - displayOnce
             - displayMultiple
             - displaySome
@@ -4504,13 +4304,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a13
+                  enum: &a14
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a13
+                  enum: *a14
               required:
                 - linkSurveys
                 - appSurveys
@@ -4658,7 +4458,7 @@ components:
           description: The URL of the webhook
         source:
           type: string
-          enum: *a8
+          enum: *a9
           description: The source of the webhook
         environmentId:
           type: string
@@ -4667,7 +4467,7 @@ components:
           type: array
           items:
             type: string
-            enum: *a9
+            enum: *a10
           description: The triggers of the webhook
         surveyIds:
           type: array
@@ -4777,7 +4577,7 @@ components:
           example: example@example.com
         role:
           type: string
-          enum: *a11
+          enum: *a12
           description: The role of the user in the organization
           example: member
         teams:
@@ -4785,7 +4585,7 @@ components:
           items:
             type: string
           description: The list of teams the user is a member of
-          example: *a12
+          example: *a13
       required:
         - id
         - createdAt
@@ -4798,38 +4598,6 @@ components:
     responseId:
       type: string
       description: The ID of the response
-    contactCreate:
-      type: object
-      properties:
-        userId:
-          type:
-            - string
-            - "null"
-          description: Optional external user identifier
-        environmentId:
-          type: string
-          description: The environment this contact belongs to
-      required:
-        - environmentId
-      description: A contact to create
-    contactAttributeInput:
-      type: object
-      properties:
-        attributeKeyId:
-          type: string
-          description: The ID of the attribute key
-        contactId:
-          type: string
-          description: The ID of the contact
-        value:
-          type: string
-          description: The value of the attribute
-          example: example@email.com
-      required:
-        - attributeKeyId
-        - contactId
-        - value
-      description: Input data for creating or updating a contact attribute
     contactAttributeKeyInput:
       type: object
       properties:
@@ -4849,13 +4617,6 @@ components:
             - "null"
           description: Description of the attribute
           example: The user's email address
-        type:
-          type: string
-          enum:
-            - default
-            - custom
-          description: Whether this is a default or custom attribute
-          example: custom
         environmentId:
           type: string
           description: The ID of the environment this attribute belongs to
@@ -4863,504 +4624,35 @@ components:
         - key
         - name
         - description
-        - type
         - environmentId
       description: Input data for creating or updating a contact attribute
-    surveyInput:
+    contactAttributeKeyId:
+      type: string
+      description: The ID of the contact attribute key
+    contactAttributeKeyUpdate:
       type: object
       properties:
         name:
-          type: string
-          description: The name of the survey
-        redirectUrl:
           type:
             - string
             - "null"
-          format: uri
-          description: The URL to redirect to after the survey is completed
-        type:
-          type: string
-          enum:
-            - link
-            - web
-            - website
-            - app
-          description: The type of the survey
-        environmentId:
-          type: string
-          description: The environment ID of the survey
-        questions:
-          type: array
-          items: {}
-          description: The questions of the survey.
-        endings:
-          type: array
-          items:
-            anyOf:
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  type:
-                    type: string
-                    const: endScreen
-                  headline:
-                    type: object
-                    additionalProperties:
-                      type: string
-                  subheader:
-                    type: object
-                    additionalProperties:
-                      type: string
-                  buttonLabel:
-                    type: object
-                    additionalProperties:
-                      type: string
-                  buttonLink:
-                    type: string
-                    format: uri
-                  imageUrl:
-                    type: string
-                  videoUrl:
-                    type: string
-                required:
-                  - id
-                  - type
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  type:
-                    type: string
-                    const: redirectToUrl
-                  url:
-                    type: string
-                  label:
-                    type: string
-                required:
-                  - id
-                  - type
-          default: *a14
-          description: The endings of the survey
-        thankYouCard:
-          type:
-            - object
-            - "null"
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: The thank you card of the survey (deprecated)
-        hiddenFields:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            fieldIds:
-              type: array
-              items:
-                type: string
-          required:
-            - enabled
-          description: Hidden fields configuration
-        variables:
-          type: array
-          items:
-            oneOf:
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  name:
-                    type: string
-                  type:
-                    type: string
-                    const: number
-                  value:
-                    type: number
-                    default: 0
-                required:
-                  - id
-                  - name
-                  - type
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  name:
-                    type: string
-                  type:
-                    type: string
-                    const: text
-                  value:
-                    type: string
-                    default: ""
-                required:
-                  - id
-                  - name
-                  - type
-          description: Survey variables
-        displayOption:
-          type: string
-          enum: *a15
-          description: Display options for the survey
-        recontactDays:
-          type:
-            - number
-            - "null"
-          description: Days before recontacting
-        displayLimit:
-          type:
-            - number
-            - "null"
-          description: Display limit for the survey
-        autoClose:
-          type:
-            - number
-            - "null"
-          description: Auto close time in seconds
-        autoComplete:
-          type:
-            - number
-            - "null"
-          description: Auto complete time in seconds
-        delay:
-          type: number
-          description: Delay before showing survey
-        runOnDate:
+          description: Display name for the attribute
+          example: Email Address
+        description:
           type:
             - string
             - "null"
-          description: Date to run the survey
-        closeOnDate:
-          type:
-            - string
-            - "null"
-          description: Date to close the survey
-        singleUse:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            isEncrypted:
-              type: boolean
-          required:
-            - enabled
-            - isEncrypted
-          description: Single use configuration
-        isVerifyEmailEnabled:
-          type: boolean
-          description: Whether email verification is enabled
-        isSingleResponsePerEmailEnabled:
-          type: boolean
-          description: Whether single response per email is enabled
-        inlineTriggers:
-          type:
-            - array
-            - "null"
-          items: {}
-          description: Inline triggers configuration
-        verifyEmail:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: Email verification configuration (deprecated)
-        displayPercentage:
-          type:
-            - number
-            - "null"
-          description: The display percentage of the survey
-        welcomeCard:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            timeToFinish:
-              type: boolean
-            showResponseCount:
-              type: boolean
-            headline:
-              type: object
-              additionalProperties:
-                type: string
-            html:
-              type: object
-              additionalProperties:
-                type: string
-            fileUrl:
-              type: string
-            buttonLabel:
-              type: object
-              additionalProperties:
-                type: string
-            videoUrl:
-              type: string
-          required:
-            - enabled
-            - timeToFinish
-            - showResponseCount
-          description: The welcome card configuration
-        surveyClosedMessage:
-          type:
-            - object
-            - "null"
-          properties:
-            enabled:
-              type: boolean
-            heading:
-              type: string
-            subheading:
-              type: string
-          required:
-            - enabled
-            - heading
-            - subheading
-          description: Message shown when survey is closed
-        styling:
-          type:
-            - object
-            - "null"
-          properties:
-            brandColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            questionColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            inputColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            inputBorderColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            cardBackgroundColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            cardBorderColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            cardShadowColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            highlightBorderColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            isDarkModeEnabled:
-              type:
-                - boolean
-                - "null"
-            roundness:
-              type:
-                - number
-                - "null"
-            cardArrangement:
-              type:
-                - object
-                - "null"
-              properties:
-                linkSurveys:
-                  type: string
-                  enum: *a13
-                appSurveys:
-                  type: string
-                  enum: *a13
-              required:
-                - linkSurveys
-                - appSurveys
-            background:
-              type:
-                - object
-                - "null"
-              properties:
-                bg:
-                  type:
-                    - string
-                    - "null"
-                bgType:
-                  type:
-                    - string
-                    - "null"
-                  enum:
-                    - animation
-                    - color
-                    - image
-                    - upload
-                    - null
-                brightness:
-                  type:
-                    - number
-                    - "null"
-            hideProgressBar:
-              type:
-                - boolean
-                - "null"
-            isLogoHidden:
-              type:
-                - boolean
-                - "null"
-          description: Survey styling configuration
-        projectOverwrites:
-          type:
-            - object
-            - "null"
-          properties:
-            brandColor:
-              type:
-                - string
-                - "null"
-              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-            highlightBorderColor:
-              type:
-                - string
-                - "null"
-              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-            placement:
-              type:
-                - string
-                - "null"
-              enum:
-                - bottomLeft
-                - bottomRight
-                - topLeft
-                - topRight
-                - center
-                - null
-            clickOutsideClose:
-              type:
-                - boolean
-                - "null"
-            darkOverlay:
-              type:
-                - boolean
-                - "null"
-          description: Project specific overwrites
-        showLanguageSwitch:
-          type:
-            - boolean
-            - "null"
-          description: Whether to show the language switch
+          description: Description of the attribute
+          example: The user's email address
+        key:
+          type: string
+          description: The attribute identifier used in the system
+          example: email
       required:
         - name
-        - type
-        - environmentId
-        - questions
-        - hiddenFields
-        - displayOption
-        - delay
-        - singleUse
-        - isVerifyEmailEnabled
-        - isSingleResponsePerEmailEnabled
-        - welcomeCard
-      description: A survey input object for creating or updating surveys
-    surveyId:
-      type: string
-      description: The ID of the survey
+        - description
+        - key
+      description: A contact attribute key to update.
     webhookId:
       type: string
       description: The ID of the webhook

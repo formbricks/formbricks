@@ -2,11 +2,9 @@
 
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { TemplateList } from "@/modules/survey/components/template-list";
-import { FormbricksAICard } from "@/modules/survey/templates/components/formbricks-ai-card";
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { Separator } from "@/modules/ui/components/separator";
 import { Project } from "@prisma/client";
 import { Environment } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
@@ -20,7 +18,6 @@ type TemplateContainerWithPreviewProps = {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
-  isAIEnabled: boolean;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -28,7 +25,6 @@ export const TemplateContainerWithPreview = ({
   environment,
   userId,
   prefilledFilters,
-  isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslate();
   const initialTemplate = customSurveyTemplate(t);
@@ -54,16 +50,6 @@ export const TemplateContainerWithPreview = ({
               />
             </div>
           </div>
-
-          {isAIEnabled && (
-            <>
-              <div className="px-6">
-                <FormbricksAICard environmentId={environment.id} />
-              </div>
-              <Separator className="mt-4" />
-            </>
-          )}
-
           <TemplateList
             environmentId={environment.id}
             project={project}
@@ -84,6 +70,7 @@ export const TemplateContainerWithPreview = ({
               project={project}
               environment={environment}
               languageCode={"default"}
+              isSpamProtectionAllowed={false} // setting it to false as this is a template
             />
           )}
         </aside>

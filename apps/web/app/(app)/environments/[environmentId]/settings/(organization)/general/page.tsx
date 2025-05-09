@@ -1,18 +1,13 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getUser } from "@/lib/user/service";
+import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
@@ -35,8 +30,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const isOwnerOrManager = isManager || isOwner;
 
-  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
@@ -56,17 +49,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           membershipRole={currentUserMembership?.role}
         />
       </SettingsCard>
-      {isOrganizationAIReady && (
-        <SettingsCard
-          title={t("environments.settings.general.formbricks_ai")}
-          description={t("environments.settings.general.formbricks_ai_description")}>
-          <AIToggle
-            environmentId={params.environmentId}
-            organization={organization}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        </SettingsCard>
-      )}
       <EmailCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}

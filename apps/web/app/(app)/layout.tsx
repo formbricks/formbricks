@@ -1,5 +1,6 @@
-import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
+import { IS_POSTHOG_CONFIGURED, POSTHOG_API_HOST, POSTHOG_API_KEY } from "@/lib/constants";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
@@ -7,8 +8,6 @@ import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-cl
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
-import { IS_POSTHOG_CONFIGURED, POSTHOG_API_HOST, POSTHOG_API_KEY } from "@formbricks/lib/constants";
-import { getUser } from "@formbricks/lib/user/service";
 
 const AppLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
@@ -31,7 +30,6 @@ const AppLayout = async ({ children }) => {
       </Suspense>
       <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
         <>
-          {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
           <IntercomClientWrapper user={user} />
           <ToasterClient />
           {children}

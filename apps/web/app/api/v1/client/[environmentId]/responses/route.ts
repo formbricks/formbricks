@@ -1,11 +1,12 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { validateFileUploads } from "@/lib/fileValidation";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -84,6 +85,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
       },
       true
     );
+  }
+
+  if (!validateFileUploads(responseInputData.data, survey.questions)) {
+    return responses.badRequestResponse("Invalid file upload response");
   }
 
   let response: TResponse;

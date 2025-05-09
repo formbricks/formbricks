@@ -1,23 +1,25 @@
+import { cache } from "@/lib/cache";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
+import { segmentCache } from "@/lib/cache/segment";
+import { validateInputs } from "@/lib/utils/validate";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
 
-const getSegments = reactCache((environmentId: string) =>
+export const getSegments = reactCache((environmentId: string) =>
   cache(
     async () => {
       try {
-        return prisma.segment.findMany({
+        const segments = await prisma.segment.findMany({
           where: { environmentId },
           select: { id: true, filters: true },
         });
+
+        return segments;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

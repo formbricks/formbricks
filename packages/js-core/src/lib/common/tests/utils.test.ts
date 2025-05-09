@@ -1,5 +1,4 @@
 // utils.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { mockProjectId, mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
@@ -25,6 +24,7 @@ import type {
   TUserState,
 } from "@/types/config";
 import { type TActionClassPageUrlRule } from "@/types/survey";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockSurveyId1 = "e3kxlpnzmdp84op9qzxl9olj";
 const mockSurveyId2 = "qo9rwjmms42hoy3k85fp8vgu";
@@ -399,16 +399,27 @@ describe("utils.ts", () => {
   // ---------------------------------------------------------------------------------
   describe("shouldDisplayBasedOnPercentage()", () => {
     test("returns true if random number <= displayPercentage", () => {
-      // We'll mock Math.random to return something
-      const mockedRandom = vi.spyOn(Math, "random").mockReturnValue(0.2); // 0.2 => 20%
-      // displayPercentage = 30 => 30% => we should display
+      const mockGetRandomValues = vi
+        .spyOn(crypto, "getRandomValues")
+        .mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+          if (array instanceof Uint32Array) {
+            array[0] = Math.floor((20 / 100) * 2 ** 32);
+            return array;
+          }
+          return array;
+        });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(true);
 
-      mockedRandom.mockReturnValue(0.5); // 50%
+      mockGetRandomValues.mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+        if (array instanceof Uint32Array) {
+          array[0] = Math.floor((80 / 100) * 2 ** 32);
+          return array;
+        }
+        return array;
+      });
       expect(shouldDisplayBasedOnPercentage(30)).toBe(false);
 
-      // restore
-      mockedRandom.mockRestore();
+      mockGetRandomValues.mockRestore();
     });
   });
 

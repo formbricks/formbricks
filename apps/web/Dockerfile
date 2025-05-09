@@ -1,4 +1,4 @@
-FROM node:22-alpine3.20@sha256:40be979442621049f40b1d51a26b55e281246b5de4e5f51a18da7beb6e17e3f9 AS base
+FROM node:22-alpine3.21 AS base
 
 #
 ## step 1: Prune monorepo
@@ -18,8 +18,9 @@ FROM node:22-alpine3.20@sha256:40be979442621049f40b1d51a26b55e281246b5de4e5f51a1
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install -g corepack@latest
+RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
+RUN corepack prepare pnpm@9.15.9 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -59,7 +60,7 @@ COPY . .
 RUN touch apps/web/.env
 
 # Install the dependencies
-RUN pnpm install
+RUN pnpm install --ignore-scripts
 
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
@@ -75,19 +76,20 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 #
 FROM base AS runner
 
-RUN npm install -g corepack@latest
+RUN npm install --ignore-scripts -g corepack@latest 
 RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
     # && addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
+    && addgroup -S nextjs \
+    && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
 
 # Ensure no write permissions are assigned to the copied resources
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
-RUN chmod -R 755 ./
+COPY --from=installer /app/apps/web/.next/standalone ./
+RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .
 RUN chmod 644 ./next.config.mjs
@@ -95,38 +97,38 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
-RUN chmod -R 755 ./apps/web/.next/static
+COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
+RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
-RUN chmod -R 755 ./apps/web/public
+COPY --from=installer /app/apps/web/public ./apps/web/public
+RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
-RUN chmod 644 ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
+RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-RUN chmod 644 ./packages/database/package.json
+COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
+RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
-RUN chmod -R 755 ./packages/database/migration
+COPY --from=installer /app/packages/database/migration ./packages/database/migration
+RUN chown -R nextjs:nextjs ./packages/database/migration && chmod -R 755 ./packages/database/migration
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
-RUN chmod -R 755 ./packages/database/src
+COPY --from=installer /app/packages/database/src ./packages/database/src
+RUN chown -R nextjs:nextjs ./packages/database/src && chmod -R 755 ./packages/database/src
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
-RUN chmod -R 755 ./packages/database/node_modules
+COPY --from=installer /app/packages/database/node_modules ./packages/database/node_modules
+RUN chown -R nextjs:nextjs ./packages/database/node_modules && chmod -R 755 ./packages/database/node_modules
 
-COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
-RUN chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
+COPY --from=installer /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
+RUN chown -R nextjs:nextjs ./packages/database/node_modules/@formbricks/logger/dist && chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
 
-COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chmod -R 755 ./node_modules/@prisma/client
+COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
 
-COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
-RUN chmod -R 755 ./node_modules/.prisma
+COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
+RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
 
-COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
-RUN chmod 644 ./prisma_version.txt
+COPY --from=installer /prisma_version.txt .
+RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
 COPY /docker/cronjobs /app/docker/cronjobs
 RUN chmod -R 755 /app/docker/cronjobs
@@ -140,12 +142,13 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma pino-pretty
+RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
+RUN npm install -g prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 ENV NODE_ENV="production"
-# USER nextjs
+USER nextjs
 
 # Prepare volume for uploads
 RUN mkdir -p /home/nextjs/apps/web/uploads/

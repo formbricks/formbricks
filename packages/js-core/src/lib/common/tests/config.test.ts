@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/unbound-method -- required for mocking */
 // config.test.ts
-import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockConfig } from "./__mocks__/config.mock";
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import type { TConfig, TConfigUpdateInput } from "@/types/config";
+import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Define mocks outside of any describe block
 const getItemMock = localStorage.getItem as unknown as Mock;
@@ -57,21 +57,13 @@ describe("Config", () => {
     expect(getItemMock).toHaveBeenCalledWith(JS_LOCAL_STORAGE_KEY);
   });
 
-  test("loadFromStorage() returns err if config is expired", () => {
-    const expiredConfig = {
-      ...mockConfig,
-      environment: {
-        ...mockConfig.environment,
-        expiresAt: new Date("2000-01-01T00:00:00Z"),
-      },
-    };
-
-    getItemMock.mockReturnValueOnce(JSON.stringify(expiredConfig));
+  test("loadFromStorage() returns err if config is not saved", () => {
+    getItemMock.mockReturnValueOnce(null);
 
     const result = configInstance.loadFromLocalStorage();
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toBe("Config in local storage has expired");
+      expect(result.error.message).toBe("No or invalid config in local storage");
     }
 
     expect(getItemMock).toHaveBeenCalledWith(JS_LOCAL_STORAGE_KEY);

@@ -153,13 +153,15 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
       await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
+
       await page.locator("input[type=file]").setInputFiles({
-        name: "file.txt",
-        mimeType: "text/plain",
+        name: "file.doc",
+        mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
+
       await page.getByText("Uploading...").waitFor({ state: "hidden" });
       await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
 
@@ -839,11 +841,11 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
       await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
       await page.locator("input[type=file]").setInputFiles({
-        name: "file.txt",
-        mimeType: "text/plain",
+        name: "file.doc",
+        mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
       await page.getByText("Uploading...").waitFor({ state: "hidden" });

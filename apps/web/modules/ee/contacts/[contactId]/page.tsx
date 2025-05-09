@@ -1,3 +1,4 @@
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { DeleteContactButton } from "@/modules/ee/contacts/[contactId]/components/delete-contact-button";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
@@ -7,7 +8,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { ResponseSection } from "./components/response-section";
 
 export const SingleContactPage = async (props: {

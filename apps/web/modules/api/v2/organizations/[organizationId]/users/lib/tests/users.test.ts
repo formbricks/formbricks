@@ -1,9 +1,9 @@
 import { teamCache } from "@/lib/cache/team";
+import { membershipCache } from "@/lib/membership/cache";
+import { userCache } from "@/lib/user/cache";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { membershipCache } from "@formbricks/lib/membership/cache";
-import { userCache } from "@formbricks/lib/user/cache";
 import { createUser, getUsers, updateUser } from "../users";
 
 const mockUser = {
@@ -45,7 +45,7 @@ vi.spyOn(teamCache, "revalidate").mockImplementation(() => {});
 
 describe("Users Lib", () => {
   describe("getUsers", () => {
-    it("returns users with meta on success", async () => {
+    test("returns users with meta on success", async () => {
       const usersArray = [mockUser];
       (prisma.$transaction as any).mockResolvedValueOnce([usersArray, usersArray.length]);
       const result = await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
@@ -68,7 +68,7 @@ describe("Users Lib", () => {
       }
     });
 
-    it("returns internal_server_error if prisma fails", async () => {
+    test("returns internal_server_error if prisma fails", async () => {
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("Transaction error"));
       const result = await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
       expect(result.ok).toBe(false);
@@ -79,7 +79,7 @@ describe("Users Lib", () => {
   });
 
   describe("createUser", () => {
-    it("creates user and revalidates caches", async () => {
+    test("creates user and revalidates caches", async () => {
       (prisma.user.create as any).mockResolvedValueOnce(mockUser);
       const result = await createUser(
         { name: "Test User", email: "test@example.com", role: "member" },
@@ -92,7 +92,7 @@ describe("Users Lib", () => {
       }
     });
 
-    it("returns internal_server_error if creation fails", async () => {
+    test("returns internal_server_error if creation fails", async () => {
       (prisma.user.create as any).mockRejectedValueOnce(new Error("Create error"));
       const result = await createUser({ name: "fail", email: "fail@example.com", role: "manager" }, "org456");
       expect(result.ok).toBe(false);
@@ -103,7 +103,7 @@ describe("Users Lib", () => {
   });
 
   describe("updateUser", () => {
-    it("updates user and revalidates caches", async () => {
+    test("updates user and revalidates caches", async () => {
       (prisma.user.findUnique as any).mockResolvedValueOnce(mockUser);
       (prisma.$transaction as any).mockResolvedValueOnce([{ ...mockUser, name: "Updated User" }]);
       const result = await updateUser({ email: mockUser.email, name: "Updated User" }, "org456");
@@ -114,7 +114,7 @@ describe("Users Lib", () => {
       }
     });
 
-    it("returns not_found if user doesn't exist", async () => {
+    test("returns not_found if user doesn't exist", async () => {
       (prisma.user.findUnique as any).mockResolvedValueOnce(null);
       const result = await updateUser({ email: "unknown@example.com" }, "org456");
       expect(result.ok).toBe(false);
@@ -123,7 +123,7 @@ describe("Users Lib", () => {
       }
     });
 
-    it("returns internal_server_error if update fails", async () => {
+    test("returns internal_server_error if update fails", async () => {
       (prisma.user.findUnique as any).mockResolvedValueOnce(mockUser);
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("Update error"));
       const result = await updateUser({ email: mockUser.email }, "org456");
@@ -135,7 +135,7 @@ describe("Users Lib", () => {
   });
 
   describe("createUser with teams", () => {
-    it("creates user with existing teams", async () => {
+    test("creates user with existing teams", async () => {
       (prisma.team.findMany as any).mockResolvedValueOnce([
         { id: "team123", name: "MyTeam", projectTeams: [{ projectId: "proj789" }] },
       ]);
@@ -157,7 +157,7 @@ describe("Users Lib", () => {
   });
 
   describe("updateUser with team changes", () => {
-    it("removes a team and adds new team", async () => {
+    test("removes a team and adds new team", async () => {
       (prisma.user.findUnique as any).mockResolvedValueOnce({
         ...mockUser,
         teamUsers: [{ team: { id: "team123", name: "OldTeam", projectTeams: [{ projectId: "proj789" }] } }],

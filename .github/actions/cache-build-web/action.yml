@@ -8,6 +8,14 @@ on:
         required: false
         default: "0"
 
+inputs:
+  turbo_token:
+    description: "Turborepo token"
+    required: false
+  turbo_team:
+    description: "Turborepo team"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -41,7 +49,7 @@ runs:
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install dependencies
@@ -62,6 +70,8 @@ runs:
 
     - run: |
         pnpm build --filter=@formbricks/web...
-
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        TURBO_TOKEN: ${{ inputs.turbo_token }}
+        TURBO_TEAM: ${{ inputs.turbo_team }}

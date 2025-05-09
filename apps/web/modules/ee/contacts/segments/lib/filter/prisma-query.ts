@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
+import { segmentCache } from "@/lib/cache/segment";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import {

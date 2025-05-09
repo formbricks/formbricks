@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 
 interface PricingCardProps {

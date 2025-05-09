@@ -1,10 +1,10 @@
 "use client";
 
+import { convertDateTimeStringShort } from "@/lib/time";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Label } from "@/modules/ui/components/label";
 import { Webhook } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface ActivityTabProps {

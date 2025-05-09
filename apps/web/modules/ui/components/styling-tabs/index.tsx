@@ -1,6 +1,6 @@
+import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
 import React, { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface Option<T> {
   value: T;

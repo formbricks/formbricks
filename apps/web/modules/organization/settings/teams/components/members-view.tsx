@@ -1,4 +1,5 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -7,7 +8,6 @@ import { OrganizationActions } from "@/modules/organization/settings/teams/compo
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -17,9 +17,10 @@ interface MembersViewProps {
   currentUserId: string;
   environmentId: string;
   canDoRoleManagement: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
-const MembersLoading = () => (
+export const MembersLoading = () => (
   <div className="px-2">
     {Array.from(Array(2)).map((_, index) => (
       <div key={index} className="mt-4">
@@ -35,6 +36,7 @@ export const MembersView = async ({
   currentUserId,
   environmentId,
   canDoRoleManagement,
+  isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
   const t = await getTranslate();
 
@@ -47,9 +49,6 @@ export const MembersView = async ({
 
   if (canDoRoleManagement) {
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
-    if (!teams) {
-      throw new Error(t("common.teams_not_found"));
-    }
   }
 
   return (
@@ -68,6 +67,7 @@ export const MembersView = async ({
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
+          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
         />
       )}
 
@@ -78,6 +78,7 @@ export const MembersView = async ({
             organization={organization}
             currentUserId={currentUserId}
             role={membershipRole}
+            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           />
         </Suspense>
       )}

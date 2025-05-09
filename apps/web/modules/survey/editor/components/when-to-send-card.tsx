@@ -1,6 +1,7 @@
 "use client";
 
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
@@ -13,7 +14,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface WhenToSendCardProps {

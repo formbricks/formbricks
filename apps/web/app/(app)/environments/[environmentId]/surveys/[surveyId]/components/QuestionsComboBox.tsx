@@ -1,5 +1,7 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import {
   Command,
   CommandEmpty,
@@ -32,9 +34,7 @@ import {
   StarIcon,
   User,
 } from "lucide-react";
-import * as React from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { Fragment, useRef, useState } from "react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
@@ -141,15 +141,15 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 };
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const { t } = useTranslate();
-  const commandRef = React.useRef(null);
-  const [inputValue, setInputValue] = React.useState("");
+  const commandRef = useRef(null);
+  const [inputValue, setInputValue] = useState("");
   useClickOutside(commandRef, () => setOpen(false));
 
   return (
     <Command ref={commandRef} className="h-10 overflow-visible bg-transparent hover:bg-slate-50">
-      <div
+      <button
         onClick={() => setOpen(true)}
         className="group flex cursor-pointer items-center justify-between rounded-md bg-white px-3 py-2 text-sm">
         {!open && selected.hasOwnProperty("label") && (
@@ -174,14 +174,14 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
           )}
         </div>
-      </div>
+      </button>
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (
-                <>
+                <Fragment key={data.header}>
                   {data?.option.length > 0 && (
                     <CommandGroup
                       heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
@@ -199,7 +199,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
                       ))}
                     </CommandGroup>
                   )}
-                </>
+                </Fragment>
               ))}
             </CommandList>
           </div>

@@ -4,13 +4,13 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { SignupForm } from "./signup-form";
 
 // Mock dependencies
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -119,8 +119,6 @@ const defaultProps = {
   isTurnstileConfigured: false,
   samlTenant: "",
   samlProduct: "",
-  defaultOrganizationId: "org1",
-  defaultOrganizationRole: "member",
   turnstileSiteKey: "dummy", // not used since isTurnstileConfigured is false
 } as const;
 
@@ -129,7 +127,7 @@ describe("SignupForm", () => {
     cleanup();
   });
 
-  it("toggles the signup form on button click", () => {
+  test("toggles the signup form on button click", () => {
     render(<SignupForm {...defaultProps} />);
 
     // Initially, the signup form is hidden.
@@ -149,7 +147,7 @@ describe("SignupForm", () => {
     expect(screen.getByTestId("signup-password")).toBeInTheDocument();
   });
 
-  it("submits the form successfully", async () => {
+  test("submits the form successfully", async () => {
     // Set up mocks for the API actions.
     vi.mocked(createUserAction).mockResolvedValue({ data: true } as any);
     vi.mocked(createEmailTokenAction).mockResolvedValue({ data: "token123" });
@@ -179,8 +177,6 @@ describe("SignupForm", () => {
         userLocale: defaultProps.userLocale,
         inviteToken: "",
         emailVerificationDisabled: defaultProps.emailVerificationDisabled,
-        defaultOrganizationId: defaultProps.defaultOrganizationId,
-        defaultOrganizationRole: defaultProps.defaultOrganizationRole,
         turnstileToken: undefined,
       });
     });
@@ -194,7 +190,7 @@ describe("SignupForm", () => {
     expect(pushMock).toHaveBeenCalledWith("/auth/verification-requested?token=token123");
   });
 
-  it("submits the form successfully when turnstile is configured", async () => {
+  test("submits the form successfully when turnstile is configured", async () => {
     // Override props to enable Turnstile
     const props = {
       ...defaultProps,
@@ -233,8 +229,6 @@ describe("SignupForm", () => {
         userLocale: props.userLocale,
         inviteToken: "",
         emailVerificationDisabled: true,
-        defaultOrganizationId: props.defaultOrganizationId,
-        defaultOrganizationRole: props.defaultOrganizationRole,
         turnstileToken: "test-turnstile-token",
       });
     });
@@ -246,7 +240,7 @@ describe("SignupForm", () => {
     expect(pushMock).toHaveBeenCalledWith("/auth/signup-without-verification-success");
   });
 
-  it("submits the form successfully when turnstile is configured, but createEmailTokenAction don't return data", async () => {
+  test("submits the form successfully when turnstile is configured, but createEmailTokenAction don't return data", async () => {
     // Override props to enable Turnstile
     const props = {
       ...defaultProps,
@@ -286,8 +280,6 @@ describe("SignupForm", () => {
         userLocale: props.userLocale,
         inviteToken: "",
         emailVerificationDisabled: true,
-        defaultOrganizationId: props.defaultOrganizationId,
-        defaultOrganizationRole: props.defaultOrganizationRole,
         turnstileToken: "test-turnstile-token",
       });
     });
@@ -298,7 +290,7 @@ describe("SignupForm", () => {
     });
   });
 
-  it("shows an error message if turnstile is configured, but no token is received", async () => {
+  test("shows an error message if turnstile is configured, but no token is received", async () => {
     // Override props to enable Turnstile
     const props = {
       ...defaultProps,
@@ -332,7 +324,7 @@ describe("SignupForm", () => {
     });
   });
 
-  it("Invite token is in the search params", async () => {
+  test("Invite token is in the search params", async () => {
     // Set up mocks for the API actions
     vi.mocked(createUserAction).mockResolvedValue({ data: true } as any);
     vi.mocked(createEmailTokenAction).mockResolvedValue({ data: "token123" });
@@ -362,8 +354,6 @@ describe("SignupForm", () => {
         userLocale: defaultProps.userLocale,
         inviteToken: "token123",
         emailVerificationDisabled: defaultProps.emailVerificationDisabled,
-        defaultOrganizationId: defaultProps.defaultOrganizationId,
-        defaultOrganizationRole: defaultProps.defaultOrganizationRole,
         turnstileToken: undefined,
       });
     });

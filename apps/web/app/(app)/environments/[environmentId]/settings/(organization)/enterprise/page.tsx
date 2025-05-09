@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -8,7 +9,6 @@ import { getTranslate } from "@/tolgee/server";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -57,11 +57,6 @@ const Page = async (props) => {
       title: t("environments.settings.enterprise.contacts_and_segments"),
       comingSoon: false,
       onRequest: false,
-    },
-    {
-      title: t("environments.settings.enterprise.ai"),
-      comingSoon: false,
-      onRequest: true,
     },
     {
       title: t("environments.settings.enterprise.audit_logs"),

@@ -1,14 +1,14 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 
 type Params = Promise<{
   sharingKey: string;
@@ -66,7 +66,6 @@ const Page = async (props: SummaryPageProps) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          isAIEnabled={false} // Disable AI for sharing page for now
           isReadOnly={true}
           locale={DEFAULT_LOCALE}
         />

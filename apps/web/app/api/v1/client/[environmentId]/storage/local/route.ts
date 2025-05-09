@@ -2,13 +2,14 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
+import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
+import { validateLocalSignedUrl } from "@/lib/crypto";
+import { validateFile } from "@/lib/fileValidation";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { putFileToLocalStorage } from "@/lib/storage/service";
+import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
-import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 
 interface Context {
@@ -86,8 +87,14 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
 
   const fileName = decodeURIComponent(encodedFileName);
 
-  // validate signature
+  // Perform server-side file validation again
+  // This is crucial as attackers could bypass the initial validation and directly call this endpoint
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file", { fileName, fileType });
+  }
 
+  // validate signature
   const validated = validateLocalSignedUrl(
     signedUuid,
     fileName,

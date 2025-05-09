@@ -1,9 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { Slider } from "@/modules/ui/components/slider";
 import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -12,19 +15,20 @@ import { ArrowUpRight, CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
   responseCount: number;
+  isSpamProtectionAllowed: boolean;
 }
 
 export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
   responseCount,
+  isSpamProtectionAllowed,
 }: ResponseOptionsCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
@@ -34,6 +38,7 @@ export const ResponseOptionsCard = ({
   useState;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
+  const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
   const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
     localSurvey.isSingleResponsePerEmailEnabled
   );
@@ -51,6 +56,7 @@ export const ResponseOptionsCard = ({
   const [singleUseEncryption, setSingleUseEncryption] = useState(true);
   const [runOnDate, setRunOnDate] = useState<Date | null>(null);
   const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
+  const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
@@ -280,6 +286,28 @@ export const ResponseOptionsCard = ({
   };
   const [parent] = useAutoAnimate();
 
+  const handleRecaptchaToggle = () => {
+    if (!isSpamProtectionAllowed) return;
+    if (recaptchaToggle) {
+      setRecaptchaToggle(false);
+      if (localSurvey.recaptcha?.enabled) {
+        setRecaptchaThreshold(0.1);
+        setLocalSurvey({ ...localSurvey, recaptcha: { enabled: false, threshold: 0.1 } });
+      }
+    } else {
+      setRecaptchaToggle(true);
+      setLocalSurvey({ ...localSurvey, recaptcha: { enabled: true, threshold: 0.1 } });
+    }
+  };
+
+  const handleThresholdChange = (value: number) => {
+    setRecaptchaThreshold(value);
+    setLocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      recaptcha: { ...prevSurvey.recaptcha, threshold: value },
+    }));
+  };
+
   return (
     <Collapsible.Root
       open={open}
@@ -362,6 +390,50 @@ export const ResponseOptionsCard = ({
               <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
+
+          {/* recaptcha for spam protection */}
+          {isSpamProtectionAllowed && (
+            <AdvancedOptionToggle
+              htmlId="recaptchaToggle"
+              isChecked={recaptchaToggle}
+              onToggle={handleRecaptchaToggle}
+              title={t("environments.surveys.edit.enable_spam_protection")}
+              description={t("environments.surveys.edit.enable_recaptcha_to_protect_your_survey_from_spam")}
+              childBorder={true}>
+              <div className="w-full px-2 py-4">
+                <p className="text-sm font-semibold text-slate-800">
+                  {t("environments.surveys.edit.spam_protection_threshold_heading")} : {recaptchaThreshold}
+                </p>
+                <p className="mb-2 text-xs text-slate-500">
+                  {t("environments.surveys.edit.spam_protection_threshold_description")}
+                </p>
+                <div className="flex w-full items-center gap-1">
+                  <div className="text-center">
+                    <p className="mx-2">0.1</p>
+                    <p className="mx-2 text-xs text-slate-500">Lenient</p>
+                  </div>
+
+                  <Slider
+                    value={[recaptchaThreshold]}
+                    className="grow"
+                    max={0.9}
+                    min={0.1}
+                    step={0.1}
+                    onValueChange={(value) => {
+                      handleThresholdChange(value[0]);
+                    }}
+                  />
+                  <div className="text-center">
+                    <p className="mx-2">0.9</p>
+                    <p className="mx-2 text-xs text-slate-500">Strict</p>
+                  </div>
+                </div>
+                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm">
+                  <AlertTitle>{t("environments.surveys.edit.spam_protection_note")}</AlertTitle>
+                </Alert>
+              </div>
+            </AdvancedOptionToggle>
+          )}
 
           {localSurvey.type === "link" && (
             <>

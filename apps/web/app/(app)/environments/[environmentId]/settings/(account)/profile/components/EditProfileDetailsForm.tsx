@@ -1,6 +1,7 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
+import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -28,7 +29,6 @@ import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { appLanguages } from "@formbricks/lib/i18n/utils";
 import { TUser, ZUser } from "@formbricks/types/user";
 import { updateUserAction } from "../actions";
 

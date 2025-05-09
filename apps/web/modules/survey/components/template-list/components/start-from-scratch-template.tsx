@@ -1,11 +1,11 @@
 "use client";
 
 import { customSurveyTemplate } from "@/app/lib/templates";
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TTemplate } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 

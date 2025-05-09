@@ -1,5 +1,8 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -12,9 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,
   TSurvey,
@@ -95,6 +95,7 @@ export const QuestionFormInput = ({
         : question.id;
     //eslint-disable-next-line
   }, [isWelcomeCard, isEndingCard, question?.id]);
+  const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -245,7 +246,6 @@ export const QuestionFormInput = ({
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
-      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
       if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
     } else return question.imageUrl;
   };
@@ -253,7 +253,6 @@ export const QuestionFormInput = ({
   const getVideoUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
     if (isEndingCard) {
-      const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
       if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
     } else return question.videoUrl;
   };
@@ -261,6 +260,13 @@ export const QuestionFormInput = ({
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
   const [animationParent] = useAutoAnimate();
+
+  const renderRemoveDescriptionButton = useMemo(() => {
+    if (id !== "subheader") return false;
+    return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endingCard?.type, id, question?.subheader]);
 
   return (
     <div className="w-full">
@@ -396,7 +402,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {id === "subheader" && question && question.subheader !== undefined && (
+                        {renderRemoveDescriptionButton ? (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                             <Button
                               variant="secondary"
@@ -408,11 +414,14 @@ export const QuestionFormInput = ({
                                 if (updateQuestion) {
                                   updateQuestion(questionIdx, { subheader: undefined });
                                 }
+                                if (updateSurvey) {
+                                  updateSurvey({ subheader: undefined });
+                                }
                               }}>
                               <TrashIcon />
                             </Button>
                           </TooltipRenderer>
-                        )}
+                        ) : null}
                       </>
                     </div>
                   </div>

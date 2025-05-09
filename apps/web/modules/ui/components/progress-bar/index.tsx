@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 interface ProgressBarProps {
   progress: number;
@@ -9,11 +9,24 @@ interface ProgressBarProps {
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, barColor, height = 5 }) => {
+  const heightClass = () => {
+    switch (height) {
+      case 2:
+        return "h-2";
+      case 5:
+        return "h-5";
+      default:
+        return "";
+    }
+  };
+
+  const maxWidth = Math.floor(Math.max(0, Math.min(progress, 1)) * 100);
+
   return (
-    <div className={cn(height === 2 ? "h-2" : height === 5 ? "h-5" : "", "w-full rounded-full bg-slate-200")}>
+    <div className={cn(heightClass(), "w-full rounded-full bg-slate-200")}>
       <div
         className={cn("h-full rounded-full", barColor)}
-        style={{ width: `${Math.floor(progress * 100)}%`, transition: "width 0.5s ease-out" }}></div>
+        style={{ width: `${maxWidth}%`, transition: "width 0.5s ease-out" }}></div>
     </div>
   );
 };

@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { FileDigitIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardProps {
@@ -29,6 +29,7 @@ export const SurveyVariablesCard = ({
 
   const setOpenState = (state: boolean) => {
     if (state) {
+      // NOSONAR // This is ok for setOpenState
       setActiveQuestionId(variablesCardId);
     } else {
       setActiveQuestionId(null);

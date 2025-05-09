@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-card/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -9,7 +10,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { cn } from "@formbricks/lib/cn";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -51,6 +51,7 @@ export const BackgroundStylingCard = ({
       <Collapsible.CollapsibleTrigger
         asChild
         disabled={disabled}
+        data-testid="background-styling-card-trigger"
         className={cn(
           "w-full cursor-pointer rounded-lg hover:bg-slate-50",
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"

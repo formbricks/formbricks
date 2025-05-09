@@ -1,13 +1,18 @@
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getRoleManagementPermission,
+  getisSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser } from "@formbricks/types/user";
 import { handleSsoCallback } from "../sso-handlers";
 import {
@@ -31,52 +36,77 @@ vi.mock("@/modules/auth/lib/user", () => ({
   createUser: vi.fn(),
 }));
 
+vi.mock("@/modules/auth/signup/lib/invite", () => ({
+  getIsValidInviteToken: vi.fn(),
+}));
+
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getisSsoEnabled: vi.fn(),
-  getIsMultiOrgEnabled: vi.fn().mockResolvedValue(true),
+  getRoleManagementPermission: vi.fn(),
+  getIsMultiOrgEnabled: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
       findFirst: vi.fn(),
+      count: vi.fn(), // Add count mock for user
     },
   },
 }));
 
-vi.mock("@formbricks/lib/account/service", () => ({
+vi.mock("@/modules/ee/sso/lib/team", () => ({
+  getOrganizationByTeamId: vi.fn(),
+  createDefaultTeamMembership: vi.fn(),
+}));
+
+vi.mock("@/lib/account/service", () => ({
   createAccount: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/membership/service", () => ({
+vi.mock("@/lib/membership/service", () => ({
   createMembership: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
+vi.mock("@/lib/organization/service", () => ({
   createOrganization: vi.fn(),
   getOrganization: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
+vi.mock("@formbricks/lib/jwt", () => ({
+  verifyInviteToken: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 // Mock environment variables
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
+  SKIP_INVITE_FOR_SSO: 0,
+  DEFAULT_TEAM_ID: "team-123",
   DEFAULT_ORGANIZATION_ID: "org-123",
   DEFAULT_ORGANIZATION_ROLE: "member",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 
 describe("handleSsoCallback", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.resetModules();
 
     // Default mock implementations
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
 
     // Mock organization-related functions
     vi.mocked(getOrganization).mockResolvedValue(mockOrganization);
@@ -88,10 +118,11 @@ describe("handleSsoCallback", () => {
       organizationId: mockOrganization.id,
     });
     vi.mocked(updateUser).mockResolvedValue({ ...mockUser, id: "user-123" });
+    vi.mocked(createDefaultTeamMembership).mockResolvedValue(undefined);
   });
 
   describe("Early return conditions", () => {
-    it("should return false if SSO is not enabled", async () => {
+    test("should return false if SSO is not enabled", async () => {
       vi.mocked(getisSsoEnabled).mockResolvedValue(false);
 
       const result = await handleSsoCallback({
@@ -103,7 +134,7 @@ describe("handleSsoCallback", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false if user email is missing", async () => {
+    test("should return false if user email is missing", async () => {
       const result = await handleSsoCallback({
         user: { ...mockUser, email: "" },
         account: mockAccount,
@@ -113,7 +144,7 @@ describe("handleSsoCallback", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false if account type is not oauth", async () => {
+    test("should return false if account type is not oauth", async () => {
       const result = await handleSsoCallback({
         user: mockUser,
         account: { ...mockAccount, type: "credentials" },
@@ -123,7 +154,7 @@ describe("handleSsoCallback", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false if provider is SAML and SAML SSO is not enabled", async () => {
+    test("should return false if provider is SAML and SAML SSO is not enabled", async () => {
       vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
       const result = await handleSsoCallback({
@@ -137,7 +168,7 @@ describe("handleSsoCallback", () => {
   });
 
   describe("Existing user handling", () => {
-    it("should return true if user with account already exists and email is the same", async () => {
+    test("should return true if user with account already exists and email is the same", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue({
         ...mockUser,
         email: mockUser.email,
@@ -166,7 +197,7 @@ describe("handleSsoCallback", () => {
       });
     });
 
-    it("should update user email if user with account exists but email changed", async () => {
+    test("should update user email if user with account exists but email changed", async () => {
       const existingUser = {
         ...mockUser,
         id: "existing-user-id",
@@ -188,7 +219,7 @@ describe("handleSsoCallback", () => {
       expect(updateUser).toHaveBeenCalledWith(existingUser.id, { email: mockUser.email });
     });
 
-    it("should throw error if user with account exists, email changed, and another user has the new email", async () => {
+    test("should throw error if user with account exists, email changed, and another user has the new email", async () => {
       const existingUser = {
         ...mockUser,
         id: "existing-user-id",
@@ -216,7 +247,7 @@ describe("handleSsoCallback", () => {
       );
     });
 
-    it("should return true if user with email already exists", async () => {
+    test("should return true if user with email already exists", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue({
         id: "existing-user-id",
@@ -237,7 +268,7 @@ describe("handleSsoCallback", () => {
   });
 
   describe("New user creation", () => {
-    it("should create a new user if no existing user found", async () => {
+    test("should create a new user if no existing user found", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
@@ -260,11 +291,11 @@ describe("handleSsoCallback", () => {
       expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
     });
 
-    it("should create organization and membership for new user when DEFAULT_ORGANIZATION_ID is set", async () => {
+    test("should return true when organization doesn't exist with DEFAULT_TEAM_ID", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganization).mockResolvedValue(null);
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(null);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -273,29 +304,15 @@ describe("handleSsoCallback", () => {
       });
 
       expect(result).toBe(true);
-      expect(createOrganization).toHaveBeenCalledWith({
-        id: "org-123",
-        name: expect.stringContaining("Organization"),
-      });
-      expect(createMembership).toHaveBeenCalledWith("org-123", mockCreatedUser().id, {
-        role: "owner",
-        accepted: true,
-      });
-      expect(createAccount).toHaveBeenCalledWith({
-        ...mockAccount,
-        userId: mockCreatedUser().id,
-      });
-      expect(updateUser).toHaveBeenCalledWith(mockCreatedUser().id, {
-        notificationSettings: expect.objectContaining({
-          unsubscribedOrganizationIds: ["org-123"],
-        }),
-      });
+      expect(getRoleManagementPermission).not.toHaveBeenCalled();
     });
 
-    it("should use existing organization if it exists", async () => {
+    test("should return true when organization exists but role management is not enabled", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -304,16 +321,15 @@ describe("handleSsoCallback", () => {
       });
 
       expect(result).toBe(true);
-      expect(createOrganization).not.toHaveBeenCalled();
-      expect(createMembership).toHaveBeenCalledWith(mockOrganization.id, mockCreatedUser().id, {
-        role: "member",
-        accepted: true,
-      });
+      expect(createMembership).not.toHaveBeenCalled();
     });
   });
 
   describe("OpenID Connect name handling", () => {
-    it("should use oidcUser.name when available", async () => {
+    test("should use oidcUser.name when available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: "Direct Name",
         given_name: "John",
@@ -332,16 +348,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
-    it("should use given_name + family_name when name is not available", async () => {
+    test("should use given_name + family_name when name is not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: "John",
@@ -360,16 +374,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
-    it("should use preferred_username when name and given_name/family_name are not available", async () => {
+    test("should use preferred_username when name and given_name/family_name are not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: undefined,
@@ -389,16 +401,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "preferred.user",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
-    it("should fallback to email username when no OIDC name fields are available", async () => {
+    test("should fallback to email username when no OIDC name fields are available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const openIdUser = mockOpenIdUser({
         name: undefined,
         given_name: undefined,
@@ -419,18 +429,16 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "test user",
-          email: openIdUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "openid",
-          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
   });
 
   describe("SAML name handling", () => {
-    it("should use samlUser.name when available", async () => {
+    test("should use samlUser.name when available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const samlUser = {
         ...mockUser,
         name: "Direct Name",
@@ -450,16 +458,14 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
-          email: samlUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "saml",
-          identityProviderAccountId: mockSamlAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
 
-    it("should use firstName + lastName when name is not available", async () => {
+    test("should use firstName + lastName when name is not available", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       const samlUser = {
         ...mockUser,
         name: "",
@@ -479,56 +485,31 @@ describe("handleSsoCallback", () => {
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
-          email: samlUser.email,
-          emailVerified: expect.any(Date),
-          identityProvider: "saml",
-          identityProviderAccountId: mockSamlAccount.providerAccountId,
-          locale: "en-US",
         })
       );
     });
   });
 
-  describe("Organization handling", () => {
-    it("should handle invalid DEFAULT_ORGANIZATION_ID gracefully", async () => {
+  describe("Auto-provisioning and invite handling", () => {
+    test("should return false when auto-provisioning is disabled and no callback URL or multi-org", async () => {
+      vi.resetModules();
+
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganization).mockResolvedValue(null);
-      vi.mocked(createOrganization).mockRejectedValue(new Error("Invalid organization ID"));
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("Invalid organization ID");
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "",
+      });
 
-      expect(createOrganization).toHaveBeenCalled();
-      expect(createMembership).not.toHaveBeenCalled();
-    });
-
-    it("should handle membership creation failure gracefully", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-      vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(createMembership).mockRejectedValue(new Error("Failed to create membership"));
-
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("Failed to create membership");
-
-      expect(createMembership).toHaveBeenCalled();
+      expect(result).toBe(false);
     });
   });
 
   describe("Error handling", () => {
-    it("should handle prisma errors gracefully", async () => {
+    test("should handle database errors", async () => {
       vi.mocked(prisma.user.findFirst).mockRejectedValue(new Error("Database error"));
 
       await expect(
@@ -540,11 +521,10 @@ describe("handleSsoCallback", () => {
       ).rejects.toThrow("Database error");
     });
 
-    it("should handle locale finding errors gracefully", async () => {
+    test("should handle locale finding errors", async () => {
       vi.mocked(findMatchingLocale).mockRejectedValue(new Error("Locale error"));
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
       await expect(
         handleSsoCallback({

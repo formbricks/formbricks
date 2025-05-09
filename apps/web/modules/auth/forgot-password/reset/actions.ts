@@ -1,12 +1,12 @@
 "use server";
 
+import { hashPassword } from "@/lib/auth";
+import { verifyToken } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getUser } from "@/modules/auth/lib/user";
 import { sendPasswordResetNotifyEmail } from "@/modules/email";
 import { z } from "zod";
-import { hashPassword } from "@formbricks/lib/auth";
-import { verifyToken } from "@formbricks/lib/jwt";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 

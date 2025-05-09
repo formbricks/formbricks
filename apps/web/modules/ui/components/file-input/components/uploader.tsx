@@ -1,6 +1,6 @@
+import { cn } from "@/lib/cn";
 import { ArrowUpFromLineIcon } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
 interface UploaderProps {
@@ -33,6 +33,7 @@ export const Uploader = ({
   return (
     <label
       htmlFor={`${id}-${name}`}
+      data-testId="upload-file-label"
       className={cn(
         "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-700",
         uploaderClassName,

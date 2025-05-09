@@ -6,7 +6,7 @@ icon: "code"
 
 #### Custom Configurations
 
-These variables are present inside your machine’s docker-compose file. Restart the docker containers if you change any variables for them to take effect.
+These variables are present inside your machine's docker-compose file. Restart the docker containers if you change any variables for them to take effect.
 
 | Variable                     | Description                                                                                                    | Required                                                | Default                                                                   |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -44,6 +44,8 @@ These variables are present inside your machine’s docker-compose file. Restart
 | SMTP_REJECT_UNAUTHORIZED_TLS | If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs. | optional                                                | 1                                                                         |
 | TURNSTILE_SITE_KEY           | Site key for Turnstile.                                                                                        | optional                                                |                                                                           |
 | TURNSTILE_SECRET_KEY         | Secret key for Turnstile.                                                                                      | optional                                                |                                                                           |
+| RECAPTCHA_SITE_KEY           | Site key for survey responses recaptcha bot protection                                                         | optional                                                |                                                                           |
+| RECAPTCHA_SECRET_KEY         | Secret key for recaptcha bot protection.                                                                       | optional                                                |                                                                           |
 | GITHUB_ID                    | Client ID for GitHub.                                                                                          | optional (required if GitHub auth is enabled)           |                                                                           |
 | GITHUB_SECRET                | Secret for GitHub.                                                                                             | optional (required if GitHub auth is enabled)           |                                                                           |
 | GOOGLE_CLIENT_ID             | Client ID for Google.                                                                                          | optional (required if Google auth is enabled)           |                                                                           |
@@ -65,6 +67,10 @@ These variables are present inside your machine’s docker-compose file. Restart
 | PROMETHEUS_ENABLED           | Enables Prometheus metrics if set to 1.                                                                        | optional                                                |                                                                           |
 | PROMETHEUS_EXPORTER_PORT     | Port for Prometheus metrics.                                                                                   | optional                                                | 9090                                                                      |
 | DOCKER_CRON_ENABLED          | Controls whether cron jobs run in the Docker image. Set to 0 to disable (useful for cluster setups).           | optional                                                | 1                                                                         |
+| DEFAULT_TEAM_ID              | Default team ID for new users.                                                                                 | optional                                                |                                                                           |
 | SURVEY_URL                   | Set this to change the domain of the survey.                                                                   | optional                                                | WEBAPP_URL                                                                |
+| SENTRY_DSN                   | Set this to track errors and monitor performance in Sentry.                                                    | optional                                                |
+| SENTRY_AUTH_TOKEN            | Set this if you want to make errors more readable in Sentry.                                                   | optional                                                |
+| DISABLE_USER_MANAGEMENT      | Set this to hide the user management UI.                                                                       | optional                                                |
 
 Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we’ll try our best to work out a solution with you.

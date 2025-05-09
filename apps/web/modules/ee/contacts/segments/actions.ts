@@ -1,5 +1,7 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
+import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -12,6 +14,7 @@ import {
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
   createSegment,
@@ -21,8 +24,6 @@ import {
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
@@ -120,6 +121,8 @@ export const updateSegmentAction = authenticatedActionClient
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
         throw new Error(errMsg);
       }
+
+      await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
     }
 
     return await updateSegment(parsedInput.segmentId, parsedInput.data);

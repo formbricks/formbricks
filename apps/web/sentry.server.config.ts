@@ -1,11 +1,12 @@
 // This file configures the initialization of Sentry on the server.
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
+import { SENTRY_DSN } from "@/lib/constants";
 import * as Sentry from "@sentry/nextjs";
-import { SENTRY_DSN } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 
 if (SENTRY_DSN) {
-  console.log("Sentry DSN found, enabling Sentry on the server");
+  logger.info("Sentry DSN found, enabling Sentry on the server");
 
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -31,5 +32,5 @@ if (SENTRY_DSN) {
     },
   });
 } else {
-  console.warn("Sentry DSN not found, Sentry will be disabled on the server");
+  logger.warn("Sentry DSN not found, Sentry will be disabled on the server");
 }

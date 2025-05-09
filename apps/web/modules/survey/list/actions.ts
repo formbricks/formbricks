@@ -8,6 +8,7 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
 import { getUserProjects } from "@/modules/survey/list/lib/project";
 import {
@@ -17,7 +18,6 @@ import {
   getSurveys,
 } from "@/modules/survey/list/lib/survey";
 import { z } from "zod";
-import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 

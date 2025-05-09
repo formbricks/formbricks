@@ -1,3 +1,8 @@
+import { cn } from "@/lib/cn";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
@@ -14,11 +19,6 @@ import { render } from "@react-email/render";
 import { TFnType } from "@tolgee/react";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";

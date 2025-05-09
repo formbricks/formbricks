@@ -10,7 +10,7 @@ import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { iso639Languages } from "@formbricks/lib/i18n/utils";
+import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import {
