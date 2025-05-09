@@ -1,6 +1,5 @@
 "use client";
 
-import { formbricksLogout } from "@/app/lib/formbricks";
 import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
@@ -35,7 +34,12 @@ import { updateUserAction } from "../actions";
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true });
 type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
 
-export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
+interface IEditProfileDetailsFormProps {
+  user: TUser;
+  isPasswordResetEnabled?: boolean;
+}
+
+export const EditProfileDetailsForm = ({ user, isPasswordResetEnabled }: IEditProfileDetailsFormProps) => {
   const form = useForm<TEditProfileNameForm>({
     defaultValues: { name: user.name, locale: user.locale || "en" },
     mode: "onChange",
@@ -72,7 +76,6 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
     } else {
       toast.success(t("auth.forgot-password.email-sent.heading"));
       await signOut({ callbackUrl: "/auth/login" });
-      await formbricksLogout();
     }
 
     setIsResettingPassword(false);
@@ -146,23 +149,25 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
           )}
         />
 
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="reset-password">{t("auth.forgot-password.reset_password")}</Label>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("auth.forgot-password.reset_password_description")}
-          </p>
-          <div className="flex items-center justify-between gap-2">
-            <Input type="email" id="reset-password" defaultValue={user.email} disabled />
-            <Button
-              onClick={handleResetPassword}
-              loading={isResettingPassword}
-              disabled={isResettingPassword || !user.email}
-              size="default"
-              variant="secondary">
-              {t("auth.forgot-password.reset_password")}
-            </Button>
+        {isPasswordResetEnabled && (
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="reset-password">{t("auth.forgot-password.reset_password")}</Label>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("auth.forgot-password.reset_password_description")}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <Input type="email" id="reset-password" defaultValue={user.email} disabled />
+              <Button
+                onClick={handleResetPassword}
+                loading={isResettingPassword}
+                disabled={isResettingPassword}
+                size="default"
+                variant="secondary">
+                {t("auth.forgot-password.reset_password")}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <Button
           type="submit"
