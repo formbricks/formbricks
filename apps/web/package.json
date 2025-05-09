@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next coverage",
-    "dev": "next dev -p 3000 --turbopack",
-    "go": "next dev -p 3000 --turbopack",
+    "dev": "next dev -p 3000",
+    "go": "next dev -p 3000",
     "build": "next build",
     "build:dev": "next build",
     "start": "next start",
