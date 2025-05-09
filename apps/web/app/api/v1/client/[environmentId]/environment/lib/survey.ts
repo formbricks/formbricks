@@ -21,6 +21,10 @@ export const getSurveysForEnvironmentState = reactCache(
             where: {
               environmentId,
             },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 30,
             select: {
               id: true,
               welcomeCard: true,
