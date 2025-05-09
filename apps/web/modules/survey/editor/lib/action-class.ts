@@ -17,7 +17,12 @@ export const createActionClass = async (
         ...actionClassInput,
         environment: { connect: { id: environmentId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
-        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
+        noCodeConfig:
+          actionClassInput.type === "noCode"
+            ? actionClassInput.noCodeConfig === null
+              ? undefined
+              : actionClassInput.noCodeConfig
+            : undefined,
       },
     });
 
