@@ -2,15 +2,21 @@
 
 import { deleteFile } from "@/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
-import { updateUser } from "@/lib/user/service";
+import { getUserByEmail, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { verifyPassword } from "@/modules/auth/lib/utils";
+import { sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
-import { ZUserUpdateInput } from "@formbricks/types/user";
+import { ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient
   .schema(ZUserUpdateInput.pick({ name: true, locale: true }))
   .action(async ({ parsedInput, ctx }) => {
+    if (parsedInput.email && ctx.user.identityProvider !== "email") {
+      throw new Error("Email update is not allowed for non-credential users.");
+    }
     return await updateUser(ctx.user.id, parsedInput);
   });
 
@@ -46,4 +52,60 @@ export const removeAvatarAction = authenticatedActionClient
       throw new Error("Deletion failed");
     }
     return await updateUser(ctx.user.id, { imageUrl: null });
+  });
+
+const ZsendVerificationEmailAction = z.object({
+  email: ZUserEmail,
+});
+
+export const sendVerificationNewEmailAction = authenticatedActionClient
+  .schema(ZsendVerificationEmailAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const { email } = parsedInput;
+    if (ctx.user.identityProvider !== "email") {
+      throw new Error("Email verification is only available for users registered with email.");
+    }
+    const user = await getUserByEmail(email);
+
+    if (ctx.user.email === email) {
+     throw new Error("You cannot request verification for the same email.");
+    }
+
+    if (user && user.id !== ctx.user.id) {
+      throw new Error("Email already belongs to another user.");
+    }
+    return await sendVerificationNewEmail(ctx.user.id, email);
+  });
+
+const ZchangePasswordAction = z.object({
+  password: z.string().min(8),
+});
+
+export const comparePasswordsAction = authenticatedActionClient
+  .schema(ZchangePasswordAction)
+  .action(async ({ parsedInput, ctx }) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          email: ctx.user.email,
+        },
+      });
+      if (!user) {
+        throw new Error("No user found with this email");
+      }
+
+      if (!user.password) {
+        throw new Error("User has no password set");
+      }
+
+      const isValid = await verifyPassword(parsedInput.password, user.password);
+
+      if (!isValid) {
+        throw new Error("Incorrect password");
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      throw new Error(error.message || "Internal server error. Please try again later.");
+    }
   });
