@@ -92,6 +92,7 @@ export const getUserByEmail = reactCache(async (email: string) =>
             email: true,
             emailVerified: true,
             isActive: true,
+            identityProvider: true,
           },
         });
 

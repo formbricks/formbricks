@@ -50,7 +50,7 @@ export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSumm
           </div>
         }
       />
-      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
           <button
             className="w-full cursor-pointer hover:opacity-80"

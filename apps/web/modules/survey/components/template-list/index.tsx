@@ -105,7 +105,7 @@ export const TemplateList = ({
   };
 
   return (
-    <main className="relative z-0 flex-1 overflow-y-auto px-6 pt-2 pb-6 focus:outline-none">
+    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-2 focus:outline-none">
       {showFilters && !templateSearch && (
         <TemplateFilters
           selectedFilter={selectedFilter}

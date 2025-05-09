@@ -32,7 +32,7 @@ vi.mock("@/modules/ui/components/checkbox", () => ({
       id={id}
       data-testid={id}
       name={props.name}
-      className="focus:ring-opacity-50 mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500"
+      className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
       onChange={() => {
         // Call onCheckedChange with true to simulate checkbox selection
         onCheckedChange(true);

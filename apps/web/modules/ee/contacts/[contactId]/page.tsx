@@ -41,7 +41,7 @@ export const SingleContactPage = async (props: {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getDeletePersonButton()} />
-      <section className="pt-6 pb-24">
+      <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ResponseSection

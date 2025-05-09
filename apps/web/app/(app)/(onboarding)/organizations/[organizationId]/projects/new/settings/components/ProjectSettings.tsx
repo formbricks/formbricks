@@ -225,7 +225,7 @@ export const ProjectSettings = ({
             alt="Logo"
             width={256}
             height={56}
-            className="absolute top-2 left-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+            className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
         <p className="text-sm text-slate-400">{t("common.preview")}</p>

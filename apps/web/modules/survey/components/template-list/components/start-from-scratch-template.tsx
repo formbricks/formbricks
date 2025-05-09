@@ -45,10 +45,10 @@ export const StartFromScratchTemplate = ({
         activeTemplate?.name === customSurvey.name
           ? "ring-brand-dark border-transparent ring-2"
           : "hover:border-brand-dark border-dashed border-slate-300",
-        "group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
+        "duration-120 group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-150"
       )}>
       <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-      <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{customSurvey.name}</h3>
+      <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{customSurvey.name}</h3>
       <p className="text-left text-xs text-slate-600">{customSurvey.description}</p>
       {activeTemplate?.name === customSurvey.name && (
         <div className="text-left">

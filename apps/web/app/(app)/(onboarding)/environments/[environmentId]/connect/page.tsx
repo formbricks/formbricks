@@ -44,7 +44,7 @@ const Page = async (props: ConnectPageProps) => {
         channel={channel}
       />
       <Button
-        className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
+        className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
         variant="ghost"
         asChild>
         <Link href={`/environments/${environment.id}`}>

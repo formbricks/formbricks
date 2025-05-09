@@ -66,7 +66,7 @@ export async function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -84,7 +84,7 @@ export async function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 font-medium">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>

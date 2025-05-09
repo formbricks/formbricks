@@ -57,7 +57,7 @@ export const StylingTabs = <T extends string | number>({
             className={cn(
               "flex flex-1 cursor-pointer items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
               selectedOption === option.value ? "bg-slate-100" : "bg-white",
-              "focus:ring-brand-dark focus:ring-opacity-50 focus:ring-2 focus:outline-none"
+              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50"
             )}>
             <input
               type="radio"

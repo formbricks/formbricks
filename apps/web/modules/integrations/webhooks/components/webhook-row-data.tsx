@@ -90,7 +90,7 @@ export const WebhookRowData = ({
       <div className="col-span-2 my-auto text-center text-sm text-slate-800">
         {renderSelectedTriggersText(webhook, t)}
       </div>
-      <div className="col-span-2 my-auto text-center text-sm whitespace-nowrap text-slate-500">
+      <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
         {timeSince(webhook.createdAt.toString(), locale)}
       </div>
       <div className="text-center"></div>
