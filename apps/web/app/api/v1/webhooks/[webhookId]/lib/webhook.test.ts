@@ -35,7 +35,8 @@ vi.mock("@/lib/utils/validate", () => ({
 }));
 
 vi.mock("@/lib/cache", () => ({
-  cache: (fn: Function) => fn,
+  // Accept any function and return the exact same generic Fn – keeps typings intact
+  cache: <T extends (...args: any[]) => any>(fn: T): T => fn,
 }));
 
 describe("deleteWebhook", () => {
