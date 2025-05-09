@@ -5,7 +5,7 @@ interface RankingResponseProps {
   isExpanded: boolean;
 }
 
-export const RankingRespone = ({ value, isExpanded }: RankingResponseProps) => {
+export const RankingResponse = ({ value, isExpanded }: RankingResponseProps) => {
   return (
     <div className={cn("my-1 font-semibold text-slate-700", isExpanded ? "" : "flex space-x-2")} dir="auto">
       {value.map(

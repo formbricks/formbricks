@@ -7,8 +7,7 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { FormProvider } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";

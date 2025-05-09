@@ -1,5 +1,6 @@
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
+import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useRouter } from "next/navigation";
@@ -42,10 +43,11 @@ vi.mock("@/modules/organization/settings/teams/components/invite-member/invite-m
 
 // Mock the CustomDialog
 vi.mock("@/modules/ui/components/custom-dialog", () => ({
-  CustomDialog: vi.fn(({ open, setOpen, onOk }) => {
+  CustomDialog: vi.fn(({ children, open, setOpen, onOk }) => {
     if (!open) return null;
     return (
       <div data-testid="leave-org-modal">
+        {children}
         <button data-testid="leave-org-confirm-btn" onClick={onOk}>
           Confirm
         </button>
@@ -107,6 +109,7 @@ describe("OrganizationActions Component", () => {
     isFormbricksCloud: false,
     environmentId: "env-123",
     isMultiOrgEnabled: true,
+    isUserManagementDisabledFromUi: false,
   };
 
   beforeEach(() => {
@@ -238,5 +241,67 @@ describe("OrganizationActions Component", () => {
   test("cannot leave organization when only one organization is present", () => {
     render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
     expect(screen.queryByText("environments.settings.general.leave_organization")).not.toBeInTheDocument();
+  });
+
+  test("invite member modal closes on close button click", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole="owner" />);
+    fireEvent.click(screen.getByText("environments.settings.teams.invite_member"));
+    expect(screen.getByTestId("invite-member-modal")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("invite-close-btn"));
+    expect(screen.queryByTestId("invite-member-modal")).not.toBeInTheDocument();
+  });
+
+  test("leave organization modal closes on cancel", () => {
+    render(<OrganizationActions {...defaultProps} />);
+    fireEvent.click(screen.getByText("environments.settings.general.leave_organization"));
+    expect(screen.getByTestId("leave-org-modal")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("leave-org-cancel-btn"));
+    expect(screen.queryByTestId("leave-org-modal")).not.toBeInTheDocument();
+  });
+
+  test("leave organization button is disabled and warning shown when isLeaveOrganizationDisabled is true", () => {
+    render(<OrganizationActions {...defaultProps} isLeaveOrganizationDisabled={true} />);
+    fireEvent.click(screen.getByText("environments.settings.general.leave_organization"));
+    expect(screen.getByTestId("leave-org-modal")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.settings.general.cannot_leave_only_organization")
+    ).toBeInTheDocument();
+  });
+
+  test("invite button is hidden when isUserManagementDisabledFromUi is true", () => {
+    render(
+      <OrganizationActions {...defaultProps} membershipRole="owner" isUserManagementDisabledFromUi={true} />
+    );
+    expect(screen.queryByText("environments.settings.teams.invite_member")).not.toBeInTheDocument();
+  });
+
+  test("invite button is hidden when membershipRole is undefined", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole={undefined} />);
+    expect(screen.queryByText("environments.settings.teams.invite_member")).not.toBeInTheDocument();
+  });
+
+  test("invite member modal receives correct props", () => {
+    render(<OrganizationActions {...defaultProps} membershipRole="owner" />);
+    fireEvent.click(screen.getByText("environments.settings.teams.invite_member"));
+    const modal = screen.getByTestId("invite-member-modal");
+    expect(modal).toBeInTheDocument();
+
+    const calls = vi.mocked(InviteMemberModal).mock.calls;
+    expect(
+      calls.some((call) =>
+        expect
+          .objectContaining({
+            environmentId: "env-123",
+            canDoRoleManagement: true,
+            isFormbricksCloud: false,
+            teams: expect.arrayContaining(defaultProps.teams),
+            membershipRole: "owner",
+            open: true,
+            setOpen: expect.any(Function),
+            onSubmit: expect.any(Function),
+          })
+          .asymmetricMatch(call[0])
+      )
+    ).toBe(true);
   });
 });

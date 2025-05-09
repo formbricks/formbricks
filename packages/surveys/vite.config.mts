@@ -15,7 +15,7 @@ const config = ({ mode }) => {
   return defineConfig({
     test: {
       environment: "node",
-      environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
+      environmentMatchGlobs: [["**/*.test.tsx", "jsdom"], ["**/lib/**/*.test.ts", "jsdom"]],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
       coverage: {

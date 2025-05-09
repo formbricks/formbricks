@@ -1,4 +1,4 @@
-import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, SURVEY_URL } from "@/lib/constants";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
@@ -171,7 +171,7 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(SURVEY_URL),
+        metadataBase: new URL(SURVEY_URL as any),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
