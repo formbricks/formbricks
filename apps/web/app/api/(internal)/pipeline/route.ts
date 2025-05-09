@@ -10,7 +10,7 @@ import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
 import { sendResponseFinishedEmail } from "@/modules/email";
-import { sendSurveyFollowUps } from "@/modules/survey/follow-ups/lib/follow-ups";
+import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
@@ -166,7 +166,7 @@ export const POST = async (request: Request) => {
 
     if (survey.followUps?.length > 0) {
       // send follow up emails
-      const followUpsResult = await sendSurveyFollowUps(organization.id, survey.id, response.id);
+      const followUpsResult = await sendFollowUpsForResponse(response.id);
       if (!followUpsResult.ok) {
         const { error: followUpsError } = followUpsResult;
         if (followUpsError.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {

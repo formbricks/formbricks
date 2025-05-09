@@ -11,4 +11,5 @@ export enum FollowUpSendError {
   RESPONSE_SURVEY_MISMATCH = "response_survey_mismatch",
   FOLLOW_UP_NOT_ALLOWED = "follow_up_not_allowed",
   RATE_LIMIT_EXCEEDED = "rate_limit_exceeded",
+  UNEXPECTED_ERROR = "unexpected_error",
 }

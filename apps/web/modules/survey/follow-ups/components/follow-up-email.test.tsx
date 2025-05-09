@@ -5,7 +5,7 @@ import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { FollowUpEmail } from "./follow-up";
+import { FollowUpEmail } from "./follow-up-email";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,

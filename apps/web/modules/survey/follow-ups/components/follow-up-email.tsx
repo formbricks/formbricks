@@ -17,6 +17,7 @@ import {
 } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
 import React from "react";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -24,7 +25,7 @@ const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  html: string;
+  followUp: TSurveyFollowUp;
   logoUrl?: string;
   attachResponseData: boolean;
   survey: TSurvey;
@@ -32,12 +33,15 @@ interface FollowUpEmailProps {
 }
 
 export async function FollowUpEmail({
-  html,
+  followUp,
   logoUrl,
   attachResponseData,
   survey,
   response,
 }: FollowUpEmailProps): Promise<React.JSX.Element> {
+  const { properties } = followUp.action;
+  const { body } = properties;
+
   const questions = attachResponseData ? getQuestionResponseMapping(survey, response) : [];
   const t = await getTranslate();
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
@@ -62,7 +66,7 @@ export async function FollowUpEmail({
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left text-sm">
             <div
               dangerouslySetInnerHTML={{
-                __html: dompurify.sanitize(html, {
+                __html: dompurify.sanitize(body, {
                   ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
                   ALLOWED_ATTR: ["href", "rel", "dir", "class"],
                   ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
