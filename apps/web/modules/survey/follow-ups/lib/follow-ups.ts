@@ -176,16 +176,6 @@ export const sendFollowUpsForResponse = async (
       });
     }
 
-    // Check rate limit
-    try {
-      await limiter(organization.id);
-    } catch (e) {
-      return err({
-        code: FollowUpSendError.RATE_LIMIT_EXCEEDED,
-        message: "Too many follow‐up requests; please wait a bit and try again.",
-      });
-    }
-
     // Check if follow-ups are allowed for this organization
     const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
     if (!surveyFollowUpsPermission) {
@@ -193,6 +183,16 @@ export const sendFollowUpsForResponse = async (
         code: FollowUpSendError.FOLLOW_UP_NOT_ALLOWED,
         message: "Survey follow-ups are not allowed for this organization",
         meta: { responseId, surveyId, organizationId: organization.id },
+      });
+    }
+
+    // Check rate limit
+    try {
+      await limiter(organization.id);
+    } catch (e) {
+      return err({
+        code: FollowUpSendError.RATE_LIMIT_EXCEEDED,
+        message: "Too many follow‐up requests; please wait a bit and try again.",
       });
     }
 

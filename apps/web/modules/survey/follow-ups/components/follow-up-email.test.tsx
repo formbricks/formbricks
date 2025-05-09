@@ -24,7 +24,28 @@ vi.mock("@/modules/email/emails/lib/utils", () => ({
 }));
 
 const defaultProps = {
-  html: "<p>Test HTML Content</p>",
+  followUp: {
+    id: "followupid",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Follow Up Email",
+    trigger: {
+      type: "response" as const,
+      properties: null,
+    },
+    action: {
+      type: "send-email" as const,
+      properties: {
+        to: "",
+        from: "test@test.com",
+        replyTo: ["test@test.com"],
+        subject: "Subject",
+        body: "<p>Test HTML Content</p>",
+        attachResponseData: true,
+      },
+    },
+    surveyId: "surveyid",
+  },
   logoUrl: "https://example.com/custom-logo.png",
   attachResponseData: false,
   survey: {
