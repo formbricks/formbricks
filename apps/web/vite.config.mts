@@ -64,6 +64,7 @@ export default defineConfig({
         "modules/ui/components/icons/**",
         "app/share/**",
         "lib/shortUrl/**",
+        "app/[shortUrlId]",
         "modules/ee/contacts/[contactId]/**",
         "modules/ee/contacts/components/**",
         "modules/ee/two-factor-auth/**",
