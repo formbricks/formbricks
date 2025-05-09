@@ -126,7 +126,7 @@ export const setup = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && isNowExpired(expiresAt)) {
+    if (expiresAt && isNowExpired(new Date(expiresAt))) {
       console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
     }
@@ -164,13 +164,15 @@ export const setup = async (
     let isEnvironmentStateExpired = false;
     let isUserStateExpired = false;
 
-    if (isNowExpired(existingConfig.environment.expiresAt)) {
+    const environmentStateExpiresAt = new Date(existingConfig.environment.expiresAt);
+
+    if (isNowExpired(environmentStateExpiresAt)) {
       logger.debug("Environment state expired. Syncing.");
       isEnvironmentStateExpired = true;
     }
 
-    if (existingConfig.user.expiresAt && isNowExpired(existingConfig.user.expiresAt)) {
-      logger.debug("Person state expired. Syncing.");
+    if (existingConfig.user.expiresAt && isNowExpired(new Date(existingConfig.user.expiresAt))) {
+      logger.debug("User state expired. Syncing.");
       isUserStateExpired = true;
     }
 

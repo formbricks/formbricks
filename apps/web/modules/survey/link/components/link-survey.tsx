@@ -32,6 +32,8 @@ interface LinkSurveyProps {
   locale: string;
   isPreview: boolean;
   contactId?: string;
+  recaptchaSiteKey?: string;
+  isSpamProtectionEnabled?: boolean;
 }
 
 export const LinkSurvey = ({
@@ -52,6 +54,8 @@ export const LinkSurvey = ({
   locale,
   isPreview,
   contactId,
+  recaptchaSiteKey,
+  isSpamProtectionEnabled = false,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -203,6 +207,8 @@ export const LinkSurvey = ({
         singleUseResponseId={responseId}
         getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
         contactId={contactId}
+        recaptchaSiteKey={recaptchaSiteKey}
+        isSpamProtectionEnabled={isSpamProtectionEnabled}
       />
     </LinkSurveyWrapper>
   );

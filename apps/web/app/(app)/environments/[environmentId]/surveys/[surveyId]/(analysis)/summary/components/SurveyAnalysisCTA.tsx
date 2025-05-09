@@ -3,8 +3,11 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
+import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
@@ -22,6 +25,7 @@ interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
   user: TUser;
   surveyDomain: string;
+  responseCount: number;
 }
 
 interface ModalState {
@@ -37,11 +41,13 @@ export const SurveyAnalysisCTA = ({
   isReadOnly,
   user,
   surveyDomain,
+  responseCount,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -89,6 +95,24 @@ export const SurveyAnalysisCTA = ({
     setModalState((prev) => ({ ...prev, dropdown: false }));
   };
 
+  const duplicateSurveyAndRoute = async (surveyId: string) => {
+    setLoading(true);
+    const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+      environmentId: environment.id,
+      surveyId: surveyId,
+      targetEnvironmentId: environment.id,
+    });
+    if (duplicatedSurveyResponse?.data) {
+      toast.success(t("environments.surveys.survey_duplicated_successfully"));
+      router.push(`/environments/${environment.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
+      toast.error(errorMessage);
+    }
+    setIsCautionDialogOpen(false);
+    setLoading(false);
+  };
+
   const getPreviewUrl = () => {
     const separator = surveyUrl.includes("?") ? "&" : "?";
     return `${surveyUrl}${separator}preview=true`;
@@ -106,6 +130,8 @@ export const SurveyAnalysisCTA = ({
     { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
+
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   const iconActions = [
     {
@@ -144,7 +170,11 @@ export const SurveyAnalysisCTA = ({
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
-      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      onClick: () => {
+        responseCount && responseCount > 0
+          ? setIsCautionDialogOpen(true)
+          : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+      },
       isVisible: !isReadOnly,
     },
   ];
@@ -181,6 +211,20 @@ export const SurveyAnalysisCTA = ({
           ))}
           <SuccessMessage environment={environment} survey={survey} />
         </>
+      )}
+
+      {responseCount > 0 && (
+        <EditPublicSurveyAlertDialog
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          isLoading={loading}
+          primaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
+          primaryButtonText={t("environments.surveys.edit.caution_edit_duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
+        />
       )}
     </div>
   );

@@ -266,6 +266,7 @@ export function MultipleChoiceMultiQuestion({
                         ref={otherSpecify}
                         dir="auto"
                         id={`${otherOption.id}-label`}
+                        maxLength={250}
                         name={question.id}
                         tabIndex={isCurrent ? 0 : -1}
                         value={otherValue}

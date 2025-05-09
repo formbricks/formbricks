@@ -204,7 +204,7 @@ export const LoginForm = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full pr-8 rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 pr-8 shadow-sm sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />

@@ -16,7 +16,6 @@ interface AddressQuestionFormProps {
   question: TSurveyAddressQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyAddressQuestion>) => void;
-  lastQuestion: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;

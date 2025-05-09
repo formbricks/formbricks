@@ -1,6 +1,5 @@
 "use client";
 
-import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +28,6 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
         setOpen={setIsModalOpen}
         user={user}
         isFormbricksCloud={isFormbricksCloud}
-        formbricksLogout={formbricksLogout}
         organizationsWithSingleOwner={[]}
       />
       <Button

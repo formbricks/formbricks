@@ -26,13 +26,6 @@ vi.mock("@/modules/ui/components/environmentId-base-layout", () => ({
 vi.mock("@/modules/ui/components/toaster-client", () => ({
   ToasterClient: () => <div data-testid="ToasterClient" />,
 }));
-vi.mock("../../components/FormbricksClient", () => ({
-  FormbricksClient: ({ userId, email }: any) => (
-    <div data-testid="FormbricksClient">
-      {userId}-{email}
-    </div>
-  ),
-}));
 vi.mock("./components/EnvironmentStorageHandler", () => ({
   default: ({ environmentId }: any) => <div data-testid="EnvironmentStorageHandler">{environmentId}</div>,
 }));

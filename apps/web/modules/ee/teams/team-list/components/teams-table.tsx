@@ -2,7 +2,7 @@
 
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/action";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { ManageTeamButton } from "@/modules/ee/teams/team-list/components/manage-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";

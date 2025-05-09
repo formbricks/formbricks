@@ -16,7 +16,7 @@ const OnboardingLayout = async (props) => {
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
   if (!isAuthorized) {
-    throw AuthorizationError;
+    throw new AuthorizationError("User is not authorized to access this environment");
   }
 
   return <div className="flex-1 bg-slate-50">{children}</div>;

@@ -78,7 +78,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
                     if (
-                      errorMessage.includes(
+                      errorMessage?.includes(
                         t("environments.project.tags.unique_constraint_failed_on_the_fields")
                       )
                     ) {

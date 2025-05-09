@@ -41,6 +41,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   isBackButtonHidden: true,
   languages: {
     select: {
@@ -125,16 +126,24 @@ export const getSurvey = reactCache(
   async (surveyId: string): Promise<TSurvey> =>
     cache(
       async () => {
-        const survey = await prisma.survey.findUnique({
-          where: { id: surveyId },
-          select: selectSurvey,
-        });
+        try {
+          const survey = await prisma.survey.findUnique({
+            where: { id: surveyId },
+            select: selectSurvey,
+          });
 
-        if (!survey) {
-          throw new ResourceNotFoundError("Survey", surveyId);
+          if (!survey) {
+            throw new ResourceNotFoundError("Survey", surveyId);
+          }
+
+          return transformPrismaSurvey<TSurvey>(survey);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        return transformPrismaSurvey<TSurvey>(survey);
       },
       [`survey-editor-getSurvey-${surveyId}`],
       {

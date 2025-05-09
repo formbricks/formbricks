@@ -6,7 +6,7 @@ import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsUserIdentifyInput } from "@formbricks/types/js";
-import { getPersonState } from "./lib/personState";
+import { getPersonState } from "./lib/person-state";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);

@@ -7,7 +7,7 @@ import { ZodIssue, z } from "zod";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
 
-const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
+export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
     ...issues.reduce((acc, issue) => {
       acc[issue.path.join(".")] = {

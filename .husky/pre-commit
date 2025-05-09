@@ -16,6 +16,6 @@ if [ -f branch.json ]; then
     echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
   else
     pnpm run tolgee-pull
-    git add packages/lib/messages
+    git add apps/web/locales
   fi
 fi

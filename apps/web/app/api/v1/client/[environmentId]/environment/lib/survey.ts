@@ -49,6 +49,7 @@ export const getSurveysForEnvironmentState = reactCache(
               autoClose: true,
               styling: true,
               status: true,
+              recaptcha: true,
               segment: {
                 include: {
                   surveys: {

@@ -11,6 +11,7 @@ interface EditMembershipsProps {
   currentUserId: string;
   role: TOrganizationRole;
   canDoRoleManagement: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export const EditMemberships = async ({
@@ -18,6 +19,7 @@ export const EditMemberships = async ({
   currentUserId,
   role,
   canDoRoleManagement,
+  isUserManagementDisabledFromUi,
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
@@ -34,7 +36,9 @@ export const EditMemberships = async ({
 
           <div className="min-w-[80px] whitespace-nowrap">{t("common.status")}</div>
 
-          <div className="min-w-[125px] whitespace-nowrap">{t("common.actions")}</div>
+          {!isUserManagementDisabledFromUi && (
+            <div className="min-w-[125px] whitespace-nowrap">{t("common.actions")}</div>
+          )}
         </div>
 
         {role && (
@@ -46,6 +50,7 @@ export const EditMemberships = async ({
             currentUserRole={role}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           />
         )}
       </div>

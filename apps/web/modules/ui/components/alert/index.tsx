@@ -118,8 +118,8 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const { size: alertSize } = useAlertContext();
 
     // Determine button styling based on alert context
-    const buttonVariant = variant || (alertSize === "small" ? "link" : "secondary");
-    const buttonSize = size || (alertSize === "small" ? "sm" : "default");
+    const buttonVariant = variant ?? (alertSize === "small" ? "link" : "secondary");
+    const buttonSize = size ?? (alertSize === "small" ? "sm" : "default");
 
     return (
       <div

@@ -1,13 +1,12 @@
 import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { surveyCache } from "@/lib/survey/cache";
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { selectSurvey } from "@/modules/survey/lib/survey";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -52,33 +51,6 @@ export const createSurvey = async (
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const insightsEnabledValues = await Promise.all(
-          openTextQuestions.map(async (question) => {
-            const insightsEnabled = await getInsightsEnabled(question);
-
-            return { id: question.id, insightsEnabled };
-          })
-        );
-
-        data.questions = data.questions?.map((question) => {
-          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-          if (index !== -1) {
-            return {
-              ...question,
-              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-            };
-          }
-
-          return question;
-        });
-      }
-    }
-
     // Survey follow-ups
     if (restSurveyBody.followUps?.length) {
       data.followUps = {
@@ -91,6 +63,8 @@ export const createSurvey = async (
     } else {
       delete data.followUps;
     }
+
+    if (data.questions) checkForInvalidImagesInQuestions(data.questions);
 
     const survey = await prisma.survey.create({
       data: {
@@ -106,14 +80,6 @@ export const createSurvey = async (
 
     // if the survey created is an "app" survey, we also create a private segment for it.
     if (survey.type === "app") {
-      // const newSegment = await createSegment({
-      //   environmentId: parsedEnvironmentId,
-      //   surveyId: survey.id,
-      //   filters: [],
-      //   title: survey.id,
-      //   isPrivate: true,
-      // });
-
       const newSegment = await prisma.segment.create({
         data: {
           title: survey.id,

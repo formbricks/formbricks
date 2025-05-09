@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
-import { createApiKey, deleteApiKey, getApiKeysWithEnvironmentPermissions, updateApiKey } from "./api-key";
+import {
+  createApiKey,
+  deleteApiKey,
+  getApiKeyWithPermissions,
+  getApiKeysWithEnvironmentPermissions,
+  updateApiKey,
+} from "./api-key";
 
 const mockApiKey: ApiKey = {
   id: "apikey123",
@@ -36,6 +42,8 @@ const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     apiKey: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
       delete: vi.fn(),
       create: vi.fn(),
@@ -49,6 +57,7 @@ vi.mock("@/lib/cache/api-key", () => ({
     revalidate: vi.fn(),
     tag: {
       byOrganizationId: vi.fn(),
+      byHashedKey: vi.fn(),
     },
   },
 }));
@@ -105,6 +114,68 @@ describe("API Key Management", () => {
 
       await expect(getApiKeysWithEnvironmentPermissions("org123")).rejects.toThrow(DatabaseError);
     });
+
+    test("throws error if prisma throws an error", async () => {
+      const errToThrow = new Error("Mock error message");
+      vi.mocked(prisma.apiKey.findMany).mockRejectedValueOnce(errToThrow);
+      vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
+
+      await expect(getApiKeysWithEnvironmentPermissions("org123")).rejects.toThrow(errToThrow);
+    });
+  });
+
+  describe("getApiKeyWithPermissions", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    test("returns api key with permissions if found", async () => {
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValue({ ...mockApiKey });
+      const result = await getApiKeyWithPermissions("apikey123");
+      expect(result).toMatchObject({
+        ...mockApiKey,
+      });
+      expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
+        where: { hashedKey: "hashed_key_value" },
+        include: {
+          apiKeyEnvironments: {
+            include: {
+              environment: {
+                include: {
+                  project: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    test("returns null if api key not found", async () => {
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
+      const result = await getApiKeyWithPermissions("invalid-key");
+      expect(result).toBeNull();
+    });
+
+    test("throws DatabaseError on prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.apiKey.findUnique).mockRejectedValueOnce(errToThrow);
+      await expect(getApiKeyWithPermissions("apikey123")).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws error if prisma throws an error", async () => {
+      const errToThrow = new Error("Mock error message");
+      vi.mocked(prisma.apiKey.findUnique).mockRejectedValueOnce(errToThrow);
+      await expect(getApiKeyWithPermissions("apikey123")).rejects.toThrow(errToThrow);
+    });
   });
 
   describe("deleteApiKey", () => {
@@ -130,6 +201,13 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.delete).mockRejectedValueOnce(errToThrow);
 
       await expect(deleteApiKey(mockApiKey.id)).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws error if prisma throws an error", async () => {
+      const errToThrow = new Error("Mock error message");
+      vi.mocked(prisma.apiKey.delete).mockRejectedValueOnce(errToThrow);
+
+      await expect(deleteApiKey(mockApiKey.id)).rejects.toThrow(errToThrow);
     });
   });
 
@@ -191,6 +269,14 @@ describe("API Key Management", () => {
 
       await expect(createApiKey("org123", "user123", mockApiKeyData)).rejects.toThrow(DatabaseError);
     });
+
+    test("throws error if prisma throws an error", async () => {
+      const errToThrow = new Error("Mock error message");
+
+      vi.mocked(prisma.apiKey.create).mockRejectedValueOnce(errToThrow);
+
+      await expect(createApiKey("org123", "user123", mockApiKeyData)).rejects.toThrow(errToThrow);
+    });
   });
 
   describe("updateApiKey", () => {
@@ -214,6 +300,14 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.update).mockRejectedValueOnce(errToThrow);
 
       await expect(updateApiKey(mockApiKey.id, { label: "Updated API Key" })).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws error if prisma throws an error", async () => {
+      const errToThrow = new Error("Mock error message");
+
+      vi.mocked(prisma.apiKey.update).mockRejectedValueOnce(errToThrow);
+
+      await expect(updateApiKey(mockApiKey.id, { label: "Updated API Key" })).rejects.toThrow(errToThrow);
     });
   });
 });

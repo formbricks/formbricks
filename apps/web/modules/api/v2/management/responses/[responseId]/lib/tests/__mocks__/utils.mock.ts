@@ -12,7 +12,6 @@ export const openTextQuestion: Survey["questions"][number] = {
   inputType: "text",
   required: true,
   headline: { en: "Open Text Question" },
-  insightsEnabled: true,
 };
 
 export const fileUploadQuestion: Survey["questions"][number] = {

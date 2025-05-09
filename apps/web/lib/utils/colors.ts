@@ -1,4 +1,4 @@
-const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
+export const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
   // return undefined if hex is undefined, this is important for adding the default values to the CSS variables
   // TODO: find a better way to handle this
   if (!hex || hex === "") return undefined;

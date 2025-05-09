@@ -43,8 +43,6 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
       environment={environment}
       project={project}
       prefilledFilters={prefilledFilters}
-      // AI Survey Creation -- Need improvement
-      isAIEnabled={false}
     />
   );
 };

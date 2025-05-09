@@ -1,7 +1,5 @@
 import {
   AZURE_OAUTH_ENABLED,
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -77,8 +75,6 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             oidcDisplayName={OIDC_DISPLAY_NAME}
             userLocale={locale}
             emailFromSearchParams={emailFromSearchParams}
-            defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
-            defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
             isSsoEnabled={isSsoEnabled}
             samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

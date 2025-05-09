@@ -7,6 +7,7 @@ import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/c
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
@@ -32,7 +33,7 @@ import {
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 
-type PrismaSegment = Prisma.SegmentGetPayload<{
+export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
     surveys: {
       select: {
@@ -195,7 +196,8 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
 
     let suffix = 1;
     if (lastCopyTitle) {
-      const match = lastCopyTitle.match(/\((\d+)\)$/);
+      const regex = /\((\d+)\)$/;
+      const match = regex.exec(lastCopyTitle);
       if (match) {
         suffix = parseInt(match[1], 10) + 1;
       }
@@ -260,7 +262,7 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
     });
 
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
-    segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+    segment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
 
     surveyCache.revalidate({ environmentId: currentSegment.environmentId });
 
@@ -374,7 +376,7 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
     });
 
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
-    segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+    segment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
 
     return transformPrismaSegment(segment);
   } catch (error) {
@@ -622,6 +624,8 @@ export const evaluateSegment = async (
 
     return finalResult;
   } catch (error) {
+    logger.error("Error evaluating segment", error);
+
     throw error;
   }
 };

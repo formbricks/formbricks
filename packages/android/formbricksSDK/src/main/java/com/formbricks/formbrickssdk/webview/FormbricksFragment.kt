@@ -186,6 +186,7 @@ class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomShe
 
                 override fun onPageCommitVisible(view: WebView?, url: String?) {
                     dialog?.window?.setDimAmount(0.5f)
+                    Formbricks.callback?.onPageCommitVisible()
                     super.onPageCommitVisible(view, url)
                 }
             }

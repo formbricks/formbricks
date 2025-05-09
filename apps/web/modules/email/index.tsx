@@ -50,6 +50,10 @@ interface SendEmailDataProps {
 }
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
+  if (!IS_SMTP_CONFIGURED) {
+    logger.info("SMTP is not configured, skipping email sending");
+    return false;
+  }
   try {
     const transporter = createTransport({
       host: SMTP_HOST,

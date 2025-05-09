@@ -246,13 +246,17 @@ export const deleteResource = (group: TBaseFilters, resourceId: string) => {
 };
 
 export const deleteEmptyGroups = (group: TBaseFilters) => {
-  for (let i = 0; i < group.length; i++) {
+  // Iterate backward to safely remove items while iterating
+  for (let i = group.length - 1; i >= 0; i--) {
     const { resource } = group[i];
 
-    if (!isResourceFilter(resource) && resource.length === 0) {
-      group.splice(i, 1);
-    } else if (!isResourceFilter(resource)) {
+    if (!isResourceFilter(resource)) {
+      // Recursively delete empty groups within the current group first
       deleteEmptyGroups(resource);
+      // After cleaning the inner group, check if it has become empty
+      if (resource.length === 0) {
+        group.splice(i, 1);
+      }
     }
   }
 };

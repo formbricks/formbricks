@@ -49,7 +49,7 @@ module "rds-aurora" {
   db_subnet_group_name = module.vpc.database_subnet_group_name
   security_group_rules = {
     vpc_ingress = {
-      cidr_blocks = module.vpc.private_subnets_cidr_blocks
+      cidr_blocks = [module.vpc.vpc_cidr_block]
     }
   }
   performance_insights_enabled         = true

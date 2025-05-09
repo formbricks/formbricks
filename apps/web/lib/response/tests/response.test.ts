@@ -24,7 +24,7 @@ import {
   mockContactAttributeKey,
   mockOrganizationOutput,
   mockSurveyOutput,
-} from "../../survey/tests/__mock__/survey.mock";
+} from "../../survey/__mock__/survey.mock";
 import {
   deleteResponse,
   getResponse,

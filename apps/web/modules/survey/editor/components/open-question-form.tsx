@@ -232,7 +232,7 @@ const getPlaceholderByInputType = (inputType: TSurveyOpenTextQuestionInputType) 
     case "email":
       return "example@email.com";
     case "url":
-      return "http://...";
+      return "https://...";
     case "number":
       return "42";
     case "phone":

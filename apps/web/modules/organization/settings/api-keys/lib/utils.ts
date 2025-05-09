@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 
 // Permission level required for different HTTP methods
@@ -41,11 +42,11 @@ export const hasPermission = (
   }
 };
 
-export const getOrganizationAccessKeyDisplayName = (key: string) => {
+export const getOrganizationAccessKeyDisplayName = (key: string, t: TFnType) => {
   switch (key) {
     case "accessControl":
-      return "environments.project.api_keys.access_control";
+      return t("environments.project.api_keys.access_control");
     default:
-      return key;
+      return t(key);
   }
 };

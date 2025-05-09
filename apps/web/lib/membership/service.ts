@@ -63,18 +63,35 @@ export const createMembership = async (
       },
     });
 
-    if (existingMembership) {
+    if (existingMembership && existingMembership.role === data.role) {
       return existingMembership;
     }
 
-    const membership = await prisma.membership.create({
-      data: {
-        userId,
-        organizationId,
-        accepted: data.accepted,
-        role: data.role as TMembership["role"],
-      },
-    });
+    let membership: TMembership;
+    if (!existingMembership) {
+      membership = await prisma.membership.create({
+        data: {
+          userId,
+          organizationId,
+          accepted: data.accepted,
+          role: data.role as TMembership["role"],
+        },
+      });
+    } else {
+      membership = await prisma.membership.update({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId,
+          },
+        },
+        data: {
+          accepted: data.accepted,
+          role: data.role as TMembership["role"],
+        },
+      });
+    }
+
     organizationCache.revalidate({
       userId,
     });

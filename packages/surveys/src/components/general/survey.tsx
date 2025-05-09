@@ -1,8 +1,10 @@
 import { EndingCard } from "@/components/general/ending-card";
+import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
+import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -14,6 +16,7 @@ import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type JSX, useCallback } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -70,6 +73,8 @@ export function Survey({
   singleUseId,
   singleUseResponseId,
   isWebEnvironment = true,
+  getRecaptchaToken,
+  isSpamProtectionEnabled,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -99,8 +104,9 @@ export function Survey({
           appUrl,
           environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: () => {
+          onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
+            setErrorType(errorCode);
 
             if (getSetIsError) {
               getSetIsError((_prev) => {});
@@ -150,6 +156,7 @@ export function Survey({
     }
     return localSurvey.questions[0]?.id;
   });
+  const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
@@ -410,7 +417,7 @@ export function Survey({
   };
 
   const onResponseCreateOrUpdate = useCallback(
-    (responseUpdate: TResponseUpdate) => {
+    async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
       if (!appUrl || !environmentId) {
         onResponse?.({
@@ -426,9 +433,7 @@ export function Survey({
 
       // Skip response creation in preview mode but still trigger the onResponseCreated callback
       if (isPreviewMode) {
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -462,9 +467,7 @@ export function Survey({
           hiddenFields: hiddenFieldsRecord,
         });
 
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
       }
     },
     [
@@ -485,6 +488,17 @@ export function Survey({
   );
 
   useEffect(() => {
+    if (isPreviewMode || !survey.recaptcha?.enabled) return;
+
+    if (!isSpamProtectionEnabled) {
+      setShowError(true);
+      setErrorType(TResponseErrorCodesEnum.InvalidDeviceError);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- this is a one-time effect
+  }, []);
+
+  useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
@@ -492,9 +506,21 @@ export function Survey({
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
-  const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+  const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
+
+    if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
+      const token = await getRecaptchaToken();
+      if (responseQueue && token) {
+        responseQueue.setResponseRecaptchaToken(token);
+      } else {
+        setShowError(true);
+        setErrorType(TResponseErrorCodesEnum.RecaptchaError);
+        setLoadingElement(false);
+        return;
+      }
+    }
 
     pushVariableState(respondedQuestionId);
 
@@ -558,6 +584,7 @@ export function Survey({
   const retryResponse = () => {
     if (responseQueue) {
       setShowError(false);
+      setErrorType(undefined);
       void responseQueue.processQueue();
     } else {
       onRetry?.();
@@ -566,13 +593,28 @@ export function Survey({
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
-      return (
-        <ResponseErrorComponent
-          responseData={responseData}
-          questions={localSurvey.questions}
-          onRetry={retryResponse}
-        />
-      );
+      switch (errorType) {
+        case TResponseErrorCodesEnum.ResponseSendingError:
+          return (
+            <ResponseErrorComponent
+              responseData={responseData}
+              questions={localSurvey.questions}
+              onRetry={retryResponse}
+            />
+          );
+        case TResponseErrorCodesEnum.RecaptchaError:
+        case TResponseErrorCodesEnum.InvalidDeviceError:
+          return (
+            <>
+              {localSurvey.type !== "link" ? (
+                <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
+                  <SurveyCloseButton onClose={onClose} />
+                </div>
+              ) : null}
+              <ErrorComponent errorType={errorType} />
+            </>
+          );
+      }
     }
 
     const content = () => {
@@ -676,7 +718,10 @@ export function Survey({
             {content()}
           </div>
           <div className="fb-space-y-4">
-            {isBrandingEnabled ? <FormbricksBranding /> : null}
+            <div className="fb-px-4 space-y-2">
+              {isBrandingEnabled ? <FormbricksBranding /> : null}
+              {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
+            </div>
             {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>
         </div>

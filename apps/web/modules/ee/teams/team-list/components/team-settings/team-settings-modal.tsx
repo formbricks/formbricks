@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
@@ -207,7 +207,7 @@ export const TeamSettingsModal = ({
       <div className="sticky top-0 flex h-full flex-col rounded-lg">
         <button
           className={cn(
-            "absolute top-0 right-0 hidden pt-4 pr-4 text-slate-400 hover:text-slate-500 focus:ring-0 focus:outline-none sm:block"
+            "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
           )}
           onClick={closeSettingsModal}>
           <XIcon className="h-6 w-6 rounded-md bg-white" />

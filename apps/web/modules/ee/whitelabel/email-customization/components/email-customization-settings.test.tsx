@@ -1,9 +1,9 @@
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import {
   removeOrganizationEmailLogoUrlAction,
   sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
-import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -18,8 +18,8 @@ vi.mock("@/modules/ee/whitelabel/email-customization/actions", () => ({
   updateOrganizationEmailLogoUrlAction: vi.fn(),
 }));
 
-vi.mock("@/modules/ui/components/file-input/lib/utils", () => ({
-  uploadFile: vi.fn(),
+vi.mock("@/app/lib/fileUpload", () => ({
+  handleFileUpload: vi.fn(),
 }));
 
 const defaultProps = {
@@ -82,8 +82,7 @@ describe("EmailCustomizationSettings", () => {
   });
 
   test("calls updateOrganizationEmailLogoUrlAction after uploading and clicking save", async () => {
-    vi.mocked(uploadFile).mockResolvedValueOnce({
-      uploaded: true,
+    vi.mocked(handleFileUpload).mockResolvedValueOnce({
       url: "https://example.com/new-uploaded-logo.png",
     });
     vi.mocked(updateOrganizationEmailLogoUrlAction).mockResolvedValue({
@@ -104,7 +103,7 @@ describe("EmailCustomizationSettings", () => {
     await user.click(saveButton[0]);
 
     // The component calls `uploadFile` then `updateOrganizationEmailLogoUrlAction`
-    expect(uploadFile).toHaveBeenCalledWith(testFile, ["jpeg", "png", "jpg", "webp"], "env-123");
+    expect(handleFileUpload).toHaveBeenCalledWith(testFile, "env-123", ["jpeg", "png", "jpg", "webp"]);
     expect(updateOrganizationEmailLogoUrlAction).toHaveBeenCalledWith({
       organizationId: "org-123",
       logoUrl: "https://example.com/new-uploaded-logo.png",

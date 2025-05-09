@@ -15,7 +15,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
-import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
+import React, {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -62,7 +69,7 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-  emptyDropdownText = "environments.surveys.edit.no_option_found",
+  emptyDropdownText,
 }: InputComboboxProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
@@ -175,14 +182,14 @@ export const InputCombobox = ({
         }
 
         return (
-          <>
+          <Fragment key={idx}>
             {idx !== 0 && <span>,</span>}
             <div className="flex items-center gap-2">
               {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
               {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
               <span>{option.label}</span>
             </div>
-          </>
+          </Fragment>
         );
       });
     } else {
@@ -267,7 +274,7 @@ export const InputCombobox = ({
             )}
             <CommandList className="m-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
-                {t(emptyDropdownText)}
+                {emptyDropdownText ? t(emptyDropdownText) : t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>
               {options && options.length > 0 && (
                 <CommandGroup>

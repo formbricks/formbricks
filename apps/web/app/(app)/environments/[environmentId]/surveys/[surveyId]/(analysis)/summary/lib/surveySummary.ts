@@ -1,5 +1,4 @@
 import "server-only";
-import { getInsightsBySurveyIdQuestionId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/insights";
 import { cache } from "@/lib/cache";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { displayCache } from "@/lib/display/cache";
@@ -317,11 +316,9 @@ export const getQuestionSummary = async (
     switch (question.type) {
       case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
-        const insightResponsesIds: string[] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
-            insightResponsesIds.push(response.id);
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
@@ -331,20 +328,12 @@ export const getQuestionSummary = async (
             });
           }
         });
-        const insights = await getInsightsBySurveyIdQuestionId(
-          survey.id,
-          question.id,
-          insightResponsesIds,
-          50
-        );
 
         summary.push({
           type: question.type,
           question,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
-          insights,
-          insightsEnabled: question.insightsEnabled,
         });
 
         values = [];
@@ -420,7 +409,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             value: label,
             count,
@@ -519,7 +508,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             rating: parseInt(label),
             count,

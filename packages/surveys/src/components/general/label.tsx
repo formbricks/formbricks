@@ -1,7 +1,12 @@
 interface LabelProps {
   text: string;
+  htmlForId?: string;
 }
 
-export function Label({ text }: Readonly<LabelProps>) {
-  return <label className="fb-text-subheading fb-font-normal fb-text-sm">{text}</label>;
+export function Label({ text, htmlForId }: Readonly<LabelProps>) {
+  return (
+    <label htmlFor={htmlForId} className="fb-text-subheading fb-font-normal fb-text-sm">
+      {text}
+    </label>
+  );
 }

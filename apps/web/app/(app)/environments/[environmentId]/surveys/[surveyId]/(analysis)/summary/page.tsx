@@ -1,19 +1,11 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import {
-  DEFAULT_LOCALE,
-  DOCUMENTS_PER_PAGE,
-  MAX_RESPONSES_FOR_INSIGHT_GENERATION,
-  WEBAPP_URL,
-} from "@/lib/constants";
+import { DEFAULT_LOCALE, DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -25,7 +17,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const surveyId = params.surveyId;
 
@@ -50,11 +42,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
-  const isAIEnabled = await getIsAIEnabled({
-    isAIEnabled: organization.isAIEnabled,
-    billing: organization.billing,
-  });
-  const shouldGenerateInsights = needsInsightsGeneration(survey);
   const surveyDomain = getSurveyDomain();
 
   return (
@@ -68,15 +55,9 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             isReadOnly={isReadOnly}
             user={user}
             surveyDomain={surveyDomain}
+            responseCount={totalResponseCount}
           />
         }>
-        {isAIEnabled && shouldGenerateInsights && (
-          <EnableInsightsBanner
-            surveyId={survey.id}
-            surveyResponseCount={totalResponseCount}
-            maxResponseCount={MAX_RESPONSES_FOR_INSIGHT_GENERATION}
-          />
-        )}
         <SurveyAnalysisNavigation
           environmentId={environment.id}
           survey={survey}
@@ -91,7 +72,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         webAppUrl={WEBAPP_URL}
         user={user}
         totalResponseCount={totalResponseCount}
-        isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
         isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}

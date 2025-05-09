@@ -1,11 +1,10 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
@@ -56,7 +55,7 @@ export const POST = async (request: Request): Promise<Response> => {
       );
     }
 
-    const environmentId = inputValidation.data.environmentId;
+    const { environmentId } = inputValidation.data;
 
     if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
       return responses.unauthorizedResponse();
@@ -69,19 +68,8 @@ export const POST = async (request: Request): Promise<Response> => {
 
     const surveyData = { ...inputValidation.data, environmentId };
 
-    if (surveyData.followUps?.length) {
-      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
-      if (!isSurveyFollowUpsEnabled) {
-        return responses.forbiddenResponse("Survey follow ups are not enabled allowed for this organization");
-      }
-    }
-
-    if (surveyData.languages && surveyData.languages.length) {
-      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
-      if (!isMultiLanguageEnabled) {
-        return responses.forbiddenResponse("Multi language is not enabled for this organization");
-      }
-    }
+    const featureCheckResult = await checkFeaturePermissions(surveyData, organization);
+    if (featureCheckResult) return featureCheckResult;
 
     const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
     return responses.successResponse(survey);

@@ -57,7 +57,7 @@ export const getTeamsByOrganizationId = reactCache(
     )()
 );
 
-const getUserTeams = reactCache(
+export const getUserTeams = reactCache(
   async (userId: string, organizationId: string): Promise<TUserTeam[]> =>
     cache(
       async () => {

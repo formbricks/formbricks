@@ -9,7 +9,7 @@ import { ZId } from "@formbricks/types/common";
 import { ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient
-  .schema(ZUserUpdateInput.partial())
+  .schema(ZUserUpdateInput.pick({ name: true, locale: true }))
   .action(async ({ parsedInput, ctx }) => {
     return await updateUser(ctx.user.id, parsedInput);
   });

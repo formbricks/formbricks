@@ -16,12 +16,12 @@ export function TolgeeBase() {
       apiKey,
       apiUrl,
       staticData: {
-        "en-US": () => import("@/lib/messages/en-US.json"),
-        "de-DE": () => import("@/lib/messages/de-DE.json"),
-        "fr-FR": () => import("@/lib/messages/fr-FR.json"),
-        "pt-BR": () => import("@/lib/messages/pt-BR.json"),
-        "pt-PT": () => import("@/lib/messages/pt-PT.json"),
-        "zh-Hant-TW": () => import("@/lib/messages/zh-Hant-TW.json"),
+        "en-US": () => import("@/locales/en-US.json"),
+        "de-DE": () => import("@/locales/de-DE.json"),
+        "fr-FR": () => import("@/locales/fr-FR.json"),
+        "pt-BR": () => import("@/locales/pt-BR.json"),
+        "pt-PT": () => import("@/locales/pt-PT.json"),
+        "zh-Hant-TW": () => import("@/locales/zh-Hant-TW.json"),
       },
     });
 }

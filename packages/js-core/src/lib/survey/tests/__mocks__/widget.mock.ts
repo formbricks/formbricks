@@ -19,6 +19,10 @@ export const mockSurvey: TEnvironmentStateSurvey = {
   },
   questions: [],
   variables: [],
+  recaptcha: {
+    enabled: false,
+    threshold: 0.5,
+  },
   type: "app", // "link" or "app"
   showLanguageSwitch: true,
   endings: [],

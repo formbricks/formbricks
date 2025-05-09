@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 
 export const getProjectWithLanguagesByEnvironmentId = reactCache(
   async (environmentId: string): Promise<TProjectWithLanguages | null> =>
@@ -49,9 +49,39 @@ export const getUserProjects = reactCache(
     cache(
       async () => {
         try {
+          const orgMembership = await prisma.membership.findFirst({
+            where: {
+              userId,
+              organizationId,
+            },
+          });
+
+          if (!orgMembership) {
+            throw new ValidationError("User is not a member of this organization");
+          }
+
+          let projectWhereClause: Prisma.ProjectWhereInput = {};
+
+          if (orgMembership.role === "member") {
+            projectWhereClause = {
+              projectTeams: {
+                some: {
+                  team: {
+                    teamUsers: {
+                      some: {
+                        userId,
+                      },
+                    },
+                  },
+                },
+              },
+            };
+          }
+
           const projects = await prisma.project.findMany({
             where: {
               organizationId,
+              ...projectWhereClause,
             },
             select: {
               id: true,

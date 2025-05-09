@@ -159,8 +159,9 @@ export function ContactInfoQuestion({
               return (
                 field.show && (
                   <div className="fb-space-y-1">
-                    <Label text={isFieldRequired() ? `${field.label}*` : field.label} />
+                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
                     <Input
+                      id={field.id}
                       ref={index === 0 ? contactInfoRef : null}
                       key={field.id}
                       required={isFieldRequired()}

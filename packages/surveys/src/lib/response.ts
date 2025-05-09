@@ -12,7 +12,7 @@ export const processResponseData = (
       if (Array.isArray(responseData)) {
         responseData = responseData
           .filter((item) => item !== null && item !== undefined && item !== "")
-          .join(", ");
+          .join("; ");
         return responseData;
       } else {
         const formattedString = Object.entries(responseData)

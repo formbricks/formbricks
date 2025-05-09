@@ -11,14 +11,6 @@
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
-    "@formbricks/demo#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/js#build"],
-      "persistent": true
-    },
-    "@formbricks/demo#lint": {
-      "dependsOn": ["@formbricks/js#build"]
-    },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
       "outputs": ["packages/i18n-utils/dist/**"]
@@ -29,29 +21,13 @@
     "@formbricks/i18n-utils#test": {
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
-    "@formbricks/js#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/js#build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/js#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/js#build"],
-      "persistent": true
-    },
-    "@formbricks/js#lint": {
-      "dependsOn": ["@formbricks/js-core#build"]
-    },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
     "@formbricks/react-native#build": {
@@ -78,36 +54,27 @@
     },
     "@formbricks/web#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "AI_AZURE_EMBEDDINGS_API_KEY",
-        "AI_AZURE_LLM_API_KEY",
-        "AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID",
-        "AI_AZURE_EMBEDDINGS_RESSOURCE_NAME",
-        "AI_AZURE_LLM_DEPLOYMENT_ID",
-        "AI_AZURE_LLM_RESSOURCE_NAME",
-        "LANGFUSE_SECRET_KEY",
-        "LANGFUSE_PUBLIC_KEY",
-        "LANGFUSE_BASEURL",
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
+        "AUTH_SSO_DEFAULT_TEAM_ID",
+        "AUTH_SKIP_INVITE_FOR_SSO",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
-        "DEFAULT_ORGANIZATION_ID",
-        "DEFAULT_ORGANIZATION_ROLE",
         "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
         "CUSTOM_CACHE_DISABLED",
@@ -118,8 +85,6 @@
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
-        "FORMBRICKS_API_HOST",
-        "FORMBRICKS_ENVIRONMENT_ID",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -177,7 +142,6 @@
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
         "SENTRY_DSN",
-        "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
@@ -196,6 +160,8 @@
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
+        "RECAPTCHA_SITE_KEY",
+        "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -205,7 +171,8 @@
         "UNSPLASH_ACCESS_KEY",
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
-        "PROMETHEUS_EXPORTER_PORT"
+        "PROMETHEUS_EXPORTER_PORT",
+        "DISABLE_USER_MANAGEMENT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

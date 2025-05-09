@@ -3,8 +3,8 @@ import { cache, revalidateTag } from "@/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
-  IS_AI_CONFIGURED,
   IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
   PROJECT_FEATURE_KEYS,
 } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -90,6 +90,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           projects: 3,
           whitelabel: true,
           removeBranding: true,
+          spamProtection: true,
           ai: true,
           saml: true,
         },
@@ -159,6 +160,7 @@ export const getEnterpriseLicense = async (): Promise<{
           contacts: false,
           ai: false,
           saml: false,
+          spamProtection: false,
         },
         lastChecked: new Date(),
       };
@@ -389,23 +391,21 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   return licenseFeatures.sso && licenseFeatures.saml;
 };
 
-export const getIsOrganizationAIReady = async (billingPlan: Organization["billing"]["plan"]) => {
-  if (!IS_AI_CONFIGURED) return false;
+export const getIsSpamProtectionEnabled = async (
+  billingPlan: Organization["billing"]["plan"]
+): Promise<boolean> => {
+  if (!IS_RECAPTCHA_CONFIGURED) return false;
+
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.ai : false;
+    return previousResult?.features ? previousResult.features.spamProtection : false;
   }
-  const license = await getEnterpriseLicense();
+  if (IS_FORMBRICKS_CLOUD)
+    return billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE;
 
-  if (IS_FORMBRICKS_CLOUD) {
-    return Boolean(license.features?.ai && billingPlan !== PROJECT_FEATURE_KEYS.FREE);
-  }
-
-  return Boolean(license.features?.ai);
-};
-
-export const getIsAIEnabled = async (organization: Pick<Organization, "isAIEnabled" | "billing">) => {
-  return organization.isAIEnabled && (await getIsOrganizationAIReady(organization.billing.plan));
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.spamProtection;
 };
 
 export const getOrganizationProjectsLimit = async (

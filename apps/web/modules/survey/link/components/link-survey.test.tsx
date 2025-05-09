@@ -94,7 +94,7 @@ const renderComponent = (props: Partial<React.ComponentProps<typeof LinkSurvey>>
     IS_FORMBRICKS_CLOUD: false,
     locale: "en",
     isPreview: false,
-  };
+  } as any;
   return render(<LinkSurvey {...defaultProps} {...props} />);
 };
 

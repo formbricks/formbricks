@@ -18,6 +18,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],

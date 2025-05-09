@@ -1,19 +1,15 @@
-import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
 import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
-import { CRON_SECRET, IS_AI_CONFIGURED } from "@/lib/constants";
+import { CRON_SECRET } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
-import { getPromptText } from "@/lib/utils/ai";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { PipelineTriggers, Webhook } from "@prisma/client";
@@ -199,50 +195,6 @@ export const POST = async (request: Request) => {
         logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
-
-    // generate embeddings for all open text question responses for all paid plans
-    const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    if (hasSurveyOpenTextQuestions) {
-      const isAICofigured = IS_AI_CONFIGURED;
-      if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const isAIEnabled = await getIsAIEnabled({
-          isAIEnabled: organization.isAIEnabled,
-          billing: organization.billing,
-        });
-
-        if (isAIEnabled) {
-          for (const question of survey.questions) {
-            if (question.type === "openText" && question.insightsEnabled) {
-              const isQuestionAnswered =
-                response.data[question.id] !== undefined && response.data[question.id] !== "";
-              if (!isQuestionAnswered) {
-                continue;
-              }
-
-              const headline = parseRecallInfo(
-                question.headline[response.language ?? "default"],
-                response.data,
-                response.variables
-              );
-
-              const text = getPromptText(headline, response.data[question.id] as string);
-              // TODO: check if subheadline gives more context and better embeddings
-              try {
-                await createDocumentAndAssignInsight(survey.name, {
-                  environmentId,
-                  surveyId,
-                  responseId: response.id,
-                  questionId: question.id,
-                  text,
-                });
-              } catch (e) {
-                logger.error({ error: e, url: request.url }, "Error creating document and assigning insight");
-              }
-            }
-          }
-        }
-      }
-    }
   } else {
     // Await webhook promises if no emails are sent (with allSettled to prevent early rejection)
     const results = await Promise.allSettled(webhookPromises);

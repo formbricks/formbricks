@@ -4,7 +4,7 @@ import { hashPassword } from "@/lib/auth";
 import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
-import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { createOrganization } from "@/lib/organization/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
@@ -14,7 +14,6 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
 import { UnknownError } from "@formbricks/types/errors";
-import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreateUserAction = z.object({
@@ -23,8 +22,6 @@ const ZCreateUserAction = z.object({
   password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
-  defaultOrganizationId: z.string().optional(),
-  defaultOrganizationRole: ZOrganizationRole.optional(),
   emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
@@ -92,42 +89,21 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
 
     await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
     await deleteInvite(invite.id);
-  }
-  // Handle organization assignment
-  else {
-    let organizationId: string | undefined;
-    let role: TOrganizationRole = "owner";
-
-    if (parsedInput.defaultOrganizationId) {
-      // Use existing or create organization with specific ID
-      let organization = await getOrganization(parsedInput.defaultOrganizationId);
-      if (!organization) {
-        organization = await createOrganization({
-          id: parsedInput.defaultOrganizationId,
-          name: `${user.name}'s Organization`,
-        });
-      } else {
-        role = parsedInput.defaultOrganizationRole || "owner";
-      }
-      organizationId = organization.id;
-    } else {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (isMultiOrgEnabled) {
-        // Create new organization
-        const organization = await createOrganization({ name: `${user.name}'s Organization` });
-        organizationId = organization.id;
-      }
-    }
-
-    if (organizationId) {
-      await createMembership(organizationId, user.id, { role, accepted: true });
+  } else {
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    if (isMultiOrgEnabled) {
+      const organization = await createOrganization({ name: `${user.name}'s Organization` });
+      await createMembership(organization.id, user.id, {
+        role: "owner",
+        accepted: true,
+      });
       await updateUser(user.id, {
         notificationSettings: {
           ...user.notificationSettings,
           alert: { ...user.notificationSettings?.alert },
           weeklySummary: { ...user.notificationSettings?.weeklySummary },
           unsubscribedOrganizationIds: Array.from(
-            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organizationId])
+            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
           ),
         },
       });

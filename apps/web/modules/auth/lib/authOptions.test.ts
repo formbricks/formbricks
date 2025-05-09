@@ -8,6 +8,18 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+// Mock next/headers
+vi.mock("next/headers", () => ({
+  cookies: () => ({
+    get: (name: string) => {
+      if (name === "next-auth.callback-url") {
+        return { value: "/" };
+      }
+      return null;
+    },
+  }),
+}));
+
 const mockUserId = "cm5yzxcp900000cl78fzocjal";
 const mockPassword = randomBytes(12).toString("hex");
 const mockHashedPassword = await hashPassword(mockPassword);

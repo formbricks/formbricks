@@ -13,6 +13,7 @@ import {
   type TSurveyHiddenFields,
   type TSurveyProjectOverwrites,
   type TSurveyQuestions,
+  type TSurveyRecaptcha,
   type TSurveySingleUse,
   type TSurveyStyling,
   type TSurveyVariables,
@@ -39,6 +40,7 @@ declare global {
     export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
+    export type SurveyRecaptcha = TSurveyRecaptcha;
     export type OrganizationBilling = TOrganizationBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;

@@ -42,7 +42,7 @@ export const createContactAttributeKey = async (
   key: string,
   type: TContactAttributeKeyType
 ): Promise<TContactAttributeKey | null> => {
-  validateInputs([environmentId, ZId], [name, ZString], [type, ZContactAttributeKeyType]);
+  validateInputs([environmentId, ZId], [key, ZString], [type, ZContactAttributeKeyType]);
 
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
     where: {

@@ -40,8 +40,8 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
-      filteredData.map(async (project) => {
-        project.environments.map(async (environment) => {
+      filteredData.forEach(async (project) => {
+        project.environments.forEach(async (environment) => {
           await copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,

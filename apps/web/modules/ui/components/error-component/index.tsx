@@ -12,8 +12,10 @@ export const ErrorComponent: React.FC = () => {
           <XCircleIcon className="h-12 w-12 text-red-400" aria-hidden="true" />
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-red-800">{t("common.error_component_title")}</h3>
-          <div className="mt-2 text-sm text-red-700">
+          <h3 className="text-sm font-medium text-red-800" data-testid="error-title">
+            {t("common.error_component_title")}
+          </h3>
+          <div className="mt-2 text-sm text-red-700" data-testid="error-description">
             <p>{t("common.error_component_description")}</p>
           </div>
         </div>

@@ -1,3 +1,7 @@
+import { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/lib/constants";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { ApiErrorResponse } from "@formbricks/types/errors";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { ApiClient } from "./api-client";
 import { SurveyState } from "./survey-state";
@@ -6,12 +10,12 @@ interface QueueConfig {
   appUrl: string;
   environmentId: string;
   retryAttempts: number;
-  onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
+  onResponseSendingFailed?: (responseUpdate: TResponseUpdate, errorCode?: TResponseErrorCodesEnum) => void;
   onResponseSendingFinished?: () => void;
   setSurveyState?: (state: SurveyState) => void;
 }
 
-const delay = (ms: number): Promise<void> => {
+export const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
@@ -23,6 +27,7 @@ export class ResponseQueue {
   private surveyState: SurveyState;
   private isRequestInProgress = false;
   readonly api: ApiClient;
+  private responseRecaptchaToken?: string;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -31,6 +36,10 @@ export class ResponseQueue {
       appUrl: config.appUrl,
       environmentId: config.environmentId,
     });
+  }
+
+  setResponseRecaptchaToken(token?: string) {
+    this.responseRecaptchaToken = token;
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -45,8 +54,7 @@ export class ResponseQueue {
   }
 
   async processQueue() {
-    if (this.isRequestInProgress) return;
-    if (this.queue.length === 0) return;
+    if (this.isRequestInProgress || this.queue.length === 0) return;
 
     this.isRequestInProgress = true;
 
@@ -54,11 +62,22 @@ export class ResponseQueue {
     let attempts = 0;
 
     while (attempts < this.config.retryAttempts) {
-      const success = await this.sendResponse(responseUpdate);
-      if (success) {
+      const res = await this.sendResponse(responseUpdate);
+
+      if (res.ok) {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
+
+      if (res.error.details?.code === RECAPTCHA_VERIFICATION_ERROR_CODE) {
+        this.isRequestInProgress = false;
+
+        if (this.config.onResponseSendingFailed) {
+          this.config.onResponseSendingFailed(responseUpdate, TResponseErrorCodesEnum.RecaptchaError);
+        }
+        return;
+      }
+
       console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
       await delay(1000); // wait for 1 second before retrying
       attempts++;
@@ -69,19 +88,19 @@ export class ResponseQueue {
       console.error("Failed to send response after 2 attempts.");
       // If the response fails finally, inform the user
       if (this.config.onResponseSendingFailed) {
-        this.config.onResponseSendingFailed(responseUpdate);
+        this.config.onResponseSendingFailed(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
       }
       this.isRequestInProgress = false;
     } else {
-      if (responseUpdate.finished && this.config.onResponseSendingFinished) {
-        this.config.onResponseSendingFinished();
+      if (responseUpdate.finished) {
+        this.config.onResponseSendingFinished?.();
       }
       this.isRequestInProgress = false;
       this.processQueue(); // process the next item in the queue if any
     }
   }
 
-  async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
+  async sendResponse(responseUpdate: TResponseUpdate): Promise<Result<boolean, ApiErrorResponse>> {
     try {
       if (this.surveyState.responseId !== null) {
         await this.api.updateResponse({ ...responseUpdate, responseId: this.surveyState.responseId });
@@ -94,10 +113,11 @@ export class ResponseQueue {
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
+          recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
 
         if (!response.ok) {
-          throw new Error("Could not create response");
+          return err(response.error);
         }
 
         this.surveyState.updateResponseId(response.data.id);
@@ -105,10 +125,14 @@ export class ResponseQueue {
           this.config.setSurveyState(this.surveyState);
         }
       }
-      return true;
+      return ok(true);
     } catch (error) {
-      console.error(error);
-      return false;
+      console.error("Formbricks: Error sending response", error);
+      return err({
+        code: "internal_server_error",
+        message: "An error occurred while sending the response.",
+        status: 500,
+      });
     }
   }
 
