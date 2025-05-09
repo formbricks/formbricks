@@ -11,7 +11,6 @@ const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 
 // @fortedigital/nextjs-cache-handler dependencies
 const createRedisHandler = require("@fortedigital/nextjs-cache-handler/redis-strings").default;
-const { Next15CacheHandler } = require("@fortedigital/nextjs-cache-handler/next-15-cache-handler");
 
 // Usual onCreation from @neshca/cache-handler
 CacheHandler.onCreation(() => {
@@ -94,4 +93,4 @@ CacheHandler.onCreation(() => {
   return global.cacheHandlerConfigPromise;
 });
 
-module.exports = new Next15CacheHandler();
+module.exports = CacheHandler;
