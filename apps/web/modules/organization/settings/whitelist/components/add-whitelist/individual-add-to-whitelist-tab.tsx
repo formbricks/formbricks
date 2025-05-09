@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import { useDebounce } from "react-use";
 import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
@@ -16,7 +17,6 @@ import { TUserWhitelistInfo } from "@formbricks/types/user";
 interface IndividualAddToWhitelistTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { email: string }[]) => void;
-  environmentId: string;
   membershipRole?: TOrganizationRole;
   organizationId: string;
 }
@@ -24,10 +24,21 @@ interface IndividualAddToWhitelistTabProps {
 export const IndividualAddToWhitelistTab = ({
   setOpen,
   onSubmit,
-  environmentId,
+  organizationId,
 }: IndividualAddToWhitelistTabProps) => {
   const [nonWhitelistedUsers, setNonWhitelistedUsers] = useState<TUserWhitelistInfo[]>([]);
-  // const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useDebounce(
+    () => {
+      setDebouncedQuery(searchQuery);
+    },
+    300,
+    [searchQuery]
+  );
+
   const ZFormSchema = z.object({
     email: z.string(),
   });
@@ -50,20 +61,24 @@ export const IndividualAddToWhitelistTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     onSubmit([data]);
+
     setOpen(false);
     reset();
   };
 
   const fetchNonWhitelistedUsers = useCallback(async () => {
+    setLoading(true);
     const data = await getNonWhitelistedUsersAction({
       take: 10,
       skip: 0,
-      organizationId: environmentId,
+      organizationId: organizationId,
+      query: debouncedQuery,
     });
     if (data && data.data) {
       setNonWhitelistedUsers(data.data);
     }
-  }, []);
+    setLoading(false);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     fetchNonWhitelistedUsers();
@@ -97,6 +112,9 @@ export const IndividualAddToWhitelistTab = ({
                 clearable
                 showSearch={true}
                 withInput={false}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                loading={loading}
               />
             )}
           />

@@ -14,7 +14,6 @@ interface AddWhitelistModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  environmentId: string;
   membershipRole?: TOrganizationRole;
   organizationId: string;
 }
@@ -23,7 +22,6 @@ export const AddWhitelistModal = ({
   open,
   setOpen,
   onSubmit,
-  environmentId,
   membershipRole,
   organizationId,
 }: AddWhitelistModalProps) => {
@@ -79,7 +77,6 @@ export const AddWhitelistModal = ({
       <div className="flex flex-col gap-6 p-6">
         <IndividualAddToWhitelistTab
           setOpen={setOpen}
-          environmentId={environmentId}
           onSubmit={onSubmit}
           membershipRole={membershipRole}
           organizationId={organizationId}
