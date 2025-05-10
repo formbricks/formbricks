@@ -26,7 +26,6 @@ describe("redis rate limiter", () => {
     vi.doMock("@/lib/constants", () => ({
       ...constants,
       REDIS_HTTP_URL: "http://redis",
-      ENTERPRISE_LICENSE_KEY: "key",
     }));
   });
 
