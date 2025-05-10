@@ -1,21 +1,21 @@
-// tests for rate-limit.ts
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 describe("in-memory rate limiter", () => {
   test("allows requests within limit and throws after limit", async () => {
-    const limiter = await import("./rate-limit");
-    const rateLimit = limiter.rateLimit({ interval: 1, allowedPerInterval: 2 });
-    expect(() => rateLimit("a")).not.toThrow();
-    expect(() => rateLimit("a")).not.toThrow();
-    expect(() => rateLimit("a")).toThrow("Rate limit exceeded");
+    const { rateLimit } = await import("./rate-limit");
+    const limiterFn = rateLimit({ interval: 1, allowedPerInterval: 2 });
+    await expect(limiterFn("a")).resolves.toBeUndefined();
+    await expect(limiterFn("a")).resolves.toBeUndefined();
+    await expect(limiterFn("a")).rejects.toThrow("Rate limit exceeded");
   });
 
   test("separate tokens have separate counts", async () => {
-    const limiter = await import("./rate-limit");
-    const rateLimit = limiter.rateLimit({ interval: 1, allowedPerInterval: 2 });
-
-    expect(() => rateLimit("x")).not.toThrow();
-    expect(() => rateLimit("y")).not.toThrow();
+    const { rateLimit } = await import("./rate-limit");
+    const limiterFn = rateLimit({ interval: 1, allowedPerInterval: 2 });
+    await expect(limiterFn("x")).resolves.toBeUndefined();
+    await expect(limiterFn("y")).resolves.toBeUndefined();
+    await expect(limiterFn("x")).resolves.toBeUndefined();
+    await expect(limiterFn("y")).resolves.toBeUndefined();
   });
 });
 
