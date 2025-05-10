@@ -5,7 +5,7 @@ import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { FollowUpEmail } from "./follow-up";
+import { FollowUpEmail } from "./follow-up-email";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -24,7 +24,28 @@ vi.mock("@/modules/email/emails/lib/utils", () => ({
 }));
 
 const defaultProps = {
-  html: "<p>Test HTML Content</p>",
+  followUp: {
+    id: "followupid",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Follow Up Email",
+    trigger: {
+      type: "response" as const,
+      properties: null,
+    },
+    action: {
+      type: "send-email" as const,
+      properties: {
+        to: "",
+        from: "test@test.com",
+        replyTo: ["test@test.com"],
+        subject: "Subject",
+        body: "<p>Test HTML Content</p>",
+        attachResponseData: true,
+      },
+    },
+    surveyId: "surveyid",
+  },
   logoUrl: "https://example.com/custom-logo.png",
   attachResponseData: false,
   survey: {

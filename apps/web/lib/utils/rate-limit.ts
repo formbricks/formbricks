@@ -1,4 +1,4 @@
-import { ENTERPRISE_LICENSE_KEY, REDIS_HTTP_URL } from "@/lib/constants";
+import { REDIS_HTTP_URL } from "@/lib/constants";
 import { LRUCache } from "lru-cache";
 import { logger } from "@formbricks/logger";
 
@@ -13,7 +13,7 @@ const inMemoryRateLimiter = (options: Options) => {
     ttl: options.interval * 1000, // converts to expected input of milliseconds
   });
 
-  return (token: string) => {
+  return async (token: string) => {
     const currentUsage = tokenCache.get(token) ?? 0;
     if (currentUsage >= options.allowedPerInterval) {
       throw new Error("Rate limit exceeded");
@@ -40,12 +40,13 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
       throw new Error();
     }
   } catch (e) {
+    logger.error({ error: e }, "Rate limit exceeded");
     throw new Error("Rate limit exceeded for IP: " + token);
   }
 };
 
 export const rateLimit = (options: Options) => {
-  if (REDIS_HTTP_URL && ENTERPRISE_LICENSE_KEY) {
+  if (REDIS_HTTP_URL) {
     return redisRateLimiter(options);
   } else {
     return inMemoryRateLimiter(options);
