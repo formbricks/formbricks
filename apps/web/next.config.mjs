@@ -16,22 +16,23 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
-  cacheHandler: require.resolve("./cache-handler.js"),
-  cacheMaxMemorySize: 0, // disable default in-memory caching
+  cacheHandler: require.resolve("./cache-handler.mjs"),
+  //cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
-  outputFileTracingIncludes: {
-    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+  experimental: {
+    serverComponentsExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
+    outputFileTracingIncludes: {
+      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
+      "/api/auth/**/*": ["../../node_modules/jose/**/*"],
+    },
   },
   i18n: {
     locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
     remotePatterns: [
