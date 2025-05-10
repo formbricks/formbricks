@@ -5,6 +5,7 @@ export type FollowUpResult = {
 };
 
 export enum FollowUpSendError {
+  VALIDATION_ERROR = "validation_error",
   ORG_NOT_FOUND = "organization_not_found",
   SURVEY_NOT_FOUND = "survey_not_found",
   RESPONSE_NOT_FOUND = "response_not_found",

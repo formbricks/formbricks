@@ -153,7 +153,7 @@ export const middleware = async (originalRequest: NextRequest) => {
 
   if (ip) {
     try {
-      applyRateLimiting(request, ip);
+      await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
       const apiError: ApiErrorResponseV2 = {

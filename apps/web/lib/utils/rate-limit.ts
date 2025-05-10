@@ -40,6 +40,7 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
       throw new Error();
     }
   } catch (e) {
+    logger.error({ error: e }, "Rate limit exceeded");
     throw new Error("Rate limit exceeded for IP: " + token);
   }
 };

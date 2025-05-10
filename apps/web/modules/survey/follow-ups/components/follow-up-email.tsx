@@ -25,26 +25,20 @@ const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  followUp: TSurveyFollowUp;
-  logoUrl?: string;
-  attachResponseData: boolean;
-  survey: TSurvey;
-  response: TResponse;
+  readonly followUp: TSurveyFollowUp;
+  readonly logoUrl?: string;
+  readonly attachResponseData: boolean;
+  readonly survey: TSurvey;
+  readonly response: TResponse;
 }
 
-export async function FollowUpEmail({
-  followUp,
-  logoUrl,
-  attachResponseData,
-  survey,
-  response,
-}: FollowUpEmailProps): Promise<React.JSX.Element> {
-  const { properties } = followUp.action;
+export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JSX.Element> {
+  const { properties } = props.followUp.action;
   const { body } = properties;
 
-  const questions = attachResponseData ? getQuestionResponseMapping(survey, response) : [];
+  const questions = props.attachResponseData ? getQuestionResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
-  const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
+  const isDefaultLogo = !props.logoUrl || props.logoUrl === fbLogoUrl;
 
   return (
     <Html>
@@ -60,7 +54,7 @@ export async function FollowUpEmail({
                 <Img alt="Logo" className="mx-auto w-60" src={fbLogoUrl} />
               </Link>
             ) : (
-              <Img alt="Logo" className="mx-auto max-h-[100px] w-60 object-contain" src={logoUrl} />
+              <Img alt="Logo" className="mx-auto max-h-[100px] w-60 object-contain" src={props.logoUrl} />
             )}
           </Section>
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left text-sm">

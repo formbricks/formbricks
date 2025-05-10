@@ -6,6 +6,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { FollowUpResult, FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { ValidationError } from "webpack";
 import { z } from "zod";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { logger } from "@formbricks/logger";
@@ -26,15 +27,15 @@ const evaluateFollowUp = async (
   response: TResponse,
   organization: TOrganization
 ): Promise<FollowUpResult> => {
-  const { properties } = followUp.action;
-  const { to, replyTo } = properties;
-  const toValueFromResponse = response.data[to];
-  const logoUrl = organization.whitelabel?.logoUrl || "";
+  try {
+    const { properties } = followUp.action;
+    const { to, replyTo } = properties;
+    const toValueFromResponse = response.data[to];
+    const logoUrl = organization.whitelabel?.logoUrl ?? "";
 
-  // Check if 'to' is a direct email address (team member or user email)
-  const parsedEmailTo = z.string().email().safeParse(to);
-  if (parsedEmailTo.success) {
-    try {
+    // Check if 'to' is a direct email address (team member or user email)
+    const parsedEmailTo = z.string().email().safeParse(to);
+    if (parsedEmailTo.success) {
       // 'to' is a valid email address, send email directly
       await sendFollowUpEmail({
         followUp,
@@ -50,90 +51,90 @@ const evaluateFollowUp = async (
         followUpId: followUp.id,
         status: "success" as const,
       };
-    } catch (error) {
+    }
+
+    // If not a direct email, check if it's a question ID or hidden field ID
+    if (!toValueFromResponse) {
       return {
         followUpId: followUp.id,
         status: "error",
-        error: error instanceof Error ? error.message : "Something went wrong",
+        error: `To value not found in response data for followup: ${followUp.id}`,
       };
     }
-  }
 
-  // If not a direct email, check if it's a question ID or hidden field ID
-  if (!toValueFromResponse) {
+    if (typeof toValueFromResponse === "string") {
+      // parse this string to check for an email:
+      const parsedResult = z.string().email().safeParse(toValueFromResponse);
+      if (parsedResult.success) {
+        // send email to this email address
+        await sendFollowUpEmail({
+          followUp,
+          to: parsedResult.data,
+          replyTo,
+          logoUrl,
+          survey,
+          response,
+          attachResponseData: properties.attachResponseData,
+        });
+
+        return {
+          followUpId: followUp.id,
+          status: "success" as const,
+        };
+      }
+
+      return {
+        followUpId: followUp.id,
+        status: "error",
+        error: `Email address is not valid for followup: ${followUp.id}`,
+      };
+    } else if (Array.isArray(toValueFromResponse)) {
+      const emailAddress = toValueFromResponse[2];
+      if (!emailAddress) {
+        return {
+          followUpId: followUp.id,
+          status: "error",
+          error: `Email address not found in response data for followup: ${followUp.id}`,
+        };
+      }
+
+      const parsedResult = z.string().email().safeParse(emailAddress);
+      if (parsedResult.data) {
+        await sendFollowUpEmail({
+          followUp,
+          to: parsedResult.data,
+          replyTo,
+          logoUrl,
+          survey,
+          response,
+          attachResponseData: properties.attachResponseData,
+        });
+
+        return {
+          followUpId: followUp.id,
+          status: "success" as const,
+        };
+      }
+
+      return {
+        followUpId: followUp.id,
+        status: "error",
+        error: `Email address is not valid for followup: ${followUp.id}`,
+      };
+    }
+
     return {
       followUpId: followUp.id,
       status: "error",
-      error: `To value not found in response data for followup: ${followUp.id}`,
+      error: "Something went wrong",
+    };
+  } catch (error) {
+    return {
+      followUpId: followUp.id,
+      status: "error",
+      error: error instanceof Error ? error.message : "Something went wrong",
     };
   }
-
-  if (typeof toValueFromResponse === "string") {
-    // parse this string to check for an email:
-    const parsedResult = z.string().email().safeParse(toValueFromResponse);
-    if (parsedResult.data) {
-      // send email to this email address
-      await sendFollowUpEmail({
-        followUp,
-        to: parsedResult.data,
-        replyTo,
-        logoUrl,
-        survey,
-        response,
-        attachResponseData: properties.attachResponseData,
-      });
-
-      return {
-        followUpId: followUp.id,
-        status: "success" as const,
-      };
-    } else {
-      return {
-        followUpId: followUp.id,
-        status: "error",
-        error: `Email address is not valid for followup: ${followUp.id}`,
-      };
-    }
-  } else if (Array.isArray(toValueFromResponse)) {
-    const emailAddress = toValueFromResponse[2];
-    if (!emailAddress) {
-      return {
-        followUpId: followUp.id,
-        status: "error",
-        error: `Email address not found in response data for followup: ${followUp.id}`,
-      };
-    }
-
-    const parsedResult = z.string().email().safeParse(emailAddress);
-    if (parsedResult.data) {
-      await sendFollowUpEmail({
-        followUp,
-        to: parsedResult.data,
-        replyTo,
-        logoUrl,
-        survey,
-        response,
-        attachResponseData: properties.attachResponseData,
-      });
-
-      return {
-        followUpId: followUp.id,
-        status: "success" as const,
-      };
-    } else {
-      return {
-        followUpId: followUp.id,
-        status: "error",
-        error: `Email address is not valid for followup: ${followUp.id}`,
-      };
-    }
-  }
-
-  return {
-    followUpId: followUp.id,
-    status: "error",
-    error: "Something went wrong",
-  };
 };
 
 /**
@@ -189,7 +190,7 @@ export const sendFollowUpsForResponse = async (
     // Check rate limit
     try {
       await limiter(organization.id);
-    } catch (e) {
+    } catch {
       return err({
         code: FollowUpSendError.RATE_LIMIT_EXCEEDED,
         message: "Too many follow‐up requests; please wait a bit and try again.",
@@ -257,6 +258,15 @@ export const sendFollowUpsForResponse = async (
       },
       "Unexpected error while sending follow-ups"
     );
+
+    if (error instanceof ValidationError) {
+      return err({
+        code: FollowUpSendError.VALIDATION_ERROR,
+        message: error.message,
+        meta: { responseId },
+      });
+    }
+
     return err({
       code: FollowUpSendError.UNEXPECTED_ERROR,
       message: "An unexpected error occurred while sending follow-ups",
