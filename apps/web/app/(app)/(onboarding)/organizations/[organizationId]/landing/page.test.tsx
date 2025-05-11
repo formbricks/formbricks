@@ -5,8 +5,17 @@ import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound, redirect } from "next/navigation";
-import { afterEach, describe, expect, test, vi } from "vitest";
-import Page from "./page";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("@/modules/ee/license-check/lib/license", () => ({
+  getEnterpriseLicense: vi.fn().mockResolvedValue({
+    active: true,
+    features: { isMultiOrgEnabled: true },
+    lastChecked: new Date(),
+    isPendingDowngrade: false,
+    fallbackLevel: "live",
+  }),
+}));
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -96,34 +105,44 @@ vi.mock("@/app/(app)/(onboarding)/organizations/[organizationId]/landing/compone
 vi.mock("@/modules/organization/lib/utils");
 vi.mock("@/lib/user/service");
 vi.mock("@/lib/organization/service");
-vi.mock("@/modules/ee/license-check/lib/utils");
 vi.mock("@/tolgee/server");
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(() => "REDIRECT_STUB"),
   notFound: vi.fn(() => "NOT_FOUND_STUB"),
 }));
 
-vi.mock("@/modules/ee/license-check/lib/license", () => ({
-  getEnterpriseLicense: () =>
-    Promise.resolve({
-      active: true,
-      features: { isMultiOrgEnabled: true },
-      lastChecked: new Date(),
-      isPendingDowngrade: false,
-      fallbackLevel: "live",
-    }),
-}));
+// Mock the React cache function
+vi.mock("react", async () => {
+  const actual = await vi.importActual("react");
+  return {
+    ...actual,
+    cache: (fn: any) => fn,
+  };
+});
 
 describe("Page component", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    vi.resetModules();
   });
 
   test("redirects to login if no user session", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValue({ session: {}, organization: {} } as any);
-
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: true,
+        features: { isMultiOrgEnabled: true },
+        lastChecked: new Date(),
+        isPendingDowngrade: false,
+        fallbackLevel: "live",
+      }),
+    }));
+    const { default: Page } = await import("./page");
     const result = await Page({ params: { organizationId: "org1" } });
-
     expect(redirect).toHaveBeenCalledWith("/auth/login");
     expect(result).toBe("REDIRECT_STUB");
   });
@@ -134,9 +153,17 @@ describe("Page component", () => {
       organization: {},
     } as any);
     vi.mocked(getUser).mockResolvedValue(null);
-
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: true,
+        features: { isMultiOrgEnabled: true },
+        lastChecked: new Date(),
+        isPendingDowngrade: false,
+        fallbackLevel: "live",
+      }),
+    }));
+    const { default: Page } = await import("./page");
     const result = await Page({ params: { organizationId: "org1" } });
-
     expect(notFound).toHaveBeenCalled();
     expect(result).toBe("NOT_FOUND_STUB");
   });
@@ -151,10 +178,18 @@ describe("Page component", () => {
     vi.mocked(getTranslate).mockResolvedValue((props: any) =>
       typeof props === "string" ? props : props.key || ""
     );
-
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: true,
+        features: { isMultiOrgEnabled: true },
+        lastChecked: new Date(),
+        isPendingDowngrade: false,
+        fallbackLevel: "live",
+      }),
+    }));
+    const { default: Page } = await import("./page");
     const element = await Page({ params: { organizationId: "org1" } });
     render(element as React.ReactElement);
-
     expect(screen.getByTestId("landing-sidebar")).toBeInTheDocument();
     expect(screen.getByText("organizations.landing.no_projects_warning_title")).toBeInTheDocument();
     expect(screen.getByText("organizations.landing.no_projects_warning_subtitle")).toBeInTheDocument();

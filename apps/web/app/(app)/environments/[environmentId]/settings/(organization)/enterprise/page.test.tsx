@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization, TOrganizationBilling } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import EnterpriseSettingsPage from "./page";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -179,15 +178,23 @@ describe("EnterpriseSettingsPage", () => {
   });
 
   test("renders correctly for an owner when not on Formbricks Cloud", async () => {
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { default: EnterpriseSettingsPage } = await import("./page");
     const Page = await EnterpriseSettingsPage({ params: { environmentId: mockEnvironmentId } });
     render(Page);
-
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
-
     expect(screen.getByText("environments.settings.enterprise.sso")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.billing.remove_branding")).toBeInTheDocument();
-
     expect(redirect).not.toHaveBeenCalled();
   });
 });
