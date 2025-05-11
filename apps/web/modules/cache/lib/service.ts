@@ -9,39 +9,45 @@ const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 
 let cache: Cache;
 
+const initializeMemoryCache = (): void => {
+  const memoryKeyvStore = new Keyv({
+    ttl: CACHE_TTL_MS,
+  });
+  cache = createCache({
+    stores: [memoryKeyvStore],
+    ttl: CACHE_TTL_MS,
+  });
+  logger.info("Using in-memory cache");
+};
+
 if (process.env.REDIS_URL) {
   try {
-    const redisKeyvStore = new Keyv({
-      store: new KeyvRedis(process.env.REDIS_URL),
-      ttl: CACHE_TTL_MS, // Default TTL for items in this store
+    const redisStore = new KeyvRedis(process.env.REDIS_URL);
+
+    // Gracefully fall back if Redis dies later on
+    redisStore.on("error", (err) => {
+      logger.error("Redis connection lost – switching to in-memory cache", { error: err });
+      initializeMemoryCache();
     });
+
+    const redisKeyvStore = new Keyv({
+      store: redisStore,
+      ttl: CACHE_TTL_MS,
+    });
+
     cache = createCache({
       stores: [redisKeyvStore],
-      ttl: CACHE_TTL_MS, // Default TTL for the cache instance
+      ttl: CACHE_TTL_MS,
     });
     logger.info("Successfully connected to Redis cache");
   } catch (error) {
     logger.error("Failed to connect to Redis cache:", error);
     logger.warn("Falling back to in-memory cache due to Redis connection failure");
-    const memoryKeyvStore = new Keyv({
-      ttl: CACHE_TTL_MS, // Default TTL for items in this store
-    });
-    cache = createCache({
-      stores: [memoryKeyvStore],
-      ttl: CACHE_TTL_MS, // Default TTL for the cache instance
-    });
+    initializeMemoryCache();
   }
 } else {
   logger.warn("REDIS_URL not found, falling back to in-memory cache.");
-  const memoryKeyvStore = new Keyv({
-    ttl: CACHE_TTL_MS, // Default TTL for items in this store
-  });
-  cache = createCache({
-    stores: [memoryKeyvStore],
-    ttl: CACHE_TTL_MS, // Default TTL for the cache instance
-    // Note: The 'max' option for memory store size is not directly supported by Keyv's default in-memory store.
-    // For LRU or size-limited caches, a specific Keyv adapter like 'lru-cache' or 'cacheable-memory' would be needed.
-  });
+  initializeMemoryCache();
 }
 
 export const getCache = (): Cache => {
