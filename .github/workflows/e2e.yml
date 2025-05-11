@@ -100,6 +100,8 @@ jobs:
           fi
           echo "License key length: ${#ENTERPRISE_LICENSE_KEY}"
           echo "License key first 4 chars: ${ENTERPRISE_LICENSE_KEY:0:4}..."
+        env:
+          ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
       - name: Run App
         run: |
