@@ -1,3 +1,4 @@
+import "server-only";
 import KeyvRedis from "@keyv/redis";
 import { type Cache, createCache } from "cache-manager";
 import { Keyv } from "keyv";

@@ -1,6 +1,6 @@
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
