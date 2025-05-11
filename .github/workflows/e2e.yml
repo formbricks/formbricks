@@ -11,6 +11,8 @@ on:
         required: false
       PLAYWRIGHT_SERVICE_URL:
         required: false
+      ENTERPRISE_LICENSE_KEY:
+        required: true
       # Add other secrets if necessary
   workflow_dispatch:
 
@@ -89,9 +91,16 @@ jobs:
           # pnpm prisma migrate deploy
           pnpm db:migrate:dev
 
+      - name: Check for Enterprise License
+        run: |
+          if [ -z "${{ secrets.ENTERPRISE_LICENSE_KEY }}" ]; then
+            echo "::error::ENTERPRISE_LICENSE_KEY secret is required but not provided. Please add it to your repository secrets."
+            exit 1
+          fi
+
       - name: Run App
         run: |
-          NODE_ENV=test pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
+          NODE_ENV=test ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }} pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
           sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..10}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
