@@ -1,6 +1,8 @@
+import * as constants from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import * as licenseModule from "./license";
 import {
   getBiggerUploadFileSizePermission,
   getIsContactsEnabled,
@@ -16,80 +18,95 @@ import {
   getWhiteLabelPermission,
 } from "./utils";
 
-// Mock the license module
-const mockGetEnterpriseLicense = vi.fn();
-const mockGetLicenseFeatures = vi.fn();
-
-vi.mock("./license", () => ({
-  getEnterpriseLicense: mockGetEnterpriseLicense,
-  getLicenseFeatures: mockGetLicenseFeatures,
-}));
-
-// Mock constants
-const mockConstants = {
-  IS_FORMBRICKS_CLOUD: false,
-  IS_RECAPTCHA_CONFIGURED: true,
-  PROJECT_FEATURE_KEYS: {
-    FREE: "free",
-    BASIC: "basic",
-    PRO: "pro",
-    SCALE: "scale",
-    ENTERPRISE: "enterprise", // Assuming this is a valid plan key
-  },
-};
-vi.mock("@/lib/constants", () => mockConstants);
+vi.mock("@/lib/constants");
+vi.mock("./license");
 
 const mockOrganization = {
   billing: {
-    plan: "free" as Organization["billing"]["plan"],
+    plan: constants.PROJECT_FEATURE_KEYS.FREE,
     limits: {
       projects: 3,
+      monthly: {
+        responses: null,
+        miu: null,
+      },
     },
   },
 } as Organization;
 
+const defaultFeatures: TEnterpriseLicenseFeatures = {
+  whitelabel: false,
+  projects: null,
+  isMultiOrgEnabled: false,
+  contacts: false,
+  removeBranding: false,
+  twoFactorAuth: false,
+  sso: false,
+  saml: false,
+  spamProtection: false,
+  ai: false,
+};
+
+const defaultLicense = {
+  active: true,
+  features: defaultFeatures,
+  lastChecked: new Date(),
+  isPendingDowngrade: false,
+  fallbackLevel: "live" as const,
+};
+
 describe("License Utils", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Default mocks for active license without specific features unless overridden
-    mockGetEnterpriseLicense.mockResolvedValue({
-      active: true,
-      features: {},
-    });
-    mockGetLicenseFeatures.mockResolvedValue({});
+    // Set default values for constants
+    vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+    vi.mocked(constants).IS_RECAPTCHA_CONFIGURED = true;
+    vi.mocked(constants).PROJECT_FEATURE_KEYS = constants.PROJECT_FEATURE_KEYS;
+    // Set default mocks for license
+    vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+    vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(defaultFeatures);
   });
 
   describe("getRemoveBrandingPermission", () => {
     test("should return true if license active and feature enabled (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { removeBranding: true } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, removeBranding: true },
+      });
       const result = await getRemoveBrandingPermission(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return false if license active but feature disabled (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { removeBranding: false } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, removeBranding: false },
+      });
       const result = await getRemoveBrandingPermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
 
     test("should return true if license active and plan is not FREE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getRemoveBrandingPermission("pro");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getRemoveBrandingPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return false if license active and plan is FREE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getRemoveBrandingPermission("free");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getRemoveBrandingPermission(constants.PROJECT_FEATURE_KEYS.FREE);
       expect(result).toBe(false);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getRemoveBrandingPermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -97,21 +114,27 @@ describe("License Utils", () => {
 
   describe("getWhiteLabelPermission", () => {
     test("should return true if license active and feature enabled (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { whitelabel: true } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, whitelabel: true },
+      });
       const result = await getWhiteLabelPermission(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return true if license active and plan is not FREE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getWhiteLabelPermission("pro");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getWhiteLabelPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getWhiteLabelPermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -119,35 +142,38 @@ describe("License Utils", () => {
 
   describe("getRoleManagementPermission", () => {
     test("should return true if license active (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getRoleManagementPermission(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return true if license active and plan is SCALE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getRoleManagementPermission("scale");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getRoleManagementPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return true if license active and plan is ENTERPRISE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getRoleManagementPermission("enterprise");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getRoleManagementPermission(constants.PROJECT_FEATURE_KEYS.ENTERPRISE);
       expect(result).toBe(true);
     });
 
     test("should return false if license active and plan is not SCALE or ENTERPRISE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getRoleManagementPermission("pro");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getRoleManagementPermission(constants.PROJECT_FEATURE_KEYS.STARTUP);
       expect(result).toBe(false);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getRoleManagementPermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -155,28 +181,31 @@ describe("License Utils", () => {
 
   describe("getBiggerUploadFileSizePermission", () => {
     test("should return true if license active (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getBiggerUploadFileSizePermission(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return true if license active and plan is not FREE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getBiggerUploadFileSizePermission("pro");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getBiggerUploadFileSizePermission(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return false if license active and plan is FREE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getBiggerUploadFileSizePermission("free");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getBiggerUploadFileSizePermission(constants.PROJECT_FEATURE_KEYS.FREE);
       expect(result).toBe(false);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getBiggerUploadFileSizePermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -184,21 +213,24 @@ describe("License Utils", () => {
 
   describe("getMultiLanguagePermission", () => {
     test("should return true if license active (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return true if license active and plan is SCALE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const result = await getMultiLanguagePermission("scale");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -206,21 +238,25 @@ describe("License Utils", () => {
 
   describe("getIsMultiOrgEnabled", () => {
     test("should return true if feature flag isMultiOrgEnabled is true", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ isMultiOrgEnabled: true } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        isMultiOrgEnabled: true,
+      });
       const result = await getIsMultiOrgEnabled();
       expect(result).toBe(true);
     });
 
     test("should return false if feature flag isMultiOrgEnabled is false", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
         isMultiOrgEnabled: false,
-      } as TEnterpriseLicenseFeatures);
+      });
       const result = await getIsMultiOrgEnabled();
       expect(result).toBe(false);
     });
 
     test("should return false if licenseFeatures is null", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce(null);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(null);
       const result = await getIsMultiOrgEnabled();
       expect(result).toBe(false);
     });
@@ -228,13 +264,19 @@ describe("License Utils", () => {
 
   describe("getIsContactsEnabled", () => {
     test("should return true if feature flag contacts is true", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ contacts: true } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        contacts: true,
+      });
       const result = await getIsContactsEnabled();
       expect(result).toBe(true);
     });
 
     test("should return false if feature flag contacts is false", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ contacts: false } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        contacts: false,
+      });
       const result = await getIsContactsEnabled();
       expect(result).toBe(false);
     });
@@ -242,13 +284,19 @@ describe("License Utils", () => {
 
   describe("getIsTwoFactorAuthEnabled", () => {
     test("should return true if feature flag twoFactorAuth is true", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ twoFactorAuth: true } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        twoFactorAuth: true,
+      });
       const result = await getIsTwoFactorAuthEnabled();
       expect(result).toBe(true);
     });
 
     test("should return false if feature flag twoFactorAuth is false", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ twoFactorAuth: false } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        twoFactorAuth: false,
+      });
       const result = await getIsTwoFactorAuthEnabled();
       expect(result).toBe(false);
     });
@@ -256,13 +304,19 @@ describe("License Utils", () => {
 
   describe("getIsSsoEnabled", () => {
     test("should return true if feature flag sso is true", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ sso: true } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        sso: true,
+      });
       const result = await getIsSsoEnabled();
       expect(result).toBe(true);
     });
 
     test("should return false if feature flag sso is false", async () => {
-      mockGetLicenseFeatures.mockResolvedValueOnce({ sso: false } as TEnterpriseLicenseFeatures);
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        sso: false,
+      });
       const result = await getIsSsoEnabled();
       expect(result).toBe(false);
     });
@@ -270,28 +324,36 @@ describe("License Utils", () => {
 
   describe("getIsSamlSsoEnabled", () => {
     test("should return false if IS_FORMBRICKS_CLOUD is true", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       const result = await getIsSamlSsoEnabled();
       expect(result).toBe(false);
     });
 
     test("should return true if sso and saml flags are true (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetLicenseFeatures.mockResolvedValueOnce({ sso: true, saml: true } as TEnterpriseLicenseFeatures);
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        sso: true,
+        saml: true,
+      });
       const result = await getIsSamlSsoEnabled();
       expect(result).toBe(true);
     });
 
     test("should return false if sso is true but saml is false (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetLicenseFeatures.mockResolvedValueOnce({ sso: true, saml: false } as TEnterpriseLicenseFeatures);
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...defaultFeatures,
+        sso: true,
+        saml: false,
+      });
       const result = await getIsSamlSsoEnabled();
       expect(result).toBe(false);
     });
 
     test("should return false if licenseFeatures is null (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetLicenseFeatures.mockResolvedValueOnce(null);
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(null);
       const result = await getIsSamlSsoEnabled();
       expect(result).toBe(false);
     });
@@ -299,35 +361,47 @@ describe("License Utils", () => {
 
   describe("getIsSpamProtectionEnabled", () => {
     test("should return false if IS_RECAPTCHA_CONFIGURED is false", async () => {
-      mockConstants.IS_RECAPTCHA_CONFIGURED = false;
+      vi.mocked(constants).IS_RECAPTCHA_CONFIGURED = false;
       const result = await getIsSpamProtectionEnabled(mockOrganization.billing.plan);
       expect(result).toBe(false);
-      mockConstants.IS_RECAPTCHA_CONFIGURED = true; // reset for other tests
+      vi.mocked(constants).IS_RECAPTCHA_CONFIGURED = true; // reset for other tests
     });
 
     test("should return true if license active, feature enabled, and plan is SCALE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { spamProtection: true } });
-      const result = await getIsSpamProtectionEnabled("scale");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, spamProtection: true },
+      });
+      const result = await getIsSpamProtectionEnabled(constants.PROJECT_FEATURE_KEYS.SCALE);
       expect(result).toBe(true);
     });
 
     test("should return false if license active, feature enabled, but plan is not SCALE or ENTERPRISE (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { spamProtection: true } });
-      const result = await getIsSpamProtectionEnabled("pro");
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, spamProtection: true },
+      });
+      const result = await getIsSpamProtectionEnabled(constants.PROJECT_FEATURE_KEYS.STARTUP);
       expect(result).toBe(false);
     });
 
     test("should return true if license active and feature enabled (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { spamProtection: true } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, spamProtection: true },
+      });
       const result = await getIsSpamProtectionEnabled(mockOrganization.billing.plan);
       expect(result).toBe(true);
     });
 
     test("should return false if license is inactive", async () => {
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getIsSpamProtectionEnabled(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
@@ -335,45 +409,69 @@ describe("License Utils", () => {
 
   describe("getOrganizationProjectsLimit", () => {
     test("should return limits.projects if license active (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const limits = { projects: 10 };
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const limits = {
+        projects: 10,
+        monthly: {
+          responses: null,
+          miu: null,
+        },
+      };
       const result = await getOrganizationProjectsLimit(limits);
       expect(result).toBe(10);
     });
 
     test("should return Infinity if limits.projects is null and license active (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: {} });
-      const limits = { projects: null };
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
+      const limits = {
+        projects: null,
+        monthly: {
+          responses: null,
+          miu: null,
+        },
+      };
       const result = await getOrganizationProjectsLimit(limits);
       expect(result).toBe(Infinity);
     });
 
     test("should return 3 if license inactive (cloud)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = true;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(3);
     });
 
     test("should return license.features.projects if defined and license active (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { projects: 5 } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, projects: 5 },
+      });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(5);
     });
 
     test("should return 3 if license.features.projects is undefined and license active (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: true, features: { projects: undefined } });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, projects: null },
+      });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(3);
     });
 
     test("should return 3 if license inactive (self-hosted)", async () => {
-      mockConstants.IS_FORMBRICKS_CLOUD = false;
-      mockGetEnterpriseLicense.mockResolvedValueOnce({ active: false, features: {} });
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+      });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(3);
     });

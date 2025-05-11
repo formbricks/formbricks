@@ -1,6 +1,5 @@
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
@@ -104,6 +103,17 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => "NOT_FOUND_STUB"),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/license", () => ({
+  getEnterpriseLicense: () =>
+    Promise.resolve({
+      active: true,
+      features: { isMultiOrgEnabled: true },
+      lastChecked: new Date(),
+      isPendingDowngrade: false,
+      fallbackLevel: "live",
+    }),
+}));
+
 describe("Page component", () => {
   afterEach(() => {
     cleanup();
@@ -138,7 +148,6 @@ describe("Page component", () => {
     } as any);
     vi.mocked(getUser).mockResolvedValue({ id: "user1", name: "Test User" } as any);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org1", name: "Org One" } as any]);
-    vi.mocked(getEnterpriseLicense).mockResolvedValue({ features: { isMultiOrgEnabled: true } } as any);
     vi.mocked(getTranslate).mockResolvedValue((props: any) =>
       typeof props === "string" ? props : props.key || ""
     );
