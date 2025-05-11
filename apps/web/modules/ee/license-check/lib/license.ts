@@ -1,4 +1,3 @@
-import "server-only";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hashString";
 import { getCache } from "@/modules/cache/lib/service";
@@ -8,6 +7,7 @@ import {
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
+import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -238,11 +238,6 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
 
-    // Remove the error log during build
-    if (process.env.NEXT_PHASE !== "phase-production-build") {
-      logger.error("------ FETCHING LICENSE FROM SERVER ------");
-    }
-
     const res = await fetch(CONFIG.API.ENDPOINT, {
       body: JSON.stringify({
         licenseKey: env.ENTERPRISE_LICENSE_KEY,
@@ -298,70 +293,72 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   return licenseDetails;
 };
 
-export const getEnterpriseLicense = async (): Promise<{
-  active: boolean;
-  features: TEnterpriseLicenseFeatures | null;
-  lastChecked: Date;
-  isPendingDowngrade: boolean;
-  fallbackLevel: FallbackLevel;
-}> => {
-  validateConfig();
+export const getEnterpriseLicense = reactCache(
+  async (): Promise<{
+    active: boolean;
+    features: TEnterpriseLicenseFeatures | null;
+    lastChecked: Date;
+    isPendingDowngrade: boolean;
+    fallbackLevel: FallbackLevel;
+  }> => {
+    validateConfig();
 
-  if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
-    return {
-      active: false,
-      features: null,
-      lastChecked: new Date(),
-      isPendingDowngrade: false,
-      fallbackLevel: "default" as const,
-    };
-  }
-
-  const currentTime = new Date();
-  const liveLicenseDetails = await fetchLicense();
-  const previousResult = await getPreviousResult();
-  const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
-
-  trackFallbackUsage(fallbackLevel);
-
-  let currentLicenseState: TPreviousResult | undefined;
-
-  switch (fallbackLevel) {
-    case "live":
-      if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
-      currentLicenseState = {
-        active: liveLicenseDetails.status === "active",
-        features: liveLicenseDetails.features,
-        lastChecked: currentTime,
-        version: 1,
-      };
-      await setPreviousResult(currentLicenseState);
+    if (!env.ENTERPRISE_LICENSE_KEY || env.ENTERPRISE_LICENSE_KEY.length === 0) {
       return {
-        active: currentLicenseState.active,
-        features: currentLicenseState.features,
-        lastChecked: currentTime,
+        active: false,
+        features: null,
+        lastChecked: new Date(),
         isPendingDowngrade: false,
-        fallbackLevel: "live" as const,
+        fallbackLevel: "default" as const,
       };
+    }
 
-    case "grace":
-      if (!validateFallback(previousResult)) {
+    const currentTime = new Date();
+    const liveLicenseDetails = await fetchLicense();
+    const previousResult = await getPreviousResult();
+    const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
+
+    trackFallbackUsage(fallbackLevel);
+
+    let currentLicenseState: TPreviousResult | undefined;
+
+    switch (fallbackLevel) {
+      case "live":
+        if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
+        currentLicenseState = {
+          active: liveLicenseDetails.status === "active",
+          features: liveLicenseDetails.features,
+          lastChecked: currentTime,
+          version: 1,
+        };
+        await setPreviousResult(currentLicenseState);
+        return {
+          active: currentLicenseState.active,
+          features: currentLicenseState.features,
+          lastChecked: currentTime,
+          isPendingDowngrade: false,
+          fallbackLevel: "live" as const,
+        };
+
+      case "grace":
+        if (!validateFallback(previousResult)) {
+          return handleInitialFailure(currentTime);
+        }
+        return {
+          active: previousResult.active,
+          features: previousResult.features,
+          lastChecked: previousResult.lastChecked,
+          isPendingDowngrade: true,
+          fallbackLevel: "grace" as const,
+        };
+
+      case "default":
         return handleInitialFailure(currentTime);
-      }
-      return {
-        active: previousResult.active,
-        features: previousResult.features,
-        lastChecked: previousResult.lastChecked,
-        isPendingDowngrade: true,
-        fallbackLevel: "grace" as const,
-      };
+    }
 
-    case "default":
-      return handleInitialFailure(currentTime);
+    return handleInitialFailure(currentTime);
   }
-
-  return handleInitialFailure(currentTime);
-};
+);
 
 export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures | null> => {
   try {
