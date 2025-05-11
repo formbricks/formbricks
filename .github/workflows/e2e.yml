@@ -98,9 +98,12 @@ jobs:
             echo "::error::ENTERPRISE_LICENSE_KEY secret is required but not provided. Please add it to your repository secrets."
             exit 1
           fi
+          echo "License key length: ${#ENTERPRISE_LICENSE_KEY}"
+          echo "License key first 4 chars: ${ENTERPRISE_LICENSE_KEY:0:4}..."
 
       - name: Run App
         run: |
+          echo "Starting app with enterprise license..."
           NODE_ENV=test ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }} pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
           sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..10}; do
