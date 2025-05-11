@@ -10,14 +10,27 @@ const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 let cache: Cache;
 
 if (process.env.REDIS_URL) {
-  const redisKeyvStore = new Keyv({
-    store: new KeyvRedis(process.env.REDIS_URL),
-    ttl: CACHE_TTL_MS, // Default TTL for items in this store
-  });
-  cache = createCache({
-    stores: [redisKeyvStore],
-    ttl: CACHE_TTL_MS, // Default TTL for the cache instance
-  });
+  try {
+    const redisKeyvStore = new Keyv({
+      store: new KeyvRedis(process.env.REDIS_URL),
+      ttl: CACHE_TTL_MS, // Default TTL for items in this store
+    });
+    cache = createCache({
+      stores: [redisKeyvStore],
+      ttl: CACHE_TTL_MS, // Default TTL for the cache instance
+    });
+    logger.info("Successfully connected to Redis cache");
+  } catch (error) {
+    logger.error("Failed to connect to Redis cache:", error);
+    logger.warn("Falling back to in-memory cache due to Redis connection failure");
+    const memoryKeyvStore = new Keyv({
+      ttl: CACHE_TTL_MS, // Default TTL for items in this store
+    });
+    cache = createCache({
+      stores: [memoryKeyvStore],
+      ttl: CACHE_TTL_MS, // Default TTL for the cache instance
+    });
+  }
 } else {
   logger.warn("REDIS_URL not found, falling back to in-memory cache.");
   const memoryKeyvStore = new Keyv({

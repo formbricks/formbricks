@@ -53,6 +53,31 @@ describe("Cache Service", () => {
         ttl: CACHE_TTL_MS,
       });
       expect(logger.warn).not.toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith("Successfully connected to Redis cache");
+      expect(getCache()).toBe(mockCacheInstance);
+    });
+
+    test("should fall back to memory store if Redis connection fails", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const mockError = new Error("Connection refused");
+      vi.mocked(KeyvRedis).mockImplementation(() => {
+        throw mockError;
+      });
+
+      const { getCache } = await import("./service"); // Dynamically import
+
+      expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
+      expect(logger.error).toHaveBeenCalledWith("Failed to connect to Redis cache:", mockError);
+      expect(logger.warn).toHaveBeenCalledWith(
+        "Falling back to in-memory cache due to Redis connection failure"
+      );
+      expect(Keyv).toHaveBeenCalledWith({
+        ttl: CACHE_TTL_MS,
+      });
+      expect(createCache).toHaveBeenCalledWith({
+        stores: [expect.any(Keyv)],
+        ttl: CACHE_TTL_MS,
+      });
       expect(getCache()).toBe(mockCacheInstance);
     });
 

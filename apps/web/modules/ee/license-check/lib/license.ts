@@ -78,12 +78,23 @@ class LicenseApiError extends LicenseError {
 }
 
 // Cache keys
-const hashedKey =
-  typeof window === "undefined" && env.ENTERPRISE_LICENSE_KEY
-    ? hashString(env.ENTERPRISE_LICENSE_KEY)
-    : undefined;
-const FETCH_LICENSE_CACHE_KEY = `formbricksEnterpriseLicense-details-${hashedKey}`;
-const PREVIOUS_RESULT_CACHE_KEY = `formbricksEnterpriseLicense-previousResult-${hashedKey}`;
+const getHashedKey = () => {
+  if (typeof window !== "undefined") {
+    return "browser"; // Browser environment
+  }
+  if (!env.ENTERPRISE_LICENSE_KEY) {
+    return "no-license"; // No license key provided
+  }
+  return hashString(env.ENTERPRISE_LICENSE_KEY); // Valid license key
+};
+
+export const getCacheKeys = () => {
+  const hashedKey = getHashedKey();
+  return {
+    FETCH_LICENSE_CACHE_KEY: `formbricksEnterpriseLicense-details-${hashedKey}`,
+    PREVIOUS_RESULT_CACHE_KEY: `formbricksEnterpriseLicense-previousResult-${hashedKey}`,
+  };
+};
 
 // Default features
 const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
@@ -127,7 +138,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
   }
 
   const formbricksCache = getCache();
-  const cachedData = await formbricksCache.get<TPreviousResult>(PREVIOUS_RESULT_CACHE_KEY);
+  const cachedData = await formbricksCache.get<TPreviousResult>(getCacheKeys().PREVIOUS_RESULT_CACHE_KEY);
   if (cachedData) {
     return {
       ...cachedData,
@@ -146,7 +157,11 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
   if (typeof window !== "undefined") return;
 
   const formbricksCache = getCache();
-  await formbricksCache.set(PREVIOUS_RESULT_CACHE_KEY, previousResult, CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS);
+  await formbricksCache.set(
+    getCacheKeys().PREVIOUS_RESULT_CACHE_KEY,
+    previousResult,
+    CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS
+  );
 };
 
 // Monitoring functions
@@ -279,7 +294,9 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   if (!env.ENTERPRISE_LICENSE_KEY) return null;
 
   const formbricksCache = getCache();
-  const cachedLicense = await formbricksCache.get<TEnterpriseLicenseDetails>(FETCH_LICENSE_CACHE_KEY);
+  const cachedLicense = await formbricksCache.get<TEnterpriseLicenseDetails>(
+    getCacheKeys().FETCH_LICENSE_CACHE_KEY
+  );
 
   if (cachedLicense) {
     return cachedLicense;
@@ -288,7 +305,11 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   const licenseDetails = await fetchLicenseFromServerInternal();
 
   if (licenseDetails) {
-    await formbricksCache.set(FETCH_LICENSE_CACHE_KEY, licenseDetails, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
+    await formbricksCache.set(
+      getCacheKeys().FETCH_LICENSE_CACHE_KEY,
+      licenseDetails,
+      CONFIG.CACHE.FETCH_LICENSE_TTL_MS
+    );
   }
   return licenseDetails;
 };
