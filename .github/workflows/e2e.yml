@@ -77,7 +77,6 @@ jobs:
           sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
-          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
         shell: bash

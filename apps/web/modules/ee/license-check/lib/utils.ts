@@ -131,18 +131,9 @@ export const getOrganizationProjectsLimit = async (
   let limit: number;
 
   if (IS_FORMBRICKS_CLOUD) {
-    if (license.active) {
-      limit = limits.projects ?? Infinity;
-    } else {
-      limit = 3;
-    }
+    limit = license.active ? (limits.projects ?? Infinity) : 3;
   } else {
-    // For self-hosted, if license is active and project limit is defined, use it. Otherwise, default to 3.
-    if (license.active && license.features?.projects !== null && license.features?.projects !== undefined) {
-      limit = license.features.projects;
-    } else {
-      limit = 3;
-    }
+    limit = license.active && license.features?.projects != null ? license.features.projects : 3;
   }
   return limit;
 };
