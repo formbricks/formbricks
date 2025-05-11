@@ -236,13 +236,14 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
   try {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const endOfYear = new Date(now.getFullYear() + 1, 0, 0);
+    // first millisecond of next year => current year is fully included
+    const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
 
     const responseCount = await prisma.response.count({
       where: {
         createdAt: {
           gte: startOfYear,
-          lt: endOfYear,
+          lt: startOfNextYear,
         },
       },
     });
