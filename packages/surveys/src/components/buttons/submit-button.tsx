@@ -61,13 +61,20 @@ export function SubmitButton({
       tabIndex={tabIndex}
       autoFocus={focus}
       className={cn(
-        "bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom flex items-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2",
+        "bg-brand border-submit-button-border text-on-brand focus:ring-focus rounded-custom relative flex items-center justify-center border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2",
         isLoading ? "cursor-not-allowed" : "",
         className
       )}
       onClick={onClick}
       disabled={disabled || isLoading}>
-      {isLoading ? <LoadingSpinner size="sm" /> : buttonLabel || isLastQuestion ? "Finish" : "Next"}
+      {isLoading && (
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <LoadingSpinner size="sm" />
+        </span>
+      )}
+      <span className={cn(isLoading ? "opacity-20" : "opacity-100")}>
+        {buttonLabel || isLastQuestion ? "Finish" : "Next"}
+      </span>
     </button>
   );
 }
