@@ -104,7 +104,7 @@ const getIcon = (type: string) => {
   return IconComponent ? <IconComponent width={18} height={18} className="text-white" /> : null;
 };
 
-const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
+export const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
   const getIconType = () => {
     if (type) {
       if (type === OptionsType.QUESTIONS && questionType) {
