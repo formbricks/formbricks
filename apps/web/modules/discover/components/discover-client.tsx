@@ -7,10 +7,11 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { useState } from "react";
 
 interface DiscoverClientProps {
+  communityId: string;
   translatedTitle: string;
 }
 
-export function DiscoverClient({ translatedTitle }: DiscoverClientProps) {
+export function DiscoverClient({ translatedTitle, communityId }: DiscoverClientProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   return (
@@ -23,7 +24,7 @@ export function DiscoverClient({ translatedTitle }: DiscoverClientProps) {
           </div>
         }
       />
-      <Engagements searchQuery={searchQuery} />
+      <Engagements communityId={communityId} searchQuery={searchQuery} />
     </PageContentWrapper>
   );
 }

@@ -1,10 +1,17 @@
 import { DiscoverClient } from "@/modules/discover/components/discover-client";
 import { getTranslate } from "@/tolgee/server";
 
-export const DiscoverPage = async () => {
-  const t = await getTranslate();
+interface DiscoverPageProps {
+  searchParams: Promise<{
+    community: string;
+  }>;
+}
 
-  return <DiscoverClient translatedTitle={t("common.discover")} />;
+export const DiscoverPage = async (props: DiscoverPageProps) => {
+  const t = await getTranslate();
+  const searchParams = await props.searchParams;
+
+  return <DiscoverClient communityId={searchParams.community} translatedTitle={t("common.discover")} />;
 };
 
 export default DiscoverPage;

@@ -4,6 +4,7 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/logo.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { getWhitelistedUsersAction } from "@/modules/organization/settings/whitelist/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -23,11 +24,12 @@ import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
   BlocksIcon,
+  // MousePointerClick,
+  BookUserIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
   MessageCircle,
-  // MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -40,13 +42,14 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserWhitelistInfo } from "@formbricks/types/user";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -78,6 +81,10 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
+  const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
+  const searchParams = useSearchParams();
+  const communityId = searchParams.get("community");
 
   const project = projects.find((project) => project.id === environment.projectId);
 
@@ -85,6 +92,29 @@ export const MainNavigation = ({
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
+
+  // Fetching whitelisted users
+  const fetchCommunities = useCallback(async () => {
+    if (!currentOrganizationId) {
+      return;
+    }
+    setIsFetchingCommunities(true);
+    const data = await getWhitelistedUsersAction({
+      take: 10,
+      skip: 0,
+      organizationId: currentOrganizationId,
+    });
+    if (data && data.data) {
+      setCommunities(data.data);
+    } else {
+      setCommunities([]);
+    }
+    setIsFetchingCommunities(false);
+  }, [currentOrganizationId]);
+
+  useEffect(() => {
+    fetchCommunities();
+  }, [fetchCommunities]);
 
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
@@ -187,7 +217,7 @@ export const MainNavigation = ({
   ];
 
   const mainNavigationLink = `/environments/${environment.id}/discover`;
-
+  console.log(isFetchingCommunities);
   return (
     <>
       {project && (
@@ -242,6 +272,54 @@ export const MainNavigation = ({
                   )
               )}
             </ul>
+
+            {/* Communities */}
+            <div className="flex w-full flex-1 flex-col items-start py-4">
+              <div className={`px-4 ${isCollapsed && "hidden"}`}>Communities</div>
+              {isFetchingCommunities ? (
+                <>
+                  <ul className="max-h-[200px] w-full flex-1">
+                    {[...Array(3)].map((_, index) => {
+                      return (
+                        <NavigationLink
+                          key={"loading-" + index}
+                          href={`/environments/${environment.id}/discover`}
+                          linkText={"Loading"}
+                          isActive={false}
+                          loading={true}
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}>
+                          <BookUserIcon className="" strokeWidth={1.5} />
+                        </NavigationLink>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : (
+                <ul className="max-h-[200px] w-full flex-1 overflow-y-scroll">
+                  {communities && communities.length > 0 ? (
+                    communities.map((community) => {
+                      return (
+                        <NavigationLink
+                          key={community.id}
+                          href={`/environments/${environment.id}/discover`}
+                          query={{ community: community.id }}
+                          linkText={community.name ? community.name : community.email}
+                          isActive={community.id == communityId}
+                          isCollapsed={isCollapsed}
+                          isTextVisible={isTextVisible}>
+                          <BookUserIcon className="" strokeWidth={1.5} />
+                        </NavigationLink>
+                      );
+                    })
+                  ) : (
+                    <li className="mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700">
+                      No Communities
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
           </div>
 
           <div>

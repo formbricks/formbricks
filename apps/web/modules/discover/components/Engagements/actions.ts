@@ -10,14 +10,23 @@ const ZGetAvailableSurveysAction = z.object({
   take: z.number(),
   skip: z.number(),
   searchQuery: z.string().optional(),
+  creatorId: z.string().optional(),
 });
 
 export const getCompletedSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     const searchQuery = parsedInput.searchQuery;
+    const creatorId = parsedInput.creatorId;
     const surveysPrisma = await prisma.survey.findMany({
       where: {
+        ...(creatorId
+          ? {
+              creator: {
+                id: creatorId,
+              },
+            }
+          : {}),
         responses: {
           some: {
             data: {
@@ -129,10 +138,18 @@ export const getAvailableSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     const searchQuery = parsedInput.searchQuery;
+    const creatorId = parsedInput.creatorId;
     const surveysPrisma = await prisma.survey.findMany({
       where: {
         public: true,
         status: "inProgress",
+        ...(creatorId
+          ? {
+              creator: {
+                id: creatorId,
+              },
+            }
+          : {}),
         responses: {
           none: {
             data: {
