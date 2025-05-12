@@ -473,6 +473,30 @@ export const QuestionCard = ({
                 question.type !== TSurveyQuestionTypeEnum.Rating &&
                 question.type !== TSurveyQuestionTypeEnum.CTA ? (
                   <div className="mt-2 flex space-x-2">
+                    {questionIdx !== 0 && (
+                      <QuestionFormInput
+                        id="backButtonLabel"
+                        value={question.backButtonLabel}
+                        label={t("environments.surveys.edit.back_button_label")}
+                        localSurvey={localSurvey}
+                        questionIdx={questionIdx}
+                        maxLength={48}
+                        placeholder={t("common.back")}
+                        isInvalid={isInvalid}
+                        updateQuestion={updateQuestion}
+                        selectedLanguageCode={selectedLanguageCode}
+                        setSelectedLanguageCode={setSelectedLanguageCode}
+                        locale={locale}
+                        onBlur={(e) => {
+                          if (!question.backButtonLabel) return;
+                          let translatedBackButtonLabel = {
+                            ...question.backButtonLabel,
+                            [selectedLanguageCode]: e.target.value,
+                          };
+                          updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
+                        }}
+                      />
+                    )}
                     <div className="w-full">
                       <QuestionFormInput
                         id="buttonLabel"
@@ -503,30 +527,6 @@ export const QuestionCard = ({
                         locale={locale}
                       />
                     </div>
-                    {questionIdx !== 0 && (
-                      <QuestionFormInput
-                        id="backButtonLabel"
-                        value={question.backButtonLabel}
-                        label={t("environments.surveys.edit.back_button_label")}
-                        localSurvey={localSurvey}
-                        questionIdx={questionIdx}
-                        maxLength={48}
-                        placeholder={t("common.back")}
-                        isInvalid={isInvalid}
-                        updateQuestion={updateQuestion}
-                        selectedLanguageCode={selectedLanguageCode}
-                        setSelectedLanguageCode={setSelectedLanguageCode}
-                        locale={locale}
-                        onBlur={(e) => {
-                          if (!question.backButtonLabel) return;
-                          let translatedBackButtonLabel = {
-                            ...question.backButtonLabel,
-                            [selectedLanguageCode]: e.target.value,
-                          };
-                          updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
-                        }}
-                      />
-                    )}
                   </div>
                 ) : null}
                 {(question.type === TSurveyQuestionTypeEnum.Rating ||
