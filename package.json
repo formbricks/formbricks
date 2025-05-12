@@ -66,8 +66,5 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
-  },
-  "dependencies": {
-    "@changesets/cli": "2.29.3"
   }
 }

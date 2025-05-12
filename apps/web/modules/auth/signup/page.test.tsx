@@ -4,7 +4,7 @@ import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
-  getisSsoEnabled,
+  getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -29,8 +29,14 @@ vi.mock("@/modules/auth/signup/components/signup-form", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsMultiOrgEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
-  getisSsoEnabled: vi.fn(),
+  getIsWhitelabelEnabled: vi.fn(),
+  getIsRemoveBrandingEnabled: vi.fn(),
+  getIsContactsEnabled: vi.fn(),
+  getIsAiEnabled: vi.fn(),
+  getIsSpamProtectionEnabled: vi.fn(),
+  getIsPendingDowngrade: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
@@ -113,7 +119,7 @@ describe("SignupPage", () => {
   test("renders the signup page with all components when signup is enabled", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(verifyInviteToken).mockReturnValue({
@@ -172,7 +178,7 @@ describe("SignupPage", () => {
   test("renders the page with email from search params", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(verifyInviteToken).mockReturnValue({

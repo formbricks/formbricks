@@ -56,6 +56,10 @@ vi.mock("@tolgee/react", async () => {
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
   },
 }));
 

@@ -1,6 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";

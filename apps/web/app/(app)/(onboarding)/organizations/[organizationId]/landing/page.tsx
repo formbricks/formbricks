@@ -1,7 +1,7 @@
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
