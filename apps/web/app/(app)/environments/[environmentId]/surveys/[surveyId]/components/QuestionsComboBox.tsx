@@ -18,11 +18,12 @@ import {
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  ContactIcon,
   EyeOff,
   GlobeIcon,
   GridIcon,
   HashIcon,
-  HelpCircleIcon,
+  HomeIcon,
   ImageIcon,
   LanguagesIcon,
   ListIcon,
@@ -74,8 +75,6 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <StarIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.CTA:
             return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.OpenText:
-            return <HelpCircleIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
             return <ListIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
@@ -90,6 +89,10 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <GridIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Ranking:
             return <ListOrderedIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionTypeEnum.Address:
+            return <HomeIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionTypeEnum.ContactInfo:
+            return <ContactIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <User width={18} height={18} className="text-white" />;
@@ -164,7 +167,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={t("common.search") + "..."}
-            className="h-5 border-none border-transparent p-0 shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
+            className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
           />
         )}
         <div>
