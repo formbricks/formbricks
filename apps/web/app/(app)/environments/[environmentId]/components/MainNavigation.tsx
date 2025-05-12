@@ -217,7 +217,7 @@ export const MainNavigation = ({
   ];
 
   const mainNavigationLink = `/environments/${environment.id}/discover`;
-  console.log(isFetchingCommunities);
+  
   return (
     <>
       {project && (
