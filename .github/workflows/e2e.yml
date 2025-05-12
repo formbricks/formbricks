@@ -95,11 +95,12 @@ jobs:
 
       - name: Check for Enterprise License
         run: |
-          if [ -z "${{ secrets.ENTERPRISE_LICENSE_KEY }}" ]; then
-            echo "::error::ENTERPRISE_LICENSE_KEY secret is required but not provided. Please add it to your repository secrets."
+          LICENSE_KEY=$(grep '^ENTERPRISE_LICENSE_KEY=' .env | cut -d'=' -f2-)
+          if [ -z "$LICENSE_KEY" ]; then
+            echo "::error::ENTERPRISE_LICENSE_KEY in .env is empty. Please check your secret configuration."
             exit 1
           fi
-          echo "License key length: ${#ENTERPRISE_LICENSE_KEY}"
+          echo "License key length: ${#LICENSE_KEY}"
 
       - name: Run App
         run: |
