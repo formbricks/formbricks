@@ -1,5 +1,5 @@
 import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
-import { LOG_LEVELS, type TLogLevel, ZLogLevel } from "../types/logger";
+import { type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
 const getLogLevel = (): TLogLevel => {
@@ -58,12 +58,17 @@ const productionConfig: LoggerOptions = {
 
 const logger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
 
-LOG_LEVELS.forEach((level) => {
-  logger[level] = logger[level].bind(logger);
-});
+// Ensure all log levels are properly bound
+const boundLogger = {
+  debug: logger.debug.bind(logger),
+  info: logger.info.bind(logger),
+  warn: logger.warn.bind(logger),
+  error: logger.error.bind(logger),
+  fatal: logger.fatal.bind(logger),
+};
 
 const extendedLogger = {
-  ...logger,
+  ...boundLogger,
   withContext: (context: Record<string, unknown>) => logger.child(context),
   request: (req: Request) =>
     logger.child({

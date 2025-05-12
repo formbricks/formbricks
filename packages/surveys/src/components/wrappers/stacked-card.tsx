@@ -98,6 +98,7 @@ export const StackedCard = ({
     <div
       ref={(el) => (cardRefs.current[dynamicQuestionIndex] = el)}
       id={`questionCard-${dynamicQuestionIndex}`}
+      data-testid={`questionCard-${dynamicQuestionIndex}`}
       key={dynamicQuestionIndex}
       style={{
         zIndex: 1000 - dynamicQuestionIndex,

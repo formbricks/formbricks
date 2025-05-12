@@ -82,7 +82,7 @@ export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
-export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
+export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1" || env.SMTP_PORT === "465";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
@@ -205,7 +205,6 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
-export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 

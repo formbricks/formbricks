@@ -35,9 +35,9 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
-    "zod": "3.24.2",
-    "pino": "^9.6.0",
-    "pino-pretty": "^13.0.0"
+    "zod": "3.24.4",
+    "pino": "9.6.0",
+    "pino-pretty": "13.0.0"
   },
   "devDependencies": {
     "vite": "6.3.5",

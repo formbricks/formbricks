@@ -390,4 +390,121 @@ describe("QuestionCard Component", () => {
     const toggle = screen.getByRole("switch", { name: "environments.surveys.edit.required" });
     expect(toggle).toBeDisabled();
   });
+
+  test("renders backButtonLabel input when question type is Rating and not first question", () => {
+    const ratingQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={ratingQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("renders backButtonLabel input when question type is NPS and not first question", () => {
+    const npsQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.NPS,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={npsQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("does not render backButtonLabel input when question type is Rating but it's the first question", () => {
+    const ratingQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={ratingQuestion}
+        questionIdx={0} // First question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.queryByTestId("question-form-input-backButtonLabel")).not.toBeInTheDocument();
+  });
+
+  test("renders backButtonLabel input for non-NPS/Rating/CTA questions when not first question", () => {
+    const openTextQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={openTextQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    // Should render backButtonLabel for non-first questions (regardless of type)
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("does not render backButtonLabel input for any question type when it's the first question", () => {
+    const openTextQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={openTextQuestion}
+        questionIdx={0} // First question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    // First question should never have back button
+    expect(screen.queryByTestId("question-form-input-backButtonLabel")).not.toBeInTheDocument();
+  });
 });

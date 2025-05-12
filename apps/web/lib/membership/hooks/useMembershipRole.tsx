@@ -17,6 +17,7 @@ export const useMembershipRole = (environmentId: string, userId: string) => {
       } catch (err: any) {
         const error = err?.message || "Something went wrong";
         setError(error);
+        setIsLoading(false);
       }
     };
     getRole();

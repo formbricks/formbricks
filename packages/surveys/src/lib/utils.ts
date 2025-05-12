@@ -15,9 +15,15 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
+export const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
+
 const shuffle = (array: unknown[]) => {
-  for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1)); // NOSONAR typescript:S2245 // Math.random() is not used in a security context
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -30,7 +36,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
     shuffle(array);
   } else if (shuffleOption === "exceptLast") {
     const lastElement = array.pop();
-    if (lastElement) {
+    if (lastElement !== undefined) {
       shuffle(array);
       array.push(lastElement);
     }

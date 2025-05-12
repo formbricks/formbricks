@@ -6,11 +6,11 @@ import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { RuntimeNodeInstrumentation } from "@opentelemetry/instrumentation-runtime-node";
 import {
-  Resource,
-  detectResourcesSync,
+  detectResources,
   envDetector,
   hostDetector,
   processDetector,
+  resourceFromAttributes,
 } from "@opentelemetry/resources";
 import { MeterProvider } from "@opentelemetry/sdk-metrics";
 import { logger } from "@formbricks/logger";
@@ -21,11 +21,11 @@ const exporter = new PrometheusExporter({
   host: "0.0.0.0", // Listen on all network interfaces
 });
 
-const detectedResources = detectResourcesSync({
+const detectedResources = detectResources({
   detectors: [envDetector, processDetector, hostDetector],
 });
 
-const customResources = new Resource({});
+const customResources = resourceFromAttributes({});
 
 const resources = detectedResources.merge(customResources);
 
