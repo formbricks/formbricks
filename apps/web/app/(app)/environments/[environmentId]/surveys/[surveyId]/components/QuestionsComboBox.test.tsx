@@ -1,7 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { OptionsType, QuestionOption, QuestionOptions, QuestionsComboBox } from "./QuestionsComboBox";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  OptionsType,
+  QuestionOption,
+  QuestionOptions,
+  QuestionsComboBox,
+  SelectedCommandItem,
+} from "./QuestionsComboBox";
 
 describe("QuestionsComboBox", () => {
   afterEach(() => {
@@ -51,5 +58,69 @@ describe("QuestionsComboBox", () => {
     // Check if the input is gone and the selected item is displayed
     expect(screen.queryByPlaceholderText("common.search...")).toBeNull();
     expect(screen.getByText("Q1")).toBeInTheDocument(); // Verify the selected item is now displayed
+  });
+});
+
+describe("SelectedCommandItem", () => {
+  test("renders question icon and color for QUESTIONS with questionType", () => {
+    const { container } = render(
+      <SelectedCommandItem
+        label="Q1"
+        type={OptionsType.QUESTIONS}
+        questionType={TSurveyQuestionTypeEnum.OpenText}
+      />
+    );
+    expect(container.querySelector(".bg-brand-dark")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("Q1");
+  });
+
+  test("renders attribute icon and color for ATTRIBUTES", () => {
+    const { container } = render(<SelectedCommandItem label="Attr" type={OptionsType.ATTRIBUTES} />);
+    expect(container.querySelector(".bg-indigo-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("Attr");
+  });
+
+  test("renders hidden field icon and color for HIDDEN_FIELDS", () => {
+    const { container } = render(<SelectedCommandItem label="Hidden" type={OptionsType.HIDDEN_FIELDS} />);
+    expect(container.querySelector(".bg-amber-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("Hidden");
+  });
+
+  test("renders meta icon and color for META with label", () => {
+    const { container } = render(<SelectedCommandItem label="device" type={OptionsType.META} />);
+    expect(container.querySelector(".bg-amber-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("device");
+  });
+
+  test("renders other icon and color for OTHERS with label", () => {
+    const { container } = render(<SelectedCommandItem label="Language" type={OptionsType.OTHERS} />);
+    expect(container.querySelector(".bg-amber-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("Language");
+  });
+
+  test("renders tag icon and color for TAGS", () => {
+    const { container } = render(<SelectedCommandItem label="Tag1" type={OptionsType.TAGS} />);
+    expect(container.querySelector(".bg-indigo-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).toContain("Tag1");
+  });
+
+  test("renders fallback color and no icon for unknown type", () => {
+    const { container } = render(<SelectedCommandItem label="Unknown" type={"UNKNOWN"} />);
+    expect(container.querySelector(".bg-amber-500")).toBeInTheDocument();
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
+    expect(container.textContent).toContain("Unknown");
+  });
+
+  test("renders fallback for non-string label", () => {
+    const { container } = render(
+      <SelectedCommandItem label={{ default: "NonString" }} type={OptionsType.QUESTIONS} />
+    );
+    expect(container.textContent).toContain("NonString");
   });
 });
