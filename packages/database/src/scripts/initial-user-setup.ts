@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import { hash } from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { ZProject } from "../../../types/project";
@@ -10,8 +11,15 @@ const { INITIAL_USER_EMAIL, INITIAL_USER_PASSWORD, INITIAL_ORGANIZATION_NAME, IN
 
 export const isFreshInstance = async (): Promise<boolean> => {
   try {
-    const userCount = await prisma.user.count();
-    const organizationCount = await prisma.organization.count();
+    // Use raw queries to check if instance is fresh
+    const [{ user_count: userCount }] = await prisma.$queryRaw<[{ user_count: number }]>`
+      SELECT COUNT(*)::integer AS user_count FROM "User"
+    `;
+
+    const [{ org_count: organizationCount }] = await prisma.$queryRaw<[{ org_count: number }]>`
+      SELECT COUNT(*)::integer AS org_count FROM "Organization"
+    `;
+
     return userCount === 0 && organizationCount === 0;
   } catch (error) {
     logger.error("Error checking if instance is fresh:", error);
@@ -66,58 +74,189 @@ const createInitialUser = async (
   projectName?: string
 ): Promise<void> => {
   const hashedPassword = await hash(password, 12);
+  const userId = createId();
+  const now = new Date();
 
-  if (!organizationName) {
-    // Create only a user without an organization
-    await prisma.user.create({
-      data: {
-        name: "Admin",
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        emailVerified: new Date(),
-        locale: "en-US",
-      },
+  // Start a transaction for all operations
+  await prisma.$transaction(async (tx) => {
+    if (!organizationName) {
+      // Create only a user without an organization using raw query
+      await tx.$executeRaw`
+        INSERT INTO "User" (
+          "id", 
+          "created_at", 
+          "updated_at", 
+          "name", 
+          "email", 
+          "password", 
+          "email_verified", 
+          "locale"
+        ) VALUES (
+          ${userId}, 
+          ${now}, 
+          ${now}, 
+          'Admin', 
+          ${email.toLowerCase()}, 
+          ${hashedPassword}, 
+          ${now}, 
+          'en-US'
+        )
+      `;
+      return;
+    }
+
+    // Create user with organization and optional project
+    const organizationId = createId();
+
+    // Create user
+    await tx.$executeRaw`
+      INSERT INTO "User" (
+        "id", 
+        "created_at", 
+        "updated_at", 
+        "name", 
+        "email", 
+        "password", 
+        "email_verified", 
+        "locale"
+      ) VALUES (
+        ${userId}, 
+        ${now}, 
+        ${now}, 
+        'Admin', 
+        ${email.toLowerCase()}, 
+        ${hashedPassword}, 
+        ${now}, 
+        'en-US'
+      )
+    `;
+
+    // Create organization with billing information
+    const billingData = JSON.stringify({
+      plan: "free",
+      limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+      stripeCustomerId: null,
+      periodStart: now,
+      period: "monthly",
     });
-    return;
-  }
 
-  // Create user with organization
-  await prisma.user.create({
-    data: {
-      name: "Admin",
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      emailVerified: new Date(),
-      locale: "en-US",
-      memberships: {
-        create: {
-          role: "owner",
-          accepted: true,
-          organization: {
-            create: {
-              name: organizationName,
-              billing: {
-                plan: "free",
-                limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
-                stripeCustomerId: null,
-                periodStart: new Date(),
-                period: "monthly",
-              },
-              ...(projectName && {
-                projects: {
-                  create: {
-                    name: projectName,
-                    environments: {
-                      create: [{ type: "development" }, { type: "production" }],
-                    },
-                  },
-                },
-              }),
-            },
-          },
-        },
-      },
-    },
+    await tx.$executeRaw`
+      INSERT INTO "Organization" (
+        "id", 
+        "created_at", 
+        "updated_at", 
+        "name", 
+        "billing",
+        "whitelabel",
+        "isAIEnabled"
+      ) VALUES (
+        ${organizationId}, 
+        ${now}, 
+        ${now}, 
+        ${organizationName}, 
+        ${billingData}::jsonb,
+        '{}'::jsonb,
+        false
+      )
+    `;
+
+    // Create membership linking user to organization
+    await tx.$executeRaw`
+      INSERT INTO "Membership" (
+        "userId", 
+        "organizationId", 
+        "accepted", 
+        "role"
+      ) VALUES (
+        ${userId}, 
+        ${organizationId}, 
+        true, 
+        'owner'
+      )
+    `;
+
+    if (projectName) {
+      // Create project
+      const projectId = createId();
+
+      await tx.$executeRaw`
+        INSERT INTO "Project" (
+          "id",
+          "created_at",
+          "updated_at",
+          "name",
+          "organizationId",
+          "styling",
+          "config",
+          "recontactDays",
+          "linkSurveyBranding",
+          "inAppSurveyBranding", 
+          "placement",
+          "clickOutsideClose",
+          "darkOverlay"
+        ) VALUES (
+          ${projectId},
+          ${now},
+          ${now},
+          ${projectName},
+          ${organizationId},
+          '{}'::jsonb,
+          '{"channel": "link"}'::jsonb,
+          7,
+          true,
+          true,
+          'bottomRight',
+          true,
+          false
+        )
+      `;
+
+      // Create development environment
+      const devEnvironmentId = createId();
+
+      await tx.$executeRaw`
+        INSERT INTO "Environment" (
+          "id",
+          "created_at",
+          "updated_at",
+          "type",
+          "projectId",
+          "widgetSetupCompleted",
+          "appSetupCompleted"
+        ) VALUES (
+          ${devEnvironmentId},
+          ${now},
+          ${now},
+          'development',
+          ${projectId},
+          false,
+          false
+        )
+      `;
+
+      // Create production environment
+      const prodEnvironmentId = createId();
+
+      await tx.$executeRaw`
+        INSERT INTO "Environment" (
+          "id",
+          "created_at",
+          "updated_at",
+          "type",
+          "projectId",
+          "widgetSetupCompleted",
+          "appSetupCompleted" 
+        ) VALUES (
+          ${prodEnvironmentId},
+          ${now},
+          ${now},
+          'production',
+          ${projectId},
+          false,
+          false
+        )
+      `;
+    }
   });
 };
 
@@ -158,6 +297,7 @@ You can now log in with the credentials provided in the environment variables.
 
     return true;
   } catch (error) {
+    console.error("Error during initial environment setup:", error);
     logger.error("Error during initial environment setup:", error);
     return false;
   }

@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const moveApiKeysToApiKeysNew: MigrationScript = {
@@ -65,13 +66,23 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
         `;
 
         // Create the API key environment relation using Prisma
-        await tx.apiKeyEnvironment.create({
-          data: {
-            apiKeyId: apiKey.id,
-            environmentId: apiKey.environmentId,
-            permission: "manage",
-          },
-        });
+        await tx.$executeRaw`
+        INSERT INTO "ApiKeyEnvironment" (
+          "id", 
+          "createdAt", 
+          "updatedAt",
+          "apiKeyId", 
+          "environmentId", 
+          "permission"
+        ) VALUES (
+          ${createId()}, 
+          NOW(), 
+          NOW(), 
+          ${apiKey.id}, 
+          ${apiKey.environmentId}, 
+          'manage'
+        )
+      `;
         migratedCount++;
       } catch (error) {
         console.error(`Error migrating API key ${apiKey.id}:`, error);
