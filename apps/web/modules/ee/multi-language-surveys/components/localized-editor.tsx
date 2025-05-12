@@ -71,16 +71,18 @@ export function LocalizedEditor({
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          const translatedHtml = {
-            ...value,
-            [selectedLanguageCode]: v,
-          };
-          if (questionIdx === -1) {
-            // welcome card
-            updateQuestion({ html: translatedHtml });
-            return;
+          if (localSurvey.questions[questionIdx]) {
+            const translatedHtml = {
+              ...value,
+              [selectedLanguageCode]: v,
+            };
+            if (questionIdx === -1) {
+              // welcome card
+              updateQuestion({ html: translatedHtml });
+              return;
+            }
+            updateQuestion(questionIdx, { html: translatedHtml });
           }
-          updateQuestion(questionIdx, { html: translatedHtml });
         }}
       />
       {localSurvey.languages.length > 1 && (
