@@ -7,7 +7,7 @@
     "@typescript-eslint/eslint-plugin": "8.32.0",
     "@typescript-eslint/parser": "8.32.0",
     "@vercel/style-guide": "6.0.0",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "15.3.2",
     "eslint-config-prettier": "10.1.2",
     "eslint-config-turbo": "2.5.2",
     "eslint-plugin-i18n-json": "4.0.1",
