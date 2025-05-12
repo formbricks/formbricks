@@ -1,5 +1,5 @@
 import { findMatchingLocale } from "@/lib/utils/locale";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
@@ -54,7 +54,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getisSsoEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
 }));
 
@@ -77,7 +77,7 @@ vi.mock("@/modules/auth/signup/components/signup-form", () => ({
 
 describe("SignupPage", () => {
   beforeEach(() => {
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getTranslate).mockResolvedValue((key) => key);

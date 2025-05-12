@@ -5,15 +5,14 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
-import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
-import { createUser } from "@/modules/auth/lib/user";
+import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
+  getIsSsoEnabled,
   getRoleManagementPermission,
-  getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
@@ -32,7 +31,7 @@ export const handleSsoCallback = async ({
   account: Account;
   callbackUrl: string;
 }) => {
-  const isSsoEnabled = await getisSsoEnabled();
+  const isSsoEnabled = await getIsSsoEnabled();
   if (!isSsoEnabled) {
     return false;
   }

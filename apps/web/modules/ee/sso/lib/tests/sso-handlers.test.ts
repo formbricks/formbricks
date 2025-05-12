@@ -7,8 +7,8 @@ import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
+  getIsSsoEnabled,
   getRoleManagementPermission,
-  getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -42,7 +42,7 @@ vi.mock("@/modules/auth/signup/lib/invite", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
-  getisSsoEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
   getRoleManagementPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
 }));
@@ -102,7 +102,7 @@ describe("handleSsoCallback", () => {
     vi.resetModules();
 
     // Default mock implementations
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
@@ -122,7 +122,7 @@ describe("handleSsoCallback", () => {
 
   describe("Early return conditions", () => {
     test("should return false if SSO is not enabled", async () => {
-      vi.mocked(getisSsoEnabled).mockResolvedValue(false);
+      vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
 
       const result = await handleSsoCallback({
         user: mockUser,

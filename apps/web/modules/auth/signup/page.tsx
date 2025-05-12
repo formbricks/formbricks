@@ -24,7 +24,7 @@ import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
-  getisSsoEnabled,
+  getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import { SignupForm } from "./components/signup-form";
@@ -34,7 +34,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getisSsoEnabled(),
+    getIsSsoEnabled(),
     getIsSamlSsoEnabled(),
   ]);
 
