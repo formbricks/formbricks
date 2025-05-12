@@ -67,6 +67,36 @@ const validateEnvironmentVariables = (): boolean => {
   return true;
 };
 
+const insertUser = async (
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  userId: string,
+  email: string,
+  hashedPassword: string,
+  now: Date
+): Promise<void> => {
+  await tx.$executeRaw`
+    INSERT INTO "User" (
+      "id", 
+      "created_at", 
+      "updated_at", 
+      "name", 
+      "email", 
+      "password", 
+      "email_verified", 
+      "locale"
+    ) VALUES (
+      ${userId}, 
+      ${now}, 
+      ${now}, 
+      'Admin', 
+      ${email.toLowerCase()}, 
+      ${hashedPassword}, 
+      ${now}, 
+      'en-US'
+    )
+  `;
+};
+
 const createInitialUser = async (
   email: string,
   password: string,
@@ -81,27 +111,7 @@ const createInitialUser = async (
   await prisma.$transaction(async (tx) => {
     if (!organizationName) {
       // Create only a user without an organization using raw query
-      await tx.$executeRaw`
-        INSERT INTO "User" (
-          "id", 
-          "created_at", 
-          "updated_at", 
-          "name", 
-          "email", 
-          "password", 
-          "email_verified", 
-          "locale"
-        ) VALUES (
-          ${userId}, 
-          ${now}, 
-          ${now}, 
-          'Admin', 
-          ${email.toLowerCase()}, 
-          ${hashedPassword}, 
-          ${now}, 
-          'en-US'
-        )
-      `;
+      await insertUser(tx, userId, email, hashedPassword, now);
       return;
     }
 
@@ -109,27 +119,7 @@ const createInitialUser = async (
     const organizationId = createId();
 
     // Create user
-    await tx.$executeRaw`
-      INSERT INTO "User" (
-        "id", 
-        "created_at", 
-        "updated_at", 
-        "name", 
-        "email", 
-        "password", 
-        "email_verified", 
-        "locale"
-      ) VALUES (
-        ${userId}, 
-        ${now}, 
-        ${now}, 
-        'Admin', 
-        ${email.toLowerCase()}, 
-        ${hashedPassword}, 
-        ${now}, 
-        'en-US'
-      )
-    `;
+    await insertUser(tx, userId, email, hashedPassword, now);
 
     // Create organization with billing information
     const billingData = JSON.stringify({
