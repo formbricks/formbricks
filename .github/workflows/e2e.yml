@@ -47,13 +47,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
-        with:
-          egress-policy: allow
-          allowed-endpoints: |
-            ee.formbricks.com:443
-
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
 
