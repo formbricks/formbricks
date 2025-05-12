@@ -126,7 +126,7 @@
     "react-hot-toast": "2.5.2",
     "react-turnstile": "1.1.4",
     "react-use": "17.6.0",
-    "redis": "4.7.0",
+    "redis": "5.0.1",
     "server-only": "0.0.1",
     "sharp": "0.34.1",
     "stripe": "16.12.0",
