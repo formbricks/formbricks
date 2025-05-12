@@ -71,7 +71,7 @@ export function LocalizedEditor({
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          if (localSurvey.questions[questionIdx]) {
+          if (localSurvey.questions[questionIdx] || questionIdx === -1) {
             const translatedHtml = {
               ...value,
               [selectedLanguageCode]: v,
