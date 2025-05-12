@@ -16,6 +16,8 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  cacheHandler: require.resolve("./cache-handler.js"),
+  cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
@@ -282,11 +284,6 @@ const nextConfig = {
   },
 };
 
-// set custom cache handler
-if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
-  nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
-}
-
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
@@ -302,22 +299,25 @@ nextConfig.images.remotePatterns.push({
 });
 
 const sentryOptions = {
-// For all available options, see:
-// https://www.npmjs.com/package/@sentry/webpack-plugin#options
+  // For all available options, see:
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-org: "formbricks",
-project: "formbricks-cloud",
+  org: "formbricks",
+  project: "formbricks-cloud",
 
-// Only print logs for uploading source maps in CI
-silent: true,
+  // Only print logs for uploading source maps in CI
+  silent: true,
 
-// Upload a larger set of source maps for prettier stack traces (increases build time)
-widenClientFileUpload: true,
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: true,
 
-// Automatically tree-shake Sentry logger statements to reduce bundle size
-disableLogger: true,
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
 };
 
-const exportConfig = (process.env.SENTRY_DSN && process.env.NODE_ENV === "production") ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
+const exportConfig =
+  process.env.SENTRY_DSN && process.env.NODE_ENV === "production"
+    ? withSentryConfig(nextConfig, sentryOptions)
+    : nextConfig;
 
 export default exportConfig;
