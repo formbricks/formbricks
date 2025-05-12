@@ -109,7 +109,7 @@ export const MainNavigation = ({
 
   useEffect(() => {
     const toggleTextOpacity = () => {
-      setIsTextVisible(isCollapsed ? true : false);
+      setIsTextVisible(isCollapsed);
     };
     const timeoutId = setTimeout(toggleTextOpacity, 150);
     return () => clearTimeout(timeoutId);
@@ -170,7 +170,7 @@ export const MainNavigation = ({
         name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
-        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+        isActive: pathname?.includes("/actions"),
       },
       {
         name: t("common.integrations"),
