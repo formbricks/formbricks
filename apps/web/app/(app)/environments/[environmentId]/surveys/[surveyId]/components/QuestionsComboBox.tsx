@@ -64,61 +64,60 @@ interface QuestionComboBoxProps {
   onChangeValue: (option: QuestionOption) => void;
 }
 
+const questionIcons = {
+  // questions
+  [TSurveyQuestionTypeEnum.OpenText]: MessageSquareTextIcon,
+  [TSurveyQuestionTypeEnum.Rating]: StarIcon,
+  [TSurveyQuestionTypeEnum.CTA]: MousePointerClickIcon,
+  [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: ListIcon,
+  [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: Rows3Icon,
+  [TSurveyQuestionTypeEnum.NPS]: NetPromoterScoreIcon,
+  [TSurveyQuestionTypeEnum.Consent]: CheckIcon,
+  [TSurveyQuestionTypeEnum.PictureSelection]: ImageIcon,
+  [TSurveyQuestionTypeEnum.Matrix]: GridIcon,
+  [TSurveyQuestionTypeEnum.Ranking]: ListOrderedIcon,
+  [TSurveyQuestionTypeEnum.Address]: HomeIcon,
+  [TSurveyQuestionTypeEnum.ContactInfo]: ContactIcon,
+
+  // attributes
+  [OptionsType.ATTRIBUTES]: User,
+
+  // hidden fields
+  [OptionsType.HIDDEN_FIELDS]: EyeOff,
+
+  // meta
+  device: SmartphoneIcon,
+  os: AirplayIcon,
+  browser: GlobeIcon,
+  source: GlobeIcon,
+  action: MousePointerClickIcon,
+
+  // others
+  Language: LanguagesIcon,
+
+  // tags
+  [OptionsType.TAGS]: HashIcon,
+};
+
+const getIcon = (type: string) => {
+  const IconComponent = questionIcons[type];
+  return IconComponent ? <IconComponent width={18} height={18} className="text-white" /> : null;
+};
+
 const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
   const getIconType = () => {
-    switch (type) {
-      case OptionsType.QUESTIONS:
-        switch (questionType) {
-          case TSurveyQuestionTypeEnum.OpenText:
-            return <MessageSquareTextIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Rating:
-            return <StarIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.CTA:
-            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-            return <ListIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-            return <Rows3Icon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.NPS:
-            return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Consent:
-            return <CheckIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.PictureSelection:
-            return <ImageIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Matrix:
-            return <GridIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Ranking:
-            return <ListOrderedIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Address:
-            return <HomeIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.ContactInfo:
-            return <ContactIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.ATTRIBUTES:
-        return <User width={18} height={18} className="text-white" />;
-
-      case OptionsType.HIDDEN_FIELDS:
-        return <EyeOff width={18} height={18} className="text-white" />;
-      case OptionsType.META:
-        switch (label) {
-          case "device":
-            return <SmartphoneIcon width={18} height={18} className="text-white" />;
-          case "os":
-            return <AirplayIcon width={18} height={18} className="text-white" />;
-          case "browser":
-            return <GlobeIcon width={18} height={18} className="text-white" />;
-          case "source":
-            return <GlobeIcon width={18} height={18} className="text-white" />;
-          case "action":
-            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.OTHERS:
-        switch (label) {
-          case "Language":
-            return <LanguagesIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.TAGS:
-        return <HashIcon width={18} height={18} className="text-white" />;
+    if (type) {
+      if (type === OptionsType.QUESTIONS && questionType) {
+        return getIcon(questionType);
+      } else if (type === OptionsType.ATTRIBUTES) {
+        return getIcon(OptionsType.ATTRIBUTES);
+      } else if (type === OptionsType.HIDDEN_FIELDS) {
+        return getIcon(OptionsType.HIDDEN_FIELDS);
+      } else if ([OptionsType.META, OptionsType.OTHERS].includes(type) && label) {
+        return getIcon(label);
+      } else if (type === OptionsType.TAGS) {
+        return getIcon(OptionsType.TAGS);
+      }
     }
   };
 
