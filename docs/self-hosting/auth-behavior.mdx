@@ -42,18 +42,6 @@ In self-hosted Formbricks, user management and authentication can be customized 
   - Set this to the ID of your default team to streamline onboarding for new users.
   - If not set, users will not be automatically assigned to any team upon signup or invite acceptance.
 
-## Typical Signup and Invite Flow
-
-1. **Signup Disabled by Default:**
-   - Self-hosted instances have open signup disabled. New users must be invited by an organization owner or admin.
-2. **Inviting Users:**
-   - Owners/admins can invite users by email. Invited users receive an email with a link to join the organization.
-3. **SSO Signup:**
-   - If `AUTH_SKIP_INVITE_FOR_SSO=1`, users can sign up via SSO without an invite.
-   - If `AUTH_SKIP_INVITE_FOR_SSO=0`, SSO users must also be invited.
-4. **Default Team Assignment:**
-   - If `AUTH_DEFAULT_TEAM_ID` is set, new users are automatically added to the specified team upon joining.
-
 ## Example `.env` Configuration
 
 ```env
