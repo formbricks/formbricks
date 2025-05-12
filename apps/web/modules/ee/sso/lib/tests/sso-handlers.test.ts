@@ -93,7 +93,6 @@ vi.mock("@/lib/constants", () => ({
   SKIP_INVITE_FOR_SSO: 0,
   DEFAULT_TEAM_ID: "team-123",
   DEFAULT_ORGANIZATION_ID: "org-123",
-  DEFAULT_ORGANIZATION_ROLE: "member",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 

@@ -89,7 +89,6 @@ vi.mock("@/lib/constants", () => ({
   AZURE_OAUTH_ENABLED: true,
   OIDC_OAUTH_ENABLED: true,
   DEFAULT_ORGANIZATION_ID: "test-default-organization-id",
-  DEFAULT_ORGANIZATION_ROLE: "test-default-organization-role",
   IS_TURNSTILE_CONFIGURED: true,
   SAML_TENANT: "test-saml-tenant",
   SAML_PRODUCT: "test-saml-product",
