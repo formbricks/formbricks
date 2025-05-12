@@ -43,7 +43,7 @@
     "@lexical/markdown": "0.31.0",
     "@lexical/react": "0.31.0",
     "@lexical/rich-text": "0.31.0",
-    "@lexical/table": "0.31.0",
+    "@lexical/table": "0.31.1",
     "@opentelemetry/exporter-prometheus": "0.200.0",
     "@opentelemetry/host-metrics": "0.36.0",
     "@opentelemetry/instrumentation": "0.200.0",
