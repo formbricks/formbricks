@@ -37,13 +37,20 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
   const { t } = useTranslate();
   const user = useUser();
   const chainId = useChainId();
-  const address = user?.address || "";
+  const [address, setAddress] = useState<string>("");
   const blockscoutApi = useBlockscoutApi();
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
+
   const form = useForm<TSurveyReward>({
     defaultValues: {
-      enableReward: false,
+      enableReward: localSurvey?.reward?.enableReward || false,
+      contractAddress: localSurvey?.reward?.contractAddress || "",
+      decimals: localSurvey?.reward?.decimals || 0,
+      name: localSurvey?.reward?.name || "",
+      symbol: localSurvey?.reward?.symbol || "",
+      chainId: localSurvey?.reward?.chainId || Number(chainId),
+      amount: localSurvey?.reward?.amount || undefined,
     },
   });
 
@@ -51,6 +58,35 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
   const setEnableReward = (value: boolean) => form.setValue("enableReward", value);
 
   const [_, setRewardOpen] = useState(false);
+
+  const getUserAddress = () => {
+    if (address) return;
+
+    if (user?.address) {
+      setAddress(user.address);
+      return;
+    }
+
+    //workaround to get user address and enable toggle without hard refresh
+    try {
+      const alchemySession = localStorage.getItem("alchemy-signer-session");
+      if (alchemySession) {
+        const sessionData = JSON.parse(alchemySession);
+        const userAddress = sessionData?.state?.session?.user?.address;
+
+        if (userAddress) {
+          setAddress(userAddress);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    getUserAddress();
+  }, [user]);
 
   useEffect(() => {
     if (!enableReward) {
@@ -100,6 +136,8 @@ export const RewardsView = ({ localSurvey, setLocalSurvey }: RewardsViewProp) =>
   const handleOverwriteToggle = (value: boolean) => {
     setEnableReward(value);
   };
+
+  // console.log("local survey.reward", localSurvey.reward);
 
   return (
     <FormProvider {...form}>
