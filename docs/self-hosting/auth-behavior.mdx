@@ -1,0 +1,64 @@
+---
+title: "Authentication Behavior"
+description: "Learn how authentication and user invitation work in self-hosted Formbricks deployments."
+icon: "user"
+---
+
+## Overview
+
+In self-hosted Formbricks, user management and authentication can be customized using environment variables. By default, self-hosted instances have user signup disabled, and only organization owners or admins can invite new users. The behavior of the authentication and invitation flow can be further controlled using the following environment variables:
+
+- `AUTH_SKIP_INVITE_FOR_SSO`
+- `AUTH_DEFAULT_TEAM_ID`
+
+## License Requirement for Role Management and SSO Behavior
+
+<Note>
+  To control advanced role management features and environment-based SSO behavior, your self-hosted Formbricks
+  instance must have a valid enterprise license.
+</Note>
+
+## Environment Variables
+
+### `AUTH_SKIP_INVITE_FOR_SSO`
+
+- **Type:** Boolean (0 or 1)
+- **Default:** 0 (invite required)
+- **Description:**
+  - When set to `1`, users who sign up via SSO (Single Sign-On) providers (such as Google, Azure AD, SAML, or OIDC) can create an account without requiring an invitation.
+  - When set to `0` (default), all users—including those signing up via SSO—must be invited by an organization owner or admin before they can create an account.
+- **Use case:**
+  - Set this to `1` if you want to allow anyone with access to your SSO provider to join your Formbricks instance without a manual invite.
+  - Keep it at `0` for stricter access control, where only invited users can join, regardless of SSO.
+
+### `AUTH_DEFAULT_TEAM_ID`
+
+- **Type:** String (Team ID, a valid cuid)
+- **Default:** None (must be set if you want to use default team assignment)
+- **Description:**
+  - When a new user is invited or signs up (if allowed), they will automatically be added to the team with the ID specified in this variable.
+  - This is useful for onboarding users into a default team, ensuring they have access to relevant projects and resources immediately after joining.
+- **Use case:**
+  - Set this to the ID of your default team to streamline onboarding for new users.
+  - If not set, users will not be automatically assigned to any team upon signup or invite acceptance.
+
+## Example `.env` Configuration
+
+```env
+# Allow SSO users to join without invite
+AUTH_SKIP_INVITE_FOR_SSO=1
+
+# Automatically assign new users to this team
+AUTH_DEFAULT_TEAM_ID=team-123
+```
+
+Refer to the [Environment Variables documentation](./configuration/environment-variables) for a full list and details.
+
+---
+
+For more information on SSO setup, see:
+
+- [Google OAuth](./configuration/auth-sso/google-oauth)
+- [Azure AD OAuth](./configuration/auth-sso/azure-ad-oauth)
+- [Open ID Connect](./configuration/auth-sso/open-id-connect)
+- [SAML SSO](./configuration/auth-sso/saml-sso)

@@ -33,6 +33,7 @@ export const responseSelection = {
   singleUseId: true,
   language: true,
   displayId: true,
+  endingId: true,
   contact: {
     select: {
       id: true,

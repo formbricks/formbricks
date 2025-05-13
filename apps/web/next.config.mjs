@@ -16,6 +16,8 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  cacheHandler: require.resolve("./cache-handler.js"),
+  cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
@@ -276,11 +278,6 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.WEBAPP_URL,
   },
 };
-
-// set custom cache handler
-if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
-  nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
-}
 
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {
