@@ -34,7 +34,23 @@ export const checkSurveyValidity = async (
       });
     }
 
-    const url = new URL(responseInput.meta?.url || "");
+    if (!responseInput.meta?.url) {
+      return responses.badRequestResponse("Missing or invalid URL in response metadata", {
+        surveyId: survey.id,
+        environmentId,
+      });
+    }
+
+    let url;
+    try {
+      url = new URL(responseInput.meta.url);
+    } catch (error) {
+      return responses.badRequestResponse("Invalid URL in response metadata", {
+        surveyId: survey.id,
+        environmentId,
+        error: error.message,
+      });
+    }
     const suId = url.searchParams.get("suId");
     if (!suId) {
       return responses.badRequestResponse("Missing single use id", {
