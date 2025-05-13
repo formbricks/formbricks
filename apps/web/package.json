@@ -129,6 +129,7 @@
     "react-colorful": "5.6.1",
     "react-confetti": "6.1.0",
     "react-day-picker": "9.6.3",
+    "react-device-detect": "2.2.3",
     "react-dom": "19.0.0",
     "react-hook-form": "7.54.1",
     "react-hot-toast": "2.4.1",

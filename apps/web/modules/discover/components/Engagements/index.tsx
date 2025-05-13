@@ -1,7 +1,7 @@
 "use client";
 
 import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
-import AvailableSurveys from "@/modules/discover/components/Engagements/components/available-engagements";
+import { AvailableEngagements } from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
 // import { SearchSection } from "@/modules/discover/components/common/search-section";
 import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
@@ -13,10 +13,15 @@ import { cn } from "@formbricks/lib/cn";
 interface EngagementsProps {
   searchQuery: string;
   // setSearchQuery: (query: string) => void;
+  communityId?: string;
   className?: string;
 }
 
-export function Engagements({ searchQuery, className = "" }: EngagementsProps): React.JSX.Element {
+export function Engagements({
+  searchQuery,
+  communityId,
+  className = "",
+}: EngagementsProps): React.JSX.Element {
   const tabs = [
     {
       id: "available-surveys",
@@ -75,11 +80,17 @@ export function Engagements({ searchQuery, className = "" }: EngagementsProps): 
           {(() => {
             switch (activeTab) {
               case "available-surveys":
-                return <AvailableSurveys searchQuery={searchQuery} />;
+                return <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} />;
               case "completed-surveys":
-                return <CompletedSurveys searchQuery={searchQuery} setActiveTab={setActiveTab} />;
+                return (
+                  <CompletedSurveys
+                    searchQuery={searchQuery}
+                    setActiveTab={setActiveTab}
+                    creatorId={communityId}
+                  />
+                );
               default:
-                return <AvailableSurveys searchQuery={searchQuery} />;
+                return <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} />;
             }
           })()}
         </div>

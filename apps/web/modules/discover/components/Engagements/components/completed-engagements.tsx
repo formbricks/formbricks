@@ -9,10 +9,15 @@ import React, { useEffect, useState } from "react";
 
 interface CompletedSurveysProps {
   searchQuery: string;
+  creatorId?: string;
   setActiveTab: (id: string) => void;
 }
 
-export function CompletedSurveys({ searchQuery, setActiveTab }: CompletedSurveysProps): React.JSX.Element {
+export function CompletedSurveys({
+  searchQuery,
+  creatorId,
+  setActiveTab,
+}: CompletedSurveysProps): React.JSX.Element {
   const [completedSurveys, setCompletedSurveys] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,6 +29,7 @@ export function CompletedSurveys({ searchQuery, setActiveTab }: CompletedSurveys
           take: 10,
           skip: 0,
           searchQuery: searchQuery,
+          creatorId: creatorId,
         });
 
         if (completedSurveys?.data) {
@@ -35,7 +41,7 @@ export function CompletedSurveys({ searchQuery, setActiveTab }: CompletedSurveys
         setIsLoading(false);
       }
     })();
-  }, [searchQuery]);
+  }, [searchQuery, creatorId]);
 
   if (isLoading) {
     return (

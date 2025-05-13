@@ -6,26 +6,31 @@ import LoadingEngagementCard from "@/modules/discover/components/common/loading-
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import React, { useEffect, useState } from "react";
 
-interface AvailableSurveysProps {
+interface AvailableEngagementsProps {
   searchQuery: string;
+  creatorId?: string;
 }
 
-export function AvailableSurveys({ searchQuery }: AvailableSurveysProps): React.JSX.Element {
-  const [availableSurveys, setAvailableSurveys] = useState<TExtendedSurvey[] | null>(null);
+export function AvailableEngagements({
+  searchQuery,
+  creatorId,
+}: AvailableEngagementsProps): React.JSX.Element {
+  const [availableEngagements, setAvailableEngagements] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setIsLoading(true);
       try {
-        const availableSurveys = await getAvailableSurveysAction({
+        const availableEngagements = await getAvailableSurveysAction({
           take: 10,
           skip: 0,
           searchQuery: searchQuery,
+          creatorId: creatorId,
         });
 
-        if (availableSurveys?.data) {
-          setAvailableSurveys(availableSurveys.data);
+        if (availableEngagements?.data) {
+          setAvailableEngagements(availableEngagements.data);
         }
       } catch (error) {
         console.error("Error fetching available surveys:", error);
@@ -33,7 +38,7 @@ export function AvailableSurveys({ searchQuery }: AvailableSurveysProps): React.
         setIsLoading(false);
       }
     })();
-  }, [searchQuery]);
+  }, [searchQuery, creatorId]);
 
   if (isLoading) {
     return (
@@ -47,12 +52,12 @@ export function AvailableSurveys({ searchQuery }: AvailableSurveysProps): React.
 
   return (
     <>
-      {availableSurveys &&
-        availableSurveys.map((survey) => {
+      {availableEngagements &&
+        availableEngagements.map((survey) => {
           return <AvailableSurveyCard type={"survey"} key={survey.id} survey={survey} />;
         })}
     </>
   );
 }
 
-export default AvailableSurveys;
+export default AvailableEngagements;

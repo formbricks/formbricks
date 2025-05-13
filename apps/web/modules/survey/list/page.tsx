@@ -9,8 +9,10 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getSelectorsByUserAgent } from "react-device-detect";
 import { SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
 import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TTemplateRole } from "@formbricks/types/templates";
@@ -36,6 +38,9 @@ export const SurveysPage = async ({
   const searchParams = await searchParamsProps;
   const params = await paramsProps;
   const t = await getTranslate();
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent");
+  const { isMobile } = getSelectorsByUserAgent(userAgent ?? "");
 
   const project = await getProjectByEnvironmentId(params.environmentId);
 
@@ -74,7 +79,21 @@ export const SurveysPage = async ({
   };
 
   let content;
-  if (surveyCount > 0) {
+  if (isMobile) {
+    content = (
+      <>
+        <PageHeader pageTitle={t("common.surveys")} />
+        <div className="text-sm font-bold text-slate-700">
+          <p>
+            {t("common.creating_not_supported")}
+            <br />
+            <br />
+            {t("common.please_use_a_desktop_browser")}
+          </p>
+        </div>
+      </>
+    );
+  } else if (surveyCount > 0) {
     content = (
       <>
         <PageHeader pageTitle={t("common.surveys")} cta={<CreateSurveyButton />} />
