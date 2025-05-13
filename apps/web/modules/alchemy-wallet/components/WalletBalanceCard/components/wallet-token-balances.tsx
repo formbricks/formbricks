@@ -13,6 +13,7 @@ import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
 import { PlusIcon, SendIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { isMobile } from "react-device-detect";
 import { cn } from "@formbricks/lib/cn";
 import { useBlockscoutApi } from "@formbricks/web3";
 
@@ -110,7 +111,7 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
             </TableBody>
           </Table>
         </div>
-        <NoTokensCTACard />
+        {!isMobile && <NoTokensCTACard />}
       </div>
     );
   }
