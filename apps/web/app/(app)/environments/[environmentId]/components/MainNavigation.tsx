@@ -4,7 +4,6 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/logo.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { getWhitelistedUsersAction } from "@/modules/organization/settings/whitelist/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -25,7 +24,7 @@ import { useTranslate } from "@tolgee/react";
 import {
   BlocksIcon,
   // MousePointerClick,
-  BookUserIcon,
+  // BookUserIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -42,14 +41,14 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { isMobile } from "react-device-detect";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
-import { TUser, TUserWhitelistInfo } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -81,10 +80,10 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
-  const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
-  const searchParams = useSearchParams();
-  const communityId = searchParams.get("community");
+  // const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
+  // const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
+  // const searchParams = useSearchParams();
+  // const communityId = searchParams.get("community");
 
   const project = projects.find((project) => project.id === environment.projectId);
 
@@ -94,32 +93,36 @@ export const MainNavigation = ({
   };
 
   // Fetching whitelisted users
-  const fetchCommunities = useCallback(async () => {
-    if (!currentOrganizationId) {
-      return;
-    }
-    setIsFetchingCommunities(true);
-    const data = await getWhitelistedUsersAction({
-      take: 10,
-      skip: 0,
-      organizationId: currentOrganizationId,
-    });
-    if (data && data.data) {
-      setCommunities(data.data);
-    } else {
-      setCommunities([]);
-    }
-    setIsFetchingCommunities(false);
-  }, [currentOrganizationId]);
+  // const fetchCommunities = useCallback(async () => {
+  //   if (!currentOrganizationId) {
+  //     return;
+  //   }
+  //   setIsFetchingCommunities(true);
+  //   const data = await getWhitelistedUsersAction({
+  //     take: 10,
+  //     skip: 0,
+  //     organizationId: currentOrganizationId,
+  //   });
+  //   if (data && data.data) {
+  //     setCommunities(data.data);
+  //   } else {
+  //     setCommunities([]);
+  //   }
+  //   setIsFetchingCommunities(false);
+  // }, [currentOrganizationId]);
 
-  useEffect(() => {
-    fetchCommunities();
-  }, [fetchCommunities]);
+  // useEffect(() => {
+  //   fetchCommunities();
+  // }, [fetchCommunities]);
 
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
     setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);
+
+  useEffect(() => {
+    setIsCollapsed(isMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     const toggleTextOpacity = () => {
@@ -167,6 +170,13 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/wallet"),
         isHidden: false,
       },
+      // {
+      //   name: t("common.communities"),
+      //   href: `/environments/${environment.id}/communities`,
+      //   icon: BookUserIcon,
+      //   isActive: pathname?.includes("/communities"),
+      //   isHidden: false,
+      // },
       ...(hasAccess
         ? [
             // {
@@ -217,7 +227,6 @@ export const MainNavigation = ({
   ];
 
   const mainNavigationLink = `/environments/${environment.id}/discover`;
-  
   return (
     <>
       {project && (
@@ -274,6 +283,7 @@ export const MainNavigation = ({
             </ul>
 
             {/* Communities */}
+            {/* 
             <div className="flex w-full flex-1 flex-col items-start py-4">
               <div className={`px-4 ${isCollapsed && "hidden"}`}>Communities</div>
               {isFetchingCommunities ? (
@@ -319,7 +329,8 @@ export const MainNavigation = ({
                   )}
                 </ul>
               )}
-            </div>
+            </div> 
+          */}
           </div>
 
           <div>
