@@ -122,7 +122,7 @@ export function MultipleChoiceMultiQuestion({
   };
 
   const getIsRequired = () => {
-    const responseValues = value;
+    const responseValues = [...value];
     if (otherSelected && otherValue) {
       responseValues.push(otherValue);
     }
