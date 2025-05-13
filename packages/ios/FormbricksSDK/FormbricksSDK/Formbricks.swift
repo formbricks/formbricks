@@ -1,14 +1,6 @@
 import Foundation
 import Network
 
-/// Formbricks SDK delegate protocol. It contains the main methods to interact with the SDK.
-public protocol FormbricksDelegate: AnyObject {
-    func onSurveyStarted()
-    func onSurveyFinished()
-    func onSurveyClosed()
-    func onError(_ error: Error)
-}
-
 /// The main class of the Formbricks SDK. It contains the main methods to interact with the SDK.
 @objc(Formbricks) public class Formbricks: NSObject {
     
@@ -23,7 +15,6 @@ public protocol FormbricksDelegate: AnyObject {
     static internal var apiQueue: OperationQueue? = OperationQueue()
     static internal var logger: Logger?
     static internal var service = FormbricksService()
-    public static weak var delegate: FormbricksDelegate?
     
     // make this class not instantiatable outside of the SDK
     internal override init() {
@@ -58,7 +49,6 @@ public protocol FormbricksDelegate: AnyObject {
         
         guard !isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsAlreadyInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }
@@ -101,7 +91,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func setUserId(_ userId: String) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-                        delegate?.onError(error)
                         Formbricks.logger?.error(error.message)
             return
         }
@@ -126,7 +115,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func setAttribute(_ attribute: String, forKey key: String) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }
@@ -146,7 +134,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func setAttributes(_ attributes: [String : String]) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }
@@ -166,7 +153,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func setLanguage(_ language: String) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }
@@ -191,7 +177,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func track(_ action: String) {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }
@@ -218,7 +203,6 @@ public protocol FormbricksDelegate: AnyObject {
     @objc public static func logout() {
         guard Formbricks.isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsNotInitialized)
-            delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }

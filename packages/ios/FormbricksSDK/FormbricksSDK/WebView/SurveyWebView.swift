@@ -119,12 +119,10 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
 
                 /// Happens when a survey is shown.
             case .onDisplayCreated:
-                Formbricks.delegate?.onSurveyStarted()
                 Formbricks.surveyManager?.onNewDisplay(surveyId: surveyId)
             
             /// Happens when the user closes the survey view with the close button.
             case .onClose:
-                Formbricks.delegate?.onSurveyClosed()
                 Formbricks.surveyManager?.dismissSurveyWebView()
             
             /// Happens when the survey wants to open an external link in the default browser.
@@ -140,7 +138,6 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
             
         } else {
             let error = FormbricksSDKError(type: .invalidJavascriptMessage)
-            Formbricks.delegate?.onError(error)
             Formbricks.logger?.error("\(error.message): \(message.body)")
         }
     }

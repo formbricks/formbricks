@@ -110,7 +110,6 @@ private class WebViewData {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
             return String(data: jsonData, encoding: .utf8)?.replacingOccurrences(of: "\\\"", with: "'")
         } catch {
-            Formbricks.delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return nil
         }

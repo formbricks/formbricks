@@ -101,7 +101,6 @@ private extension UpdateQueue {
     
         guard let userId = effectiveUserId else {
             let error = FormbricksSDKError(type: .userIdIsNotSetYet)
-            Formbricks.delegate?.onError(error)
             Formbricks.logger?.error(error.message)
             return
         }

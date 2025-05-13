@@ -210,7 +210,6 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 // The filters can be nested, so we need to use z.lazy to define the type
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
 
-// TODO: Figure out why this is not working, and then remove the ts-ignore
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .array(
     z.object({

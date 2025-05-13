@@ -106,7 +106,6 @@ extension SurveyManager {
             case .failure:
                 self?.hasApiError = true
                 let error = FormbricksSDKError(type: .unableToRefreshEnvironment)
-                Formbricks.delegate?.onError(error)
                 Formbricks.logger?.error(error.message)
                 self?.startErrorTimer()
             }
@@ -186,7 +185,6 @@ extension SurveyManager {
                     return try? JSONDecoder().decode(EnvironmentResponse.self, from: data)
                 } else {
                     let error = FormbricksSDKError(type: .unableToRetrieveEnvironment)
-                    Formbricks.delegate?.onError(error)
                     Formbricks.logger?.error(error.message)
                     return nil
                 }
@@ -197,7 +195,6 @@ extension SurveyManager {
                 backingEnvironmentResponse = newValue
             } else {
                 let error = FormbricksSDKError(type: .unableToPersistEnvironment)
-                Formbricks.delegate?.onError(error)
                 Formbricks.logger?.error(error.message)
             }
         }
@@ -231,7 +228,6 @@ private extension SurveyManager {
                 
             default:
                 let error = FormbricksSDKError(type: .invalidDisplayOption)
-                Formbricks.delegate?.onError(error)
                 Formbricks.logger?.error(error.message)
                 return false
             }
