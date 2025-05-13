@@ -9,7 +9,6 @@ import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
 import com.formbricks.formbrickssdk.model.error.SDKError
-import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -60,7 +59,6 @@ object SurveyManager {
                     try {
                         Gson().fromJson(json, EnvironmentDataHolder::class.java)
                     } catch (e: Exception) {
-                        Formbricks.callback?.onError(e)
                         Logger.e(RuntimeException("Unable to retrieve environment data from the local storage."))
                         null
                     }
@@ -118,11 +116,9 @@ object SurveyManager {
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
                 hasApiError = false
-                Formbricks.callback?.onSuccess(SuccessType.GET_ENVIRONMENT_SUCCESS)
             } catch (e: Exception) {
                 hasApiError = true
                 val error = SDKError.unableToRefreshEnvironment
-                Formbricks.callback?.onError(error)
                 Logger.e(error)
                 startErrorTimer()
             }
@@ -143,7 +139,8 @@ object SurveyManager {
         }
 
         if (firstSurveyWithActionClass == null) {
-            Formbricks.callback?.onError(SDKError.surveyNotFoundError)
+            val error = SDKError.surveyNotFoundError
+            Logger.e(error)
             return
         }
 
@@ -154,7 +151,6 @@ object SurveyManager {
 
             if (languageCode == null) {
                 val error = RuntimeException("Survey “${firstSurveyWithActionClass.name}” is not available in language “$currentLanguage”. Skipping.")
-                Formbricks.callback?.onError(error)
                 Logger.e(error)
                 return
             }
@@ -177,7 +173,8 @@ object SurveyManager {
                 }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))
             }
         } else {
-           Formbricks.callback?.onError(SDKError.surveyNotDisplayedError)
+            val error = SDKError.surveyNotDisplayedError
+            Logger.e(error)
         }
     }
 
@@ -192,7 +189,6 @@ object SurveyManager {
     fun postResponse(surveyId: String?) {
         val id = surveyId.guard {
             val error = SDKError.missingSurveyId
-            Formbricks.callback?.onError(error)
             Logger.e(error)
             return
         }
@@ -206,7 +202,6 @@ object SurveyManager {
     fun onNewDisplay(surveyId: String?) {
         val id = surveyId.guard {
             val error = SDKError.missingSurveyId
-            Formbricks.callback?.onError(error)
             Logger.e(error)
             return
         }
@@ -269,7 +264,6 @@ object SurveyManager {
 
                 else -> {
                     val error = SDKError.invalidDisplayOption
-                    Formbricks.callback?.onError(error)
                     Logger.e(error)
                     false
                 }

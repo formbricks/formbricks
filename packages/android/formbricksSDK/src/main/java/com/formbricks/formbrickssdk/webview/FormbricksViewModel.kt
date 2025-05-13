@@ -99,7 +99,7 @@ class FormbricksViewModel : ViewModel() {
               observer.observe(document.body, { childList: true, subtree: true });
 
                 const script = document.createElement("script");
-                script.src = "${Formbricks.appUrl}/js/surveys.umd.cjs";
+                script.src = "${Formbricks.appUrl}/js/surveys.umd.cjs?randQuery=123445";
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
