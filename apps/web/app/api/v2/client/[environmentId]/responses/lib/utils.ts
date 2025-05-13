@@ -2,6 +2,8 @@ import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[envi
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt } from "@/lib/crypto";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -22,6 +24,39 @@ export const checkSurveyValidity = async (
       },
       true
     );
+  }
+
+  if (survey.singleUse?.enabled) {
+    if (!responseInput.singleUseId) {
+      return responses.badRequestResponse("Missing single use id", {
+        surveyId: survey.id,
+        environmentId,
+      });
+    }
+
+    const url = new URL(responseInput.meta?.url || "");
+    const suId = url.searchParams.get("suId");
+    if (!suId) {
+      return responses.badRequestResponse("Missing single use id", {
+        surveyId: survey.id,
+        environmentId,
+      });
+    }
+
+    if (survey.singleUse.isEncrypted) {
+      const decryptedSuId = symmetricDecrypt(suId, ENCRYPTION_KEY);
+      if (decryptedSuId !== responseInput.singleUseId) {
+        return responses.badRequestResponse("Invalid single use id", {
+          surveyId: survey.id,
+          environmentId,
+        });
+      }
+    } else if (responseInput.singleUseId !== suId) {
+      return responses.badRequestResponse("Invalid single use id", {
+        surveyId: survey.id,
+        environmentId,
+      });
+    }
   }
 
   if (survey.recaptcha?.enabled) {
