@@ -15,8 +15,8 @@ export const SentryProvider = ({ children, sentryDsn, isEnabled }: SentryProvide
       Sentry.init({
         dsn: sentryDsn,
 
-        // Adjust this value in production, or use tracesSampler for greater control
-        tracesSampleRate: 1,
+        // No tracing while Sentry doesn't update to telemetry 2.0.0 - https://github.com/getsentry/sentry-javascript/issues/15737
+        tracesSampleRate: 0,
 
         // Setting this option to true will print useful information to the console while you're setting up Sentry.
         debug: false,

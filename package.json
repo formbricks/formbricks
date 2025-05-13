@@ -10,7 +10,7 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
-    "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
+    "clean": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
     "db:migrate:dev": "turbo run db:migrate:dev",
@@ -34,6 +34,10 @@
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
     "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
