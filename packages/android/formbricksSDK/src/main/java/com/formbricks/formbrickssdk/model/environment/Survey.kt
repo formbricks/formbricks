@@ -19,6 +19,12 @@ data class LanguageDetail(
 )
 
 @Serializable
+data class SurveyRecaptcha(
+    @SerializedName("enabled") val enabled: Boolean,
+    @SerializedName("threshold") val threshold: Double
+)
+
+@Serializable
 data class Survey(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
@@ -30,5 +36,6 @@ data class Survey(
     @SerializedName("displayOption") val displayOption: String?,
     @SerializedName("segment") val segment: Segment?,
     @SerializedName("styling") val styling: Styling?,
-    @SerializedName("languages") val languages: List<SurveyLanguage>?
+    @SerializedName("languages") val languages: List<SurveyLanguage>?,
+    @SerializedName("recaptcha") val recaptcha: SurveyRecaptcha?
 )

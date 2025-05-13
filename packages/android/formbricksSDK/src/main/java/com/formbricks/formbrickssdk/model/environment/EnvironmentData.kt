@@ -7,5 +7,6 @@ import kotlinx.serialization.Serializable
 data class EnvironmentData(
     @SerializedName("surveys") val surveys: List<Survey>?,
     @SerializedName("actionClasses") val actionClasses: List<ActionClass>?,
-    @SerializedName("project") val project: Project
+    @SerializedName("project") val project: Project,
+    @SerializedName("recaptchaSiteKey") val recaptchaSiteKey: String?
 )

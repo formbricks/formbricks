@@ -130,6 +130,7 @@ object SurveyManager {
      * Handles the display percentage and the delay of the survey.
      */
     fun track(action: String) {
+        print(environmentDataHolder?.data?.data?.actionClasses)
         val actionClasses = environmentDataHolder?.data?.data?.actionClasses ?: listOf()
         val codeActionClasses = actionClasses.filter { it.type == "code" }
         val actionClass = codeActionClasses.firstOrNull { it.key == action }

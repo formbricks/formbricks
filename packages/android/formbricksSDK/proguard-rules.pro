@@ -35,4 +35,3 @@
 -keep class com.formbricks.formbrickssdk.Formbricks { *; }
 -keep class com.formbricks.formbrickssdk.helper.FormbricksConfig { *; }
 -keep class com.formbricks.formbrickssdk.model.error.SDKError { *; }
--keep interface com.formbricks.formbrickssdk.FormbricksCallback { *; }
