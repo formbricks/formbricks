@@ -121,6 +121,16 @@ export function MultipleChoiceMultiQuestion({
     onChange({ [question.id]: [] }); // if not array, make it an array
   };
 
+  const getIsRequired = () => {
+    const responseValues = value;
+    if (otherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    return question.required && Array.isArray(responseValues) && responseValues.length
+      ? false
+      : question.required;
+  };
+
   return (
     <form
       key={question.id}
@@ -195,7 +205,7 @@ export function MultipleChoiceMultiQuestion({
                             Array.isArray(value) &&
                             value.includes(getLocalizedValue(choice.label, languageCode))
                           }
-                          required={otherSelected && otherValue ? false : question.required}
+                          required={getIsRequired()}
                         />
                         <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
