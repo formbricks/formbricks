@@ -45,10 +45,12 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
         <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-6 fb-bg-gradient-to-b fb-to-transparent" />
       )}
       <div
+        id="scrollable-container"
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
+          minHeight: isSurveyPreview ? "26dvh" : "44dvh",
         }}
         className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
         {children}

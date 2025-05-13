@@ -11,14 +11,14 @@ import { StackedCard } from "./stacked-card";
 // offset < 0 -> Question cards that are already answered
 // offset > 0 -> Question that aren't answered yet
 interface StackedCardsContainerProps {
-  cardArrangement: TCardArrangementOptions;
-  currentQuestionId: TSurveyQuestionId;
-  survey: TJsEnvironmentStateSurvey;
-  getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
-  styling: TProjectStyling | TSurveyStyling;
-  setQuestionId: (questionId: TSurveyQuestionId) => void;
-  shouldResetQuestionId?: boolean;
-  fullSizeCards: boolean;
+  readonly cardArrangement: TCardArrangementOptions;
+  readonly currentQuestionId: TSurveyQuestionId;
+  readonly survey: TJsEnvironmentStateSurvey;
+  readonly getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
+  readonly styling: TProjectStyling | TSurveyStyling;
+  readonly setQuestionId: (questionId: TSurveyQuestionId) => void;
+  readonly shouldResetQuestionId?: boolean;
+  readonly fullSizeCards: boolean;
 }
 
 export function StackedCardsContainer({

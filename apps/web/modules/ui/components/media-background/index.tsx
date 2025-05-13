@@ -178,7 +178,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
       <div ref={ContentRef} className="overflow-hiddem flex flex-grow flex-col rounded-b-lg">
         <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
-          <div className="flex h-full w-full items-center justify-center">{children}</div>
+          <div className="flex h-full w-full items-start justify-center pt-[10dvh]">{children}</div>
         </div>
       </div>
     );
