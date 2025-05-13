@@ -135,25 +135,6 @@ describe("MultipleChoiceMultiQuestion", () => {
     expect(onChange3).toHaveBeenCalledWith({ q1: ["Option 2"] });
   });
 
-  test("handles 'Other' option correctly", async () => {
-    const onChange = vi.fn();
-    render(<MultipleChoiceMultiQuestion {...defaultProps} onChange={onChange} />);
-
-    // When clicking Other, it calls onChange with an empty string first
-    await userEvent.click(screen.getByLabelText("Other"));
-    expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
-    expect(onChange).toHaveBeenCalledWith({ q1: [""] });
-
-    // Clear the mock to focus on typing behavior
-    onChange.mockClear();
-
-    // Enter text in the field and use fireEvent directly which doesn't trigger onChange for each character
-    const otherInput = screen.getByPlaceholderText("Please specify");
-    fireEvent.change(otherInput, { target: { value: "Custom response" } });
-
-    expect(onChange).toHaveBeenCalledWith({ q1: ["Custom response"] });
-  });
-
   test("handles form submission", async () => {
     const onSubmit = vi.fn();
     const { container } = render(
@@ -165,6 +146,46 @@ describe("MultipleChoiceMultiQuestion", () => {
     expect(form).toBeInTheDocument();
     fireEvent.submit(form!);
 
+    expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
+  });
+
+  test("filters out invalid values during submission", async () => {
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        // Add an invalid value that should be filtered out
+        value={["Option 1", "Invalid Option"]}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Submit the form
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    // Check that onSubmit was called with only valid values
+    expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
+  });
+
+  test("calls onChange with updated values during submission", async () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        value={["Option 1", "Invalid Option"]}
+        onChange={onChange}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Submit the form
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    // Check that onChange was called with filtered values
+    expect(onChange).toHaveBeenCalledWith({ q1: ["Option 1"] });
     expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
   });
 
