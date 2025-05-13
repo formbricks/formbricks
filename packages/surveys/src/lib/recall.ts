@@ -47,7 +47,7 @@ export const replaceRecallInfo = (
     const recallItemId = extractId(recallInfo);
     if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
 
-    const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+    const fallback = extractFallbackValue(recallInfo).replaceAll("&nbsp;", " ");
     let value: string | null = null;
 
     // Fetching value from variables based on recallItemId

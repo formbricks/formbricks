@@ -53,7 +53,7 @@ describe("replaceRecallInfo", () => {
   });
 
   test("should handle nbsp in fallback", () => {
-    const text = "Status: #recall:status/fallback:PendingnbspReview#.";
+    const text = "Status: #recall:status/fallback:Pending&nbsp;Review#.";
     const expected = "Status: Pending Review.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
@@ -78,13 +78,13 @@ describe("replaceRecallInfo", () => {
 
   test("should handle empty array values, replacing with fallback", () => {
     const text = "Categories: #recall:emptyArray/fallback:No&nbsp;Categories#.";
-    const expected = "Categories: No& ;Categories.";
+    const expected = "Categories: No Categories.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
   test("should handle null values from responseData, replacing with fallback", () => {
     const text = "Preference: #recall:nullValue/fallback:Not&nbsp;Set#.";
-    const expected = "Preference: Not& ;Set.";
+    const expected = "Preference: Not Set.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
@@ -116,7 +116,7 @@ describe("replaceRecallInfo", () => {
 
   test("should handle complex fallback with spaces and special characters encoded as nbsp", () => {
     const text =
-      "Details: #recall:extraInfo/fallback:ValuenbspWithnbspSpaces# and #recall:anotherInfo/fallback:Default#";
+      "Details: #recall:extraInfo/fallback:Value&nbsp;With&nbsp;Spaces# and #recall:anotherInfo/fallback:Default#";
     const expected = "Details: Value With Spaces and Default";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });

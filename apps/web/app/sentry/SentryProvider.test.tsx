@@ -38,7 +38,7 @@ describe("SentryProvider", () => {
     expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         dsn: sentryDsn,
-        tracesSampleRate: 1,
+        tracesSampleRate: 0,
         debug: false,
         replaysOnErrorSampleRate: 1.0,
         replaysSessionSampleRate: 0.1,

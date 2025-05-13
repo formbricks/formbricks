@@ -6,6 +6,7 @@ export const convertDateString = (dateString: string) => {
   if (!dateString) {
     return dateString;
   }
+
   const date = new Date(dateString);
   return intlFormat(
     date,
