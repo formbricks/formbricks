@@ -71,7 +71,7 @@ export const SavedActionsTab = ({
                   {actions.map((action) => (
                     <button
                       key={action.id}
-                      className="cursor-pointer rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-100"
+                      className="flex cursor-pointer flex-col items-start rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-100"
                       onClick={() => handleActionClick(action)}>
                       <div className="mt-1 flex items-center">
                         <div className="mr-1.5 h-4 w-4 text-slate-600">
