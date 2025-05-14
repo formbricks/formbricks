@@ -40,11 +40,7 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
-      } else if (type === "contact") {
-        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
-      }
+      await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
 
       deleteRows(rowsToBeDeleted);
       toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));
@@ -69,15 +65,15 @@ export const SelectedRowSettings = <T,>({
 
   // Helper component for selectable options
   const SelectableOption = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <div className="cursor-pointer rounded-md p-1 hover:bg-slate-500" onClick={onClick}>
+    <button className="cursor-pointer rounded-md p-1 hover:bg-slate-500" onClick={onClick}>
       {label}
-    </div>
+    </button>
   );
 
   return (
     <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
       <div className="lowercase">
-        {selectedRowCount} {type === "response" ? t("common.responses") : t("common.contacts")}
+        {selectedRowCount} {type === "response" ? t("common.responses") : t("common.contacts")}{" "}
         {t("common.selected")}
       </div>
       <Separator />
@@ -88,11 +84,11 @@ export const SelectedRowSettings = <T,>({
         onClick={() => handleToggleAllRowsSelection(false)}
       />
       <Separator />
-      <div
+      <button
         className="cursor-pointer rounded-md bg-slate-500 p-1 hover:bg-slate-600"
         onClick={() => setIsDeleteDialogOpen(true)}>
         <Trash2Icon strokeWidth={1.5} className="h-4 w-4" />
-      </div>
+      </button>
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
