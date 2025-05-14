@@ -47,7 +47,7 @@ export const Template = ({
 
   const cardClass = cn(
     showCreateSurveyButton && "ring-2 ring-slate-400",
-    "group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-120 duration-150 hover:ring-2 hover:ring-slate-300"
+    "flex flex-col group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-120 duration-150 hover:ring-2 hover:ring-slate-300"
   );
 
   const cardContent = (
