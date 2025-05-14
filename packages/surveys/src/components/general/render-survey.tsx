@@ -6,6 +6,12 @@ import { Survey } from "./survey";
 export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
 
+  // Define survey type-specific styles
+  const surveyTypeStyles = {
+    "--fb-scrollable-max-height": props.survey.type === "link" ? "56dvh" : "25dvh",
+    "--fb-scrollable-min-height": props.survey.type === "link" ? "0dvh" : "25dvh",
+  } as React.CSSProperties;
+
   const close = () => {
     setIsOpen(false);
     setTimeout(() => {
@@ -22,7 +28,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}
       onClose={close}
-      isOpen={isOpen}>
+      isOpen={isOpen}
+      style={surveyTypeStyles}>
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}

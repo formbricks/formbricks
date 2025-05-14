@@ -10,6 +10,7 @@ interface SurveyContainerProps {
   readonly onClose?: () => void;
   readonly clickOutside?: boolean;
   readonly isOpen?: boolean;
+  readonly style?: React.CSSProperties;
 }
 
 export function SurveyContainer({
@@ -20,6 +21,7 @@ export function SurveyContainer({
   onClose,
   clickOutside,
   isOpen = true,
+  style,
 }: SurveyContainerProps) {
   const [show, setShow] = useState(false);
 
@@ -73,7 +75,7 @@ export function SurveyContainer({
 
   if (!isModal) {
     return (
-      <div id="fbjs" className="fb-formbricks-form" style={{ height: "100%", width: "100%" }}>
+      <div id="fbjs" className="fb-formbricks-form" style={{ ...style, height: "100%", width: "100%" }}>
         {children}
       </div>
     );
