@@ -98,16 +98,16 @@ export const ResponseNotes = ({
   const unresolvedNotes = useMemo(() => notes.filter((note) => !note.isResolved), [notes]);
 
   return (
-    <div
+    <button
       className={clsx(
         "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
         !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
         !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
-          ? "top-0 -right-2 h-5/6 max-h-[600px] w-1/4 bg-white"
+          ? "-right-2 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-            ? "top-[8.33%] right-0 h-5/6 max-h-[600px] w-1/12"
-            : "top-[8.333%] right-[120px] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);
@@ -116,7 +116,7 @@ export const ResponseNotes = ({
         <div className="flex h-full flex-col">
           <div
             className={clsx(
-              "space-y-2 rounded-t-lg px-2 pt-2 pb-2",
+              "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
               unresolvedNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
             )}>
             {!unresolvedNotes.length ? (
@@ -127,7 +127,7 @@ export const ResponseNotes = ({
               </div>
             ) : (
               <div className="float-left mr-1.5">
-                <Maximize2Icon className="h-4 w-4 text-amber-500 group-hover/hint:scale-110 hover:text-amber-600" />
+                <Maximize2Icon className="h-4 w-4 text-amber-500 hover:text-amber-600 group-hover/hint:scale-110" />
               </div>
             )}
           </div>
@@ -141,7 +141,7 @@ export const ResponseNotes = ({
         </div>
       ) : (
         <div className="relative flex h-full flex-col">
-          <div className="rounded-t-lg bg-amber-50 px-4 pt-4 pb-3">
+          <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
                 <h3 className="pb-1 text-sm text-amber-500">{t("common.note")}</h3>
@@ -254,6 +254,6 @@ export const ResponseNotes = ({
           </div>
         </div>
       )}
-    </div>
+    </button>
   );
 };
