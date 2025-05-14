@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
+import { ComponentChildren } from "preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 import { MultipleChoiceMultiQuestion } from "./multiple-choice-multi-question";
@@ -37,7 +38,7 @@ vi.mock("@/components/general/question-media", () => ({
 }));
 
 vi.mock("@/components/wrappers/scrollable-container", () => ({
-  ScrollableContainer: ({ children }: { children: React.ReactNode }) => (
+  ScrollableContainer: ({ children }: { children: ComponentChildren }) => (
     <div data-testid="scrollable-container">{children}</div>
   ),
 }));
