@@ -54,6 +54,7 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 export const QuestionFormInput = ({
@@ -74,6 +75,7 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   locale,
+  onKeyDown,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -243,6 +245,13 @@ export const QuestionFormInput = ({
     ]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (onKeyDown) onKeyDown(e);
+    },
+    [onKeyDown]
+  );
+
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
@@ -271,7 +280,7 @@ export const QuestionFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mt-3 mb-2">
+        <div className="mb-2 mt-3">
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -342,7 +351,7 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent ${
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           }`}
                           dir="auto"
@@ -382,6 +391,7 @@ export const QuestionFormInput = ({
                           }
                           autoComplete={isRecallSelectVisible ? "off" : "on"}
                           autoFocus={id === "headline"}
+                          onKeyDown={handleKeyDown}
                         />
                         {recallComponents}
                       </div>

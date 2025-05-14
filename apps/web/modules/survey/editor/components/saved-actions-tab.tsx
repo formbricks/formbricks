@@ -64,12 +64,12 @@ export const SavedActionsTab = ({
           (actions, i) =>
             actions.length > 0 && (
               <div key={i} className="me-4">
-                <h2 className="mt-4 mb-2 font-semibold">
+                <h2 className="mb-2 mt-4 font-semibold">
                   {i === 0 ? t("common.no_code") : t("common.code")}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {actions.map((action) => (
-                    <div
+                    <button
                       key={action.id}
                       className="cursor-pointer rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-100"
                       onClick={() => handleActionClick(action)}>
@@ -80,7 +80,7 @@ export const SavedActionsTab = ({
                         <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
                       <p className="mt-1 text-xs text-slate-500">{action.description}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
