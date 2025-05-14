@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-jiti("@formbricks/lib/env");
+jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
@@ -16,11 +16,15 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  cacheHandler: require.resolve("./cache-handler.js"),
+  cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
+    "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
   i18n: {
     locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
@@ -28,7 +32,7 @@ const nextConfig = {
     defaultLocale: "en-US",
   },
   experimental: {},
-  transpilePackages: ["@formbricks/database", "@formbricks/lib"],
+  transpilePackages: ["@formbricks/database"],
   images: {
     remotePatterns: [
       {
@@ -127,7 +131,7 @@ const nextConfig = {
       },
       {
         // matching all API routes
-        source: "/api/v1/client/:path*",
+        source: "/api/(v1|v2)/client/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Origin", value: "*" },
@@ -280,11 +284,6 @@ const nextConfig = {
   },
 };
 
-// set custom cache handler
-if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
-  nextConfig.cacheHandler = require.resolve("./cache-handler.mjs");
-}
-
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
@@ -301,35 +300,24 @@ nextConfig.images.remotePatterns.push({
 
 const sentryOptions = {
   // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
-  // Suppresses source map uploading logs during build
-  silent: true,
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
   org: "formbricks",
   project: "formbricks-cloud",
-};
 
-const sentryConfig = {
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+  // Only print logs for uploading source maps in CI
+  silent: true,
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
-
-  // Transpiles SDK to be compatible with IE11 (increases bundle size)
-  transpileClientSDK: true,
-
-  // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-  tunnelRoute: "/monitoring",
-
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 };
 
-const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
+const exportConfig =
+  process.env.SENTRY_DSN && process.env.NODE_ENV === "production"
+    ? withSentryConfig(nextConfig, sentryOptions)
+    : nextConfig;
 
-export default nextConfig;
+export default exportConfig;

@@ -1,17 +1,17 @@
+import { cn } from "@/lib/cn";
+import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
+import { processResponseData } from "@/lib/responses";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
 import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
-import { RankingRespone } from "@/modules/ui/components/ranking-response";
+import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
-import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { processResponseData } from "@formbricks/lib/responses";
-import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import {
   TSurvey,
   TSurveyMatrixQuestion,
@@ -161,7 +161,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Ranking:
       if (Array.isArray(responseData)) {
-        return <RankingRespone value={responseData} isExpanded={isExpanded} />;
+        return <RankingResponse value={responseData} isExpanded={isExpanded} />;
       }
     default:
       if (

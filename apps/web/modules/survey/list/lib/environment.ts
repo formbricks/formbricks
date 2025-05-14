@@ -1,11 +1,11 @@
 import "server-only";
+import { cache } from "@/lib/cache";
+import { environmentCache } from "@/lib/environment/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Environment, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 

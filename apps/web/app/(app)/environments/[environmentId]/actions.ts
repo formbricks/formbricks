@@ -1,5 +1,8 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
+import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -8,9 +11,6 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
-import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";

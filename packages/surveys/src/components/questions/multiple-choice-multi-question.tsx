@@ -64,20 +64,6 @@ export function MultipleChoiceMultiQuestion({
   const [otherSelected, setOtherSelected] = useState<boolean>(false);
   const [otherValue, setOtherValue] = useState("");
 
-  useEffect(() => {
-    setOtherSelected(
-      Boolean(value) &&
-        (Array.isArray(value) ? value : [value]).some((item) => {
-          return !getChoicesWithoutOtherLabels().includes(item);
-        })
-    );
-    setOtherValue(
-      (Array.isArray(value) &&
-        value.filter((v) => !question.choices.find((c) => c.label[languageCode] === v))[0]) ||
-        ""
-    );
-  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value, languageCode]);
-
   const questionChoices = useMemo(() => {
     if (!question.choices) {
       return [];
@@ -135,6 +121,16 @@ export function MultipleChoiceMultiQuestion({
     onChange({ [question.id]: [] }); // if not array, make it an array
   };
 
+  const getIsRequired = () => {
+    const responseValues = [...value];
+    if (otherSelected && otherValue) {
+      responseValues.push(otherValue);
+    }
+    return question.required && Array.isArray(responseValues) && responseValues.length
+      ? false
+      : question.required;
+  };
+
   return (
     <form
       key={question.id}
@@ -143,10 +139,11 @@ export function MultipleChoiceMultiQuestion({
         const newValue = value.filter((item) => {
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
+        if (otherValue && otherSelected && !newValue.includes(otherValue)) newValue.push(otherValue);
         onChange({ [question.id]: newValue });
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: newValue }, updatedTtcObj);
       }}
       className="fb-w-full">
       <ScrollableContainer>
@@ -208,11 +205,7 @@ export function MultipleChoiceMultiQuestion({
                             Array.isArray(value) &&
                             value.includes(getLocalizedValue(choice.label, languageCode))
                           }
-                          required={
-                            question.required && Array.isArray(value) && value.length
-                              ? false
-                              : question.required
-                          }
+                          required={getIsRequired()}
                         />
                         <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
@@ -225,9 +218,7 @@ export function MultipleChoiceMultiQuestion({
                   <label
                     tabIndex={isCurrent ? 0 : -1}
                     className={cn(
-                      value.includes(getLocalizedValue(otherOption.label, languageCode))
-                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                        : "fb-border-border",
+                      otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
                       "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                     )}
                     onKeyDown={(e) => {
@@ -249,11 +240,6 @@ export function MultipleChoiceMultiQuestion({
                         aria-labelledby={`${otherOption.id}-label`}
                         onChange={() => {
                           setOtherSelected(!otherSelected);
-                          if (!value.includes(otherValue)) {
-                            addItem(otherValue);
-                          } else {
-                            removeItem(otherValue);
-                          }
                         }}
                         checked={otherSelected}
                       />
@@ -266,12 +252,13 @@ export function MultipleChoiceMultiQuestion({
                         ref={otherSpecify}
                         dir="auto"
                         id={`${otherOption.id}-label`}
+                        maxLength={250}
                         name={question.id}
                         tabIndex={isCurrent ? 0 : -1}
                         value={otherValue}
+                        pattern=".*\S+.*"
                         onChange={(e) => {
                           setOtherValue(e.currentTarget.value);
-                          addItem(e.currentTarget.value);
                         }}
                         className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
                         placeholder={
@@ -279,7 +266,6 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
-                        pattern=".*\S+.*"
                       />
                     ) : null}
                   </label>

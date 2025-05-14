@@ -1,14 +1,14 @@
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
 
 // Mock dependencies
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -47,7 +47,6 @@ vi.mock("@formbricks/lib/constants", () => ({
   AZURE_OAUTH_ENABLED: true,
   OIDC_OAUTH_ENABLED: true,
   DEFAULT_ORGANIZATION_ID: "test-default-organization-id",
-  DEFAULT_ORGANIZATION_ROLE: "test-default-organization-role",
   IS_TURNSTILE_CONFIGURED: true,
   SAML_TENANT: "test-saml-tenant",
   SAML_PRODUCT: "test-saml-product",
@@ -55,11 +54,11 @@ vi.mock("@formbricks/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getisSsoEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
@@ -78,7 +77,7 @@ vi.mock("@/modules/auth/signup/components/signup-form", () => ({
 
 describe("SignupPage", () => {
   beforeEach(() => {
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getTranslate).mockResolvedValue((key) => key);

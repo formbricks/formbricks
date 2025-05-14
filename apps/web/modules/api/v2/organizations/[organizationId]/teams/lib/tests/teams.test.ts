@@ -1,7 +1,7 @@
+import { organizationCache } from "@/lib/organization/cache";
 import { TGetTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { organizationCache } from "@formbricks/lib/organization/cache";
 import { createTeam, getTeams } from "../teams";
 
 // Define a mock team object

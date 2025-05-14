@@ -1,11 +1,11 @@
 import { webhookCache } from "@/lib/cache/webhook";
+import { captureTelemetry } from "@/lib/telemetry";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getWebhooks = async (

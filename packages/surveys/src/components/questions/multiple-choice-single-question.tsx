@@ -225,6 +225,7 @@ export function MultipleChoiceSingleQuestion({
                         id={`${otherOption.id}-label`}
                         dir="auto"
                         name={question.id}
+                        pattern=".*\S+.*"
                         value={value}
                         onChange={(e) => {
                           onChange({ [question.id]: e.currentTarget.value });
@@ -237,7 +238,7 @@ export function MultipleChoiceSingleQuestion({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
-                        pattern=".*\S+.*"
+                        maxLength={250}
                       />
                     ) : null}
                   </label>

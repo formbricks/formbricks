@@ -1,10 +1,10 @@
 "use server";
 
+import { getSpreadsheetNameById } from "@/lib/googleSheet/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
 import { ZIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 const ZGetSpreadsheetNameByIdAction = z.object({

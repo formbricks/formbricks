@@ -10,8 +10,8 @@ vi.mock("../lib/api-key", () => ({
   getApiKeysWithEnvironmentPermissions: vi.fn(),
 }));
 
-// Mock @formbricks/lib/constants
-vi.mock("@formbricks/lib/constants", () => ({
+// Mock @/lib/constants
+vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "test-app-id",
@@ -32,8 +32,8 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
 }));
 
-// Mock @formbricks/lib/env
-vi.mock("@formbricks/lib/env", () => ({
+// Mock @/lib/env
+vi.mock("@/lib/env", () => ({
   env: {
     IS_FORMBRICKS_CLOUD: "0",
   },

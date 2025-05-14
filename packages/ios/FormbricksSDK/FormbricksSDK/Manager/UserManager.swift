@@ -95,10 +95,14 @@ final class UserManager: UserManagerSyncable {
                 self?.lastDisplayedAt = userResponse.data.state?.data?.lastDisplayAt
                 self?.expiresAt = userResponse.data.state?.expiresAt
                 
+                let serverLanguage = userResponse.data.state?.data?.language
+                Formbricks.language = serverLanguage ?? "default"
+                
                 self?.updateQueue?.reset()
                 self?.surveyManager?.filterSurveys()
                 self?.startSyncTimer()
             case .failure(let error):
+                Formbricks.delegate?.onError(error)
                 Formbricks.logger?.error(error)
             }
         }
@@ -106,6 +110,14 @@ final class UserManager: UserManagerSyncable {
     
     /// Logs out the user and clears the user state.
     func logout() {
+        var isUserIdDefined = false
+        
+        if userId != nil {
+            isUserIdDefined = true
+        } else {
+            Formbricks.logger?.error("no userId is set, please set a userId first using the setUserId function")
+        }
+        
         UserDefaults.standard.removeObject(forKey: UserManager.userIdKey)
         UserDefaults.standard.removeObject(forKey: UserManager.contactIdKey)
         UserDefaults.standard.removeObject(forKey: UserManager.segmentsKey)
@@ -120,9 +132,16 @@ final class UserManager: UserManagerSyncable {
         backingResponses = nil
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
-        updateQueue?.reset()
+        Formbricks.language = "default"
         
-        Formbricks.logger?.debug("Successfully logged out user and reset the user state.")
+        syncTimer?.invalidate()
+        syncTimer = nil
+        updateQueue?.cleanup()
+        
+        if isUserIdDefined {
+            Formbricks.logger?.debug("Successfully logged out user and reset the user state.")
+        }
+        
     }
     
     func cleanupUpdateQueue() {

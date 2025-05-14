@@ -10,7 +10,7 @@ import { SignupForm } from "./signup-form";
 
 // Mock dependencies
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -119,8 +119,6 @@ const defaultProps = {
   isTurnstileConfigured: false,
   samlTenant: "",
   samlProduct: "",
-  defaultOrganizationId: "org1",
-  defaultOrganizationRole: "member",
   turnstileSiteKey: "dummy", // not used since isTurnstileConfigured is false
 } as const;
 
@@ -179,8 +177,6 @@ describe("SignupForm", () => {
         userLocale: defaultProps.userLocale,
         inviteToken: "",
         emailVerificationDisabled: defaultProps.emailVerificationDisabled,
-        defaultOrganizationId: defaultProps.defaultOrganizationId,
-        defaultOrganizationRole: defaultProps.defaultOrganizationRole,
         turnstileToken: undefined,
       });
     });
@@ -233,8 +229,6 @@ describe("SignupForm", () => {
         userLocale: props.userLocale,
         inviteToken: "",
         emailVerificationDisabled: true,
-        defaultOrganizationId: props.defaultOrganizationId,
-        defaultOrganizationRole: props.defaultOrganizationRole,
         turnstileToken: "test-turnstile-token",
       });
     });
@@ -286,8 +280,6 @@ describe("SignupForm", () => {
         userLocale: props.userLocale,
         inviteToken: "",
         emailVerificationDisabled: true,
-        defaultOrganizationId: props.defaultOrganizationId,
-        defaultOrganizationRole: props.defaultOrganizationRole,
         turnstileToken: "test-turnstile-token",
       });
     });
@@ -362,8 +354,6 @@ describe("SignupForm", () => {
         userLocale: defaultProps.userLocale,
         inviteToken: "token123",
         emailVerificationDisabled: defaultProps.emailVerificationDisabled,
-        defaultOrganizationId: defaultProps.defaultOrganizationId,
-        defaultOrganizationRole: defaultProps.defaultOrganizationRole,
         turnstileToken: undefined,
       });
     });

@@ -1,5 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { isCapitalized } from "@/lib/utils/strings";
 import {
   convertOperatorToText,
   convertOperatorToTitle,
@@ -39,9 +42,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { cn } from "@formbricks/lib/cn";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { isCapitalized } from "@formbricks/lib/utils/strings";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TArithmeticOperator,
@@ -312,7 +312,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <SelectValue>
             <div className={cn("flex items-center gap-2", !isCapitalized(attrKeyValue ?? "") && "lowercase")}>
@@ -494,7 +494,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -525,7 +525,7 @@ function PersonSegmentFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id}>
+            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id} key={operator.id}>
               {operator.name}
             </SelectItem>
           ))}
@@ -643,7 +643,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />

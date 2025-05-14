@@ -26,7 +26,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
@@ -34,18 +33,18 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./packages/lib/messages/*.json"
+    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json"
   },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
     "@formbricks/eslint-config": "workspace:*",
-    "@playwright/test": "1.51.1",
+    "@playwright/test": "1.52.0",
     "eslint": "8.57.0",
     "husky": "9.1.7",
-    "lint-staged": "15.5.0",
+    "lint-staged": "15.5.2",
     "rimraf": "6.0.1",
-    "tsx": "4.19.3",
-    "turbo": "2.5.0"
+    "tsx": "4.19.4",
+    "turbo": "2.5.2"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -61,14 +60,11 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@9.15.9",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
-  },
-  "dependencies": {
-    "@changesets/cli": "2.28.1"
   }
 }

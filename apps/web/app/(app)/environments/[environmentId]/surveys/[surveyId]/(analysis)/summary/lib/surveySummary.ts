@@ -1,20 +1,19 @@
 import "server-only";
-import { getInsightsBySurveyIdQuestionId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/insights";
+import { cache } from "@/lib/cache";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { displayCache } from "@/lib/display/cache";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { responseCache } from "@/lib/response/cache";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { buildWhereClause } from "@/lib/response/utils";
+import { surveyCache } from "@/lib/survey/cache";
+import { getSurvey } from "@/lib/survey/service";
+import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { RESPONSES_PER_PAGE } from "@formbricks/lib/constants";
-import { displayCache } from "@formbricks/lib/display/cache";
-import { getDisplayCountBySurveyId } from "@formbricks/lib/display/service";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { buildWhereClause } from "@formbricks/lib/response/utils";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -317,11 +316,9 @@ export const getQuestionSummary = async (
     switch (question.type) {
       case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
-        const insightResponsesIds: string[] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
-            insightResponsesIds.push(response.id);
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
@@ -331,20 +328,12 @@ export const getQuestionSummary = async (
             });
           }
         });
-        const insights = await getInsightsBySurveyIdQuestionId(
-          survey.id,
-          question.id,
-          insightResponsesIds,
-          50
-        );
 
         summary.push({
           type: question.type,
           question,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
-          insights,
-          insightsEnabled: question.insightsEnabled,
         });
 
         values = [];
@@ -420,7 +409,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             value: label,
             count,
@@ -519,7 +508,7 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).forEach(([label, count]) => {
           values.push({
             rating: parseInt(label),
             count,

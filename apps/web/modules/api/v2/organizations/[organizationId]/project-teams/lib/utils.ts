@@ -1,13 +1,13 @@
+import { cache } from "@/lib/cache";
 import { teamCache } from "@/lib/cache/team";
+import { organizationCache } from "@/lib/organization/cache";
+import { projectCache } from "@/lib/project/cache";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetProjectTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 

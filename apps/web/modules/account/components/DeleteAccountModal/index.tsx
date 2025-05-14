@@ -16,7 +16,6 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
-  formbricksLogout: () => Promise<void>;
 }
 
 export const DeleteAccountModal = ({
@@ -24,7 +23,6 @@ export const DeleteAccountModal = ({
   open,
   user,
   isFormbricksCloud,
-  formbricksLogout,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
   const { t } = useTranslate();
@@ -38,7 +36,6 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
-      await formbricksLogout();
       // redirect to account deletion survey in Formbricks Cloud
       if (isFormbricksCloud) {
         await signOut({ redirect: true });

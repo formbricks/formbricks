@@ -1,8 +1,8 @@
+import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getUser } from "@formbricks/lib/user/service";
 import { TUser } from "@formbricks/types/user";
 import AppLayout from "./layout";
 
@@ -10,11 +10,11 @@ vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/user/service", () => ({
+vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
   INTERCOM_APP_ID: "test-app-id",
@@ -36,14 +36,10 @@ vi.mock("@formbricks/lib/constants", () => ({
   IS_POSTHOG_CONFIGURED: true,
   POSTHOG_API_HOST: "test-posthog-api-host",
   POSTHOG_API_KEY: "test-posthog-api-key",
-  FORMBRICKS_API_HOST: "mock-formbricks-api-host",
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
 }));
 
-vi.mock("@/app/(app)/components/FormbricksClient", () => ({
-  FormbricksClient: () => <div data-testid="formbricks-client" />,
-}));
 vi.mock("@/app/intercom/IntercomClientWrapper", () => ({
   IntercomClientWrapper: () => <div data-testid="mock-intercom-wrapper" />,
 }));
@@ -74,17 +70,5 @@ describe("(app) AppLayout", () => {
     expect(screen.getByTestId("mock-intercom-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("toaster-client")).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toHaveTextContent("Hello from children");
-    expect(screen.getByTestId("formbricks-client")).toBeInTheDocument();
-  });
-
-  test("skips FormbricksClient if no user is present", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
-
-    const element = await AppLayout({
-      children: <div data-testid="child-content">Hello from children</div>,
-    });
-    render(element);
-
-    expect(screen.queryByTestId("formbricks-client")).not.toBeInTheDocument();
   });
 });

@@ -61,6 +61,7 @@ final class UpdateQueue {
             } else {
                 // If no userId, just update locally without API call
                 Formbricks.logger?.debug("UpdateQueue - updating language locally: \(language)")
+                return
             }
             
             startDebounceTimer()
@@ -99,7 +100,9 @@ private extension UpdateQueue {
         let effectiveUserId: String? = self.userId ?? Formbricks.userManager?.userId ?? nil
     
         guard let userId = effectiveUserId else {
-            Formbricks.logger?.error(FormbricksSDKError(type: .userIdIsNotSetYet).message)
+            let error = FormbricksSDKError(type: .userIdIsNotSetYet)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return
         }
         
