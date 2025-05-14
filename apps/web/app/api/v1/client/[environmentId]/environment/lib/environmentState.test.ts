@@ -254,7 +254,7 @@ describe("getEnvironmentState", () => {
     vi.mocked(getEnvironment).mockResolvedValue(mockEnvironment);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
     vi.mocked(getProjectForEnvironmentState).mockResolvedValue(mockProject);
-    vi.mocked(getSurveysForEnvironmentState).mockResolvedValue(mockSurveys);
+    vi.mocked(getSurveysForEnvironmentState).mockResolvedValue([mockSurveys[0]]); // Only return the app, inProgress survey
     vi.mocked(getActionClassesForEnvironmentState).mockResolvedValue(mockActionClasses);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50); // Default below limit
   });
