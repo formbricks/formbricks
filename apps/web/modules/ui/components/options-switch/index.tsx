@@ -42,7 +42,7 @@ export const OptionsSwitch = ({
         style={highlightStyle}
       />
       {questionTypes.map((type) => (
-        <div
+        <button
           key={type.value}
           data-value={type.value}
           onClick={() => !type.disabled && handleOptionChange(type.value)}
@@ -57,7 +57,7 @@ export const OptionsSwitch = ({
             <span className="text-sm text-slate-900">{type.label}</span>
             {type.icon && <div className="h-4 w-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

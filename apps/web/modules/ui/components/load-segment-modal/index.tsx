@@ -73,7 +73,7 @@ const SegmentDetail = ({
   };
 
   return (
-    <div
+    <button
       key={segment.id}
       className={cn(
         "relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
@@ -112,7 +112,7 @@ const SegmentDetail = ({
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
         <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt)}</div>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -169,6 +169,7 @@ export const LoadSegmentModal = ({
 
               {segmentsArray.map((segment) => (
                 <SegmentDetail
+                  key={segment.id}
                   segment={segment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                   setOpen={setOpen}

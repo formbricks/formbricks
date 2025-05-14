@@ -29,7 +29,7 @@ export const SegmentTableDataRow = ({
     <>
       <button
         key={id}
-        className="grid h-16 w-full cursor-pointer grid-cols-7 content-center rounded-lg p-2 transition-colors ease-in-out hover:bg-slate-100"
+        className="grid h-16 w-full cursor-pointer grid-cols-7 content-center rounded-lg p-2 text-left transition-colors ease-in-out hover:bg-slate-100"
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
