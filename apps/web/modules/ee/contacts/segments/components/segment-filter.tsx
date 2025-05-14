@@ -116,14 +116,14 @@ function SegmentFilterItemConnector({
 
   return (
     <div className="w-[40px]">
-      <span
+      <button
         className={cn(Boolean(connector) && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
         onClick={() => {
           if (viewOnly) return;
           onConnectorChange();
         }}>
-        {connector ? connector : t("environments.segments.where")}
-      </span>
+        {connector ?? t("environments.segments.where")}
+      </button>
     </div>
   );
 }
@@ -312,7 +312,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue>
             <div className={cn("flex items-center gap-2", !isCapitalized(attrKeyValue ?? "") && "lowercase")}>
@@ -494,7 +494,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -626,14 +626,14 @@ function SegmentSegmentFilter({
       />
 
       <div>
-        <span
+        <button
           className={cn("cursor-pointer underline", viewOnly && "cursor-not-allowed")}
           onClick={() => {
             if (viewOnly) return;
             toggleSegmentOperator();
           }}>
           {operatorText}
-        </span>
+        </button>
       </div>
 
       <Select
@@ -643,7 +643,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />
