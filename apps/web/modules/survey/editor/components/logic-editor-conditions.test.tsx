@@ -75,7 +75,6 @@ describe("LogicEditorConditions", () => {
     );
 
     // Find the dropdown menu trigger for the condition
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const dropdownTrigger = container.querySelector<HTMLButtonElement>("#condition-0-0-dropdown");
     if (!dropdownTrigger) {
       throw new Error("Dropdown trigger not found");
