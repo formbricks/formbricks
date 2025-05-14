@@ -1,20 +1,20 @@
-import { prisma } from "@formbricks/database";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { cache } from "@formbricks/lib/cache";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { organizationCache } from "@formbricks/lib/organization/cache";
+import { actionClassCache } from "@/lib/actionClass/cache";
+import { cache } from "@/lib/cache";
+import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
+import { environmentCache } from "@/lib/environment/cache";
+import { getEnvironment } from "@/lib/environment/service";
+import { organizationCache } from "@/lib/organization/cache";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
+} from "@/lib/organization/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@formbricks/lib/posthogServer";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
+} from "@/lib/posthogServer";
+import { projectCache } from "@/lib/project/cache";
+import { surveyCache } from "@/lib/survey/cache";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState } from "@formbricks/types/js";
@@ -99,14 +99,11 @@ export const getEnvironmentState = async (
         getActionClassesForEnvironmentState(environmentId),
       ]);
 
-      const filteredSurveys = surveys.filter(
-        (survey) => survey.type === "app" && survey.status === "inProgress"
-      );
-
       const data: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
+        surveys: !isMonthlyResponsesLimitReached ? surveys : [],
         actionClasses,
         project: project,
+        ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       };
 
       return {

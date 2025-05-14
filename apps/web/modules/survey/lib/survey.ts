@@ -1,10 +1,10 @@
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
+import { surveyCache } from "@/lib/survey/cache";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Organization, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -41,6 +41,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   isBackButtonHidden: true,
   languages: {
     select: {
@@ -125,16 +126,24 @@ export const getSurvey = reactCache(
   async (surveyId: string): Promise<TSurvey> =>
     cache(
       async () => {
-        const survey = await prisma.survey.findUnique({
-          where: { id: surveyId },
-          select: selectSurvey,
-        });
+        try {
+          const survey = await prisma.survey.findUnique({
+            where: { id: surveyId },
+            select: selectSurvey,
+          });
 
-        if (!survey) {
-          throw new ResourceNotFoundError("Survey", surveyId);
+          if (!survey) {
+            throw new ResourceNotFoundError("Survey", surveyId);
+          }
+
+          return transformPrismaSurvey<TSurvey>(survey);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        return transformPrismaSurvey<TSurvey>(survey);
       },
       [`survey-editor-getSurvey-${surveyId}`],
       {

@@ -1,14 +1,15 @@
 import { getLocale } from "@/tolgee/language";
 import { getTolgee } from "@/tolgee/server";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
 import { TolgeeInstance } from "@tolgee/react";
 import React from "react";
+import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import RootLayout from "./layout";
+import RootLayout, { metadata } from "./layout";
 
 // Mock dependencies for the layout
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -38,15 +39,6 @@ vi.mock("@/tolgee/language", () => ({
 
 vi.mock("@/tolgee/server", () => ({
   getTolgee: vi.fn(),
-}));
-
-vi.mock("@/modules/ui/components/post-hog-client", () => ({
-  PHProvider: ({ children, posthogEnabled }: { children: React.ReactNode; posthogEnabled: boolean }) => (
-    <div data-testid="ph-provider">
-      PHProvider: {posthogEnabled}
-      {children}
-    </div>
-  ),
 }));
 
 vi.mock("@/tolgee/client", () => ({
@@ -95,10 +87,53 @@ describe("RootLayout", () => {
 
     const children = <div data-testid="child">Child Content</div>;
     const element = await RootLayout({ children });
-    render(element);
+    const html = renderToString(element);
 
-    expect(screen.getByTestId("tolgee-next-provider")).toBeInTheDocument();
-    expect(screen.getByTestId("sentry-provider")).toBeInTheDocument();
-    expect(screen.getByTestId("child")).toHaveTextContent("Child Content");
+    // Create a container and set its innerHTML
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    // Now we can use screen queries on the rendered content
+    expect(container.querySelector('[data-testid="tolgee-next-provider"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="sentry-provider"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="child"]')).toHaveTextContent("Child Content");
+
+    // Cleanup
+    document.body.removeChild(container);
+  });
+
+  test("renders with different locale", async () => {
+    const fakeLocale = "de-DE";
+    vi.mocked(getLocale).mockResolvedValue(fakeLocale);
+
+    const fakeStaticData = { key: "value" };
+    const fakeTolgee = {
+      loadRequired: vi.fn().mockResolvedValue(fakeStaticData),
+    };
+    vi.mocked(getTolgee).mockResolvedValue(fakeTolgee as unknown as TolgeeInstance);
+
+    const children = <div data-testid="child">Child Content</div>;
+    const element = await RootLayout({ children });
+    const html = renderToString(element);
+
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    const tolgeeProvider = container.querySelector('[data-testid="tolgee-next-provider"]');
+    expect(tolgeeProvider).toHaveTextContent(fakeLocale);
+
+    document.body.removeChild(container);
+  });
+
+  test("exports correct metadata", () => {
+    expect(metadata).toEqual({
+      title: {
+        template: "%s | Formbricks",
+        default: "Formbricks",
+      },
+      description: "Open-Source Survey Suite",
+    });
   });
 });

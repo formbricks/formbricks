@@ -183,14 +183,18 @@ export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: stri
   return selectedLanguage.language.code;
 };
 
+export const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
+
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boolean => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
+  const randomNum = Math.floor(getSecureRandom() * 10000) / 100;
   return randomNum <= displayPercentage;
 };
 
-export const isNowExpired = (expirationDate: Date): boolean => {
-  return new Date() >= expirationDate;
-};
+export const isNowExpired = (expirationDate: Date): boolean => new Date() >= expirationDate;
 
 export const checkUrlMatch = (
   url: string,
@@ -278,7 +282,9 @@ export const evaluateNoCodeConfigClick = (
 
   if (cssSelector) {
     // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelector.split(/\s*(?=[.#])/);
+    const individualSelectors = cssSelector
+      .split(/(?=[.#])/) // split before each . or #
+      .map((sel) => sel.trim()); // remove leftover whitespace
     for (const selector of individualSelectors) {
       if (!targetElement.matches(selector)) {
         return false;

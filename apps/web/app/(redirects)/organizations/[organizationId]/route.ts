@@ -1,12 +1,12 @@
+import { hasOrganizationAccess } from "@/lib/auth";
+import { getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
-import { hasOrganizationAccess } from "@formbricks/lib/auth";
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getUserProjects } from "@formbricks/lib/project/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {

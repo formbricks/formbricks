@@ -54,15 +54,19 @@ struct SurveyWebView: UIViewRepresentable {
     func clean() {
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
-                    /*
-                     This completion handler is intentionally empty since we only need to 
-                     ensure the data is removed. No additional actions are required after
-                     the website data has been cleared.
-                    */
-                })
-            }
+            self.remove(records)
+        }
+    }
+    
+    private func remove(_ records: [WKWebsiteDataRecord]) {
+        records.forEach { record in
+            WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
+                /*
+                 This completion handler is intentionally empty since we only need to
+                 ensure the data is removed. No additional actions are required after
+                 the website data has been cleared.
+                */
+            })
         }
     }
 }
@@ -115,10 +119,12 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
 
                 /// Happens when a survey is shown.
             case .onDisplayCreated:
+                Formbricks.delegate?.onSurveyStarted()
                 Formbricks.surveyManager?.onNewDisplay(surveyId: surveyId)
             
             /// Happens when the user closes the survey view with the close button.
             case .onClose:
+                Formbricks.delegate?.onSurveyClosed()
                 Formbricks.surveyManager?.dismissSurveyWebView()
             
             /// Happens when the survey wants to open an external link in the default browser.
@@ -133,7 +139,9 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
             }
             
         } else {
-            Formbricks.logger?.error("\(FormbricksSDKError(type: .invalidJavascriptMessage).message): \(message.body)")
+            let error = FormbricksSDKError(type: .invalidJavascriptMessage)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error("\(error.message): \(message.body)")
         }
     }
 }

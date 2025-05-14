@@ -1,6 +1,10 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { organizationCache } from "@/lib/cache/organization";
 import { teamCache } from "@/lib/cache/team";
+import { projectCache } from "@/lib/project/cache";
+import { userCache } from "@/lib/user/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TOrganizationTeam,
   TOtherTeam,
@@ -13,10 +17,6 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { userCache } from "@formbricks/lib/user/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
@@ -57,7 +57,7 @@ export const getTeamsByOrganizationId = reactCache(
     )()
 );
 
-const getUserTeams = reactCache(
+export const getUserTeams = reactCache(
   async (userId: string, organizationId: string): Promise<TUserTeam[]> =>
     cache(
       async () => {

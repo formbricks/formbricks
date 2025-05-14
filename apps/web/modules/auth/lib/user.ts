@@ -1,16 +1,21 @@
+import { cache } from "@/lib/cache";
+import { isValidImageFile } from "@/lib/fileValidation";
+import { userCache } from "@/lib/user/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { cache } from "@formbricks/lib/cache";
-import { userCache } from "@formbricks/lib/user/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUser = async (id: string, data: TUserUpdateInput) => {
   validateInputs([id, ZId], [data, ZUserUpdateInput.partial()]);
+
+  if (data.imageUrl && !isValidImageFile(data.imageUrl)) {
+    throw new InvalidInputError("Invalid image file");
+  }
 
   try {
     const updatedUser = await prisma.user.update({

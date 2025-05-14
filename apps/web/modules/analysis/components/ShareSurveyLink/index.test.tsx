@@ -16,7 +16,7 @@ const dummySurvey = {
 const dummySurveyDomain = "http://dummy.com";
 const dummyLocale = "en-US";
 
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -37,12 +37,6 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-ai-azure-llm-ressource-name",
-  AI_AZURE_LLM_API_KEY: "mock-ai",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-ai-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-ai-azure-embeddings-ressource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-ai-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-ai-azure-embeddings-deployment-id",
 }));
 
 vi.mock("@/modules/survey/list/actions", () => ({

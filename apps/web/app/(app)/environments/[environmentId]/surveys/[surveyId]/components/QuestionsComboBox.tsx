@@ -1,5 +1,7 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import {
   Command,
   CommandEmpty,
@@ -16,11 +18,12 @@ import {
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  ContactIcon,
   EyeOff,
   GlobeIcon,
   GridIcon,
   HashIcon,
-  HelpCircleIcon,
+  HomeIcon,
   ImageIcon,
   LanguagesIcon,
   ListIcon,
@@ -32,9 +35,7 @@ import {
   StarIcon,
   User,
 } from "lucide-react";
-import * as React from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { Fragment, useRef, useState } from "react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
@@ -63,59 +64,60 @@ interface QuestionComboBoxProps {
   onChangeValue: (option: QuestionOption) => void;
 }
 
-const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
-  const getIconType = () => {
-    switch (type) {
-      case OptionsType.QUESTIONS:
-        switch (questionType) {
-          case TSurveyQuestionTypeEnum.OpenText:
-            return <MessageSquareTextIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Rating:
-            return <StarIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.CTA:
-            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.OpenText:
-            return <HelpCircleIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-            return <ListIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-            return <Rows3Icon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.NPS:
-            return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Consent:
-            return <CheckIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.PictureSelection:
-            return <ImageIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Matrix:
-            return <GridIcon width={18} height={18} className="text-white" />;
-          case TSurveyQuestionTypeEnum.Ranking:
-            return <ListOrderedIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.ATTRIBUTES:
-        return <User width={18} height={18} className="text-white" />;
+const questionIcons = {
+  // questions
+  [TSurveyQuestionTypeEnum.OpenText]: MessageSquareTextIcon,
+  [TSurveyQuestionTypeEnum.Rating]: StarIcon,
+  [TSurveyQuestionTypeEnum.CTA]: MousePointerClickIcon,
+  [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: ListIcon,
+  [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: Rows3Icon,
+  [TSurveyQuestionTypeEnum.NPS]: NetPromoterScoreIcon,
+  [TSurveyQuestionTypeEnum.Consent]: CheckIcon,
+  [TSurveyQuestionTypeEnum.PictureSelection]: ImageIcon,
+  [TSurveyQuestionTypeEnum.Matrix]: GridIcon,
+  [TSurveyQuestionTypeEnum.Ranking]: ListOrderedIcon,
+  [TSurveyQuestionTypeEnum.Address]: HomeIcon,
+  [TSurveyQuestionTypeEnum.ContactInfo]: ContactIcon,
 
-      case OptionsType.HIDDEN_FIELDS:
-        return <EyeOff width={18} height={18} className="text-white" />;
-      case OptionsType.META:
-        switch (label) {
-          case "device":
-            return <SmartphoneIcon width={18} height={18} className="text-white" />;
-          case "os":
-            return <AirplayIcon width={18} height={18} className="text-white" />;
-          case "browser":
-            return <GlobeIcon width={18} height={18} className="text-white" />;
-          case "source":
-            return <GlobeIcon width={18} height={18} className="text-white" />;
-          case "action":
-            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.OTHERS:
-        switch (label) {
-          case "Language":
-            return <LanguagesIcon width={18} height={18} className="text-white" />;
-        }
-      case OptionsType.TAGS:
-        return <HashIcon width={18} height={18} className="text-white" />;
+  // attributes
+  [OptionsType.ATTRIBUTES]: User,
+
+  // hidden fields
+  [OptionsType.HIDDEN_FIELDS]: EyeOff,
+
+  // meta
+  device: SmartphoneIcon,
+  os: AirplayIcon,
+  browser: GlobeIcon,
+  source: GlobeIcon,
+  action: MousePointerClickIcon,
+
+  // others
+  Language: LanguagesIcon,
+
+  // tags
+  [OptionsType.TAGS]: HashIcon,
+};
+
+const getIcon = (type: string) => {
+  const IconComponent = questionIcons[type];
+  return IconComponent ? <IconComponent width={18} height={18} className="text-white" /> : null;
+};
+
+export const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
+  const getIconType = () => {
+    if (type) {
+      if (type === OptionsType.QUESTIONS && questionType) {
+        return getIcon(questionType);
+      } else if (type === OptionsType.ATTRIBUTES) {
+        return getIcon(OptionsType.ATTRIBUTES);
+      } else if (type === OptionsType.HIDDEN_FIELDS) {
+        return getIcon(OptionsType.HIDDEN_FIELDS);
+      } else if ([OptionsType.META, OptionsType.OTHERS].includes(type) && label) {
+        return getIcon(label);
+      } else if (type === OptionsType.TAGS) {
+        return getIcon(OptionsType.TAGS);
+      }
     }
   };
 
@@ -141,15 +143,15 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 };
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const { t } = useTranslate();
-  const commandRef = React.useRef(null);
-  const [inputValue, setInputValue] = React.useState("");
+  const commandRef = useRef(null);
+  const [inputValue, setInputValue] = useState("");
   useClickOutside(commandRef, () => setOpen(false));
 
   return (
     <Command ref={commandRef} className="h-10 overflow-visible bg-transparent hover:bg-slate-50">
-      <div
+      <button
         onClick={() => setOpen(true)}
         className="group flex cursor-pointer items-center justify-between rounded-md bg-white px-3 py-2 text-sm">
         {!open && selected.hasOwnProperty("label") && (
@@ -174,14 +176,14 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
           )}
         </div>
-      </div>
+      </button>
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (
-                <>
+                <Fragment key={data.header}>
                   {data?.option.length > 0 && (
                     <CommandGroup
                       heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
@@ -199,7 +201,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
                       ))}
                     </CommandGroup>
                   )}
-                </>
+                </Fragment>
               ))}
             </CommandList>
           </div>

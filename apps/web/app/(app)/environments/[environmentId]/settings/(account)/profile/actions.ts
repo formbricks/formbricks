@@ -1,15 +1,15 @@
 "use server";
 
+import { deleteFile } from "@/lib/storage/service";
+import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
+import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import { deleteFile } from "@formbricks/lib/storage/service";
-import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
-import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient
-  .schema(ZUserUpdateInput.partial())
+  .schema(ZUserUpdateInput.pick({ name: true, locale: true }))
   .action(async ({ parsedInput, ctx }) => {
     return await updateUser(ctx.user.id, parsedInput);
   });

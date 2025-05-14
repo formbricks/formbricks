@@ -1,6 +1,8 @@
 "use client";
 
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import {
   Command,
   CommandEmpty,
@@ -19,8 +21,6 @@ import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 type QuestionFilterComboBoxProps = {
@@ -81,6 +81,39 @@ export const QuestionFilterComboBox = ({
       .includes(searchQuery.toLowerCase())
   );
 
+  const filterComboBoxItem = !Array.isArray(filterComboBoxValue) ? (
+    <p className="text-slate-600">{filterComboBoxValue}</p>
+  ) : (
+    <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
+      {typeof filterComboBoxValue !== "string" &&
+        filterComboBoxValue?.map((o, index) => (
+          <button
+            key={`${o}-${index}`}
+            type="button"
+            onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
+            className="flex w-30 items-center bg-slate-100 px-2 whitespace-nowrap text-slate-600">
+            {o}
+            <X width={14} height={14} className="ml-2" />
+          </button>
+        ))}
+    </div>
+  );
+
+  const commandItemOnSelect = (o: string) => {
+    if (!isMultiple) {
+      onChangeFilterComboBoxValue(typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o);
+    } else {
+      onChangeFilterComboBoxValue(
+        Array.isArray(filterComboBoxValue)
+          ? [...filterComboBoxValue, typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+          : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+      );
+    }
+    if (!isMultiple) {
+      setOpen(false);
+    }
+  };
+
   return (
     <div className="inline-flex w-full flex-row">
       {filterOptions && filterOptions?.length <= 1 ? (
@@ -96,7 +129,7 @@ export const QuestionFilterComboBox = ({
           <DropdownMenuTrigger
             disabled={disabled}
             className={clsx(
-              "h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+              "h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600 focus:ring-0 focus:outline-transparent",
               !disabled ? "cursor-pointer" : "opacity-50"
             )}>
             <div className="flex items-center justify-between">
@@ -130,39 +163,37 @@ export const QuestionFilterComboBox = ({
       )}
       <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">
         <div
-          onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
           className={clsx(
-            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm",
-            disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm"
           )}>
-          {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (
-            !Array.isArray(filterComboBoxValue) ? (
-              <p className="text-slate-600">{filterComboBoxValue}</p>
-            ) : (
-              <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
-                {typeof filterComboBoxValue !== "string" &&
-                  filterComboBoxValue?.map((o, index) => (
-                    <button
-                      key={`${o}-${index}`}
-                      type="button"
-                      onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
-                      className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
-                      {o}
-                      <X width={14} height={14} className="ml-2" />
-                    </button>
-                  ))}
-              </div>
-            )
+          {filterComboBoxValue && filterComboBoxValue.length > 0 ? (
+            filterComboBoxItem
           ) : (
-            <p className="text-slate-400">{t("common.select")}...</p>
+            <button
+              type="button"
+              onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+              disabled={disabled || isDisabledComboBox || !filterValue}
+              className={clsx(
+                "flex-1 text-left text-slate-400",
+                disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+              )}>
+              {t("common.select")}...
+            </button>
           )}
-          <div>
+          <button
+            type="button"
+            onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+            disabled={disabled || isDisabledComboBox || !filterValue}
+            className={clsx(
+              "ml-2 flex items-center justify-center",
+              disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+            )}>
             {open ? (
-              <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
+              <ChevronUp className="h-4 w-4 opacity-50" />
             ) : (
-              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              <ChevronDown className="h-4 w-4 opacity-50" />
             )}
-          </div>
+          </button>
         </div>
         <div className="relative mt-2 h-full">
           {open && (
@@ -183,21 +214,7 @@ export const QuestionFilterComboBox = ({
                   {filteredOptions?.map((o, index) => (
                     <CommandItem
                       key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
-                      onSelect={() => {
-                        !isMultiple
-                          ? onChangeFilterComboBoxValue(
-                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
-                            )
-                          : onChangeFilterComboBoxValue(
-                              Array.isArray(filterComboBoxValue)
-                                ? [
-                                    ...filterComboBoxValue,
-                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
-                                  ]
-                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-                            );
-                        !isMultiple && setOpen(false);
-                      }}
+                      onSelect={() => commandItemOnSelect(o)}
                       className="cursor-pointer">
                       {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
                     </CommandItem>

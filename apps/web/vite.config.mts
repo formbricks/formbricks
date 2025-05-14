@@ -9,78 +9,92 @@ export default defineConfig({
     environment: "node",
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
-    setupFiles: ["../../packages/lib/vitestSetup.ts"],
+    setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
     coverage: {
       provider: "v8", // Use V8 as the coverage provider
       reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
-      include: [
-        "modules/api/v2/**/*.ts",
-        "modules/api/v2/**/*.tsx",
-        "modules/auth/lib/**/*.ts",
-        "modules/auth/signup/components/signup-form.tsx",
-        "modules/auth/signup/page.tsx",
-        "modules/signup/lib/**/*.ts",
-        "modules/auth/signup/lib/**/*.ts",
-        "modules/auth/signup/**/*.tsx",
-        "modules/ee/whitelabel/email-customization/components/*.tsx",
-        "modules/ee/sso/lib/**/*.ts",
-        "modules/email/components/email-template.tsx",
-        "modules/email/emails/survey/follow-up.tsx",
-        "modules/email/emails/lib/*.tsx",
-        "modules/environments/lib/**/*.ts",
-        "modules/ui/components/post-hog-client/*.tsx",
-        "modules/ee/role-management/components/*.tsx",
-        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
-        "modules/ui/components/alert/*.tsx",
-        "modules/ui/components/environmentId-base-layout/*.tsx",
-        "app/(app)/environments/**/layout.tsx",
-        "app/(app)/environments/**/settings/(organization)/general/page.tsx",
-        "app/(app)/environments/**/components/PosthogIdentify.tsx",
-        "app/(app)/(onboarding)/organizations/**/layout.tsx",
-        "app/(app)/(survey-editor)/environments/**/layout.tsx",
-        "app/(app)/components/FormbricksClient.tsx",
-        "app/(auth)/layout.tsx",
-        "app/(app)/layout.tsx",
-        "app/layout.tsx",
-        "app/intercom/*.tsx",
-        "app/sentry/*.tsx",
-        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
-        "modules/ee/sso/lib/**/*.ts",
-        "app/lib/**/*.ts",
-        "app/api/(internal)/insights/lib/**/*.ts",
-        "app/api/(internal)/pipeline/lib/survey-follow-up.ts",
-        "modules/ee/role-management/*.ts",
-        "modules/organization/settings/teams/actions.ts",
-        "modules/organization/settings/api-keys/lib/**/*.ts",
-        "app/api/v1/**/*.ts",
-        "modules/api/v2/management/auth/*.ts",
-        "modules/organization/settings/api-keys/components/*.tsx",
-        "modules/survey/hooks/*.tsx",
-        "modules/survey/components/question-form-input/index.tsx",
-        "modules/survey/lib/client-utils.ts",
-        "modules/survey/list/components/survey-card.tsx",
-        "modules/survey/list/components/survey-dropdown-menu.tsx",
-        "modules/survey/follow-ups/components/follow-up-item.tsx",
-        "modules/ee/contacts/segments/lib/**/*.ts",
-        "modules/ee/contacts/segments/components/segment-settings.tsx",
-        "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
-        "modules/ee/sso/components/**/*.tsx",
-        "modules/account/**/*.tsx",
-        "modules/account/**/*.ts",
-        "modules/analysis/**/*.tsx",
-        "modules/analysis/**/*.ts",
-        "modules/survey/editor/components/end-screen-form.tsx",
-      ],
+      include: ["app/**/*.{ts,tsx}", "modules/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
       exclude: [
-        "**/.next/**",
-        "**/*.spec.*",
-        "**/constants.ts", // Exclude constants files
-        "**/route.ts", // Exclude route files
-        "**/openapi.ts", // Exclude openapi configuration files
-        "**/openapi-document.ts", // Exclude openapi document files
-        "modules/**/types/**", // Exclude types
+        // Build and configuration files
+        "**/.next/**", // Next.js build output
+        "**/*.config.{js,ts,mjs,mts,cjs}", // All configuration files
+        "**/Dockerfile", // Dockerfiles
+        "**/vitestSetup.ts", // Vitest setup files
+        "**/*.setup.*", // Setup files
+
+        // Test and mock related files
+        "**/*.spec.*", // Test files
+        "**/*.test.*", // Test files
+        "**/*.mock.*", // Mock files
+        "**/mocks/**", // Mock directories
+        "**/__mocks__/**", // Jest-style mock directories
+        "**/playwright/**", // Playwright E2E test files
+
+        // Next.js specific files
+        "**/route.{ts,tsx}", // Next.js API routes
+        "**/middleware.ts", // Next.js middleware
+        "**/instrumentation.ts", // Next.js instrumentation files
+        "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
+
+        // Documentation and static files
+        "**/openapi.ts", // OpenAPI spec files
+        "**/openapi-document.ts", // OpenAPI-related document files
+        "**/*.json", // JSON files
+        "**/*.mdx", // MDX files
+        "**/*.css", // CSS files
+
+        // Type definitions and constants
+        "**/types/**", // Type definition folders
+        "**/types.ts", // Files named 'types.ts'
+        "**/constants.ts", // Constants files
+
+        // Server-side code
+        "**/actions.ts", // Server actions (plural)
+        "**/action.ts", // Server actions (singular)
+        "lib/env.ts", // Environment configuration
+        "lib/posthogServer.ts", // PostHog server integration
+        "**/cache.ts", // Cache files
+        "**/cache/**", // Cache directories
+
+        // UI Components and Templates
+        "**/stories.*", // Storybook files
+        "**/templates.ts", // Project-specific template files
+        "modules/ui/components/icons/*", // Icon components
+        "modules/ui/components/icons/**", // Icon components (nested)
+
+        // Feature-specific modules
+        "app/**/billing-confirmation/**", // Billing confirmation pages
+        "modules/ee/billing/**", // Enterprise billing features
+        "modules/ee/multi-language-surveys/**", // Multi-language survey features
+        "modules/email/**", // Email functionality
+        "modules/integrations/**", // Integration modules
+        "modules/setup/**/intro/**", // Setup intro pages
+        "modules/setup/**/signup/**", // Setup signup pages
+        "modules/setup/**/layout.tsx", // Setup layouts
+        "app/share/**", // Share functionality
+        "lib/shortUrl/**", // Short URL functionality
+        "app/[shortUrlId]", // Short URL pages
+        "modules/ee/contacts/components/**", // Contact components
+
+        // Third-party integrations
+        "lib/slack/**", // Slack integration
+        "lib/notion/**", // Notion integration
+        "lib/googleSheet/**", // Google Sheets integration
+        "app/api/google-sheet/**", // Google Sheets API
+        "app/api/billing/**", // Billing API
+        "lib/airtable/**", // Airtable integration
+        "app/api/v1/integrations/**", // Integration APIs
+
+        // Specific components
+        "packages/surveys/src/components/general/smileys.tsx", // Smiley components
+        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx", // Analysis smiley components
+        "modules/auth/lib/mock-data.ts", // Mock data for authentication
+
+        // Other
+        "**/scripts/**", // Utility scripts
+        "**/*.mjs", // ES modules
       ],
     },
   },

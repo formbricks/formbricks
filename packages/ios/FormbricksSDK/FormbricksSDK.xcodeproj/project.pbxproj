@@ -36,7 +36,6 @@
 		4DDAED9C2D50D54A00A19B1F /* Exceptions for "FormbricksSDK" folder in "FormbricksSDKTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Config.swift,
 				"Extension/Calendar+DaysBetween.swift",
 				"Extension/Error+Message.swift",
 				"Extension/JSON+Formatter.swift",
@@ -122,11 +121,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4D7D8DD42DB14F18002C453E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		4DDAED562D50D49A00A19B1F = {
 			isa = PBXGroup;
 			children = (
 				4DDAED622D50D49A00A19B1F /* FormbricksSDK */,
 				4DDAED6C2D50D49B00A19B1F /* FormbricksSDKTests */,
+				4D7D8DD42DB14F18002C453E /* Frameworks */,
 				4DDAED612D50D49A00A19B1F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -227,6 +234,8 @@
 			);
 			mainGroup = 4DDAED562D50D49A00A19B1F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4DDAED612D50D49A00A19B1F /* Products */;
 			projectDirPath = "";

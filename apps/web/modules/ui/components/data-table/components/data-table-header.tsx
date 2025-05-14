@@ -1,10 +1,10 @@
+import { cn } from "@/lib/cn";
 import { TableHead } from "@/modules/ui/components/table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Header, flexRender } from "@tanstack/react-table";
 import { GripVerticalIcon } from "lucide-react";
 import { CSSProperties } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { getCommonPinningStyles } from "../lib/utils";
 import { ColumnSettingsDropdown } from "./column-settings-dropdown";
 
@@ -63,8 +63,9 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
+          data-testid="column-resize-handle"
           className={cn(
-            "absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
+            "absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
             header.column.getIsResizing() ? "bg-black" : "bg-slate-500",
             !header.column.getCanResize() ? "hidden" : "group-hover:block"
           )}

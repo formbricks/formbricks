@@ -350,8 +350,13 @@ export const AddApiKeyModal = ({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+              <div className="space-y-4">
+                <div>
+                  <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                  <p className="text-sm text-slate-500">
+                    {t("environments.project.api_keys.organization_access_description")}
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-[auto_100px_100px] gap-4">
                     <div></div>
@@ -360,7 +365,7 @@ export const AddApiKeyModal = ({
 
                     {Object.keys(selectedOrganizationAccess).map((key) => (
                       <Fragment key={key}>
-                        <div className="py-1 text-sm">{t(getOrganizationAccessKeyDisplayName(key))}</div>
+                        <div className="py-1 text-sm">{getOrganizationAccessKeyDisplayName(key, t)}</div>
                         <div className="flex items-center justify-center py-1">
                           <Switch
                             data-testid={`organization-access-${key}-read`}

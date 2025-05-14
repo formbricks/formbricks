@@ -1,11 +1,11 @@
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
 import { notFound, redirect } from "next/navigation";
-import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 
 const Page = async (props) => {
   const params = await props.params;

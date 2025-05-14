@@ -1,13 +1,14 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { validateFileUploads } from "@/lib/fileValidation";
+import { getResponses } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
-import { getResponses } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, ZResponseInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
 export const GET = async (request: NextRequest) => {
@@ -47,72 +48,85 @@ export const GET = async (request: NextRequest) => {
   }
 };
 
-export const POST = async (request: Request): Promise<Response> => {
+const validateInput = async (request: Request) => {
+  let jsonInput;
   try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+    jsonInput = await request.json();
+  } catch (err) {
+    logger.error({ error: err, url: request.url }, "Error parsing JSON input");
+    return { error: responses.badRequestResponse("Malformed JSON input, please check your request body") };
+  }
 
-    let jsonInput;
-
-    try {
-      jsonInput = await request.json();
-    } catch (err) {
-      logger.error({ error: err, url: request.url }, "Error parsing JSON input");
-      return responses.badRequestResponse("Malformed JSON input, please check your request body");
-    }
-
-    const inputValidation = ZResponseInput.safeParse(jsonInput);
-
-    if (!inputValidation.success) {
-      return responses.badRequestResponse(
+  const inputValidation = ZResponseInput.safeParse(jsonInput);
+  if (!inputValidation.success) {
+    return {
+      error: responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
         transformErrorToDetails(inputValidation.error),
         true
-      );
-    }
+      ),
+    };
+  }
 
-    const responseInput = inputValidation.data;
+  return { data: inputValidation.data };
+};
 
-    const environmentId = responseInput.environmentId;
-
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
-    }
-
-    // get and check survey
-    const survey = await getSurvey(responseInput.surveyId);
-    if (!survey) {
-      return responses.notFoundResponse("Survey", responseInput.surveyId, true);
-    }
-    if (survey.environmentId !== environmentId) {
-      return responses.badRequestResponse(
+const validateSurvey = async (responseInput: TResponseInput, environmentId: string) => {
+  const survey = await getSurvey(responseInput.surveyId);
+  if (!survey) {
+    return { error: responses.notFoundResponse("Survey", responseInput.surveyId, true) };
+  }
+  if (survey.environmentId !== environmentId) {
+    return {
+      error: responses.badRequestResponse(
         "Survey is part of another environment",
         {
           "survey.environmentId": survey.environmentId,
           environmentId,
         },
         true
-      );
+      ),
+    };
+  }
+  return { survey };
+};
+
+export const POST = async (request: Request): Promise<Response> => {
+  try {
+    const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
+
+    const inputResult = await validateInput(request);
+    if (inputResult.error) return inputResult.error;
+
+    const responseInput = inputResult.data;
+    const environmentId = responseInput.environmentId;
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
     }
 
-    // if there is a createdAt but no updatedAt, set updatedAt to createdAt
+    const surveyResult = await validateSurvey(responseInput, environmentId);
+    if (surveyResult.error) return surveyResult.error;
+
+    if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
+      return responses.badRequestResponse("Invalid file upload response");
+    }
+
     if (responseInput.createdAt && !responseInput.updatedAt) {
       responseInput.updatedAt = responseInput.createdAt;
     }
 
-    let response: TResponse;
     try {
-      response = await createResponse(inputValidation.data);
+      const response = await createResponse(responseInput);
+      return responses.successResponse(response, true);
     } catch (error) {
       if (error instanceof InvalidInputError) {
         return responses.badRequestResponse(error.message);
-      } else {
-        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
-        return responses.internalServerErrorResponse(error.message);
       }
+      logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
+      return responses.internalServerErrorResponse(error.message);
     }
-
-    return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

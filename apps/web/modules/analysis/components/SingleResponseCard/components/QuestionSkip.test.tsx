@@ -1,6 +1,6 @@
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { QuestionSkip } from "./QuestionSkip";
 
@@ -16,7 +16,7 @@ vi.mock("@/modules/i18n/utils", () => ({
 }));
 
 // Mock recall utils
-vi.mock("@formbricks/lib/utils/recall", () => ({
+vi.mock("@/lib/utils/recall", () => ({
   parseRecallInfo: vi.fn((headline, _) => {
     return `parsed: ${headline}`;
   }),

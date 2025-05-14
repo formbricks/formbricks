@@ -1,7 +1,7 @@
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const OnboardingLayout = async (props) => {
@@ -16,7 +16,7 @@ const OnboardingLayout = async (props) => {
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
   if (!isAuthorized) {
-    throw AuthorizationError;
+    throw new AuthorizationError("User is not authorized to access this environment");
   }
 
   return <div className="flex-1 bg-slate-50">{children}</div>;

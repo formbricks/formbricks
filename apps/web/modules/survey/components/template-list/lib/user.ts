@@ -1,12 +1,15 @@
+import { isValidImageFile } from "@/lib/fileValidation";
+import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { userCache } from "@formbricks/lib/user/cache";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserUpdateInput } from "@formbricks/types/user";
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
+  if (data.imageUrl && !isValidImageFile(data.imageUrl)) throw new InvalidInputError("Invalid image file");
+
   try {
     const updatedUser = await prisma.user.update({
       where: {

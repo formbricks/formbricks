@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -6,7 +7,6 @@ import { MembersView } from "@/modules/organization/settings/teams/components/me
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 export const TeamsPage = async (props) => {
   const params = await props.params;
@@ -32,6 +32,7 @@ export const TeamsPage = async (props) => {
         currentUserId={session.user.id}
         environmentId={params.environmentId}
         canDoRoleManagement={canDoRoleManagement}
+        isUserManagementDisabledFromUi={DISABLE_USER_MANAGEMENT}
       />
       <TeamsView
         organizationId={organization.id}

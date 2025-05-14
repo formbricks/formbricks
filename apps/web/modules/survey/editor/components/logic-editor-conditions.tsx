@@ -1,5 +1,15 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import {
+  addConditionBelow,
+  createGroupFromResource,
+  duplicateCondition,
+  isConditionGroup,
+  removeCondition,
+  toggleGroupConnector,
+  updateCondition,
+} from "@/lib/surveyLogic/utils";
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -17,16 +27,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
-import {
-  addConditionBelow,
-  createGroupFromResource,
-  duplicateCondition,
-  isConditionGroup,
-  removeCondition,
-  toggleGroupConnector,
-  updateCondition,
-} from "@formbricks/lib/surveyLogic/utils";
 import {
   TConditionGroup,
   TDynamicLogicField,
@@ -35,6 +35,7 @@ import {
   TSurvey,
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 
 interface LogicEditorConditionsProps {
@@ -136,10 +137,34 @@ export function LogicEditorConditions({
   };
 
   const handleQuestionChange = (condition: TSingleCondition, value: string, option?: TComboboxOption) => {
+    const type = option?.meta?.type as TDynamicLogicField;
+    if (type === "question") {
+      const [questionId, rowId] = value.split(".");
+      const question = localSurvey.questions.find((q) => q.id === questionId);
+
+      if (question && question.type === TSurveyQuestionTypeEnum.Matrix) {
+        if (value.includes(".")) {
+          // Matrix question with rowId is selected
+          handleUpdateCondition(condition.id, {
+            leftOperand: {
+              value: questionId,
+              type: "question",
+              meta: {
+                row: rowId,
+              },
+            },
+            operator: "isEmpty",
+            rightOperand: undefined,
+          });
+          return;
+        }
+      }
+    }
+
     handleUpdateCondition(condition.id, {
       leftOperand: {
         value,
-        type: option?.meta?.type as TDynamicLogicField,
+        type,
       },
       operator: "isSkipped",
       rightOperand: undefined,
@@ -184,6 +209,17 @@ export function LogicEditorConditions({
     }
   };
 
+  const getLeftOperandValue = (condition: TSingleCondition) => {
+    if (condition.leftOperand.type === "question") {
+      const question = localSurvey.questions.find((q) => q.id === condition.leftOperand.value);
+      if (question && question.type === TSurveyQuestionTypeEnum.Matrix) {
+        if (condition.leftOperand?.meta?.row !== undefined) {
+          return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
+        }
+      }
+    }
+    return condition.leftOperand.value;
+  };
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
     index: number,
@@ -257,6 +293,7 @@ export function LogicEditorConditions({
       "includesOneOf",
       "doesNotIncludeOneOf",
       "doesNotIncludeAllOf",
+      "isAnyOf",
     ].includes(condition.operator);
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
@@ -279,7 +316,7 @@ export function LogicEditorConditions({
           key="conditionValue"
           showSearch={false}
           groupedOptions={conditionValueOptions}
-          value={condition.leftOperand.value}
+          value={getLeftOperandValue(condition)}
           onChangeValue={(val: string, option) => {
             handleQuestionChange(condition, val, option);
           }}

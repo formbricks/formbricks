@@ -1,16 +1,15 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
-import { useTranslate } from "@tolgee/react";
-import { T } from "@tolgee/react";
+import { T, useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TUserLocale } from "@formbricks/types/user";
@@ -43,11 +42,10 @@ export const ManageIntegration = ({
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
-  const integrationArray = slackIntegration
-    ? slackIntegration.config.data
-      ? slackIntegration.config.data
-      : []
-    : [];
+  let integrationArray: TIntegrationSlackConfigData[] = [];
+  if (slackIntegration?.config.data) {
+    integrationArray = slackIntegration.config.data;
+  }
 
   const handleDeleteIntegration = async () => {
     setisDeleting(true);
@@ -129,9 +127,9 @@ export const ManageIntegration = ({
             {integrationArray &&
               integrationArray.map((data, index) => {
                 return (
-                  <div
-                    key={index}
-                    className="m-2 grid h-16 grid-cols-8 content-center rounded-lg text-slate-700 hover:cursor-pointer hover:bg-slate-100"
+                  <button
+                    key={`${index}-${data.surveyName}-${data.channelName}`}
+                    className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 text-slate-700 hover:cursor-pointer hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
@@ -141,7 +139,7 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">
                       {timeSince(data.createdAt.toString(), locale)}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
           </div>

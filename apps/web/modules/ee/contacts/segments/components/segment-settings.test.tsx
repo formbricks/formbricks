@@ -466,7 +466,6 @@ describe("SegmentSettings", () => {
     expect(updatedSaveButton.getAttribute("data-loading")).not.toBe("true");
   });
 
-  // [Tusk] FAILING TEST
   test("should add a filter to the segment when a valid filter is selected in the filter modal", async () => {
     // Render component
     render(<SegmentSettings {...mockProps} />);

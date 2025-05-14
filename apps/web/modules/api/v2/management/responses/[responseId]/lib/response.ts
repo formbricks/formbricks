@@ -1,3 +1,6 @@
+import { cache } from "@/lib/cache";
+import { responseCache } from "@/lib/response/cache";
+import { responseNoteCache } from "@/lib/responseNote/cache";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
@@ -9,9 +12,6 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { cache } from "@formbricks/lib/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) =>

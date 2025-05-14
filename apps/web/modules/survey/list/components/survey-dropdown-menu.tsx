@@ -1,6 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
@@ -30,7 +32,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
@@ -59,6 +60,8 @@ export const SurveyDropDownMenu = ({
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   const router = useRouter();
 
   const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
@@ -117,6 +120,12 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
+  const handleEditforActiveSurvey = (e) => {
+    e.preventDefault();
+    setIsDropDownOpen(false);
+    setIsCautionDialogOpen(true);
+  };
+
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
@@ -140,8 +149,9 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                    <SquarePenIcon className="mr-2 h-4 w-4" />
+                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                    onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
+                    <SquarePenIcon className="mr-2 size-4" />
                     {t("common.edit")}
                   </Link>
                 </DropdownMenuItem>
@@ -235,6 +245,23 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+        />
+      )}
+
+      {survey.responseCount > 0 && (
+        <EditPublicSurveyAlertDialog
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          isLoading={loading}
+          primaryButtonAction={async () => {
+            await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+          }}
+          primaryButtonText={t("common.duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
         />
       )}
 

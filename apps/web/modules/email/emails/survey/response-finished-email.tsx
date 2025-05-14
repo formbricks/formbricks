@@ -1,8 +1,8 @@
+import { getQuestionResponseMapping } from "@/lib/responses";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Column, Container, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
-import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { type TSurvey } from "@formbricks/types/surveys/types";

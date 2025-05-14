@@ -1,15 +1,15 @@
+import { verifyInviteToken } from "@/lib/jwt";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
-  getisSsoEnabled,
+  getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
 
 // Mock the necessary dependencies
@@ -29,19 +29,25 @@ vi.mock("@/modules/auth/signup/components/signup-form", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsMultiOrgEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
-  getisSsoEnabled: vi.fn(),
+  getIsWhitelabelEnabled: vi.fn(),
+  getIsRemoveBrandingEnabled: vi.fn(),
+  getIsContactsEnabled: vi.fn(),
+  getIsAiEnabled: vi.fn(),
+  getIsSpamProtectionEnabled: vi.fn(),
+  getIsPendingDowngrade: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
   getIsValidInviteToken: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/jwt", () => ({
+vi.mock("@/lib/jwt", () => ({
   verifyInviteToken: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/utils/locale", () => ({
+vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
@@ -50,7 +56,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock environment variables and constants
-vi.mock("@formbricks/lib/constants", () => ({
+vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
@@ -89,7 +95,6 @@ vi.mock("@formbricks/lib/constants", () => ({
   AZURE_OAUTH_ENABLED: true,
   OIDC_OAUTH_ENABLED: true,
   DEFAULT_ORGANIZATION_ID: "test-default-organization-id",
-  DEFAULT_ORGANIZATION_ROLE: "test-default-organization-role",
   IS_TURNSTILE_CONFIGURED: true,
   SAML_TENANT: "test-saml-tenant",
   SAML_PRODUCT: "test-saml-product",
@@ -114,7 +119,7 @@ describe("SignupPage", () => {
   test("renders the signup page with all components when signup is enabled", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(verifyInviteToken).mockReturnValue({
@@ -173,7 +178,7 @@ describe("SignupPage", () => {
   test("renders the page with email from search params", async () => {
     // Mock the license check functions to return true
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(verifyInviteToken).mockReturnValue({

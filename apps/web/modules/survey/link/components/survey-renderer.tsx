@@ -1,3 +1,13 @@
+import {
+  IMPRINT_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
+  PRIVACY_URL,
+  RECAPTCHA_SITE_KEY,
+  WEBAPP_URL,
+} from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
@@ -9,9 +19,6 @@ import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyRendererProps {
@@ -50,6 +57,8 @@ export const renderSurvey = async ({
     throw new Error("Organization not found");
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
+
+  const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
@@ -120,6 +129,8 @@ export const renderSurvey = async ({
         locale={locale}
         isPreview={isPreview}
         contactId={contactId}
+        recaptchaSiteKey={RECAPTCHA_SITE_KEY}
+        isSpamProtectionEnabled={isSpamProtectionEnabled}
       />
     );
   }
@@ -143,6 +154,8 @@ export const renderSurvey = async ({
       locale={locale}
       isPreview={isPreview}
       contactId={contactId}
+      recaptchaSiteKey={RECAPTCHA_SITE_KEY}
+      isSpamProtectionEnabled={isSpamProtectionEnabled}
     />
   );
 };

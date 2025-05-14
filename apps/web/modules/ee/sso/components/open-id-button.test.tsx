@@ -1,7 +1,7 @@
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { signIn } from "next-auth/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { OpenIdButton } from "./open-id-button";
 
 // Mock next-auth/react

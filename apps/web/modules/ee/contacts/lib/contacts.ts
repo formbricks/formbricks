@@ -1,13 +1,13 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -37,7 +37,7 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
+export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
   const whereClause: Prisma.ContactWhereInput = { environmentId };
 
   if (search) {

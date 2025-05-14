@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -28,7 +29,6 @@ import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@ta
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
 
