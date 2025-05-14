@@ -8,8 +8,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
 
   // Define survey type-specific styles
   const surveyTypeStyles = {
-    "--fb-scrollable-max-height": props.survey.type === "link" ? "56dvh" : "25dvh",
-    "--fb-scrollable-min-height": props.survey.type === "link" ? "0dvh" : "25dvh",
+    "--fb-survey-card-max-height": props.survey.type === "link" ? "56dvh" : "25dvh",
+    "--fb-survey-card-min-height": props.survey.type === "link" ? "0dvh" : "25dvh",
   } as React.CSSProperties;
 
   const close = () => {

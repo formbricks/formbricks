@@ -48,8 +48,8 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: "var(--fb-scrollable-max-height)",
-          minHeight: "var(--fb-scrollable-min-height)",
+          maxHeight: "var(--fb-survey-card-max-height)",
+          minHeight: "var(--fb-survey-card-min-height)",
         }}
         className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
         {children}
