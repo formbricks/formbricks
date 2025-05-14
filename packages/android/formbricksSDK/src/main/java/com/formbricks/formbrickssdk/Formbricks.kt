@@ -95,7 +95,7 @@ object Formbricks {
      * ```
      *
      */
-    fun setUserId(userId: String) {
+    fun setUserId(userId: String, allowOverrideUserId: Boolean) {
         if (!isInitialized) {
             val error = SDKError.sdkIsNotInitialized
             callback?.onError(error)
@@ -104,7 +104,7 @@ object Formbricks {
 
         }
 
-        if(UserManager.userId != null) {
+        if (UserManager.userId != null && !allowOverrideUserId) {
             val error = RuntimeException("A userId is already set ${UserManager.userId} - please call logout first before setting a new one")
             callback?.onError(error)
             Logger.e(error)
