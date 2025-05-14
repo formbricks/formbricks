@@ -1,5 +1,4 @@
-import { MutableRef } from "preact/hooks";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { MutableRef, useEffect, useMemo, useState } from "preact/hooks";
 import { JSX } from "preact/jsx-runtime";
 import React from "react";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -61,11 +60,11 @@ export const StackedCard = ({
       switch (cardArrangement) {
         case "casual":
           return offset < 0
-            ? `translateX(100%) scale(0.95)`
+            ? `translateX(35%) scale(0.97)`
             : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
         case "straight":
           return offset < 0
-            ? `translateY(100%) scale(0.95)`
+            ? `translateY(35%) scale(0.97)`
             : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
         default:
           return offset < 0 ? `translateX(0)` : `translateX(0)`;
@@ -106,7 +105,7 @@ export const StackedCard = ({
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
         transitionProperty: "transform, opacity, margin, width",
-        transitionDuration: "600ms",
+        transitionDuration: "500ms",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,

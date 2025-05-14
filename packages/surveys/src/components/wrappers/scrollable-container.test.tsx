@@ -135,7 +135,7 @@ describe("ScrollableContainer", () => {
     expect(scrollableDiv).toHaveStyle({ maxHeight: "60dvh" });
   });
 
-  test("uses 42dvh maxHeight when isSurveyPreview is true", () => {
+  test("uses 48dvh maxHeight when isSurveyPreview is true", () => {
     vi.spyOn(document, "getElementById").mockReturnValue(document.createElement("div")); // Simulate survey-preview element exists
     const { container } = render(
       <ScrollableContainer>
@@ -143,7 +143,7 @@ describe("ScrollableContainer", () => {
       </ScrollableContainer>
     );
     const scrollableDiv = container.querySelector<HTMLElement>(".fb-overflow-auto");
-    expect(scrollableDiv).toHaveStyle({ maxHeight: "42dvh" });
+    expect(scrollableDiv).toHaveStyle({ maxHeight: "48dvh" });
   });
 
   test("cleans up scroll event listener on unmount", () => {
