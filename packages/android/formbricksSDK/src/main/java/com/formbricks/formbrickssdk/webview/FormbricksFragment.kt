@@ -148,6 +148,12 @@ class FormbricksFragment(val hiddenFields: Map<String, Any>? = null) : BottomShe
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (surveyId.isNullOrEmpty()) {
+            Formbricks.callback?.onError(SDKError.missingSurveyId)
+            dismissAllowingStateLoss()
+            return
+        }
+
         dialog?.window?.setDimAmount(0.0f)
         binding.formbricksWebview.setBackgroundColor(Color.TRANSPARENT)
         binding.formbricksWebview.let {
