@@ -146,7 +146,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
       <div>
         <h2 className="text-base font-medium">{t("common.person")}</h2>
         <div>
-          <div
+          <button
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             tabIndex={0}
             data-testid="person-filter-item"
@@ -169,7 +169,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
             }}>
             <FingerprintIcon className="h-4 w-4" />
             <p>{t("common.user_id")}</p>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
       )}
       {contactAttributeKeys.map((attributeKey) => {
         return (
-          <div
+          <button
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             key={attributeKey.id}
             tabIndex={0}
@@ -210,7 +210,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
             }}>
             <TagIcon className="h-4 w-4" />
             <p>{attributeKey.name ?? attributeKey.key}</p>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -320,7 +320,7 @@ export function AddFilterModal({
             <div key={index}>
               {filters.attributes.map((attributeKey) => {
                 return (
-                  <div
+                  <button
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     key={attributeKey.id}
                     tabIndex={0}
@@ -345,13 +345,13 @@ export function AddFilterModal({
                     }}>
                     <TagIcon className="h-4 w-4" />
                     <p>{attributeKey.name ?? attributeKey.key}</p>
-                  </div>
+                  </button>
                 );
               })}
 
               {filters.contactAttributeFiltered.map((personAttribute) => {
                 return (
-                  <div
+                  <button
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     key={personAttribute.name}
                     tabIndex={0}
@@ -374,13 +374,13 @@ export function AddFilterModal({
                     }}>
                     <FingerprintIcon className="h-4 w-4" />
                     <p>{personAttribute.name}</p>
-                  </div>
+                  </button>
                 );
               })}
 
               {filters.segments.map((segment) => {
                 return (
-                  <div
+                  <button
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                     key={segment.id}
                     tabIndex={0}
@@ -405,12 +405,12 @@ export function AddFilterModal({
                     }}>
                     <Users2Icon className="h-4 w-4" />
                     <p>{segment.title}</p>
-                  </div>
+                  </button>
                 );
               })}
 
               {filters.devices.map((deviceType) => (
-                <div
+                <button
                   className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                   key={deviceType.id}
                   tabIndex={0}
@@ -435,7 +435,7 @@ export function AddFilterModal({
                   }}>
                   <MonitorSmartphoneIcon className="h-4 w-4" />
                   <span>{deviceType.name}</span>
-                </div>
+                </button>
               ))}
             </div>
           );
@@ -466,7 +466,7 @@ export function AddFilterModal({
           .filter((segment) => !segment.isPrivate)
           .map((segment) => {
             return (
-              <div
+              <button
                 className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                 key={segment.id}
                 tabIndex={0}
@@ -491,7 +491,7 @@ export function AddFilterModal({
                 }}>
                 <Users2Icon className="h-4 w-4" />
                 <p>{segment.title}</p>
-              </div>
+              </button>
             );
           })}
       </>
@@ -502,7 +502,7 @@ export function AddFilterModal({
     return (
       <div className="flex flex-col">
         {deviceTypesFiltered.map((deviceType) => (
-          <div
+          <button
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
             key={deviceType.id}
             tabIndex={0}
@@ -527,7 +527,7 @@ export function AddFilterModal({
             }}>
             <MonitorSmartphoneIcon className="h-4 w-4" />
             <span>{deviceType.name}</span>
-          </div>
+          </button>
         ))}
       </div>
     );
