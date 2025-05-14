@@ -69,7 +69,7 @@ describe("SegmentTableDataRow", () => {
       />
     );
 
-    const row = screen.getByText(mockCurrentSegment.title).closest("div.grid");
+    const row = screen.getByText(mockCurrentSegment.title).closest("button.grid");
     expect(row).toBeInTheDocument();
 
     // Initially modal should not be called with open: true
@@ -117,7 +117,7 @@ describe("SegmentTableDataRow", () => {
       undefined // Expect undefined as the second argument
     );
 
-    const row = screen.getByText(mockCurrentSegment.title).closest("div.grid");
+    const row = screen.getByText(mockCurrentSegment.title).closest("button.grid");
     await user.click(row!);
 
     // Check second call (open: true)

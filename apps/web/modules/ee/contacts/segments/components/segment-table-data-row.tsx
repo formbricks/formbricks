@@ -27,9 +27,9 @@ export const SegmentTableDataRow = ({
 
   return (
     <>
-      <div
+      <button
         key={id}
-        className="m-2 grid h-16 cursor-pointer grid-cols-7 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100"
+        className="grid h-16 w-full cursor-pointer grid-cols-7 content-center rounded-lg p-2 transition-colors ease-in-out hover:bg-slate-100"
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
@@ -55,7 +55,7 @@ export const SegmentTableDataRow = ({
         <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
         </div>
-      </div>
+      </button>
 
       <EditSegmentModal
         environmentId={environmentId}
