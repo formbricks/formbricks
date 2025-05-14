@@ -36,7 +36,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "dotenv-cli": "8.0.0",
     "prisma": "6.7.0",
-    "prisma-json-types-generator": "3.3.1",
+    "prisma-json-types-generator": "3.4.1",
     "ts-node": "10.9.2"
   }
 }
