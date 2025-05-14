@@ -149,7 +149,7 @@ export function SegmentEditor({
           <div key={groupId}>
             <div className="flex items-start gap-2">
               <div className="w-auto" key={connector}>
-                <span
+                <button
                   className={cn(
                     Boolean(connector) && "cursor-pointer underline",
                     "text-sm",
@@ -159,8 +159,8 @@ export function SegmentEditor({
                     if (viewOnly) return;
                     onConnectorChange(groupId, connector);
                   }}>
-                  {connector ? connector : t("environments.segments.where")}
-                </span>
+                  {connector ?? t("environments.segments.where")}
+                </button>
               </div>
 
               <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
