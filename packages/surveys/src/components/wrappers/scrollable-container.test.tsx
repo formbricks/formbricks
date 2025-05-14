@@ -124,28 +124,6 @@ describe("ScrollableContainer", () => {
     });
   });
 
-  test("uses 60dvh maxHeight by default when not in survey preview", () => {
-    vi.spyOn(document, "getElementById").mockReturnValue(null);
-    const { container } = render(
-      <ScrollableContainer>
-        <div>Content</div>
-      </ScrollableContainer>
-    );
-    const scrollableDiv = container.querySelector<HTMLElement>(".fb-overflow-auto");
-    expect(scrollableDiv).toHaveStyle({ maxHeight: "60dvh" });
-  });
-
-  test("uses 48dvh maxHeight when isSurveyPreview is true", () => {
-    vi.spyOn(document, "getElementById").mockReturnValue(document.createElement("div")); // Simulate survey-preview element exists
-    const { container } = render(
-      <ScrollableContainer>
-        <div>Content</div>
-      </ScrollableContainer>
-    );
-    const scrollableDiv = container.querySelector<HTMLElement>(".fb-overflow-auto");
-    expect(scrollableDiv).toHaveStyle({ maxHeight: "48dvh" });
-  });
-
   test("cleans up scroll event listener on unmount", () => {
     const { unmount, container } = render(
       <ScrollableContainer>

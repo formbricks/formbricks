@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom/vitest";
-import { render } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/preact";
+// Ensure screen is imported
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+// Use test consistently
 import { RenderSurvey } from "./render-survey";
 
 // Stub SurveyContainer to render children and capture props
@@ -31,7 +33,7 @@ describe("RenderSurvey", () => {
     vi.useRealTimers();
   });
 
-  it("renders with default props and handles close", () => {
+  test("renders with default props and handles close", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -63,7 +65,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished skips close if redirectToUrl", () => {
+  test("onFinished skips close if redirectToUrl", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "redirectToUrl" }] } as any;
@@ -88,7 +90,7 @@ describe("RenderSurvey", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("onFinished closes after delay for non-redirect endings", () => {
+  test("onFinished closes after delay for non-redirect endings", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -115,7 +117,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished does not auto-close when inline mode", () => {
+  test("onFinished does not auto-close when inline mode", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [] } as any;
@@ -138,5 +140,46 @@ describe("RenderSurvey", () => {
     props.onFinished();
     vi.advanceTimersByTime(5000);
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  // New tests for surveyTypeStyles
+  test("should apply correct styles for link surveys", () => {
+    const propsForLinkSurvey = {
+      survey: { type: "link", endings: [] },
+      styling: {},
+      isBrandingEnabled: false,
+      languageCode: "en",
+      onClose: vi.fn(),
+      onFinished: vi.fn(),
+      placement: "bottomRight",
+      mode: "modal",
+    } as any;
+
+    const { container } = render(<RenderSurvey {...propsForLinkSurvey} />);
+    const surveyContainerWrapper = container.querySelector('[data-testid="container"]');
+    expect(surveyContainerWrapper).toHaveStyle({
+      "--fb-survey-card-max-height": "56dvh",
+      "--fb-survey-card-min-height": "0dvh",
+    });
+  });
+
+  test("should apply correct styles for app (non-link) surveys", () => {
+    const propsForAppSurvey = {
+      survey: { type: "app", endings: [] },
+      styling: {},
+      isBrandingEnabled: false,
+      languageCode: "en",
+      onClose: vi.fn(),
+      onFinished: vi.fn(),
+      placement: "bottomRight",
+      mode: "modal",
+    } as any;
+
+    const { container } = render(<RenderSurvey {...propsForAppSurvey} />);
+    const surveyContainerWrapper = container.querySelector('[data-testid="container"]');
+    expect(surveyContainerWrapper).toHaveStyle({
+      "--fb-survey-card-max-height": "25dvh",
+      "--fb-survey-card-min-height": "25dvh",
+    });
   });
 });
