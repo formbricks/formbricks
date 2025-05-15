@@ -17,10 +17,10 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-  permissions:
-    id-token: write
-    contents: write
-    pull-requests: write
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
