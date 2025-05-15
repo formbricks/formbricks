@@ -175,7 +175,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else if (isEditorView) {
     return (
-      <div ref={ContentRef} className="overflow-hiddem flex flex-grow flex-col rounded-b-lg">
+      <div ref={ContentRef} className="flex flex-grow flex-col overflow-hidden rounded-b-lg">
         <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
           <div className="flex h-full w-full items-start justify-center pt-[10dvh]">{children}</div>

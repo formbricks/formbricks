@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/preact";
+import { render } from "@testing-library/preact";
 // Ensure screen is imported
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Use test consistently

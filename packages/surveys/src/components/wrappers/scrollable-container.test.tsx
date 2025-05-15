@@ -191,4 +191,52 @@ describe("ScrollableContainer", () => {
       );
     }).not.toThrow();
   });
+
+  test("applies reduced height when isSurveyPreview is true", () => {
+    // Create a survey-preview element to make isSurveyPreview true
+    const previewElement = document.createElement("div");
+    previewElement.id = "survey-preview";
+    document.body.appendChild(previewElement);
+
+    const { container } = render(
+      <ScrollableContainer>
+        <div>Preview Content</div>
+      </ScrollableContainer>
+    );
+
+    const scrollableDiv = container.querySelector<HTMLElement>("#scrollable-container");
+    expect(scrollableDiv).toBeInTheDocument();
+
+    if (scrollableDiv) {
+      const computedStyle = scrollableDiv.style;
+      expect(computedStyle.maxHeight).toBe("calc(var(--fb-survey-card-max-height, 42dvh) * 0.66)");
+      expect(computedStyle.minHeight).toBe("calc(var(--fb-survey-card-min-height, 42dvh) * 0.66)");
+    }
+
+    // Clean up
+    document.body.removeChild(previewElement);
+  });
+
+  test("applies normal height when isSurveyPreview is false", () => {
+    // Ensure no survey-preview element exists
+    const existingPreview = document.getElementById("survey-preview");
+    if (existingPreview) {
+      document.body.removeChild(existingPreview);
+    }
+
+    const { container } = render(
+      <ScrollableContainer>
+        <div>Regular Content</div>
+      </ScrollableContainer>
+    );
+
+    const scrollableDiv = container.querySelector<HTMLElement>("#scrollable-container");
+    expect(scrollableDiv).toBeInTheDocument();
+
+    if (scrollableDiv) {
+      const computedStyle = scrollableDiv.style;
+      expect(computedStyle.maxHeight).toBe("calc(var(--fb-survey-card-max-height, 42dvh) * 1)");
+      expect(computedStyle.minHeight).toBe("calc(var(--fb-survey-card-min-height, 42dvh) * 1)");
+    }
+  });
 });

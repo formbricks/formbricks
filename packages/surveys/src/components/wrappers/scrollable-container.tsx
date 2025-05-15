@@ -6,11 +6,14 @@ interface ScrollableContainerProps {
   children: JSX.Element;
 }
 
-export function ScrollableContainer({ children }: ScrollableContainerProps) {
+export function ScrollableContainer({ children }: Readonly<ScrollableContainerProps>) {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isSurveyPreview = Boolean(document.getElementById("survey-preview"));
+
+  console.log("isSurveyPreview", document.getElementById("survey-preview"));
+  const previewScaleCoifficient = isSurveyPreview ? 0.66 : 1;
 
   const checkScroll = () => {
     if (!containerRef.current) return;
@@ -48,8 +51,8 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: "var(--fb-survey-card-max-height, 60dvh)",
-          minHeight: "var(--fb-survey-card-min-height, 60dvh)",
+          maxHeight: `calc(var(--fb-survey-card-max-height, 42dvh) * ${previewScaleCoifficient})`,
+          minHeight: `calc(var(--fb-survey-card-min-height, 42dvh) * ${previewScaleCoifficient})`,
         }}
         className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
         {children}
