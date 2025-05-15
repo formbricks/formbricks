@@ -10,18 +10,21 @@ const { INITIAL_USER_EMAIL, INITIAL_USER_PASSWORD, INITIAL_ORGANIZATION_NAME, IN
 
 export const isFreshInstance = async (): Promise<boolean> => {
   try {
-    // Use raw queries to check if instance is fresh
-    const [{ user_count: userCount }] = await prisma.$queryRaw<[{ user_count: number }]>`
-      SELECT COUNT(*)::integer AS user_count FROM "User"
-    `;
+    const [userResult, organizationResult] = await Promise.all([
+      prisma.$queryRaw<[{ user_count: number }]>`
+          SELECT COUNT(*)::integer AS user_count FROM "User"
+        `,
+      prisma.$queryRaw<[{ org_count: number }]>`
+          SELECT COUNT(*)::integer AS org_count FROM "Organization"
+        `,
+    ]);
 
-    const [{ org_count: organizationCount }] = await prisma.$queryRaw<[{ org_count: number }]>`
-      SELECT COUNT(*)::integer AS org_count FROM "Organization"
-    `;
+    const userCount = userResult[0].user_count;
+    const organizationCount = organizationResult[0].org_count;
 
     return userCount === 0 && organizationCount === 0;
   } catch (error) {
-    logger.error("Error checking if instance is fresh:", error);
+    logger.error(error, "Error checking if instance is fresh:");
     return false;
   }
 };
@@ -49,7 +52,7 @@ const isValidOrganizationName = (name: string): boolean => {
 
 const isValidProjectName = (name: string): boolean => {
   const ZProjectName = z.string().trim().min(1, { message: "Project name cannot be empty" });
-  const parseResult = ZProjectName.safeParse({ name });
+  const parseResult = ZProjectName.safeParse(name);
   return parseResult.success;
 };
 
@@ -71,6 +74,38 @@ const validateEnvironmentVariables = (): boolean => {
     return false;
   }
   return true;
+};
+
+const createEnvironment = async (
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  type: "development" | "production",
+  projectId: string
+): Promise<void> => {
+  const now = new Date();
+  const envId = createId();
+
+  await tx.$executeRawUnsafe(
+    `
+    INSERT INTO "Environment" (
+      "id",
+      "created_at",
+      "updated_at",
+      "type",
+      "projectId",
+      "widgetSetupCompleted",
+      "appSetupCompleted"
+    ) VALUES (
+      $1, $2, $3, $4::"EnvironmentType", $5, $6, $7
+    )
+  `,
+    envId,
+    now,
+    now,
+    type,
+    projectId,
+    false,
+    false
+  );
 };
 
 const insertUser = async (
@@ -196,8 +231,8 @@ const createInitialUser = async (
           ${now},
           ${projectName},
           ${organizationId},
-          '{}'::jsonb,
-          '{"channel": "link"}'::jsonb,
+          '{"allowStyleOverwrite":true}'::jsonb,
+          '{"channel": "link", "industry":"other"}'::jsonb,
           7,
           true,
           true,
@@ -207,51 +242,8 @@ const createInitialUser = async (
         )
       `;
 
-      // Create development environment
-      const devEnvironmentId = createId();
-
-      await tx.$executeRaw`
-        INSERT INTO "Environment" (
-          "id",
-          "created_at",
-          "updated_at",
-          "type",
-          "projectId",
-          "widgetSetupCompleted",
-          "appSetupCompleted"
-        ) VALUES (
-          ${devEnvironmentId},
-          ${now},
-          ${now},
-          'development',
-          ${projectId},
-          false,
-          false
-        )
-      `;
-
-      // Create production environment
-      const prodEnvironmentId = createId();
-
-      await tx.$executeRaw`
-        INSERT INTO "Environment" (
-          "id",
-          "created_at",
-          "updated_at",
-          "type",
-          "projectId",
-          "widgetSetupCompleted",
-          "appSetupCompleted" 
-        ) VALUES (
-          ${prodEnvironmentId},
-          ${now},
-          ${now},
-          'production',
-          ${projectId},
-          false,
-          false
-        )
-      `;
+      await createEnvironment(tx, "development", projectId);
+      await createEnvironment(tx, "production", projectId);
     }
   });
 };
@@ -294,7 +286,7 @@ You can now log in with the credentials provided in the environment variables.
     return true;
   } catch (error) {
     console.error("Error during initial environment setup:", error);
-    logger.error("Error during initial environment setup:", error);
+    logger.error(error, "Error during initial environment setup:");
     return false;
   }
 };
