@@ -63,7 +63,7 @@ class MainActivity : FragmentActivity() {
 
         val setUserIdButton = findViewById<Button>(R.id.setUserId)
         setUserIdButton.setOnClickListener {
-            Formbricks.setUserId(UUID.randomUUID().toString())
+            Formbricks.setUserId(UUID.randomUUID().toString(), true)
         }
 
         val setAttributeButton = findViewById<Button>(R.id.setAttribute)
