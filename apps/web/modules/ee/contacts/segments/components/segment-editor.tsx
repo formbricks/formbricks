@@ -176,6 +176,7 @@ export function SegmentEditor({
 
                 <div className="mt-4">
                   <Button
+                    data-testid="add-filter-button"
                     disabled={viewOnly}
                     onClick={() => {
                       if (viewOnly) return;

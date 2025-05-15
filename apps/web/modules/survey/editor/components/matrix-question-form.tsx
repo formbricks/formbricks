@@ -182,8 +182,8 @@ export const MatrixQuestionForm = ({
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.rows.map((_, index) => (
-              <div className="flex items-center" key={`row-${index}`}>
+            {question.rows.map((row, index) => (
+              <div className="flex items-center" key={`${row}-${index}`}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -232,8 +232,8 @@ export const MatrixQuestionForm = ({
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.columns.map((_, index) => (
-              <div className="flex items-center" key={`column-${index}`}>
+            {question.columns.map((column, index) => (
+              <div className="flex items-center" key={`${column}-${index}`}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}

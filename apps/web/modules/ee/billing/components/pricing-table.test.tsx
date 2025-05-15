@@ -101,7 +101,6 @@ describe("PricingTable", () => {
     expect(cancellingBadge).toBeInTheDocument();
   });
 
-  // [Tusk] FAILING TEST
   test("billing period toggle buttons have correct aria-pressed attributes", async () => {
     const MockPricingTable = () => {
       const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>("yearly");
