@@ -142,6 +142,12 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
+COPY --from=installer /app/node_modules/bcryptjs ./node_modules/bcryptjs
+RUN chmod -R 755 ./node_modules/bcryptjs
+
+COPY --from=installer /app/packages/database/zod ./packages/database/zod
+RUN chown -R nextjs:nextjs ./packages/database/zod && chmod -R 755 ./packages/database/zod
+
 RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
 RUN npm install -g prisma
 
@@ -166,4 +172,6 @@ CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
     fi; \
     (cd packages/database && npm run db:migrate:deploy) && \
     (cd packages/database && npm run db:create-saml-database:deploy) && \
+    (cd packages/database && npm run db:initial-user-setup:deploy) && \
+
     exec node apps/web/server.js
