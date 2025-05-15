@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       VERSION:
-        description: 'The version of the Helm chart to release'
+        description: "The version of the Helm chart to release"
         required: true
         type: string
 

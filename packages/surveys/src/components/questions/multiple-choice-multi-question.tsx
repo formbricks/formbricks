@@ -61,8 +61,17 @@ export function MultipleChoiceMultiQuestion({
         .map((item) => getLocalizedValue(item.label, languageCode)),
     [question, languageCode]
   );
-  const [otherSelected, setOtherSelected] = useState<boolean>(false);
-  const [otherValue, setOtherValue] = useState("");
+  const [otherSelected, setOtherSelected] = useState<boolean>(
+    Boolean(value) &&
+      (Array.isArray(value) ? value : [value]).some((item) => {
+        return !getChoicesWithoutOtherLabels().includes(item);
+      })
+  );
+  const [otherValue, setOtherValue] = useState(
+    (Array.isArray(value) &&
+      value.filter((v) => !question.choices.find((c) => c.label[languageCode] === v))[0]) ||
+      ""
+  );
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -239,6 +248,14 @@ export function MultipleChoiceMultiQuestion({
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${otherOption.id}-label`}
                         onChange={() => {
+                          if (otherSelected) {
+                            setOtherValue("");
+                            onChange({
+                              [question.id]: value.filter((item) => {
+                                return getChoicesWithoutOtherLabels().includes(item);
+                              }),
+                            });
+                          }
                           setOtherSelected(!otherSelected);
                         }}
                         checked={otherSelected}
@@ -266,6 +283,15 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
+                        onBlur={() => {
+                          const newValue = value.filter((item) => {
+                            return getChoicesWithoutOtherLabels().includes(item);
+                          });
+                          if (otherValue && otherSelected) {
+                            newValue.push(otherValue);
+                            onChange({ [question.id]: newValue });
+                          }
+                        }}
                       />
                     ) : null}
                   </label>
