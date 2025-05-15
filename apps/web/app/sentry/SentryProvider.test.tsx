@@ -81,6 +81,26 @@ describe("SentryProvider", () => {
     expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
   });
 
+  test("does not reinitialize Sentry when props change after initial render", () => {
+    const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
+
+    const { rerender } = render(
+      <SentryProvider sentryDsn={sentryDsn} isEnabled>
+        <div data-testid="child">Test Content</div>
+      </SentryProvider>
+    );
+
+    expect(initSpy).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <SentryProvider sentryDsn="https://newDsn@o0.ingest.sentry.io/0" isEnabled={false}>
+        <div data-testid="child">Test Content</div>
+      </SentryProvider>
+    );
+
+    expect(initSpy).toHaveBeenCalledTimes(1);
+  });
+
   test("processes beforeSend correctly", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
@@ -108,5 +128,37 @@ describe("SentryProvider", () => {
 
     const hintWithoutError = { originalException: undefined };
     expect(beforeSend(dummyEvent, hintWithoutError)).toEqual(dummyEvent);
+  });
+
+  test("processes beforeSend correctly when hint.originalException is not an Error object", () => {
+    const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
+
+    render(
+      <SentryProvider sentryDsn={sentryDsn} isEnabled>
+        <div data-testid="child">Test Content</div>
+      </SentryProvider>
+    );
+
+    const config = initSpy.mock.calls[0][0];
+    expect(config).toHaveProperty("beforeSend");
+    const beforeSend = config.beforeSend;
+
+    if (!beforeSend) {
+      throw new Error("beforeSend is not defined");
+    }
+
+    const dummyEvent = { some: "event" } as unknown as Sentry.ErrorEvent;
+
+    const hintWithString = { originalException: "string exception" };
+    expect(() => beforeSend(dummyEvent, hintWithString)).not.toThrow();
+    expect(beforeSend(dummyEvent, hintWithString)).toEqual(dummyEvent);
+
+    const hintWithNumber = { originalException: 123 };
+    expect(() => beforeSend(dummyEvent, hintWithNumber)).not.toThrow();
+    expect(beforeSend(dummyEvent, hintWithNumber)).toEqual(dummyEvent);
+
+    const hintWithNull = { originalException: null };
+    expect(() => beforeSend(dummyEvent, hintWithNull)).not.toThrow();
+    expect(beforeSend(dummyEvent, hintWithNull)).toEqual(dummyEvent);
   });
 });

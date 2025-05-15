@@ -120,6 +120,24 @@ describe("replaceRecallInfo", () => {
     const expected = "Details: Value With Spaces and Default";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
+
+  test("should handle fallback with only 'nbsp'", () => {
+    const text = "Note: #recall:note/fallback:nbsp#.";
+    const expected = "Note: .";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should handle fallback with only '&nbsp;'", () => {
+    const text = "Note: #recall:note/fallback:&nbsp;#.";
+    const expected = "Note: .";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should handle fallback with '$nbsp;' (should not replace '$nbsp;')", () => {
+    const text = "Note: #recall:note/fallback:$nbsp;#.";
+    const expected = "Note: $ ;.";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
 });
 
 describe("parseRecallInformation", () => {

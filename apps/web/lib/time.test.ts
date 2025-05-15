@@ -21,6 +21,14 @@ describe("Time Utilities", () => {
     test("should return empty string for empty input", () => {
       expect(convertDateString("")).toBe("");
     });
+
+    test("should return null for null input", () => {
+      expect(convertDateString(null as any)).toBe(null);
+    });
+
+    test("should handle invalid date strings", () => {
+      expect(convertDateString("not-a-date")).toBe("Invalid Date");
+    });
   });
 
   describe("convertDateTimeString", () => {

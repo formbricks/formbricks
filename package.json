@@ -10,7 +10,8 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
-    "clean": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
+    "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
+    "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
     "db:migrate:dev": "turbo run db:migrate:dev",

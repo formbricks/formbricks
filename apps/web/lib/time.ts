@@ -2,12 +2,16 @@ import { formatDistance, intlFormat } from "date-fns";
 import { de, enUS, fr, pt, ptBR, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 
-export const convertDateString = (dateString: string) => {
+export const convertDateString = (dateString: string | null) => {
+  if (dateString === null) return null;
   if (!dateString) {
     return dateString;
   }
 
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
   return intlFormat(
     date,
     {
