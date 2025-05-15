@@ -150,7 +150,12 @@ export const createActionClass = async (
         ...actionClassInput,
         environment: { connect: { id: environmentId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
-        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
+        noCodeConfig:
+          actionClassInput.type === "noCode"
+            ? actionClassInput.noCodeConfig === null
+              ? undefined
+              : actionClassInput.noCodeConfig
+            : undefined,
       },
       select: selectActionClass,
     });
@@ -193,7 +198,12 @@ export const updateActionClass = async (
         ...actionClassInput,
         environment: { connect: { id: environmentId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
-        noCodeConfig: actionClassInput.type === "noCode" ? actionClassInput.noCodeConfig || {} : undefined,
+        noCodeConfig:
+          actionClassInput.type === "noCode"
+            ? actionClassInput.noCodeConfig === null
+              ? undefined
+              : actionClassInput.noCodeConfig
+            : undefined,
       },
       select: {
         ...selectActionClass,
@@ -212,7 +222,6 @@ export const updateActionClass = async (
       id: result.id,
     });
 
-    // @ts-expect-error
     const surveyIds = result.surveyTriggers.map((survey) => survey.surveyId);
     for (const surveyId of surveyIds) {
       surveyCache.revalidate({
