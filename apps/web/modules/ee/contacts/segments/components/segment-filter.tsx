@@ -117,6 +117,8 @@ function SegmentFilterItemConnector({
   return (
     <div className="w-[40px]">
       <button
+        type="button"
+        aria-label={connector ?? t("environments.segments.where")}
         className={cn(Boolean(connector) && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
         onClick={() => {
           if (viewOnly) return;
@@ -627,6 +629,8 @@ function SegmentSegmentFilter({
 
       <div>
         <button
+          type="button"
+          aria-label={operatorText}
           className={cn("cursor-pointer underline", viewOnly && "cursor-not-allowed")}
           onClick={() => {
             if (viewOnly) return;

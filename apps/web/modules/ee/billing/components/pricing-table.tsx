@@ -154,7 +154,17 @@ export const PricingTable = ({
                   className="mx-2"
                   size="normal"
                   type="warning"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                  text={`Cancelling: ${
+                    cancellingOn
+                      ? cancellingOn.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })
+                      : ""
+                  }`}
                 />
               )}
             </h2>
@@ -253,6 +263,7 @@ export const PricingTable = ({
             <div className="gap-x-2">
               <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
                 <button
+                  aria-pressed={planPeriod === "monthly"}
                   className={`flex-1 rounded-md px-4 py-0.5 text-center ${
                     planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
@@ -260,6 +271,7 @@ export const PricingTable = ({
                   {t("environments.settings.billing.monthly")}
                 </button>
                 <button
+                  aria-pressed={planPeriod === "yearly"}
                   className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}

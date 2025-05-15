@@ -385,4 +385,87 @@ describe("SegmentEditor", () => {
 
     // Dropdown menu trigger is disabled, so no need to test clicking items inside
   });
+
+  test("connector button is focusable and activates on Enter/Space", async () => {
+    const user = userEvent.setup();
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorButton = screen.getByText("and");
+    // Focus the button directly instead of tabbing to it
+    connectorButton.focus();
+
+    // Simulate pressing Enter
+    await user.keyboard("[Enter]");
+    expect(segmentUtils.toggleGroupConnector).toHaveBeenCalledWith(
+      expect.any(Array),
+      groupResource1.id,
+      "or"
+    );
+
+    vi.mocked(segmentUtils.toggleGroupConnector).mockClear(); // Clear mock for next assertion
+
+    // Simulate pressing Space
+    await user.keyboard(" ");
+    expect(segmentUtils.toggleGroupConnector).toHaveBeenCalledWith(
+      expect.any(Array),
+      groupResource1.id,
+      "or"
+    );
+  });
+
+  test("connector button has accessibility attributes", () => {
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorElement = screen.getByText("and");
+    expect(connectorElement.tagName.toLowerCase()).toBe("button");
+  });
+
+  test("connector button is included in the correct tab order", async () => {
+    const user = userEvent.setup();
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    // Get the connector button
+    const connectorButton = screen.getByText("and");
+
+    // Get the add filter button
+    const addFilterButton = screen.getByText("common.add_filter");
+
+    // Tab to the first element (connector button)
+    await user.tab();
+    expect(connectorButton).toHaveFocus();
+
+    // Tab to the next element (add filter button)
+    await user.tab();
+    expect(addFilterButton).toHaveFocus();
+  });
 });
