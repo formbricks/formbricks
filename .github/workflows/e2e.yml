@@ -22,8 +22,8 @@ env:
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 permissions:
-  contents: read
   id-token: write
+  contents: read
   actions: read
 
 jobs:
@@ -31,11 +31,6 @@ jobs:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      contents: read
-      checks: write
-      id-token: write
-      actions: read
     services:
       postgres:
         image: pgvector/pgvector:pg17
