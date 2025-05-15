@@ -232,7 +232,7 @@ describe("StackedCardsContainer", () => {
   test("renders stacked arrangement correctly", () => {
     render(<StackedCardsContainer {...defaultProps} cardArrangement="casual" />);
     // q1 is index 0. currentQuestionIdx = 0. prev = -1, next = 1, next+1 = 2
-    expect(mockStackedCardFn).toHaveBeenCalledTimes(4); // prev, current, next, next+1
+    expect(mockStackedCardFn).toHaveBeenCalledTimes(5); // prev, current, next, next+1, next+2
     expect(screen.getByTestId("stacked-card-0")).toBeInTheDocument(); // current
     expect(screen.getByTestId("stacked-card-1")).toBeInTheDocument(); // next
     // Check that getCardContent is called for the current card (offset 0) via the mock
