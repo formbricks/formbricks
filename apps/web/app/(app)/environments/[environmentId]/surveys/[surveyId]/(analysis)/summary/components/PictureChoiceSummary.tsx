@@ -43,7 +43,7 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, index) => (
           <button
             className="w-full cursor-pointer hover:opacity-80"

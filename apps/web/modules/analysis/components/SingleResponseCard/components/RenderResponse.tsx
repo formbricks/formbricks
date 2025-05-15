@@ -101,7 +101,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               return (
                 <p
                   key={rowValueInSelectedLanguage}
-                  className="ph-no-capture my-1 font-normal text-slate-700 capitalize">
+                  className="ph-no-capture my-1 font-normal capitalize text-slate-700">
                   {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
                 </p>
               );
