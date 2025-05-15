@@ -634,9 +634,6 @@ importers:
       bcryptjs:
         specifier: 3.0.2
         version: 3.0.2
-      dotenv-cli:
-        specifier: 8.0.0
-        version: 8.0.0
       zod:
         specifier: 3.24.4
         version: 3.24.4
@@ -650,6 +647,9 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
+      dotenv-cli:
+        specifier: 8.0.0
+        version: 8.0.0
       prisma:
         specifier: 6.7.0
         version: 6.7.0(typescript@5.8.3)

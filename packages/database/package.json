@@ -30,7 +30,6 @@
     "@paralleldrive/cuid2": "2.2.2",
     "@prisma/client": "6.7.0",
     "bcryptjs": "3.0.2",
-    "dotenv-cli": "8.0.0",
     "zod-openapi": "4.2.4",
     "zod": "3.24.4"
   },
