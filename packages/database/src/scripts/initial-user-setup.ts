@@ -1,8 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { hash } from "bcryptjs";
+import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { ZProject } from "../../../types/project";
-import { ZUserEmail, ZUserPassword } from "../../../types/user";
 import { ZOrganization } from "../../zod/organizations";
 import { prisma } from "../client";
 
@@ -28,11 +27,17 @@ export const isFreshInstance = async (): Promise<boolean> => {
 };
 
 const isValidEmail = (email: string): boolean => {
+  const ZUserEmail = z.string().max(255).email({ message: "Invalid email" });
   const parseResult = ZUserEmail.safeParse(email);
   return parseResult.success;
 };
 
 const isValidPassword = (password: string): boolean => {
+  const ZUserPassword = z
+    .string()
+    .min(8)
+    .max(128, { message: "Password must be 128 characters or less" })
+    .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
   const parseResult = ZUserPassword.safeParse(password);
   return parseResult.success;
 };
@@ -43,7 +48,8 @@ const isValidOrganizationName = (name: string): boolean => {
 };
 
 const isValidProjectName = (name: string): boolean => {
-  const parseResult = ZProject.pick({ name: true }).safeParse({ name });
+  const ZProjectName = z.string().trim().min(1, { message: "Project name cannot be empty" });
+  const parseResult = ZProjectName.safeParse({ name });
   return parseResult.success;
 };
 
