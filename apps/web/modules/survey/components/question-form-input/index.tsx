@@ -271,7 +271,7 @@ export const QuestionFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mt-3 mb-2">
+        <div className="mb-2 mt-3">
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -342,7 +342,7 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent ${
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           }`}
                           dir="auto"

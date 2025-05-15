@@ -1,8 +1,8 @@
-name: 'Terraform'
+name: "Terraform"
 
 on:
   workflow_dispatch:
-# TODO: enable it back when migration is completed.
+  # TODO: enable it back when migration is completed.
   push:
     branches:
       - main
@@ -14,14 +14,13 @@ on:
     paths:
       - "infra/terraform/**"
 
-permissions:
-  id-token: write
-  contents: write
-  pull-requests: write
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -83,4 +82,3 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply .planfile
         working-directory: "infra/terraform"
-

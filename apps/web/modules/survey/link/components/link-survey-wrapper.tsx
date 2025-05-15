@@ -82,7 +82,7 @@ export const LinkSurveyWrapper = ({
             {!styling.isLogoHidden && project.logo?.url && <ClientLogo projectLogo={project.logo} />}
             <div className="h-full w-full max-w-4xl space-y-6 px-1.5">
               {isPreview && (
-                <div className="fixed top-0 left-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
+                <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
                   Survey Preview 👀
                   <ResetProgressButton onClick={handleResetSurvey} />
