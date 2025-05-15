@@ -1,16 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
 export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Check viewport width on mount and resize
+  useEffect(() => {
+    const checkViewportWidth = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    checkViewportWidth();
+    window.addEventListener("resize", checkViewportWidth);
+
+    return () => {
+      window.removeEventListener("resize", checkViewportWidth);
+    };
+  }, []);
 
   // Define survey type-specific styles
-  const surveyTypeStyles = {
-    "--fb-survey-card-max-height": props.survey.type === "link" ? "56dvh" : "25dvh",
-    "--fb-survey-card-min-height": props.survey.type === "link" ? "0dvh" : "25dvh",
-  } as React.CSSProperties;
+  const surveyTypeStyles =
+    props.survey.type === "link"
+      ? {
+          "--fb-survey-card-max-height": "60dvh",
+          "--fb-survey-card-min-height": isDesktop ? `0dvh` : "60dvh",
+        }
+      : ({
+          "--fb-survey-card-max-height": "25dvh",
+          "--fb-survey-card-min-height": "25dvh",
+        } as React.CSSProperties);
 
   const close = () => {
     setIsOpen(false);
