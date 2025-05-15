@@ -6,6 +6,7 @@ permissions:
   pull-requests: read
   actions: read
   checks: write
+  id-token: write
 
 on:
   pull_request:
