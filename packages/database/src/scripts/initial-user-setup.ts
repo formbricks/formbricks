@@ -73,6 +73,13 @@ const validateEnvironmentVariables = (): boolean => {
     logger.error("Invalid project name format. Please provide a valid project name.");
     return false;
   }
+  if (INITIAL_PROJECT_NAME && !INITIAL_ORGANIZATION_NAME) {
+    logger.error(
+      "INITIAL_PROJECT_NAME is set but INITIAL_ORGANIZATION_NAME is missing. " +
+        "A project cannot be created without an organization."
+    );
+    return false;
+  }
   return true;
 };
 
