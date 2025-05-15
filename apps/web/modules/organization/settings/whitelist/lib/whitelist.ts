@@ -155,11 +155,29 @@ export const getNonWhitelistedUsers = async ({
   }
 };
 
-export const getWhitelistedUsers = async (): Promise<TUserWhitelistInfo[]> => {
+export const getWhitelistedUsers = async ({ query }: { query?: string }): Promise<TUserWhitelistInfo[]> => {
   try {
     const whitelistedUsers = await prisma.user.findMany({
       where: {
         whitelist: true,
+        ...(query
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {}),
       },
       select: whitelistSelection,
     });

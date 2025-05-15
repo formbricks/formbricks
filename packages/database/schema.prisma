@@ -843,6 +843,8 @@ model User {
   surveys                   Survey[]
   teamUsers                 TeamUser[]
   whitelist                 Boolean          @default(false)
+  communities               UserCommunity[]  @relation("user")
+  communitiesCreated        UserCommunity[]  @relation("creator")
 
   @@index([email])
 }
@@ -1071,4 +1073,16 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+model UserCommunity {
+  id        String   @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  userId    String
+  user      User     @relation("user", fields: [userId], references: [id])
+  creatorId String
+  creator   User     @relation("creator", fields: [creatorId], references: [id])
+
+  @@unique([userId, creatorId])
 }

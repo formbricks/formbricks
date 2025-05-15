@@ -135,33 +135,12 @@ const ZGetWhitelistedUsersAction = z.object({
   take: z.number(),
   skip: z.number(),
   query: z.string().optional(),
-  organizationId: ZId,
 });
 
 export const getWhitelistedUsersAction = authenticatedActionClient
   .schema(ZGetWhitelistedUsersAction)
-  .action(async ({ parsedInput, ctx }) => {
-    // Verify user is an owner or manager
-    const currentUserMembership = await getMembershipByUserIdOrganizationId(
-      ctx.user.id,
-      parsedInput.organizationId
-    );
-    if (!currentUserMembership) {
-      throw new AuthenticationError("User not a member of this organization");
-    }
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-
-    const whitelistedUsers = await getWhitelistedUsers();
+  .action(async ({ parsedInput }) => {
+    const whitelistedUsers = await getWhitelistedUsers({ query: parsedInput.query });
 
     return whitelistedUsers;
   });

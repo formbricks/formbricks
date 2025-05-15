@@ -23,8 +23,8 @@ import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
   BlocksIcon,
+  BookUserIcon,
   // MousePointerClick,
-  // BookUserIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -80,40 +80,12 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  // const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
-  // const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
-  // const searchParams = useSearchParams();
-  // const communityId = searchParams.get("community");
-
   const project = projects.find((project) => project.id === environment.projectId);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
-
-  // Fetching whitelisted users
-  // const fetchCommunities = useCallback(async () => {
-  //   if (!currentOrganizationId) {
-  //     return;
-  //   }
-  //   setIsFetchingCommunities(true);
-  //   const data = await getWhitelistedUsersAction({
-  //     take: 10,
-  //     skip: 0,
-  //     organizationId: currentOrganizationId,
-  //   });
-  //   if (data && data.data) {
-  //     setCommunities(data.data);
-  //   } else {
-  //     setCommunities([]);
-  //   }
-  //   setIsFetchingCommunities(false);
-  // }, [currentOrganizationId]);
-
-  // useEffect(() => {
-  //   fetchCommunities();
-  // }, [fetchCommunities]);
 
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
@@ -170,13 +142,13 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/wallet"),
         isHidden: false,
       },
-      // {
-      //   name: t("common.communities"),
-      //   href: `/environments/${environment.id}/communities`,
-      //   icon: BookUserIcon,
-      //   isActive: pathname?.includes("/communities"),
-      //   isHidden: false,
-      // },
+      {
+        name: t("common.communities"),
+        href: `/environments/${environment.id}/communities`,
+        icon: BookUserIcon,
+        isActive: pathname?.includes("/communities"),
+        isHidden: false,
+      },
       ...(hasAccess
         ? [
             // {
@@ -238,7 +210,6 @@ export const MainNavigation = ({
           )}>
           <div>
             {/* Logo and Toggle */}
-
             <div className="flex items-center justify-between px-3 pb-4">
               {!isCollapsed && (
                 <Link

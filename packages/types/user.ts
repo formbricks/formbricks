@@ -100,3 +100,11 @@ export const ZUserWhitelistInfo = z.object({
 });
 
 export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;
+
+export const ZUserCommunity = z.object({
+  id: z.string(),
+  user: ZUser,
+  creator: ZUser,
+});
+
+export type TUserCommunity = z.infer<typeof ZUserCommunity>;
