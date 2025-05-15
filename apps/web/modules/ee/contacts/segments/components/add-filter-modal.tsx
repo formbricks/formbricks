@@ -139,8 +139,7 @@ interface AttributeTabContentProps {
 }
 
 // Reusable FilterButton component to remove duplicated button code
-function FilterButton({
-  // NOSONAR // the read-only attribute doesn't work as expected yet
+function FilterButton({ // NOSONAR // the read-only attribute doesn't work as expected yet
   icon,
   label,
   onClick,
@@ -170,8 +169,7 @@ function FilterButton({
   );
 }
 
-function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) {
-  // NOSONAR // the read-only attribute doesn't work as expected yet
+function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) { // NOSONAR // the read-only attribute doesn't work as expected yet
   const { t } = useTranslate();
 
   return (
@@ -245,8 +243,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
   );
 }
 
-export function AddFilterModal({
-  // NOSONAR // the read-only attribute doesn't work as expected yet
+export function AddFilterModal({ // NOSONAR // the read-only attribute doesn't work as expected yet
   onAddFilter,
   open,
   setOpen,
