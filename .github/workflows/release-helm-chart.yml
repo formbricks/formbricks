@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       VERSION:
-        description: 'The version of the Helm chart to release'
+        description: "The version of the Helm chart to release"
         required: true
         type: string
 
@@ -14,6 +14,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
@@ -47,7 +50,5 @@ jobs:
           helm package ./helm-chart
 
       - name: Push Helm chart to GitHub Container Registry
-        permissions:
-          packages: write
         run: |
           helm push formbricks-${{ inputs.VERSION }}.tgz oci://ghcr.io/formbricks/helm-charts
