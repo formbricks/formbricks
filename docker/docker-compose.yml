@@ -188,7 +188,7 @@ x-environment: &environment
     # AUTH_SSO_DEFAULT_TEAM_ID=
 
     # Configure the minimum role for user management from UI(owner, manager, disabled)
-    # USER_MANAGEMENT_MINIMUM_ROLE="owner"
+    # USER_MANAGEMENT_MINIMUM_ROLE="manager"
 
 services:
   postgres:
