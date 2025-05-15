@@ -15,14 +15,14 @@ import { AuthenticationError, OperationNotAllowedError, ValidationError } from "
 
 // Mock constants with getter functions to allow overriding in tests
 let mockIsFormbricksCloud = false;
-let mockDisableUserManagement = false;
+let mockUserManagementMinimumRole = "owner";
 
 vi.mock("@/lib/constants", () => ({
   get IS_FORMBRICKS_CLOUD() {
     return mockIsFormbricksCloud;
   },
-  get DISABLE_USER_MANAGEMENT() {
-    return mockDisableUserManagement;
+  get USER_MANAGEMENT_MINIMUM_ROLE() {
+    return mockUserManagementMinimumRole;
   },
 }));
 
@@ -62,7 +62,7 @@ describe("Role Management Actions", () => {
   afterEach(() => {
     vi.resetAllMocks();
     mockIsFormbricksCloud = false;
-    mockDisableUserManagement = false;
+    mockUserManagementMinimumRole = "owner";
   });
 
   describe("checkRoleManagementPermission", () => {
@@ -220,7 +220,7 @@ describe("Role Management Actions", () => {
 
     test("throws error if user management is disabled", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as any);
-      mockDisableUserManagement = true;
+      mockUserManagementMinimumRole = "disabled";
 
       await expect(
         updateMembershipAction({
@@ -231,12 +231,12 @@ describe("Role Management Actions", () => {
             data: { role: "member" },
           },
         } as any)
-      ).rejects.toThrow(new OperationNotAllowedError("User management is disabled"));
+      ).rejects.toThrow(new OperationNotAllowedError("User management is not allowed for your role"));
     });
 
     test("throws error if billing role is not allowed in self-hosted", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as any);
-      mockDisableUserManagement = false;
+      mockUserManagementMinimumRole = "owner";
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
       await expect(
@@ -253,7 +253,7 @@ describe("Role Management Actions", () => {
 
     test("allows billing role in cloud environment", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as any);
-      mockDisableUserManagement = false;
+      mockUserManagementMinimumRole = "owner";
       mockIsFormbricksCloud = true;
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
       vi.mocked(getOrganization).mockResolvedValue({ billing: { plan: "pro" } } as any);
@@ -274,7 +274,7 @@ describe("Role Management Actions", () => {
 
     test("throws error if manager tries to assign a role other than member", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "manager" } as any);
-      mockDisableUserManagement = false;
+      mockUserManagementMinimumRole = "manager";
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
       await expect(
@@ -291,7 +291,7 @@ describe("Role Management Actions", () => {
 
     test("allows manager to assign member role", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "manager" } as any);
-      mockDisableUserManagement = false;
+      mockUserManagementMinimumRole = "manager";
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
       vi.mocked(getOrganization).mockResolvedValue({ billing: { plan: "pro" } } as any);
       vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
@@ -312,7 +312,7 @@ describe("Role Management Actions", () => {
 
     test("successful membership update as owner", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as any);
-      mockDisableUserManagement = false;
+      mockUserManagementMinimumRole = "owner";
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
       vi.mocked(getOrganization).mockResolvedValue({ billing: { plan: "pro" } } as any);
       vi.mocked(getRoleManagementPermission).mockResolvedValue(true);

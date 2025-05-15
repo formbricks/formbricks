@@ -13,7 +13,7 @@ vi.mock(
 );
 
 vi.mock("@/lib/constants", () => ({
-  DISABLE_USER_MANAGEMENT: 0,
+  USER_MANAGEMENT_MINIMUM_ROLE: "owner",
   IS_FORMBRICKS_CLOUD: 1,
   ENCRYPTION_KEY: "test-key",
   ENTERPRISE_LICENSE_KEY: "test-enterprise-key",
