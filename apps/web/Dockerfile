@@ -145,6 +145,9 @@ RUN chmod -R 755 ./node_modules/zod
 COPY --from=installer /app/node_modules/bcryptjs ./node_modules/bcryptjs
 RUN chmod -R 755 ./node_modules/bcryptjs
 
+COPY --from=installer /app/packages/database/zod ./packages/database/zod
+RUN chown -R nextjs:nextjs ./packages/database/zod && chmod -R 755 ./packages/database/zod
+
 RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
 RUN npm install -g prisma
 
