@@ -6,11 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
-  actions: read
-
 jobs:
   chromatic:
     name: Run Chromatic
