@@ -142,8 +142,8 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-COPY --from=installer /app/node_modules/bycrypt ./node_modules/bycrypt
-RUN chmod -R 755 ./node_modules/bycrypt
+COPY --from=installer /app/node_modules/bcryptjs ./node_modules/bcryptjs
+RUN chmod -R 755 ./node_modules/bcryptjs
 
 RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
 RUN npm install -g prisma
