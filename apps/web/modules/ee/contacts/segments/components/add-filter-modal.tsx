@@ -158,7 +158,7 @@ function FilterButton({
 }) {
   return (
     <button
-      className={`flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50 ${className}`}
+      className={`flex w-full cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50 ${className}`}
       tabIndex={tabIndex}
       onClick={onClick}
       onKeyDown={onKeyDown}
