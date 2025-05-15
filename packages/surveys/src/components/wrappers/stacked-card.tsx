@@ -31,10 +31,10 @@ export const StackedCard = ({
   hovered,
   cardArrangement,
 }: StackedCardProps) => {
-  const isHidden = offset < 0;
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
   const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
+  const isHidden = offset < 0;
 
   const getBottomStyles = () => {
     if (survey.type !== "link")
@@ -48,29 +48,32 @@ export const StackedCard = ({
   };
 
   const calculateCardTransform = useMemo(() => {
-    let rotationCoefficient = 3;
+    if (offset > 2)
+      return () => {
+        return ``;
+      };
 
+    let rotationCoefficient = 3;
     if (cardWidth >= 1000) {
       rotationCoefficient = 1.5;
     } else if (cardWidth > 650) {
       rotationCoefficient = 2;
     }
 
+    let rotationValue = ((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString();
+    let translateValue = ((hovered ? 12 : 10) * offset).toString();
+
     return (offset: number) => {
       switch (cardArrangement) {
         case "casual":
-          return offset < 0
-            ? `translateX(35%) scale(0.97)`
-            : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
+          return offset < 0 ? `translateX(35%) scale(0.97)` : `translateX(0) rotate(-${rotationValue}deg)`;
         case "straight":
-          return offset < 0
-            ? `translateY(35%) scale(0.97)`
-            : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
+          return offset < 0 ? `translateY(35%) scale(0.97)` : `translateY(-${translateValue}px)`;
         default:
-          return offset < 0 ? `translateX(0)` : `translateX(0)`;
+          return `translateX(0)`;
       }
     };
-  }, [cardArrangement, hovered, cardWidth]);
+  }, [cardArrangement, hovered, cardWidth, offset]);
 
   const straightCardArrangementStyles =
     cardArrangement === "straight"
@@ -106,6 +109,7 @@ export const StackedCard = ({
         height: fullSizeCards ? "100%" : currentCardHeight,
         transitionProperty: "transform, opacity, margin, width",
         transitionDuration: "500ms",
+        transitionBehavior: "ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
         ...straightCardArrangementStyles,

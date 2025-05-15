@@ -11,8 +11,6 @@ export function ScrollableContainer({ children }: Readonly<ScrollableContainerPr
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isSurveyPreview = Boolean(document.getElementById("survey-preview"));
-
-  console.log("isSurveyPreview", document.getElementById("survey-preview"));
   const previewScaleCoifficient = isSurveyPreview ? 0.66 : 1;
 
   const checkScroll = () => {
