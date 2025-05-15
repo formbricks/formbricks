@@ -72,8 +72,8 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base leading-6 font-semibold">{headline}</Text>
-          <Container className="text-question-color m-0 text-sm leading-6 font-normal">
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
+          <Container className="text-question-color m-0 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
               dangerouslySetInnerHTML={{
@@ -131,7 +131,7 @@ export async function PreviewEmailTemplate({
                         )}>
                         {firstQuestion.isColorCodingEnabled ? (
                           <Section
-                            className={`absolute top-0 left-0 h-[6px] w-full ${getNPSOptionColor(i)}`}
+                            className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`}
                           />
                         ) : null}
                         {i}
@@ -162,8 +162,8 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base leading-6 font-semibold">{headline}</Text>
-          <Container className="text-question-color mt-2 ml-0 text-sm leading-6 font-normal">
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
+          <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
               dangerouslySetInnerHTML={{
@@ -227,7 +227,7 @@ export async function PreviewEmailTemplate({
                           <>
                             {firstQuestion.isColorCodingEnabled ? (
                               <Section
-                                className={`absolute top-0 left-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
+                                className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
                               />
                             ) : null}
                             <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
@@ -315,13 +315,13 @@ export async function PreviewEmailTemplate({
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mr-1 mb-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mr-1 mb-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
@@ -369,11 +369,11 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
-                <Column className="w-40 px-4 py-2 break-words" />
+                <Column className="w-40 break-words px-4 py-2" />
                 {firstQuestion.columns.map((column) => {
                   return (
                     <Column
-                      className="text-question-color max-w-40 px-4 py-2 text-center break-words"
+                      className="text-question-color max-w-40 break-words px-4 py-2 text-center"
                       key={getLocalizedValue(column, "default")}>
                       {getLocalizedValue(column, "default")}
                     </Column>
@@ -385,7 +385,7 @@ export async function PreviewEmailTemplate({
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
                     key={getLocalizedValue(row, "default")}>
-                    <Column className="w-40 px-4 py-2 break-words">
+                    <Column className="w-40 break-words px-4 py-2">
                       {getLocalizedValue(row, "default")}
                     </Column>
                     {firstQuestion.columns.map((_) => {

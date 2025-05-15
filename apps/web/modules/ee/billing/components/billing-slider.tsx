@@ -19,7 +19,7 @@ export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrim
     return (
       <SliderPrimitive.Root
         ref={ref}
-        className={cn("relative flex w-full touch-none items-center select-none", className)}
+        className={cn("relative flex w-full touch-none select-none items-center", className)}
         {...props}>
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-r-full bg-slate-300">
           <div
