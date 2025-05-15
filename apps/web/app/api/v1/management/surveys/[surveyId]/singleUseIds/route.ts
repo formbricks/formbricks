@@ -1,8 +1,10 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getSurvey } from "@/lib/survey/service";
+import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { generateSurveySingleUseIds } from "@formbricks/lib/utils/singleUseSurveys";
 
 export const GET = async (
   request: NextRequest,
@@ -16,8 +18,12 @@ export const GET = async (
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
     }
-    if (survey.environmentId !== authentication.environmentId) {
-      throw new Error("Unauthorized");
+    if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+      return responses.unauthorizedResponse();
+    }
+
+    if (survey.type !== "link") {
+      return responses.badRequestResponse("Single use links are only available for link surveys");
     }
 
     if (!survey.singleUse || !survey.singleUse.enabled) {
@@ -36,9 +42,10 @@ export const GET = async (
 
     const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
 
+    const surveyDomain = getSurveyDomain();
     // map single use ids to survey links
     const surveyLinks = singleUseIds.map(
-      (singleUseId) => `${process.env.WEBAPP_URL}/s/${survey.id}?suId=${singleUseId}`
+      (singleUseId) => `${surveyDomain}/s/${survey.id}?suId=${singleUseId}`
     );
 
     return responses.successResponse(surveyLinks);

@@ -1,15 +1,16 @@
 "use server";
 
+import { getOrganization } from "@/lib/organization/service";
+import { getResponseDownloadUrl, getResponseFilteringValues } from "@/lib/response/service";
+import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getResponseDownloadUrl, getResponseFilteringValues } from "@formbricks/lib/response/service";
-import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -95,7 +96,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
     throw new ResourceNotFoundError("Organization not found", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = getSurveyFollowUpsPermission(organization.billing.plan);
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }
@@ -122,6 +123,10 @@ export const updateSurveyAction = authenticatedActionClient
     });
 
     const { followUps } = parsedInput;
+
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission(organizationId);
+    }
 
     if (followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);

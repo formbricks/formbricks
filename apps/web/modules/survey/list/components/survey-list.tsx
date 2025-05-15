@@ -1,5 +1,6 @@
 "use client";
 
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
 import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
@@ -7,7 +8,6 @@ import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
@@ -19,7 +19,7 @@ import { SurveyLoading } from "./survey-loading";
 interface SurveysListProps {
   environmentId: string;
   isReadOnly: boolean;
-  WEBAPP_URL: string;
+  surveyDomain: string;
   userId: string;
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
@@ -37,7 +37,7 @@ export const initialFilters: TSurveyFilters = {
 export const SurveysList = ({
   environmentId,
   isReadOnly,
-  WEBAPP_URL,
+  surveyDomain,
   userId,
   surveysPerPage: surveysLimit,
   currentProjectChannel,
@@ -156,7 +156,7 @@ export const SurveysList = ({
                   survey={survey}
                   environmentId={environmentId}
                   isReadOnly={isReadOnly}
-                  WEBAPP_URL={WEBAPP_URL}
+                  surveyDomain={surveyDomain}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}

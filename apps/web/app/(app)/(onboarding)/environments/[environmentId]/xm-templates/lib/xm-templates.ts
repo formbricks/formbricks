@@ -1,12 +1,14 @@
-import { getDefaultEndingCard } from "@/app/lib/templates";
+import {
+  buildCTAQuestion,
+  buildNPSQuestion,
+  buildOpenTextQuestion,
+  buildRatingQuestion,
+  getDefaultEndingCard,
+} from "@/app/lib/survey-builder";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { logger } from "@formbricks/logger";
 import { TXMTemplate } from "@formbricks/types/templates";
-
-function logError(error: Error, context: string) {
-  console.error(`Error in ${context}:`, error);
-}
 
 export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
   try {
@@ -19,7 +21,7 @@ export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
       },
     };
   } catch (error) {
-    logError(error, "getXMSurveyDefault");
+    logger.error(error, "Failed to create default XM survey template");
     throw error; // Re-throw after logging
   }
 };
@@ -29,35 +31,26 @@ const npsSurvey = (t: TFnType): TXMTemplate => {
     ...getXMSurveyDefault(t),
     name: t("templates.nps_survey_name"),
     questions: [
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.NPS,
-        headline: { default: t("templates.nps_survey_question_1_headline") },
+      buildNPSQuestion({
+        headline: t("templates.nps_survey_question_1_headline"),
         required: true,
-        lowerLabel: { default: t("templates.nps_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.nps_survey_question_1_upper_label") },
+        lowerLabel: t("templates.nps_survey_question_1_lower_label"),
+        upperLabel: t("templates.nps_survey_question_1_upper_label"),
         isColorCodingEnabled: true,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.nps_survey_question_2_headline") },
+        t,
+      }),
+      buildOpenTextQuestion({
+        headline: t("templates.nps_survey_question_2_headline"),
         required: false,
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.nps_survey_question_3_headline") },
+        t,
+      }),
+      buildOpenTextQuestion({
+        headline: t("templates.nps_survey_question_3_headline"),
         required: false,
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -70,9 +63,8 @@ const starRatingSurvey = (t: TFnType): TXMTemplate => {
     ...defaultSurvey,
     name: t("templates.star_rating_survey_name"),
     questions: [
-      {
+      buildRatingQuestion({
         id: reusableQuestionIds[0],
-        type: TSurveyQuestionTypeEnum.Rating,
         logic: [
           {
             id: createId(),
@@ -105,16 +97,15 @@ const starRatingSurvey = (t: TFnType): TXMTemplate => {
         ],
         range: 5,
         scale: "number",
-        headline: { default: t("templates.star_rating_survey_question_1_headline") },
+        headline: t("templates.star_rating_survey_question_1_headline"),
         required: true,
-        lowerLabel: { default: t("templates.star_rating_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.star_rating_survey_question_1_upper_label") },
-        isColorCodingEnabled: false,
-      },
-      {
+        lowerLabel: t("templates.star_rating_survey_question_1_lower_label"),
+        upperLabel: t("templates.star_rating_survey_question_1_upper_label"),
+        t,
+      }),
+      buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: { default: t("templates.star_rating_survey_question_2_html") },
-        type: TSurveyQuestionTypeEnum.CTA,
+        html: t("templates.star_rating_survey_question_2_html"),
         logic: [
           {
             id: createId(),
@@ -141,25 +132,23 @@ const starRatingSurvey = (t: TFnType): TXMTemplate => {
             ],
           },
         ],
-        headline: { default: t("templates.star_rating_survey_question_2_headline") },
+        headline: t("templates.star_rating_survey_question_2_headline"),
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: t("templates.star_rating_survey_question_2_button_label") },
+        buttonLabel: t("templates.star_rating_survey_question_2_button_label"),
         buttonExternal: true,
-      },
-      {
+        t,
+      }),
+      buildOpenTextQuestion({
         id: reusableQuestionIds[2],
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.star_rating_survey_question_3_headline") },
+        headline: t("templates.star_rating_survey_question_3_headline"),
         required: true,
-        subheader: { default: t("templates.star_rating_survey_question_3_subheader") },
-        buttonLabel: { default: t("templates.star_rating_survey_question_3_button_label") },
-        placeholder: { default: t("templates.star_rating_survey_question_3_placeholder") },
+        subheader: t("templates.star_rating_survey_question_3_subheader"),
+        buttonLabel: t("templates.star_rating_survey_question_3_button_label"),
+        placeholder: t("templates.star_rating_survey_question_3_placeholder"),
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -172,9 +161,8 @@ const csatSurvey = (t: TFnType): TXMTemplate => {
     ...defaultSurvey,
     name: t("templates.csat_survey_name"),
     questions: [
-      {
+      buildRatingQuestion({
         id: reusableQuestionIds[0],
-        type: TSurveyQuestionTypeEnum.Rating,
         logic: [
           {
             id: createId(),
@@ -207,15 +195,14 @@ const csatSurvey = (t: TFnType): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: t("templates.csat_survey_question_1_headline") },
+        headline: t("templates.csat_survey_question_1_headline"),
         required: true,
-        lowerLabel: { default: t("templates.csat_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.csat_survey_question_1_upper_label") },
-        isColorCodingEnabled: false,
-      },
-      {
+        lowerLabel: t("templates.csat_survey_question_1_lower_label"),
+        upperLabel: t("templates.csat_survey_question_1_upper_label"),
+        t,
+      }),
+      buildOpenTextQuestion({
         id: reusableQuestionIds[1],
-        type: TSurveyQuestionTypeEnum.OpenText,
         logic: [
           {
             id: createId(),
@@ -242,25 +229,20 @@ const csatSurvey = (t: TFnType): TXMTemplate => {
             ],
           },
         ],
-        headline: { default: t("templates.csat_survey_question_2_headline") },
+        headline: t("templates.csat_survey_question_2_headline"),
         required: false,
-        placeholder: { default: t("templates.csat_survey_question_2_placeholder") },
+        placeholder: t("templates.csat_survey_question_2_placeholder"),
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
-      {
+        t,
+      }),
+      buildOpenTextQuestion({
         id: reusableQuestionIds[2],
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.csat_survey_question_3_headline") },
+        headline: t("templates.csat_survey_question_3_headline"),
         required: false,
-        placeholder: { default: t("templates.csat_survey_question_3_placeholder") },
+        placeholder: t("templates.csat_survey_question_3_placeholder"),
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -270,28 +252,22 @@ const cessSurvey = (t: TFnType): TXMTemplate => {
     ...getXMSurveyDefault(t),
     name: t("templates.cess_survey_name"),
     questions: [
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.Rating,
+      buildRatingQuestion({
         range: 5,
         scale: "number",
-        headline: { default: t("templates.cess_survey_question_1_headline") },
+        headline: t("templates.cess_survey_question_1_headline"),
         required: true,
-        lowerLabel: { default: t("templates.cess_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.cess_survey_question_1_upper_label") },
-        isColorCodingEnabled: false,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.cess_survey_question_2_headline") },
+        lowerLabel: t("templates.cess_survey_question_1_lower_label"),
+        upperLabel: t("templates.cess_survey_question_1_upper_label"),
+        t,
+      }),
+      buildOpenTextQuestion({
+        headline: t("templates.cess_survey_question_2_headline"),
         required: true,
-        placeholder: { default: t("templates.cess_survey_question_2_placeholder") },
+        placeholder: t("templates.cess_survey_question_2_placeholder"),
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -304,9 +280,8 @@ const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
     ...defaultSurvey,
     name: t("templates.smileys_survey_name"),
     questions: [
-      {
+      buildRatingQuestion({
         id: reusableQuestionIds[0],
-        type: TSurveyQuestionTypeEnum.Rating,
         logic: [
           {
             id: createId(),
@@ -339,16 +314,15 @@ const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: t("templates.smileys_survey_question_1_headline") },
+        headline: t("templates.smileys_survey_question_1_headline"),
         required: true,
-        lowerLabel: { default: t("templates.smileys_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.smileys_survey_question_1_upper_label") },
-        isColorCodingEnabled: false,
-      },
-      {
+        lowerLabel: t("templates.smileys_survey_question_1_lower_label"),
+        upperLabel: t("templates.smileys_survey_question_1_upper_label"),
+        t,
+      }),
+      buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: { default: t("templates.smileys_survey_question_2_html") },
-        type: TSurveyQuestionTypeEnum.CTA,
+        html: t("templates.smileys_survey_question_2_html"),
         logic: [
           {
             id: createId(),
@@ -375,25 +349,23 @@ const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
             ],
           },
         ],
-        headline: { default: t("templates.smileys_survey_question_2_headline") },
+        headline: t("templates.smileys_survey_question_2_headline"),
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: t("templates.smileys_survey_question_2_button_label") },
+        buttonLabel: t("templates.smileys_survey_question_2_button_label"),
         buttonExternal: true,
-      },
-      {
+        t,
+      }),
+      buildOpenTextQuestion({
         id: reusableQuestionIds[2],
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.smileys_survey_question_3_headline") },
+        headline: t("templates.smileys_survey_question_3_headline"),
         required: true,
-        subheader: { default: t("templates.smileys_survey_question_3_subheader") },
-        buttonLabel: { default: t("templates.smileys_survey_question_3_button_label") },
-        placeholder: { default: t("templates.smileys_survey_question_3_placeholder") },
+        subheader: t("templates.smileys_survey_question_3_subheader"),
+        buttonLabel: t("templates.smileys_survey_question_3_button_label"),
+        placeholder: t("templates.smileys_survey_question_3_placeholder"),
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -403,37 +375,26 @@ const enpsSurvey = (t: TFnType): TXMTemplate => {
     ...getXMSurveyDefault(t),
     name: t("templates.enps_survey_name"),
     questions: [
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.NPS,
-        headline: {
-          default: t("templates.enps_survey_question_1_headline"),
-        },
+      buildNPSQuestion({
+        headline: t("templates.enps_survey_question_1_headline"),
         required: false,
-        lowerLabel: { default: t("templates.enps_survey_question_1_lower_label") },
-        upperLabel: { default: t("templates.enps_survey_question_1_upper_label") },
+        lowerLabel: t("templates.enps_survey_question_1_lower_label"),
+        upperLabel: t("templates.enps_survey_question_1_upper_label"),
         isColorCodingEnabled: true,
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.enps_survey_question_2_headline") },
+        t,
+      }),
+      buildOpenTextQuestion({
+        headline: t("templates.enps_survey_question_2_headline"),
         required: false,
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
-      {
-        id: createId(),
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: t("templates.enps_survey_question_3_headline") },
+        t,
+      }),
+      buildOpenTextQuestion({
+        headline: t("templates.enps_survey_question_3_headline"),
         required: false,
         inputType: "text",
-        charLimit: {
-          enabled: false,
-        },
-      },
+        t,
+      }),
     ],
   };
 };
@@ -449,7 +410,7 @@ export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
       enpsSurvey(t),
     ];
   } catch (error) {
-    logError(error, "getXMTemplates");
+    logger.error(error, "Unable to load XM templates, returning empty array");
     return []; // Return an empty array or handle as needed
   }
 };

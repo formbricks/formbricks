@@ -1,13 +1,13 @@
+import { getMembershipRole } from "@/lib/membership/hooks/actions";
 import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { type TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { type TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
-import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
 
-const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
+export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
     ...issues.reduce((acc, issue) => {
       acc[issue.path.join(".")] = {

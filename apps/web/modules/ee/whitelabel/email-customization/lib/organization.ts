@@ -1,11 +1,12 @@
 import "server-only";
+import { cache } from "@/lib/cache";
+import { organizationCache } from "@/lib/organization/cache";
+import { projectCache } from "@/lib/project/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
@@ -64,7 +65,10 @@ export const updateOrganizationEmailLogoUrl = async (
 
     return true;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
@@ -125,7 +129,10 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
 
     return true;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 

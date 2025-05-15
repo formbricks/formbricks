@@ -1,8 +1,8 @@
+import { DEFAULT_LOCALE } from "@/lib/constants";
+import { getUserLocale } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { DEFAULT_LOCALE } from "@formbricks/lib/constants";
-import { getUserLocale } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export async function getLocale() {
   const session = await getServerSession(authOptions);

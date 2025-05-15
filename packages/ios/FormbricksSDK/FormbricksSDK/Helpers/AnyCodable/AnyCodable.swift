@@ -22,7 +22,7 @@ struct AnyCodable: Codable {
     }
 }
 
-extension AnyCodable: _AnyEncodable, _AnyDecodable {}
+extension AnyCodable: AnyEncodableProtocol, AnyDecodableProtocol {}
 
 extension AnyCodable: Equatable {
     public static func == (lhs: AnyCodable, rhs: AnyCodable) -> Bool {
@@ -88,12 +88,10 @@ extension AnyCodable: CustomStringConvertible {
 
 extension AnyCodable: CustomDebugStringConvertible {
     public var debugDescription: String {
-        switch value {
-        case let value as CustomDebugStringConvertible:
+        if let value = value as? CustomDebugStringConvertible {
             return "AnyCodable(\(value.debugDescription))"
-        default:
-            return "AnyCodable(\(description))"
         }
+        return "AnyCodable(\(description))"
     }
 }
 

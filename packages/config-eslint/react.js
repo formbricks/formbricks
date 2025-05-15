@@ -34,9 +34,10 @@ module.exports = {
     },
   },
   ignorePatterns: ["node_modules/", "dist/", ".eslintrc.js", "**/*.css"],
-  // add rules configurations here
+  plugins: ["@vitest"],
   rules: {
     "import/no-default-export": "off",
+    "@vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
   },
   overrides: [
     {

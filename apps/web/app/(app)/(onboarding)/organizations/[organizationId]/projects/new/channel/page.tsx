@@ -1,13 +1,12 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getUserProjects } from "@/lib/project/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
 import { PictureInPicture2Icon, SendIcon, XIcon } from "lucide-react";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getUserProjects } from "@formbricks/lib/project/service";
 
 interface ChannelPageProps {
   params: Promise<{
@@ -17,8 +16,10 @@ interface ChannelPageProps {
 
 const Page = async (props: ChannelPageProps) => {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+
+  const { session } = await getOrganizationAuth(params.organizationId);
+
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 

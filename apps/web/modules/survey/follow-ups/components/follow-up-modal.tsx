@@ -1,12 +1,16 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
+  TFollowUpEmailToUser,
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";
@@ -33,13 +37,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import DOMpurify from "isomorphic-dompurify";
-import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  EyeOffIcon,
+  HandshakeIcon,
+  MailIcon,
+  TriangleAlertIcon,
+  UserIcon,
+  ZapIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -52,12 +62,13 @@ interface AddFollowUpModalProps {
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
   userEmail: string;
+  teamMemberDetails: TFollowUpEmailToUser[];
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   locale: TUserLocale;
 }
 
 type EmailSendToOption = {
-  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField";
+  type: "openTextQuestion" | "contactInfoQuestion" | "hiddenField" | "user";
   label: string;
   id: string;
 };
@@ -71,6 +82,7 @@ export const FollowUpModal = ({
   defaultValues,
   mode = "create",
   userEmail,
+  teamMemberDetails,
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
@@ -103,6 +115,22 @@ export const FollowUpModal = ({
         ? { fieldIds: localSurvey.hiddenFields.fieldIds }
         : { fieldIds: [] };
 
+    const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
+      if (teamMemberDetail.email === userEmail) {
+        return { name: "Yourself", email: userEmail };
+      }
+
+      return teamMemberDetail;
+    });
+
+    const isUserEmailInTeamMemberDetails = updatedTeamMemberDetails.some(
+      (teamMemberDetail) => teamMemberDetail.email === userEmail
+    );
+
+    const updatedTeamMembers = isUserEmailInTeamMemberDetails
+      ? updatedTeamMemberDetails
+      : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
+
     return [
       ...openTextAndContactQuestions.map((question) => ({
         label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
@@ -120,8 +148,14 @@ export const FollowUpModal = ({
         id: fieldId,
         type: "hiddenField" as EmailSendToOption["type"],
       })),
+
+      ...updatedTeamMembers.map((member) => ({
+        label: `${member.name} (${member.email})`,
+        id: member.email,
+        type: "user" as EmailSendToOption["type"],
+      })),
     ];
-  }, [localSurvey, selectedLanguageCode]);
+  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail]);
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
@@ -132,6 +166,7 @@ export const FollowUpModal = ({
       replyTo: defaultValues?.replyTo ?? [userEmail],
       subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
       body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
+      attachResponseData: defaultValues?.attachResponseData ?? false,
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
@@ -216,6 +251,7 @@ export const FollowUpModal = ({
             replyTo: data.replyTo,
             subject: data.subject,
             body: sanitizedBody,
+            attachResponseData: data.attachResponseData,
           },
         },
       };
@@ -262,6 +298,7 @@ export const FollowUpModal = ({
           replyTo: data.replyTo,
           subject: data.subject,
           body: sanitizedBody,
+          attachResponseData: data.attachResponseData,
         },
       },
     };
@@ -316,13 +353,45 @@ export const FollowUpModal = ({
         replyTo: defaultValues?.replyTo ?? [userEmail],
         subject: defaultValues?.subject ?? "Thanks for your answers!",
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
+        attachResponseData: defaultValues?.attachResponseData ?? false,
       });
     }
-  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);
+  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
 
   const handleModalClose = () => {
     form.reset();
     setOpen(false);
+  };
+
+  const emailSendToQuestionOptions = emailSendToOptions.filter(
+    (option) => option.type === "openTextQuestion" || option.type === "contactInfoQuestion"
+  );
+  const emailSendToHiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
+  const userSendToEmailOptions = emailSendToOptions.filter((option) => option.type === "user");
+
+  const renderSelectItem = (option: EmailSendToOption) => {
+    return (
+      <SelectItem key={option.id} value={option.id}>
+        {option.type === "hiddenField" ? (
+          <div className="flex items-center space-x-2">
+            <EyeOffIcon className="h-4 w-4" />
+            <span>{option.label}</span>
+          </div>
+        ) : option.type === "user" ? (
+          <div className="flex items-center space-x-2">
+            <UserIcon className="h-4 w-4" />
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <div className="h-4 w-4">
+              {QUESTIONS_ICON_MAP[option.type === "openTextQuestion" ? "openText" : "contactInfo"]}
+            </div>
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
+          </div>
+        )}
+      </SelectItem>
+    );
   };
 
   return (
@@ -380,7 +449,6 @@ export const FollowUpModal = ({
               </div>
 
               {/* Trigger */}
-
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                   <div className="rounded-full border border-slate-300 bg-white p-1">
@@ -423,17 +491,13 @@ export const FollowUpModal = ({
                               </Select>
 
                               {triggerType === "endings" && !localSurvey.endings.length ? (
-                                <div className="mt-4 flex items-start text-yellow-600">
-                                  <TriangleAlertIcon
-                                    className="mr-2 h-5 min-h-5 w-5 min-w-5"
-                                    aria-hidden="true"
-                                  />
-                                  <p className="text-sm">
+                                <Alert variant="warning" size="small">
+                                  <AlertTitle>
                                     {t(
                                       "environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"
                                     )}
-                                  </p>
-                                </div>
+                                  </AlertTitle>
+                                </Alert>
                               ) : null}
                             </div>
                           </div>
@@ -507,13 +571,13 @@ export const FollowUpModal = ({
                   ) : null}
                 </div>
               </div>
+
               {/* Arrow */}
               <div className="flex items-center justify-center">
                 <ArrowDownIcon className="h-4 w-4 text-slate-500" />
               </div>
 
               {/* Action */}
-
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                   <div className="rounded-full border border-slate-300 bg-white p-1">
@@ -562,7 +626,7 @@ export const FollowUpModal = ({
                               </div>
                             )}
 
-                            {emailSendToOptions.length > 0 && (
+                            {emailSendToOptions.length > 0 ? (
                               <div className="max-w-80">
                                 <FormControl>
                                   <Select
@@ -580,38 +644,44 @@ export const FollowUpModal = ({
                                     </SelectTrigger>
 
                                     <SelectContent>
-                                      {emailSendToOptions.map((option) => {
-                                        return (
-                                          <SelectItem key={option.id} value={option.id}>
-                                            {option.type !== "hiddenField" ? (
-                                              <div className="flex items-center space-x-2">
-                                                <div className="h-4 w-4">
-                                                  {
-                                                    QUESTIONS_ICON_MAP[
-                                                      option.type === "openTextQuestion"
-                                                        ? "openText"
-                                                        : "contactInfo"
-                                                    ]
-                                                  }
-                                                </div>
-                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                                  {option.label}
-                                                </span>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center space-x-2">
-                                                <EyeOffIcon className="h-4 w-4" />
-                                                <span>{option.label}</span>
-                                              </div>
-                                            )}
-                                          </SelectItem>
-                                        );
-                                      })}
+                                      {emailSendToQuestionOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex items-center space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Questions</p>
+                                          </div>
+
+                                          {emailSendToQuestionOptions.map((option) =>
+                                            renderSelectItem(option)
+                                          )}
+                                        </div>
+                                      ) : null}
+
+                                      {emailSendToHiddenFieldOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Hidden Fields</p>
+                                          </div>
+
+                                          {emailSendToHiddenFieldOptions.map((option) =>
+                                            renderSelectItem(option)
+                                          )}
+                                        </div>
+                                      ) : null}
+
+                                      {userSendToEmailOptions.length > 0 ? (
+                                        <div className="flex flex-col">
+                                          <div className="flex space-x-2 p-2">
+                                            <p className="text-sm text-slate-500">Users</p>
+                                          </div>
+
+                                          {userSendToEmailOptions.map((option) => renderSelectItem(option))}
+                                        </div>
+                                      ) : null}
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         );
                       }}
@@ -744,6 +814,38 @@ export const FollowUpModal = ({
                                 <span className="text-sm text-red-500">{formErrors.body.message}</span>
                               </div>
                             ) : null}
+                          </div>
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="attachResponseData"
+                    render={({ field }) => {
+                      return (
+                        <FormItem>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="attachResponseData"
+                                checked={field.value}
+                                defaultChecked={defaultValues?.attachResponseData ?? false}
+                                onCheckedChange={(checked) => field.onChange(checked)}
+                              />
+                              <FormLabel htmlFor="attachResponseData" className="font-medium">
+                                {t(
+                                  "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                                )}
+                              </FormLabel>
+                            </div>
+
+                            <FormDescription className="text-sm text-slate-500">
+                              {t(
+                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
+                              )}
+                            </FormDescription>
                           </div>
                         </FormItem>
                       );

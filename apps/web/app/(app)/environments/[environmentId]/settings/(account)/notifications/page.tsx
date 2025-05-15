@@ -1,12 +1,12 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
-import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { EditAlerts } from "./components/EditAlerts";
 import { EditWeeklySummary } from "./components/EditWeeklySummary";
@@ -155,6 +155,10 @@ const Page = async (props) => {
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
   if (!user) {
     throw new Error(t("common.user_not_found"));
+  }
+
+  if (!memberships) {
+    throw new Error(t("common.membership_not_found"));
   }
 
   if (user?.notificationSettings) {

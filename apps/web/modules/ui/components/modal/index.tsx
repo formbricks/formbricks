@@ -1,7 +1,7 @@
+import { cn } from "@/lib/cn";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 const DialogPortal = DialogPrimitive.Portal;
 
@@ -13,7 +13,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       blur && "backdrop-blur-md",
-      "fixed inset-0 z-50 bg-slate-500 bg-opacity-30",
+      "fixed inset-0 z-50 bg-opacity-30",
       "data-[state='closed']:animate-fadeOut data-[state='open']:animate-fadeIn"
     )}
     {...props}

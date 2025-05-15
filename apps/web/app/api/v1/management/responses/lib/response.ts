@@ -1,17 +1,22 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
-import { prisma } from "@formbricks/database";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { cache } from "@/lib/cache";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { calculateTtcTotal } from "@formbricks/lib/response/utils";
-import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+} from "@/lib/organization/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { responseCache } from "@/lib/response/cache";
+import { getResponseContact } from "@/lib/response/service";
+import { calculateTtcTotal } from "@/lib/response/utils";
+import { responseNoteCache } from "@/lib/responseNote/cache";
+import { captureTelemetry } from "@/lib/telemetry";
+import { validateInputs } from "@/lib/utils/validate";
+import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -24,6 +29,7 @@ export const responseSelection = {
   updatedAt: true,
   surveyId: true,
   finished: true,
+  endingId: true,
   data: true,
   meta: true,
   ttc: true,
@@ -178,7 +184,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           });
         } catch (err) {
           // Log error but do not throw
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }
@@ -192,3 +198,53 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     throw error;
   }
 };
+
+export const getResponsesByEnvironmentIds = reactCache(
+  async (environmentIds: string[], limit?: number, offset?: number): Promise<TResponse[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+        try {
+          const responses = await prisma.response.findMany({
+            where: {
+              survey: {
+                environmentId: { in: environmentIds },
+              },
+            },
+            select: responseSelection,
+            orderBy: [
+              {
+                createdAt: "desc",
+              },
+            ],
+            take: limit ? limit : undefined,
+            skip: offset ? offset : undefined,
+          });
+
+          const transformedResponses: TResponse[] = await Promise.all(
+            responses.map((responsePrisma) => {
+              return {
+                ...responsePrisma,
+                contact: getResponseContact(responsePrisma),
+                tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+              };
+            })
+          );
+
+          return transformedResponses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      environmentIds.map(
+        (environmentId) => `getResponses-management-api-${environmentId}-${limit}-${offset}`
+      ),
+      {
+        tags: environmentIds.map((environmentId) => responseCache.tag.byEnvironmentId(environmentId)),
+      }
+    )()
+);

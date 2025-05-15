@@ -8,6 +8,8 @@ import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.extensions.lastDisplayAt
 import com.formbricks.formbrickssdk.logger.Logger
+import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.formbricks.formbrickssdk.network.queue.UpdateQueue
 import com.google.gson.Gson
@@ -136,11 +138,20 @@ object UserManager {
                 responses = userResponse.data.state.data.responses
                 lastDisplayedAt = userResponse.data.state.data.lastDisplayAt()
                 expiresAt = userResponse.data.state.expiresAt()
+                val languageFromUserResponse = userResponse.data.state.data.language
+
+                if(languageFromUserResponse != null) {
+                    Formbricks.language = languageFromUserResponse
+                }
+
                 UpdateQueue.current.reset()
                 SurveyManager.filterSurveys()
                 startSyncTimer()
+                Formbricks.callback?.onSuccess(SuccessType.SET_USER_SUCCESS)
             } catch (e: Exception) {
-                Logger.e("Unable to post survey response.")
+                val error = SDKError.unableToPostResponse
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
             }
         }
     }
@@ -149,7 +160,16 @@ object UserManager {
      * Logs out the user and clears the user state.
      */
     fun logout() {
+        val isUserIdDefined = userId != null
+
+        if (!isUserIdDefined) {
+            val error = SDKError.noUserIdSetError
+            Formbricks.callback?.onError(error)
+            Logger.e(error)
+        }
+
         prefManager.edit().apply {
+            remove(CONTACT_ID_KEY)
             remove(USER_ID_KEY)
             remove(SEGMENTS_KEY)
             remove(DISPLAYS_KEY)
@@ -158,13 +178,20 @@ object UserManager {
             remove(EXPIRES_AT_KEY)
             apply()
         }
+
         backingUserId = null
+        backingContactId = null
         backingSegments = null
         backingDisplays = null
         backingResponses = null
         backingLastDisplayedAt = null
         backingExpiresAt = null
+        Formbricks.language = "default"
         UpdateQueue.current.reset()
+
+        if(isUserIdDefined) {
+            Logger.d("User logged out successfully!")
+        }
     }
 
     private fun startSyncTimer() {

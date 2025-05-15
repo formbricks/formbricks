@@ -1,8 +1,8 @@
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -11,6 +11,7 @@ interface EditMembershipsProps {
   currentUserId: string;
   role: TOrganizationRole;
   canDoRoleManagement: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export const EditMemberships = async ({
@@ -18,6 +19,7 @@ export const EditMemberships = async ({
   currentUserId,
   role,
   canDoRoleManagement,
+  isUserManagementDisabledFromUi,
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
@@ -26,12 +28,17 @@ export const EditMemberships = async ({
   return (
     <div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-5 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-1">{t("common.full_name")}</div>
-          <div className="col-span-1 text-center">{t("common.email")}</div>
-          {canDoRoleManagement && <div className="col-span-1 text-center">{t("common.role")}</div>}
-          <div className="col-span-1 text-center">{t("common.status")}</div>
-          <div className="col-span-1"></div>
+        <div className="flex h-12 w-full max-w-full items-center gap-x-4 rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
+          <div className="w-1/2 overflow-hidden">{t("common.full_name")}</div>
+          <div className="w-1/2 overflow-hidden">{t("common.email")}</div>
+
+          {canDoRoleManagement && <div className="min-w-[100px] whitespace-nowrap">{t("common.role")}</div>}
+
+          <div className="min-w-[80px] whitespace-nowrap">{t("common.status")}</div>
+
+          {!isUserManagementDisabledFromUi && (
+            <div className="min-w-[125px] whitespace-nowrap">{t("common.actions")}</div>
+          )}
         </div>
 
         {role && (
@@ -43,6 +50,7 @@ export const EditMemberships = async ({
             currentUserRole={role}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           />
         )}
       </div>

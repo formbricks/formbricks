@@ -31,7 +31,6 @@ class FormbricksViewModel : ViewModel() {
             
             <head>
                 <title>Formbricks WebView Survey</title>
-                <script src="https://cdn.tailwindcss.com"></script>
             </head>
 
             <body style="overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;">
@@ -42,14 +41,9 @@ class FormbricksViewModel : ViewModel() {
                 var json = `{{WEBVIEW_DATA}}`
 
                 function onClose() {
-                    console.log("onClose")
                     FormbricksJavascript.message(JSON.stringify({ event: "onClose" }));
                 };
-
-                function onFinished() {
-                    FormbricksJavascript.message(JSON.stringify({ event: "onFinished" }));
-                };
-
+                
                 function onDisplayCreated() {
                     FormbricksJavascript.message(JSON.stringify({ event: "onDisplayCreated" }));
                 };
@@ -62,7 +56,6 @@ class FormbricksViewModel : ViewModel() {
                     const options = JSON.parse(json);
                     const surveyProps = {
                         ...options,
-                        onFinished,
                         onDisplayCreated,
                         onResponseCreated,
                         onClose,
@@ -110,6 +103,7 @@ class FormbricksViewModel : ViewModel() {
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    FormbricksJavascript.message(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);
@@ -128,10 +122,20 @@ class FormbricksViewModel : ViewModel() {
         val jsonObject = JsonObject()
         environmentDataHolder.getSurveyJson(surveyId).let { jsonObject.add("survey", it) }
         jsonObject.addProperty("isBrandingEnabled", true)
-        jsonObject.addProperty("apiHost", Formbricks.appUrl)
-        jsonObject.addProperty("languageCode", Formbricks.language)
+        jsonObject.addProperty("appUrl", Formbricks.appUrl)
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
         jsonObject.addProperty("contactId", UserManager.contactId)
+        jsonObject.addProperty("isWebEnvironment", false)
+
+        val isMultiLangSurvey =
+            (environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.languages?.size
+                ?: 0) > 1
+
+        if (isMultiLangSurvey) {
+            jsonObject.addProperty("languageCode", Formbricks.language)
+        } else {
+            jsonObject.addProperty("languageCode", "default")
+        }
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false

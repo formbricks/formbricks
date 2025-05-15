@@ -1,8 +1,3 @@
-import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
-import { getTranslate } from "@/tolgee/server";
-import { render } from "@react-email/render";
-import { createTransport } from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
   DEBUG,
   MAIL_FROM,
@@ -15,9 +10,16 @@ import {
   SMTP_SECURE_ENABLED,
   SMTP_USER,
   WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+} from "@/lib/constants";
+import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
+import { getTranslate } from "@/tolgee/server";
+import { render } from "@react-email/render";
+import { createTransport } from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
@@ -31,7 +33,6 @@ import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
 import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
-import { FollowUpEmail } from "./emails/survey/follow-up";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
@@ -48,6 +49,10 @@ interface SendEmailDataProps {
 }
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
+  if (!IS_SMTP_CONFIGURED) {
+    logger.info("SMTP is not configured, skipping email sending");
+    return false;
+  }
   try {
     const transporter = createTransport({
       host: SMTP_HOST,
@@ -76,7 +81,7 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
 
     return true;
   } catch (error) {
-    console.error("Error in sendEmail:", error);
+    logger.error(error, "Error in sendEmail");
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
 };
@@ -104,7 +109,7 @@ export const sendVerificationEmail = async ({
       html,
     });
   } catch (error) {
-    console.error("Error in sendVerificationEmail:", error);
+    logger.error(error, "Error in sendVerificationEmail");
     throw error; // Re-throw the error to maintain the original behavior
   }
 };
@@ -269,9 +274,9 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const t = await getTranslate();
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
     }
-    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+    return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
   const surveyLink = getSurveyLink();
 
@@ -347,27 +352,5 @@ export const sendNoLiveSurveyNotificationEmail = async (
       projectName: notificationData.projectName,
     }),
     html,
-  });
-};
-
-export const sendFollowUpEmail = async (
-  html: string,
-  subject: string,
-  to: string,
-  replyTo: string[],
-  logoUrl?: string
-): Promise<void> => {
-  const emailHtmlBody = await render(
-    await FollowUpEmail({
-      html,
-      logoUrl,
-    })
-  );
-
-  await sendEmail({
-    to,
-    replyTo: replyTo.join(", "),
-    subject,
-    html: emailHtmlBody,
   });
 };

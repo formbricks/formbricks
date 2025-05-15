@@ -1,5 +1,9 @@
 "use server";
 
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { createInviteToken } from "@/lib/jwt";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
@@ -13,10 +17,6 @@ import {
 } from "@/modules/organization/settings/teams/lib/membership";
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { createInviteToken } from "@formbricks/lib/jwt";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
@@ -160,7 +160,6 @@ export const resendInviteAction = authenticatedActionClient
     });
 
     const invite = await getInvite(parsedInput.inviteId);
-
     const updatedInvite = await resendInvite(parsedInput.inviteId);
     await sendInviteMemberEmail(
       parsedInput.inviteId,
@@ -191,6 +190,14 @@ export const inviteUserAction = authenticatedActionClient
       throw new ValidationError("Billing role is not allowed");
     }
 
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(
+      ctx.user.id,
+      parsedInput.organizationId
+    );
+    if (!currentUserMembership) {
+      throw new AuthenticationError("User not a member of this organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -201,6 +208,10 @@ export const inviteUserAction = authenticatedActionClient
         },
       ],
     });
+
+    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
+      throw new OperationNotAllowedError("Managers can only invite users as members");
+    }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
       await checkRoleManagementPermission(parsedInput.organizationId);

@@ -5,6 +5,7 @@ import {
   AddIntegrationModal,
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -13,7 +14,6 @@ import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -98,17 +98,17 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
       {integrationData.length ? (
         <div className="mt-6 w-full rounded-lg border border-slate-200">
           <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-            {tableHeaders.map((header, idx) => (
-              <div key={idx} className={`col-span-2 hidden text-center sm:block`}>
+            {tableHeaders.map((header) => (
+              <div key={header} className={`col-span-2 hidden text-center sm:block`}>
                 {t(header)}
               </div>
             ))}
           </div>
 
           {integrationData.map((data, index) => (
-            <div
-              key={index}
-              className="m-2 grid h-16 grid-cols-8 content-center rounded-lg hover:bg-slate-100"
+            <button
+              key={`${index}-${data.baseId}-${data.tableId}-${data.surveyId}`}
+              className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 hover:bg-slate-100"
               onClick={() => {
                 setDefaultValues({
                   base: data.baseId,
@@ -129,7 +129,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               <div className="col-span-2 text-center">
                 {timeSince(data.createdAt.toString(), props.locale)}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       ) : (

@@ -1,15 +1,14 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { timeSince } from "@/lib/time";
 import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
-import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
-import { Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { CheckIcon, Maximize2Icon, Minimize2Icon, PencilIcon, PlusIcon } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -105,7 +104,7 @@ export const ResponseNotes = ({
         !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
         !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
-          ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
+          ? "-right-2 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
             ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
             : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
@@ -228,9 +227,7 @@ export const ResponseNotes = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && noteText) {
                         e.preventDefault();
-                        {
-                          isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
-                        }
+                        isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
                       }
                     }}
                     required></textarea>

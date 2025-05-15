@@ -1,5 +1,6 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
@@ -8,7 +9,6 @@ import { Column } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface DataTableSettingsModalItemProps<T> {

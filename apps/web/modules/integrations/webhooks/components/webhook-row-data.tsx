@@ -1,10 +1,10 @@
 "use client";
 
+import { timeSince } from "@/lib/time";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Webhook } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
-import { timeSince } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

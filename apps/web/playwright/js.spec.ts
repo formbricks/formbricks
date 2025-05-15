@@ -8,14 +8,14 @@ const HTML_TEMPLATE = `<head>
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
       var e = document.getElementsByTagName("script")[0];
-      e.parentNode.insertBefore(t, e),
-        setTimeout(function () {
-          formbricks.init({
-            environmentId: "ENVIRONMENT_ID",
-            userId: "RANDOM_USER_ID",
-            apiHost: "http://localhost:3000",
-          });
-        }, 500);
+      t.onload = function(){
+        if (window.formbricks) {
+          window.formbricks.setup({environmentId: "ENVIRONMENT_ID", appUrl: "http://localhost:3000"});
+        } else {
+          console.error("Formbricks library failed to load properly. The formbricks object is not available.");
+        }
+      };
+      e.parentNode.insertBefore(t, e);
     })();
   </script>
 </head>
@@ -121,7 +121,7 @@ test.describe("JS Package Test", async () => {
     await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
     await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
     await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
-    await page.getByRole("button", { name: "Finish" }).click();
+    await page.locator("#questionCard-5").getByRole("button", { name: "Next" }).click();
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");

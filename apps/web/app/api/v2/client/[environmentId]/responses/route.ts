@@ -1,11 +1,14 @@
+import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { getSurvey } from "@/lib/survey/service";
+import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
@@ -73,14 +76,23 @@ export const POST = async (request: Request, context: Context): Promise<Response
   // get and check survey
   const survey = await getSurvey(responseInputData.surveyId);
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
+    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
-  if (survey.environmentId !== environmentId) {
+  const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
+  if (surveyCheckResult) return surveyCheckResult;
+
+  // Validate response data for "other" options exceeding character limit
+  const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+    responseData: responseInputData.data,
+    surveyQuestions: survey.questions,
+    responseLanguage: responseInputData.language,
+  });
+
+  if (otherResponseInvalidQuestionId) {
     return responses.badRequestResponse(
-      "Survey is part of another environment",
+      `Response exceeds character limit`,
       {
-        "survey.environmentId": survey.environmentId,
-        environmentId,
+        questionId: otherResponseInvalidQuestionId,
       },
       true
     );
@@ -107,15 +119,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
-    } else {
-      console.error(error);
-      return responses.internalServerErrorResponse(error.message);
     }
+    logger.error({ error, url: request.url }, "Error creating response");
+    return responses.internalServerErrorResponse(error.message);
   }
 
   sendToPipeline({
     event: "responseCreated",
-    environmentId: survey.environmentId,
+    environmentId,
     surveyId: response.surveyId,
     response: response,
   });
@@ -123,13 +134,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (responseInput.finished) {
     sendToPipeline({
       event: "responseFinished",
-      environmentId: survey.environmentId,
+      environmentId,
       surveyId: response.surveyId,
       response: response,
     });
   }
 
-  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+  await capturePosthogEnvironmentEvent(environmentId, "response created", {
     surveyId: response.surveyId,
     surveyType: survey.type,
   });

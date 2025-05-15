@@ -1,8 +1,9 @@
+import { cache } from "@/lib/cache";
+import { projectCache } from "@/lib/project/cache";
 import { Language, Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getProject = reactCache(
@@ -19,7 +20,7 @@ export const getProject = reactCache(
           return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error fetching project");
             throw new DatabaseError(error.message);
           }
           throw error;

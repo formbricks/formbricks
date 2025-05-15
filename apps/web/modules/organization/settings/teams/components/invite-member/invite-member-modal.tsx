@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
@@ -7,7 +8,6 @@ import { H4, Muted } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { BulkInviteTab } from "./bulk-invite-tab";
 import { IndividualInviteTab } from "./individual-invite-tab";
@@ -20,6 +20,7 @@ interface InviteMemberModalProps {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  membershipRole?: TOrganizationRole;
 }
 
 export const InviteMemberModal = ({
@@ -30,6 +31,7 @@ export const InviteMemberModal = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  membershipRole,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -44,6 +46,7 @@ export const InviteMemberModal = ({
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         teams={teams}
+        membershipRole={membershipRole}
       />
     ),
     bulk: (

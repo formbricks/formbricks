@@ -1,24 +1,27 @@
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
+import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<Webhook> => {
-  validateInputs([environmentId, ZId], [webhookInput, ZWebhookInput]);
+export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhook> => {
+  validateInputs([webhookInput, ZWebhookInput]);
 
   try {
     const createdWebhook = await prisma.webhook.create({
       data: {
-        ...webhookInput,
+        url: webhookInput.url,
+        name: webhookInput.name,
+        source: webhookInput.source,
         surveyIds: webhookInput.surveyIds || [],
+        triggers: webhookInput.triggers || [],
         environment: {
           connect: {
-            id: environmentId,
+            id: webhookInput.environmentId,
           },
         },
       },
@@ -37,22 +40,24 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
     }
 
     if (!(error instanceof InvalidInputError)) {
-      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
+      throw new DatabaseError(
+        `Database error when creating webhook for environment ${webhookInput.environmentId}`
+      );
     }
 
     throw error;
   }
 };
 
-export const getWebhooks = (environmentId: string, page?: number): Promise<Webhook[]> =>
+export const getWebhooks = (environmentIds: string[], page?: number): Promise<Webhook[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentIds, ZId.array()], [page, ZOptionalNumber]);
 
       try {
         const webhooks = await prisma.webhook.findMany({
           where: {
-            environmentId: environmentId,
+            environmentId: { in: environmentIds },
           },
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -66,8 +71,8 @@ export const getWebhooks = (environmentId: string, page?: number): Promise<Webho
         throw error;
       }
     },
-    [`getWebhooks-${environmentId}-${page}`],
+    environmentIds.map((environmentId) => `getWebhooks-${environmentId}-${page}`),
     {
-      tags: [webhookCache.tag.byEnvironmentId(environmentId)],
+      tags: environmentIds.map((environmentId) => webhookCache.tag.byEnvironmentId(environmentId)),
     }
   )();

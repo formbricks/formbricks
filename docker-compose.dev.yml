@@ -16,12 +16,13 @@ services:
       - 8025:8025 # web ui
       - 1025:1025 # smtp server
 
-  redis:
-    image: redis:7.0.11
+  valkey:
+    image: valkey/valkey:8.1.1
+    command: "valkey-server"
     ports:
       - 6379:6379
     volumes:
-      - redis-data:/data
+      - valkey-data:/data
 
   minio:
     image: minio/minio:RELEASE.2025-02-28T09-55-16Z
@@ -30,15 +31,15 @@ services:
       - MINIO_ROOT_USER=devminio
       - MINIO_ROOT_PASSWORD=devminio123
     ports:
-      - "9000:9000"  # S3 API
-      - "9001:9001"  # Console
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
     volumes:
       - minio-data:/data
 
 volumes:
   postgres:
     driver: local
-  redis-data:
+  valkey-data:
     driver: local
   minio-data:
     driver: local

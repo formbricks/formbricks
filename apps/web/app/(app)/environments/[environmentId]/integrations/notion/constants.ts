@@ -25,6 +25,8 @@ export const TYPE_MAPPING = {
   [TSurveyQuestionTypeEnum.Address]: ["rich_text"],
   [TSurveyQuestionTypeEnum.Matrix]: ["rich_text"],
   [TSurveyQuestionTypeEnum.Cal]: ["checkbox"],
+  [TSurveyQuestionTypeEnum.ContactInfo]: ["rich_text"],
+  [TSurveyQuestionTypeEnum.Ranking]: ["rich_text"],
 };
 
 export const UNSUPPORTED_TYPES_BY_NOTION = [

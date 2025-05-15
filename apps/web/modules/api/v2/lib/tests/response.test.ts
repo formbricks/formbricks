@@ -85,13 +85,15 @@ describe("API Responses", () => {
 
   describe("conflictResponse", () => {
     test("return a 409 response", async () => {
-      const res = responses.conflictResponse();
+      const details = [{ field: "resource", issue: "already exists" }];
+      const res = responses.conflictResponse({ details });
       expect(res.status).toBe(409);
       const body = await res.json();
       expect(body).toEqual({
         error: {
           code: 409,
           message: "Conflict",
+          details,
         },
       });
     });
@@ -118,7 +120,7 @@ describe("API Responses", () => {
     });
 
     test("include CORS headers when cors is true", () => {
-      const res = responses.unprocessableEntityResponse({ cors: true });
+      const res = responses.unprocessableEntityResponse({ cors: true, details: [] });
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
@@ -177,6 +179,40 @@ describe("API Responses", () => {
     test("include CORS headers when cors is true", () => {
       const data = { foo: "bar" };
       const res = responses.successResponse({ data, cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    });
+  });
+
+  describe("createdResponse", () => {
+    test("return a success response with the provided data", async () => {
+      const data = { foo: "bar" };
+      const meta = { page: 1 };
+      const res = responses.createdResponse({ data, meta });
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.data).toEqual(data);
+      expect(body.meta).toEqual(meta);
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const data = { foo: "bar" };
+      const res = responses.createdResponse({ data, cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    });
+  });
+
+  describe("multiStatusResponse", () => {
+    test("return a 207 response with the provided data", async () => {
+      const data = { foo: "bar" };
+      const res = responses.multiStatusResponse({ data });
+      expect(res.status).toBe(207);
+      const body = await res.json();
+      expect(body.data).toEqual(data);
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const data = { foo: "bar" };
+      const res = responses.multiStatusResponse({ data, cors: true });
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });

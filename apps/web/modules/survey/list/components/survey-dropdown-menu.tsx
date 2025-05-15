@@ -1,6 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
@@ -29,14 +32,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  webAppUrl: string;
-  singleUseId?: string;
+  surveyDomain: string;
+  refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
@@ -46,8 +48,8 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  webAppUrl,
-  singleUseId,
+  surveyDomain,
+  refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
@@ -58,9 +60,11 @@ export const SurveyDropDownMenu = ({
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
+  const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -74,6 +78,20 @@ export const SurveyDropDownMenu = ({
       toast.error(t("environments.surveys.error_deleting_survey"));
     }
     setLoading(false);
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      e.preventDefault();
+      setIsDropDownOpen(false);
+      const newId = await refreshSingleUseId();
+      const copiedLink = copySurveyLink(surveyLink, newId);
+      navigator.clipboard.writeText(copiedLink);
+      toast.success(t("common.copied_to_clipboard"));
+      router.refresh();
+    } catch (error) {
+      toast.error(t("environments.surveys.summary.failed_to_copy_link"));
+    }
   };
 
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
@@ -102,9 +120,16 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
+  const handleEditforActiveSurvey = (e) => {
+    e.preventDefault();
+    setIsDropDownOpen(false);
+    setIsCautionDialogOpen(true);
+  };
+
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
+      data-testid="survey-dropdown-menu"
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
@@ -124,8 +149,9 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                    <SquarePenIcon className="mr-2 h-4 w-4" />
+                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                    onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
+                    <SquarePenIcon className="mr-2 size-4" />
                     {t("common.edit")}
                   </Link>
                 </DropdownMenuItem>
@@ -168,11 +194,12 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <div
                     className="flex w-full cursor-pointer items-center"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      const previewUrl = singleUseId
-                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
+                      const newId = await refreshSingleUseId();
+                      const previewUrl = newId
+                        ? `/s/${survey.id}?suId=${newId}&preview=true`
                         : `/s/${survey.id}?preview=true`;
                       window.open(previewUrl, "_blank");
                     }}>
@@ -183,16 +210,9 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <button
                     type="button"
+                    data-testid="copy-link"
                     className="flex w-full items-center"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      navigator.clipboard.writeText(
-                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
-                      );
-                      toast.success("Copied link to clipboard");
-                      router.refresh();
-                    }}>
+                    onClick={async (e) => handleCopyLink(e)}>
                     <LinkIcon className="mr-2 h-4 w-4" />
                     {t("common.copy_link")}
                   </button>
@@ -225,6 +245,23 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+        />
+      )}
+
+      {survey.responseCount > 0 && (
+        <EditPublicSurveyAlertDialog
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          isLoading={loading}
+          primaryButtonAction={async () => {
+            await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+          }}
+          primaryButtonText={t("common.duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
         />
       )}
 

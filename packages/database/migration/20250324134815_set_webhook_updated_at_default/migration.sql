@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Webhook" ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;

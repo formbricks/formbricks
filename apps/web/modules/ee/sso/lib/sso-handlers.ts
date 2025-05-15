@@ -1,20 +1,37 @@
+import { createAccount } from "@/lib/account/service";
+import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
+import { getIsFreshInstance } from "@/lib/instance/service";
+import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
-import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
-import { createUser } from "@/modules/auth/lib/user";
-import { TOidcNameFields } from "@/modules/auth/types/auth";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import type { IdentityProvider } from "@prisma/client";
+import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getIsSsoEnabled,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
+import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
+import type { IdentityProvider, Organization } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@formbricks/lib/constants";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
-export const handleSSOCallback = async ({ user, account }: { user: TUser; account: Account }) => {
-  const isSsoEnabled = await getisSsoEnabled();
+export const handleSsoCallback = async ({
+  user,
+  account,
+  callbackUrl,
+}: {
+  user: TUser;
+  account: Account;
+  callbackUrl: string;
+}) => {
+  const isSsoEnabled = await getIsSsoEnabled();
   if (!isSsoEnabled) {
     return false;
   }
@@ -93,6 +110,73 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       }
     }
 
+    if (provider === "saml") {
+      const samlUser = user as TUser & TSamlNameFields;
+      if (samlUser.name) {
+        userName = samlUser.name;
+      } else if (samlUser.firstName || samlUser.lastName) {
+        userName = `${samlUser.firstName} ${samlUser.lastName}`;
+      }
+    }
+
+    // Get multi-org license status
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+    const isFirstUser = await getIsFreshInstance();
+
+    // Additional security checks for self-hosted instances without auto-provisioning and no multi-org enabled
+    if (!isFirstUser && !SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
+      if (!callbackUrl) {
+        return false;
+      }
+
+      try {
+        // Parse and validate the callback URL
+        const isValidCallbackUrl = new URL(callbackUrl);
+        // Extract invite token and source from URL parameters
+        const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
+        const source = isValidCallbackUrl.searchParams.get("source") || "";
+
+        // Allow sign-in if multi-org is enabled, otherwise check for invite token
+        if (source === "signin" && !inviteToken) {
+          return false;
+        }
+
+        // If multi-org is enabled, skip invite token validation
+        // Verify invite token and check email match
+        const { email, inviteId } = verifyInviteToken(inviteToken);
+        if (email !== user.email) {
+          return false;
+        }
+        // Check if invite token is still valid
+        const isValidInviteToken = await getIsValidInviteToken(inviteId);
+        if (!isValidInviteToken) {
+          return false;
+        }
+      } catch (err) {
+        // Log and reject on any validation errors
+        logger.error(err, "Invalid callbackUrl");
+        return false;
+      }
+    }
+
+    let organization: Organization | null = null;
+
+    if (!isFirstUser && !isMultiOrgEnabled) {
+      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+        organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
+      } else {
+        organization = await getFirstOrganization();
+      }
+
+      if (!organization) {
+        return false;
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+      if (!canDoRoleManagement && !callbackUrl) return false;
+    }
+
     const userProfile = await createUser({
       name:
         userName ||
@@ -110,25 +194,19 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
     // send new user to brevo
     createBrevoCustomer({ id: user.id, email: user.email });
 
+    if (isMultiOrgEnabled) return true;
+
     // Default organization assignment if env variable is set
-    if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
-      // check if organization exists
-      let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
-      let isNewOrganization = false;
-      if (!organization) {
-        // create organization with id from env
-        organization = await createOrganization({
-          id: DEFAULT_ORGANIZATION_ID,
-          name: userProfile.name + "'s Organization",
-        });
-        isNewOrganization = true;
-      }
-      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "manager";
-      await createMembership(organization.id, userProfile.id, { role: role, accepted: true });
+    if (organization) {
+      await createMembership(organization.id, userProfile.id, { role: "member", accepted: true });
       await createAccount({
         ...account,
         userId: userProfile.id,
       });
+
+      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+        await createDefaultTeamMembership(userProfile.id);
+      }
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...userProfile.notificationSettings,

@@ -122,9 +122,11 @@ const notFoundResponse = ({
 const conflictResponse = ({
   cors = false,
   cache = "private, no-store",
+  details = [],
 }: {
   cors?: boolean;
   cache?: string;
+  details?: ApiErrorDetails;
 } = {}) => {
   const headers = {
     ...(cors && corsHeaders),
@@ -136,6 +138,7 @@ const conflictResponse = ({
       error: {
         code: 409,
         message: "Conflict",
+        details,
       },
     },
     {
@@ -232,7 +235,7 @@ const internalServerErrorResponse = ({
 const successResponse = ({
   data,
   meta,
-  cors = false,
+  cors = true,
   cache = "private, no-store",
 }: {
   data: Object;
@@ -257,6 +260,62 @@ const successResponse = ({
   );
 };
 
+export const createdResponse = ({
+  data,
+  meta,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  data: Object;
+  meta?: Record<string, unknown>;
+  cors?: boolean;
+  cache?: string;
+}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      data,
+      meta,
+    } as ApiSuccessResponse,
+    {
+      status: 201,
+      headers,
+    }
+  );
+};
+
+export const multiStatusResponse = ({
+  data,
+  meta,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  data: Object;
+  meta?: Record<string, unknown>;
+  cors?: boolean;
+  cache?: string;
+}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      data,
+      meta,
+    } as ApiSuccessResponse,
+    {
+      status: 207,
+      headers,
+    }
+  );
+};
+
 export const responses = {
   badRequestResponse,
   unauthorizedResponse,
@@ -267,4 +326,6 @@ export const responses = {
   tooManyRequestsResponse,
   internalServerErrorResponse,
   successResponse,
+  createdResponse,
+  multiStatusResponse,
 };

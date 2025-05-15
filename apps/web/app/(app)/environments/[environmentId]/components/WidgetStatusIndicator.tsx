@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon, CheckIcon, RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
 interface WidgetStatusIndicatorProps {

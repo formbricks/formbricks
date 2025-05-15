@@ -11,11 +11,15 @@ on:
         required: false
       PLAYWRIGHT_SERVICE_URL:
         required: false
+      ENTERPRISE_LICENSE_KEY:
+        required: true
       # Add other secrets if necessary
   workflow_dispatch:
 
 env:
   TELEMETRY_DISABLED: 1
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 permissions:
   contents: read
@@ -48,17 +52,19 @@ jobs:
           --health-retries=5
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: allow
+          allowed-endpoints: |
+            ee.formbricks.com:443
 
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
         with:
-          node-version: 20.x
+          node-version: 22.x
 
       - name: Install pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -77,7 +83,7 @@ jobs:
           sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
-          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
         shell: bash
@@ -91,8 +97,18 @@ jobs:
           # pnpm prisma migrate deploy
           pnpm db:migrate:dev
 
+      - name: Check for Enterprise License
+        run: |
+          LICENSE_KEY=$(grep '^ENTERPRISE_LICENSE_KEY=' .env | cut -d'=' -f2-)
+          if [ -z "$LICENSE_KEY" ]; then
+            echo "::error::ENTERPRISE_LICENSE_KEY in .env is empty. Please check your secret configuration."
+            exit 1
+          fi
+          echo "License key length: ${#LICENSE_KEY}"
+
       - name: Run App
         run: |
+          echo "Starting app with enterprise license..."
           NODE_ENV=test pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
           sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..10}; do

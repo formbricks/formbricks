@@ -1,24 +1,22 @@
-import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
-import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { CRON_SECRET } from "@/lib/constants";
+import { getIntegrations } from "@/lib/integration/service";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { convertDatesInObject } from "@/lib/time";
 import { sendResponseFinishedEmail } from "@/modules/email";
-import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
+import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
-import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { convertDatesInObject } from "@formbricks/lib/time";
-import { getPromptText } from "@formbricks/lib/utils/ai";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -34,7 +32,10 @@ export const POST = async (request: Request) => {
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {
-    console.error(inputValidation.error);
+    logger.error(
+      { error: inputValidation.error, url: request.url },
+      "Error in POST /api/(internal)/pipeline"
+    );
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
       transformErrorToDetails(inputValidation.error),
@@ -46,7 +47,7 @@ export const POST = async (request: Request) => {
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", "Organization not found");
   }
 
   // Fetch webhooks
@@ -87,7 +88,7 @@ export const POST = async (request: Request) => {
         data: response,
       }),
     }).catch((error) => {
-      console.error(`Webhook call to ${webhook.url} failed:`, error);
+      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
     })
   );
 
@@ -100,7 +101,7 @@ export const POST = async (request: Request) => {
     ]);
 
     if (!survey) {
-      console.error(`Survey with id ${surveyId} not found`);
+      logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
       return new Response("Survey not found", { status: 404 });
     }
 
@@ -163,16 +164,23 @@ export const POST = async (request: Request) => {
       select: { email: true, locale: true },
     });
 
-    // send follow up emails
-    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
-
-    if (surveyFollowUpsPermission) {
-      await sendSurveyFollowUps(survey, response, organization);
+    if (survey.followUps?.length > 0) {
+      // send follow up emails
+      const followUpsResult = await sendFollowUpsForResponse(response.id);
+      if (!followUpsResult.ok) {
+        const { error: followUpsError } = followUpsResult;
+        if (followUpsError.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {
+          logger.error({ error: followUpsError }, `Failed to send follow-up emails for survey ${surveyId}`);
+        }
+      }
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
-        console.error(`Failed to send email to ${user.email}:`, error);
+        logger.error(
+          { error, url: request.url, userEmail: user.email },
+          `Failed to send email to ${user.email}`
+        );
       })
     );
 
@@ -188,59 +196,15 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        console.error("Promise rejected:", result.reason);
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
-
-    // generate embeddings for all open text question responses for all paid plans
-    const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    if (hasSurveyOpenTextQuestions) {
-      const isAICofigured = IS_AI_CONFIGURED;
-      if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const isAIEnabled = await getIsAIEnabled({
-          isAIEnabled: organization.isAIEnabled,
-          billing: organization.billing,
-        });
-
-        if (isAIEnabled) {
-          for (const question of survey.questions) {
-            if (question.type === "openText" && question.insightsEnabled) {
-              const isQuestionAnswered =
-                response.data[question.id] !== undefined && response.data[question.id] !== "";
-              if (!isQuestionAnswered) {
-                continue;
-              }
-
-              const headline = parseRecallInfo(
-                question.headline[response.language ?? "default"],
-                response.data,
-                response.variables
-              );
-
-              const text = getPromptText(headline, response.data[question.id] as string);
-              // TODO: check if subheadline gives more context and better embeddings
-              try {
-                await createDocumentAndAssignInsight(survey.name, {
-                  environmentId,
-                  surveyId,
-                  responseId: response.id,
-                  questionId: question.id,
-                  text,
-                });
-              } catch (e) {
-                console.error(e);
-              }
-            }
-          }
-        }
-      }
-    }
   } else {
     // Await webhook promises if no emails are sent (with allSettled to prevent early rejection)
     const results = await Promise.allSettled(webhookPromises);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        console.error("Promise rejected:", result.reason);
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
   }

@@ -1,5 +1,5 @@
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -15,9 +15,15 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
+export const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
+
 const shuffle = (array: unknown[]) => {
-  for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -30,7 +36,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
     shuffle(array);
   } else if (shuffleOption === "exceptLast") {
     const lastElement = array.pop();
-    if (lastElement) {
+    if (lastElement !== undefined) {
       shuffle(array);
       array.push(lastElement);
     }
@@ -83,7 +89,7 @@ export const calculateElementIdx = (
     return survey.questions.findIndex((e) => e.id === lastQuestion?.id);
   };
 
-  let elementIdx = currentQustionIdx || 0.5;
+  let elementIdx = currentQustionIdx + 1;
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
@@ -116,12 +122,12 @@ export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejec
 };
 
 export const makeRequest = async <T>(
-  apiHost: string,
+  appUrl: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: unknown
 ): Promise<Result<T, ApiErrorResponse>> => {
-  const url = new URL(apiHost + endpoint);
+  const url = new URL(appUrl + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
 
   const res = await wrapThrowsAsync(fetch)(url.toString(), {
@@ -129,7 +135,6 @@ export const makeRequest = async <T>(
     headers: {
       "Content-Type": "application/json",
     },
-    cache: "no-store",
     body,
   });
 
@@ -159,32 +164,6 @@ export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): strin
     return surveyLanguage.default;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
-};
-
-const mimeTypes: { [key in TAllowedFileExtension]: string } = {
-  heic: "image/heic",
-  png: "image/png",
-  jpeg: "image/jpeg",
-  jpg: "image/jpeg",
-  webp: "image/webp",
-  pdf: "application/pdf",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xls: "application/vnd.ms-excel",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ppt: "application/vnd.ms-powerpoint",
-  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  plain: "text/plain",
-  csv: "text/csv",
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-  avi: "video/x-msvideo",
-  mkv: "video/x-matroska",
-  webm: "video/webm",
-  zip: "application/zip",
-  rar: "application/vnd.rar",
-  "7z": "application/x-7z-compressed",
-  tar: "application/x-tar",
 };
 
 // Function to convert file extension to its MIME type

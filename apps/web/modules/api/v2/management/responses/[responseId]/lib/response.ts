@@ -1,16 +1,17 @@
+import { cache } from "@/lib/cache";
+import { responseCache } from "@/lib/response/cache";
+import { responseNoteCache } from "@/lib/responseNote/cache";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
-import { responseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Response } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) =>
@@ -77,7 +78,10 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     return ok(deletedResponse);
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === "P2016" || error.code === "P2025") {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
         return err({
           type: "not_found",
           details: [{ field: "response", issue: "not found" }],
@@ -94,7 +98,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: z.infer<typeof responseUpdateSchema>
+  responseInput: z.infer<typeof ZResponseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const updatedResponse = await prisma.response.update({
@@ -107,6 +111,7 @@ export const updateResponse = async (
     responseCache.revalidate({
       id: updatedResponse.id,
       surveyId: updatedResponse.surveyId,
+      ...(updatedResponse.singleUseId ? { singleUseId: updatedResponse.singleUseId } : {}),
     });
 
     responseNoteCache.revalidate({
@@ -116,7 +121,10 @@ export const updateResponse = async (
     return ok(updatedResponse);
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === "P2016" || error.code === "P2025") {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
         return err({
           type: "not_found",
           details: [{ field: "response", issue: "not found" }],

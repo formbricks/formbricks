@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
@@ -13,7 +14,6 @@ import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
 interface UploadContactsCSVButtonProps {
@@ -74,6 +74,13 @@ export const UploadContactsCSVButton = ({
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
           setErrror(parsedRecords.error.errors[0].message);
+          return;
+        }
+
+        if (!parsedRecords.data.length) {
+          setErrror(
+            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
+          );
           return;
         }
 
@@ -189,8 +196,12 @@ export const UploadContactsCSVButton = ({
     }
 
     if (result?.validationErrors) {
-      if (result.validationErrors.csvData?._errors?.[0]) {
-        setErrror(result.validationErrors.csvData._errors?.[0]);
+      const csvDataErrors = Array.isArray(result.validationErrors.csvData)
+        ? result.validationErrors.csvData[0]?._errors?.[0]
+        : result.validationErrors.csvData?._errors?.[0];
+
+      if (csvDataErrors) {
+        setErrror(csvDataErrors);
       } else {
         setErrror("An error occurred while uploading the contacts. Please try again later.");
       }

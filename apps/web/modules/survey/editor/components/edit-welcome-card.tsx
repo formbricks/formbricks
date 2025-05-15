@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -10,7 +11,6 @@ import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -36,6 +36,7 @@ export const EditWelcomeCard = ({
   locale,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslate();
+
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];

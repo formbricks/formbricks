@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -10,24 +11,41 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
-import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import type { Control } from "react-hook-form";
-import { Controller } from "react-hook-form";
+import { useMemo } from "react";
+import { type Control, Controller } from "react-hook-form";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
+  membershipRole?: TOrganizationRole;
 }
 
-export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud }: AddMemberRoleProps) {
-  const roles = isFormbricksCloud
-    ? Object.values(OrganizationRole)
-    : Object.keys(OrganizationRole).filter((role) => role !== "billing");
+export function AddMemberRole({
+  control,
+  canDoRoleManagement,
+  isFormbricksCloud,
+  membershipRole,
+}: AddMemberRoleProps) {
+  const { isMember, isOwner } = getAccessFlags(membershipRole);
 
   const { t } = useTranslate();
+
+  const roles = useMemo(() => {
+    let rolesArray = ["member"];
+
+    if (isOwner) {
+      rolesArray.push("manager", "owner");
+      if (isFormbricksCloud) {
+        rolesArray.push("billing");
+      }
+    }
+    return rolesArray;
+  }, [isOwner, isFormbricksCloud]);
+
+  if (isMember) return null;
 
   const rolesDescription = {
     owner: t("environments.settings.teams.owner_role_description"),
@@ -44,7 +62,7 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue="owner"
+            defaultValue={canDoRoleManagement ? "member" : "owner"}
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);
@@ -56,7 +74,7 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup>
+              <SelectGroup className="flex flex-col-reverse">
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     <P className="capitalize">{role}</P>

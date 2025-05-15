@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
@@ -20,8 +20,8 @@ interface EmbedViewProps {
   survey: any;
   email: string;
   surveyUrl: string;
+  surveyDomain: string;
   setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
-  webAppUrl: string;
   locale: TUserLocale;
 }
 
@@ -35,8 +35,8 @@ export const EmbedView = ({
   survey,
   email,
   surveyUrl,
+  surveyDomain,
   setSurveyUrl,
-  webAppUrl,
   locale,
 }: EmbedViewProps) => {
   const { t } = useTranslate();
@@ -82,8 +82,8 @@ export const EmbedView = ({
           ) : activeId === "link" ? (
             <LinkTab
               survey={survey}
-              webAppUrl={webAppUrl}
               surveyUrl={surveyUrl}
+              surveyDomain={surveyDomain}
               setSurveyUrl={setSurveyUrl}
               locale={locale}
             />

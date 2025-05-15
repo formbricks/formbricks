@@ -1,11 +1,11 @@
 "use server";
 
+import { gethasNoOrganizations } from "@/lib/instance/service";
+import { createMembership } from "@/lib/membership/service";
+import { createOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization } from "@formbricks/lib/organization/service";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 const ZCreateOrganizationAction = z.object({

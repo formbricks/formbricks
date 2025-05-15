@@ -1,18 +1,19 @@
 // instrumentation-node.ts
+import { env } from "@/lib/env";
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
 import { HostMetrics } from "@opentelemetry/host-metrics";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { RuntimeNodeInstrumentation } from "@opentelemetry/instrumentation-runtime-node";
 import {
-  Resource,
-  detectResourcesSync,
+  detectResources,
   envDetector,
   hostDetector,
   processDetector,
+  resourceFromAttributes,
 } from "@opentelemetry/resources";
 import { MeterProvider } from "@opentelemetry/sdk-metrics";
-import { env } from "@formbricks/lib/env";
+import { logger } from "@formbricks/logger";
 
 const exporter = new PrometheusExporter({
   port: env.PROMETHEUS_EXPORTER_PORT ? parseInt(env.PROMETHEUS_EXPORTER_PORT) : 9464,
@@ -20,11 +21,11 @@ const exporter = new PrometheusExporter({
   host: "0.0.0.0", // Listen on all network interfaces
 });
 
-const detectedResources = detectResourcesSync({
+const detectedResources = detectResources({
   detectors: [envDetector, processDetector, hostDetector],
 });
 
-const customResources = new Resource({});
+const customResources = resourceFromAttributes({});
 
 const resources = detectedResources.merge(customResources);
 
@@ -51,7 +52,7 @@ process.on("SIGTERM", async () => {
     await meterProvider.shutdown();
     // Possibly close other instrumentation resources
   } catch (e) {
-    console.error("Error during graceful shutdown:", e);
+    logger.error(e, "Error during graceful shutdown");
   } finally {
     process.exit(0);
   }

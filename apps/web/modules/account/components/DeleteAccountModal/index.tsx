@@ -2,8 +2,7 @@
 
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { T } from "@tolgee/react";
+import { T, useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,7 +16,6 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
-  formbricksLogout: () => Promise<void>;
 }
 
 export const DeleteAccountModal = ({
@@ -25,7 +23,6 @@ export const DeleteAccountModal = ({
   open,
   user,
   isFormbricksCloud,
-  formbricksLogout,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
   const { t } = useTranslate();
@@ -39,7 +36,6 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
-      await formbricksLogout();
       // redirect to account deletion survey in Formbricks Cloud
       if (isFormbricksCloud) {
         await signOut({ redirect: true });
@@ -88,6 +84,7 @@ export const DeleteAccountModal = ({
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
         <form
+          data-testid="deleteAccountForm"
           onSubmit={async (e) => {
             e.preventDefault();
             await deleteAccount();
@@ -98,6 +95,7 @@ export const DeleteAccountModal = ({
             })}
           </label>
           <Input
+            data-testid="deleteAccountConfirmation"
             value={inputValue}
             onChange={handleInputChange}
             placeholder={user.email}

@@ -42,14 +42,14 @@ struct AnyDecodable: Decodable {
 }
 
 @usableFromInline
-protocol _AnyDecodable {
+protocol AnyDecodableProtocol {
     var value: Any { get }
     init<T>(_ value: T?)
 }
 
-extension AnyDecodable: _AnyDecodable {}
+extension AnyDecodable: AnyDecodableProtocol {}
 
-extension _AnyDecodable {
+extension AnyDecodableProtocol {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -139,10 +139,9 @@ extension AnyDecodable: CustomStringConvertible {
 
 extension AnyDecodable: CustomDebugStringConvertible {
     public var debugDescription: String {
-        switch value {
-        case let value as CustomDebugStringConvertible:
+        if let value = value as? CustomDebugStringConvertible {
             return "AnyDecodable(\(value.debugDescription))"
-        default:
+        } else {
             return "AnyDecodable(\(description))"
         }
     }

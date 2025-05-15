@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useTranslate } from "@tolgee/react";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface SliderProps {
   className?: string;

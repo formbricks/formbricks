@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import { LegalFooter } from "@/modules/survey/link/components/legal-footer";
 import { SurveyLoadingAnimation } from "@/modules/survey/link/components/survey-loading-animation";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -5,7 +6,6 @@ import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { Project, SurveyType } from "@prisma/client";
 import { type JSX, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -22,7 +22,7 @@ interface LinkSurveyWrapperProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
-  webAppUrl: string;
+  surveyDomain: string;
   isBrandingEnabled: boolean;
 }
 
@@ -39,7 +39,7 @@ export const LinkSurveyWrapper = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
-  webAppUrl,
+  surveyDomain,
   isBrandingEnabled,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
@@ -96,7 +96,7 @@ export const LinkSurveyWrapper = ({
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={webAppUrl + "/s/" + surveyId}
+          surveyUrl={surveyDomain + "/s/" + surveyId}
         />
       </div>
     );

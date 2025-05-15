@@ -1,8 +1,10 @@
 import { EndingCard } from "@/components/general/ending-card";
+import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
+import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -14,6 +16,7 @@ import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type JSX, useCallback } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -34,7 +37,7 @@ interface VariableStackEntry {
 }
 
 export function Survey({
-  apiHost,
+  appUrl,
   environmentId,
   isPreviewMode = false,
   userId,
@@ -63,25 +66,27 @@ export function Survey({
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
-  clickOutside,
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
   action,
   singleUseId,
   singleUseResponseId,
+  isWebEnvironment = true,
+  getRecaptchaToken,
+  isSpamProtectionEnabled,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
-  if (apiHost && environmentId) {
+  if (appUrl && environmentId) {
     apiClient = new ApiClient({
-      apiHost,
+      appUrl,
       environmentId,
     });
   }
 
   const surveyState = useMemo(() => {
-    if (apiHost && environmentId) {
+    if (appUrl && environmentId) {
       if (mode === "inline") {
         return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId, contactId);
       }
@@ -89,18 +94,19 @@ export function Survey({
       return new SurveyState(survey.id, null, null, userId, contactId);
     }
     return null;
-  }, [apiHost, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
+  }, [appUrl, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
   const responseQueue = useMemo(() => {
-    if (apiHost && environmentId && surveyState) {
+    if (appUrl && environmentId && surveyState) {
       return new ResponseQueue(
         {
-          apiHost,
+          appUrl,
           environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: () => {
+          onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
+            setErrorType(errorCode);
 
             if (getSetIsError) {
               getSetIsError((_prev) => {});
@@ -119,7 +125,7 @@ export function Survey({
     }
 
     return null;
-  }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
+  }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -150,6 +156,7 @@ export function Survey({
     }
     return localSurvey.questions[0]?.id;
   });
+  const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
@@ -175,7 +182,7 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
-    return offset === 0 && localSurvey.type !== "link" && (clickOutside ?? true);
+    return offset === 0 && localSurvey.type !== "link";
   };
   const getShowLanguageSwitch = (offset: number) => {
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
@@ -260,7 +267,7 @@ export function Survey({
   useEffect(() => {
     // call onDisplay when component is mounted
 
-    if (apiHost && environmentId) {
+    if (appUrl && environmentId) {
       createDisplay();
     } else {
       onDisplay?.();
@@ -410,9 +417,9 @@ export function Survey({
   };
 
   const onResponseCreateOrUpdate = useCallback(
-    (responseUpdate: TResponseUpdate) => {
+    async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
-      if (!apiHost || !environmentId) {
+      if (!appUrl || !environmentId) {
         onResponse?.({
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
@@ -426,9 +433,7 @@ export function Survey({
 
       // Skip response creation in preview mode but still trigger the onResponseCreated callback
       if (isPreviewMode) {
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -454,46 +459,69 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            url: window.location.href,
+            ...(isWebEnvironment && { url: window.location.href }),
             action,
           },
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
+          endingId: responseUpdate.endingId,
           hiddenFields: hiddenFieldsRecord,
         });
 
-        if (onResponseCreated) {
-          onResponseCreated();
-        }
+        onResponseCreated?.();
       }
     },
     [
-      apiHost,
+      appUrl,
       environmentId,
       isPreviewMode,
       surveyState,
       responseQueue,
+      onResponse,
+      onResponseCreated,
       contactId,
       userId,
       survey,
+      isWebEnvironment,
       action,
       hiddenFieldsRecord,
-      onResponseCreated,
-      onResponse,
     ]
   );
 
   useEffect(() => {
+    if (isPreviewMode || !survey.recaptcha?.enabled) return;
+
+    if (!isSpamProtectionEnabled) {
+      setShowError(true);
+      setErrorType(TResponseErrorCodesEnum.InvalidDeviceError);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- this is a one-time effect
+  }, []);
+
+  useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
-      window.parent.postMessage("formbricksSurveyCompleted", "*");
+      window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
       onFinished?.();
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
-  const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+  const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
+
+    if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
+      const token = await getRecaptchaToken();
+      if (responseQueue && token) {
+        responseQueue.setResponseRecaptchaToken(token);
+      } else {
+        setShowError(true);
+        setErrorType(TResponseErrorCodesEnum.RecaptchaError);
+        setLoadingElement(false);
+        return;
+      }
+    }
 
     pushVariableState(respondedQuestionId);
 
@@ -557,6 +585,7 @@ export function Survey({
   const retryResponse = () => {
     if (responseQueue) {
       setShowError(false);
+      setErrorType(undefined);
       void responseQueue.processQueue();
     } else {
       onRetry?.();
@@ -565,13 +594,28 @@ export function Survey({
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
-      return (
-        <ResponseErrorComponent
-          responseData={responseData}
-          questions={localSurvey.questions}
-          onRetry={retryResponse}
-        />
-      );
+      switch (errorType) {
+        case TResponseErrorCodesEnum.ResponseSendingError:
+          return (
+            <ResponseErrorComponent
+              responseData={responseData}
+              questions={localSurvey.questions}
+              onRetry={retryResponse}
+            />
+          );
+        case TResponseErrorCodesEnum.RecaptchaError:
+        case TResponseErrorCodesEnum.InvalidDeviceError:
+          return (
+            <>
+              {localSurvey.type !== "link" ? (
+                <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2 fb-bg-white">
+                  <SurveyCloseButton onClose={onClose} />
+                </div>
+              ) : null}
+              <ErrorComponent errorType={errorType} />
+            </>
+          );
+      }
     }
 
     const content = () => {
@@ -610,6 +654,7 @@ export function Survey({
               responseData={responseData}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
+              isPreviewMode={isPreviewMode}
             />
           );
         }
@@ -674,7 +719,10 @@ export function Survey({
             {content()}
           </div>
           <div className="fb-space-y-4">
-            {isBrandingEnabled ? <FormbricksBranding /> : null}
+            <div className="fb-px-4 space-y-2">
+              {isBrandingEnabled ? <FormbricksBranding /> : null}
+              {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
+            </div>
             {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>
         </div>

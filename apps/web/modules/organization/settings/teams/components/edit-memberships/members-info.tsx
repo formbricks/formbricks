@@ -1,14 +1,14 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
-import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utilts";
+import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -20,6 +20,7 @@ interface MembersInfoProps {
   currentUserId: string;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 // Type guard to check if member is an invitee
@@ -35,6 +36,7 @@ export const MembersInfo = ({
   currentUserId,
   canDoRoleManagement,
   isFormbricksCloud,
+  isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
   const { t } = useTranslate();
@@ -51,6 +53,10 @@ export const MembersInfo = ({
           <Badge type="warning" text="Pending" size="tiny" />
         </TooltipRenderer>
       );
+    }
+
+    if (!member.isActive) {
+      return <Badge type="gray" text="Inactive" size="tiny" />;
     }
 
     return <Badge type="success" text="Active" size="tiny" />;
@@ -86,20 +92,21 @@ export const MembersInfo = ({
   };
 
   return (
-    <div className="grid-cols-5" id="membersInfoWrapper">
+    <div className="max-w-full space-y-4 px-4 py-3" id="membersInfoWrapper">
       {allMembers.map((member) => (
         <div
-          className="singleMemberInfo grid h-auto w-full grid-cols-5 content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
+          id="singleMemberInfo"
+          className="flex w-full max-w-full items-center gap-x-4 text-left text-sm text-slate-900"
           key={member.email}>
-          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all">
-            <p>{member.name}</p>
+          <div className="ph-no-capture w-1/2 overflow-hidden">
+            <p className="w-full truncate">{member.name}</p>
           </div>
-          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all text-center">
-            {member.email}
+          <div className="ph-no-capture w-1/2 overflow-hidden">
+            <p className="w-full truncate"> {member.email}</p>
           </div>
 
-          <div className="ph-no-capture col-span-1 flex flex-col items-center justify-center break-all">
-            {canDoRoleManagement && allMembers?.length > 0 && (
+          {canDoRoleManagement && allMembers?.length > 0 && (
+            <div className="ph-no-capture min-w-[100px]">
               <EditMembershipRole
                 currentUserRole={currentUserRole}
                 memberRole={member.role}
@@ -110,18 +117,20 @@ export const MembersInfo = ({
                 inviteId={isInvitee(member) ? member.id : ""}
                 doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
                 isFormbricksCloud={isFormbricksCloud}
+                isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
               />
-            )}
-          </div>
-          <div className="col-span-1 flex items-center justify-center">{getMembershipBadge(member)}</div>
-          <div className="col-span-1 flex items-center justify-end gap-x-4 pr-4">
+            </div>
+          )}
+          <div className="min-w-[80px]">{getMembershipBadge(member)}</div>
+
+          {!isUserManagementDisabledFromUi && (
             <MemberActions
               organization={organization}
               member={!isInvitee(member) ? member : undefined}
               invite={isInvitee(member) ? member : undefined}
               showDeleteButton={showDeleteButton(member)}
             />
-          </div>
+          )}
         </div>
       ))}
     </div>

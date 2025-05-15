@@ -2,6 +2,7 @@
 
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { previewSurvey } from "@/app/lib/templates";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
@@ -26,7 +27,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import {
   TProjectConfigChannel,
   TProjectConfigIndustry,

@@ -1,12 +1,13 @@
 import "server-only";
+import { projectCache } from "@/lib/project/cache";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   TProjectUpdateBrandingInput,
   ZProjectUpdateBrandingInput,
 } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ValidationError } from "@formbricks/types/errors";
 
@@ -49,7 +50,7 @@ export const updateProjectBranding = async (
     return true;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      logger.error(error.errors, "Error updating project branding");
     }
     throw new ValidationError("Data validation of project failed");
   }

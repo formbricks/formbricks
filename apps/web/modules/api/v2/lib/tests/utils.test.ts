@@ -1,12 +1,24 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import * as Sentry from "@sentry/nextjs";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
+import { logger } from "@formbricks/logger";
 import { formatZodError, handleApiError, logApiError, logApiRequest } from "../utils";
 
 const mockRequest = new Request("http://localhost");
 
 // Add the request id header
 mockRequest.headers.set("x-request-id", "123");
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+// Mock SENTRY_DSN constant
+vi.mock("@/lib/constants", () => ({
+  SENTRY_DSN: "mocked-sentry-dsn",
+  IS_PRODUCTION: true,
+}));
 
 describe("utils", () => {
   describe("handleApiError", () => {
@@ -128,38 +140,77 @@ describe("utils", () => {
 
   describe("logApiRequest", () => {
     test("logs API request details", () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      // Mock the withContext method and its returned info method
+      const infoMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        info: infoMock,
+      });
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
 
       const mockRequest = new Request("http://localhost/api/test?apikey=123&token=abc&safeParam=value");
       mockRequest.headers.set("x-request-id", "123");
+      mockRequest.headers.set("x-start-time", Date.now().toString());
 
-      logApiRequest(mockRequest, 200, 100);
+      logApiRequest(mockRequest, 200);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        `[API REQUEST DETAILS] GET /api/test - 200 - 100ms\n correlationId: 123\n queryParams: {"safeParam":"value"}`
-      );
+      // Verify withContext was called
+      expect(withContextMock).toHaveBeenCalled();
+      // Verify info was called on the child logger
+      expect(infoMock).toHaveBeenCalledWith("API Request Details");
 
-      consoleLogSpy.mockRestore();
+      // Restore the original method
+      logger.withContext = originalWithContext;
     });
 
     test("logs API request details without correlationId and without safe query params", () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      // Mock the withContext method and its returned info method
+      const infoMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        info: infoMock,
+      });
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
 
       const mockRequest = new Request("http://localhost/api/test?apikey=123&token=abc");
       mockRequest.headers.delete("x-request-id");
+      mockRequest.headers.set("x-start-time", (Date.now() - 100).toString());
 
-      logApiRequest(mockRequest, 200, 100);
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        `[API REQUEST DETAILS] GET /api/test - 200 - 100ms\n queryParams: {}`
+      logApiRequest(mockRequest, 200);
+
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: "GET",
+          path: "/api/test",
+          responseStatus: 200,
+          queryParams: {},
+        })
       );
 
-      consoleLogSpy.mockRestore();
+      // Verify info was called on the child logger
+      expect(infoMock).toHaveBeenCalledWith("API Request Details");
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
     });
   });
 
   describe("logApiError", () => {
     test("logs API error details", () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
 
       const mockRequest = new Request("http://localhost/api/test");
       mockRequest.headers.set("x-request-id", "123");
@@ -171,15 +222,29 @@ describe("utils", () => {
 
       logApiError(mockRequest, error);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `[API ERROR DETAILS]\n correlationId: 123\n error: ${JSON.stringify(error, null, 2)}`
-      );
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith({
+        correlationId: "123",
+        error,
+      });
 
-      consoleErrorSpy.mockRestore();
+      // Verify error was called on the child logger
+      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
     });
 
     test("logs API error details without correlationId", () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
 
       const mockRequest = new Request("http://localhost/api/test");
       mockRequest.headers.delete("x-request-id");
@@ -191,11 +256,57 @@ describe("utils", () => {
 
       logApiError(mockRequest, error);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `[API ERROR DETAILS]\n error: ${JSON.stringify(error, null, 2)}`
-      );
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith({
+        correlationId: "",
+        error,
+      });
 
-      consoleErrorSpy.mockRestore();
+      // Verify error was called on the child logger
+      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
+    });
+
+    test("log API error details with SENTRY_DSN set", () => {
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      // Mock Sentry's captureException method
+      vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
+
+      const mockRequest = new Request("http://localhost/api/test");
+      mockRequest.headers.set("x-request-id", "123");
+
+      const error: ApiErrorResponseV2 = {
+        type: "internal_server_error",
+        details: [{ field: "server", issue: "error occurred" }],
+      };
+
+      logApiError(mockRequest, error);
+
+      // Verify withContext was called with the expected context
+      expect(withContextMock).toHaveBeenCalledWith({
+        correlationId: "123",
+        error,
+      });
+
+      // Verify error was called on the child logger
+      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+
+      // Verify Sentry.captureException was called
+      expect(Sentry.captureException).toHaveBeenCalled();
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
     });
   });
 });

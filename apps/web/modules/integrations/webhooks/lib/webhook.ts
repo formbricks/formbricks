@@ -1,9 +1,10 @@
+import { cache } from "@/lib/cache";
 import { webhookCache } from "@/lib/cache/webhook";
+import { validateInputs } from "@/lib/utils/validate";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import {
   DatabaseError,
@@ -62,7 +63,10 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RelatedRecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("Webhook", id);
     }
     throw new DatabaseError(`Database error when deleting webhook with ID ${id}`);

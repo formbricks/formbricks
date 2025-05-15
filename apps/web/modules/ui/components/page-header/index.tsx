@@ -1,4 +1,4 @@
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/cn";
 
 export interface PageHeaderProps {
   pageTitle: string;

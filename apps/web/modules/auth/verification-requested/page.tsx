@@ -1,7 +1,7 @@
+import { getEmailFromEmailToken } from "@/lib/jwt";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { T, getTranslate } from "@/tolgee/server";
-import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {

@@ -1,14 +1,15 @@
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
-import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
-import { NOTION_RICH_TEXT_LIMIT } from "@formbricks/lib/constants";
-import { writeData } from "@formbricks/lib/googleSheet/service";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
-import { processResponseData } from "@formbricks/lib/responses";
-import { writeDataToSlack } from "@formbricks/lib/slack/service";
-import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
-import { truncateText } from "@formbricks/lib/utils/strings";
+import { writeData as airtableWriteData } from "@/lib/airtable/service";
+import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
+import { writeData } from "@/lib/googleSheet/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { writeData as writeNotionData } from "@/lib/notion/service";
+import { processResponseData } from "@/lib/responses";
+import { writeDataToSlack } from "@/lib/slack/service";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { truncateText } from "@/lib/utils/strings";
+import { logger } from "@formbricks/logger";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -83,13 +84,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!googleResult.ok) {
-          console.error("Error in google sheets integration: ", googleResult.error);
+          logger.error(googleResult.error, "Error in google sheets integration");
         }
         break;
       case "slack":
         const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         if (!slackResult.ok) {
-          console.error("Error in slack integration: ", slackResult.error);
+          logger.error(slackResult.error, "Error in slack integration");
         }
         break;
       case "airtable":
@@ -99,13 +100,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!airtableResult.ok) {
-          console.error("Error in airtable integration: ", airtableResult.error);
+          logger.error(airtableResult.error, "Error in airtable integration");
         }
         break;
       case "notion":
         const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         if (!notionResult.ok) {
-          console.error("Error in notion integration: ", notionResult.error);
+          logger.error(notionResult.error, "Error in notion integration");
         }
         break;
     }
@@ -391,6 +392,19 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
             },
           ];
         }
+        if (Array.isArray(value)) {
+          const content = value.join("\n");
+          return [
+            {
+              text: {
+                content:
+                  content.length > NOTION_RICH_TEXT_LIMIT
+                    ? truncateText(content, NOTION_RICH_TEXT_LIMIT)
+                    : content,
+              },
+            },
+          ];
+        }
         return [
           {
             text: {
@@ -418,7 +432,7 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
         return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
-    console.error(error);
+    logger.error(error, "Payload build failed!");
     throw new Error("Payload build failed!");
   }
 };

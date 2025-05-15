@@ -1,9 +1,9 @@
 // extend this object in order to add more validation rules
+import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { TFnType } from "@tolgee/react";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
-import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
@@ -146,6 +146,10 @@ export const validationRules = {
       fieldsToValidate = fieldsToValidate.filter((field) => field !== "backButtonLabel");
     }
 
+    if ((question.type === "nps" || question.type === "rating") && question.required) {
+      fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
+    }
+
     for (const field of fieldsToValidate) {
       if (
         question[field] &&
@@ -244,7 +248,7 @@ export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: 
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
         t("environments.surveys.edit.invalid_targeting");
       toast.error(errMsg);
-      return;
+      return false;
     }
   }
 

@@ -40,16 +40,16 @@ struct AnyEncodable: Encodable {
 }
 
 @usableFromInline
-protocol _AnyEncodable {
+protocol AnyEncodableProtocol {
     var value: Any { get }
     init<T>(_ value: T?)
 }
 
-extension AnyEncodable: _AnyEncodable {}
+extension AnyEncodable: AnyEncodableProtocol {}
 
 // MARK: - Encodable
 
-extension _AnyEncodable {
+extension AnyEncodableProtocol {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
@@ -199,10 +199,9 @@ extension AnyEncodable: CustomStringConvertible {
 
 extension AnyEncodable: CustomDebugStringConvertible {
     public var debugDescription: String {
-        switch value {
-        case let value as CustomDebugStringConvertible:
+        if let value = value as? CustomDebugStringConvertible {
             return "AnyEncodable(\(value.debugDescription))"
-        default:
+        } else {
             return "AnyEncodable(\(description))"
         }
     }
@@ -217,7 +216,7 @@ extension AnyEncodable: ExpressibleByStringInterpolation {}
 extension AnyEncodable: ExpressibleByArrayLiteral {}
 extension AnyEncodable: ExpressibleByDictionaryLiteral {}
 
-extension _AnyEncodable {
+extension AnyEncodableProtocol {
     public init(nilLiteral _: ()) {
         self.init(nil as Any?)
     }

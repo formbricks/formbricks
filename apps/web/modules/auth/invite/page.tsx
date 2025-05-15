@@ -1,3 +1,7 @@
+import { WEBAPP_URL } from "@/lib/constants";
+import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { getUser, updateUser } from "@/lib/user/service";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -7,10 +11,7 @@ import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { after } from "next/server";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { getUser, updateUser } from "@formbricks/lib/user/service";
+import { logger } from "@formbricks/logger";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {
@@ -131,7 +132,7 @@ export const InvitePage = async (props: InvitePageProps) => {
       </ContentLayout>
     );
   } catch (e) {
-    console.error(e);
+    logger.error(e, "Error in InvitePage");
     return (
       <ContentLayout
         headline={t("auth.invite.invite_not_found")}

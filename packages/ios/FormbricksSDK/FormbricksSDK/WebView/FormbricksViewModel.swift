@@ -24,7 +24,6 @@ private extension FormbricksViewModel {
             
             <head>
                 <title>Formbricks WebView Survey</title>
-                <script src="https://cdn.tailwindcss.com"></script>
             </head>
 
             <body style="overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;">
@@ -37,10 +36,6 @@ private extension FormbricksViewModel {
 
                 function onClose() {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onClose" }));
-                };
-
-                function onFinished() {
-                    window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onFinished" }));
                 };
 
                 function onDisplayCreated() {
@@ -59,7 +54,6 @@ private extension FormbricksViewModel {
                     const options = JSON.parse(json);
                     surveyProps = {
                         ...options,
-                        onFinished,
                         onDisplayCreated,
                         onResponseCreated,
                         onClose,
@@ -70,10 +64,11 @@ private extension FormbricksViewModel {
                 }
 
                 const script = document.createElement("script");
-                script.src = "\(Formbricks.appUrl ?? "http://localhost:3000")/js/surveys.umd.cjs";
+                script.src = "\(FormbricksEnvironment.surveyScriptUrlString)";
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);
@@ -91,10 +86,18 @@ private class WebViewData {
     init(environmentResponse: EnvironmentResponse, surveyId: String) {
         data["survey"] = environmentResponse.getSurveyJson(forSurveyId: surveyId)
         data["isBrandingEnabled"] = true
-        data["languageCode"] = Formbricks.language
-        data["apiHost"] = Formbricks.appUrl
+        data["appUrl"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
-        data["contactId"] = UserManager.shared.contactId
+        data["contactId"] = Formbricks.userManager?.contactId
+        data["isWebEnvironment"] = false
+        
+        let isMultiLangSurvey = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.languages?.count ?? 0 > 1
+        
+        if isMultiLangSurvey {
+            data["languageCode"] = Formbricks.language
+        } else {
+            data["languageCode"] = "default"
+        }
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false
@@ -107,7 +110,8 @@ private class WebViewData {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
             return String(data: jsonData, encoding: .utf8)?.replacingOccurrences(of: "\\\"", with: "'")
         } catch {
-            Formbricks.logger.error(error.message)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger?.error(error.message)
             return nil
         }
     }

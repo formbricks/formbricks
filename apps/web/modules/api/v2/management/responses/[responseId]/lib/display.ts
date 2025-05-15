@@ -1,7 +1,8 @@
+import { displayCache } from "@/lib/display/cache";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@formbricks/database";
-import { displayCache } from "@formbricks/lib/display/cache";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const deleteDisplay = async (displayId: string): Promise<Result<boolean, ApiErrorResponseV2>> => {
@@ -26,7 +27,10 @@ export const deleteDisplay = async (displayId: string): Promise<Result<boolean, 
     return ok(true);
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === "P2016" || error.code === "P2025") {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
         return err({
           type: "not_found",
           details: [{ field: "display", issue: "not found" }],

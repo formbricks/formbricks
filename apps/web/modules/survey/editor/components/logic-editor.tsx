@@ -1,5 +1,6 @@
 "use client";
 
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
@@ -13,7 +14,6 @@ import {
 import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {
@@ -44,14 +44,14 @@ export function LogicEditor({
       value: string;
     }[] = [];
 
-    localSurvey.questions.forEach((ques) => {
-      if (ques.id === question.id) return null;
+    for (let i = questionIdx + 1; i < localSurvey.questions.length; i++) {
+      const ques = localSurvey.questions[i];
       options.push({
         icon: QUESTIONS_ICON_MAP[ques.type],
         label: getLocalizedValue(ques.headline, "default"),
         value: ques.id,
       });
-    });
+    }
 
     localSurvey.endings.forEach((ending) => {
       options.push({
@@ -105,6 +105,7 @@ export function LogicEditor({
               <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
                 {t("environments.surveys.edit.next_question")}
               </SelectItem>
+
               {fallbackOptions.map((option) => (
                 <SelectItem key={`fallback_${option.value}`} value={option.value}>
                   <div className="flex items-center gap-2">

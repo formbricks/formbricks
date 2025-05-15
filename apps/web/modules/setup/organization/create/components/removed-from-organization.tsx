@@ -1,11 +1,10 @@
 "use client";
 
-import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 
 interface RemovedFromOrganizationProps {
@@ -29,7 +28,6 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
         setOpen={setIsModalOpen}
         user={user}
         isFormbricksCloud={isFormbricksCloud}
-        formbricksLogout={formbricksLogout}
         organizationsWithSingleOwner={[]}
       />
       <Button

@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
 import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-form";
 import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
@@ -15,8 +17,6 @@ import { useTranslate } from "@tolgee/react";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TSurvey,

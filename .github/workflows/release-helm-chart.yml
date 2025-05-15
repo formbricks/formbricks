@@ -1,9 +1,12 @@
 name: Publish Helm Chart
 
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      VERSION:
+        description: 'The version of the Helm chart to release'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           egress-policy: audit
 
@@ -36,8 +39,8 @@ jobs:
 
       - name: Update Chart.yaml with new version
         run: |
-          yq -i ".version = \"${VERSION#v}\"" helm-chart/Chart.yaml
-          yq -i ".appVersion = \"${VERSION}\"" helm-chart/Chart.yaml
+          yq -i ".version = \"${{ inputs.VERSION }}\"" helm-chart/Chart.yaml
+          yq -i ".appVersion = \"v${{ inputs.VERSION }}\"" helm-chart/Chart.yaml
 
       - name: Package Helm chart
         run: |
@@ -47,4 +50,4 @@ jobs:
         permissions:
           packages: write
         run: |
-          helm push formbricks-${VERSION#v}.tgz oci://ghcr.io/formbricks/helm-charts
+          helm push formbricks-${{ inputs.VERSION }}.tgz oci://ghcr.io/formbricks/helm-charts

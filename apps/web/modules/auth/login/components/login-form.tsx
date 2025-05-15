@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -17,8 +19,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
-import { cn } from "@formbricks/lib/cn";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 const ZLoginForm = z.object({
   email: z.string().email(),
@@ -63,12 +63,12 @@ export const LoginForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  const callbackUrl = searchParams?.get("callbackUrl") || "";
+  const callbackUrl = searchParams?.get("callbackUrl") ?? "";
   const { t } = useTranslate();
 
   const form = useForm<TLoginForm>({
     defaultValues: {
-      email: searchParams?.get("email") || "",
+      email: searchParams?.get("email") ?? "",
       password: "",
       totpCode: "",
       backupCode: "",
@@ -112,7 +112,7 @@ export const LoginForm = ({
       }
 
       if (!signInResponse?.error) {
-        router.push(searchParams?.get("callbackUrl") || "/");
+        router.push(searchParams?.get("callbackUrl") ?? "/");
       }
     } catch (error) {
       toast.error(error.toString());
@@ -120,7 +120,6 @@ export const LoginForm = ({
   };
 
   const [showLogin, setShowLogin] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [totpLogin, setTotpLogin] = useState(false);
   const [totpBackup, setTotpBackup] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -143,7 +142,7 @@ export const LoginForm = ({
     }
 
     return t("auth.login.login_to_your_account");
-  }, [totpBackup, totpLogin]);
+  }, [t, totpBackup, totpLogin]);
 
   const TwoFactorComponent = useMemo(() => {
     if (totpBackup) {
@@ -155,7 +154,7 @@ export const LoginForm = ({
     }
 
     return null;
-  }, [totpBackup, totpLogin]);
+  }, [form, totpBackup, totpLogin]);
 
   return (
     <FormProvider {...form}>
@@ -202,9 +201,10 @@ export const LoginForm = ({
                             autoComplete="current-password"
                             placeholder="*******"
                             aria-placeholder="password"
-                            onFocus={() => setIsPasswordFocused(true)}
+                            aria-label="password"
+                            aria-required="true"
                             required
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 pr-8 shadow-sm sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />
@@ -214,7 +214,7 @@ export const LoginForm = ({
                     </FormItem>
                   )}
                 />
-                {passwordResetEnabled && isPasswordFocused && (
+                {passwordResetEnabled && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -256,6 +256,7 @@ export const LoginForm = ({
               samlTenant={samlTenant}
               samlProduct={samlProduct}
               callbackUrl={callbackUrl}
+              source="signin"
             />
           )}
         </div>

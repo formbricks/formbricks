@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteTagAction,
@@ -16,7 +17,6 @@ import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TTag } from "@formbricks/types/tags";
 
 interface SingleTagProps {
@@ -78,7 +78,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
                     if (
-                      errorMessage.includes(
+                      errorMessage?.includes(
                         t("environments.project.tags.unique_constraint_failed_on_the_fields")
                       )
                     ) {

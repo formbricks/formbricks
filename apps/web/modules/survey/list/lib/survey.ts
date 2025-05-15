@@ -1,4 +1,12 @@
 import "server-only";
+import { actionClassCache } from "@/lib/actionClass/cache";
+import { cache } from "@/lib/cache";
+import { segmentCache } from "@/lib/cache/segment";
+import { projectCache } from "@/lib/project/cache";
+import { responseCache } from "@/lib/response/cache";
+import { surveyCache } from "@/lib/survey/cache";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
@@ -8,13 +16,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { responseCache } from "@formbricks/lib/response/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
@@ -72,7 +74,7 @@ export const getSurveys = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -161,7 +163,7 @@ export const getSurveysSortedByRelevance = reactCache(
           return surveys;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys sorted by relevance");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -193,7 +195,7 @@ export const getSurvey = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -283,7 +285,7 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error deleting survey");
       throw new DatabaseError(error.message);
     }
 
@@ -527,6 +529,9 @@ export const copySurveyToOtherEnvironment = async (
     }
 
     const targetProjectLanguageCodes = targetProject.languages.map((language) => language.code);
+
+    if (surveyData.questions) checkForInvalidImagesInQuestions(surveyData.questions);
+
     const newSurvey = await prisma.survey.create({
       data: surveyData,
       select: {
@@ -606,7 +611,7 @@ export const copySurveyToOtherEnvironment = async (
     return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error copying survey to other environment");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -628,7 +633,7 @@ export const getSurveyCount = reactCache(
           return surveyCount;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey count");
             throw new DatabaseError(error.message);
           }
 

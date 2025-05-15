@@ -1,5 +1,6 @@
-import { BREVO_API_KEY, BREVO_LIST_ID } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { BREVO_API_KEY, BREVO_LIST_ID } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
 
@@ -34,9 +35,10 @@ export const createBrevoCustomer = async ({ id, email }: { id: string; email: TU
     });
 
     if (res.status !== 200) {
-      console.error("Error sending user to Brevo:", await res.text());
+      const errorText = await res.text();
+      logger.error({ errorText }, "Error sending user to Brevo");
     }
   } catch (error) {
-    console.error("Error sending user to Brevo:", error);
+    logger.error(error, "Error sending user to Brevo");
   }
 };

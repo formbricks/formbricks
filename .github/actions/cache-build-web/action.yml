@@ -8,6 +8,14 @@ on:
         required: false
         default: "0"
 
+inputs:
+  turbo_token:
+    description: "Turborepo token"
+    required: false
+  turbo_team:
+    description: "Turborepo team"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -41,7 +49,7 @@ runs:
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install dependencies
@@ -57,14 +65,13 @@ runs:
       run: |
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
-        sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
-        sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
-        sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
         echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> .env
       shell: bash
 
     - run: |
         pnpm build --filter=@formbricks/web...
-
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        TURBO_TOKEN: ${{ inputs.turbo_token }}
+        TURBO_TEAM: ${{ inputs.turbo_team }}

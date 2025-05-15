@@ -1,7 +1,9 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
+import { responseCache } from "@/lib/response/cache";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { deleteDisplay } from "../display";
 import { deleteResponse, getResponse, updateResponse } from "../response";
@@ -18,6 +20,16 @@ vi.mock("../survey", () => ({
 
 vi.mock("../utils", () => ({
   findAndDeleteUploadedFilesInResponse: vi.fn(),
+}));
+
+vi.mock("@/lib/response/cache", () => ({
+  responseCache: {
+    revalidate: vi.fn(),
+    tag: {
+      byId: vi.fn(),
+      byResponseId: vi.fn(),
+    },
+  },
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -154,7 +166,7 @@ describe("Response Lib", () => {
     test("handle prisma client error code P2025", async () => {
       vi.mocked(prisma.response.delete).mockRejectedValue(
         new PrismaClientKnownRequestError("Response not found", {
-          code: "P2025",
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",
@@ -174,7 +186,7 @@ describe("Response Lib", () => {
   });
 
   describe("updateResponse", () => {
-    test("update the response and revalidate caches", async () => {
+    test("update the response and revalidate caches including singleUseId", async () => {
       vi.mocked(prisma.response.update).mockResolvedValue(response);
 
       const result = await updateResponse(responseId, responseInput);
@@ -183,16 +195,43 @@ describe("Response Lib", () => {
         data: responseInput,
       });
 
+      expect(responseCache.revalidate).toHaveBeenCalledWith({
+        id: response.id,
+        surveyId: response.surveyId,
+        singleUseId: response.singleUseId,
+      });
+
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);
       }
     });
 
+    test("update the response and revalidate caches", async () => {
+      const responseWithoutSingleUseId = { ...response, singleUseId: null };
+      vi.mocked(prisma.response.update).mockResolvedValue(responseWithoutSingleUseId);
+
+      const result = await updateResponse(responseId, responseInput);
+      expect(prisma.response.update).toHaveBeenCalledWith({
+        where: { id: responseId },
+        data: responseInput,
+      });
+
+      expect(responseCache.revalidate).toHaveBeenCalledWith({
+        id: response.id,
+        surveyId: response.surveyId,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(responseWithoutSingleUseId);
+      }
+    });
+
     test("return a not_found error when the response is not found", async () => {
       vi.mocked(prisma.response.update).mockRejectedValue(
         new PrismaClientKnownRequestError("Response not found", {
-          code: "P2025",
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",

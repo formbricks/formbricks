@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
 
 vi.mock("@unkey/ratelimit", () => ({
   Ratelimit: vi.fn(),
@@ -7,8 +14,8 @@ vi.mock("@unkey/ratelimit", () => ({
 describe("when rate limiting is disabled", () => {
   beforeEach(async () => {
     vi.resetModules();
-    const constants = await vi.importActual("@formbricks/lib/constants");
-    vi.doMock("@formbricks/lib/constants", () => ({
+    const constants = await vi.importActual("@/lib/constants");
+    vi.doMock("@/lib/constants", () => ({
       ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: true,
@@ -16,26 +23,26 @@ describe("when rate limiting is disabled", () => {
   });
 
   test("should log a warning once and return a stubbed response", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const loggerSpy = vi.spyOn(logger, "warn");
     const { rateLimiter } = await import("@/modules/api/v2/lib/rate-limit");
 
     const res1 = await rateLimiter()({ identifier: "test-id" });
     expect(res1).toEqual({ success: true, limit: 10, remaining: 999, reset: 0 });
-    expect(warnSpy).toHaveBeenCalledWith("Rate limiting disabled");
+    expect(loggerSpy).toHaveBeenCalled();
 
     // Subsequent calls won't log again.
     await rateLimiter()({ identifier: "another-id" });
 
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    warnSpy.mockRestore();
+    expect(loggerSpy).toHaveBeenCalledTimes(1);
+    loggerSpy.mockRestore();
   });
 });
 
 describe("when UNKEY_ROOT_KEY is missing", () => {
   beforeEach(async () => {
     vi.resetModules();
-    const constants = await vi.importActual("@formbricks/lib/constants");
-    vi.doMock("@formbricks/lib/constants", () => ({
+    const constants = await vi.importActual("@/lib/constants");
+    vi.doMock("@/lib/constants", () => ({
       ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: false,
@@ -44,14 +51,14 @@ describe("when UNKEY_ROOT_KEY is missing", () => {
   });
 
   test("should log a warning about missing UNKEY_ROOT_KEY and return stub response", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const loggerSpy = vi.spyOn(logger, "warn");
     const { rateLimiter } = await import("@/modules/api/v2/lib/rate-limit");
     const limiterFunc = rateLimiter();
 
     const res = await limiterFunc({ identifier: "test-id" });
     expect(res).toEqual({ success: true, limit: 10, remaining: 999, reset: 0 });
-    expect(warnSpy).toHaveBeenCalledWith("Disabled due to not finding UNKEY_ROOT_KEY env variable");
-    warnSpy.mockRestore();
+    expect(loggerSpy).toHaveBeenCalled();
+    loggerSpy.mockRestore();
   });
 });
 
@@ -61,8 +68,8 @@ describe("when rate limiting is active (enabled)", () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    const constants = await vi.importActual("@formbricks/lib/constants");
-    vi.doMock("@formbricks/lib/constants", () => ({
+    const constants = await vi.importActual("@/lib/constants");
+    vi.doMock("@/lib/constants", () => ({
       ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: false,

@@ -1,22 +1,6 @@
-import {
-  deleteResponseEndpoint,
-  getResponseEndpoint,
-  updateResponseEndpoint,
-} from "@/modules/api/v2/management/responses/[responseId]/lib/openapi";
-import {
-  createResponseEndpoint,
-  getResponsesEndpoint,
-} from "@/modules/api/v2/management/responses/lib/openapi";
-import { ZodOpenApiPathsObject } from "zod-openapi";
-
-export const responsePaths: ZodOpenApiPathsObject = {
-  "/responses": {
-    get: getResponsesEndpoint,
-    post: createResponseEndpoint,
+export const managementServer = [
+  {
+    url: `https://app.formbricks.com/api/v2/management`,
+    description: "Formbricks Management API",
   },
-  "/responses/{id}": {
-    get: getResponseEndpoint,
-    put: updateResponseEndpoint,
-    delete: deleteResponseEndpoint,
-  },
-};
+];

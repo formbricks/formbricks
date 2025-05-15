@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { Badge } from "@/modules/ui/components/badge";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
@@ -13,8 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { cn } from "@formbricks/lib/cn";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
