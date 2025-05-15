@@ -6,7 +6,6 @@ permissions:
   pull-requests: read
   actions: read
   checks: write
-  id-token: write
 
 on:
   pull_request:
@@ -47,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write
+      statuses: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0
