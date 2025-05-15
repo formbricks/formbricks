@@ -13,7 +13,7 @@
     "db:migrate:dev": "dotenv -e ../../.env -- sh -c \"pnpm prisma generate && tsx ./src/scripts/apply-migrations.ts\"",
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" tsx ./src/scripts/create-saml-database.ts",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- tsx ./src/scripts/create-saml-database.ts",
-    "db:initial-user-setup:deploy": "tsx ./src/scripts/initial-user-setup.ts",
+    "db:initial-user-setup:deploy": "env INITIAL_USER_EMAIL=\"${INITIAL_USER_EMAIL}\" INITIAL_USER_PASSWORD=\"${INITIAL_USER_PASSWORD}\" INITIAL_ORGANIZATION_NAME=\"${INITIAL_ORGANIZATION_NAME}\" INITIAL_PROJECT_NAME=\"${INITIAL_PROJECT_NAME}\" tsx ./src/scripts/initial-user-setup.ts",
     "db:initial-user-setup:dev": "dotenv -e ../../.env -- tsx ./src/scripts/initial-user-setup.ts",
     "db:push": "prisma db push --accept-data-loss",
     "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:initial-user-setup:dev",
