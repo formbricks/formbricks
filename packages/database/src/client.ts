@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { withAccelerate } from "@prisma/extension-accelerate";
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
@@ -7,7 +6,7 @@ const prismaClientSingleton = () => {
     ...(process.env.DEBUG === "1" && {
       log: ["query", "info"],
     }),
-  }).$extends(withAccelerate());
+  });
 };
 
 type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;

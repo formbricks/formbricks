@@ -126,7 +126,7 @@ export const PricingCard = ({
             id={plan.id}
             className={cn(
               plan.featured ? "text-slate-900" : "text-slate-800",
-              "text-sm leading-6 font-semibold"
+              "text-sm font-semibold leading-6"
             )}>
             {t(plan.name)}
           </h2>

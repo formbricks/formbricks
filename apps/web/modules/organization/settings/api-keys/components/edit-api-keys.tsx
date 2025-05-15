@@ -162,7 +162,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal?.length === 0 ? (
-            <div className="flex h-12 items-center justify-center px-6 text-sm font-medium whitespace-nowrap text-slate-400">
+            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
               {t("environments.project.api_keys.no_api_keys_yet")}
             </div>
           ) : (
