@@ -2,10 +2,13 @@ import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
 import { type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
+const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
+
 const getLogLevel = (): TLogLevel => {
   let logLevel: TLogLevel = "info";
 
   if (IS_PRODUCTION) logLevel = "warn";
+  if (IS_BUILD) logLevel = "error"; // Only show errors during build
 
   const envLogLevel = process.env.LOG_LEVEL;
 
