@@ -289,7 +289,7 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
-                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent" dir="auto">
+                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
@@ -397,7 +397,7 @@ export const PreviewSurvey = ({
                     <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
                 </div>
-                <div className="z-0 w-full max-w-4xl rounded-lg border-transparent" dir="auto">
+                <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}

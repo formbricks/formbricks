@@ -19,6 +19,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, isInv
         isInvalid && "border border-red-500 focus:border-red-500"
       )}
       ref={ref}
+      dir="auto"
       {...props}
     />
   );
