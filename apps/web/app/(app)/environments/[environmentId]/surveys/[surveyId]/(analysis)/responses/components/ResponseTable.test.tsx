@@ -11,6 +11,15 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+    dismiss: vi.fn(),
+  },
+}));
+
 // Mock components
 vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, onClick, ...props }: any) => (
@@ -367,8 +376,8 @@ describe("ResponseTable", () => {
   test("shows error toast when download action returns error", async () => {
     const errorMsg = "Download failed";
     vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
-      error: { message: errorMsg },
-      success: false,
+      data: undefined,
+      serverError: errorMsg,
     });
     vi.mocked(getFormattedErrorMessage).mockReturnValueOnce(errorMsg);
 
@@ -388,8 +397,10 @@ describe("ResponseTable", () => {
   });
 
   test("shows default error toast when download action returns no data", async () => {
-    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({});
-    vi.mocked(getFormattedErrorMessage).mockReturnValueOnce(null);
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: undefined,
+    });
+    vi.mocked(getFormattedErrorMessage).mockReturnValueOnce("");
 
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
@@ -425,8 +436,8 @@ describe("ResponseTable", () => {
     vi.mocked(document.createElement).mockClear();
 
     vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
-      error: { message: "Download failed" },
-      success: false,
+      data: undefined,
+      serverError: "Download failed",
     });
 
     // Create a fresh spy for createElement for this test only
