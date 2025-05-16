@@ -257,7 +257,8 @@ export const setup = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+      logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
+      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
