@@ -214,7 +214,7 @@ describe("OpenTextQuestion", () => {
 
     const onChange = vi.fn();
 
-    const { container } = render(
+    render(
       <OpenTextQuestion
         {...defaultProps}
         onChange={onChange}
