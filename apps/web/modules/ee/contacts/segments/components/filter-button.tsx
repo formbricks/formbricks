@@ -9,7 +9,6 @@ function FilterButton({
   className = "",
   ...props
 }: {
-  // NOSONAR // read-only is not used in the project
   icon: React.ReactNode;
   label: React.ReactNode;
   onClick: () => void;
