@@ -13,13 +13,15 @@ export const updateAttributes = async (
   userId: string,
   environmentId: string,
   contactAttributesParam: TContactAttributes
-): Promise<{ success: boolean; messages?: string[] }> => {
+): Promise<{ success: boolean; messages?: string[]; ignoreEmailAttribute?: boolean }> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
     [environmentId, ZId],
     [contactAttributesParam, ZContactAttributes]
   );
+
+  let ignoreEmailAttribute = false;
 
   // Fetch contact attribute keys and email check in parallel
   const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
@@ -57,6 +59,10 @@ export const updateAttributes = async (
   let messages: string[] = emailExists
     ? ["The email already exists for this environment and was not updated."]
     : [];
+
+  if (emailExists) {
+    ignoreEmailAttribute = true;
+  }
 
   // First, update all existing attributes
   if (existingAttributes.length > 0) {
@@ -124,5 +130,6 @@ export const updateAttributes = async (
   return {
     success: true,
     messages,
+    ignoreEmailAttribute,
   };
 };
