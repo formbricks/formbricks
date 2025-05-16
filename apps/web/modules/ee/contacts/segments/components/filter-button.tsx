@@ -1,7 +1,6 @@
 import React from "react";
 
 function FilterButton({
-  // NOSONAR // read-only is not used in the project
   icon,
   label,
   onClick,
@@ -10,6 +9,7 @@ function FilterButton({
   className = "",
   ...props
 }: {
+  // NOSONAR // read-only is not used in the project
   icon: React.ReactNode;
   label: React.ReactNode;
   onClick: () => void;
