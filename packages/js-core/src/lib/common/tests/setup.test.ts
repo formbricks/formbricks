@@ -198,6 +198,10 @@ describe("setup.ts", () => {
           filteredSurveys: [{ name: "S1" }, { name: "S2" }],
         })
       );
+
+      // Check for the new log messages
+      expect(mockLogger.debug).toHaveBeenCalledWith("Fetched 0 surveys from the backend");
+      expect(mockLogger.debug).toHaveBeenCalledWith("0 surveys could be shown to current user on trigger: ");
     });
 
     test("resets config if no valid config found, fetches environment, sets default user", async () => {
