@@ -1,5 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -15,6 +16,10 @@ export const TeamsPage = async (props) => {
   const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
   const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+  const hasUserManagementAccess = getUserManagementAccess(
+    currentUserMembership?.role,
+    USER_MANAGEMENT_MINIMUM_ROLE
+  );
 
   return (
     <PageContentWrapper>
@@ -32,7 +37,7 @@ export const TeamsPage = async (props) => {
         currentUserId={session.user.id}
         environmentId={params.environmentId}
         canDoRoleManagement={canDoRoleManagement}
-        isUserManagementDisabledFromUi={DISABLE_USER_MANAGEMENT}
+        isUserManagementDisabledFromUi={!hasUserManagementAccess}
       />
       <TeamsView
         organizationId={organization.id}

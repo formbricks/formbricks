@@ -53,10 +53,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // Draft survey => link should point to edit
@@ -70,10 +70,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={true}
-        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // When it's read only and draft, we expect no link
@@ -87,10 +87,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "inProgress" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // For non-draft => link to summary

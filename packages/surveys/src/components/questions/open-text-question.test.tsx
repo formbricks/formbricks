@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/preact";
+import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -76,10 +76,7 @@ describe("OpenTextQuestion", () => {
     render(<OpenTextQuestion {...defaultProps} onChange={onChange} />);
 
     const input = screen.getByPlaceholderText("Type here...");
-
-    // Directly set the input value and trigger the input event
-    Object.defineProperty(input, "value", { value: "Hello" });
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    fireEvent.input(input, { target: { value: "Hello" } });
 
     expect(onChange).toHaveBeenCalledWith({ q1: "Hello" });
   });
@@ -162,5 +159,292 @@ describe("OpenTextQuestion", () => {
     render(<OpenTextQuestion {...defaultProps} autoFocusEnabled={true} currentQuestionId="q1" />);
 
     expect(focusMock).toHaveBeenCalled();
+  });
+
+  test("handles input change for textarea with resize functionality", async () => {
+    // Create a spy on the Element.prototype to monitor style changes
+    const styleSpy = vi.spyOn(HTMLElement.prototype, "style", "get").mockImplementation(
+      () =>
+        ({
+          height: "",
+          overflow: "",
+        }) as CSSStyleDeclaration
+    );
+    const onChange = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        onChange={onChange}
+        question={{ ...defaultQuestion, longAnswer: true }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    // Only trigger a regular input event without trying to modify scrollHeight
+    fireEvent.input(textarea, { target: { value: "Test value for textarea" } });
+
+    // Check that onChange was called with the correct value
+    expect(onChange).toHaveBeenCalledWith({ q1: "Test value for textarea" });
+
+    // Clean up the spy
+    styleSpy.mockRestore();
+  });
+
+  test("handles textarea resize with different heights", async () => {
+    // Mock styles and scrollHeight for handleInputResize testing
+    let heightValue = "";
+    let overflowValue = "";
+
+    // Mock style setter to capture values
+    const originalSetProperty = CSSStyleDeclaration.prototype.setProperty;
+    CSSStyleDeclaration.prototype.setProperty = vi.fn();
+
+    // Mock to capture style changes
+    Object.defineProperty(HTMLElement.prototype, "style", {
+      get: vi.fn(() => ({
+        height: heightValue,
+        overflow: overflowValue,
+        setProperty: (prop: string, value: string) => {
+          if (prop === "height") heightValue = value;
+          if (prop === "overflow") overflowValue = value;
+        },
+      })),
+    });
+
+    const onChange = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        onChange={onChange}
+        question={{ ...defaultQuestion, longAnswer: true }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+
+    // Simulate normal height (less than max)
+    const mockNormalEvent = {
+      target: {
+        style: { height: "", overflow: "" },
+        scrollHeight: 100, // Less than max 160px
+      },
+    };
+
+    // Get the event handler
+    const inputHandler = textarea.oninput as EventListener;
+    if (inputHandler) {
+      inputHandler(mockNormalEvent as unknown as Event);
+    }
+
+    // Now simulate text that exceeds max height
+    const mockOverflowEvent = {
+      target: {
+        style: { height: "", overflow: "" },
+        scrollHeight: 200, // More than max 160px
+      },
+    };
+
+    if (inputHandler) {
+      inputHandler(mockOverflowEvent as unknown as Event);
+    }
+
+    // Restore the original method
+    CSSStyleDeclaration.prototype.setProperty = originalSetProperty;
+  });
+
+  test("handles form submission by enter key", async () => {
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    const { container } = render(
+      <OpenTextQuestion {...defaultProps} value="Test submission" onSubmit={onSubmit} setTtc={setTtc} />
+    );
+
+    // Get the form element using container query
+    const form = container.querySelector("form");
+    expect(form).toBeInTheDocument();
+
+    // Simulate form submission
+    fireEvent.submit(form!);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "Test submission" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
+
+  test("applies minLength constraint when configured", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        question={{ ...defaultQuestion, charLimit: { min: 5, max: 100 } }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText("Type here...");
+    expect(input).toHaveAttribute("minLength", "5");
+    expect(input).toHaveAttribute("maxLength", "100");
+  });
+
+  test("handles video URL in media", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        question={{ ...defaultQuestion, videoUrl: "https://example.com/video.mp4" }}
+      />
+    );
+
+    expect(screen.getByTestId("question-media")).toBeInTheDocument();
+  });
+
+  test("doesn't autofocus when not current question", () => {
+    const focusMock = vi.fn();
+    window.HTMLElement.prototype.focus = focusMock;
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        autoFocusEnabled={true}
+        currentQuestionId="q2" // Different from question id (q1)
+      />
+    );
+
+    expect(focusMock).not.toHaveBeenCalled();
+  });
+
+  test("handles input change for textarea", async () => {
+    const onChange = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        onChange={onChange}
+        question={{ ...defaultQuestion, longAnswer: true }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    fireEvent.input(textarea, { target: { value: "Long text response" } });
+
+    expect(onChange).toHaveBeenCalledWith({ q1: "Long text response" });
+  });
+
+  test("applies phone number maxLength constraint", () => {
+    render(<OpenTextQuestion {...defaultProps} question={{ ...defaultQuestion, inputType: "phone" }} />);
+
+    const input = screen.getByPlaceholderText("Type here...");
+    expect(input).toHaveAttribute("maxLength", "30");
+  });
+
+  test("renders without subheader when not provided", () => {
+    const questionWithoutSubheader = {
+      ...defaultQuestion,
+      subheader: undefined,
+    };
+
+    render(<OpenTextQuestion {...defaultProps} question={questionWithoutSubheader} />);
+    expect(screen.getByTestId("mock-subheader")).toHaveTextContent("");
+  });
+
+  test("sets correct tabIndex based on current question status", () => {
+    // When it's the current question
+    render(<OpenTextQuestion {...defaultProps} currentQuestionId="q1" />);
+    const inputCurrent = screen.getByPlaceholderText("Type here...");
+    const submitCurrent = screen.getByRole("button", { name: "Submit" });
+
+    expect(inputCurrent).toHaveAttribute("tabIndex", "0");
+    expect(submitCurrent).toHaveAttribute("tabIndex", "0");
+
+    // When it's not the current question
+    cleanup();
+    render(<OpenTextQuestion {...defaultProps} currentQuestionId="q2" />);
+    const inputNotCurrent = screen.getByPlaceholderText("Type here...");
+    const submitNotCurrent = screen.getByRole("button", { name: "Submit" });
+
+    expect(inputNotCurrent).toHaveAttribute("tabIndex", "-1");
+    expect(submitNotCurrent).toHaveAttribute("tabIndex", "-1");
+  });
+
+  test("applies title attribute for phone input in textarea", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        question={{
+          ...defaultQuestion,
+          longAnswer: true,
+          inputType: "phone",
+        }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    expect(textarea).toHaveAttribute("title", "Please enter a valid phone number");
+  });
+
+  test("applies character limits for textarea", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        question={{
+          ...defaultQuestion,
+          longAnswer: true,
+          inputType: "text",
+          charLimit: { min: 10, max: 200 },
+        }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    expect(textarea).toHaveAttribute("minLength", "10");
+    expect(textarea).toHaveAttribute("maxLength", "200");
+  });
+
+  test("renders input with no maxLength for other input types", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        question={{
+          ...defaultQuestion,
+          inputType: "email",
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText("Type here...");
+    // Should be undefined for non-text, non-phone types
+    expect(input).not.toHaveAttribute("maxLength");
+  });
+
+  test("applies autofocus attribute to textarea when enabled", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        autoFocusEnabled={true}
+        question={{
+          ...defaultQuestion,
+          longAnswer: true,
+        }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    expect(textarea).toHaveAttribute("autoFocus");
+  });
+
+  test("does not apply autofocus attribute to textarea when not current question", () => {
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        autoFocusEnabled={true}
+        currentQuestionId="q2" // different from question.id (q1)
+        question={{
+          ...defaultQuestion,
+          longAnswer: true,
+        }}
+      />
+    );
+
+    const textarea = screen.getByRole("textbox");
+    expect(textarea).not.toHaveAttribute("autoFocus");
   });
 });

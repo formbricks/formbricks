@@ -85,20 +85,26 @@ export const updateUser = async (
     }
 
     if (shouldUpdate) {
-      const { success, messages: updateAttrMessages } = await updateAttributes(
-        contact.id,
-        userId,
-        environmentId,
-        attributes
-      );
+      const {
+        success,
+        messages: updateAttrMessages,
+        ignoreEmailAttribute,
+      } = await updateAttributes(contact.id, userId, environmentId, attributes);
 
       messages = updateAttrMessages ?? [];
 
       // If the attributes update was successful and the language attribute was provided, set the language
       if (success) {
+        let attributesToUpdate = { ...attributes };
+
+        if (ignoreEmailAttribute) {
+          const { email, ...rest } = attributes;
+          attributesToUpdate = rest;
+        }
+
         contactAttributes = {
           ...contactAttributes,
-          ...attributes,
+          ...attributesToUpdate,
         };
 
         if (attributes.language) {

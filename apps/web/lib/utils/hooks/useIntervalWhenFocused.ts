@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export const useIntervalWhenFocused = (
   callback: () => void,
@@ -8,7 +8,7 @@ export const useIntervalWhenFocused = (
 ) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleFocus = () => {
+  const handleFocus = useCallback(() => {
     if (isActive) {
       if (shouldExecuteImmediately) {
         // Execute the callback immediately when the tab comes into focus
@@ -20,7 +20,7 @@ export const useIntervalWhenFocused = (
         callback();
       }, intervalDuration);
     }
-  };
+  }, [isActive, intervalDuration, callback, shouldExecuteImmediately]);
 
   const handleBlur = () => {
     // Clear the interval when the tab loses focus
@@ -46,7 +46,7 @@ export const useIntervalWhenFocused = (
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
     };
-  }, [isActive, intervalDuration]);
+  }, [isActive, intervalDuration, handleFocus]);
 };
 
 export default useIntervalWhenFocused;
