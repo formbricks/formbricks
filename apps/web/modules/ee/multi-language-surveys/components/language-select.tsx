@@ -79,7 +79,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <div className="max-h-96 overflow-auto">
           {filteredItems.map((item, index) => (
             <button
-              className="block w-full cursor-pointer rounded-md px-4 py-2 text-slate-700 hover:bg-slate-100 active:bg-blue-100"
+              className="block w-full cursor-pointer rounded-md px-4 py-2 text-left text-slate-700 hover:bg-slate-100 active:bg-blue-100"
               key={index}
               onClick={() => {
                 handleOptionSelect(item);

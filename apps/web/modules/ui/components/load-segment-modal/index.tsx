@@ -76,7 +76,7 @@ const SegmentDetail = ({
     <button
       key={segment.id}
       className={cn(
-        "relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
+        "relative mt-1 grid h-16 w-full cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
         currentSegment.id === segment.id && "pointer-events-none bg-slate-100 opacity-60"
       )}
       onClick={async () => {

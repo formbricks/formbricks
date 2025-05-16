@@ -40,7 +40,7 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
+      await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
 
       deleteRows(rowsToBeDeleted);
       toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));

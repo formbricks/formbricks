@@ -15,6 +15,8 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
+import AttributeTabContent from "./attribute-tab-content";
+import FilterButton from "./filter-button";
 
 interface TAddFilterModalProps {
   open: boolean;
@@ -26,7 +28,7 @@ interface TAddFilterModalProps {
 
 type TFilterType = "attribute" | "segment" | "device" | "person";
 
-const handleAddFilter = ({
+export const handleAddFilter = ({
   type,
   onAddFilter,
   setOpen,
@@ -132,118 +134,8 @@ const handleAddFilter = ({
   }
 };
 
-interface AttributeTabContentProps {
-  contactAttributeKeys: TContactAttributeKey[];
-  onAddFilter: (filter: TBaseFilter) => void;
-  setOpen: (open: boolean) => void;
-}
-
-// Reusable FilterButton component to remove duplicated button code
-function FilterButton({ // NOSONAR // the read-only attribute doesn't work as expected yet
-  icon,
-  label,
-  onClick,
-  onKeyDown,
-  tabIndex = 0,
-  className = "",
-  ...props
-}: {
-  icon: React.ReactNode;
-  label: React.ReactNode;
-  onClick: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
-  tabIndex?: number;
-  className?: string;
-  [key: string]: any;
-}) {
-  return (
-    <button
-      className={`flex w-full cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50 ${className}`}
-      tabIndex={tabIndex}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
-      {...props}>
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) { // NOSONAR // the read-only attribute doesn't work as expected yet
-  const { t } = useTranslate();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div>
-        <h2 className="text-base font-medium">{t("common.person")}</h2>
-        <div>
-          <FilterButton
-            data-testid="filter-btn-person-userId"
-            icon={<FingerprintIcon className="h-4 w-4" />}
-            label={t("common.user_id")}
-            onClick={() => {
-              handleAddFilter({
-                type: "person",
-                onAddFilter,
-                setOpen,
-              });
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleAddFilter({
-                  type: "person",
-                  onAddFilter,
-                  setOpen,
-                });
-              }
-            }}
-          />
-        </div>
-      </div>
-
-      <hr className="my-2" />
-
-      <div>
-        <h2 className="text-base font-medium">{t("common.attributes")}</h2>
-      </div>
-      {contactAttributeKeys.length === 0 && (
-        <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-          <p>{t("environments.segments.no_attributes_yet")}</p>
-        </div>
-      )}
-      {contactAttributeKeys.map((attributeKey) => (
-        <FilterButton
-          key={attributeKey.id}
-          data-testid={`filter-btn-attribute-${attributeKey.key}`}
-          icon={<TagIcon className="h-4 w-4" />}
-          label={attributeKey.name ?? attributeKey.key}
-          onClick={() => {
-            handleAddFilter({
-              type: "attribute",
-              onAddFilter,
-              setOpen,
-              contactAttributeKey: attributeKey.key,
-            });
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleAddFilter({
-                type: "attribute",
-                onAddFilter,
-                setOpen,
-                contactAttributeKey: attributeKey.key,
-              });
-            }
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-export function AddFilterModal({ // NOSONAR // the read-only attribute doesn't work as expected yet
+export function AddFilterModal({
+  // NOSONAR // the read-only attribute doesn't work as expected yet
   onAddFilter,
   open,
   setOpen,
@@ -464,6 +356,7 @@ export function AddFilterModal({ // NOSONAR // the read-only attribute doesn't w
         contactAttributeKeys={contactAttributeKeysFiltered}
         onAddFilter={onAddFilter}
         setOpen={setOpen}
+        handleAddFilter={handleAddFilter}
       />
     );
   };

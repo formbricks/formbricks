@@ -45,7 +45,10 @@ export const OptionsSwitch = ({
         <button
           key={type.value}
           data-value={type.value}
-          onClick={() => !type.disabled && handleOptionChange(type.value)}
+          onClick={(e) => {
+            e.preventDefault();
+            !type.disabled && handleOptionChange(type.value);
+          }}
           className={`relative z-10 flex-grow rounded-md p-2 text-center transition-colors duration-200 ${
             type.disabled
               ? "cursor-not-allowed opacity-50"
