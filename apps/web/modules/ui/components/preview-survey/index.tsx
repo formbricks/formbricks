@@ -283,13 +283,13 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="flex h-full w-full flex-col justify-center px-1">
+                <div className="flex h-full w-full flex-col justify-center px-1" dir="auto">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
-                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent" dir="auto">
                     <SurveyInline
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
@@ -397,7 +397,7 @@ export const PreviewSurvey = ({
                     <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
                 </div>
-                <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
+                <div className="z-0 w-full max-w-4xl rounded-lg border-transparent" dir="auto">
                   <SurveyInline
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}

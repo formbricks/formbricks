@@ -133,6 +133,7 @@ export const Modal = ({
     <div
       id="preview-survey-base"
       aria-live="assertive"
+      dir="auto"
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
         overlayVisible ? (darkOverlay ? "bg-slate-700/80" : "bg-white/50") : "",
@@ -149,6 +150,7 @@ export const Modal = ({
             background,
           }),
         }}
+        dir="auto"
         className={cn(
           "no-scrollbar pointer-events-auto absolute max-h-[90%] w-full max-w-sm transition-all duration-500 ease-in-out",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
