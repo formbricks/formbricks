@@ -607,7 +607,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Adding logic
   // Open Text Question
   await page.getByRole("heading", { name: params.openTextQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
@@ -638,7 +638,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Single Select Question
   await page.getByRole("heading", { name: params.singleSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "Equals one of" }).click();
@@ -666,7 +666,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Multi Select Question
   await page.getByRole("heading", { name: params.multiSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "Includes all of" }).click();
@@ -707,7 +707,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Picture Select Question
   await page.getByRole("heading", { name: params.pictureSelectQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
@@ -732,7 +732,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Rating Question
   await page.getByRole("heading", { name: params.ratingQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: ">=" }).click();
@@ -759,7 +759,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // NPS Question
   await page.getByRole("heading", { name: params.npsQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: ">", exact: true }).click();
@@ -820,7 +820,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Ranking Question
   await page.getByRole("heading", { name: params.ranking.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
@@ -845,7 +845,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Matrix Question
   await page.getByRole("heading", { name: params.matrix.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is completely submitted" }).click();
@@ -878,7 +878,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // CTA Question
   await page.getByRole("heading", { name: params.ctaQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
@@ -906,7 +906,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Consent Question
   await page.getByRole("heading", { name: params.consentQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#action-0-objective").click();
   await page.getByRole("option", { name: "Calculate" }).click();
@@ -919,7 +919,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // File Upload Question
   await page.getByRole("heading", { name: params.fileUploadQuestion.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#action-0-objective").click();
   await page.getByRole("option", { name: "Calculate" }).click();
@@ -936,7 +936,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
 
   await page.getByRole("main").getByText(params.date.question).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
 
   await page.getByPlaceholder("Value").fill(today);
@@ -966,7 +966,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Cal Question
   await page.getByRole("heading", { name: params.cal.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
@@ -981,7 +981,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Address Question
   await page.getByRole("heading", { name: params.address.question }).click();
-  await page.getByRole("button", { name: "Show Advanced Settings" }).click();
+  await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#action-0-objective").click();
   await page.getByRole("option", { name: "Calculate" }).click();
