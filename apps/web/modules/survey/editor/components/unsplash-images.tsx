@@ -192,7 +192,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
   return (
     <div className="relative mt-2 w-full">
       <div className="relative">
-        <SearchIcon className="absolute top-1/2 left-2 h-6 w-4 -translate-y-1/2 text-slate-500" />
+        <SearchIcon className="absolute left-2 top-1/2 h-6 w-4 -translate-y-1/2 text-slate-500" />
         <Input
           value={query}
           onChange={handleChange}
@@ -215,7 +215,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 className="h-full cursor-pointer rounded-lg object-cover"
               />
               {image.authorName && (
-                <span className="bg-opacity-75 absolute right-1 bottom-1 hidden rounded bg-black px-2 py-1 text-xs text-white group-hover:block">
+                <span className="absolute bottom-1 right-1 hidden rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white group-hover:block">
                   {image.authorName}
                 </span>
               )}

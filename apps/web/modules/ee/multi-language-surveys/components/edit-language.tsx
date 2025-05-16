@@ -228,7 +228,7 @@ export function EditLanguage({
                 ))}
               </>
             ) : (
-              <p className="text-sm text-slate-500 italic">
+              <p className="text-sm italic text-slate-500">
                 {t("environments.project.languages.no_language_found")}
               </p>
             )}
