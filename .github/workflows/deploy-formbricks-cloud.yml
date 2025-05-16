@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       VERSION:
-        description: 'The version of the Docker image to release'
+        description: 'The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0.'
         required: true
         type: string
       REPOSITORY:
@@ -54,7 +54,7 @@ jobs:
           tags: tag:github
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # v4.2.0
         with:
           role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
           aws-region: "eu-central-1"
@@ -67,7 +67,7 @@ jobs:
 
       - uses: helmfile/helmfile-action@v2
         name: Deploy Formbricks Cloud Prod
-        if: (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch') && github.event.inputs.ENVIRONMENT == 'prod'
+        if: inputs.ENVIRONMENT == 'prod'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -75,6 +75,7 @@ jobs:
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.FORMBRICKS_ROLE_ARN }}
         with:
+          helmfile-version: 'v1.0.0'
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
@@ -84,13 +85,14 @@ jobs:
 
       - uses: helmfile/helmfile-action@v2
         name: Deploy Formbricks Cloud Stage
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.ENVIRONMENT == 'stage'
+        if: inputs.ENVIRONMENT == 'stage'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
         with:
+          helmfile-version: 'v1.0.0'
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets

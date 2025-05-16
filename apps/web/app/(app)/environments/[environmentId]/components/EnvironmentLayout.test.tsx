@@ -1,4 +1,3 @@
-import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -10,7 +9,7 @@ import {
 } from "@/lib/organization/service";
 import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { Session } from "next-auth";
@@ -49,7 +48,6 @@ vi.mock("@/lib/membership/utils", () => ({
   getAccessFlags: vi.fn(() => ({ isMember: true })), // Default to member for simplicity
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getEnterpriseLicense: vi.fn(),
   getOrganizationProjectsLimit: vi.fn(),
 }));
 vi.mock("@/modules/ee/teams/lib/roles", () => ({
@@ -176,7 +174,6 @@ describe("EnvironmentLayout", () => {
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getMonthlyActiveOrganizationPeopleCount).mockResolvedValue(100);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(500);
-    vi.mocked(getEnterpriseLicense).mockResolvedValue(mockLicense);
     vi.mocked(getOrganizationProjectsLimit).mockResolvedValue(null as any);
     vi.mocked(getProjectPermissionByUserId).mockResolvedValue(mockProjectPermission);
     mockIsDevelopment = false;
@@ -189,13 +186,19 @@ describe("EnvironmentLayout", () => {
   });
 
   test("renders correctly with default props", async () => {
-    // Ensure the default mockLicense has isPendingDowngrade: false and active: false
-    vi.mocked(getEnterpriseLicense).mockResolvedValue({
-      ...mockLicense,
-      isPendingDowngrade: false,
-      active: false,
-    });
-
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     render(
       await EnvironmentLayout({
         environmentId: "env-1",
@@ -203,20 +206,31 @@ describe("EnvironmentLayout", () => {
         children: <div>Child Content</div>,
       })
     );
-
     expect(screen.getByTestId("main-navigation")).toBeInTheDocument();
     expect(screen.getByTestId("top-control-bar")).toBeInTheDocument();
     expect(screen.getByText("Child Content")).toBeInTheDocument();
     expect(screen.queryByTestId("dev-banner")).not.toBeInTheDocument();
     expect(screen.queryByTestId("limits-banner")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("downgrade-banner")).not.toBeInTheDocument(); // This should now pass
+    expect(screen.queryByTestId("downgrade-banner")).not.toBeInTheDocument();
   });
 
   test("renders DevEnvironmentBanner in development environment", async () => {
     const devEnvironment = { ...mockEnvironment, type: "development" as const };
     vi.mocked(getEnvironment).mockResolvedValue(devEnvironment);
     mockIsDevelopment = true;
-
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     render(
       await EnvironmentLayout({
         environmentId: "env-1",
@@ -224,13 +238,24 @@ describe("EnvironmentLayout", () => {
         children: <div>Child Content</div>,
       })
     );
-
     expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
   });
 
   test("renders LimitsReachedBanner in Formbricks Cloud", async () => {
     mockIsFormbricksCloud = true;
-
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     render(
       await EnvironmentLayout({
         environmentId: "env-1",
@@ -238,17 +263,21 @@ describe("EnvironmentLayout", () => {
         children: <div>Child Content</div>,
       })
     );
-
     expect(screen.getByTestId("limits-banner")).toBeInTheDocument();
     expect(vi.mocked(getMonthlyActiveOrganizationPeopleCount)).toHaveBeenCalledWith(mockOrganization.id);
     expect(vi.mocked(getMonthlyOrganizationResponseCount)).toHaveBeenCalledWith(mockOrganization.id);
   });
 
   test("renders PendingDowngradeBanner when pending downgrade", async () => {
-    // Ensure the license mock reflects the condition needed for the banner
     const pendingLicense = { ...mockLicense, isPendingDowngrade: true, active: true };
-    vi.mocked(getEnterpriseLicense).mockResolvedValue(pendingLicense);
-
+    vi.mocked(getOrganizationProjectsLimit).mockResolvedValue(null as any);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue(pendingLicense),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     render(
       await EnvironmentLayout({
         environmentId: "env-1",
@@ -256,12 +285,24 @@ describe("EnvironmentLayout", () => {
         children: <div>Child Content</div>,
       })
     );
-
     expect(screen.getByTestId("downgrade-banner")).toBeInTheDocument();
   });
 
   test("throws error if user not found", async () => {
     vi.mocked(getUser).mockResolvedValue(null);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     await expect(EnvironmentLayout({ environmentId: "env-1", session: mockSession })).rejects.toThrow(
       "common.user_not_found"
     );
@@ -269,6 +310,19 @@ describe("EnvironmentLayout", () => {
 
   test("throws error if organization not found", async () => {
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     await expect(EnvironmentLayout({ environmentId: "env-1", session: mockSession })).rejects.toThrow(
       "common.organization_not_found"
     );
@@ -276,13 +330,39 @@ describe("EnvironmentLayout", () => {
 
   test("throws error if environment not found", async () => {
     vi.mocked(getEnvironment).mockResolvedValue(null);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     await expect(EnvironmentLayout({ environmentId: "env-1", session: mockSession })).rejects.toThrow(
       "common.environment_not_found"
     );
   });
 
   test("throws error if projects, environments or organizations not found", async () => {
-    vi.mocked(getUserProjects).mockResolvedValue(null as any); // Simulate one of the promises failing
+    vi.mocked(getUserProjects).mockResolvedValue(null as any);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     await expect(EnvironmentLayout({ environmentId: "env-1", session: mockSession })).rejects.toThrow(
       "environments.projects_environments_organizations_not_found"
     );
@@ -291,6 +371,19 @@ describe("EnvironmentLayout", () => {
   test("throws error if member has no project permission", async () => {
     vi.mocked(getAccessFlags).mockReturnValue({ isMember: true } as any);
     vi.mocked(getProjectPermissionByUserId).mockResolvedValue(null);
+    vi.resetModules();
+    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({
+        active: false,
+        isPendingDowngrade: false,
+        features: { isMultiOrgEnabled: false },
+        lastChecked: new Date(),
+        fallbackLevel: "live",
+      }),
+    }));
+    const { EnvironmentLayout } = await import(
+      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
+    );
     await expect(EnvironmentLayout({ environmentId: "env-1", session: mockSession })).rejects.toThrow(
       "common.project_permission_not_found"
     );

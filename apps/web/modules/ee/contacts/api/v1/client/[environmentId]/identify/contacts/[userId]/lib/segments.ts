@@ -11,14 +11,16 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
 
-const getSegments = reactCache((environmentId: string) =>
+export const getSegments = reactCache((environmentId: string) =>
   cache(
     async () => {
       try {
-        return prisma.segment.findMany({
+        const segments = await prisma.segment.findMany({
           where: { environmentId },
           select: { id: true, filters: true },
         });
+
+        return segments;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

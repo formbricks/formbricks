@@ -697,7 +697,7 @@ export const getResponseHiddenFields = (
   }
 };
 
-const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
+export const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
   const subsets: string[][] = [];
 
   // Helper function to generate permutations of an array

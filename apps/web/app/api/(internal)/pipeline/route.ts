@@ -1,4 +1,3 @@
-import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -11,7 +10,8 @@ import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
 import { sendResponseFinishedEmail } from "@/modules/email";
-import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
+import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
@@ -164,11 +164,15 @@ export const POST = async (request: Request) => {
       select: { email: true, locale: true },
     });
 
-    // send follow up emails
-    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
-
-    if (surveyFollowUpsPermission) {
-      await sendSurveyFollowUps(survey, response, organization);
+    if (survey.followUps?.length > 0) {
+      // send follow up emails
+      const followUpsResult = await sendFollowUpsForResponse(response.id);
+      if (!followUpsResult.ok) {
+        const { error: followUpsError } = followUpsResult;
+        if (followUpsError.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {
+          logger.error({ error: followUpsError }, `Failed to send follow-up emails for survey ${surveyId}`);
+        }
+      }
     }
 
     const emailPromises = usersWithNotifications.map((user) =>

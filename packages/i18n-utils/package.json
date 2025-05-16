@@ -30,7 +30,6 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "build": "tsc && vite build"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "vite": "6.3.5",
     "@formbricks/config-typescript": "workspace:*",

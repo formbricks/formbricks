@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";

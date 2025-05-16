@@ -20,7 +20,13 @@ export const getSurveysForEnvironmentState = reactCache(
           const surveysPrisma = await prisma.survey.findMany({
             where: {
               environmentId,
+              type: "app",
+              status: "inProgress",
             },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 30,
             select: {
               id: true,
               welcomeCard: true,

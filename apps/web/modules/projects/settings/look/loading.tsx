@@ -149,7 +149,7 @@ export const ProjectLookSettingsLoading = () => {
               <div className={cn("absolute bottom-3 h-16 w-16 rounded bg-slate-700 sm:right-3")}></div>
             </div>
           </div>
-          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed bg-slate-200 select-none">
+          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             {t("common.loading")}
           </Button>
         </div>
@@ -159,7 +159,7 @@ export const ProjectLookSettingsLoading = () => {
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <div className="w-full items-center">
-          <div className="pointer-events-none flex cursor-not-allowed items-center space-x-2 select-none">
+          <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
             <Label htmlFor="signature">{t("environments.project.look.show_powered_by_formbricks")}</Label>
           </div>

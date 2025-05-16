@@ -3,6 +3,7 @@ import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/respon
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
+import { symmetricDecrypt } from "@/lib/crypto";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -38,6 +39,13 @@ vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
   },
+}));
+
+vi.mock("@/lib/crypto", () => ({
+  symmetricDecrypt: vi.fn(),
+}));
+vi.mock("@/lib/constants", () => ({
+  ENCRYPTION_KEY: "test-key",
 }));
 
 const mockSurvey: TSurvey = {
@@ -205,5 +213,120 @@ describe("checkSurveyValidity", () => {
     const survey = { ...mockSurvey }; // Recaptcha disabled by default in mock
     const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
     expect(result).toBeNull();
+  });
+
+  test("should return badRequestResponse if singleUse is enabled and singleUseId is missing", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const result = await checkSurveyValidity(survey, "env-1", { ...mockResponseInput });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
+      surveyId: survey.id,
+      environmentId: "env-1",
+    });
+  });
+
+  test("should return badRequestResponse if singleUse is enabled and meta.url is missing", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: {},
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing or invalid URL in response metadata", {
+      surveyId: survey.id,
+      environmentId: "env-1",
+    });
+  });
+
+  test("should return badRequestResponse if meta.url is invalid", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url: "not-a-url" },
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Invalid URL in response metadata",
+      expect.objectContaining({ surveyId: survey.id, environmentId: "env-1" })
+    );
+  });
+
+  test("should return badRequestResponse if suId is missing from url", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const url = "https://example.com/?foo=bar";
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
+      surveyId: survey.id,
+      environmentId: "env-1",
+    });
+  });
+
+  test("should return badRequestResponse if isEncrypted and decrypted suId does not match singleUseId", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
+    const url = "https://example.com/?suId=encrypted-id";
+    vi.mocked(symmetricDecrypt).mockReturnValue("decrypted-id");
+    const resultEncryptedMismatch = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    });
+    expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");
+    expect(resultEncryptedMismatch).toBeInstanceOf(Response);
+    expect(resultEncryptedMismatch?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
+      surveyId: survey.id,
+      environmentId: "env-1",
+    });
+  });
+
+  test("should return badRequestResponse if not encrypted and suId does not match singleUseId", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const url = "https://example.com/?suId=su-2";
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
+      surveyId: survey.id,
+      environmentId: "env-1",
+    });
+  });
+
+  test("should return null if singleUse is enabled, not encrypted, and suId matches singleUseId", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const url = "https://example.com/?suId=su-1";
+    const result = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    });
+    expect(result).toBeNull();
+  });
+
+  test("should return null if singleUse is enabled, encrypted, and decrypted suId matches singleUseId", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
+    const url = "https://example.com/?suId=encrypted-id";
+    vi.mocked(symmetricDecrypt).mockReturnValue("su-1");
+    const _resultEncryptedMatch = await checkSurveyValidity(survey, "env-1", {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    });
+    expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");
+    expect(_resultEncryptedMatch).toBeNull();
   });
 });

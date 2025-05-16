@@ -29,7 +29,7 @@ jobs:
           node-version: 22.x
 
       - name: Install pnpm
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
@@ -48,7 +48,7 @@ jobs:
         run: |
           pnpm test:coverage
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@aa494459d7c39c106cc77b166de8b4250a32bb97
+        uses: SonarSource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
