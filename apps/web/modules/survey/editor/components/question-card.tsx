@@ -196,7 +196,9 @@ export const QuestionCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
 
-        <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
+        <button
+          className="opacity-0 hover:cursor-move group-hover:opacity-100"
+          aria-label="Drag to reorder question">
           <GripIcon className="h-4 w-4" />
         </button>
       </div>
@@ -215,14 +217,15 @@ export const QuestionCard = ({
           className={cn(
             open ? "" : " ",
             "flex cursor-pointer justify-between gap-4 rounded-r-lg p-4 hover:bg-slate-50"
-          )}>
+          )}
+          aria-label="Toggle question details">
           <div>
             <div className="flex grow">
               {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                 {QUESTIONS_ICON_MAP[question.type]}
               </div> */}
               <div className="flex grow flex-col justify-center" dir="auto">
-                <p className="text-sm font-semibold">
+                <h3 className="text-sm font-semibold">
                   {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
                     selectedLanguageCode
                   ]
@@ -232,7 +235,7 @@ export const QuestionCard = ({
                         ] ?? ""
                       )
                     : getTSurveyQuestionTypeEnumName(question.type, t)}
-                </p>
+                </h3>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
                     {question?.required
@@ -272,7 +275,7 @@ export const QuestionCard = ({
             TSurveyQuestionTypeEnum.Ranking,
             TSurveyQuestionTypeEnum.Matrix,
           ].includes(question.type) ? (
-            <Alert variant="warning" size="small" className="w-fill">
+            <Alert variant="warning" size="small" className="w-fill" role="alert">
               <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => onAlertTrigger()}>{t("common.learn_more")}</AlertButton>
             </Alert>
@@ -457,7 +460,9 @@ export const QuestionCard = ({
           ) : null}
           <div className="mt-4">
             <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-              <Collapsible.CollapsibleTrigger className="flex items-center text-sm text-slate-700">
+              <Collapsible.CollapsibleTrigger
+                className="flex items-center text-sm text-slate-700"
+                aria-label="Toggle advanced settings">
                 {openAdvanced ? (
                   <ChevronDownIcon className="mr-1 h-4 w-3" />
                 ) : (
