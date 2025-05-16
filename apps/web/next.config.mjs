@@ -26,11 +26,6 @@ const nextConfig = {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
-  i18n: {
-    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
-    localeDetection: false,
-    defaultLocale: "en-US",
-  },
   experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
