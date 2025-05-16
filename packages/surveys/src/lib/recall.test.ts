@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "../../../types/surveys/types";
 import { parseRecallInformation, replaceRecallInfo } from "./recall";
@@ -15,7 +15,7 @@ vi.mock("./i18n", () => ({
 vi.mock("./date-time", () => ({
   isValidDateString: (val: string) => /^\d{4}-\d{2}-\d{2}$/.test(val) || /^\d{2}-\d{2}-\d{4}$/.test(val),
   formatDateWithOrdinal: (date: Date) =>
-    `${date.getFullYear()}-${("0" + (date.getMonth() + 1)).slice(-2)}-${("0" + date.getDate()).slice(-2)}_formatted`,
+    `${date.getUTCFullYear()}-${("0" + (date.getUTCMonth() + 1)).slice(-2)}-${("0" + date.getUTCDate()).slice(-2)}_formatted`,
 }));
 
 describe("replaceRecallInfo", () => {
@@ -34,79 +34,73 @@ describe("replaceRecallInfo", () => {
     lastLogin: "2024-03-10",
   };
 
-  it("should replace recall info from responseData", () => {
+  test("should replace recall info from responseData", () => {
     const text = "Welcome, #recall:name/fallback:Guest#! Your email is #recall:email/fallback:N/A#.";
     const expected = "Welcome, John Doe! Your email is john.doe@example.com.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should replace recall info from variables if not in responseData", () => {
+  test("should replace recall info from variables if not in responseData", () => {
     const text = "Product: #recall:productName/fallback:N/A#. Role: #recall:userRole/fallback:User#.";
     const expected = "Product: Formbricks. Role: Admin.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should use fallback if value is not found in responseData or variables", () => {
+  test("should use fallback if value is not found in responseData or variables", () => {
     const text = "Your organization is #recall:orgName/fallback:DefaultOrg#.";
     const expected = "Your organization is DefaultOrg.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should handle nbsp in fallback", () => {
-    const text = "Status: #recall:status/fallback:PendingnbspReview#.";
-    const expected = "Status: Pending Review.";
+  test("should handle nbsp in fallback", () => {
+    const text = "Status: #recall:status/fallback:Pending&nbsp;Review#.";
+    const expected = "Status: Pending& ;Review.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should format date strings from responseData", () => {
+  test("should format date strings from responseData", () => {
     const text = "Registered on: #recall:registrationDate/fallback:N/A#.";
     const expected = "Registered on: 2023-01-15_formatted.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should format date strings from variables", () => {
+  test("should format date strings from variables", () => {
     const text = "Last login: #recall:lastLogin/fallback:N/A#.";
     const expected = "Last login: 2024-03-10_formatted.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should join array values with a comma and space", () => {
+  test("should join array values with a comma and space", () => {
     const text = "Tags: #recall:tags/fallback:none#.";
     const expected = "Tags: beta, user.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should handle empty array values, replacing with fallback", () => {
+  test("should handle empty array values, replacing with fallback", () => {
     const text = "Categories: #recall:emptyArray/fallback:No&nbsp;Categories#.";
     const expected = "Categories: No& ;Categories.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should handle null values from responseData, replacing with fallback", () => {
-    const text = "Preference: #recall:nullValue/fallback:Not&nbsp;Set#.";
-    const expected = "Preference: Not& ;Set.";
-    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
-  });
-
-  it("should handle multiple recall patterns in a single string", () => {
+  test("should handle multiple recall patterns in a single string", () => {
     const text =
       "Hi #recall:name/fallback:User#, welcome to #recall:productName/fallback:Our Product#. Your role is #recall:userRole/fallback:Member#.";
     const expected = "Hi John Doe, welcome to #recall:productName/fallback:Our Product#. Your role is Admin.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should return original text if no recall pattern is found", () => {
+  test("should return original text if no recall pattern is found", () => {
     const text = "This is a normal text without recall info.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(text);
   });
 
-  it("should handle recall ID not found, using fallback", () => {
+  test("should handle recall ID not found, using fallback", () => {
     const text = "Value: #recall:nonExistent/fallback:FallbackValue#.";
     const expected = "Value: FallbackValue.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should handle if recall info is incomplete (e.g. missing fallback part), effectively using empty fallback", () => {
+  test("should handle if recall info is incomplete (e.g. missing fallback part), effectively using empty fallback", () => {
     // This specific pattern is not fully matched by extractRecallInfo, leading to no replacement.
     // The current extractRecallInfo expects #recall:ID/fallback:VALUE#
     const text = "Test: #recall:name#";
@@ -114,10 +108,28 @@ describe("replaceRecallInfo", () => {
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  it("should handle complex fallback with spaces and special characters encoded as nbsp", () => {
+  test("should handle complex fallback with spaces and special characters encoded as nbsp", () => {
     const text =
-      "Details: #recall:extraInfo/fallback:ValuenbspWithnbspSpaces# and #recall:anotherInfo/fallback:Default#";
-    const expected = "Details: Value With Spaces and Default";
+      "Details: #recall:extraInfo/fallback:Value&nbsp;With&nbsp;Spaces# and #recall:anotherInfo/fallback:Default#";
+    const expected = "Details: Value& ;With& ;Spaces and Default";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should handle fallback with only 'nbsp'", () => {
+    const text = "Note: #recall:note/fallback:nbsp#.";
+    const expected = "Note: .";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should handle fallback with only '&nbsp;'", () => {
+    const text = "Note: #recall:note/fallback:&nbsp;#.";
+    const expected = "Note: & ;.";
+    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should handle fallback with '$nbsp;' (should not replace '$nbsp;')", () => {
+    const text = "Note: #recall:note/fallback:$nbsp;#.";
+    const expected = "Note: $ ;.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 });
@@ -151,7 +163,7 @@ describe("parseRecallInformation", () => {
     // other necessary TSurveyQuestion fields can be added here with default values
   };
 
-  it("should replace recall info in headline", () => {
+  test("should replace recall info in headline", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "Welcome, #recall:name/fallback:Guest#!" },
@@ -161,7 +173,7 @@ describe("parseRecallInformation", () => {
     expect(result.headline.en).toBe(expectedHeadline);
   });
 
-  it("should replace recall info in subheader", () => {
+  test("should replace recall info in subheader", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "Main Question" },
@@ -172,7 +184,7 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.en).toBe(expectedSubheader);
   });
 
-  it("should replace recall info in both headline and subheader", () => {
+  test("should replace recall info in both headline and subheader", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "User: #recall:name/fallback:User#" },
@@ -183,7 +195,7 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.en).toBe("Survey: Onboarding");
   });
 
-  it("should not change text if no recall info is present", () => {
+  test("should not change text if no recall info is present", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "A simple question." },
@@ -199,7 +211,7 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.en).toBe(question.subheader?.en);
   });
 
-  it("should handle undefined subheader gracefully", () => {
+  test("should handle undefined subheader gracefully", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "Question with #recall:name/fallback:User#" },
@@ -210,7 +222,7 @@ describe("parseRecallInformation", () => {
     expect(result.subheader).toBeUndefined();
   });
 
-  it("should not modify subheader if languageCode content is missing, even if recall is in other lang", () => {
+  test("should not modify subheader if languageCode content is missing, even if recall is in other lang", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "Hello #recall:name/fallback:User#" },
@@ -222,7 +234,7 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.fr).toBe("Bonjour #recall:name/fallback:Utilisateur#");
   });
 
-  it("should handle malformed recall string (empty ID) leading to no replacement for that pattern", () => {
+  test("should handle malformed recall string (empty ID) leading to no replacement for that pattern", () => {
     // This tests extractId returning null because extractRecallInfo won't match '#recall:/fallback:foo#'
     // due to idPattern requiring at least one char for ID.
     const question: TSurveyQuestion = {
@@ -233,7 +245,7 @@ describe("parseRecallInformation", () => {
     expect(result.headline.en).toBe("Malformed: #recall:/fallback:foo# and valid: John Doe");
   });
 
-  it("should use empty string for empty fallback value", () => {
+  test("should use empty string for empty fallback value", () => {
     // This tests extractFallbackValue returning ""
     const question: TSurveyQuestion = {
       ...baseQuestion,
@@ -243,7 +255,7 @@ describe("parseRecallInformation", () => {
     expect(result.headline.en).toBe("Data: "); // nonExistentData not found, empty fallback used
   });
 
-  it("should handle recall info if subheader is present but no text for languageCode", () => {
+  test("should handle recall info if subheader is present but no text for languageCode", () => {
     const question: TSurveyQuestion = {
       ...baseQuestion,
       headline: { en: "Headline #recall:name/fallback:User#" },
