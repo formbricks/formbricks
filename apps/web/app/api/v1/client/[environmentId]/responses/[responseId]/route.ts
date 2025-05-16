@@ -57,6 +57,10 @@ export const PUT = async (
     return handleDatabaseError(error, request.url, endpoint, responseId);
   }
 
+  if (response.finished) {
+    return responses.badRequestResponse("Response is already finished", undefined, true);
+  }
+
   // get survey to get environmentId
   let survey;
   try {
