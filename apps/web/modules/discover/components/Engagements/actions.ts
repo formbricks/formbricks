@@ -2,6 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { TExtendedSurvey, TSurveyCreator } from "@/modules/discover/types/survey";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { TResponse } from "@formbricks/types/responses";
@@ -11,13 +12,27 @@ const ZGetAvailableSurveysAction = z.object({
   skip: z.number(),
   searchQuery: z.string().optional(),
   creatorId: z.string().optional(),
+  sortBy: z.string().optional(),
 });
+
+const buildOrderByClause = (sortBy?: string): Prisma.SurveyOrderByWithRelationInput => {
+  const orderMapping: { [key: string]: Prisma.SurveyOrderByWithRelationInput } = {
+    name: { name: "asc" },
+    createdAt: { createdAt: "desc" },
+    updatedAt: { updatedAt: "desc" },
+  };
+
+  return sortBy ? orderMapping[sortBy] || { updatedAt: "desc" } : { updatedAt: "desc" };
+};
 
 export const getCompletedSurveysAction = authenticatedActionClient
   .schema(ZGetAvailableSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     const searchQuery = parsedInput.searchQuery;
     const creatorId = parsedInput.creatorId;
+    const sortBy = parsedInput.sortBy || "updatedAt";
+    const orderBy = buildOrderByClause(sortBy);
+
     const surveysPrisma = await prisma.survey.findMany({
       where: {
         ...(creatorId
@@ -72,6 +87,7 @@ export const getCompletedSurveysAction = authenticatedActionClient
           },
         },
       },
+      orderBy,
       take: parsedInput.take,
       skip: parsedInput.skip,
     });
@@ -139,6 +155,8 @@ export const getAvailableSurveysAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const searchQuery = parsedInput.searchQuery;
     const creatorId = parsedInput.creatorId;
+    const sortBy = parsedInput.sortBy || "updatedAt";
+    const orderBy = buildOrderByClause(sortBy);
     const surveysPrisma = await prisma.survey.findMany({
       where: {
         public: true,
@@ -187,6 +205,7 @@ export const getAvailableSurveysAction = authenticatedActionClient
           },
         },
       },
+      orderBy,
       take: parsedInput.take,
       skip: parsedInput.skip,
     });

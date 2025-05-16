@@ -13,18 +13,20 @@ interface DiscoverClientProps {
 
 export function DiscoverClient({ translatedTitle, communityId }: DiscoverClientProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("updatedAt");
 
   return (
     <PageContentWrapper>
       <PageHeader
         pageTitle={translatedTitle}
-        cta={
-          <div className="w-72">
-            <SearchSection setSearchQuery={setSearchQuery} />
-          </div>
-        }
+        cta={<SearchSection setSearchQuery={setSearchQuery} sortBy={sortBy} setSortBy={setSortBy} />}
       />
-      <Engagements communityId={communityId} searchQuery={searchQuery} />
+      <Engagements
+        communityId={communityId}
+        searchQuery={searchQuery}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
     </PageContentWrapper>
   );
 }

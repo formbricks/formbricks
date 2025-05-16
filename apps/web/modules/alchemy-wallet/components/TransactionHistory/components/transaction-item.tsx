@@ -104,13 +104,13 @@ export function TransactionItem({ isFromSelf, isToSelf, transfer }: TransactionI
           {transactionUIData.icon}
         </div>
         <div className="flex flex-1 flex-col gap-1">
-          <div className="flex flex-1 flex-row justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:gap-4">
             <p className="text-sm font-semibold">{transactionUIData.actionText}</p>
-            <span className={`text-sm font-normal ${transactionUIData.color}`}>
+            <span className={`text-sm font-normal ${transactionUIData.color} mt-1 sm:mt-0`}>
               {transactionUIData.amountText}
             </span>
           </div>
-          <div className="flex flex-1 flex-row justify-between gap-4">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:gap-4">
             <span className="text-xs">{transactionUIData.tag}</span>
             <span className="text-xs">
               {transfer.timestamp ? formatDateWithOrdinal(new Date(transfer.timestamp)) : "N/A"}

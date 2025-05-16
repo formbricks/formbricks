@@ -15,7 +15,7 @@ import { PlusIcon, SendIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { isMobile } from "react-device-detect";
 import { cn } from "@formbricks/lib/cn";
-import { useBlockscoutApi } from "@formbricks/web3";
+import { formatAddress, useBlockscoutApi } from "@formbricks/web3";
 
 export function WalletTokenBalances({ className = "" }: { className?: string }) {
   const { t } = useTranslate();
@@ -44,6 +44,38 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
     let interval = setInterval(fetchBalances, 60000);
     return () => clearInterval(interval);
   }, [blockscoutApi, address]);
+
+  const MobileTokenBalanceCard = ({ balance }: { balance: TokenBalance }) => (
+    <div className="mb-3 rounded-lg border border-slate-200 p-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="max-w-[100px] truncate font-medium">{balance.token.name}</div>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSelectedBalance(balance);
+            openSendModal();
+          }}
+          className="flex flex-nowrap items-center gap-1 px-2 py-1 text-xs">
+          <SendIcon className="h-3 w-3" strokeWidth={2} />
+          {t("common.withdraw")}
+        </Button>
+      </div>
+
+      <div className="mt-2 flex flex-col gap-1 text-sm">
+        <div className="flex justify-between gap-1">
+          <span className="text-slate-500">{t("common.address")}:</span>
+          <Address address={formatAddress(balance.token.address, 3)} />
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-500">{t("common.value")}:</span>
+          <span>{formatUnits(balance.value, parseInt(balance.token.decimals, 10))}</span>
+        </div>
+      </div>
+    </div>
+  );
 
   if (!balances) {
     return (
@@ -130,7 +162,13 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
             <PlusIcon className="h-4 w-4" strokeWidth={2} />
           </Button>
         </div>
-        <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
+
+        <div className="md:hidden">
+          {balances.map((balance) => (
+            <MobileTokenBalanceCard key={balance.token.address} balance={balance} />
+          ))}
+        </div>
+        <Table className="hidden md:table md:w-full" style={{ tableLayout: "fixed" }} id="response-table">
           <TableHeader className="pointer-events-auto">
             <TableRow>
               <TableHead>{t("common.token")}</TableHead>

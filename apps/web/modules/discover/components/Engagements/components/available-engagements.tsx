@@ -9,11 +9,13 @@ import React, { useEffect, useState } from "react";
 interface AvailableEngagementsProps {
   searchQuery: string;
   creatorId?: string;
+  sortBy?: string;
 }
 
 export function AvailableEngagements({
   searchQuery,
   creatorId,
+  sortBy = "updatedAt",
 }: AvailableEngagementsProps): React.JSX.Element {
   const [availableEngagements, setAvailableEngagements] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,8 +27,9 @@ export function AvailableEngagements({
         const availableEngagements = await getAvailableSurveysAction({
           take: 10,
           skip: 0,
-          searchQuery: searchQuery,
-          creatorId: creatorId,
+          searchQuery,
+          creatorId,
+          sortBy,
         });
 
         if (availableEngagements?.data) {
@@ -38,7 +41,7 @@ export function AvailableEngagements({
         setIsLoading(false);
       }
     })();
-  }, [searchQuery, creatorId]);
+  }, [searchQuery, creatorId, sortBy]);
 
   if (isLoading) {
     return (

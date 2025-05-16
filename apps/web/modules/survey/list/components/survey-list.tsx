@@ -11,6 +11,7 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage"
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
+import { MobileSurveyCard } from "./mobile-survey-card";
 import { SurveyCard } from "./survey-card";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
@@ -21,6 +22,7 @@ interface SurveysListProps {
   userId: string;
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
+  isMobile?: boolean;
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -37,6 +39,7 @@ export const SurveysList = ({
   userId,
   surveysPerPage: surveysLimit,
   currentProjectChannel,
+  isMobile = false,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -135,15 +138,29 @@ export const SurveysList = ({
       {surveys.length > 0 ? (
         <div>
           <div className="flex-col space-y-3" ref={parent}>
-            <div className="mt-6 grid w-full grid-cols-7 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
-              <div className="col-span-2 place-self-start">Name</div>
-              <div className="col-span-1">{t("common.status")}</div>
-              <div className="col-span-1">{t("common.responses")}</div>
-              <div className="col-span-1">{t("common.type")}</div>
-              <div className="col-span-1">{t("common.created_at")}</div>
-              <div className="col-span-1">{t("common.updated_at")}</div>
-            </div>
+            {!isMobile && (
+              <div className="mt-6 grid w-full grid-cols-7 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
+                <div className="col-span-2 place-self-start">Name</div>
+                <div className="col-span-1">{t("common.status")}</div>
+                <div className="col-span-1">{t("common.responses")}</div>
+                <div className="col-span-1">{t("common.type")}</div>
+                <div className="col-span-1">{t("common.created_at")}</div>
+                <div className="col-span-1">{t("common.updated_at")}</div>
+              </div>
+            )}
             {surveys.map((survey) => {
+              if (isMobile) {
+                return (
+                  <MobileSurveyCard
+                    key={survey.id}
+                    survey={survey}
+                    environmentId={environmentId}
+                    surveyDomain={surveyDomain}
+                    duplicateSurvey={handleDuplicateSurvey}
+                    deleteSurvey={handleDeleteSurvey}
+                  />
+                );
+              }
               return (
                 <SurveyCard
                   key={survey.id}

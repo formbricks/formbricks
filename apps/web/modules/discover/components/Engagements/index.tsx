@@ -3,7 +3,6 @@
 import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
 import { AvailableEngagements } from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
-// import { SearchSection } from "@/modules/discover/components/common/search-section";
 import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
@@ -12,15 +11,17 @@ import { cn } from "@formbricks/lib/cn";
 
 interface EngagementsProps {
   searchQuery: string;
-  // setSearchQuery: (query: string) => void;
   communityId?: string;
   className?: string;
+  sortBy?: string;
+  setSortBy?: (sortBy: string) => void;
 }
 
 export function Engagements({
   searchQuery,
   communityId,
   className = "",
+  sortBy = "updatedAt",
 }: EngagementsProps): React.JSX.Element {
   const tabs = [
     {
@@ -80,17 +81,22 @@ export function Engagements({
           {(() => {
             switch (activeTab) {
               case "available-surveys":
-                return <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} />;
+                return (
+                  <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} sortBy={sortBy} />
+                );
               case "completed-surveys":
                 return (
                   <CompletedSurveys
                     searchQuery={searchQuery}
                     setActiveTab={setActiveTab}
                     creatorId={communityId}
+                    sortBy={sortBy}
                   />
                 );
               default:
-                return <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} />;
+                return (
+                  <AvailableEngagements searchQuery={searchQuery} creatorId={communityId} sortBy={sortBy} />
+                );
             }
           })()}
         </div>
