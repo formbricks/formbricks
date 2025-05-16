@@ -181,7 +181,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator('input[name="subheader"]').fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
-  await page.locator("p").filter({ hasText: params.openTextQuestion.question }).click();
+  await page.locator("h3").filter({ hasText: params.openTextQuestion.question }).click();
 
   // Single Select Question
   await page
@@ -403,7 +403,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator('input[name="subheader"]').fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
-  await page.locator("p").filter({ hasText: params.openTextQuestion.question }).click();
+  await page.locator("h3").filter({ hasText: params.openTextQuestion.question }).click();
 
   // Single Select Question
   await page
