@@ -1,6 +1,7 @@
 import React from "react";
 
 function FilterButton({
+  // NOSONAR // read-only is not used in the project
   icon,
   label,
   onClick,

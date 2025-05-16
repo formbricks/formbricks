@@ -18,6 +18,7 @@ interface AttributeTabContentProps {
 
 // Helper component to render a FilterButton with common handlers
 function FilterButtonWithHandler({
+  // NOSONAR // read-only is not used in the project
   dataTestId,
   icon,
   label,
@@ -70,6 +71,7 @@ function FilterButtonWithHandler({
 }
 
 function AttributeTabContent({
+  // NOSONAR // read-only is not used in the project
   contactAttributeKeys,
   onAddFilter,
   setOpen,
