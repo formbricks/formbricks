@@ -4,7 +4,6 @@ import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surv
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -27,6 +26,7 @@ import {
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
@@ -200,11 +200,10 @@ export const ResponseTable = ({
         link.click();
         document.body.removeChild(link);
       } else {
-        const errorMessage = getFormattedErrorMessage(downloadResponse);
-        toast.error(errorMessage || t("environments.surveys.responses.error_downloading_responses"));
+        toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }
     } catch (error) {
-      console.error(error);
+      Sentry.captureException(error);
       toast.error(t("environments.surveys.responses.error_downloading_responses"));
     }
   };
@@ -222,10 +221,10 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRows={deleteResponses}
+          deleteRowsAction={deleteResponses}
           type="response"
           deleteAction={deleteResponse}
-          downloadRows={downloadSelectedRows}
+          downloadRowsAction={downloadSelectedRows}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

@@ -17,18 +17,18 @@ import { toast } from "react-hot-toast";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
-  deleteRows: (rowId: string[]) => void;
+  deleteRowsAction: (rowId: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  downloadRows?: (rowIds: string[], format: string) => void;
+  downloadRowsAction?: (rowIds: string[], format: string) => void;
 }
 
 export const SelectedRowSettings = <T,>({
   table,
-  deleteRows,
+  deleteRowsAction,
   type,
   deleteAction,
-  downloadRows,
+  downloadRowsAction,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,10 +50,10 @@ export const SelectedRowSettings = <T,>({
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
       if (type === "response" || type === "contact") {
-        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
+        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
       }
 
-      deleteRows(rowsToBeDeleted);
+      deleteRowsAction(rowsToBeDeleted);
       toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));
     } catch (error) {
       if (error instanceof Error) {
@@ -74,8 +74,8 @@ export const SelectedRowSettings = <T,>({
   // Handle download selected rows
   const handleDownloadSelectedRows = async (format: string) => {
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
-    if (downloadRows && rowsToDownload.length > 0) {
-      downloadRows(rowsToDownload, format);
+    if (downloadRowsAction && rowsToDownload.length > 0) {
+      downloadRowsAction(rowsToDownload, format);
     }
   };
 
@@ -105,7 +105,7 @@ export const SelectedRowSettings = <T,>({
           {t("common.clear_selection")}
         </Button>
         <Separator />
-        {downloadRows && (
+        {downloadRowsAction && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">

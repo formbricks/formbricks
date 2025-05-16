@@ -71,8 +71,8 @@ vi.mock("@/modules/ui/components/data-table", () => ({
     ) : null,
   DataTableToolbar: ({
     table,
-    deleteRows,
-    downloadRows,
+    deleteRowsAction,
+    downloadRowsAction,
     setIsTableSettingsModalOpen,
     setIsExpanded,
     isExpanded,
@@ -86,17 +86,17 @@ vi.mock("@/modules/ui/components/data-table", () => ({
       </button>
       <button
         data-testid="delete-rows"
-        onClick={() => deleteRows(Object.keys(table.getState().rowSelection))}>
+        onClick={() => deleteRowsAction(Object.keys(table.getState().rowSelection))}>
         Delete Selected
       </button>
       <button
         data-testid="download-csv"
-        onClick={() => downloadRows(Object.keys(table.getState().rowSelection), "csv")}>
+        onClick={() => downloadRowsAction(Object.keys(table.getState().rowSelection), "csv")}>
         Download CSV
       </button>
       <button
         data-testid="download-xlsx"
-        onClick={() => downloadRows(Object.keys(table.getState().rowSelection), "xlsx")}>
+        onClick={() => downloadRowsAction(Object.keys(table.getState().rowSelection), "xlsx")}>
         Download XLSX
       </button>
     </div>
@@ -391,8 +391,7 @@ describe("ResponseTable", () => {
 
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
-      expect(getFormattedErrorMessage).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith(errorMsg);
+      expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
     });
   });
 
@@ -415,7 +414,6 @@ describe("ResponseTable", () => {
 
   test("shows error toast when download action throws exception", async () => {
     vi.mocked(getResponsesDownloadUrlAction).mockRejectedValueOnce(new Error("Network error"));
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
@@ -425,10 +423,7 @@ describe("ResponseTable", () => {
     await waitFor(() => {
       expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
-      expect(consoleErrorSpy).toHaveBeenCalled();
     });
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("does not create download link when download action fails", async () => {

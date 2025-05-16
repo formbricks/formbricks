@@ -30,18 +30,18 @@ vi.mock("@/modules/ui/components/button", () => ({
 describe("SelectedRowSettings", () => {
   const rows = [{ id: "r1" }, { id: "r2" }];
   let table: any;
-  let deleteRows: ReturnType<typeof vi.fn>;
+  let deleteRowsAction: ReturnType<typeof vi.fn>;
   let deleteAction: ReturnType<typeof vi.fn>;
-  let downloadRows: ReturnType<typeof vi.fn>;
+  let downloadRowsAction: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     table = {
       getFilteredSelectedRowModel: () => ({ rows }),
       toggleAllPageRowsSelected: vi.fn(),
     };
-    deleteRows = vi.fn();
+    deleteRowsAction = vi.fn();
     deleteAction = vi.fn(() => Promise.resolve());
-    downloadRows = vi.fn();
+    downloadRowsAction = vi.fn();
 
     // Reset all toast mocks before each test
     vi.mocked(toast.error).mockClear();
@@ -57,9 +57,9 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="contact"
       />
     );
@@ -76,7 +76,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
         type="response"
       />
@@ -88,19 +88,19 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="response"
       />
     );
     fireEvent.click(screen.getByText("common.download"));
     fireEvent.click(screen.getByText("environments.surveys.summary.selected_responses_csv"));
-    expect(downloadRows).toHaveBeenCalledWith(["r1", "r2"], "csv");
+    expect(downloadRowsAction).toHaveBeenCalledWith(["r1", "r2"], "csv");
 
     fireEvent.click(screen.getByText("common.download"));
     fireEvent.click(screen.getByText("environments.surveys.summary.selected_responses_excel"));
-    expect(downloadRows).toHaveBeenCalledWith(["r1", "r2"], "xlsx");
+    expect(downloadRowsAction).toHaveBeenCalledWith(["r1", "r2"], "xlsx");
   });
 
   test("deletes rows successfully and shows success toast for contact", async () => {
@@ -108,9 +108,9 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="contact"
       />
     );
@@ -119,7 +119,7 @@ describe("SelectedRowSettings", () => {
     fireEvent.click(screen.getByText("Confirm Delete"));
     await waitFor(() => {
       expect(deleteAction).toHaveBeenCalledTimes(2);
-      expect(deleteRows).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
       expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
     });
   });
@@ -129,9 +129,9 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="response"
       />
     );
@@ -149,9 +149,9 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="response"
       />
     );
@@ -160,7 +160,7 @@ describe("SelectedRowSettings", () => {
     fireEvent.click(screen.getByText("Confirm Delete"));
     await waitFor(() => {
       expect(deleteAction).toHaveBeenCalledTimes(2);
-      expect(deleteRows).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
       expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
     });
   });
@@ -170,9 +170,9 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRows={deleteRows}
+        deleteRowsAction={deleteRowsAction}
         deleteAction={deleteAction}
-        downloadRows={downloadRows}
+        downloadRowsAction={downloadRowsAction}
         type="contact"
       />
     );

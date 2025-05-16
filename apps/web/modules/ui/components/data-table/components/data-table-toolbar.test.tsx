@@ -48,9 +48,9 @@ const mockTable = {
   getFilteredSelectedRowModel: vi.fn(() => ({ rows: [] })),
 } as any;
 
-const mockDeleteRows = vi.fn();
+const mockDeleteRowsAction = vi.fn();
 const mockDeleteAction = vi.fn();
-const mockDownloadRows = vi.fn();
+const mockDownloadRowsAction = vi.fn();
 const mockRefreshContacts = vi.fn();
 const mockSetIsExpanded = vi.fn();
 const mockSetIsTableSettingsModalOpen = vi.fn();
@@ -60,10 +60,10 @@ const defaultProps = {
   setIsTableSettingsModalOpen: mockSetIsTableSettingsModalOpen,
   isExpanded: false,
   table: mockTable,
-  deleteRows: mockDeleteRows,
+  deleteRowsAction: mockDeleteRowsAction,
   type: "response" as "response" | "contact",
   deleteAction: mockDeleteAction,
-  downloadRows: mockDownloadRows,
+  downloadRowAction: mockDownloadRowsAction,
   refreshContacts: mockRefreshContacts,
 };
 
