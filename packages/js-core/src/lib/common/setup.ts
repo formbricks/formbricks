@@ -193,6 +193,8 @@ export const setup = async (
 
         if (environmentStateResponse.ok) {
           environmentState = environmentStateResponse.data;
+          const backendSurveys = environmentState.data.surveys;
+          logger.debug(`Fetched ${backendSurveys.length.toString()} surveys from the backend`);
         } else {
           logger.error(
             `Error fetching environment state: ${environmentStateResponse.error.code} - ${environmentStateResponse.error.responseMessage ?? ""}`
@@ -247,6 +249,7 @@ export const setup = async (
 
       // filter the environment state wrt the person state
       const filteredSurveys = filterSurveys(environmentState, userState);
+      logger.debug(`${filteredSurveys.length.toString()} surveys could be shown to current user on trigger.`);
 
       // update the appConfig with the new filtered surveys and person state
       config.update({
@@ -256,8 +259,8 @@ export const setup = async (
         filteredSurveys,
       });
 
-      const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+      // const surveyNames = filteredSurveys.map((s) => s.name);
+      // logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -283,6 +286,9 @@ export const setup = async (
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
+      const backendSurveys = environmentStateResponse.data.data.surveys;
+      logger.debug(`Fetched ${backendSurveys.length.toString()} surveys from the backend`);
+
       if ("userId" in configInput && configInput.userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
@@ -304,6 +310,7 @@ export const setup = async (
 
       const environmentState = environmentStateResponse.data;
       const filteredSurveys = filterSurveys(environmentState, userState);
+      logger.debug(`${filteredSurveys.length.toString()} surveys could be shown to current user on trigger.`);
 
       config.update({
         appUrl: configInput.appUrl,
