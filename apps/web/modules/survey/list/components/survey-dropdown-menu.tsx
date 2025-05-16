@@ -129,8 +129,7 @@ export const SurveyDropDownMenu = ({
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
-      data-testid="survey-dropdown-menu"
-      onClick={(e) => e.stopPropagation()}>
+      data-testid="survey-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
           <div
@@ -172,27 +171,25 @@ export const SurveyDropDownMenu = ({
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (
-              <>
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    disabled={loading}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      setIsCopyFormOpen(true);
-                    }}>
-                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                    {t("common.copy")}...
-                  </button>
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  className="flex w-full items-center"
+                  disabled={loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
+                    setIsCopyFormOpen(true);
+                  }}>
+                  <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                  {t("common.copy")}...
+                </button>
+              </DropdownMenuItem>
             )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
-                  <div
+                  <button
                     className="flex w-full cursor-pointer items-center"
                     onClick={async (e) => {
                       e.preventDefault();
@@ -205,7 +202,7 @@ export const SurveyDropDownMenu = ({
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
                     {t("common.preview_survey")}
-                  </div>
+                  </button>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button

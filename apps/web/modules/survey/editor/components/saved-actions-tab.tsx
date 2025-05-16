@@ -69,9 +69,9 @@ export const SavedActionsTab = ({
                 </h2>
                 <div className="flex flex-col gap-2">
                   {actions.map((action) => (
-                    <div
+                    <button
                       key={action.id}
-                      className="cursor-pointer rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-100"
+                      className="flex cursor-pointer flex-col items-start rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-100"
                       onClick={() => handleActionClick(action)}>
                       <div className="mt-1 flex items-center">
                         <div className="mr-1.5 h-4 w-4 text-slate-600">
@@ -80,7 +80,7 @@ export const SavedActionsTab = ({
                         <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
                       <p className="mt-1 text-xs text-slate-500">{action.description}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

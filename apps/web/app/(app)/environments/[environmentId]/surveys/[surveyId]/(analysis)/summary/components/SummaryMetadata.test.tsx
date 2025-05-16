@@ -11,7 +11,11 @@ vi.mock("lucide-react", () => ({
 vi.mock("@/modules/ui/components/tooltip", () => ({
   TooltipProvider: ({ children }) => <>{children}</>,
   Tooltip: ({ children }) => <>{children}</>,
-  TooltipTrigger: ({ children }) => <>{children}</>,
+  TooltipTrigger: ({ children, onClick }) => (
+    <button tabIndex={0} onClick={onClick} style={{ display: "inline-block" }}>
+      {children}
+    </button>
+  ),
   TooltipContent: ({ children }) => <>{children}</>,
 }));
 
@@ -67,8 +71,10 @@ describe("SummaryMetadata", () => {
     expect(screen.getByText("25%")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("1m 5.00s")).toBeInTheDocument();
-    const btn = screen.getByRole("button");
-    expect(screen.queryByTestId("down")).toBeInTheDocument();
+    const btn = screen
+      .getAllByRole("button")
+      .find((el) => el.textContent?.includes("environments.surveys.summary.drop_offs"));
+    if (!btn) throw new Error("DropOffs toggle button not found");
     await userEvent.click(btn);
     expect(screen.queryByTestId("up")).toBeInTheDocument();
   });
@@ -101,8 +107,10 @@ describe("SummaryMetadata", () => {
     };
     render(<Wrapper />);
     expect(screen.getAllByText("-")).toHaveLength(1);
-    const btn = screen.getByRole("button");
-    expect(screen.queryByTestId("down")).toBeInTheDocument();
+    const btn = screen
+      .getAllByRole("button")
+      .find((el) => el.textContent?.includes("environments.surveys.summary.drop_offs"));
+    if (!btn) throw new Error("DropOffs toggle button not found");
     await userEvent.click(btn);
     expect(screen.queryByTestId("up")).toBeInTheDocument();
   });

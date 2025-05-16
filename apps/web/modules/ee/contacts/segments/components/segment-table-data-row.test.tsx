@@ -69,7 +69,7 @@ describe("SegmentTableDataRow", () => {
       />
     );
 
-    const row = screen.getByText(mockCurrentSegment.title).closest("div.grid");
+    const row = screen.getByText(mockCurrentSegment.title).closest("button.grid");
     expect(row).toBeInTheDocument();
 
     // Initially modal should not be called with open: true
@@ -117,7 +117,7 @@ describe("SegmentTableDataRow", () => {
       undefined // Expect undefined as the second argument
     );
 
-    const row = screen.getByText(mockCurrentSegment.title).closest("div.grid");
+    const row = screen.getByText(mockCurrentSegment.title).closest("button.grid");
     await user.click(row!);
 
     // Check second call (open: true)
@@ -129,5 +129,24 @@ describe("SegmentTableDataRow", () => {
       }),
       undefined // Expect undefined as the second argument
     );
+  });
+
+  test("has focus styling for keyboard navigation", async () => {
+    const user = userEvent.setup();
+    render(
+      <SegmentTableDataRow
+        currentSegment={mockCurrentSegment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        isContactsEnabled={mockIsContactsEnabled}
+        isReadOnly={mockIsReadOnly}
+      />
+    );
+
+    const row = screen.getByText(mockCurrentSegment.title).closest("button.grid");
+    expect(row).toBeInTheDocument();
+
+    await user.tab();
+    expect(document.activeElement).toBe(row);
   });
 });

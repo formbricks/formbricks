@@ -1,16 +1,8 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SelectedRowSettings } from "./selected-row-settings";
-
-// Mock the toast functions directly since they're causing issues
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
 
 // Instead of mocking @radix-ui/react-dialog, we'll test the component's behavior
 // by checking if the appropriate actions are performed after clicking the buttons
@@ -134,7 +126,7 @@ describe("SelectedRowSettings", () => {
       toggleAllPageRowsSelected: vi.fn(),
     };
 
-    const { rerender } = render(
+    render(
       <SelectedRowSettings
         table={mockTable as any}
         deleteRows={deleteRowsMock}

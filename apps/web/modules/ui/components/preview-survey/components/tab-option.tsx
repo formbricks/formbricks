@@ -8,8 +8,8 @@ interface TabOptionProps {
 
 export const TabOption = ({ active, icon, onClick }: TabOptionProps) => {
   return (
-    <div className={`${active ? "rounded-full bg-slate-200" : ""} cursor-pointer`} onClick={onClick}>
+    <button className={`${active ? "rounded-full bg-slate-200" : ""} cursor-pointer`} onClick={onClick}>
       {icon}
-    </div>
+    </button>
   );
 };

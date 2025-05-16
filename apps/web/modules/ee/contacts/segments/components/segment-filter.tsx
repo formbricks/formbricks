@@ -116,14 +116,16 @@ function SegmentFilterItemConnector({
 
   return (
     <div className="w-[40px]">
-      <span
+      <button
+        type="button"
+        aria-label={connector ?? t("environments.segments.where")}
         className={cn(Boolean(connector) && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
         onClick={() => {
           if (viewOnly) return;
           onConnectorChange();
         }}>
-        {connector ? connector : t("environments.segments.where")}
-      </span>
+        {connector ?? t("environments.segments.where")}
+      </button>
     </div>
   );
 }
@@ -626,14 +628,16 @@ function SegmentSegmentFilter({
       />
 
       <div>
-        <span
+        <button
+          type="button"
+          aria-label={operatorText}
           className={cn("cursor-pointer underline", viewOnly && "cursor-not-allowed")}
           onClick={() => {
             if (viewOnly) return;
             toggleSegmentOperator();
           }}>
           {operatorText}
-        </span>
+        </button>
       </div>
 
       <Select

@@ -189,4 +189,30 @@ describe("ResponseNotes", () => {
       expect(updateFetchedResponses).toHaveBeenCalled();
     });
   });
+
+  test("pressing Enter in textarea only submits form and doesn't trigger parent button onClick", async () => {
+    vi.mocked(createResponseNoteAction).mockResolvedValueOnce("createdNote" as any);
+    render(
+      <ResponseNotes
+        user={dummyUser}
+        responseId={dummyResponseId}
+        notes={[]}
+        isOpen={true}
+        setIsOpen={setIsOpen}
+        updateFetchedResponses={updateFetchedResponses}
+        locale={dummyLocale}
+      />
+    );
+    const textarea = screen.getByRole("textbox");
+    await userEvent.type(textarea, "New note");
+    await userEvent.type(textarea, "{enter}");
+    await waitFor(() => {
+      expect(createResponseNoteAction).toHaveBeenCalledWith({
+        responseId: dummyResponseId,
+        text: "New note",
+      });
+      expect(updateFetchedResponses).toHaveBeenCalled();
+      expect(setIsOpen).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -119,7 +119,7 @@ export const VideoSettings = ({
 
       {isYoutubeLink && (
         <AdvancedOptionToggle
-          data-testId="youtube-privacy-mode"
+          data-testid="youtube-privacy-mode"
           htmlId="youtubePrivacyMode"
           isChecked={isYoutubePrivacyModeEnabled}
           onToggle={toggleYoutubePrivacyMode}

@@ -42,10 +42,13 @@ export const OptionsSwitch = ({
         style={highlightStyle}
       />
       {questionTypes.map((type) => (
-        <div
+        <button
           key={type.value}
           data-value={type.value}
-          onClick={() => !type.disabled && handleOptionChange(type.value)}
+          onClick={(e) => {
+            e.preventDefault();
+            !type.disabled && handleOptionChange(type.value);
+          }}
           className={`relative z-10 flex-grow rounded-md p-2 text-center transition-colors duration-200 ${
             type.disabled
               ? "cursor-not-allowed opacity-50"
@@ -57,7 +60,7 @@ export const OptionsSwitch = ({
             <span className="text-sm text-slate-900">{type.label}</span>
             {type.icon && <div className="h-4 w-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

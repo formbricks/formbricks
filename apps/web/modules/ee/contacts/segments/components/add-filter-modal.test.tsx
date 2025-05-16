@@ -8,8 +8,28 @@ import { TSegment } from "@formbricks/types/segment";
 
 // Mock the Modal component
 vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open }: { children: React.ReactNode; open: boolean }) => {
-    return open ? <div>{children}</div> : null; // NOSONAR // This is a mock
+  Modal: ({
+    children,
+    open,
+    closeOnOutsideClick,
+    setOpen,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    closeOnOutsideClick?: boolean;
+    setOpen?: (open: boolean) => void;
+  }) => {
+    return open ? ( // NOSONAR // This is a mock
+      <button
+        data-testid="modal-overlay"
+        onClick={(e) => {
+          if (closeOnOutsideClick && e.target === e.currentTarget && setOpen) {
+            setOpen(false);
+          }
+        }}>
+        <div data-testid="modal-content">{children}</div>
+      </button>
+    ) : null; // NOSONAR // This is a mock
   },
 }));
 
@@ -280,7 +300,7 @@ describe("AddFilterModal", () => {
 
     test("handles Person (userId) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("userId"),
+        () => screen.getByTestId("filter-btn-person-userId"),
         "person",
         { personIdentifier: "userId" },
         "equals",
@@ -290,7 +310,7 @@ describe("AddFilterModal", () => {
 
     test("handles Attribute (Email Address) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Email Address"),
+        () => screen.getByTestId("filter-btn-attribute-email"),
         "attribute",
         { contactAttributeKey: "email" },
         "equals",
@@ -300,7 +320,7 @@ describe("AddFilterModal", () => {
 
     test("handles Attribute (Plan Type) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Plan Type"),
+        () => screen.getByTestId("filter-btn-attribute-plan"),
         "attribute",
         { contactAttributeKey: "plan" },
         "equals",
@@ -310,7 +330,7 @@ describe("AddFilterModal", () => {
 
     test("handles Segment (Active Users) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Active Users"),
+        () => screen.getByTestId("filter-btn-segment-seg1"),
         "segment",
         { segmentId: "seg1" },
         "userIsIn",
@@ -320,7 +340,7 @@ describe("AddFilterModal", () => {
 
     test("handles Segment (Paying Customers) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Paying Customers"),
+        () => screen.getByTestId("filter-btn-segment-seg2"),
         "segment",
         { segmentId: "seg2" },
         "userIsIn",
@@ -330,7 +350,7 @@ describe("AddFilterModal", () => {
 
     test("handles Device (Phone) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("environments.segments.phone"),
+        () => screen.getByTestId("filter-btn-device-phone"),
         "device",
         { deviceType: "phone" },
         "equals",
@@ -340,7 +360,7 @@ describe("AddFilterModal", () => {
 
     test("handles Device (Desktop) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("environments.segments.desktop"),
+        () => screen.getByTestId("filter-btn-device-desktop"),
         "device",
         { deviceType: "desktop" },
         "equals",
@@ -366,7 +386,7 @@ describe("AddFilterModal", () => {
 
     test("handles Person (userId) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByTestId("person-filter-item"), // Use testid from component
+        () => screen.getByTestId("filter-btn-person-userId"),
         "person",
         { personIdentifier: "userId" },
         "equals",
@@ -376,7 +396,7 @@ describe("AddFilterModal", () => {
 
     test("handles Attribute (Email Address) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Email Address"),
+        () => screen.getByTestId("filter-btn-attribute-email"),
         "attribute",
         { contactAttributeKey: "email" },
         "equals",
@@ -386,7 +406,7 @@ describe("AddFilterModal", () => {
 
     test("handles Attribute (Plan Type) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Plan Type"),
+        () => screen.getByTestId("filter-btn-attribute-plan"),
         "attribute",
         { contactAttributeKey: "plan" },
         "equals",
@@ -412,7 +432,7 @@ describe("AddFilterModal", () => {
 
     test("handles Segment (Active Users) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Active Users"),
+        () => screen.getByTestId("filter-btn-segment-seg1"),
         "segment",
         { segmentId: "seg1" },
         "userIsIn",
@@ -422,7 +442,7 @@ describe("AddFilterModal", () => {
 
     test("handles Segment (Paying Customers) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("Paying Customers"),
+        () => screen.getByTestId("filter-btn-segment-seg2"),
         "segment",
         { segmentId: "seg2" },
         "userIsIn",
@@ -448,7 +468,7 @@ describe("AddFilterModal", () => {
 
     test("handles Device (Phone) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("environments.segments.phone"),
+        () => screen.getByTestId("filter-btn-device-phone"),
         "device",
         { deviceType: "phone" },
         "equals",
@@ -458,7 +478,7 @@ describe("AddFilterModal", () => {
 
     test("handles Device (Desktop) filter add (click/keydown)", async () => {
       await testFilterInteraction(
-        () => screen.getByText("environments.segments.desktop"),
+        () => screen.getByTestId("filter-btn-device-desktop"),
         "device",
         { deviceType: "desktop" },
         "equals",
@@ -509,5 +529,87 @@ describe("AddFilterModal", () => {
     const searchInput = screen.getByPlaceholderText("Browse filters...");
     await user.type(searchInput, "nonexistentfilter");
     expect(await screen.findByText("environments.segments.no_filters_yet")).toBeInTheDocument();
+  });
+
+  test("verifies keyboard navigation through filter buttons", async () => {
+    render(
+      <AddFilterModal
+        open={true}
+        setOpen={setOpen}
+        onAddFilter={onAddFilter}
+        contactAttributeKeys={mockContactAttributeKeys}
+        segments={mockSegments}
+      />
+    );
+
+    // Get the search input to start tabbing from
+    const searchInput = screen.getByPlaceholderText("Browse filters...");
+    searchInput.focus();
+
+    // Tab to the first tab button ("all")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent(/common\.all/);
+
+    // Tab to the second tab button ("attributes")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent(/person_and_attributes/);
+
+    // Tab to the third tab button ("segments")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent(/common\.segments/);
+
+    // Tab to the fourth tab button ("devices")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent(/environments\.segments\.devices/);
+
+    // Tab to the first filter button ("Email Address")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent("Email Address");
+
+    // Tab to the second filter button ("Plan Type")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent("Plan Type");
+
+    // Tab to the third filter button ("userId")
+    await user.tab();
+    expect(document.activeElement).toHaveTextContent("userId");
+  });
+
+  test("button elements are accessible to screen readers", () => {
+    render(
+      <AddFilterModal
+        open={true}
+        setOpen={setOpen}
+        onAddFilter={onAddFilter}
+        contactAttributeKeys={mockContactAttributeKeys}
+        segments={mockSegments}
+      />
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThan(0); // Verify buttons exist
+
+    // Check that buttons are focusable (they should be by default)
+    buttons.forEach((button) => {
+      expect(button).not.toHaveAttribute("aria-hidden", "true");
+      expect(button).not.toHaveAttribute("tabIndex", "-1"); // Should not be unfocusable
+    });
+  });
+
+  test("closes the modal when clicking outside the content area", async () => {
+    render(
+      <AddFilterModal
+        open={true}
+        setOpen={setOpen}
+        onAddFilter={onAddFilter}
+        contactAttributeKeys={mockContactAttributeKeys}
+        segments={mockSegments}
+      />
+    );
+
+    const modalOverlay = screen.getByTestId("modal-overlay");
+    await user.click(modalOverlay);
+
+    expect(setOpen).toHaveBeenCalledWith(false);
   });
 });

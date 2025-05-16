@@ -416,7 +416,6 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}

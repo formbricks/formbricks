@@ -21,7 +21,6 @@ interface MatrixQuestionFormProps {
   question: TSurveyMatrixQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMatrixQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -183,11 +182,8 @@ export const MatrixQuestionForm = ({
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.rows.map((_, index) => (
-              <div
-                className="flex items-center"
-                onKeyDown={(e) => handleKeyDown(e, "row")}
-                key={`row-${index}`}>
+            {question.rows.map((row, index) => (
+              <div className="flex items-center" key={`${row}-${index}`}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -201,6 +197,7 @@ export const MatrixQuestionForm = ({
                     isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
                   }
                   locale={locale}
+                  onKeyDown={(e) => handleKeyDown(e, "row")}
                 />
                 {question.rows.length > 2 && (
                   <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
@@ -235,11 +232,8 @@ export const MatrixQuestionForm = ({
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.columns.map((_, index) => (
-              <div
-                className="flex items-center"
-                onKeyDown={(e) => handleKeyDown(e, "column")}
-                key={`column-${index}`}>
+            {question.columns.map((column, index) => (
+              <div className="flex items-center" key={`${column}-${index}`}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}
@@ -253,6 +247,7 @@ export const MatrixQuestionForm = ({
                     isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
                   }
                   locale={locale}
+                  onKeyDown={(e) => handleKeyDown(e, "column")}
                 />
                 {question.columns.length > 2 && (
                   <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>

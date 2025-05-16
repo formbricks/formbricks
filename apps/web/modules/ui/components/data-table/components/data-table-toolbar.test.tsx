@@ -6,6 +6,7 @@ import { DataTableToolbar } from "./data-table-toolbar";
 
 describe("DataTableToolbar", () => {
   afterEach(() => {
+    vi.resetAllMocks();
     cleanup();
   });
 
@@ -85,15 +86,14 @@ describe("DataTableToolbar", () => {
       />
     );
 
-    // Find the settings button by class and click it
-    const settingsIcon = document.querySelector(".lucide-settings");
-    const settingsButton = settingsIcon?.closest("div");
-
+    // Find the settings button (second button in the toolbar)
+    const buttons = screen.getAllByRole("button");
+    // The settings button is always present, but the refresh button is only present for type="contact"
+    // So for type="response", settings is the first button
+    const settingsButton = buttons[0];
     expect(settingsButton).toBeInTheDocument();
-    if (settingsButton) {
-      await user.click(settingsButton);
-      expect(setIsTableSettingsModalOpen).toHaveBeenCalledWith(true);
-    }
+    await user.click(settingsButton);
+    expect(setIsTableSettingsModalOpen).toHaveBeenCalledWith(true);
   });
 
   test("calls setIsExpanded when expand button is clicked", async () => {
@@ -117,15 +117,13 @@ describe("DataTableToolbar", () => {
       />
     );
 
-    // Find the expand button by class and click it
-    const expandIcon = document.querySelector(".lucide-move-vertical");
-    const expandButton = expandIcon?.closest("div");
-
+    // Find the expand button (second button in the toolbar for type="response")
+    const buttons = screen.getAllByRole("button");
+    // For type="response", expand is the second button
+    const expandButton = buttons[1];
     expect(expandButton).toBeInTheDocument();
-    if (expandButton) {
-      await user.click(expandButton);
-      expect(setIsExpanded).toHaveBeenCalledWith(true);
-    }
+    await user.click(expandButton);
+    expect(setIsExpanded).toHaveBeenCalledWith(true);
   });
 
   test("shows refresh button and calls refreshContacts when type is contact", async () => {
@@ -150,16 +148,13 @@ describe("DataTableToolbar", () => {
       />
     );
 
-    // Find the refresh button by class and click it
-    const refreshIcon = document.querySelector(".lucide-refresh-ccw");
-    const refreshButton = refreshIcon?.closest("div");
-
+    // For type="contact", the first button is refresh, second is settings, third is expand
+    const buttons = screen.getAllByRole("button");
+    const refreshButton = buttons[0];
     expect(refreshButton).toBeInTheDocument();
-    if (refreshButton) {
-      await user.click(refreshButton);
-      expect(refreshContacts).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith("environments.contacts.contacts_table_refresh_success");
-    }
+    await user.click(refreshButton);
+    expect(refreshContacts).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("environments.contacts.contacts_table_refresh_success");
   });
 
   test("shows error toast when refreshContacts fails", async () => {
@@ -184,15 +179,12 @@ describe("DataTableToolbar", () => {
       />
     );
 
-    // Find the refresh button by class and click it
-    const refreshIcon = document.querySelector(".lucide-refresh-ccw");
-    const refreshButton = refreshIcon?.closest("div");
-
+    // For type="contact", the first button is refresh
+    const buttons = screen.getAllByRole("button");
+    const refreshButton = buttons[0];
     expect(refreshButton).toBeInTheDocument();
-    if (refreshButton) {
-      await user.click(refreshButton);
-      expect(refreshContacts).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("environments.contacts.contacts_table_refresh_error");
-    }
+    await user.click(refreshButton);
+    expect(refreshContacts).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith("environments.contacts.contacts_table_refresh_error");
   });
 });
