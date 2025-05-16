@@ -16,6 +16,59 @@ interface AttributeTabContentProps {
   }) => void;
 }
 
+// Helper component to render a FilterButton with common handlers
+function FilterButtonWithHandler({
+  dataTestId,
+  icon,
+  label,
+  type,
+  onAddFilter,
+  setOpen,
+  handleAddFilter,
+  contactAttributeKey,
+}: {
+  dataTestId: string;
+  icon: React.ReactNode;
+  label: React.ReactNode;
+  type: "attribute" | "person";
+  onAddFilter: (filter: TBaseFilter) => void;
+  setOpen: (open: boolean) => void;
+  handleAddFilter: (args: {
+    type: "attribute" | "person";
+    onAddFilter: (filter: TBaseFilter) => void;
+    setOpen: (open: boolean) => void;
+    contactAttributeKey?: string;
+  }) => void;
+  contactAttributeKey?: string;
+}) {
+  return (
+    <FilterButton
+      data-testid={dataTestId}
+      icon={icon}
+      label={label}
+      onClick={() => {
+        handleAddFilter({
+          type,
+          onAddFilter,
+          setOpen,
+          ...(type === "attribute" ? { contactAttributeKey } : {}),
+        });
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleAddFilter({
+            type,
+            onAddFilter,
+            setOpen,
+            ...(type === "attribute" ? { contactAttributeKey } : {}),
+          });
+        }
+      }}
+    />
+  );
+}
+
 function AttributeTabContent({
   contactAttributeKeys,
   onAddFilter,
@@ -29,27 +82,14 @@ function AttributeTabContent({
       <div>
         <h2 className="text-base font-medium">{t("common.person")}</h2>
         <div>
-          <FilterButton
-            data-testid="filter-btn-person-userId"
+          <FilterButtonWithHandler
+            dataTestId="filter-btn-person-userId"
             icon={<FingerprintIcon className="h-4 w-4" />}
             label={t("common.user_id")}
-            onClick={() => {
-              handleAddFilter({
-                type: "person",
-                onAddFilter,
-                setOpen,
-              });
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleAddFilter({
-                  type: "person",
-                  onAddFilter,
-                  setOpen,
-                });
-              }
-            }}
+            type="person"
+            onAddFilter={onAddFilter}
+            setOpen={setOpen}
+            handleAddFilter={handleAddFilter}
           />
         </div>
       </div>
@@ -65,30 +105,16 @@ function AttributeTabContent({
         </div>
       )}
       {contactAttributeKeys.map((attributeKey) => (
-        <FilterButton
+        <FilterButtonWithHandler
           key={attributeKey.id}
-          data-testid={`filter-btn-attribute-${attributeKey.key}`}
+          dataTestId={`filter-btn-attribute-${attributeKey.key}`}
           icon={<TagIcon className="h-4 w-4" />}
           label={attributeKey.name ?? attributeKey.key}
-          onClick={() => {
-            handleAddFilter({
-              type: "attribute",
-              onAddFilter,
-              setOpen,
-              contactAttributeKey: attributeKey.key,
-            });
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleAddFilter({
-                type: "attribute",
-                onAddFilter,
-                setOpen,
-                contactAttributeKey: attributeKey.key,
-              });
-            }
-          }}
+          type="attribute"
+          onAddFilter={onAddFilter}
+          setOpen={setOpen}
+          handleAddFilter={handleAddFilter}
+          contactAttributeKey={attributeKey.key}
         />
       ))}
     </div>
