@@ -45,7 +45,7 @@ vi.mock("@dnd-kit/modifiers", () => ({
 }));
 
 vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: ({ children }: any) => <div>{children}</div>,
+  SortableContext: ({ children }: any) => <>{children}</>,
   horizontalListSortingStrategy: "horizontalListSortingStrategy",
   arrayMove: vi.fn((arr, oldIndex, newIndex) => {
     const result = [...arr];
@@ -78,7 +78,10 @@ vi.mock("@/modules/ui/components/data-table", () => ({
     isExpanded,
   }: any) => (
     <div data-testid="table-toolbar">
-      <button data-testid="toggle-expand" onClick={() => setIsExpanded(!isExpanded)}>
+      <button
+        data-testid="toggle-expand"
+        onClick={() => setIsExpanded(!isExpanded)}
+        aria-pressed={isExpanded}>
         Toggle Expand
       </button>
       <button data-testid="open-settings" onClick={() => setIsTableSettingsModalOpen(true)}>
@@ -465,8 +468,27 @@ describe("ResponseTable", () => {
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
 
+    // Verify localStorage calls
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnOrder");
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnVisibility");
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-rowExpand");
+
+    // The mock for generateResponseTableColumns returns this order:
+    // ["select", "createdAt", "person", "status"]
+    // Only visible columns should be rendered, in this order
+    const expectedHeaders = ["select", "createdAt", "person"];
+    const headers = screen.getAllByTestId(/^header-/);
+    expect(headers).toHaveLength(expectedHeaders.length);
+    expectedHeaders.forEach((columnId, index) => {
+      expect(headers[index]).toHaveAttribute("data-testid", `header-${columnId}`);
+    });
+
+    // Verify column visibility is applied
+    const statusHeader = screen.queryByTestId("header-status");
+    expect(statusHeader).not.toBeInTheDocument();
+
+    // Verify row expansion is applied
+    const toggleExpandButton = screen.getByTestId("toggle-expand");
+    expect(toggleExpandButton).toHaveAttribute("aria-pressed", "true");
   });
 });
