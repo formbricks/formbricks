@@ -1,3 +1,4 @@
+import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -24,6 +25,8 @@ const mockUser = {
   objective: "other",
 } as unknown as TUser;
 
+vi.mock("next-auth/react", () => ({ signOut: vi.fn() }));
+
 // Mock window.location.reload
 const originalLocation = window.location;
 beforeEach(() => {
@@ -35,6 +38,10 @@ beforeEach(() => {
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions", () => ({
   updateUserAction: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/forgot-password/actions", () => ({
+  forgotPasswordAction: vi.fn(),
 }));
 
 afterEach(() => {
@@ -50,7 +57,7 @@ describe("EditProfileDetailsForm", () => {
   test("renders with initial user data and updates successfully", async () => {
     vi.mocked(updateUserAction).mockResolvedValue({ ...mockUser, name: "New Name" } as any);
 
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} isPasswordResetEnabled={false} />);
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     expect(nameInput).toHaveValue(mockUser.name);
@@ -88,7 +95,7 @@ describe("EditProfileDetailsForm", () => {
     const errorMessage = "Update failed";
     vi.mocked(updateUserAction).mockRejectedValue(new Error(errorMessage));
 
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} isPasswordResetEnabled={false} />);
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     await userEvent.clear(nameInput);
@@ -106,12 +113,28 @@ describe("EditProfileDetailsForm", () => {
   });
 
   test("update button is disabled initially and enables on change", async () => {
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} isPasswordResetEnabled={false} />);
     const updateButton = screen.getByText("common.update");
     expect(updateButton).toBeDisabled();
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     await userEvent.type(nameInput, " updated");
     expect(updateButton).toBeEnabled();
+  });
+
+  test("reset password button works", async () => {
+    vi.mocked(forgotPasswordAction).mockResolvedValue({ data: { success: true } });
+
+    render(<EditProfileDetailsForm user={mockUser} isPasswordResetEnabled={true} />);
+
+    const resetButton = screen.getByRole("button", { name: "auth.forgot-password.reset_password" });
+    await userEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(forgotPasswordAction).toHaveBeenCalledWith({ email: mockUser.email });
+    });
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("auth.forgot-password.email-sent.heading");
+    });
   });
 });
