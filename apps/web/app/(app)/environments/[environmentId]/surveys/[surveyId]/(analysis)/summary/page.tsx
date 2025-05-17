@@ -77,7 +77,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         locale={user.locale ?? DEFAULT_LOCALE}
       />
 
-      <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
+      <SettingsId title={t("common.survey_id")} id={surveyId} />
     </PageContentWrapper>
   );
 };
