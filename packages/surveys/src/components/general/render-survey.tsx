@@ -1,10 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
-export function RenderSurvey(props: SurveyContainerProps) {
+export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Check viewport width on mount and resize
+  useEffect(() => {
+    const checkViewportWidth = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    checkViewportWidth();
+    window.addEventListener("resize", checkViewportWidth);
+
+    return () => {
+      window.removeEventListener("resize", checkViewportWidth);
+    };
+  }, []);
+
+  // Define survey type-specific styles
+  const surveyTypeStyles =
+    props.survey.type === "link"
+      ? ({
+          "--fb-survey-card-max-height": isDesktop ? "56dvh" : "60dvh",
+          "--fb-survey-card-min-height": isDesktop ? "0" : "42dvh",
+        } as React.CSSProperties)
+      : ({
+          "--fb-survey-card-max-height": "40dvh",
+          "--fb-survey-card-min-height": "40dvh",
+        } as React.CSSProperties);
 
   const close = () => {
     setIsOpen(false);
@@ -22,7 +48,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}
       onClose={close}
-      isOpen={isOpen}>
+      isOpen={isOpen}
+      style={surveyTypeStyles}>
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}

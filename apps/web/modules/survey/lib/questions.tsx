@@ -341,7 +341,7 @@ export const getCXQuestionNameMap = (t: TFnType) =>
   ) as Record<TSurveyQuestionTypeEnum, string>;
 
 export const universalQuestionPresets = {
-  required: true,
+  required: false,
 };
 
 export const getQuestionDefaults = (id: string, project: any, t: TFnType) => {

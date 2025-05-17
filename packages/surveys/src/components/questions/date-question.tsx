@@ -8,9 +8,8 @@ import { getMonthName, getOrdinalDate } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import DatePicker from "react-date-picker";
-import { DatePickerProps } from "react-date-picker";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import DatePicker, { DatePickerProps } from "react-date-picker";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import "../../styles/date-picker.css";
@@ -23,13 +22,12 @@ interface DateQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  autoFocusEnabled?: boolean;
 }
 
 function CalendarIcon() {
@@ -94,7 +92,8 @@ export function DateQuestion({
   ttc,
   currentQuestionId,
   isBackButtonHidden,
-}: DateQuestionProps) {
+  autoFocusEnabled,
+}: Readonly<DateQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -103,6 +102,15 @@ export function DateQuestion({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [hideInvalid, setHideInvalid] = useState(!selectedDate);
+
+  const datePickerRef = useCallback(
+    (currentElement: HTMLButtonElement | null) => {
+      if (currentElement && autoFocusEnabled && isCurrent) {
+        currentElement.focus();
+      }
+    },
+    [autoFocusEnabled, isCurrent]
+  );
 
   useEffect(() => {
     if (datePickerOpen) {
@@ -170,6 +178,7 @@ export function DateQuestion({
             <div className="fb-relative">
               {!datePickerOpen && (
                 <button
+                  ref={datePickerRef}
                   onClick={() => {
                     setDatePickerOpen(true);
                   }}

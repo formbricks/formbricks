@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 import { useState } from "preact/hooks";
 
@@ -35,7 +36,10 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           key={imgUrl}
           src={imgUrl}
           alt={altText}
-          className="fb-rounded-custom"
+          className={cn(
+            "fb-rounded-custom fb-max-h-[40dvh] fb-mx-auto fb-object-contain",
+            isLoading ? "fb-opacity-0" : ""
+          )}
           onLoad={() => {
             setIsLoading(false);
           }}
@@ -48,7 +52,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
               src={videoUrlWithParams}
               title="Question Video"
               frameBorder="0"
-              className="fb-rounded-custom fb-aspect-video fb-w-full"
+              className={cn("fb-rounded-custom fb-aspect-video fb-w-full", isLoading ? "fb-opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}

@@ -30,7 +30,7 @@ export function StackedCardsContainer({
   setQuestionId,
   shouldResetQuestionId = true,
   fullSizeCards = false,
-}: StackedCardsContainerProps) {
+}: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.highlightBorderColor?.light
@@ -148,7 +148,8 @@ export function StackedCardsContainer({
         </div>
       ) : (
         questionIdxTemp !== undefined &&
-        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
+        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1, nextQuestionIdx + 2].map(
+          // [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (dynamicQuestionIndex, index) => {
             const hasEndingCard = survey.endings.length > 0;
             // Check for hiding extra card

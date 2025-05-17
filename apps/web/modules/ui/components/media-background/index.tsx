@@ -166,6 +166,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     return (
       <div
         ref={ContentRef}
+        id="mobile-preview"
         className={`relative h-[90%] max-h-[42rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
         <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
@@ -175,10 +176,10 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else if (isEditorView) {
     return (
-      <div ref={ContentRef} className="overflow-hiddem flex flex-grow flex-col rounded-b-lg">
+      <div ref={ContentRef} className="flex flex-grow flex-col overflow-hidden rounded-b-lg">
         <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
           {renderBackground()}
-          <div className="flex h-full w-full items-center justify-center">{children}</div>
+          <div className="flex h-full w-full items-start justify-center pt-[10dvh]">{children}</div>
         </div>
       </div>
     );

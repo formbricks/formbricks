@@ -41,8 +41,15 @@ export function PictureSelectionQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
-}: PictureSelectionProps) {
+}: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(() => {
+    const initialLoadingState: Record<string, boolean> = {};
+    question.choices.forEach((choice) => {
+      initialLoadingState[choice.id] = true;
+    });
+    return initialLoadingState;
+  });
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
@@ -115,12 +122,12 @@ export function PictureSelectionQuestion({
           <div className="fb-mt-4">
             <fieldset>
               <legend className="fb-sr-only">Options</legend>
-              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-4">
+              <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-1 sm:fb-grid-cols-2 fb-gap-4">
                 {questionChoices.map((choice) => (
-                  <label
+                  <button
                     key={choice.id}
+                    type="button"
                     tabIndex={isCurrent ? 0 : -1}
-                    htmlFor={choice.id}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
                       if (e.key === " ") {
@@ -133,16 +140,25 @@ export function PictureSelectionQuestion({
                       handleChange(choice.id);
                     }}
                     className={cn(
-                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand focus:fb-border-4 group/image",
+                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus-visible:fb-outline-none focus-visible:fb-ring-2 focus-visible:fb-ring-brand focus-visible:fb-ring-offset-2 fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] group/image",
                       Array.isArray(value) && value.includes(choice.id)
                         ? "fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-sm"
                         : ""
                     )}>
+                    {loadingImages[choice.id] && (
+                      <div className="fb-absolute fb-inset-0 fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
+                    )}
                     <img
                       src={choice.imageUrl}
                       id={choice.id}
                       alt={getOriginalFileNameFromUrl(choice.imageUrl)}
-                      className="fb-h-full fb-w-full fb-object-cover"
+                      className={cn(
+                        "fb-h-full fb-w-full fb-object-cover",
+                        loadingImages[choice.id] ? "fb-opacity-0" : ""
+                      )}
+                      onLoad={() => {
+                        setLoadingImages((prev) => ({ ...prev, [choice.id]: false }));
+                      }}
                     />
                     <a
                       tabIndex={-1}
@@ -198,7 +214,7 @@ export function PictureSelectionQuestion({
                         required={question.required && value.length ? false : question.required}
                       />
                     )}
-                  </label>
+                  </button>
                 ))}
               </div>
             </fieldset>
