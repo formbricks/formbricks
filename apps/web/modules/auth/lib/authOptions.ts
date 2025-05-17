@@ -1,5 +1,6 @@
 import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { env } from "@/lib/env";
 import { verifyToken } from "@/lib/jwt";
 import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
@@ -178,7 +179,7 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
-    maxAge: parseInt(process.env.SESSION_MAX_AGE || "43200"),
+    maxAge: env.SESSION_MAX_AGE ?? 43200,
   },
   callbacks: {
     async jwt({ token }) {
