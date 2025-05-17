@@ -57,7 +57,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
                 setIsLoading(false);
               }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"
+              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
         </div>

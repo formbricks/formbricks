@@ -1,192 +1,187 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import toast from "react-hot-toast";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { toast } from "react-hot-toast";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SelectedRowSettings } from "./selected-row-settings";
 
-// Mock the toast functions directly since they're causing issues
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+// Mock translation
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({ t: (key: string) => key }),
 }));
 
-// Instead of mocking @radix-ui/react-dialog, we'll test the component's behavior
-// by checking if the appropriate actions are performed after clicking the buttons
+// Mock DeleteDialog to reveal confirm button when open
+vi.mock("@/modules/ui/components/delete-dialog", () => ({
+  DeleteDialog: ({ open, onDelete }: any) =>
+    open ? <button onClick={() => onDelete()}>Confirm Delete</button> : null,
+}));
+
+// Mock dropdown-menu components to render their children
+vi.mock("@/modules/ui/components/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: any) => <>{children}</>,
+  DropdownMenuTrigger: ({ children }: any) => <>{children}</>,
+  DropdownMenuContent: ({ children }: any) => <>{children}</>,
+  DropdownMenuItem: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+}));
+
+// Mock Button
+vi.mock("@/modules/ui/components/button", () => ({
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+}));
 
 describe("SelectedRowSettings", () => {
+  const rows = [{ id: "r1" }, { id: "r2" }];
+  let table: any;
+  let deleteRowsAction: ReturnType<typeof vi.fn>;
+  let deleteAction: ReturnType<typeof vi.fn>;
+  let downloadRowsAction: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    table = {
+      getFilteredSelectedRowModel: () => ({ rows }),
+      toggleAllPageRowsSelected: vi.fn(),
+    };
+    deleteRowsAction = vi.fn();
+    deleteAction = vi.fn(() => Promise.resolve());
+    downloadRowsAction = vi.fn();
+
+    // Reset all toast mocks before each test
+    vi.mocked(toast.error).mockClear();
+    vi.mocked(toast.success).mockClear();
+  });
+
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     cleanup();
   });
 
-  test("renders correct number of selected rows for responses", () => {
-    const mockTable = {
-      getFilteredSelectedRowModel: vi.fn().mockReturnValue({
-        rows: [{ id: "row1" }, { id: "row2" }],
-      }),
-      toggleAllPageRowsSelected: vi.fn(),
-    };
-
+  test("renders selected count and handles select all/clear selection", () => {
     render(
       <SelectedRowSettings
-        table={mockTable as any}
-        deleteRows={vi.fn()}
-        type="response"
-        deleteAction={vi.fn()}
-      />
-    );
-
-    // We need to look for a text node that contains "2" but might have other text around it
-    const selectionText = screen.getByText((content) => content.includes("2"));
-    expect(selectionText).toBeInTheDocument();
-
-    // Check that we have the correct number of common text items
-    expect(screen.getByText("common.select_all")).toBeInTheDocument();
-    expect(screen.getByText("common.clear_selection")).toBeInTheDocument();
-  });
-
-  test("renders correct number of selected rows for contacts", () => {
-    const mockTable = {
-      getFilteredSelectedRowModel: vi.fn().mockReturnValue({
-        rows: [{ id: "contact1" }, { id: "contact2" }, { id: "contact3" }],
-      }),
-      toggleAllPageRowsSelected: vi.fn(),
-    };
-
-    render(
-      <SelectedRowSettings
-        table={mockTable as any}
-        deleteRows={vi.fn()}
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
         type="contact"
-        deleteAction={vi.fn()}
       />
     );
+    expect(screen.getByText("2 common.contacts common.selected")).toBeInTheDocument();
 
-    // We need to look for a text node that contains "3" but might have other text around it
-    const selectionText = screen.getByText((content) => content.includes("3"));
-    expect(selectionText).toBeInTheDocument();
+    fireEvent.click(screen.getByText("common.select_all"));
+    expect(table.toggleAllPageRowsSelected).toHaveBeenCalledWith(true);
 
-    // Check that the text contains contacts (using a function matcher)
-    const textWithContacts = screen.getByText((content) => content.includes("common.contacts"));
-    expect(textWithContacts).toBeInTheDocument();
+    fireEvent.click(screen.getByText("common.clear_selection"));
+    expect(table.toggleAllPageRowsSelected).toHaveBeenCalledWith(false);
   });
 
-  test("select all option calls toggleAllPageRowsSelected with true", async () => {
-    const user = userEvent.setup();
-    const toggleAllPageRowsSelectedMock = vi.fn();
-    const mockTable = {
-      getFilteredSelectedRowModel: vi.fn().mockReturnValue({
-        rows: [{ id: "row1" }],
-      }),
-      toggleAllPageRowsSelected: toggleAllPageRowsSelectedMock,
-    };
-
+  test("does not render download when downloadRows prop is undefined", () => {
     render(
       <SelectedRowSettings
-        table={mockTable as any}
-        deleteRows={vi.fn()}
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
         type="response"
-        deleteAction={vi.fn()}
       />
     );
-
-    await user.click(screen.getByText("common.select_all"));
-    expect(toggleAllPageRowsSelectedMock).toHaveBeenCalledWith(true);
+    expect(screen.queryByText("common.download")).toBeNull();
   });
 
-  test("clear selection option calls toggleAllPageRowsSelected with false", async () => {
-    const user = userEvent.setup();
-    const toggleAllPageRowsSelectedMock = vi.fn();
-    const mockTable = {
-      getFilteredSelectedRowModel: vi.fn().mockReturnValue({
-        rows: [{ id: "row1" }],
-      }),
-      toggleAllPageRowsSelected: toggleAllPageRowsSelectedMock,
-    };
-
+  test("invokes downloadRows with correct formats", () => {
     render(
       <SelectedRowSettings
-        table={mockTable as any}
-        deleteRows={vi.fn()}
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
         type="response"
-        deleteAction={vi.fn()}
       />
     );
+    fireEvent.click(screen.getByText("common.download"));
+    fireEvent.click(screen.getByText("environments.surveys.summary.selected_responses_csv"));
+    expect(downloadRowsAction).toHaveBeenCalledWith(["r1", "r2"], "csv");
 
-    await user.click(screen.getByText("common.clear_selection"));
-    expect(toggleAllPageRowsSelectedMock).toHaveBeenCalledWith(false);
+    fireEvent.click(screen.getByText("common.download"));
+    fireEvent.click(screen.getByText("environments.surveys.summary.selected_responses_excel"));
+    expect(downloadRowsAction).toHaveBeenCalledWith(["r1", "r2"], "xlsx");
   });
 
-  // For the tests that involve the modal dialog, we'll test the underlying functionality
-  // directly by mocking the deleteAction and deleteRows functions
-
-  test("deleteAction is called with the row ID when deleting", async () => {
-    const deleteActionMock = vi.fn().mockResolvedValue(undefined);
-    const deleteRowsMock = vi.fn();
-
-    // Create a spy for the deleteRows function
-    const mockTable = {
-      getFilteredSelectedRowModel: vi.fn().mockReturnValue({
-        rows: [{ id: "test-id-123" }],
-      }),
-      toggleAllPageRowsSelected: vi.fn(),
-    };
-
-    const { rerender } = render(
+  test("deletes rows successfully and shows success toast for contact", async () => {
+    deleteAction = vi.fn(() => Promise.resolve());
+    render(
       <SelectedRowSettings
-        table={mockTable as any}
-        deleteRows={deleteRowsMock}
-        type="response"
-        deleteAction={deleteActionMock}
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
+        type="contact"
       />
     );
-
-    // Test that the component renders the trash icon button
-    const trashIcon = document.querySelector(".lucide-trash2");
-    expect(trashIcon).toBeInTheDocument();
-
-    // Since we can't easily test the dialog interaction without mocking a lot of components,
-    // we can test the core functionality by calling the handlers directly
-
-    // We know that the deleteAction is called with the row ID
-    await deleteActionMock("test-id-123");
-    expect(deleteActionMock).toHaveBeenCalledWith("test-id-123");
-
-    // We know that deleteRows is called with an array of row IDs
-    deleteRowsMock(["test-id-123"]);
-    expect(deleteRowsMock).toHaveBeenCalledWith(["test-id-123"]);
+    // open delete dialog
+    fireEvent.click(screen.getAllByText("common.delete")[0]);
+    fireEvent.click(screen.getByText("Confirm Delete"));
+    await waitFor(() => {
+      expect(deleteAction).toHaveBeenCalledTimes(2);
+      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
+    });
   });
 
-  test("toast.success is called on successful deletion", async () => {
-    const deleteActionMock = vi.fn().mockResolvedValue(undefined);
-
-    // We can test the toast directly
-    await deleteActionMock();
-
-    // In the component, after the deleteAction succeeds, it should call toast.success
-    toast.success("common.table_items_deleted_successfully");
-
-    // Verify that toast.success was called with the right message
-    expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
+  test("handles delete error and shows error toast for response", async () => {
+    deleteAction = vi.fn(() => Promise.reject(new Error("fail delete")));
+    render(
+      <SelectedRowSettings
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
+        type="response"
+      />
+    );
+    // open delete menu (trigger button)
+    const deleteTriggers = screen.getAllByText("common.delete");
+    fireEvent.click(deleteTriggers[0]);
+    fireEvent.click(screen.getByText("Confirm Delete"));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("fail delete");
+    });
   });
 
-  test("toast.error is called on deletion error", async () => {
-    const errorMessage = "Failed to delete";
-
-    // We can test the error path directly
-    toast.error(errorMessage);
-
-    // Verify that toast.error was called with the right message
-    expect(toast.error).toHaveBeenCalledWith(errorMessage);
+  test("deletes rows successfully and shows success toast for response", async () => {
+    deleteAction = vi.fn(() => Promise.resolve());
+    render(
+      <SelectedRowSettings
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
+        type="response"
+      />
+    );
+    // open delete dialog
+    fireEvent.click(screen.getAllByText("common.delete")[0]);
+    fireEvent.click(screen.getByText("Confirm Delete"));
+    await waitFor(() => {
+      expect(deleteAction).toHaveBeenCalledTimes(2);
+      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
+    });
   });
 
-  test("toast.error is called with generic message on unknown error", async () => {
-    // We can test the unknown error path directly
-    toast.error("common.an_unknown_error_occurred_while_deleting_table_items");
-
-    // Verify that toast.error was called with the generic message
-    expect(toast.error).toHaveBeenCalledWith("common.an_unknown_error_occurred_while_deleting_table_items");
+  test("handles delete error for non-Error and shows generic error toast", async () => {
+    deleteAction = vi.fn(() => Promise.reject("fail nonerror")); // Changed from Error to string
+    render(
+      <SelectedRowSettings
+        table={table}
+        deleteRowsAction={deleteRowsAction}
+        deleteAction={deleteAction}
+        downloadRowsAction={downloadRowsAction}
+        type="contact"
+      />
+    );
+    // open delete menu (trigger button)
+    const deleteTriggers = screen.getAllByText("common.delete");
+    fireEvent.click(deleteTriggers[0]);
+    fireEvent.click(screen.getByText("Confirm Delete"));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("common.an_unknown_error_occurred_while_deleting_table_items");
+    });
   });
 });
