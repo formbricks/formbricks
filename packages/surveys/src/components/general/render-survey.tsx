@@ -24,8 +24,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const surveyTypeStyles =
     props.survey.type === "link"
       ? ({
-          "--fb-survey-card-max-height": isDesktop ? "56dvh" : "33dvh",
-          "--fb-survey-card-min-height": isDesktop ? `0dvh` : "33dvh",
+          "--fb-survey-card-max-height": isDesktop ? "56dvh" : "60dvh",
+          "--fb-survey-card-min-height": isDesktop ? "0" : "42dvh",
         } as React.CSSProperties)
       : ({
           "--fb-survey-card-max-height": "25dvh",

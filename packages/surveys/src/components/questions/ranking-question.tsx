@@ -46,7 +46,7 @@ export function RankingQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: RankingQuestionProps) {
+}: Readonly<RankingQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {

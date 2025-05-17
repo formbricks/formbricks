@@ -12,20 +12,19 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
-  question: TSurveyOpenTextQuestion;
-  value: string;
-  onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  onBack: () => void;
-  isFirstQuestion: boolean;
-  isLastQuestion: boolean;
-  autoFocus?: boolean;
-  languageCode: string;
-  ttc: TResponseTtc;
-  setTtc: (ttc: TResponseTtc) => void;
-  autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
-  isBackButtonHidden: boolean;
+  readonly question: TSurveyOpenTextQuestion;
+  readonly value: string;
+  readonly onChange: (responseData: TResponseData) => void;
+  readonly onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
+  readonly onBack: () => void;
+  readonly isFirstQuestion: boolean;
+  readonly isLastQuestion: boolean;
+  readonly languageCode: string;
+  readonly ttc: TResponseTtc;
+  readonly setTtc: (ttc: TResponseTtc) => void;
+  readonly autoFocusEnabled: boolean;
+  readonly currentQuestionId: TSurveyQuestionId;
+  readonly isBackButtonHidden: boolean;
 }
 
 export function OpenTextQuestion({
@@ -42,7 +41,7 @@ export function OpenTextQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: OpenTextQuestionProps) {
+}: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -95,7 +94,7 @@ export function OpenTextQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-mt-4">
+          <div className="fb-mt-4 fb-text-md">
             {question.longAnswer === false ? (
               <input
                 ref={inputRef as RefObject<HTMLInputElement>}
@@ -112,11 +111,11 @@ export function OpenTextQuestion({
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
                 }}
-                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0"
                 pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={
                   question.inputType === "text"
                     ? question.charLimit?.max
                     : question.inputType === "phone"
@@ -127,7 +126,7 @@ export function OpenTextQuestion({
             ) : (
               <textarea
                 ref={inputRef as RefObject<HTMLTextAreaElement>}
-                rows={3}
+                rows={5}
                 autoFocus={isCurrent ? autoFocusEnabled : undefined}
                 name={question.id}
                 tabIndex={isCurrent ? 0 : -1}
@@ -141,10 +140,10 @@ export function OpenTextQuestion({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
-                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0"
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={question.inputType === "text" ? question.charLimit?.max : undefined}
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
               />
             )}
             {question.inputType === "text" && question.charLimit?.max !== undefined && (

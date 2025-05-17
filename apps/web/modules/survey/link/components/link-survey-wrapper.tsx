@@ -78,7 +78,7 @@ export const LinkSurveyWrapper = ({
           surveyType={surveyType}
           styling={styling}
           onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip md:items-start md:pt-[16dvh]">
+          <div className="flex max-h-dvh min-h-dvh items-start justify-center overflow-clip pt-[16dvh]">
             {!styling.isLogoHidden && project.logo?.url && <ClientLogo projectLogo={project.logo} />}
             <div className="h-full w-full max-w-4xl space-y-6 px-1.5">
               {isPreview && (

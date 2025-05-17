@@ -43,7 +43,7 @@ export function ContactInfoQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
-}: ContactInfoQuestionProps) {
+}: Readonly<ContactInfoQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
@@ -131,7 +131,7 @@ export function ContactInfoQuestion({
             questionId={question.id}
           />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          <div className="fb-mt-4 fb-w-full fb-grid fb-grid-cols-1 md:fb-grid-cols-2 fb-gap-4">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {

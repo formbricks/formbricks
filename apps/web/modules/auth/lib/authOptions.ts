@@ -178,7 +178,7 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
-    maxAge: 3600,
+    maxAge: 604800, // 7 days
   },
   callbacks: {
     async jwt({ token }) {
