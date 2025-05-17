@@ -51,10 +51,10 @@ export function ScrollableContainer({ children }: Readonly<ScrollableContainerPr
         style={{
           scrollbarGutter: "stable both-edges",
           maxHeight: isMobilePreview
-            ? "25dvh"
+            ? "30dvh"
             : `calc(var(--fb-survey-card-max-height, 42dvh) * ${previewScaleCoifficient})`,
           minHeight: isMobilePreview
-            ? "25dvh"
+            ? "30dvh"
             : `calc(var(--fb-survey-card-min-height, 42dvh) * ${previewScaleCoifficient})`,
         }}
         className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
