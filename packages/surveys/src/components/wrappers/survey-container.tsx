@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { type TPlacement } from "@formbricks/types/common";
 
 interface SurveyContainerProps {
-  readonly mode: "modal" | "inline";
-  readonly placement?: TPlacement;
-  readonly darkOverlay?: boolean;
-  readonly children: React.ReactNode;
-  readonly onClose?: () => void;
-  readonly clickOutside?: boolean;
-  readonly isOpen?: boolean;
-  readonly style?: React.CSSProperties;
+  mode: "modal" | "inline";
+  placement?: TPlacement;
+  darkOverlay?: boolean;
+  children: React.ReactNode;
+  onClose?: () => void;
+  clickOutside?: boolean;
+  isOpen?: boolean;
+  style?: React.CSSProperties;
 }
 
 export function SurveyContainer({
@@ -22,7 +22,7 @@ export function SurveyContainer({
   clickOutside,
   isOpen = true,
   style,
-}: SurveyContainerProps) {
+}: Readonly<SurveyContainerProps>) {
   const [show, setShow] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);

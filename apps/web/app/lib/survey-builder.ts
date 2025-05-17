@@ -66,7 +66,7 @@ export const buildMultipleChoiceQuestion = ({
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
     shuffleOption: shuffleOption || "none",
-    required: required ?? true,
+    required: required ?? false,
     logic,
   };
 };
@@ -105,7 +105,7 @@ export const buildOpenTextQuestion = ({
     headline: { default: headline },
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    required: required ?? false,
     longAnswer,
     logic,
     charLimit: {
@@ -153,7 +153,7 @@ export const buildRatingQuestion = ({
     range,
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? { default: lowerLabel } : undefined,
     upperLabel: upperLabel ? { default: upperLabel } : undefined,
@@ -194,7 +194,7 @@ export const buildNPSQuestion = ({
     headline: { default: headline },
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? { default: lowerLabel } : undefined,
     upperLabel: upperLabel ? { default: upperLabel } : undefined,
@@ -230,7 +230,7 @@ export const buildConsentQuestion = ({
     headline: { default: headline },
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    required: required ?? false,
     label: { default: label },
     logic,
   };
@@ -269,7 +269,7 @@ export const buildCTAQuestion = ({
     buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
     backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
     dismissButtonLabel: dismissButtonLabel ? { default: dismissButtonLabel } : undefined,
-    required: required ?? true,
+    required: required ?? false,
     buttonExternal,
     buttonUrl,
     logic,

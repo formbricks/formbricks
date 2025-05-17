@@ -12,19 +12,19 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
-  readonly question: TSurveyOpenTextQuestion;
-  readonly value: string;
-  readonly onChange: (responseData: TResponseData) => void;
-  readonly onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  readonly onBack: () => void;
-  readonly isFirstQuestion: boolean;
-  readonly isLastQuestion: boolean;
-  readonly languageCode: string;
-  readonly ttc: TResponseTtc;
-  readonly setTtc: (ttc: TResponseTtc) => void;
-  readonly autoFocusEnabled: boolean;
-  readonly currentQuestionId: TSurveyQuestionId;
-  readonly isBackButtonHidden: boolean;
+  question: TSurveyOpenTextQuestion;
+  value: string;
+  onChange: (responseData: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
+  onBack: () => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
+  languageCode: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
+  autoFocusEnabled: boolean;
+  currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function OpenTextQuestion({
