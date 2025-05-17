@@ -289,7 +289,7 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
-                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div className="z-10 w-full rounded-lg border border-transparent">
                     <SurveyInline
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}

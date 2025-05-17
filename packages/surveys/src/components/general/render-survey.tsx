@@ -3,7 +3,7 @@ import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
-export function RenderSurvey(props: SurveyContainerProps) {
+export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const [isOpen, setIsOpen] = useState(true);
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -28,8 +28,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
           "--fb-survey-card-min-height": isDesktop ? "0" : "42dvh",
         } as React.CSSProperties)
       : ({
-          "--fb-survey-card-max-height": "25dvh",
-          "--fb-survey-card-min-height": "25dvh",
+          "--fb-survey-card-max-height": "40dvh",
+          "--fb-survey-card-min-height": "40dvh",
         } as React.CSSProperties);
 
   const close = () => {

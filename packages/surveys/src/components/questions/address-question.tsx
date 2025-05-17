@@ -136,7 +136,7 @@ export function AddressQuestion({
             questionId={question.id}
           />
 
-          <div className="fb-mt-4 fb-w-full fb-grid fb-grid-cols-1 md:fb-grid-cols-2 fb-gap-4">
+          <div className="fb-mt-4 fb-w-full fb-grid fb-grid-cols-1 fb-gap-3">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {

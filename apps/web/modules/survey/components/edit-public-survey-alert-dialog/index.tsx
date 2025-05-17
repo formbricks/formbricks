@@ -34,7 +34,7 @@ export const EditPublicSurveyAlertDialog = ({
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
       disabled: isLoading,
-      variant: "outline",
+      variant: "secondary",
     });
   }
   if (primaryButtonAction) {
