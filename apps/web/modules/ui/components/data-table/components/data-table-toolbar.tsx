@@ -13,9 +13,10 @@ interface DataTableToolbarProps<T> {
   setIsExpanded: (isExpanded: boolean) => void;
   isExpanded: boolean;
   table: Table<T>;
-  deleteRows: (rowIds: string[]) => void;
+  deleteRowsAction: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
+  downloadRowsAction?: (rowIds: string[], format: string) => void;
   refreshContacts?: () => Promise<void>;
 }
 
@@ -24,9 +25,10 @@ export const DataTableToolbar = <T,>({
   setIsTableSettingsModalOpen,
   isExpanded,
   table,
-  deleteRows,
+  deleteRowsAction,
   type,
   deleteAction,
+  downloadRowsAction,
   refreshContacts,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslate();
@@ -34,7 +36,13 @@ export const DataTableToolbar = <T,>({
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <SelectedRowSettings table={table} deleteRows={deleteRows} type={type} deleteAction={deleteAction} />
+        <SelectedRowSettings
+          table={table}
+          deleteRowsAction={deleteRowsAction}
+          type={type}
+          deleteAction={deleteAction}
+          downloadRowsAction={downloadRowsAction}
+        />
       ) : (
         <div></div>
       )}

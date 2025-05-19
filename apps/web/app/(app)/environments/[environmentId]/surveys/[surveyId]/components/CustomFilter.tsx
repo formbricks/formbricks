@@ -250,6 +250,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       if (responsesDownloadUrlResponse?.data) {
         const link = document.createElement("a");
         link.href = responsesDownloadUrlResponse.data;
+        link.download = "";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
