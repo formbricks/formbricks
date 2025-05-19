@@ -180,9 +180,9 @@ export const ThemeStylingPreviewSurvey = ({
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
-                <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+                <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo projectLogo={project.logo} previewSurvey />
-                </div>
+                </button>
               )}
               <div
                 key={surveyFormKey}
@@ -205,17 +205,19 @@ export const ThemeStylingPreviewSurvey = ({
 
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-        <div
+        <button
+          type="button"
           className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("link")}>
           {t("common.link_survey")}
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("app")}>
           {t("common.app_survey")}
-        </div>
+        </button>
       </div>
     </div>
   );
