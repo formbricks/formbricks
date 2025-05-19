@@ -20,17 +20,23 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
     };
   }, []);
 
-  // Define survey type-specific styles
-  const surveyTypeStyles =
-    props.survey.type === "link"
-      ? ({
-          "--fb-survey-card-max-height": isDesktop ? "56dvh" : "60dvh",
-          "--fb-survey-card-min-height": isDesktop ? "0" : "42dvh",
-        } as React.CSSProperties)
-      : ({
-          "--fb-survey-card-max-height": "40dvh",
-          "--fb-survey-card-min-height": "40dvh",
-        } as React.CSSProperties);
+  // Determine styles based on survey type
+  useEffect(() => {
+    const root = document.documentElement;
+    if (props.survey.type === "link") {
+      root.style.setProperty("--fb-survey-card-max-height", isDesktop ? "56dvh" : "60dvh");
+      root.style.setProperty("--fb-survey-card-min-height", isDesktop ? "0" : "42dvh");
+    } else {
+      root.style.setProperty("--fb-survey-card-max-height", "40dvh");
+      root.style.setProperty("--fb-survey-card-min-height", "40dvh");
+    }
+
+    // Clean up when component unmounts
+    return () => {
+      root.style.removeProperty("--fb-survey-card-max-height");
+      root.style.removeProperty("--fb-survey-card-min-height");
+    };
+  }, [props.survey.type, isDesktop]);
 
   const close = () => {
     setIsOpen(false);
@@ -48,8 +54,7 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}
       onClose={close}
-      isOpen={isOpen}
-      style={surveyTypeStyles}>
+      isOpen={isOpen}>
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
