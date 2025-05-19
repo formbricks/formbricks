@@ -7,17 +7,6 @@
     "continue_with_oidc": "Continuar com {oidcDisplayName}",
     "continue_with_openid": "Continuar com OpenID",
     "continue_with_saml": "Continuar com SAML SSO",
-    "email-change": {
-      "confirm_password_description": "Confirme sua senha para continuar.",
-      "email_change_success": "O e-mail foi alterado com sucesso.",
-      "email_change_success_description": "Agora você pode fazer login usando seu novo endereço de e-mail.",
-      "email_verification_failed": "Falha na verificação do e-mail",
-      "invalid_or_expired_token": "O token é inválido ou expirou.",
-      "new_email": "Novo e-mail",
-
-      "old_email": "E-mail antigo"
-    },
-
     "forgot-password": {
       "back_to_login": "Voltar para o login",
       "email-sent": {

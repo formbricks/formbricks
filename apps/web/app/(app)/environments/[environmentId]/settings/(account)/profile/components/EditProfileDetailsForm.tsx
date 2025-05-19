@@ -21,8 +21,8 @@ import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { TUser, ZUser } from "@formbricks/types/user";
-import { comparePasswordsAction, sendVerificationNewEmailAction, updateUserAction } from "../actions";
+import { TUser, TUserUpdateInput, ZUser } from "@formbricks/types/user";
+import { updateUserAction } from "../actions";
 
 // Schema & types
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true });
@@ -52,69 +52,50 @@ export const EditProfileDetailsForm = ({
   const [showModal, setShowModal] = useState(false);
 
   const handleConfirmPassword = async (password: string) => {
-  try {
     const values = form.getValues();
     const dirtyFields = form.formState.dirtyFields;
 
-    const emailChanged = 'email' in dirtyFields;
-    const nameChanged = 'name' in dirtyFields;
-    const localeChanged = 'locale' in dirtyFields;
+    const emailChanged = "email" in dirtyFields;
+    const nameChanged = "name" in dirtyFields;
+    const localeChanged = "locale" in dirtyFields;
 
     const name = values.name.trim();
     const email = values.email.trim();
     const locale = values.locale;
 
+    const data: TUserUpdateInput = {};
+
     if (emailChanged) {
-      const passwordCheckResult = await comparePasswordsAction({ password });
+      data.email = email;
+      data.password = password;
+    }
+    if (nameChanged) {
+      data.name = name;
+    }
+    if (localeChanged) {
+      data.locale = locale;
+    }
 
-      if (!passwordCheckResult?.data?.success) {
-        toast.error("Invalid password");
-        return;
-      }
+    const updatedUserResult = await updateUserAction(data);
 
+    if (updatedUserResult?.data) {
       if (!emailVerificationDisabled) {
-        if (nameChanged || localeChanged) {
-          await updateUserAction({
-            name: nameChanged ? name : user.name,
-            locale: localeChanged ? locale : user.locale,
-          });
-        }
-
-        const response = await sendVerificationNewEmailAction({ email });
-        if (response?.data) {
-          toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
-        } else {
-          toast.error(getFormattedErrorMessage(response));
-        }
+        toast.success(t("auth.verification-requested.verification_email_successfully_sent", { email }));
       } else {
-        await updateUserAction({
-          name: nameChanged ? name : user.name,
-          email,
-          locale: localeChanged ? locale : user.locale,
-        });
-
         toast.success(t("environments.settings.profile.profile_updated_successfully"));
         await signOut({ redirect: false });
         router.push(`/email-change-without-verification-success`);
         return;
       }
-    } else if (nameChanged || localeChanged) {
-      await updateUserAction({
-        name: nameChanged ? name : user.name,
-        locale: localeChanged ? locale : user.locale,
-      });
-
-      toast.success(t("environments.settings.profile.profile_updated_successfully"));
+    } else {
+      const errorMessage = getFormattedErrorMessage(updatedUserResult);
+      toast.error(errorMessage);
+      return;
     }
 
     window.location.reload();
     setShowModal(false);
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    toast.error(`${t("common.error")}: ${errorMessage}`);
-  }
-};
-
+  };
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     if (data.email !== user.email) {
