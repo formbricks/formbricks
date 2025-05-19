@@ -206,12 +206,14 @@ export const ThemeStylingPreviewSurvey = ({
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <button
+          type="button"
           className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("link")}>
           {t("common.link_survey")}
         </button>
 
         <button
+          type="button"
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("app")}>
           {t("common.app_survey")}
