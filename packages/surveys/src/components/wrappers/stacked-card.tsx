@@ -33,8 +33,8 @@ export const StackedCard = ({
 }: StackedCardProps) => {
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
-  const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
-  const isHidden = offset < 0;
+  const currentCardHeight = delayedOffset === 0 ? "auto" : cardHeight;
+  const isHidden = offset < 0 || offset > 2;
 
   const getBottomStyles = () => {
     if (survey.type !== "link")
@@ -108,7 +108,7 @@ export const StackedCard = ({
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
         transitionProperty: "transform, opacity, margin, width",
-        transitionDuration: "5000ms",
+        transitionDuration: "500ms",
         transitionBehavior: "ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,

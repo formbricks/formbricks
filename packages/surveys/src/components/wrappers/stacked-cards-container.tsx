@@ -40,7 +40,7 @@ export function StackedCardsContainer({
     : styling.cardBorderColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
-  const [cardHeight, setCardHeight] = useState("auto");
+  const [cardHeight, setCardHeight] = useState("inital");
   const [cardWidth, setCardWidth] = useState<number>(0);
 
   const questionIdxTemp = useMemo(() => {
@@ -112,7 +112,7 @@ export function StackedCardsContainer({
         });
         resizeObserver.current.observe(currentElement);
       }
-    }, 0);
+    }, 200);
     return () => {
       resizeObserver.current?.disconnect();
       clearTimeout(timer);
@@ -130,7 +130,7 @@ export function StackedCardsContainer({
   return (
     <div
       data-testid="stacked-cards-container"
-      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
+      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-start"
       onMouseEnter={() => {
         setHovered(true);
       }}
