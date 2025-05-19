@@ -2,11 +2,13 @@ import { env } from "@/lib/env";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
+  createEmailChangeToken,
   createEmailToken,
   createInviteToken,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
+  verifyEmailChangeToken,
   verifyInviteToken,
   verifyToken,
   verifyTokenForLinkSurvey,
@@ -190,6 +192,34 @@ describe("JWT Functions", () => {
 
     test("should throw error for invalid token", () => {
       expect(() => verifyInviteToken("invalid-token")).toThrow("Invalid or expired invite token");
+    });
+  });
+
+  describe("verifyEmailChangeToken", () => {
+    test("should verify and decrypt valid email change token", async () => {
+      const userId = "test-user-id";
+      const email = "test@example.com";
+      const token = createEmailChangeToken(userId, email);
+      const result = await verifyEmailChangeToken(token);
+      expect(result).toEqual({ id: userId, email });
+    });
+
+    test("should throw error if token is invalid or missing fields", async () => {
+      // Create a token with missing fields
+      const jwt = await import("jsonwebtoken");
+      const token = jwt.sign({ foo: "bar" }, env.NEXTAUTH_SECRET as string);
+      await expect(verifyEmailChangeToken(token)).rejects.toThrow(
+        "Token is invalid or missing required fields"
+      );
+    });
+
+    test("should return original id/email if decryption fails", async () => {
+      // Create a token with non-encrypted id/email
+      const jwt = await import("jsonwebtoken");
+      const payload = { id: "plain-id", email: "plain@example.com" };
+      const token = jwt.sign(payload, env.NEXTAUTH_SECRET as string);
+      const result = await verifyEmailChangeToken(token);
+      expect(result).toEqual(payload);
     });
   });
 });

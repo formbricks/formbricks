@@ -22,10 +22,6 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   const payload = jwt.verify(token, env.NEXTAUTH_SECRET as string) as { id: string; email: string };
 
   if (!payload || !payload.id || !payload.email) {
@@ -176,10 +172,6 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
 
 export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {
   try {
-    if (!env.ENCRYPTION_KEY) {
-      throw new Error("ENCRYPTION_KEY is not set");
-    }
-
     const decoded = jwt.decode(token);
     const payload: JwtPayload = decoded as JwtPayload;
 
