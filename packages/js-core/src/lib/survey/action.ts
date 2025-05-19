@@ -1,6 +1,7 @@
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { triggerSurvey } from "@/lib/survey/widget";
+import { UpdateQueue } from "@/lib/user/update-queue";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
 import { type TTrackProperties } from "@/types/survey";
 
@@ -18,6 +19,7 @@ export const trackAction = async (
 ): Promise<Result<void, NetworkError>> => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
+  const updateQueue = UpdateQueue.getInstance();
 
   const aliasName = alias ?? name;
 
@@ -27,6 +29,11 @@ export const trackAction = async (
   const activeSurveys = appConfig.get().filteredSurveys;
 
   if (Boolean(activeSurveys) && activeSurveys.length > 0) {
+    if (!updateQueue.isEmpty()) {
+      logger.debug("Waiting for pending updates to complete before showing survey");
+      await updateQueue.processUpdates();
+    }
+
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
