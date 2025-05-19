@@ -14,7 +14,7 @@ interface PasswordConfirmationModalProps {
   setOpen: (open: boolean) => void;
   oldEmail: string;
   newEmail: string;
-  onConfirm: (password: string) => void;
+  onConfirm: (password: string) => Promise<void>;
 }
 
 const PasswordConfirmationSchema = z.object({

@@ -42,5 +42,6 @@ describe("VerifyEmailChangePage", () => {
     expect(screen.getByTestId("form-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("email-change-sign-in")).toBeInTheDocument();
     expect(screen.getByTestId("back-to-login")).toBeInTheDocument();
+    expect(screen.getByText("Email Change Sign In with token:")).toBeInTheDocument();
   });
 });
