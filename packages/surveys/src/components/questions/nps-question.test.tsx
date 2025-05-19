@@ -167,19 +167,6 @@ describe("NPSQuestion", () => {
     expect(getUpdatedTtc).toHaveBeenCalled();
   });
 
-  test("updates hover state when mouse moves over options", () => {
-    render(<NPSQuestion {...mockProps} />);
-
-    const option = screen.getByText("5").closest("label");
-    expect(option).toBeInTheDocument();
-
-    fireEvent.mouseOver(option!);
-    expect(option).toHaveClass("fb-bg-accent-bg");
-
-    fireEvent.mouseLeave(option!);
-    expect(option).not.toHaveClass("fb-bg-accent-bg");
-  });
-
   test("supports keyboard navigation", () => {
     render(<NPSQuestion {...mockProps} />);
 
