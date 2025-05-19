@@ -22,6 +22,43 @@ export const calculateTtcTotal = (ttc: TResponseTtc) => {
   return result;
 };
 
+const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
+  if (!tags) return [];
+
+  const filterTags: Record<string, any>[] = [];
+
+  if (tags?.applied) {
+    const appliedTags = tags.applied.map((name) => ({
+      tags: {
+        some: {
+          tag: {
+            name,
+          },
+        },
+      },
+    }));
+    filterTags.push(appliedTags);
+  }
+
+  if (tags?.notApplied) {
+    const notAppliedTags = {
+      tags: {
+        every: {
+          tag: {
+            name: {
+              notIn: tags.notApplied,
+            },
+          },
+        },
+      },
+    };
+
+    filterTags.push(notAppliedTags);
+  }
+
+  return filterTags.flat();
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -49,39 +86,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
 
   // For Tags
   if (filterCriteria?.tags) {
-    const tags: Record<string, any>[] = [];
-
-    if (filterCriteria?.tags?.applied) {
-      const appliedTags = filterCriteria.tags.applied.map((name) => ({
-        tags: {
-          some: {
-            tag: {
-              name,
-            },
-          },
-        },
-      }));
-      tags.push(appliedTags);
-    }
-
-    if (filterCriteria?.tags?.notApplied) {
-      const notAppliedTags = {
-        tags: {
-          every: {
-            tag: {
-              name: {
-                notIn: filterCriteria.tags.notApplied,
-              },
-            },
-          },
-        },
-      };
-
-      tags.push(notAppliedTags);
-    }
-
+    const tagFilters = createFilterTags(filterCriteria.tags);
     whereClause.push({
-      AND: tags.flat(),
+      AND: tagFilters,
     });
   }
 
@@ -442,6 +449,13 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
       AND: data,
     });
   }
+
+  // filter by explicit response IDs
+  if (filterCriteria?.responseIds) {
+    whereClause.push({
+      id: { in: filterCriteria.responseIds },
+    });
+  }
   return { AND: whereClause };
 };
 
@@ -683,7 +697,7 @@ export const getResponseHiddenFields = (
   }
 };
 
-const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
+export const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
   const subsets: string[][] = [];
 
   // Helper function to generate permutations of an array

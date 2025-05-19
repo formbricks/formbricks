@@ -1,10 +1,11 @@
 import preact from "@preact/preset-vite";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
-import { defineConfig, loadEnv } from "vite";
+import { loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
+import { defineConfig } from "vitest/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +16,7 @@ const config = ({ mode }) => {
   return defineConfig({
     test: {
       environment: "node",
-      environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
+      environmentMatchGlobs: [["**/*.test.tsx", "jsdom"], ["**/lib/**/*.test.ts", "jsdom"]],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
       coverage: {
@@ -23,16 +24,13 @@ const config = ({ mode }) => {
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",
         include: [
-          "src/lib/api-client.ts",
-          "src/lib/response-queue.ts",
-          "src/lib/logic.ts",
-          "src/components/buttons/*.tsx"
+          "src/lib/**/*.{ts,tsx}",
+          "src/components/**/*.{ts,tsx}"
         ],
-        exclude: ["dist/**", "node_modules/**"],
       },
     },
     define: {
-      "process.env": env,
+      "process.env.NODE_ENV": JSON.stringify(mode),
     },
     build: {
       emptyOutDir: false,

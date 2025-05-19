@@ -36,6 +36,7 @@ export const EditWelcomeCard = ({
   locale,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslate();
+
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
@@ -66,7 +67,7 @@ export const EditWelcomeCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "",
-          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <Hand className="h-4 w-4" />

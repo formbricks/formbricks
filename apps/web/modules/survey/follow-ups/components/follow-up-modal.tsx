@@ -856,7 +856,7 @@ export const FollowUpModal = ({
             </div>
           </div>
 
-          <div className="absolute right-0 bottom-0 z-20 h-12 w-full bg-white p-2">
+          <div className="absolute bottom-0 right-0 z-20 h-12 w-full bg-white p-2">
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"

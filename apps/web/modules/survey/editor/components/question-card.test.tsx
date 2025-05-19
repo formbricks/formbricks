@@ -1,15 +1,10 @@
 import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 import { Project } from "@prisma/client";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-// Import waitFor
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import {
-  TSurvey,
-  TSurveyAddressQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+// Import waitFor
+import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 // Mock child components
 vi.mock("@/modules/survey/components/question-form-input", () => ({
@@ -371,8 +366,9 @@ describe("QuestionCard Component", () => {
 
   test("applies invalid styling when isInvalid is true", () => {
     render(<QuestionCard {...defaultProps} isInvalid={true} />);
-    const dragHandle = screen.getByRole("button", { name: "" }).parentElement; // Get the div containing the GripIcon
+    const dragHandle = screen.getByRole("button", { name: "Drag to reorder question" }).parentElement; // Get the div containing the GripIcon
     expect(dragHandle).toHaveClass("bg-red-400");
+    expect(dragHandle).toHaveClass("hover:bg-red-600");
   });
 
   test("disables required toggle for Address question if all fields are optional", () => {
@@ -389,5 +385,212 @@ describe("QuestionCard Component", () => {
     render(<QuestionCard {...defaultProps} question={addressQuestion} activeQuestionId="q1" />);
     const toggle = screen.getByRole("switch", { name: "environments.surveys.edit.required" });
     expect(toggle).toBeDisabled();
+  });
+
+  test("renders backButtonLabel input when question type is Rating and not first question", () => {
+    const ratingQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={ratingQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("renders backButtonLabel input when question type is NPS and not first question", () => {
+    const npsQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.NPS,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={npsQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("does not render backButtonLabel input when question type is Rating but it's the first question", () => {
+    const ratingQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.Rating,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={ratingQuestion}
+        questionIdx={0} // First question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    expect(screen.queryByTestId("question-form-input-backButtonLabel")).not.toBeInTheDocument();
+  });
+
+  test("renders backButtonLabel input for non-NPS/Rating/CTA questions when not first question", () => {
+    const openTextQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={openTextQuestion}
+        questionIdx={1} // Not the first question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    // Should render backButtonLabel for non-first questions (regardless of type)
+    expect(screen.getByTestId("question-form-input-backButtonLabel")).toBeInTheDocument();
+  });
+
+  test("does not render backButtonLabel input for any question type when it's the first question", () => {
+    const openTextQuestion = {
+      ...baseQuestion,
+      id: "question-1",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Test Question", en: "Test Question" },
+    } as TSurveyQuestion;
+
+    render(
+      <QuestionCard
+        {...defaultProps}
+        question={openTextQuestion}
+        questionIdx={0} // First question
+        activeQuestionId="question-1"
+      />
+    );
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    // First question should never have back button
+    expect(screen.queryByTestId("question-form-input-backButtonLabel")).not.toBeInTheDocument();
+  });
+
+  // Accessibility Tests
+  test("maintains proper focus management when toggling advanced settings", async () => {
+    const user = userEvent.setup();
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const advancedSettingsTrigger = screen.getByText("environments.surveys.edit.show_advanced_settings");
+    await user.click(advancedSettingsTrigger);
+
+    const closeTrigger = screen.getByText("environments.surveys.edit.hide_advanced_settings");
+    expect(closeTrigger).toBeInTheDocument();
+  });
+
+  test("ensures proper ARIA attributes for collapsible sections", () => {
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const collapsibleTrigger = screen.getByText("environments.surveys.edit.show_advanced_settings");
+    expect(collapsibleTrigger).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(collapsibleTrigger);
+    expect(collapsibleTrigger).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("maintains keyboard accessibility for required toggle", async () => {
+    const user = userEvent.setup();
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const requiredToggle = screen.getByRole("switch", { name: "environments.surveys.edit.required" });
+    await user.click(requiredToggle);
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, { required: false });
+  });
+
+  test("provides screen reader text for drag handle", () => {
+    render(<QuestionCard {...defaultProps} />);
+    const dragHandle = screen.getByRole("button", { name: "Drag to reorder question" });
+    const svg = dragHandle.querySelector("svg");
+    expect(svg).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("maintains proper heading hierarchy", () => {
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+    const headline = screen.getByText("Question Headline");
+    expect(headline.tagName).toBe("H3");
+    expect(headline).toHaveClass("text-sm", "font-semibold");
+  });
+
+  test("ensures proper focus order for form elements", async () => {
+    const user = userEvent.setup();
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    // Open advanced settings
+    fireEvent.click(screen.getByText("environments.surveys.edit.show_advanced_settings"));
+
+    const requiredToggle = screen.getByRole("switch", { name: "environments.surveys.edit.required" });
+    await user.click(requiredToggle);
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, { required: false });
+  });
+
+  test("provides proper ARIA attributes for interactive elements", () => {
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const requiredToggle = screen.getByRole("switch", { name: "environments.surveys.edit.required" });
+    expect(requiredToggle).toHaveAttribute("aria-checked", "true");
+
+    const longAnswerToggle = screen.getByRole("switch", { name: "environments.surveys.edit.long_answer" });
+    expect(longAnswerToggle).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("ensures proper role attributes for interactive elements", () => {
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const toggles = screen.getAllByRole("switch");
+    expect(toggles).toHaveLength(2); // Required and Long Answer toggles
+
+    const collapsibleTrigger = screen.getByText("environments.surveys.edit.show_advanced_settings");
+    expect(collapsibleTrigger).toHaveAttribute("type", "button");
+  });
+
+  test("maintains proper focus management when closing advanced settings", async () => {
+    const user = userEvent.setup();
+    render(<QuestionCard {...defaultProps} activeQuestionId="q1" />);
+
+    const advancedSettingsTrigger = screen.getByText("environments.surveys.edit.show_advanced_settings");
+    await user.click(advancedSettingsTrigger);
+
+    const closeTrigger = screen.getByText("environments.surveys.edit.hide_advanced_settings");
+    await user.click(closeTrigger);
+
+    expect(screen.getByText("environments.surveys.edit.show_advanced_settings")).toBeInTheDocument();
   });
 });

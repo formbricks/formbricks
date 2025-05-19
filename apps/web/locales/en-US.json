@@ -1,6 +1,6 @@
 {
   "auth": {
-    "continue_with_azure": "Continue with Azure",
+    "continue_with_azure": "Continue with Microsoft",
     "continue_with_email": "Continue with Email",
     "continue_with_github": "Continue with GitHub",
     "continue_with_google": "Continue with Google",
@@ -1676,6 +1676,7 @@
         "device": "Device",
         "device_info": "Device info",
         "email": "Email",
+        "error_downloading_responses": "An error occured while downloading responses",
         "first_name": "First Name",
         "how_to_identify_users": "How to identify users",
         "last_name": "Last Name",
@@ -1773,6 +1774,8 @@
         "quickstart_web_apps": "Quickstart: Web apps",
         "quickstart_web_apps_description": "Please follow the Quickstart guide to get started:",
         "results_are_public": "Results are public",
+        "selected_responses_csv": "Selected responses (CSV)",
+        "selected_responses_excel": "Selected responses (Excel)",
         "send_preview": "Send preview",
         "send_to_panel": "Send to panel",
         "setup_instructions": "Setup instructions",

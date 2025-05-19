@@ -1,6 +1,6 @@
 {
   "auth": {
-    "continue_with_azure": "Login mit Azure",
+    "continue_with_azure": "Weiter mit Microsoft",
     "continue_with_email": "Login mit E-Mail",
     "continue_with_github": "Login mit GitHub",
     "continue_with_google": "Login mit Google",
@@ -1676,6 +1676,7 @@
         "device": "Gerät",
         "device_info": "Geräteinfo",
         "email": "E-Mail",
+        "error_downloading_responses": "Beim Herunterladen der Antworten ist ein Fehler aufgetreten",
         "first_name": "Vorname",
         "how_to_identify_users": "Wie man Benutzer identifiziert",
         "last_name": "Nachname",
@@ -1773,6 +1774,8 @@
         "quickstart_web_apps": "Schnellstart: Web-Apps",
         "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
         "results_are_public": "Ergebnisse sind öffentlich",
+        "selected_responses_csv": "Ausgewählte Antworten (CSV)",
+        "selected_responses_excel": "Ausgewählte Antworten (Excel)",
         "send_preview": "Vorschau senden",
         "send_to_panel": "An das Panel senden",
         "setup_instructions": "Einrichtung",

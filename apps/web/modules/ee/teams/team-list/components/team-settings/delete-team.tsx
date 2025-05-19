@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteTeamAction } from "@/modules/ee/teams/team-list/action";
+import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";

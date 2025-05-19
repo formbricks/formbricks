@@ -1,4 +1,5 @@
-export const isLoginRoute = (url: string) => url === "/api/auth/callback/credentials";
+export const isLoginRoute = (url: string) =>
+  url === "/api/auth/callback/credentials" || url === "/auth/login";
 
 export const isSignupRoute = (url: string) => url === "/auth/signup";
 

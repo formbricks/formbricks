@@ -12,7 +12,7 @@ import { ZId } from "@formbricks/types/common";
 import { ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient
-  .schema(ZUserUpdateInput.partial())
+  .schema(ZUserUpdateInput.pick({ name: true, locale: true }))
   .action(async ({ parsedInput, ctx }) => {
     if (parsedInput.email && ctx.user.identityProvider !== "email") {
       throw new Error("Email update is not allowed for non-credential users.");

@@ -1,7 +1,8 @@
 "use server";
 
-import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -11,8 +12,7 @@ import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { AuthenticationError } from "@formbricks/types/errors";
+import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 
 export const checkRoleManagementPermission = async (organizationId: string) => {
@@ -88,8 +88,13 @@ export const updateMembershipAction = authenticatedActionClient
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    if (DISABLE_USER_MANAGEMENT) {
-      throw new OperationNotAllowedError("User management is disabled");
+    const hasUserManagementAccess = getUserManagementAccess(
+      currentUserMembership.role,
+      USER_MANAGEMENT_MINIMUM_ROLE
+    );
+
+    if (!hasUserManagementAccess) {
+      throw new OperationNotAllowedError("User management is not allowed for your role");
     }
 
     await checkAuthorizationUpdated({

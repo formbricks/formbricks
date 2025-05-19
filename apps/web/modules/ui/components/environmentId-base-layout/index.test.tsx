@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EnvironmentIdBaseLayout } from "./index";
@@ -27,21 +27,12 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
-  FORMBRICKS_API_HOST: "test-formbricks-api-host",
-  FORMBRICKS_ENVIRONMENT_ID: "test-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
 }));
 
 // Mock sub-components to render identifiable elements
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
   ResponseFilterProvider: ({ children }: any) => <div data-testid="ResponseFilterProvider">{children}</div>,
-}));
-vi.mock("@/app/(app)/components/FormbricksClient", () => ({
-  FormbricksClient: ({ userId, email }: any) => (
-    <div data-testid="FormbricksClient">
-      {userId}-{email}
-    </div>
-  ),
 }));
 vi.mock("@/modules/ui/components/toaster-client", () => ({
   ToasterClient: () => <div data-testid="ToasterClient" />,
@@ -69,7 +60,6 @@ describe("EnvironmentIdBaseLayout", () => {
 
     expect(screen.getByTestId("ResponseFilterProvider")).toBeInTheDocument();
     expect(screen.getByTestId("PosthogIdentify")).toHaveTextContent("org1");
-    expect(screen.getByTestId("FormbricksClient")).toHaveTextContent("user1-user1@example.com");
     expect(screen.getByTestId("ToasterClient")).toBeInTheDocument();
     expect(screen.getByTestId("child")).toHaveTextContent("Test Content");
   });

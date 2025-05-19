@@ -76,7 +76,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
           const value = animationFiles[key];
           return (
             <div
-              key={index}
+              key={key}
               onMouseEnter={() => debouncedManagePlayback(index, "play")}
               onMouseLeave={() => debouncedManagePlayback(index, "pause")}
               onClick={() => handleBg(value)}
@@ -88,7 +88,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
                 <source src={`${key}`} type="video/mp4" />
               </video>
               <input
-                className="absolute top-2 right-2 h-4 w-4 rounded-sm bg-white"
+                className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white"
                 type="checkbox"
                 checked={animation === value}
                 onChange={() => handleBg(value)}

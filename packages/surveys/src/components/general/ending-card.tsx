@@ -158,7 +158,7 @@ export function EndingCard({
                   <div>
                     <Headline
                       alignTextCenter
-                      headline={"Respondants will not see this card"}
+                      headline={"Respondents will not see this card"}
                       questionId="EndingCard"
                     />
                     <Subheader subheader={"They will be redirected immediately"} questionId="EndingCard" />

@@ -219,6 +219,7 @@ export const authOptions: NextAuthOptions = {
       }
       if (ENTERPRISE_LICENSE_KEY) {
         const result = await handleSsoCallback({ user, account, callbackUrl });
+
         if (result) {
           await updateUserLastLoginAt(user.email);
         }

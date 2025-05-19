@@ -260,6 +260,7 @@
           "group": "Auth & SSO",
           "icon": "lock",
           "pages": [
+            "self-hosting/auth-behavior",
             "self-hosting/configuration/auth-sso/open-id-connect",
             "self-hosting/configuration/auth-sso/azure-ad-oauth",
             "self-hosting/configuration/auth-sso/google-oauth",
@@ -286,6 +287,19 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
+        {
+          "group": "Enterprise Features",
+          "icon": "building",
+          "pages": [
+            "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+            "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+            "self-hosting/advanced/enterprise-features/team-access",
+            "self-hosting/advanced/enterprise-features/contact-management-segments",
+            "self-hosting/advanced/enterprise-features/multi-language-surveys",
+            "self-hosting/advanced/enterprise-features/oidc-sso",
+            "self-hosting/advanced/enterprise-features/saml-sso"
+          ]
+        },
         "self-hosting/advanced/rate-limiting"
       ]
     },

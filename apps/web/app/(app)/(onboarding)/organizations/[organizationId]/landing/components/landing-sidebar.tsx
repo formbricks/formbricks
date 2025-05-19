@@ -1,6 +1,5 @@
 "use client";
 
-import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
@@ -125,7 +124,6 @@ export const LandingSidebar = ({
             <DropdownMenuItem
               onClick={async () => {
                 await signOut({ callbackUrl: "/auth/login" });
-                await formbricksLogout();
               }}
               icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
               {t("common.logout")}

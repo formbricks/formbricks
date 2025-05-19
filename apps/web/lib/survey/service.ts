@@ -109,7 +109,7 @@ export const selectSurvey = {
   followUps: true,
 } satisfies Prisma.SurveySelect;
 
-const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
+export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
   if (!triggers) return;
 
   // check if all the triggers are valid
@@ -428,7 +428,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           });
 
           segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
-          updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+          updatedSegment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
           logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
@@ -865,7 +865,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       });
 
       segmentCache.revalidate({ id: currentSurveySegment.id });
-      segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+      segment.surveys.forEach((survey) => surveyCache.revalidate({ id: survey.id }));
       surveyCache.revalidate({ environmentId: segment.environmentId });
     }
 
