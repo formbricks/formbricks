@@ -23,10 +23,26 @@ vi.mock("./survey", () => ({
   },
 }));
 
+// Mock ResizeObserver
+let resizeCallback: Function | undefined;
+const ResizeObserverMock = vi.fn((callback) => {
+  resizeCallback = callback;
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
+global.ResizeObserver = ResizeObserverMock as any;
+
 describe("RenderSurvey", () => {
   beforeEach(() => {
     surveySpy.mockClear();
     vi.useFakeTimers();
+    // Reset styles on documentElement before each test
+    document.documentElement.style.removeProperty("--fb-survey-card-max-height");
+    document.documentElement.style.removeProperty("--fb-survey-card-min-height");
+    resizeCallback = undefined; // Reset callback for each test
   });
 
   afterEach(() => {
@@ -155,12 +171,14 @@ describe("RenderSurvey", () => {
       mode: "modal",
     } as any;
 
-    const { container } = render(<RenderSurvey {...propsForLinkSurvey} />);
-    const surveyContainerWrapper = container.querySelector('[data-testid="container"]');
-    expect(surveyContainerWrapper).toHaveStyle({
-      "--fb-survey-card-max-height": "56dvh",
-      "--fb-survey-card-min-height": "0dvh",
-    });
+    render(<RenderSurvey {...propsForLinkSurvey} />);
+    // Manually trigger the ResizeObserver callback if it was captured
+    if (resizeCallback) {
+      resizeCallback();
+    }
+
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-max-height")).toBe("56dvh");
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-min-height")).toBe("0");
   });
 
   test("should apply correct styles for app (non-link) surveys", () => {
@@ -175,11 +193,13 @@ describe("RenderSurvey", () => {
       mode: "modal",
     } as any;
 
-    const { container } = render(<RenderSurvey {...propsForAppSurvey} />);
-    const surveyContainerWrapper = container.querySelector('[data-testid="container"]');
-    expect(surveyContainerWrapper).toHaveStyle({
-      "--fb-survey-card-max-height": "25dvh",
-      "--fb-survey-card-min-height": "25dvh",
-    });
+    render(<RenderSurvey {...propsForAppSurvey} />);
+    // Manually trigger the ResizeObserver callback if it was captured
+    if (resizeCallback) {
+      resizeCallback();
+    }
+
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-max-height")).toBe("40dvh");
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-min-height")).toBe("40dvh");
   });
 });

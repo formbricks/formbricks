@@ -5,38 +5,30 @@ import { Survey } from "./survey";
 
 export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const [isOpen, setIsOpen] = useState(true);
-  const [isDesktop, setIsDesktop] = useState(false);
 
   // Check viewport width on mount and resize
   useEffect(() => {
-    const checkViewportWidth = () => {
-      setIsDesktop(window.innerWidth > 768);
-    };
-    checkViewportWidth();
-    window.addEventListener("resize", checkViewportWidth);
-
-    return () => {
-      window.removeEventListener("resize", checkViewportWidth);
-    };
-  }, []);
-
-  // Determine styles based on survey type
-  useEffect(() => {
     const root = document.documentElement;
-    if (props.survey.type === "link") {
-      root.style.setProperty("--fb-survey-card-max-height", isDesktop ? "56dvh" : "60dvh");
-      root.style.setProperty("--fb-survey-card-min-height", isDesktop ? "0" : "42dvh");
-    } else {
-      root.style.setProperty("--fb-survey-card-max-height", "40dvh");
-      root.style.setProperty("--fb-survey-card-min-height", "40dvh");
-    }
+    const resizeObserver = new ResizeObserver(() => {
+      const isDesktop = window.innerWidth > 768;
 
-    // Clean up when component unmounts
+      if (props.survey.type === "link") {
+        root.style.setProperty("--fb-survey-card-max-height", isDesktop ? "56dvh" : "60dvh");
+        root.style.setProperty("--fb-survey-card-min-height", isDesktop ? "0" : "42dvh");
+      } else {
+        root.style.setProperty("--fb-survey-card-max-height", "40dvh");
+        root.style.setProperty("--fb-survey-card-min-height", "40dvh");
+      }
+    });
+
+    resizeObserver.observe(document.body);
+
     return () => {
+      resizeObserver.disconnect();
       root.style.removeProperty("--fb-survey-card-max-height");
       root.style.removeProperty("--fb-survey-card-min-height");
     };
-  }, [props.survey.type, isDesktop]);
+  }, [props.survey.type]);
 
   const close = () => {
     setIsOpen(false);
