@@ -50,7 +50,7 @@ export const StackedCard = ({
   const calculateCardTransform = useMemo(() => {
     if (offset > 2)
       return () => {
-        return ``;
+        return `opacity(0)`;
       };
 
     let rotationCoefficient = 3;
@@ -108,7 +108,7 @@ export const StackedCard = ({
         opacity: isHidden ? 0 : (100 - 20 * offset) / 100,
         height: fullSizeCards ? "100%" : currentCardHeight,
         transitionProperty: "transform, opacity, margin, width",
-        transitionDuration: "500ms",
+        transitionDuration: "5000ms",
         transitionBehavior: "ease-in-out",
         pointerEvents: offset === 0 ? "auto" : "none",
         ...borderStyles,
