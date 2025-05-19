@@ -28,12 +28,12 @@ describe("AnimatedSurveyBg", () => {
       <AnimatedSurveyBg handleBgChange={handleBgChange} background={initialBackground} />
     );
 
-    // Find the first video element and simulate a click on its parent div
+    // Find the first video element and simulate a click on its parent button
     const videoElement = container.querySelector("video");
-    const parentDiv = videoElement?.closest("div");
+    const parentButton = videoElement?.closest("button");
 
-    if (parentDiv) {
-      await userEvent.click(parentDiv);
+    if (parentButton) {
+      await userEvent.click(parentButton);
 
       const expectedValue = "/animated-bgs/4K/1_4k.mp4";
 
@@ -78,7 +78,7 @@ describe("AnimatedSurveyBg", () => {
     render(<AnimatedSurveyBg handleBgChange={mockHandleBgChange} background={backgroundValue} />);
 
     // Simulate a mouse enter event on the first video thumbnail
-    const firstThumbnail = screen.getAllByRole("checkbox")[0].closest("div"); // Find the parent div
+    const firstThumbnail = screen.getAllByRole("checkbox")[0].closest("button"); // Find the parent button
     if (firstThumbnail) {
       fireEvent.mouseEnter(firstThumbnail);
     }
