@@ -1,4 +1,5 @@
 /* eslint-disable no-console -- required for logging */
+import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
@@ -6,7 +7,28 @@ import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils"
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
 import { type TEnvironmentStateActionClass } from "@/types/config";
-import { type NetworkError, type Result, type ResultError, err, match, okVoid } from "@/types/error";
+import { type Result } from "@/types/error";
+
+// Factory for creating context-specific tracking handlers
+const createTrackNoCodeActionWithContext = (context: string) => {
+  return async (actionName: string): Promise<Result<void, unknown>> => {
+    const result = await trackNoCodeAction(actionName);
+    if (!result.ok) {
+      const errorToLog = result.error as { message?: string };
+      const errorMessageText = errorToLog.message ?? "An unknown error occurred.";
+      console.error(
+        `🧱 Formbricks - Error in no-code ${context} action '${actionName}': ${errorMessageText}`,
+        errorToLog
+      );
+    }
+    return result;
+  };
+};
+
+const trackNoCodePageViewActionHandler = createTrackNoCodeActionWithContext("page view");
+const trackNoCodeClickActionHandler = createTrackNoCodeActionWithContext("click");
+const trackNoCodeExitIntentActionHandler = createTrackNoCodeActionWithContext("exit intent");
+const trackNoCodeScrollActionHandler = createTrackNoCodeActionWithContext("scroll");
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -18,7 +40,8 @@ export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
 };
 
-export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
+export const checkPageUrl = async (): Promise<void> => {
+  const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
@@ -35,11 +58,8 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     const isValidUrl = handleUrlFilters(urlFilters);
 
     if (isValidUrl) {
-      const trackResult = await trackNoCodeAction(event.name);
-
-      if (!trackResult.ok) {
-        return err(trackResult.error);
-      }
+      queue.add(trackNoCodePageViewActionHandler, CommandType.GeneralAction, true, event.name);
+      await queue.wait();
     } else {
       const scheduledTimeouts = timeoutStack.getTimeouts();
 
@@ -51,11 +71,11 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
       }
     }
   }
-
-  return okVoid();
 };
 
-const checkPageUrlWrapper = (): ReturnType<typeof checkPageUrl> => checkPageUrl();
+const checkPageUrlWrapper = (): void => {
+  void checkPageUrl();
+};
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
@@ -93,6 +113,7 @@ export const removePageUrlEventListeners = (): void => {
 let isClickEventListenerAdded = false;
 
 const checkClickMatch = (event: MouseEvent): void => {
+  const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
   const { environment } = appConfig.get();
@@ -107,20 +128,7 @@ const checkClickMatch = (event: MouseEvent): void => {
 
   noCodeClickActionClasses.forEach((action: TEnvironmentStateActionClass) => {
     if (evaluateNoCodeConfigClick(targetElement, action)) {
-      trackNoCodeAction(action.name)
-        .then((res) => {
-          match(
-            res,
-            (_value: unknown) => undefined,
-            (actionError: unknown) => {
-              // errorHandler.handle(actionError);
-              console.error(actionError);
-            }
-          );
-        })
-        .catch((error: unknown) => {
-          console.error(error);
-        });
+      queue.add(trackNoCodeClickActionHandler, CommandType.GeneralAction, true, action.name);
     }
   });
 };
@@ -144,7 +152,8 @@ export const removeClickEventListener = (): void => {
 // Exit Intent Handlers
 let isExitIntentListenerAdded = false;
 
-const checkExitIntent = async (e: MouseEvent): Promise<ResultError<NetworkError> | undefined> => {
+const checkExitIntent = (e: MouseEvent): void => {
+  const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
   const { environment } = appConfig.get();
@@ -161,13 +170,14 @@ const checkExitIntent = async (e: MouseEvent): Promise<ResultError<NetworkError>
 
       if (!isValidUrl) continue;
 
-      const trackResult = await trackNoCodeAction(event.name);
-      if (!trackResult.ok) return err(trackResult.error);
+      queue.add(trackNoCodeExitIntentActionHandler, CommandType.GeneralAction, true, event.name);
     }
   }
 };
 
-const checkExitIntentWrapper = (e: MouseEvent): ReturnType<typeof checkExitIntent> => checkExitIntent(e);
+const checkExitIntentWrapper = (e: MouseEvent): void => {
+  checkExitIntent(e);
+};
 
 export const addExitIntentListener = (): void => {
   if (typeof document !== "undefined" && !isExitIntentListenerAdded) {
@@ -189,7 +199,8 @@ export const removeExitIntentListener = (): void => {
 let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
-const checkScrollDepth = async (): Promise<Result<void, unknown>> => {
+const checkScrollDepth = (): void => {
+  const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
   const scrollPosition = window.scrollY;
@@ -216,15 +227,14 @@ const checkScrollDepth = async (): Promise<Result<void, unknown>> => {
 
       if (!isValidUrl) continue;
 
-      const trackResult = await trackNoCodeAction(event.name);
-      if (!trackResult.ok) return err(trackResult.error);
+      queue.add(trackNoCodeScrollActionHandler, CommandType.GeneralAction, true, event.name);
     }
   }
-
-  return okVoid();
 };
 
-const checkScrollDepthWrapper = (): ReturnType<typeof checkScrollDepth> => checkScrollDepth();
+const checkScrollDepthWrapper = (): void => {
+  checkScrollDepth();
+};
 
 export const addScrollDepthListener = (): void => {
   if (typeof window !== "undefined" && !scrollDepthListenerAdded) {

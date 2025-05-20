@@ -121,7 +121,11 @@ export const filterSurveys = (
   });
 
   if (!userId) {
-    return filteredSurveys;
+    // exclude surveys that have a segment with filters
+    return filteredSurveys.filter((survey) => {
+      const segmentFiltersLength = survey.segment?.filters.length ?? 0;
+      return segmentFiltersLength === 0;
+    });
   }
 
   if (!segments.length) {

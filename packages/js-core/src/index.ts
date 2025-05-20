@@ -1,5 +1,5 @@
 /* eslint-disable import/no-default-export -- required for default export*/
-import { CommandQueue } from "@/lib/common/command-queue";
+import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
@@ -9,7 +9,7 @@ import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
 
-const queue = new CommandQueue();
+const queue = CommandQueue.getInstance();
 
 const setup = async (setupConfig: TConfigInput): Promise<void> => {
   // If the initConfig has a userId or attributes, we need to use the legacy init
@@ -27,59 +27,53 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
       // eslint-disable-next-line no-console -- legacy init
       console.warn("🧱 Formbricks - Warning: Using legacy init");
     }
-    queue.add(Setup.setup, false, {
+    queue.add(Setup.setup, CommandType.Setup, false, {
       ...setupConfig,
       // @ts-expect-error -- apiHost was in the older type
       ...(setupConfig.apiHost && { appUrl: setupConfig.apiHost as string }),
     } as unknown as TConfigInput);
   } else {
-    queue.add(Setup.setup, false, setupConfig);
-    await queue.wait();
+    queue.add(Setup.setup, CommandType.Setup, false, setupConfig);
   }
-};
 
-const setUserId = async (userId: string): Promise<void> => {
-  queue.add(User.setUserId, true, userId);
+  // wait for setup to complete
   await queue.wait();
 };
 
-const setEmail = async (email: string): Promise<void> => {
-  await setAttribute("email", email);
-  await queue.wait();
+const setUserId = (userId: string): void => {
+  queue.add(User.setUserId, CommandType.UserAction, true, userId);
 };
 
-const setAttribute = async (key: string, value: string): Promise<void> => {
-  queue.add(Attribute.setAttributes, true, { [key]: value });
-  await queue.wait();
+const setEmail = (email: string): void => {
+  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { email });
 };
 
-const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
-  queue.add(Attribute.setAttributes, true, attributes);
-  await queue.wait();
+const setAttribute = (key: string, value: string): void => {
+  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { [key]: value });
 };
 
-const setLanguage = async (language: string): Promise<void> => {
-  queue.add(Attribute.setAttributes, true, { language });
-  await queue.wait();
+const setAttributes = (attributes: Record<string, string>): void => {
+  queue.add(Attribute.setAttributes, CommandType.UserAction, true, attributes);
 };
 
-const logout = async (): Promise<void> => {
-  queue.add(User.logout, true);
-  await queue.wait();
+const setLanguage = (language: string): void => {
+  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
+};
+
+const logout = (): void => {
+  queue.add(User.logout, CommandType.GeneralAction);
 };
 
 /**
  * @param code - The code of the action to track
  * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
  */
-const track = async (code: string, properties?: TTrackProperties): Promise<void> => {
-  queue.add<string | TTrackProperties | undefined>(Action.trackCodeAction, true, code, properties);
-  await queue.wait();
+const track = (code: string, properties?: TTrackProperties): void => {
+  queue.add(Action.trackCodeAction, CommandType.GeneralAction, true, code, properties);
 };
 
-const registerRouteChange = async (): Promise<void> => {
-  queue.add(checkPageUrl, true);
-  await queue.wait();
+const registerRouteChange = (): void => {
+  queue.add(checkPageUrl, CommandType.GeneralAction);
 };
 
 const formbricks = {

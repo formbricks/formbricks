@@ -2,24 +2,43 @@
 /* eslint-disable no-console -- we need to log global errors */
 import { checkSetup } from "@/lib/common/setup";
 import { wrapThrowsAsync } from "@/lib/common/utils";
+import { UpdateQueue } from "@/lib/user/update-queue";
 import type { Result } from "@/types/error";
 
 export type TCommand = (
   ...args: any[]
 ) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
 
+export enum CommandType {
+  Setup,
+  UserAction,
+  GeneralAction,
+}
+
+interface InternalQueueItem {
+  command: TCommand;
+  type: CommandType;
+  checkSetup: boolean;
+  commandArgs: any[];
+}
+
 export class CommandQueue {
-  private queue: {
-    command: TCommand;
-    checkSetup: boolean;
-    commandArgs: any[];
-  }[] = [];
+  private queue: InternalQueueItem[] = [];
   private running = false;
   private resolvePromise: (() => void) | null = null;
   private commandPromise: Promise<void> | null = null;
+  private static instance: CommandQueue | null = null;
 
-  public add<A>(command: TCommand, shouldCheckSetup = true, ...args: A[]): void {
-    this.queue.push({ command, checkSetup: shouldCheckSetup, commandArgs: args });
+  public static getInstance(): CommandQueue {
+    CommandQueue.instance ??= new CommandQueue();
+    return CommandQueue.instance;
+  }
+
+  public add(command: TCommand, type: CommandType, shouldCheckSetupFlag = true, ...args: any[]): void {
+    const newItem: InternalQueueItem = { command, type, checkSetup: shouldCheckSetupFlag, commandArgs: args };
+
+    this.queue.push(newItem);
+    this.queue.sort((a, b) => a.type - b.type);
 
     if (!this.running) {
       this.commandPromise = new Promise((resolve) => {
@@ -37,18 +56,26 @@ export class CommandQueue {
 
   private async run(): Promise<void> {
     this.running = true;
+
     while (this.queue.length > 0) {
       const currentItem = this.queue.shift();
 
       if (!currentItem) continue;
 
-      // make sure formbricks is setup
       if (currentItem.checkSetup) {
-        // call different function based on package type
         const setupResult = checkSetup();
-
         if (!setupResult.ok) {
+          console.warn(`🧱 Formbricks - Setup not complete.`);
           continue;
+        }
+      }
+
+      if (currentItem.type === CommandType.GeneralAction) {
+        // first check if there are pending updates in the update queue
+        const updateQueue = UpdateQueue.getInstance();
+        if (!updateQueue.isEmpty()) {
+          console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
+          await updateQueue.processUpdates();
         }
       }
 
@@ -64,11 +91,16 @@ export class CommandQueue {
         console.error("🧱 Formbricks - Global error: ", result.data.error);
       }
     }
+
     this.running = false;
     if (this.resolvePromise) {
       this.resolvePromise();
       this.resolvePromise = null;
       this.commandPromise = null;
     }
+  }
+
+  public getQueue(): InternalQueueItem[] {
+    return this.queue;
   }
 }
