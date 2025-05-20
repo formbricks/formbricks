@@ -5,26 +5,22 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 
 export const createToken = (userId: string, userEmail: string, options = {}): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
   return jwt.sign({ id: encryptedUserId }, env.NEXTAUTH_SECRET + userEmail, options);
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   const encryptedEmail = symmetricEncrypt(userEmail, env.ENCRYPTION_KEY);
   return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET + surveyId);
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
-  const payload = jwt.verify(token, env.NEXTAUTH_SECRET as string) as { id: string; email: string };
+  if (!env.NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
 
-  if (!payload || !payload.id || !payload.email) {
+  const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as { id: string; email: string };
+
+  if (!payload?.id || !payload?.email) {
     throw new Error("Token is invalid or missing required fields");
   }
 
@@ -50,10 +46,6 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
 };
 
 export const createEmailChangeToken = (userId: string, email: string): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
   const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
 
@@ -67,10 +59,6 @@ export const createEmailChangeToken = (userId: string, email: string): string =>
   });
 };
 export const createEmailToken = (email: string): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   if (!env.NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -80,10 +68,6 @@ export const createEmailToken = (email: string): string => {
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   if (!env.NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -100,10 +84,6 @@ export const getEmailFromEmailToken = (token: string): string => {
 };
 
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
   if (!env.NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -132,9 +112,6 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
 };
 
 export const verifyToken = async (token: string): Promise<JwtPayload> => {
-  if (!env.ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
   // First decode to get the ID
   const decoded = jwt.decode(token);
   const payload: JwtPayload = decoded as JwtPayload;

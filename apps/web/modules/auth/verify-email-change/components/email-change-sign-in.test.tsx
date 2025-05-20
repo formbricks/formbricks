@@ -1,5 +1,7 @@
+import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { signOut } from "next-auth/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EmailChangeSignIn } from "./email-change-sign-in";
 
@@ -14,7 +16,7 @@ vi.mock("next-auth/react", () => ({
   signOut: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/verify-email-change/action", () => ({
+vi.mock("@/modules/auth/verify-email-change/actions", () => ({
   verifyEmailChangeAction: vi.fn(),
 }));
 
@@ -30,9 +32,6 @@ describe("EmailChangeSignIn", () => {
   });
 
   test("handles successful email change verification", async () => {
-    const { verifyEmailChangeAction } = await import("@/modules/auth/verify-email-change/action");
-    const { signOut } = await import("next-auth/react");
-
     vi.mocked(verifyEmailChangeAction).mockResolvedValueOnce({});
 
     render(<EmailChangeSignIn token="valid-token" />);
@@ -46,9 +45,6 @@ describe("EmailChangeSignIn", () => {
   });
 
   test("handles failed email change verification", async () => {
-    const { verifyEmailChangeAction } = await import("@/modules/auth/verify-email-change/action");
-    const { signOut } = await import("next-auth/react");
-
     vi.mocked(verifyEmailChangeAction).mockResolvedValueOnce({ serverError: "Error" });
 
     render(<EmailChangeSignIn token="invalid-token" />);
@@ -69,9 +65,6 @@ describe("EmailChangeSignIn", () => {
   });
 
   test("handles verification error", async () => {
-    const { verifyEmailChangeAction } = await import("@/modules/auth/verify-email-change/action");
-    const { signOut } = await import("next-auth/react");
-
     vi.mocked(verifyEmailChangeAction).mockRejectedValueOnce(new Error("Network error"));
 
     render(<EmailChangeSignIn token="valid-token" />);

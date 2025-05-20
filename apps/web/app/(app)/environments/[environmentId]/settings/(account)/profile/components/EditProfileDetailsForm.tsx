@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordConfirmationModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/password-confirmation-modal";
 import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
@@ -11,7 +12,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { PasswordConfirmationModal } from "@/modules/ui/components/password-confirmation-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
@@ -41,7 +41,7 @@ export const EditProfileDetailsForm = ({
   const form = useForm<TEditProfileNameForm>({
     defaultValues: {
       name: user.name,
-      locale: user.locale || "en",
+      locale: user.locale,
       email: user.email,
     },
     mode: "onChange",
@@ -60,7 +60,7 @@ export const EditProfileDetailsForm = ({
     const localeChanged = "locale" in dirtyFields;
 
     const name = values.name.trim();
-    const email = values.email.trim();
+    const email = values.email.trim().toLowerCase();
     const locale = values.locale;
 
     const data: TUserUpdateInput = {};
@@ -98,6 +98,11 @@ export const EditProfileDetailsForm = ({
   };
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
+    if (data.email !== user.email && data.email.toLowerCase() === user.email.toLowerCase()) {
+      toast.error(t("auth.email-change.email_already_exists"));
+      return;
+    }
+
     if (data.email !== user.email) {
       setShowModal(true);
     } else {

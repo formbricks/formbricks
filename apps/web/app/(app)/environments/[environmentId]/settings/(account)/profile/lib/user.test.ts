@@ -92,9 +92,7 @@ describe("User Library Tests", () => {
       } as any);
 
       await expect(verifyUserPassword(userId, password)).rejects.toThrow(InvalidInputError);
-      await expect(verifyUserPassword(userId, password)).rejects.toThrow(
-        "Third party login is already enabled"
-      );
+      await expect(verifyUserPassword(userId, password)).rejects.toThrow("Password is not set for this user");
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
         select: { password: true, identityProvider: true },
@@ -109,9 +107,7 @@ describe("User Library Tests", () => {
       } as any);
 
       await expect(verifyUserPassword(userId, password)).rejects.toThrow(InvalidInputError);
-      await expect(verifyUserPassword(userId, password)).rejects.toThrow(
-        "Third party login is already enabled"
-      );
+      await expect(verifyUserPassword(userId, password)).rejects.toThrow("Password is not set for this user");
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
         select: { password: true, identityProvider: true },

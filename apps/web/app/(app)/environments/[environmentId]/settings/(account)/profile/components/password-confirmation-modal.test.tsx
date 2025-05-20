@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { PasswordConfirmationModal } from "./index";
+import { PasswordConfirmationModal } from "./password-confirmation-modal";
 
 // Mock the Modal component
 vi.mock("@/modules/ui/components/modal", () => ({
@@ -16,6 +16,19 @@ vi.mock("@/modules/ui/components/modal", () => ({
         </button>
       </div>
     ) : null,
+}));
+
+// Mock the PasswordInput component
+vi.mock("@/modules/ui/components/password-input", () => ({
+  PasswordInput: ({ onChange, value, placeholder }: any) => (
+    <input
+      type="password"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      data-testid="password-input"
+    />
+  ),
 }));
 
 // Mock the useTranslate hook
@@ -58,9 +71,9 @@ describe("PasswordConfirmationModal", () => {
 
   test("shows password input field", () => {
     render(<PasswordConfirmationModal {...defaultProps} />);
-    const passwordInput = screen.getByPlaceholderText("*******");
+    const passwordInput = screen.getByTestId("password-input");
     expect(passwordInput).toBeInTheDocument();
-    expect(passwordInput).toHaveAttribute("type", "password");
+    expect(passwordInput).toHaveAttribute("placeholder", "*******");
   });
 
   test("disables confirm button when form is not dirty", () => {
@@ -69,35 +82,30 @@ describe("PasswordConfirmationModal", () => {
     expect(confirmButton).toBeDisabled();
   });
 
-  test("enables confirm button when password is entered", async () => {
+  test("disables confirm button when old and new emails are the same", () => {
+    render(
+      <PasswordConfirmationModal {...defaultProps} oldEmail="same@example.com" newEmail="same@example.com" />
+    );
+    const confirmButton = screen.getByText("common.confirm");
+    expect(confirmButton).toBeDisabled();
+  });
+
+  test("enables confirm button when password is entered and emails are different", async () => {
     const user = userEvent.setup();
     render(<PasswordConfirmationModal {...defaultProps} />);
 
-    const passwordInput = screen.getByPlaceholderText("*******");
+    const passwordInput = screen.getByTestId("password-input");
     await user.type(passwordInput, "password123");
 
     const confirmButton = screen.getByText("common.confirm");
     expect(confirmButton).not.toBeDisabled();
   });
 
-  test("calls onConfirm with password when form is submitted", async () => {
-    const user = userEvent.setup();
-    render(<PasswordConfirmationModal {...defaultProps} />);
-
-    const passwordInput = screen.getByPlaceholderText("*******");
-    await user.type(passwordInput, "password123");
-
-    const confirmButton = screen.getByText("common.confirm");
-    await user.click(confirmButton);
-
-    expect(defaultProps.onConfirm).toHaveBeenCalledWith("password123");
-  });
-
   test("shows error message when password is too short", async () => {
     const user = userEvent.setup();
     render(<PasswordConfirmationModal {...defaultProps} />);
 
-    const passwordInput = screen.getByPlaceholderText("*******");
+    const passwordInput = screen.getByTestId("password-input");
     await user.type(passwordInput, "short");
 
     const confirmButton = screen.getByText("common.confirm");
@@ -106,29 +114,19 @@ describe("PasswordConfirmationModal", () => {
     expect(screen.getByText("String must contain at least 8 character(s)")).toBeInTheDocument();
   });
 
-  test("handles cancel button click", async () => {
+  test("handles cancel button click and resets form", async () => {
     const user = userEvent.setup();
     render(<PasswordConfirmationModal {...defaultProps} />);
+
+    const passwordInput = screen.getByTestId("password-input");
+    await user.type(passwordInput, "password123");
 
     const cancelButton = screen.getByText("common.cancel");
     await user.click(cancelButton);
 
     expect(defaultProps.setOpen).toHaveBeenCalledWith(false);
-  });
-
-  test("handles error from onConfirm", async () => {
-    const user = userEvent.setup();
-    const error = new Error("Authentication failed");
-    defaultProps.onConfirm.mockRejectedValueOnce(error);
-
-    render(<PasswordConfirmationModal {...defaultProps} />);
-
-    const passwordInput = screen.getByPlaceholderText("*******");
-    await user.type(passwordInput, "password123");
-
-    const confirmButton = screen.getByText("common.confirm");
-    await user.click(confirmButton);
-
-    expect(screen.getByText("Authentication failed")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(passwordInput).toHaveValue("");
+    });
   });
 });

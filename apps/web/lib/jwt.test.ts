@@ -48,16 +48,6 @@ describe("JWT Functions", () => {
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createToken(mockUser.id, mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createTokenForLinkSurvey", () => {
@@ -67,18 +57,6 @@ describe("JWT Functions", () => {
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createTokenForLinkSurvey("test-survey-id", mockUser.email)).toThrow(
-          "ENCRYPTION_KEY is not set"
-        );
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createEmailToken", () => {
@@ -86,16 +64,6 @@ describe("JWT Functions", () => {
       const token = createEmailToken(mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createEmailToken(mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
     });
 
     test("should throw error if NEXTAUTH_SECRET is not set", () => {
@@ -115,16 +83,6 @@ describe("JWT Functions", () => {
       const extractedEmail = getEmailFromEmailToken(token);
       expect(extractedEmail).toBe(mockUser.email);
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => getEmailFromEmailToken("invalid-token")).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createInviteToken", () => {
@@ -133,18 +91,6 @@ describe("JWT Functions", () => {
       const token = createInviteToken(inviteId, mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createInviteToken("test-invite-id", mockUser.email)).toThrow(
-          "ENCRYPTION_KEY is not set"
-        );
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
     });
   });
 

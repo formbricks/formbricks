@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
+import { ZUserPassword } from "@formbricks/types/user";
 
 interface PasswordConfirmationModalProps {
   open: boolean;
@@ -18,7 +19,7 @@ interface PasswordConfirmationModalProps {
 }
 
 const PasswordConfirmationSchema = z.object({
-  password: z.string().min(8),
+  password: ZUserPassword,
 });
 
 type FormValues = z.infer<typeof PasswordConfirmationSchema>;
@@ -62,10 +63,12 @@ export const PasswordConfirmationModal = ({
 
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between sm:gap-4">
             <p>
-              <strong>{t("auth.email-change.old_email")}:</strong> {oldEmail}
+              <strong>{t("auth.email-change.old_email")}:</strong>
+              <br /> {oldEmail.toLowerCase()}
             </p>
             <p>
-              <strong>{t("auth.email-change.new_email")}:</strong> {newEmail}
+              <strong>{t("auth.email-change.new_email")}:</strong>
+              <br /> {newEmail.toLowerCase()}
             </p>
           </div>
 
@@ -103,7 +106,7 @@ export const PasswordConfirmationModal = ({
               type="submit"
               variant="default"
               loading={isSubmitting}
-              disabled={isSubmitting || !isDirty}>
+              disabled={isSubmitting || !isDirty || oldEmail.toLowerCase() === newEmail.toLowerCase()}>
               {t("common.confirm")}
             </Button>
           </div>

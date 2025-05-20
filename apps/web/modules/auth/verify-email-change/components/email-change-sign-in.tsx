@@ -1,6 +1,6 @@
 "use client";
 
-import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/action";
+import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -43,7 +43,7 @@ export const EmailChangeSignIn = ({ token }: { token: string }) => {
 
   return (
     <>
-      <h1 className={`mb-4 text-center leading-2 font-bold ${status === "error" ? "text-red-600" : ""}`}>
+      <h1 className={`leading-2 mb-4 text-center font-bold ${status === "error" ? "text-red-600" : ""}`}>
         {status === "success"
           ? t("auth.email-change.email_change_success")
           : t("auth.email-change.email_verification_failed")}

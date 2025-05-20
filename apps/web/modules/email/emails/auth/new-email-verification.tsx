@@ -9,7 +9,7 @@ interface VerificationEmailProps {
   verifyLink: string;
 }
 
-export async function VerificationNewEmail({
+export async function NewEmailVerification({
   verifyLink,
 }: VerificationEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
@@ -36,4 +36,4 @@ export async function VerificationNewEmail({
   );
 }
 
-export default VerificationNewEmail;
+export default NewEmailVerification;

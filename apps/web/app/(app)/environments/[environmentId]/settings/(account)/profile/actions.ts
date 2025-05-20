@@ -20,7 +20,7 @@ import {
   OperationNotAllowedError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { TUserUpdateInput, ZUserPassword, ZUserUpdateInput } from "@formbricks/types/user";
 
 const limiter = rateLimit({
   interval: 60 * 60, // 1 hour
@@ -30,16 +30,18 @@ const limiter = rateLimit({
 export const updateUserAction = authenticatedActionClient
   .schema(
     ZUserUpdateInput.pick({ name: true, email: true, locale: true }).extend({
-      password: z.string().optional(),
+      password: ZUserPassword.optional(),
     })
   )
   .action(async ({ parsedInput, ctx }) => {
+    const inputEmail = parsedInput.email?.trim().toLowerCase();
+
     let payload: TUserUpdateInput = {
       name: parsedInput.name,
       locale: parsedInput.locale,
     };
 
-    if (parsedInput.email && ctx.user.email !== parsedInput.email) {
+    if (inputEmail && ctx.user.email !== inputEmail) {
       // Check rate limit
       try {
         await limiter(ctx.user.id);
@@ -59,16 +61,16 @@ export const updateUserAction = authenticatedActionClient
         throw new AuthorizationError("Incorrect credentials");
       }
 
-      const doesUserExist = await checkUserExistsByEmail(parsedInput.email);
+      const doesUserExist = await checkUserExistsByEmail(inputEmail);
 
       if (doesUserExist) {
         throw new InvalidInputError("This email is already in use");
       }
 
       if (EMAIL_VERIFICATION_DISABLED) {
-        payload.email = parsedInput.email;
+        payload.email = inputEmail;
       } else {
-        await sendVerificationNewEmail(ctx.user.id, parsedInput.email);
+        await sendVerificationNewEmail(ctx.user.id, inputEmail);
       }
     }
 

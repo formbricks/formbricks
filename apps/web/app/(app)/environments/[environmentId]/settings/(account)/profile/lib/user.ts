@@ -1,12 +1,13 @@
 import { cache } from "@/lib/cache";
 import { userCache } from "@/lib/user/cache";
 import { verifyPassword } from "@/modules/auth/lib/utils";
+import { User } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const verifyUserPassword = reactCache(
-  async (userId: string, password: string): Promise<boolean> =>
+export const getUserById = reactCache(
+  async (userId: string): Promise<Pick<User, "password" | "identityProvider">> =>
     cache(
       async () => {
         const user = await prisma.user.findUnique({
@@ -18,29 +19,33 @@ export const verifyUserPassword = reactCache(
             identityProvider: true,
           },
         });
-
         if (!user) {
           throw new ResourceNotFoundError("user", userId);
         }
-
-        if (user.identityProvider !== "email" || !user.password) {
-          throw new InvalidInputError("Third party login is already enabled");
-        }
-
-        const isCorrectPassword = await verifyPassword(password, user.password);
-
-        if (!isCorrectPassword) {
-          return false;
-        }
-
-        return true;
+        return user;
       },
-      [`verifyUserPassword-${userId}`],
+      [`getUserById-${userId}`],
       {
         tags: [userCache.tag.byId(userId)],
       }
     )()
 );
+
+export const verifyUserPassword = async (userId: string, password: string): Promise<boolean> => {
+  const user = await getUserById(userId);
+
+  if (user.identityProvider !== "email" || !user.password) {
+    throw new InvalidInputError("Password is not set for this user");
+  }
+
+  const isCorrectPassword = await verifyPassword(password, user.password);
+
+  if (!isCorrectPassword) {
+    return false;
+  }
+
+  return true;
+};
 
 export const checkUserExistsByEmail = reactCache(
   async (email: string): Promise<boolean> =>
@@ -48,7 +53,7 @@ export const checkUserExistsByEmail = reactCache(
       async () => {
         const user = await prisma.user.findUnique({
           where: {
-            email,
+            email: email.toLowerCase(),
           },
           select: {
             id: true,
