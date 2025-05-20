@@ -12,16 +12,12 @@ export const EmailChangeSignIn = ({ token }: { token: string }) => {
   useEffect(() => {
     const validateToken = async () => {
       if (typeof token === "string" && token.trim() !== "") {
-        try {
-          const result = await verifyEmailChangeAction({ token });
+        const result = await verifyEmailChangeAction({ token });
 
-          if (result?.serverError) {
-            setStatus("error");
-          } else {
-            setStatus("success");
-          }
-        } catch (err) {
+        if (!result?.data) {
           setStatus("error");
+        } else {
+          setStatus("success");
         }
       } else {
         setStatus("error");

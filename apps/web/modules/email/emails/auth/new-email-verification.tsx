@@ -6,7 +6,7 @@ import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
 
 interface VerificationEmailProps {
-  verifyLink: string;
+  readonly verifyLink: string;
 }
 
 export async function NewEmailVerification({
