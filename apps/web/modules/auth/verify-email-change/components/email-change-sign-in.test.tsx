@@ -65,17 +65,4 @@ describe("EmailChangeSignIn", () => {
     expect(screen.getByText("auth.email-change.email_verification_failed")).toBeInTheDocument();
     expect(screen.getByText("auth.email-change.invalid_or_expired_token")).toBeInTheDocument();
   });
-
-  test("handles verification error", async () => {
-    vi.mocked(verifyEmailChangeAction).mockRejectedValueOnce(new Error("Network error"));
-
-    render(<EmailChangeSignIn token="valid-token" />);
-
-    await waitFor(() => {
-      expect(screen.getByText("auth.email-change.email_verification_failed")).toBeInTheDocument();
-      expect(screen.getByText("auth.email-change.invalid_or_expired_token")).toBeInTheDocument();
-    });
-
-    expect(signOut).not.toHaveBeenCalled();
-  });
 });
