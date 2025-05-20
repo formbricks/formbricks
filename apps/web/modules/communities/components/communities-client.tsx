@@ -8,9 +8,10 @@ import { useState } from "react";
 
 interface CommunitiesClientProps {
   translatedTitle: string;
+  environmentId: string;
 }
 
-export function CommunitiesClient({ translatedTitle }: CommunitiesClientProps) {
+export function CommunitiesClient({ environmentId, translatedTitle }: CommunitiesClientProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   return (
@@ -23,9 +24,7 @@ export function CommunitiesClient({ translatedTitle }: CommunitiesClientProps) {
           </div>
         }
       />
-      {searchQuery}
-      Communities Section here
-      <Communities />
+      <Communities environmentId={environmentId} searchQuery={searchQuery} />
     </PageContentWrapper>
   );
 }

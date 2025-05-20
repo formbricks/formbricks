@@ -2,8 +2,8 @@
 
 import { addUserCommunityAction } from "@/modules/communities/actions";
 import { Button } from "@/modules/ui/components/button";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -41,15 +41,12 @@ export function AddUserCommunityButton({ creatorId, className }: Props): React.J
       aria-label={t("common.add_community")}
       onClick={handleAddUserCommunity}
       disabled={loading}
+      variant={"secondary"}
       className={cn(
         "ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         className
       )}>
-      {t("common.add_community")}
-      <PlusIcon
-        className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-180"
-        strokeWidth={3}
-      />
+      {loading ? <LoadingSpinner /> : <>{t("common.add_community")}</>}
     </Button>
   );
 }

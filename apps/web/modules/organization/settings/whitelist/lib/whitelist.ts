@@ -5,7 +5,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { AuthorizationError, DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 
-const whitelistSelection = {
+export const whitelistSelection = {
   id: true,
   email: true,
   name: true,

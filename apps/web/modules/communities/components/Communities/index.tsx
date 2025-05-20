@@ -1,47 +1,54 @@
-import { CommunityCard } from "@/modules/communities/components/CommunityCard";
-import { getWhitelistedUsersAction } from "@/modules/organization/settings/whitelist/actions";
 // import { useTranslate } from "@tolgee/react";
-import { useCallback, useEffect, useState } from "react";
+import AvailableCommunities from "@/modules/communities/components/Communities/components/available-communities";
+import MyCommunities from "@/modules/communities/components/Communities/components/my-communities";
+import { TabBar } from "@/modules/ui/components/tab-bar";
+import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TUserWhitelistInfo } from "@formbricks/types/user";
 
 interface CommunitiesProps {
+  searchQuery?: string;
   className?: string;
+  environmentId: string;
 }
 
-export const Communities = ({ className = "" }: CommunitiesProps) => {
+export const Communities = ({ environmentId, searchQuery, className = "" }: CommunitiesProps) => {
   // const { t } = useTranslate();
-  const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
-  const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
-
-  // Fetching whitelisted users
-  const fetchCommunities = useCallback(async () => {
-    setIsFetchingCommunities(true);
-    const data = await getWhitelistedUsersAction({
-      take: 10,
-      skip: 0,
-    });
-    if (data && data.data) {
-      setCommunities(data.data);
-    } else {
-      setCommunities([]);
-    }
-    setIsFetchingCommunities(false);
-  }, []);
-
-  useEffect(() => {
-    fetchCommunities();
-  }, [fetchCommunities]);
+  const tabs = [
+    {
+      id: "my-communities",
+      label: "My Communities",
+      icon: <ClipboardListIcon className="h-4 w-4" strokeWidth={2} />,
+    },
+    {
+      id: "available-communities",
+      label: "Explore",
+      icon: <ClipboardCheckIcon className="h-4 w-4" strokeWidth={2} />,
+    },
+  ];
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
     <div className={cn("relative flex w-full flex-col", className)}>
-      {!isFetchingCommunities && communities && communities.length > 0 && (
-        <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
-          {communities.map((community) => {
-            return <CommunityCard key={community.id} community={community} />;
-          })}
-        </div>
-      )}
+      <TabBar
+        tabs={tabs}
+        activeId={activeTab}
+        setActiveId={setActiveTab}
+        tabStyle="button"
+        className="bg-slate-100"
+      />
+      <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+        {(() => {
+          switch (activeTab) {
+            case "my-communities":
+              return <MyCommunities environmentId={environmentId} searchQuery={searchQuery} />;
+            case "available-communities":
+              return <AvailableCommunities environmentId={environmentId} searchQuery={searchQuery} />;
+            default:
+              return <MyCommunities environmentId={environmentId} searchQuery={searchQuery} />;
+          }
+        })()}
+      </div>
     </div>
   );
 };

@@ -1,8 +1,8 @@
+import { whitelistSelection } from "@/modules/organization/settings/whitelist/lib/whitelist";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-
-// import { TUserCommunity } from "@formbricks/types/user";
+import { TUserWhitelistInfo } from "@formbricks/types/user";
 
 // const userCommunitySelection = {
 //     id: true,
@@ -86,31 +86,98 @@ export const removeUserCommunity = async ({
   }
 };
 
-// export const getUserCommunities = async ({
-//   userId,
-//   query,
-// }: {
-//   userId: string;
-//   query?: string;
-// }): Promise<TUserCommunity[]> => {
-//   try {
-//     const userCommunities = await prisma.userCommunity.findMany({
-//     where: {
-//         userId: userId,
-//         creator: {
-//             OR: [
-//             { name: { contains: query, mode: 'insensitive' } },
-//             { email: { contains: query, mode: 'insensitive' } },
-//             ],
-//         },
-//         },
-//       select: userCommunitySelection,
-//     });
-//     return userCommunities;
-//   } catch (error) {
-//     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-//       throw new DatabaseError(error.message);
-//     }
-//     return [];
-//   }
-// };
+export const getCurrentUserCommunities = async ({
+  userId,
+  query,
+}: {
+  userId: string;
+  query?: string;
+}): Promise<TUserWhitelistInfo[]> => {
+  try {
+    const currentUserCommunities = await prisma.userCommunity.findMany({
+      where: {
+        userId: userId,
+        creator: {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+          ],
+        },
+      },
+      select: {
+        creator: { select: whitelistSelection },
+      },
+    });
+    return currentUserCommunities.map((community) => community.creator) || [];
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    return [];
+  }
+};
+
+export const getAvailableUserCommunities = async ({
+  userId,
+  query,
+}: {
+  userId: string;
+  query?: string;
+}): Promise<TUserWhitelistInfo[]> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        communities: {
+          select: {
+            creatorId: true,
+          },
+        },
+      },
+    });
+
+    // Check if user exists
+    if (!user) {
+      throw new InvalidInputError("User does not exist!");
+    }
+
+    const currentUserCommunityCreatorIds = user.communities.map((community) => community.creatorId) || [];
+
+    const availableUserCommunities = await prisma.user.findMany({
+      where: {
+        id: {
+          notIn: currentUserCommunityCreatorIds,
+        },
+        whitelist: true,
+        ...(query
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+      select: whitelistSelection,
+    });
+
+    return availableUserCommunities;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    return [];
+  }
+};

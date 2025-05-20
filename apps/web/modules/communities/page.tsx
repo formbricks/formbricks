@@ -1,16 +1,21 @@
 import { CommunitiesClient } from "@/modules/communities/components/communities-client";
 import { getTranslate } from "@/tolgee/server";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
-export const CommunitiesPage = async () => {
+interface CommunitiesPageProps {
+  params: Promise<{
+    environmentId: string;
+  }>;
+}
+
+export const CommunitiesPage = async (props: CommunitiesPageProps) => {
+  const params = await props.params;
   const t = await getTranslate();
-  // Fetch whitelisted users and display here
-  // Create function to add a community to UserCommunity
-  // Create function to remove a community from UserCommunity
-  // Add links on community cards to /discover?community=id
+  const environment = await getEnvironment(params.environmentId);
 
-  // href={`/environments/${environment.id}/discover`}
-  // query={{ community: community.id }}
-  // <Link href={query ? { pathname: href, query } : href} className="flex items-center">
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
+  }
 
-  return <CommunitiesClient translatedTitle={t("common.communities")} />;
+  return <CommunitiesClient environmentId={environment.id} translatedTitle={t("common.communities")} />;
 };

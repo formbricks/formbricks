@@ -1,7 +1,12 @@
 "use server";
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { addUserCommunity, removeUserCommunity } from "@/modules/communities/lib/communities";
+import {
+  addUserCommunity,
+  getAvailableUserCommunities,
+  getCurrentUserCommunities,
+  removeUserCommunity,
+} from "@/modules/communities/lib/communities";
 import { z } from "zod";
 
 //getUserCommunities,
@@ -34,6 +39,33 @@ export const removeUserCommunityAction = authenticatedActionClient
     });
 
     return deletedUserCommunityId;
+  });
+
+// Todo: Add pagination
+const ZGetAvailableUserCommunitiesAction = z.object({
+  query: z.string().optional(),
+});
+
+export const getAvailableUserCommunitiesAction = authenticatedActionClient
+  .schema(ZGetAvailableUserCommunitiesAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await getAvailableUserCommunities({
+      userId: ctx.user.id,
+      query: parsedInput.query,
+    });
+  });
+
+const ZGetCurrentUserCommunitiesAction = z.object({
+  query: z.string().optional(),
+});
+
+export const getCurrentUserCommunitiesAction = authenticatedActionClient
+  .schema(ZGetCurrentUserCommunitiesAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await getCurrentUserCommunities({
+      userId: ctx.user.id,
+      query: parsedInput.query,
+    });
   });
 
 // const ZGetUserCommunitiesAction = z.object({
