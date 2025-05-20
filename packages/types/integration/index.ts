@@ -2,9 +2,10 @@ import { z } from "zod";
 import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./google-sheet";
 import { ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
+import { ZIntegrationPlainConfig } from "./plain";
 import { ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
 
-export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion", "slack"]);
+export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion", "slack", "plain"]);
 export type TIntegrationType = z.infer<typeof ZIntegrationType>;
 
 export const ZIntegrationConfig = z.union([
@@ -12,6 +13,7 @@ export const ZIntegrationConfig = z.union([
   ZIntegrationAirtableConfig,
   ZIntegrationNotionConfig,
   ZIntegrationSlackConfig,
+  ZIntegrationPlainConfig,
 ]);
 
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
