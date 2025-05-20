@@ -1,6 +1,5 @@
 import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { env } from "@/lib/env";
 import { verifyToken } from "@/lib/jwt";
 import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
