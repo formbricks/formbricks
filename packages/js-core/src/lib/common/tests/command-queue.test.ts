@@ -1,4 +1,4 @@
-import { CommandQueue } from "@/lib/common/command-queue";
+import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import { checkSetup } from "@/lib/common/setup";
 import { type Result } from "@/types/error";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -51,9 +51,9 @@ describe("CommandQueue", () => {
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Enqueue commands
-    queue.add(cmdA, true);
-    queue.add(cmdB, true);
-    queue.add(cmdC, true);
+    queue.add(cmdA, CommandType.GeneralAction, true);
+    queue.add(cmdB, CommandType.GeneralAction, true);
+    queue.add(cmdC, CommandType.GeneralAction, true);
 
     // Wait for them to finish
     await queue.wait();
@@ -79,7 +79,7 @@ describe("CommandQueue", () => {
       },
     });
 
-    queue.add(cmd, true);
+    queue.add(cmd, CommandType.GeneralAction, true);
     await queue.wait();
 
     // Command should never have been called
@@ -99,7 +99,7 @@ describe("CommandQueue", () => {
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Here we pass 'false' for the second argument, so no check is performed
-    queue.add(cmd, false);
+    queue.add(cmd, CommandType.GeneralAction, false);
     await queue.wait();
 
     expect(cmd).toHaveBeenCalledTimes(1);
@@ -128,7 +128,7 @@ describe("CommandQueue", () => {
       throw new Error("some error");
     });
 
-    queue.add(failingCmd, true);
+    queue.add(failingCmd, CommandType.GeneralAction, true);
     await queue.wait();
 
     expect(consoleErrorSpy).toHaveBeenCalledWith("🧱 Formbricks - Global error: ", expect.any(Error));
@@ -153,8 +153,8 @@ describe("CommandQueue", () => {
 
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
-    queue.add(cmd1, true);
-    queue.add(cmd2, true);
+    queue.add(cmd1, CommandType.GeneralAction, true);
+    queue.add(cmd2, CommandType.GeneralAction, true);
 
     await queue.wait();
 

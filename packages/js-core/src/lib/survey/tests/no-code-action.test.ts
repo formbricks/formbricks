@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method -- mock functions are unbound */
 import { Config } from "@/lib/common/config";
+import { checkSetup } from "@/lib/common/setup";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
@@ -45,10 +46,15 @@ vi.mock("@/lib/common/timeout-stack", () => ({
   },
 }));
 
-vi.mock("@/lib/common/utils", () => ({
-  handleUrlFilters: vi.fn(),
-  evaluateNoCodeConfigClick: vi.fn(),
-}));
+vi.mock("@/lib/common/utils", async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- We need this only for type inference
+  const actual = await importOriginal<typeof import("@/lib/common/utils")>();
+  return {
+    ...actual,
+    handleUrlFilters: vi.fn(),
+    evaluateNoCodeConfigClick: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/survey/action", () => ({
   trackNoCodeAction: vi.fn(),
@@ -56,6 +62,10 @@ vi.mock("@/lib/survey/action", () => ({
 
 vi.mock("@/lib/survey/widget", () => ({
   setIsSurveyRunning: vi.fn(),
+}));
+
+vi.mock("@/lib/common/setup", () => ({
+  checkSetup: vi.fn(),
 }));
 
 describe("no-code-event-listeners file", () => {
@@ -76,6 +86,7 @@ describe("no-code-event-listeners file", () => {
   test("checkPageUrl calls handleUrlFilters & trackNoCodeAction for matching actionClasses", async () => {
     (handleUrlFilters as Mock).mockReturnValue(true);
     (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+    (checkSetup as Mock).mockReturnValue({ ok: true });
 
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
@@ -99,11 +110,10 @@ describe("no-code-event-listeners file", () => {
 
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
 
-    const result = await checkPageUrl();
+    await checkPageUrl();
 
     expect(handleUrlFilters).toHaveBeenCalledWith([{ value: "/some-path", rule: "contains" }]);
     expect(trackNoCodeAction).toHaveBeenCalledWith("pageViewAction");
-    expect(result.ok).toBe(true);
   });
 
   test("checkPageUrl removes scheduled timeouts & calls setIsSurveyRunning(false) if invalid url", async () => {
@@ -138,12 +148,11 @@ describe("no-code-event-listeners file", () => {
 
     getInstanceTimeoutStackMock.mockReturnValue(mockTimeoutStack as unknown as TimeoutStack);
 
-    const result = await checkPageUrl();
+    await checkPageUrl();
 
     expect(trackNoCodeAction).not.toHaveBeenCalled();
     expect(mockTimeoutStack.remove).toHaveBeenCalledWith(123);
     expect(setIsSurveyRunning).toHaveBeenCalledWith(false);
-    expect(result.ok).toBe(true);
   });
 
   test("addPageUrlEventListeners adds event listeners to window, patches history if not patched", () => {
