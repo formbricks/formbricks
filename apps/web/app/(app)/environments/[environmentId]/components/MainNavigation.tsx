@@ -252,56 +252,6 @@ export const MainNavigation = ({
                   )
               )}
             </ul>
-
-            {/* Communities */}
-            {/* 
-            <div className="flex w-full flex-1 flex-col items-start py-4">
-              <div className={`px-4 ${isCollapsed && "hidden"}`}>Communities</div>
-              {isFetchingCommunities ? (
-                <>
-                  <ul className="max-h-[200px] w-full flex-1">
-                    {[...Array(3)].map((_, index) => {
-                      return (
-                        <NavigationLink
-                          key={"loading-" + index}
-                          href={`/environments/${environment.id}/discover`}
-                          linkText={"Loading"}
-                          isActive={false}
-                          loading={true}
-                          isCollapsed={isCollapsed}
-                          isTextVisible={isTextVisible}>
-                          <BookUserIcon className="" strokeWidth={1.5} />
-                        </NavigationLink>
-                      );
-                    })}
-                  </ul>
-                </>
-              ) : (
-                <ul className="max-h-[200px] w-full flex-1 overflow-y-scroll">
-                  {communities && communities.length > 0 ? (
-                    communities.map((community) => {
-                      return (
-                        <NavigationLink
-                          key={community.id}
-                          href={`/environments/${environment.id}/discover`}
-                          query={{ community: community.id }}
-                          linkText={community.name ? community.name : community.email}
-                          isActive={community.id == communityId}
-                          isCollapsed={isCollapsed}
-                          isTextVisible={isTextVisible}>
-                          <BookUserIcon className="" strokeWidth={1.5} />
-                        </NavigationLink>
-                      );
-                    })
-                  ) : (
-                    <li className="mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700">
-                      No Communities
-                    </li>
-                  )}
-                </ul>
-              )}
-            </div> 
-          */}
           </div>
 
           <div>
