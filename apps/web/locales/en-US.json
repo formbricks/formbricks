@@ -510,6 +510,7 @@
     "verification_email_thanks": "Thanks for validating your email!",
     "verification_email_to_fill_survey": "To fill out the survey please click on the button below:",
     "verification_email_verify_email": "Verify email",
+    "verification_security_notice": "If you did not request this email change, please ignore this email or contact support immediately.",
     "verified_link_survey_email_subject": "Your survey is ready to be filled out.",
     "weekly_summary_create_reminder_notification_body_cal_slot": "Pick a 15-minute slot in our CEOs calendar",
     "weekly_summary_create_reminder_notification_body_dont_let_a_week_pass": "Don't let a week pass without learning about your users:",
