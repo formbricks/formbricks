@@ -17,7 +17,14 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  AUDIT_LOG_GET_USER_IP,
+  IS_PRODUCTION,
+  RATE_LIMITING_DISABLED,
+  SURVEY_URL,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -106,7 +113,6 @@ export const middleware = async (originalRequest: NextRequest) => {
   request.headers.set("x-start-time", Date.now().toString());
 
   // Create a new NextResponse object to forward the new request with headers
-
   const nextResponseWithCustomHeader = NextResponse.next({
     request: {
       headers: request.headers,
@@ -117,20 +123,30 @@ export const middleware = async (originalRequest: NextRequest) => {
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
 
-  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
-    return nextResponseWithCustomHeader;
-  }
-
   let ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     ipAddress(request);
 
+  const setClientIpCookie = (ip: string) => {
+    if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
+      nextResponseWithCustomHeader.cookies.set("client-ip", ip, { httpOnly: true, sameSite: "lax" });
+    }
+  };
+
+  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
+    if (ip) setClientIpCookie(ip);
+    return nextResponseWithCustomHeader;
+  }
+
   if (ip) {
+    setClientIpCookie(ip);
+
     try {
       await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
+      // NOSONAR - This is a catch all for rate limiting errors
       const apiError: ApiErrorResponseV2 = {
         type: "too_many_requests",
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
