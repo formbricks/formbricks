@@ -14,6 +14,7 @@ import { PictureSelectionQuestion } from "@/components/questions/picture-selecti
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
 import { getLocalizedValue } from "@/lib/i18n";
+import { useEffect } from "react";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -74,13 +75,16 @@ export function QuestionConditional({
       .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
   };
 
-  if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
-    if (skipPrefilled) {
-      onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
-    } else {
-      onChange({ [question.id]: prefilledQuestionValue });
+  useEffect(() => {
+    if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
+      if (skipPrefilled) {
+        onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
+      } else {
+        onChange({ [question.id]: prefilledQuestionValue });
+      }
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the question renders for the first time
+  }, [question.id]);
 
   return question.type === TSurveyQuestionTypeEnum.OpenText ? (
     <OpenTextQuestion
