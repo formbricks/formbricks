@@ -76,7 +76,7 @@ export function QuestionConditional({
   };
 
   useEffect(() => {
-    if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
+    if (value === undefined && (prefilledQuestionValue || prefilledQuestionValue === "")) {
       if (skipPrefilled) {
         onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
       } else {
@@ -84,7 +84,7 @@ export function QuestionConditional({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the question renders for the first time
-  }, [question.id]);
+  }, []);
 
   return question.type === TSurveyQuestionTypeEnum.OpenText ? (
     <OpenTextQuestion
