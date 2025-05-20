@@ -115,8 +115,8 @@ describe("DataTableHeader", () => {
       </table>
     );
 
-    // The grip vertical icon should not be present for select column
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    // The column settings button (EllipsisVerticalIcon) should not be present for select column
+    expect(document.querySelector(".lucide-ellipsis-vertical")).not.toBeInTheDocument();
   });
 
   test("renders resize handle that calls resize handler", async () => {

@@ -154,7 +154,17 @@ export const PricingTable = ({
                   className="mx-2"
                   size="normal"
                   type="warning"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                  text={`Cancelling: ${
+                    cancellingOn
+                      ? cancellingOn.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })
+                      : ""
+                  }`}
                 />
               )}
             </h2>
@@ -252,14 +262,16 @@ export const PricingTable = ({
           <div className="mx-auto mb-12">
             <div className="gap-x-2">
               <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-                <div
+                <button
+                  aria-pressed={planPeriod === "monthly"}
                   className={`flex-1 rounded-md px-4 py-0.5 text-center ${
                     planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("monthly")}>
                   {t("environments.settings.billing.monthly")}
-                </div>
-                <div
+                </button>
+                <button
+                  aria-pressed={planPeriod === "yearly"}
                   className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
@@ -268,7 +280,7 @@ export const PricingTable = ({
                   <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                     {t("environments.settings.billing.get_2_months_free")} 🔥
                   </span>
-                </div>
+                </button>
               </div>
               <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
                 <div

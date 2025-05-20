@@ -69,6 +69,7 @@ const defaultProps = {
 
 describe("DataTableToolbar", () => {
   afterEach(() => {
+    vi.resetAllMocks();
     cleanup();
     vi.clearAllMocks();
   });
