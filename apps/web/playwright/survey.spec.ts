@@ -135,7 +135,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel)).toBeVisible();
       await expect(page.locator("#questionCard-6").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-6").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.getByLabel(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
       await page.locator("#questionCard-6").getByRole("button", { name: "Next" }).click();
 
       // Picture Select Question
