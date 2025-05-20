@@ -103,7 +103,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
         page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
       expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
       await page.locator("path").nth(3).click();
 
@@ -115,7 +115,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(
         page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.highLabel)
       ).toBeVisible();
-      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
 
       for (let i = 0; i < 11; i++) {
