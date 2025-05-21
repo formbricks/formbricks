@@ -418,7 +418,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
   await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
-  await page.getByLabel("Required").click();
 
   // Multi Select Question
   await page
@@ -462,8 +461,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
       buffer: buffer2,
     },
   ]);
-
-  await page.getByLabel("Required").click();
 
   // Rating Question
   await page
@@ -633,8 +630,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
   await page.getByRole("option", { name: "Assign =" }).click();
-  await page.getByRole("textbox", { name: "Value" }).click();
-  await page.getByRole("textbox", { name: "Value" }).fill("This ");
+  await page.locator("#action-2-value-input").click();
+  await page.locator("#action-2-value-input").fill("1");
 
   // Single Select Question
   await page.getByRole("heading", { name: params.singleSelectQuestion.question }).click();
