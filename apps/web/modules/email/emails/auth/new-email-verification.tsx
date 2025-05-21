@@ -17,7 +17,7 @@ export async function NewEmailVerification({
     <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
-        <Text>{t("emails.verification_email_text")}</Text>
+        <Text>{t("emails.new_email_verification_text")}</Text>
         <Text>{t("emails.verification_security_notice")}</Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
         <Text>{t("emails.verification_email_click_on_this_link")}</Text>
