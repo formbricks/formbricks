@@ -24,6 +24,7 @@ vi.mock("@/lib/constants", () => ({
   FB_LOGO_URL: "https://formbricks.com/logo.png",
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: "587",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("next-auth", () => ({
