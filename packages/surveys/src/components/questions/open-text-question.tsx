@@ -57,29 +57,30 @@ export function OpenTextQuestion({
   }, [isCurrent, autoFocusEnabled]);
 
   const handleInputChange = (inputValue: string) => {
+    inputRef.current?.setCustomValidity("");
     setCurrentLength(inputValue.length);
     onChange({ [question.id]: inputValue });
   };
 
-  const handleInputResize = (event: { target: any }) => {
-    const maxHeight = 160; // 8 lines
-    const textarea = event.target;
-    textarea.style.height = "auto";
-    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
-    textarea.style.height = `${newHeight}px`;
-    textarea.style.overflow = newHeight >= maxHeight ? "auto" : "hidden";
+  const handleOnSubmit = (e: Event) => {
+    e.preventDefault();
+    const input = inputRef.current;
+    input?.setCustomValidity("");
+
+    if (question.required && (!value || value.trim() === "")) {
+      input?.setCustomValidity("Please fill out this field.");
+      input?.reportValidity();
+      return;
+    }
+
+    // at this point, validity is clean
+    const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtc);
+    onSubmit({ [question.id]: value }, updatedTtc);
   };
 
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedttc);
-        onSubmit({ [question.id]: value }, updatedttc);
-      }}
-      className="fb-w-full">
+    <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -138,7 +139,6 @@ export function OpenTextQuestion({
                 value={value}
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
-                  handleInputResize(e);
                 }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0"
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}

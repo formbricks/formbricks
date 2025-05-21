@@ -45,6 +45,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: 587,
   SMTP_USER: "mock-smtp-user",
   SMTP_PASSWORD: "mock-smtp-password",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext");
