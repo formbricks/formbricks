@@ -16,6 +16,7 @@ import {
   removeScrollDepthListener,
 } from "@/lib/survey/no-code-action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
+import { TActionClassNoCodeConfig } from "@/types/survey";
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
@@ -273,7 +274,7 @@ describe("no-code-event-listeners file", () => {
 
   // Test cases for Click Event Handlers
   describe("Click Event Handlers", () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       vi.stubGlobal("document", {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -297,7 +298,7 @@ describe("no-code-event-listeners file", () => {
 
   // Test cases for Exit Intent Handlers
   describe("Exit Intent Handlers", () => {
-    let querySelectorMock: MockInstance<any>;
+    let querySelectorMock: MockInstance;
     let addEventListenerMock: Mock;
     let removeEventListenerMock: Mock;
 
@@ -329,7 +330,7 @@ describe("no-code-event-listeners file", () => {
       expect(addEventListenerMock).not.toHaveBeenCalled();
     });
 
-    test("checkExitIntent does not trigger if clientY > 0", async () => {
+    test("checkExitIntent does not trigger if clientY > 0", () => {
       const mockAction = {
         name: "exitAction",
         type: "noCode",
@@ -352,8 +353,8 @@ describe("no-code-event-listeners file", () => {
 
   // Test cases for Scroll Depth Handlers
   describe("Scroll Depth Handlers", () => {
-    let addEventListenerSpy: MockInstance<any>;
-    let removeEventListenerSpy: MockInstance<any>;
+    let addEventListenerSpy: MockInstance;
+    let removeEventListenerSpy: MockInstance;
 
     beforeEach(() => {
       addEventListenerSpy = vi.fn();
@@ -440,7 +441,9 @@ describe("no-code-event-listeners file", () => {
     });
 
     test("checkScrollDepth filters by URL", async () => {
-      (handleUrlFilters as Mock).mockImplementation((urlFilters) => urlFilters[0]?.value === "valid-scroll");
+      (handleUrlFilters as Mock).mockImplementation(
+        (urlFilters: TActionClassNoCodeConfig["urlFilters"]) => urlFilters[0]?.value === "valid-scroll"
+      );
       (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
 
       const mockActionValid = {
