@@ -214,17 +214,18 @@ describe("Response Lib", () => {
 
   describe("getResponses", () => {
     test("return responses with meta information", async () => {
-      const responses = [response];
-      prisma.$transaction = vi.fn().mockResolvedValue([responses, responses.length]);
+      (prisma.response.findMany as any).mockResolvedValue([response]);
+      (prisma.response.count as any).mockResolvedValue(1);
 
-      const result = await getResponses(environmentId, responseFilter);
-      expect(prisma.$transaction).toHaveBeenCalled();
+      const result = await getResponses([environmentId], responseFilter);
+      expect(prisma.response.findMany).toHaveBeenCalled();
+      expect(prisma.response.count).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual({
           data: [response],
           meta: {
-            total: responses.length,
+            total: 1,
             limit: responseFilter.limit,
             offset: responseFilter.skip,
           },
@@ -233,9 +234,10 @@ describe("Response Lib", () => {
     });
 
     test("return a not_found error if responses are not found", async () => {
-      prisma.$transaction = vi.fn().mockResolvedValue([null, 0]);
+      (prisma.response.findMany as any).mockResolvedValue(null);
+      (prisma.response.count as any).mockResolvedValue(0);
 
-      const result = await getResponses(environmentId, responseFilter);
+      const result = await getResponses([environmentId], responseFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -245,10 +247,25 @@ describe("Response Lib", () => {
       }
     });
 
-    test("return an internal_server_error error if prisma transaction fails", async () => {
-      prisma.$transaction = vi.fn().mockRejectedValue(new Error("Internal server error"));
+    test("return an internal_server_error error if prisma findMany fails", async () => {
+      (prisma.response.findMany as any).mockRejectedValue(new Error("Internal server error"));
+      (prisma.response.count as any).mockResolvedValue(0);
 
-      const result = await getResponses(environmentId, responseFilter);
+      const result = await getResponses([environmentId], responseFilter);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          details: [{ field: "responses", issue: "Internal server error" }],
+        });
+      }
+    });
+
+    test("return an internal_server_error error if prisma count fails", async () => {
+      (prisma.response.findMany as any).mockResolvedValue([response]);
+      (prisma.response.count as any).mockRejectedValue(new Error("Internal server error"));
+
+      const result = await getResponses([environmentId], responseFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
