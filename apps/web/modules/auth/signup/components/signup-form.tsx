@@ -103,6 +103,12 @@ export const SignupForm = ({
       if (isTurnstileConfigured && !turnstileToken) {
         throw new Error(t("auth.signup.please_verify_captcha"));
       }
+      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      const token = emailTokenActionResponse?.data;
+
+      const url = emailVerificationDisabled
+        ? `/auth/signup-without-verification-success`
+        : `/auth/verification-requested?token=${token}`;
 
       const createUserResponse = await createUserAction({
         name: data.name,
@@ -115,13 +121,7 @@ export const SignupForm = ({
       });
 
       if (createUserResponse?.data) {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
         if (emailTokenActionResponse?.data) {
-          const token = emailTokenActionResponse?.data;
-          const url = emailVerificationDisabled
-            ? `/auth/signup-without-verification-success`
-            : `/auth/verification-requested?token=${token}`;
-
           router.push(url);
         } else {
           if (isTurnstileConfigured) {
@@ -139,7 +139,11 @@ export const SignupForm = ({
         }
 
         const errorMessage = getFormattedErrorMessage(createUserResponse);
-        toast.error(errorMessage);
+        if (errorMessage === "User with this email already exists") {
+          router.push(url);
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (e: any) {
       toast.error(e.message);

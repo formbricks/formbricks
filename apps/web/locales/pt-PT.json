@@ -68,7 +68,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Utilizador criado com sucesso",
-      "user_successfully_created_description": "O seu novo utilizador foi criado com sucesso. Por favor, clique no botão abaixo e inicie sessão na sua conta."
+      "user_successfully_created_description": "O seu novo utilizador foi criado com sucesso. Por favor, clique no botão abaixo e inicie sessão na sua conta.",
+      "user_successfully_created_info": "Se este email não estiver já registado, será criada uma nova conta; caso contrário, nenhuma ação será realizada"
     },
     "testimonial_1": "Medimos a clareza dos nossos documentos e aprendemos com a rotatividade, tudo numa só plataforma. Ótimo produto, equipa muito responsiva!",
     "testimonial_all_features_included": "Todas as funcionalidades incluídas",
@@ -83,6 +84,7 @@
       "please_confirm_your_email_address": "Por favor, confirme o seu endereço de email",
       "resend_verification_email": "Reenviar email de verificação",
       "verification_email_successfully_sent": "Email de verificação enviado para {email}. Por favor, verifique para completar a atualização.",
+      "verification_email_successfully_sent_info": "Se este email não estiver já associado a uma conta, receberá um email de verificação",
       "we_sent_an_email_to": "Enviámos um email para {email}. ",
       "you_didnt_receive_an_email_or_your_link_expired": "Não recebeu um email ou o seu link expirou?"
     },
