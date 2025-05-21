@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
 
 interface ScrollableContainerProps {
+  className?: string;
   children: JSX.Element;
 }
 

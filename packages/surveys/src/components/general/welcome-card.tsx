@@ -156,34 +156,34 @@ export function WelcomeCard({
             htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData, variablesData)}
             questionId="welcomeCard"
           />
+          {timeToFinish && !showResponseCount ? (
+            <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+              <TimerIcon />
+              <p className="fb-pt-1 fb-text-xs">
+                <span> Takes {calculateTimeToComplete()} </span>
+              </p>
+            </div>
+          ) : null}
+          {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
+            <div className="fb-items-center fb-text-subheading fb-my-4 b-flex">
+              <UsersIcon />
+              <p className="fb-pt-1 fb-text-xs">
+                <span>{`${responseCount.toString()} people responded`}</span>
+              </p>
+            </div>
+          ) : null}
+          {timeToFinish && showResponseCount ? (
+            <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+              <TimerIcon />
+              <p className="fb-pt-1 fb-text-xs">
+                <span> Takes {calculateTimeToComplete()} </span>
+                <span>
+                  {responseCount && responseCount > 3 ? `⋅ ${responseCount.toString()} people responded` : ""}
+                </span>
+              </p>
+            </div>
+          ) : null}
         </div>
-        {timeToFinish && !showResponseCount ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
-            <TimerIcon />
-            <p className="fb-pt-1 fb-text-xs">
-              <span> Takes {calculateTimeToComplete()} </span>
-            </p>
-          </div>
-        ) : null}
-        {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 b-flex">
-            <UsersIcon />
-            <p className="fb-pt-1 fb-text-xs">
-              <span>{`${responseCount.toString()} people responded`}</span>
-            </p>
-          </div>
-        ) : null}
-        {timeToFinish && showResponseCount ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
-            <TimerIcon />
-            <p className="fb-pt-1 fb-text-xs">
-              <span> Takes {calculateTimeToComplete()} </span>
-              <span>
-                {responseCount && responseCount > 3 ? `⋅ ${responseCount.toString()} people responded` : ""}
-              </span>
-            </p>
-          </div>
-        ) : null}
       </ScrollableContainer>
       <div className="fb-px-6 fb-py-4 fb-flex fb-gap-4">
         <SubmitButton
