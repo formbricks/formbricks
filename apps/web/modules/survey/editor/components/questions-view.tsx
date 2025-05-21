@@ -502,11 +502,7 @@ export const QuestionsView = ({
 
         {!isCxMode && (
           <>
-            <AddEndingCardButton
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              addEndingCard={addEndingCard}
-            />
+            <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
             <hr />
 
             <HiddenFieldsCard

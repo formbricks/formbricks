@@ -97,7 +97,7 @@ export const SurveyCard = ({
           {survey.creator ? survey.creator.name : "-"}
         </div>
       </div>
-      <div className="absolute right-3 top-3.5">
+      <button className="absolute right-3 top-3.5" onClick={(e) => e.stopPropagation()}>
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
@@ -109,7 +109,7 @@ export const SurveyCard = ({
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
         />
-      </div>
+      </button>
     </>
   );
 

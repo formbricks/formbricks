@@ -385,4 +385,113 @@ describe("SegmentEditor", () => {
 
     // Dropdown menu trigger is disabled, so no need to test clicking items inside
   });
+
+  test("connector button is focusable and activates on Enter/Space", async () => {
+    const user = userEvent.setup();
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorButton = screen.getByText("and");
+    // Focus the button directly instead of tabbing to it
+    connectorButton.focus();
+
+    // Simulate pressing Enter
+    await user.keyboard("[Enter]");
+    expect(segmentUtils.toggleGroupConnector).toHaveBeenCalledWith(
+      expect.any(Array),
+      groupResource1.id,
+      "or"
+    );
+
+    vi.mocked(segmentUtils.toggleGroupConnector).mockClear(); // Clear mock for next assertion
+
+    // Simulate pressing Space
+    await user.keyboard(" ");
+    expect(segmentUtils.toggleGroupConnector).toHaveBeenCalledWith(
+      expect.any(Array),
+      groupResource1.id,
+      "or"
+    );
+  });
+
+  test("connector button has accessibility attributes", () => {
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorElement = screen.getByText("and");
+    expect(connectorElement.tagName.toLowerCase()).toBe("button");
+  });
+
+  test("connector button and add filter button are both keyboard focusable and reachable via tabbing", async () => {
+    const user = userEvent.setup();
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorButton = screen.getByText("and");
+    const addFilterButton = screen.getByTestId("add-filter-button");
+
+    // Tab through the page and collect focusable elements
+    const focusable: (Element | null)[] = [];
+    for (let i = 0; i < 10; i++) {
+      // Arbitrary upper bound to avoid infinite loop
+      await user.tab();
+      focusable.push(document.activeElement);
+      if (document.activeElement === document.body) break;
+    }
+
+    // Filter out nulls for the assertion
+    const nonNullFocusable = focusable.filter((el): el is Element => el !== null);
+    expect(nonNullFocusable).toContain(connectorButton);
+    expect(nonNullFocusable).toContain(addFilterButton);
+  });
+
+  test("connector button and add filter button can be focused independently", () => {
+    const segment = { ...mockSegmentBase, filters: [groupResource1] };
+    render(
+      <SegmentEditor
+        group={[groupResource1]}
+        environmentId={mockEnvironmentId}
+        segment={segment}
+        segments={mockSegments}
+        contactAttributeKeys={mockContactAttributeKeys}
+        setSegment={mockSetSegment}
+      />
+    );
+
+    const connectorButton = screen.getByText("and");
+    const addFilterButton = screen.getByTestId("add-filter-button");
+
+    connectorButton.focus();
+    expect(document.activeElement).toBe(connectorButton);
+
+    addFilterButton.focus();
+    expect(document.activeElement).toBe(addFilterButton);
+  });
 });

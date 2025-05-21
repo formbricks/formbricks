@@ -179,7 +179,11 @@
     },
     {
       "group": "Technical Handbook",
-      "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
+      "pages": [
+        "development/technical-handbook/overview",
+        "development/technical-handbook/database-model",
+        "development/technical-handbook/tenant-separation"
+      ]
     },
     {
       "group": "Standards",
