@@ -7,6 +7,16 @@
     "continue_with_oidc": "Weiter mit {oidcDisplayName}",
     "continue_with_openid": "Login mit OpenID",
     "continue_with_saml": "Login mit SAML SSO",
+    "email-change": {
+      "confirm_password_description": "Bitte bestätige dein Passwort, bevor du deine E-Mail-Adresse änderst",
+      "email_already_exists": "Diese E-Mail wird bereits verwendet",
+      "email_change_success": "E-Mail erfolgreich geändert",
+      "email_change_success_description": "Du hast deine E-Mail-Adresse erfolgreich geändert. Bitte logge dich mit deiner neuen E-Mail-Adresse ein.",
+      "email_verification_failed": "E-Mail-Bestätigung fehlgeschlagen",
+      "invalid_or_expired_token": "E-Mail-Änderung fehlgeschlagen. Dein Token ist ungültig oder abgelaufen.",
+      "new_email": "Neue E-Mail",
+      "old_email": "Alte E-Mail"
+    },
     "forgot-password": {
       "back_to_login": "Zurück zum Login",
       "email-sent": {
@@ -451,6 +461,7 @@
     "live_survey_notification_view_more_responses": "Zeige {responseCount} weitere Antworten",
     "live_survey_notification_view_previous_responses": "Vorherige Antworten anzeigen",
     "live_survey_notification_view_response": "Antwort anzeigen",
+    "new_email_verification_text": "Um Ihre neue E-Mail-Adresse zu bestätigen, klicken Sie bitte auf die Schaltfläche unten:",
     "notification_footer_all_the_best": "Alles Gute,",
     "notification_footer_in_your_settings": "in deinen Einstellungen \uD83D\uDE4F",
     "notification_footer_please_turn_them_off": "Bitte ausstellen",
@@ -500,6 +511,8 @@
     "verification_email_thanks": "Danke, dass Du deine E-Mail bestätigt hast!",
     "verification_email_to_fill_survey": "Um die Umfrage auszufüllen, klicke bitte auf den untenstehenden Button:",
     "verification_email_verify_email": "E-Mail bestätigen",
+    "verification_new_email_subject": "E-Mail-Änderungsbestätigung",
+    "verification_security_notice": "Wenn du diese E-Mail-Änderung nicht angefordert hast, ignoriere bitte diese E-Mail oder kontaktiere sofort den Support.",
     "verified_link_survey_email_subject": "Deine Umfrage ist bereit zum Ausfüllen.",
     "weekly_summary_create_reminder_notification_body_cal_slot": "Wähle einen 15-minütigen Termin im Kalender unseres Gründers aus.",
     "weekly_summary_create_reminder_notification_body_dont_let_a_week_pass": "Lass keine Woche vergehen, ohne etwas über deine Nutzer zu lernen:",

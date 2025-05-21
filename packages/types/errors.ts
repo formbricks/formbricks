@@ -85,6 +85,14 @@ class AuthorizationError extends Error {
   }
 }
 
+class TooManyRequestsError extends Error {
+  statusCode = 429;
+  constructor(message: string) {
+    super(message);
+    this.name = "TooManyRequestsError";
+  }
+}
+
 interface NetworkError {
   code: "network_error";
   message: string;
@@ -116,6 +124,7 @@ export {
   OperationNotAllowedError,
   AuthenticationError,
   AuthorizationError,
+  TooManyRequestsError,
 };
 export type { NetworkError, ForbiddenError };
 

@@ -190,8 +190,8 @@ x-environment: &environment
     # Configure the minimum role for user management from UI(owner, manager, disabled)
     # USER_MANAGEMENT_MINIMUM_ROLE="manager"
 
-    # Configure the maximum age for the session in seconds. Default is 43200 (12 hours)
-    # SESSION_MAX_AGE=43200
+    # Configure the maximum age for the session in seconds. Default is 86400 (24 hours)
+    # SESSION_MAX_AGE=86400
 
 services:
   postgres:
