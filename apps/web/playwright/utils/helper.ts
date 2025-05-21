@@ -507,7 +507,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Add option" }).click();
   await page.getByPlaceholder("Option 5").click();
   await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
-  await page.getByLabel("Required").click();
 
   // Matrix Question
   await page
@@ -546,7 +545,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
   await page.getByPlaceholder("Your question here. Recall").fill(params.ctaQuestion.question);
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
-  await page.getByLabel("Required").click();
 
   // Consent Question
   await page
@@ -575,7 +573,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Date" }).click();
   await page.getByLabel("Question*").fill(params.date.question);
-  await page.getByLabel("Required").click();
 
   // Cal Question
   await page
@@ -585,7 +582,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Schedule a meeting" }).click();
   await page.getByLabel("Question*").fill(params.cal.question);
-  await page.getByLabel("Required").click();
 
   // Fill Address Question
   await page
