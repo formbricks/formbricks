@@ -47,7 +47,7 @@ export const getCloudPricingData = (t: TFnType) => {
       },
       {
         name: t("environments.settings.billing.scale_and_enterprise"),
-        id: "enterprise",
+        id: "scale_and_enterprise",
         featured: false,
         description: t("environments.settings.billing.scale_and_enterprise_description"),
         price: {
