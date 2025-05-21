@@ -6,7 +6,7 @@ interface ScrollableContainerProps {
   children: JSX.Element;
 }
 
-export function ScrollableContainer({ children }: Readonly<ScrollableContainerProps>) {
+export function ScrollableContainer({ className, children }: Readonly<ScrollableContainerProps>) {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export function ScrollableContainer({ children }: Readonly<ScrollableContainerPr
             ? "30dvh"
             : `calc(var(--fb-survey-card-min-height, 42dvh) * ${previewScaleCoifficient})`,
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
+        className={cn(`fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg ${className}`)}>
         {children}
       </div>
       {!isAtBottom && (

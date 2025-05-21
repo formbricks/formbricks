@@ -109,8 +109,10 @@ export function EndingCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when isCurrent changes
   }, [isCurrent]);
 
+  const marginPreservingHeight = survey.type === "app" ? "fb-my-[37px]" : "";
+
   return (
-    <ScrollableContainer>
+    <ScrollableContainer className={marginPreservingHeight}>
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
