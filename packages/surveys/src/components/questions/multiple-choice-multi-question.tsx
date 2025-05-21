@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds } from "@/lib/utils";
+import { cn, getShuffledChoicesIds, isRTL } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -140,6 +140,12 @@ export function MultipleChoiceMultiQuestion({
       : question.required;
   };
 
+  const otherOptionDir = useMemo(() => {
+    const placeholder = getLocalizedValue(question.otherOptionPlaceholder, languageCode);
+    if (!otherValue) return isRTL(placeholder) ? "rtl" : "ltr";
+    return "auto";
+  }, [languageCode, question.otherOptionPlaceholder, otherValue]);
+
   return (
     <form
       key={question.id}
@@ -267,7 +273,7 @@ export function MultipleChoiceMultiQuestion({
                     {otherSelected ? (
                       <input
                         ref={otherSpecify}
-                        dir="auto"
+                        dir={otherOptionDir}
                         id={`${otherOption.id}-label`}
                         maxLength={250}
                         name={question.id}
@@ -279,7 +285,9 @@ export function MultipleChoiceMultiQuestion({
                         }}
                         className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
                         placeholder={
-                          getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                          getLocalizedValue(question.otherOptionPlaceholder, languageCode).length > 0
+                            ? getLocalizedValue(question.otherOptionPlaceholder, languageCode)
+                            : "Please specify"
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}

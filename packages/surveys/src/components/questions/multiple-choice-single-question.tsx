@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds } from "@/lib/utils";
+import { cn, getShuffledChoicesIds, isRTL } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -99,6 +99,12 @@ export function MultipleChoiceSingleQuestion({
       otherSpecify.current.focus();
     }
   }, [otherSelected]);
+
+  const otherOptionDir = useMemo(() => {
+    const placeholder = getLocalizedValue(question.otherOptionPlaceholder, languageCode);
+    if (!value) return isRTL(placeholder) ? "rtl" : "ltr";
+    return "auto";
+  }, [languageCode, question.otherOptionPlaceholder, value]);
 
   return (
     <form
@@ -223,7 +229,7 @@ export function MultipleChoiceSingleQuestion({
                       <input
                         ref={otherSpecify}
                         id={`${otherOption.id}-label`}
-                        dir="auto"
+                        dir={otherOptionDir}
                         name={question.id}
                         pattern=".*\S+.*"
                         value={value}
