@@ -7,6 +7,7 @@ import {
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
+import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
@@ -24,17 +25,10 @@ import {
   type MissingFieldError,
   type MissingPersonError,
   type NetworkError,
-  type NotSetupError,
   type Result,
   err,
   okVoid,
 } from "@/types/error";
-
-let isSetup = false;
-
-export const setIsSetup = (state: boolean): void => {
-  isSetup = state;
-};
 
 const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
@@ -99,7 +93,7 @@ export const setup = async (
     }
   }
 
-  if (isSetup) {
+  if (getIsSetup()) {
     logger.debug("Already set up, skipping setup.");
     return okVoid();
   }
@@ -326,20 +320,6 @@ export const setup = async (
 
   // check page url if set up after page load
   void checkPageUrl();
-  return okVoid();
-};
-
-export const checkSetup = (): Result<void, NotSetupError> => {
-  const logger = Logger.getInstance();
-  logger.debug("Check if set up");
-
-  if (!isSetup) {
-    return err({
-      code: "not_setup",
-      message: "Formbricks is not set up. Call setup() first.",
-    });
-  }
-
   return okVoid();
 };
 

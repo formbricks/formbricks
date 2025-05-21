@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method -- mock functions are unbound */
 import { Config } from "@/lib/common/config";
-import { checkSetup } from "@/lib/common/setup";
+import { checkSetup } from "@/lib/common/status";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
@@ -64,7 +64,7 @@ vi.mock("@/lib/survey/widget", () => ({
   setIsSurveyRunning: vi.fn(),
 }));
 
-vi.mock("@/lib/common/setup", () => ({
+vi.mock("@/lib/common/status", () => ({
   checkSetup: vi.fn(),
 }));
 
