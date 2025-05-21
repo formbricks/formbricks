@@ -122,6 +122,7 @@ vi.mock("@/lib/constants", () => ({
   SAML_DATABASE_URL: "test-saml-db-url",
   NEXTAUTH_SECRET: "test-nextauth-secret",
   WEBAPP_URL: "http://localhost:3000",
+  SESSION_MAX_AGE: 1000,
 }));
 
 describe("Organization Settings Teams Actions", () => {

@@ -36,6 +36,7 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "https://example.com",
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-license-key",
+  SESSION_MAX_AGE: 1000,
 }));
 
 // Track the callback for useDebounce to better control when it fires

@@ -54,6 +54,7 @@ vi.mock("@/lib/constants", () => ({
   TURNSTILE_SITE_KEY: "test-turnstile-site-key",
   SAML_OAUTH_ENABLED: true,
   SMTP_PASSWORD: "smtp-password",
+  SESSION_MAX_AGE: 1000,
 }));
 
 // Mock the InviteMembers component

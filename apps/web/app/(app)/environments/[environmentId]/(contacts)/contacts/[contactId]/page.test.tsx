@@ -25,6 +25,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
   IS_POSTHOG_CONFIGURED: true,
+  SESSION_MAX_AGE: 1000,
 }));
 
 describe("Contact Page Re-export", () => {

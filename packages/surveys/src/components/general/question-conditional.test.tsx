@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/preact";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { QuestionConditional } from "./question-conditional";
 
@@ -40,7 +40,7 @@ describe("QuestionConditional", () => {
     vi.clearAllMocks();
   });
 
-  it("renders OpenText question correctly", () => {
+  test("renders OpenText question correctly", () => {
     const question = {
       id: "q1",
       type: TSurveyQuestionTypeEnum.OpenText as const,
@@ -59,7 +59,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByPlaceholderText("Type your answer here")).toBeInTheDocument();
   });
 
-  it("renders MultipleChoiceSingle question correctly", () => {
+  test("renders MultipleChoiceSingle question correctly", () => {
     const question = {
       id: "q2",
       type: TSurveyQuestionTypeEnum.MultipleChoiceSingle as const,
@@ -81,7 +81,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("Blue")).toBeInTheDocument();
   });
 
-  it("handles prefilled values correctly", () => {
+  test("handles prefilled values correctly", () => {
     const question = {
       id: "q1",
       type: TSurveyQuestionTypeEnum.OpenText as const,
@@ -98,7 +98,7 @@ describe("QuestionConditional", () => {
       <QuestionConditional
         {...baseProps}
         question={question}
-        value=""
+        value={undefined as any}
         prefilledQuestionValue="John"
         skipPrefilled={true}
       />
@@ -107,7 +107,7 @@ describe("QuestionConditional", () => {
     expect(mockOnSubmit).toHaveBeenCalledWith({ [question.id]: "John" }, { [question.id]: 0 });
   });
 
-  it("renders Rating question correctly", () => {
+  test("renders Rating question correctly", () => {
     const question = {
       id: "q3",
       type: TSurveyQuestionTypeEnum.Rating as const,
@@ -128,7 +128,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("Excellent")).toBeInTheDocument();
   });
 
-  it("renders MultipleChoiceMulti question correctly", () => {
+  test("renders MultipleChoiceMulti question correctly", () => {
     const question = {
       id: "q4",
       type: TSurveyQuestionTypeEnum.MultipleChoiceMulti as const,
@@ -150,7 +150,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("Banana")).toBeInTheDocument();
   });
 
-  it("renders NPS question correctly", () => {
+  test("renders NPS question correctly", () => {
     const question = {
       id: "q5",
       type: TSurveyQuestionTypeEnum.NPS as const,
@@ -169,7 +169,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("Very likely")).toBeInTheDocument();
   });
 
-  it("renders Date question correctly", () => {
+  test("renders Date question correctly", () => {
     const question = {
       id: "q6",
       type: TSurveyQuestionTypeEnum.Date as const,
@@ -186,7 +186,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("When is your birthday?")).toBeInTheDocument();
   });
 
-  it("renders PictureSelection question correctly", () => {
+  test("renders PictureSelection question correctly", () => {
     const question = {
       id: "q7",
       type: TSurveyQuestionTypeEnum.PictureSelection as const,
@@ -206,7 +206,7 @@ describe("QuestionConditional", () => {
     expect(screen.getByText("Choose your favorite picture")).toBeInTheDocument();
   });
 
-  it("handles unimplemented question type correctly", () => {
+  test("handles unimplemented question type correctly", () => {
     const question: TSurveyQuestion = {
       id: "invalid",
       type: TSurveyQuestionTypeEnum.Address, // Address type doesn't have a matching case in the component
