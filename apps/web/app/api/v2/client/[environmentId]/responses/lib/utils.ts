@@ -26,7 +26,7 @@ export const checkSurveyValidity = async (
     );
   }
 
-  if (survey.singleUse?.enabled) {
+  if (survey.type === "link" && survey.singleUse?.enabled) {
     if (!responseInput.singleUseId) {
       return responses.badRequestResponse("Missing single use id", {
         surveyId: survey.id,
