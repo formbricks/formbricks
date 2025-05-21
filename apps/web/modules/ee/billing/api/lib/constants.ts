@@ -49,7 +49,7 @@ export const getCloudPricingData = (t: TFnType) => {
         name: t("environments.settings.billing.scale_and_enterprise"),
         id: "scale_and_enterprise",
         featured: false,
-        description: t("environments.settings.billing.scale_and_enterprise_description"),
+        description: t("environments.settings.billing.scale_description"),
         price: {
           monthly: t("environments.settings.billing.custom"),
           yearly: t("environments.settings.billing.custom"),
