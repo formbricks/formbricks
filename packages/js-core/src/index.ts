@@ -27,53 +27,53 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
       // eslint-disable-next-line no-console -- legacy init
       console.warn("🧱 Formbricks - Warning: Using legacy init");
     }
-    queue.add(Setup.setup, CommandType.Setup, false, {
+    await queue.add(Setup.setup, CommandType.Setup, false, {
       ...setupConfig,
       // @ts-expect-error -- apiHost was in the older type
       ...(setupConfig.apiHost && { appUrl: setupConfig.apiHost as string }),
     } as unknown as TConfigInput);
   } else {
-    queue.add(Setup.setup, CommandType.Setup, false, setupConfig);
+    await queue.add(Setup.setup, CommandType.Setup, false, setupConfig);
   }
 
   // wait for setup to complete
   await queue.wait();
 };
 
-const setUserId = (userId: string): void => {
-  queue.add(User.setUserId, CommandType.UserAction, true, userId);
+const setUserId = async (userId: string): Promise<void> => {
+  await queue.add(User.setUserId, CommandType.UserAction, true, userId);
 };
 
-const setEmail = (email: string): void => {
-  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { email });
+const setEmail = async (email: string): Promise<void> => {
+  await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { email });
 };
 
-const setAttribute = (key: string, value: string): void => {
-  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { [key]: value });
+const setAttribute = async (key: string, value: string): Promise<void> => {
+  await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { [key]: value });
 };
 
-const setAttributes = (attributes: Record<string, string>): void => {
-  queue.add(Attribute.setAttributes, CommandType.UserAction, true, attributes);
+const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
+  await queue.add(Attribute.setAttributes, CommandType.UserAction, true, attributes);
 };
 
-const setLanguage = (language: string): void => {
-  queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
+const setLanguage = async (language: string): Promise<void> => {
+  await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
 };
 
-const logout = (): void => {
-  queue.add(User.logout, CommandType.GeneralAction);
+const logout = async (): Promise<void> => {
+  await queue.add(User.logout, CommandType.GeneralAction);
 };
 
 /**
  * @param code - The code of the action to track
  * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
  */
-const track = (code: string, properties?: TTrackProperties): void => {
-  queue.add(Action.trackCodeAction, CommandType.GeneralAction, true, code, properties);
+const track = async (code: string, properties?: TTrackProperties): Promise<void> => {
+  await queue.add(Action.trackCodeAction, CommandType.GeneralAction, true, code, properties);
 };
 
-const registerRouteChange = (): void => {
-  queue.add(checkPageUrl, CommandType.GeneralAction);
+const registerRouteChange = async (): Promise<void> => {
+  await queue.add(checkPageUrl, CommandType.GeneralAction);
 };
 
 const formbricks = {

@@ -3,7 +3,7 @@
 import { checkSetup } from "@/lib/common/setup";
 import { wrapThrowsAsync } from "@/lib/common/utils";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import type { Result } from "@/types/error";
+import { type Result } from "@/types/error";
 
 export type TCommand = (
   ...args: any[]
@@ -34,18 +34,38 @@ export class CommandQueue {
     return CommandQueue.instance;
   }
 
-  public add(command: TCommand, type: CommandType, shouldCheckSetupFlag = true, ...args: any[]): void {
-    const newItem: InternalQueueItem = { command, type, checkSetup: shouldCheckSetupFlag, commandArgs: args };
+  public add(
+    command: TCommand,
+    type: CommandType,
+    shouldCheckSetupFlag = true,
+    ...args: any[]
+  ): Promise<Result<void, unknown>> {
+    return new Promise((addResolve) => {
+      try {
+        const newItem: InternalQueueItem = {
+          command,
+          type,
+          checkSetup: shouldCheckSetupFlag,
+          commandArgs: args,
+        };
 
-    this.queue.push(newItem);
-    this.queue.sort((a, b) => a.type - b.type);
+        this.queue.push(newItem);
 
-    if (!this.running) {
-      this.commandPromise = new Promise((resolve) => {
-        this.resolvePromise = resolve;
-        void this.run();
-      });
-    }
+        // sort queue by type - Setup commands first, then UserAction, then GeneralAction
+        this.queue.sort((a, b) => a.type - b.type);
+
+        if (!this.running) {
+          this.commandPromise = new Promise((resolve) => {
+            this.resolvePromise = resolve;
+            void this.run();
+          });
+        }
+
+        addResolve({ ok: true, data: undefined });
+      } catch (error) {
+        addResolve({ ok: false, error: error as Error });
+      }
+    });
   }
 
   public async wait(): Promise<void> {
@@ -98,9 +118,5 @@ export class CommandQueue {
       this.resolvePromise = null;
       this.commandPromise = null;
     }
-  }
-
-  public getQueue(): InternalQueueItem[] {
-    return this.queue;
   }
 }

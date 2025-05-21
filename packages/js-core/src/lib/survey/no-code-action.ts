@@ -6,7 +6,6 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
-import { type TEnvironmentStateActionClass } from "@/types/config";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
@@ -58,8 +57,7 @@ export const checkPageUrl = async (): Promise<void> => {
     const isValidUrl = handleUrlFilters(urlFilters);
 
     if (isValidUrl) {
-      queue.add(trackNoCodePageViewActionHandler, CommandType.GeneralAction, true, event.name);
-      await queue.wait();
+      await queue.add(trackNoCodePageViewActionHandler, CommandType.GeneralAction, true, event.name);
     } else {
       const scheduledTimeouts = timeoutStack.getTimeouts();
 
@@ -112,7 +110,7 @@ export const removePageUrlEventListeners = (): void => {
 // Click Event Handlers
 let isClickEventListenerAdded = false;
 
-const checkClickMatch = (event: MouseEvent): void => {
+const checkClickMatch = async (event: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
@@ -126,15 +124,15 @@ const checkClickMatch = (event: MouseEvent): void => {
 
   const targetElement = event.target as HTMLElement;
 
-  noCodeClickActionClasses.forEach((action: TEnvironmentStateActionClass) => {
+  for (const action of noCodeClickActionClasses) {
     if (evaluateNoCodeConfigClick(targetElement, action)) {
-      queue.add(trackNoCodeClickActionHandler, CommandType.GeneralAction, true, action.name);
+      await queue.add(trackNoCodeClickActionHandler, CommandType.GeneralAction, true, action.name);
     }
-  });
+  }
 };
 
 const checkClickMatchWrapper = (e: MouseEvent): void => {
-  checkClickMatch(e);
+  void checkClickMatch(e);
 };
 
 export const addClickEventListener = (): void => {
@@ -152,7 +150,7 @@ export const removeClickEventListener = (): void => {
 // Exit Intent Handlers
 let isExitIntentListenerAdded = false;
 
-const checkExitIntent = (e: MouseEvent): void => {
+const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
@@ -170,13 +168,13 @@ const checkExitIntent = (e: MouseEvent): void => {
 
       if (!isValidUrl) continue;
 
-      queue.add(trackNoCodeExitIntentActionHandler, CommandType.GeneralAction, true, event.name);
+      await queue.add(trackNoCodeExitIntentActionHandler, CommandType.GeneralAction, true, event.name);
     }
   }
 };
 
 const checkExitIntentWrapper = (e: MouseEvent): void => {
-  checkExitIntent(e);
+  void checkExitIntent(e);
 };
 
 export const addExitIntentListener = (): void => {
@@ -199,7 +197,7 @@ export const removeExitIntentListener = (): void => {
 let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
-const checkScrollDepth = (): void => {
+const checkScrollDepth = async (): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
@@ -227,13 +225,13 @@ const checkScrollDepth = (): void => {
 
       if (!isValidUrl) continue;
 
-      queue.add(trackNoCodeScrollActionHandler, CommandType.GeneralAction, true, event.name);
+      await queue.add(trackNoCodeScrollActionHandler, CommandType.GeneralAction, true, event.name);
     }
   }
 };
 
 const checkScrollDepthWrapper = (): void => {
-  checkScrollDepth();
+  void checkScrollDepth();
 };
 
 export const addScrollDepthListener = (): void => {
