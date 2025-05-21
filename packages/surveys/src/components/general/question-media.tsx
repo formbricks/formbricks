@@ -27,7 +27,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
+    <div className="fb-group/image fb-relative fb-mb-6 fb-block fb-min-h-40 fb-rounded-md">
       {isLoading ? (
         <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
       ) : null}
