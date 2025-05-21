@@ -139,6 +139,7 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SESSION_MAX_AGE",
         "SENTRY_DSN",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",

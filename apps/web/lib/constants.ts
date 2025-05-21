@@ -283,3 +283,5 @@ export const SENTRY_DSN = env.SENTRY_DSN;
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
+
+export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;
