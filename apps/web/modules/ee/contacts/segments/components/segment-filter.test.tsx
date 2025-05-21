@@ -510,7 +510,7 @@ describe("SegmentFilter", () => {
         qualifier: {
           operator: "greaterThan",
         },
-        value: "10",
+        value: "hello",
       };
 
       const segmentWithArithmeticFilter: TSegment = {
@@ -527,7 +527,7 @@ describe("SegmentFilter", () => {
       const currentProps = { ...baseProps, segment: segmentWithArithmeticFilter };
       render(<SegmentFilter {...currentProps} connector="and" resource={arithmeticFilterResource} />);
 
-      const valueInput = screen.getByDisplayValue("10");
+      const valueInput = screen.getByDisplayValue("hello");
       await userEvent.clear(valueInput);
       fireEvent.change(valueInput, { target: { value: "abc" } });
 
@@ -694,7 +694,7 @@ describe("SegmentFilter", () => {
         id: "filter-person-2",
         root: { type: "person", personIdentifier: "userId" },
         qualifier: { operator: "greaterThan" },
-        value: "10",
+        value: "hello",
       };
 
       const segmentWithPersonFilterArithmetic: TSegment = {
@@ -715,7 +715,7 @@ describe("SegmentFilter", () => {
           resource={personFilterResourceWithArithmeticOperator}
         />
       );
-      const valueInput = screen.getByDisplayValue("10");
+      const valueInput = screen.getByDisplayValue("hello");
 
       await userEvent.clear(valueInput);
       fireEvent.change(valueInput, { target: { value: "abc" } });
