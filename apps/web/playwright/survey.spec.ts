@@ -831,7 +831,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByText(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.getByLabel(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel).check();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
