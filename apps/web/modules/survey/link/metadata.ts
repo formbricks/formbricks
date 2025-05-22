@@ -27,8 +27,13 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     baseMetadata.twitter.images = [ogImgURL];
   }
 
+  const canonicalPath = `/s/${surveyId}`;
+
   return {
     title: survey.name,
     ...baseMetadata,
+    alternates: {
+      canonical: canonicalPath,
+    },
   };
 };
