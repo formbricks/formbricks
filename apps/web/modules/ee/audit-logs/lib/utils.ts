@@ -1,3 +1,4 @@
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
@@ -42,6 +43,7 @@ async function buildAndLogAuditEvent({
   oldObject,
   newObject,
   eventId,
+  apiUrl,
 }: {
   actionType: TAuditActionType;
   targetType: TAuditTarget;
@@ -54,7 +56,12 @@ async function buildAndLogAuditEvent({
   oldObject?: any;
   newObject?: any;
   eventId?: string;
+  apiUrl?: string;
 }) {
+  if (!AUDIT_LOG_ENABLED) {
+    return;
+  }
+
   try {
     let changes;
     if (oldObject && newObject) {
@@ -73,6 +80,7 @@ async function buildAndLogAuditEvent({
       organizationId,
       status,
       ipAddress,
+      apiUrl,
       ...(changes ? { changes } : {}),
     };
 
@@ -99,7 +107,7 @@ async function buildAndLogAuditEvent({
  * @param oldObject - The old object (optional).
  * @param newObject - The new object (optional).
  * @param status - The status of the action ("success" or "failure").
- *
+ * @param apiUrl - The URL of the API request.
  **/
 export async function queueAuditEventBackground({
   actionType,
@@ -112,6 +120,7 @@ export async function queueAuditEventBackground({
   newObject,
   status,
   eventId,
+  apiUrl,
 }: {
   actionType: TAuditActionType;
   targetType: TAuditTarget;
@@ -123,6 +132,7 @@ export async function queueAuditEventBackground({
   newObject?: any;
   status: TAuditStatus;
   eventId?: string;
+  apiUrl?: string;
 }) {
   setImmediate(async () => {
     const ipAddress = await getClientIpFromHeaders();
@@ -139,6 +149,7 @@ export async function queueAuditEventBackground({
       oldObject,
       newObject,
       eventId,
+      apiUrl,
     });
   });
 }
@@ -156,7 +167,7 @@ export async function queueAuditEventBackground({
  * @param oldObject - The old object (optional).
  * @param newObject - The new object (optional).
  * @param status - The status of the action ("success" or "failure").
- *
+ * @param apiUrl - The URL of the API request.
  **/
 export async function queueAuditEvent({
   actionType,
@@ -169,6 +180,7 @@ export async function queueAuditEvent({
   newObject,
   status,
   eventId,
+  apiUrl,
 }: {
   actionType: TAuditActionType;
   targetType: TAuditTarget;
@@ -180,6 +192,7 @@ export async function queueAuditEvent({
   newObject?: any;
   status: TAuditStatus;
   eventId?: string;
+  apiUrl?: string;
 }) {
   const ipAddress = await getClientIpFromHeaders();
 
@@ -195,6 +208,7 @@ export async function queueAuditEvent({
     oldObject,
     newObject,
     eventId,
+    apiUrl,
   });
 }
 
@@ -223,6 +237,10 @@ export function withAuditLogging(
     } catch (err) {
       status = "failure";
       error = err;
+    }
+
+    if (!AUDIT_LOG_ENABLED) {
+      return result;
     }
 
     setImmediate(async () => {

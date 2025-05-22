@@ -32,9 +32,10 @@ export const AuditLogEventSchema = z.object({
   status: z.enum(["success", "failure"]),
   timestamp: z.string().datetime(),
   organizationId: z.string(),
-  ipAddress: z.string().optional(),
+  ipAddress: z.string().ip().optional(),
   changes: z.record(z.any()).optional(),
   eventId: z.string().optional(),
+  apiUrl: z.string().url().optional(),
 });
 
 export type TAuditLogEvent = z.infer<typeof AuditLogEventSchema>;

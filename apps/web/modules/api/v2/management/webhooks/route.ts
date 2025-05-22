@@ -55,6 +55,7 @@ export const POST = async (request: NextRequest) =>
         targetId: undefined,
         organizationId: authentication.organizationId,
         status: "failure" as const,
+        apiUrl: request.url,
       };
 
       if (!body) {

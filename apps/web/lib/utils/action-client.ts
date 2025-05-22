@@ -19,9 +19,6 @@ import {
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
     const eventId = (utils.ctx as Record<string, any>)?.eventId;
-
-    console.log("----------------------- eventId", eventId);
-
     Sentry.captureException(e, {
       extra: {
         eventId,

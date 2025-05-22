@@ -106,6 +106,7 @@ export const logApiError = (
       ...auditLog,
       status: "failure",
       eventId: correlationId,
+      apiUrl: request.url,
     });
   }
 

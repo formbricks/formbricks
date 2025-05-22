@@ -68,6 +68,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         targetId: params?.webhookId,
         organizationId: authentication.organizationId,
         status: "failure" as const,
+        apiUrl: request.url,
       };
 
       if (!body || !params) {
@@ -155,6 +156,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         targetId: params?.webhookId,
         organizationId: authentication.organizationId,
         status: "failure" as const,
+        apiUrl: request.url,
       };
 
       if (!params) {

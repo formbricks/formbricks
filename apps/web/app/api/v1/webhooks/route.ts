@@ -3,6 +3,7 @@ import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
@@ -25,43 +26,78 @@ export const GET = async (request: Request) => {
   }
 };
 
-export const POST = async (request: Request) => {
+export const POST = withApiLogging(async (request: Request) => {
+  const auditLog: ApiAuditLog = {
+    actionType: "webhook.created",
+    targetType: "webhook",
+    userId: "anonymous",
+    targetId: undefined,
+    organizationId: "anonymous",
+    status: "failure",
+    newObject: undefined,
+  };
+
   const authentication = await authenticateRequest(request);
   if (!authentication) {
-    return responses.notAuthenticatedResponse();
+    return {
+      response: responses.notAuthenticatedResponse(),
+      audit: auditLog,
+    };
   }
+
+  auditLog.organizationId = authentication.organizationId;
+  auditLog.userId = authentication.apiKeyId;
   const webhookInput = await request.json();
   const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
   if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
+    return {
+      response: responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error),
+        true
+      ),
+      audit: auditLog,
+    };
   }
 
   const environmentId = inputValidation.data.environmentId;
-
   if (!environmentId) {
-    return responses.badRequestResponse("Environment ID is required");
+    return {
+      response: responses.badRequestResponse("Environment ID is required"),
+      audit: auditLog,
+    };
   }
 
   if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-    return responses.unauthorizedResponse();
+    return {
+      response: responses.unauthorizedResponse(),
+      audit: auditLog,
+    };
   }
 
-  // add webhook to database
   try {
     const webhook = await createWebhook(inputValidation.data);
-    return responses.successResponse(webhook);
+    auditLog.targetId = webhook.id;
+    auditLog.status = "success";
+    auditLog.newObject = webhook;
+    return {
+      response: responses.successResponse(webhook),
+      audit: auditLog,
+    };
   } catch (error) {
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return {
+        response: responses.badRequestResponse(error.message),
+        audit: auditLog,
+      };
     }
     if (error instanceof DatabaseError) {
-      return responses.internalServerErrorResponse(error.message);
+      return {
+        response: responses.internalServerErrorResponse(error.message),
+        audit: auditLog,
+      };
     }
     throw error;
   }
-};
+});
