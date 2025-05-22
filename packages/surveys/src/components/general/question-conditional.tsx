@@ -1,4 +1,4 @@
-import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TJsEnvironmentStateSurvey, type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import {
@@ -39,6 +39,7 @@ interface QuestionConditionalProps {
   skipPrefilled?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  survey: TJsEnvironmentStateSurvey;
   surveyId: string;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
@@ -60,6 +61,7 @@ export function QuestionConditional({
   skipPrefilled,
   ttc,
   setTtc,
+  survey,
   surveyId,
   onFileUpload,
   autoFocusEnabled,
@@ -89,6 +91,7 @@ export function QuestionConditional({
     <OpenTextQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -106,6 +109,7 @@ export function QuestionConditional({
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -123,6 +127,7 @@ export function QuestionConditional({
     <MultipleChoiceMultiQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -140,6 +145,7 @@ export function QuestionConditional({
     <NPSQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -157,6 +163,7 @@ export function QuestionConditional({
     <CTAQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -175,6 +182,7 @@ export function QuestionConditional({
     <RatingQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -192,6 +200,7 @@ export function QuestionConditional({
     <ConsentQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -209,6 +218,7 @@ export function QuestionConditional({
     <DateQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -226,6 +236,7 @@ export function QuestionConditional({
     <PictureSelectionQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -244,6 +255,7 @@ export function QuestionConditional({
       key={question.id}
       surveyId={surveyId}
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -262,6 +274,7 @@ export function QuestionConditional({
     <CalQuestion
       key={question.id}
       question={question}
+      survey={survey}
       value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -278,6 +291,7 @@ export function QuestionConditional({
   ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
     <MatrixQuestion
       question={question}
+      survey={survey}
       value={typeof value === "object" && !Array.isArray(value) ? value : {}}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -293,6 +307,7 @@ export function QuestionConditional({
   ) : question.type === TSurveyQuestionTypeEnum.Address ? (
     <AddressQuestion
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -309,6 +324,7 @@ export function QuestionConditional({
   ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
     <RankingQuestion
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -325,6 +341,7 @@ export function QuestionConditional({
   ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
     <ContactInfoQuestion
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
@@ -341,6 +358,7 @@ export function QuestionConditional({
   ) : question.type === TSurveyQuestionTypeEnum.DeployToken ? (
     <DeployTokenQuestion
       question={question}
+      survey={survey}
       value={Array.isArray(value) ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}

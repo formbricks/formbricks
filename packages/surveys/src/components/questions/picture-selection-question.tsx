@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -14,6 +15,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -30,6 +32,7 @@ interface PictureSelectionProps {
 
 export function PictureSelectionQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -105,6 +108,7 @@ export function PictureSelectionQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

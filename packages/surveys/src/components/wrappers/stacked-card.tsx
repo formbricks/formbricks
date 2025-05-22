@@ -9,7 +9,9 @@ interface StackedCardProps {
   dynamicQuestionIndex: number;
   offset: number;
   fullSizeCards: boolean;
+  backgroundStyles: React.CSSProperties;
   borderStyles: React.CSSProperties;
+  boxShadowStyles: React.CSSProperties;
   getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
   cardHeight: string;
   survey: TJsEnvironmentStateSurvey;
@@ -23,7 +25,9 @@ export const StackedCard = ({
   dynamicQuestionIndex,
   offset,
   fullSizeCards,
+  backgroundStyles,
   borderStyles,
+  boxShadowStyles,
   getCardContent,
   cardHeight,
   survey,
@@ -106,7 +110,9 @@ export const StackedCard = ({
         height: fullSizeCards ? "100%" : currentCardHeight,
         transitionDuration: "600ms",
         pointerEvents: offset === 0 ? "auto" : "none",
+        ...backgroundStyles,
         ...borderStyles,
+        ...boxShadowStyles,
         ...straightCardArrangementStyles,
         ...getBottomStyles(),
       }}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -13,6 +14,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -29,6 +31,7 @@ interface MultipleChoiceMultiProps {
 
 export function MultipleChoiceMultiQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -156,6 +159,7 @@ export function MultipleChoiceMultiQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

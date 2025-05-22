@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { TJsEnvironmentStateSurvey, type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -15,6 +15,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -33,6 +34,7 @@ interface FileUploadQuestionProps {
 
 export function FileUploadQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -79,6 +81,7 @@ export function FileUploadQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

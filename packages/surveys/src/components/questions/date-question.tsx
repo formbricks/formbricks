@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-date-picker";
 import { DatePickerProps } from "react-date-picker";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getMonthName, getOrdinalDate } from "../../lib/date-time";
@@ -17,6 +18,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -83,6 +85,7 @@ function CalendarCheckIcon() {
 
 export function DateQuestion({
   question,
+  survey,
   value,
   onSubmit,
   onBack,
@@ -154,6 +157,7 @@ export function DateQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

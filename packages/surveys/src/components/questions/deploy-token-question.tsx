@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDeployTokenQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { useDeployERC20 } from "@formbricks/web3";
@@ -16,6 +17,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface DeployTokenQuestionProps {
   question: TSurveyDeployTokenQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -34,6 +36,7 @@ interface DeployTokenQuestionProps {
 
 export function DeployTokenQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -173,6 +176,7 @@ export function DeployTokenQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

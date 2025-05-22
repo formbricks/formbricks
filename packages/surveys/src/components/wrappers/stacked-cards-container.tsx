@@ -35,9 +35,16 @@ export function StackedCardsContainer({
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.highlightBorderColor?.light
     : styling.highlightBorderColor?.light;
+  const cardRoundess = survey.styling?.overwriteThemeStyling ? survey.styling?.roundness : styling.roundness;
+  const cardBackgroundColor = survey.styling?.overwriteThemeStyling
+    ? survey.styling?.cardBackgroundColor?.light
+    : styling.cardBackgroundColor?.light;
   const cardBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.cardBorderColor?.light
     : styling.cardBorderColor?.light;
+  const cardShadowColor = survey.styling?.overwriteThemeStyling
+    ? survey.styling?.cardShadowColor?.light
+    : styling.cardShadowColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
@@ -82,10 +89,17 @@ export function StackedCardsContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when questionIdxTemp changes
   }, [questionIdxTemp]);
 
+  const backgroundStyles = useMemo(() => {
+    const backgroundColor = cardBackgroundColor;
+    return {
+      backgroundColor,
+    };
+  }, [cardBackgroundColor]);
+
   const borderStyles = useMemo(() => {
     const baseStyle = {
       border: "1px solid",
-      borderRadius: "var(--border-radius)",
+      borderRadius: cardRoundess ? cardRoundess : "var(--border-radius)",
     };
     // Determine borderColor based on the survey type and availability of highlightBorderColor
     const borderColor =
@@ -94,7 +108,16 @@ export function StackedCardsContainer({
       ...baseStyle,
       borderColor,
     };
-  }, [survey.type, cardBorderColor, highlightBorderColor]);
+  }, [cardRoundess, survey.type, highlightBorderColor, cardBorderColor]);
+
+  const boxShadowStyles = useMemo(() => {
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow
+    // NOTE: May want to update to allow slider or removal of shadow
+    const boxShadow = `1px 1px ${cardShadowColor}`;
+    return {
+      boxShadow,
+    };
+  }, [cardShadowColor]);
 
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
@@ -141,7 +164,7 @@ export function StackedCardsContainer({
         <div
           id={`questionCard-${questionIdxTemp.toString()}`}
           className={cn("bg-survey-bg w-full overflow-hidden", fullSizeCards ? "h-full" : "")}
-          style={borderStyles}>
+          style={{ ...borderStyles, ...backgroundStyles }}>
           {getCardContent(questionIdxTemp, 0)}
         </div>
       ) : (
@@ -159,7 +182,9 @@ export function StackedCardsContainer({
                 dynamicQuestionIndex={dynamicQuestionIndex}
                 offset={offset}
                 fullSizeCards={fullSizeCards}
+                backgroundStyles={backgroundStyles}
                 borderStyles={borderStyles}
+                boxShadowStyles={boxShadowStyles}
                 getCardContent={getCardContent}
                 cardHeight={cardHeight}
                 survey={survey}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -12,6 +13,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -29,6 +31,7 @@ interface CTAQuestionProps {
 
 export function CTAQuestion({
   question,
+  survey,
   onSubmit,
   onChange,
   onBack,
@@ -56,6 +59,7 @@ export function CTAQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />
