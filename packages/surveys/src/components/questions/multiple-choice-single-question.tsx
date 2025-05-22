@@ -202,7 +202,7 @@ export function MultipleChoiceSingleQuestion({
                         document.getElementById(otherOption.id)?.focus();
                       }
                     }}>
-                    <span className="fb-flex fb-items-center fb-text-sm">
+                    <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
                       <input
                         tabIndex={-1}
                         dir="auto"
@@ -218,10 +218,7 @@ export function MultipleChoiceSingleQuestion({
                         }}
                         checked={otherSelected}
                       />
-                      <span
-                        id={`${otherOption.id}-label`}
-                        className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                        dir="auto">
+                      <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
