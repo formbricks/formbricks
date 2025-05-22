@@ -1,5 +1,6 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { FormEvent, useCallback, useMemo, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyQuestionChoice,
@@ -18,6 +19,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -34,6 +36,7 @@ interface RankingQuestionProps {
 
 export function RankingQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -151,6 +154,7 @@ export function RankingQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

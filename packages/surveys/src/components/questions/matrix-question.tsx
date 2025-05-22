@@ -1,5 +1,6 @@
 import { FormEvent } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -14,6 +15,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -29,6 +31,7 @@ interface MatrixQuestionProps {
 
 export function MatrixQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -127,6 +130,7 @@ export function MatrixQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

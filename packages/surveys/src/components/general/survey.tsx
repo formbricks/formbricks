@@ -638,6 +638,7 @@ export function Survey({
           Boolean(question) && (
             <QuestionConditional
               key={question.id}
+              survey={localSurvey}
               surveyId={localSurvey.id}
               question={parseRecallInformation(question, selectedLanguage, responseData, currentVariables)}
               value={responseData[question.id]}

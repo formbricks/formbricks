@@ -159,6 +159,9 @@ export const ThemeStylingPreviewSurvey = ({
               darkOverlay={darkOverlay}
               previewMode="desktop"
               background={project.styling.cardBackgroundColor?.light}
+              // NOTE: This does not look to update the radius of the card.
+              // Check StackedCardsContainer in packages/surveys/src/components/wrappers/stacked-cards-container.tsx for how it is set.
+              // TODO: Confirm and remove if not needed
               borderRadius={project.styling.roundness ?? 8}>
               <Fragment key={surveyFormKey}>
                 <SurveyInline

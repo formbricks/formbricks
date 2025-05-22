@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useCallback, useMemo, useRef, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -15,6 +16,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface ContactInfoQuestionProps {
   question: TSurveyContactInfoQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -32,6 +34,7 @@ interface ContactInfoQuestionProps {
 
 export function ContactInfoQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -124,6 +127,7 @@ export function ContactInfoQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />

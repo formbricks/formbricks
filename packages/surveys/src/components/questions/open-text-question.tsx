@@ -1,5 +1,6 @@
 import { type RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../../lib/i18n";
@@ -13,6 +14,7 @@ import { ScrollableContainer } from "../wrappers/scrollable-container";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
+  survey: TJsEnvironmentStateSurvey;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -30,6 +32,7 @@ interface OpenTextQuestionProps {
 
 export function OpenTextQuestion({
   question,
+  survey,
   value,
   onChange,
   onSubmit,
@@ -88,6 +91,7 @@ export function OpenTextQuestion({
           ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
+            headlineColor={survey.styling?.questionColor?.light}
             questionId={question.id}
             required={question.required}
           />
