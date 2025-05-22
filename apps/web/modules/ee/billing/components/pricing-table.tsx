@@ -21,15 +21,13 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   stripePriceLookupKeys: {
-    STARTUP_MONTHLY: string;
-    STARTUP_YEARLY: string;
-    SCALE_MONTHLY: string;
-    SCALE_YEARLY: string;
+    STARTUP_MAY25_MONTHLY: string;
+    STARTUP_MAY25_YEARLY: string;
   };
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    SCALE: string;
+    CUSTOM: string;
     ENTERPRISE: string;
   };
   hasBillingRights: boolean;
@@ -102,7 +100,11 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      }
     }
   };
 
@@ -110,20 +112,20 @@ export const PricingTable = ({
     if (planId === "startup") {
       await upgradePlan(
         planPeriod === "monthly"
-          ? stripePriceLookupKeys.STARTUP_MONTHLY
-          : stripePriceLookupKeys.STARTUP_YEARLY
+          ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
+          : stripePriceLookupKeys.STARTUP_MAY25_YEARLY
       );
       return;
     }
 
-    if (planId === "enterprise") {
-      window.location.href = "https://cal.com/johannes/license";
+    if (planId === "custom") {
+      window.location.href =
+        "https://app.formbricks.com/s/cm7k8esy20001jp030fh8a9o5?source=billingView&delivery=cloud";
       return;
     }
 
     if (planId === "free") {
       toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
-      return;
     }
   };
 
@@ -226,7 +228,7 @@ export const PricingTable = ({
 
             <div
               className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-12",
+                "relative mx-8 flex flex-col gap-4 pb-6",
                 projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
