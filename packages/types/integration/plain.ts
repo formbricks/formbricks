@@ -2,10 +2,10 @@ import { z } from "zod";
 import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./shared-types";
 
 export const ZIntegrationPlainCredential = z.object({
-  access_token: z.string(),
-  workspace_icon: z.string().nullable(),
-  workspace_id: z.string(),
-  workspace_name: z.string().nullable(),
+  api_key: z.string(),
+  // workspace_icon: z.string().nullable(),
+  // workspace_id: z.string(),
+  // workspace_name: z.string().nullable(),
 });
 
 export type TIntegrationPlainCredential = z.infer<typeof ZIntegrationPlainCredential>;

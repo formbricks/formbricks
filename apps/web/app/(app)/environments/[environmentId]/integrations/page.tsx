@@ -214,7 +214,7 @@ const Page = async (props) => {
       docsNewTab: true,
       connectHref: `/environments/${params.environmentId}/integrations/plain`,
       connectText: t("common.connect"),
-      connectNewTab: true,
+      connectNewTab: false,
       label: "Plain",
       description: t("environments.integrations.plain.plain_integration_description"),
       icon: <Image src={PlainCom} alt="Plain.com Logo" />,

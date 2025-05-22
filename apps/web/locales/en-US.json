@@ -705,11 +705,6 @@
         "update_connection_tooltip": "Reconnect the integration to include newly added databases. Your existing integrations will remain intact."
       },
       "notion_integration_description": "Send data to your Notion database",
-      "plain": {
-        "connect_with_plain": "Connect with Plain.com",
-        "plain_integration": "Plain Integration",
-        "plain_integration_description": "Create support threads in Plain.com with Formbricks"
-      },
       "please_select_a_survey_error": "Please select a survey",
       "select_at_least_one_question_error": "Please select at least one question",
       "slack": {
