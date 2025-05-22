@@ -200,7 +200,7 @@ export const TeamSettingsModal = ({
       open={open}
       setOpen={setOpen}
       noPadding
-      className="flex max-h-[90dvh] flex-col overflow-visible" // Changed from "overflow-visible max-h-[90dvh]"
+      className="flex max-h-[90dvh] flex-col overflow-visible"
       size="md"
       hideCloseButton
       closeOnOutsideClick={true}>
