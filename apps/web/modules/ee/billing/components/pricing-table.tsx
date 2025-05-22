@@ -126,7 +126,6 @@ export const PricingTable = ({
 
     if (planId === "free") {
       toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
-      return;
     }
   };
 
