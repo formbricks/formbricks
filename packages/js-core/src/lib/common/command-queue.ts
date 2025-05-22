@@ -56,20 +56,6 @@ export class CommandQueue {
           this.queue = this.queue.filter((item) => item.type !== CommandType.Setup);
           this.queue.unshift(newItem);
         } else if (type === CommandType.UserAction) {
-          // newItem (UserAction) is currently at the end due to the initial push.
-          // We pop it and then re-insert it at the correct position.
-          const itemPopped = this.queue.pop();
-
-          // We expect itemPopped to be newItem. If not, this is an unexpected state.
-          // For robustness in this step, we will proceed to place the original newItem.
-          if (itemPopped !== newItem) {
-            console.warn(
-              "🧱 Formbricks - CommandQueue: Popped item was not the newItem during UserAction handling. This is unexpected. Proceeding to place the original newItem."
-            );
-            // If itemPopped was something else, it means newItem might still be in the queue or gone.
-            // This state is problematic. For now, we focus on placing newItem as intended.
-          }
-
           let firstNonSetupIndex = 0;
           while (
             firstNonSetupIndex < this.queue.length &&
@@ -96,21 +82,8 @@ export class CommandQueue {
             }
             this.queue.splice(insertionPoint, 0, newItem); // Use newItem directly
           } else {
-            const firstGeneralActionIndex = this.queue.findIndex(
-              (item, index) => index >= firstNonSetupIndex && item.type === CommandType.GeneralAction
-            );
-
-            if (firstGeneralActionIndex === -1) {
-              this.queue.push(newItem); // Use newItem directly
-            } else {
-              this.queue.splice(firstGeneralActionIndex, 0, newItem); // Use newItem directly
-            }
+            this.queue.sort((a, b) => a.type - b.type);
           }
-        } else {
-          // type === CommandType.GeneralAction
-          // GENERAL_ACTION: newItem was pushed at the start of the 'add' method.
-          // It's currently at the end, which is its correct position.
-          // No further action needed here (this fixes the previous duplicate push).
         }
 
         if (!this.running) {
