@@ -23,13 +23,11 @@ interface PricingTableProps {
   stripePriceLookupKeys: {
     STARTUP_MONTHLY: string;
     STARTUP_YEARLY: string;
-    SCALE_MONTHLY: string;
-    SCALE_YEARLY: string;
   };
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    SCALE: string;
+    CUSTOM: string;
     ENTERPRISE: string;
   };
   hasBillingRights: boolean;
@@ -116,8 +114,9 @@ export const PricingTable = ({
       return;
     }
 
-    if (planId === "enterprise") {
-      window.location.href = "https://cal.com/johannes/license";
+    if (planId === "custom") {
+      window.location.href =
+        "https://app.formbricks.com/s/cm7k8esy20001jp030fh8a9o5?source=billingView&delivery=cloud";
       return;
     }
 
@@ -226,7 +225,7 @@ export const PricingTable = ({
 
             <div
               className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-12",
+                "relative mx-8 flex flex-col gap-4 pb-6",
                 projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
