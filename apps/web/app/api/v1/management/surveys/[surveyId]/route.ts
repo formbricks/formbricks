@@ -65,9 +65,9 @@ export const PUT = withApiLogging(
     const auditLog: ApiAuditLog = {
       actionType: "survey.updated",
       targetType: "survey",
-      userId: "anonymous",
+      userId: "unknown",
       targetId: undefined,
-      organizationId: "anonymous",
+      organizationId: "unknown",
       status: "failure",
       oldObject: undefined,
       newObject: undefined,

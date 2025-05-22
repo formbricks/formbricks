@@ -1,4 +1,4 @@
-import { AUDIT_LOG_ENABLED } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
@@ -11,6 +11,56 @@ import {
   TAuditTarget,
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { logger } from "@formbricks/logger";
+
+const SENSITIVE_KEYS = [
+  "email",
+  "name",
+  "password",
+  "access_token",
+  "refresh_token",
+  "id_token",
+  "twofactorsecret",
+  "backupcodes",
+  "session_state",
+  "provideraccountid",
+  "imageurl",
+  "identityprovideraccountid",
+  "locale",
+  "token",
+  "key",
+  "secret",
+  "code",
+  "address",
+  "phone",
+  "hashedkey",
+  "apikey",
+  "createdby",
+  "lastusedat",
+  "expiresat",
+  "acceptorid",
+  "creatorid",
+  "firstname",
+  "lastname",
+  "userid",
+  "attributes",
+];
+
+function redactPII(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(redactPII);
+  }
+  if (obj && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => {
+        if (SENSITIVE_KEYS.some((sensitiveKey) => key.toLowerCase().includes(sensitiveKey))) {
+          return [key, "********"];
+        }
+        return [key, redactPII(value)];
+      })
+    );
+  }
+  return obj;
+}
 
 function deepDiff(oldObj: any, newObj: any): any {
   if (typeof oldObj !== "object" || typeof newObj !== "object" || oldObj === null || newObj === null) {
@@ -66,20 +116,21 @@ async function buildAndLogAuditEvent({
     let changes;
     if (oldObject && newObject) {
       changes = deepDiff(oldObject, newObject);
+      changes = redactPII(changes);
     } else if (newObject) {
-      changes = newObject;
+      changes = redactPII(newObject);
     } else if (oldObject) {
-      changes = oldObject;
+      changes = redactPII(oldObject);
     }
 
     const auditEvent: TAuditLogEvent = {
       actor: { id: userId, type: userType },
-      action: { type: actionType },
+      action: actionType,
       target: { id: targetId, type: targetType },
       timestamp: new Date().toISOString(),
       organizationId,
       status,
-      ipAddress,
+      ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : "unknown",
       apiUrl,
       ...(changes ? { changes } : {}),
     };
@@ -253,7 +304,7 @@ export function withAuditLogging(
           if (environmentId) {
             organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
           } else {
-            organizationId = "anonymous";
+            organizationId = "unknown";
           }
         }
 
@@ -267,7 +318,6 @@ export function withAuditLogging(
             break;
         }
 
-        const ipAddress = ctx?.ipAddress ?? "anonymous";
         await buildAndLogAuditEvent({
           actionType: `${targetType}.${actionType}`,
           targetType,
@@ -275,7 +325,7 @@ export function withAuditLogging(
           userType: "user",
           targetId: targetId,
           organizationId,
-          ipAddress,
+          ipAddress: AUDIT_LOG_GET_USER_IP ? ctx?.ipAddress : "unknown",
           status,
           oldObject: ctx.oldObject,
           newObject: ctx.newObject,

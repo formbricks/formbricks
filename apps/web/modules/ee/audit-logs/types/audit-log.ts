@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 // Define as const arrays
-const AuditTargets = ["segment", "survey", "webhook"] as const;
-const AuditActions = ["created", "updated", "deleted"] as const;
+const AuditTargets = ["segment", "survey", "webhook", "user"] as const;
+const AuditActions = ["created", "updated", "deleted", "signedin"] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;
 
@@ -22,9 +22,7 @@ export const AuditLogEventSchema = z.object({
     id: z.string(),
     type: z.enum(Actors),
   }),
-  action: z.object({
-    type: z.enum(AuditActionTypes),
-  }),
+  action: z.enum(AuditActionTypes),
   target: z.object({
     id: z.string().or(z.undefined()),
     type: z.enum(AuditTargets),

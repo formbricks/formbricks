@@ -30,9 +30,9 @@ export const POST = withApiLogging(async (request: Request) => {
   const auditLog: ApiAuditLog = {
     actionType: "webhook.created",
     targetType: "webhook",
-    userId: "anonymous",
+    userId: "unknown",
     targetId: undefined,
-    organizationId: "anonymous",
+    organizationId: "unknown",
     status: "failure",
     newObject: undefined,
   };
