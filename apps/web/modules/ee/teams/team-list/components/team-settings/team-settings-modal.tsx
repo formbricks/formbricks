@@ -200,11 +200,11 @@ export const TeamSettingsModal = ({
       open={open}
       setOpen={setOpen}
       noPadding
-      className="overflow-visible"
+      className="flex max-h-[90dvh] flex-col overflow-visible" // Changed from "overflow-visible max-h-[90dvh]"
       size="md"
       hideCloseButton
       closeOnOutsideClick={true}>
-      <div className="sticky top-0 flex h-full flex-col rounded-lg">
+      <div className="sticky top-0 z-10 rounded-t-lg bg-slate-100">
         <button
           className={cn(
             "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
@@ -213,27 +213,27 @@ export const TeamSettingsModal = ({
           <XIcon className="h-6 w-6 rounded-md bg-white" />
           <span className="sr-only">Close</span>
         </button>
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div>
-                <H4>
-                  {t("environments.settings.teams.team_name_settings_title", {
-                    teamName: team.name,
-                  })}
-                </H4>
-                <Muted className="text-slate-500">
-                  {t("environments.settings.teams.team_settings_description")}
-                </Muted>
-              </div>
+        <div className="flex w-full items-center justify-between p-6">
+          <div className="flex items-center space-x-2">
+            <div>
+              <H4>
+                {t("environments.settings.teams.team_name_settings_title", {
+                  teamName: team.name,
+                })}
+              </H4>
+              <Muted className="text-slate-500">
+                {t("environments.settings.teams.team_settings_description")}
+              </Muted>
             </div>
           </div>
         </div>
       </div>
       <FormProvider {...form}>
-        <form className="w-full" onSubmit={handleSubmit(handleUpdateTeam)}>
-          <div className="flex flex-col gap-6 p-6">
-            <div className="max-h-[500px] space-y-6 overflow-y-auto">
+        <form
+          className="flex w-full flex-grow flex-col overflow-hidden"
+          onSubmit={handleSubmit(handleUpdateTeam)}>
+          <div className="flex-grow space-y-6 overflow-y-auto p-6">
+            <div className="space-y-6">
               <FormField
                 control={control}
                 name="name"
@@ -512,6 +512,8 @@ export const TeamSettingsModal = ({
                 />
               </div>
             </div>
+          </div>
+          <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-white p-6">
             <div className="flex justify-between">
               <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
                 {t("common.cancel")}
