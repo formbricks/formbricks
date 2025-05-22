@@ -105,6 +105,7 @@ export const env = createEnv({
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     USER_MANAGEMENT_MINIMUM_ROLE: z.enum(["owner", "manager", "disabled"]).optional(),
+    SESSION_MAX_AGE: z.string().transform((val) => parseInt(val)).optional(),
   },
 
   /*
@@ -200,5 +201,6 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     USER_MANAGEMENT_MINIMUM_ROLE: process.env.USER_MANAGEMENT_MINIMUM_ROLE,
+    SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
   },
 });

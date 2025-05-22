@@ -85,6 +85,7 @@ vi.mock("@/lib/constants", () => ({
   OIDC_AUTH_URL: "https://mock-oidc-auth-url.com",
   OIDC_ISSUER: "https://mock-oidc-issuer.com",
   OIDC_SIGNING_ALGORITHM: "RS256",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("next/navigation", () => ({
