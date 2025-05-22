@@ -513,7 +513,7 @@ export const TeamSettingsModal = ({
               </div>
             </div>
           </div>
-          <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-white p-6">
+          <div className="sticky bottom-0 z-10 border-slate-200 p-6">
             <div className="flex justify-between">
               <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
                 {t("common.cancel")}
