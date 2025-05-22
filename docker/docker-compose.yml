@@ -187,8 +187,11 @@ x-environment: &environment
     # (Role Management is an Enterprise feature)
     # AUTH_SSO_DEFAULT_TEAM_ID=
 
-    # Set the below to 1 to disable the user management UI
-    # DISABLE_USER_MANAGEMENT: 0
+    # Configure the minimum role for user management from UI(owner, manager, disabled)
+    # USER_MANAGEMENT_MINIMUM_ROLE="manager"
+
+    # Configure the maximum age for the session in seconds. Default is 86400 (24 hours)
+    # SESSION_MAX_AGE=86400
 
 services:
   postgres:

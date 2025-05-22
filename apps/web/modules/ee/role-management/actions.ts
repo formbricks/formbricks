@@ -1,7 +1,8 @@
 "use server";
 
-import { DISABLE_USER_MANAGEMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -87,8 +88,13 @@ export const updateMembershipAction = authenticatedActionClient
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    if (DISABLE_USER_MANAGEMENT) {
-      throw new OperationNotAllowedError("User management is disabled");
+    const hasUserManagementAccess = getUserManagementAccess(
+      currentUserMembership.role,
+      USER_MANAGEMENT_MINIMUM_ROLE
+    );
+
+    if (!hasUserManagementAccess) {
+      throw new OperationNotAllowedError("User management is not allowed for your role");
     }
 
     await checkAuthorizationUpdated({

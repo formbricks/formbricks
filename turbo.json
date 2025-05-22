@@ -139,6 +139,7 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SESSION_MAX_AGE",
         "SENTRY_DSN",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
@@ -170,7 +171,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "DISABLE_USER_MANAGEMENT"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

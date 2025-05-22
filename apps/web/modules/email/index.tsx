@@ -12,8 +12,9 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
-import { createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
+import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { getTranslate } from "@/tolgee/server";
 import { render } from "@react-email/render";
@@ -83,6 +84,25 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
   } catch (error) {
     logger.error(error, "Error in sendEmail");
     throw new InvalidInputError("Incorrect SMTP credentials");
+  }
+};
+
+export const sendVerificationNewEmail = async (id: string, email: string): Promise<boolean> => {
+  try {
+    const t = await getTranslate();
+    const token = createEmailChangeToken(id, email);
+    const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
+
+    const html = await render(await NewEmailVerification({ verifyLink }));
+
+    return await sendEmail({
+      to: email,
+      subject: t("emails.verification_new_email_subject"),
+      html,
+    });
+  } catch (error) {
+    logger.error(error, "Error in sendVerificationNewEmail");
+    throw error;
   }
 };
 

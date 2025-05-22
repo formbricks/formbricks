@@ -153,7 +153,7 @@ export const SingleResponseCardHeader = ({
   const deleteSubmissionToolTip = <>{t("environments.surveys.responses.this_response_is_in_progress")}</>;
 
   return (
-    <div className="space-y-2 border-b border-slate-200 px-6 pt-4 pb-4">
+    <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center space-x-4">
           {pageType === "response" && (

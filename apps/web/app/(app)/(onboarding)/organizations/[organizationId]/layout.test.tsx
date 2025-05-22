@@ -34,6 +34,7 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("next-auth", () => ({

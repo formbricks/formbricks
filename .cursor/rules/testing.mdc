@@ -1,0 +1,6 @@
+---
+description: Whenever the user asks to write or update a test file for .tsx or .ts files.
+globs: 
+alwaysApply: false
+---
+Use the rules in this file when writing tests [copilot-instructions.md](mdc:.github/copilot-instructions.md)

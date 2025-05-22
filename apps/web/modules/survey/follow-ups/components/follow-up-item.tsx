@@ -113,8 +113,8 @@ export const FollowUpItem = ({
   return (
     <>
       <div className="relative cursor-pointer rounded-lg border border-slate-300 bg-white p-4 hover:bg-slate-50">
-        <div
-          className="flex flex-col space-y-2"
+        <button
+          className="flex w-full flex-col items-start space-y-2"
           onClick={() => {
             setEditFollowUpModalOpen(true);
           }}>
@@ -144,9 +144,9 @@ export const FollowUpItem = ({
               />
             ) : null}
           </div>
-        </div>
+        </button>
 
-        <div className="absolute top-4 right-4 flex items-center">
+        <div className="absolute right-4 top-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"

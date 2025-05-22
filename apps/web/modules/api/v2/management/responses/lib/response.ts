@@ -135,14 +135,11 @@ export const getResponses = async (
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
     const query = getResponsesQuery(environmentIds, params);
+    const whereClause = query.where;
 
-    const [responses, count] = await prisma.$transaction([
-      prisma.response.findMany({
-        ...query,
-      }),
-      prisma.response.count({
-        where: query.where,
-      }),
+    const [responses, totalCount] = await Promise.all([
+      prisma.response.findMany(query),
+      prisma.response.count({ where: whereClause }),
     ]);
 
     if (!responses) {
@@ -152,7 +149,7 @@ export const getResponses = async (
     return ok({
       data: responses,
       meta: {
-        total: count,
+        total: totalCount,
         limit: params.limit,
         offset: params.skip,
       },

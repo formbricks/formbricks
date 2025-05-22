@@ -1,8 +1,8 @@
-name: 'Terraform'
+name: "Terraform"
 
 on:
   workflow_dispatch:
-# TODO: enable it back when migration is completed.
+  # TODO: enable it back when migration is completed.
   push:
     branches:
       - main
@@ -14,14 +14,13 @@ on:
     paths:
       - "infra/terraform/**"
 
-permissions:
-  id-token: write
-  contents: write
-  pull-requests: write
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -41,7 +40,7 @@ jobs:
           tags: tag:github
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # v4.2.0
         with:
           role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
           aws-region: "eu-central-1"
@@ -71,7 +70,7 @@ jobs:
         working-directory: infra/terraform
 
       - name: Post PR comment
-        uses: borchero/terraform-plan-comment@3399d8dbae8b05185e815e02361ede2949cd99c4 # v2.4.0
+        uses: borchero/terraform-plan-comment@434458316f8f24dd073cd2561c436cce41dc8f34 # v2.4.1
         if: always() && github.ref != 'refs/heads/main' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
         with:
           token: ${{ github.token }}
@@ -83,4 +82,3 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply .planfile
         working-directory: "infra/terraform"
-

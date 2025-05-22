@@ -25,6 +25,7 @@ vi.mock("@/lib/constants", () => ({
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
+  SESSION_MAX_AGE: 1000,
 }));
 
 describe("SurveyCard", () => {
@@ -53,10 +54,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // Draft survey => link should point to edit
@@ -70,10 +71,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={true}
-        WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // When it's read only and draft, we expect no link
@@ -87,10 +88,10 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "inProgress" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
+        surveyDomain={WEBAPP_URL}
       />
     );
     // For non-draft => link to summary

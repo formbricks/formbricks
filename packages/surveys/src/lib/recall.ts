@@ -7,27 +7,19 @@ import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
 const extractId = (text: string): string | null => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/;
   const match = text.match(pattern);
-  if (match && match[1]) {
-    return match[1];
-  } else {
-    return null;
-  }
+  return match?.[1] ?? null;
 };
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
 const extractFallbackValue = (text: string): string => {
   const pattern = /fallback:(\S*)#/;
   const match = text.match(pattern);
-  if (match && match[1]) {
-    return match[1];
-  } else {
-    return "";
-  }
+  return match?.[1] ?? "";
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ? id : "[A-Za-z0-9_-]+";
+  const idPattern = id ?? "[A-Za-z0-9_-]+";
   const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
@@ -47,7 +39,7 @@ export const replaceRecallInfo = (
     const recallItemId = extractId(recallInfo);
     if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
 
-    const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+    const fallback = extractFallbackValue(recallInfo).replace(/nbsp/g, " ").trim();
     let value: string | null = null;
 
     // Fetching value from variables based on recallItemId
