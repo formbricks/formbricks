@@ -1,6 +1,6 @@
 import { TFnType } from "@tolgee/react";
 
-export type PricingPlan = {
+export type TPricingPlan = {
   id: string;
   name: string;
   featured: boolean;
@@ -14,8 +14,8 @@ export type PricingPlan = {
   href?: string;
 };
 
-export const getCloudPricingData = (t: TFnType): { plans: PricingPlan[] } => {
-  const freePlan: PricingPlan = {
+export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
+  const freePlan: TPricingPlan = {
     id: "free",
     name: t("environments.settings.billing.free"),
     featured: false,
@@ -39,7 +39,7 @@ export const getCloudPricingData = (t: TFnType): { plans: PricingPlan[] } => {
     ],
   };
 
-  const startupPlan: PricingPlan = {
+  const startupPlan: TPricingPlan = {
     id: "startup",
     name: t("environments.settings.billing.startup"),
     featured: true,
@@ -57,7 +57,7 @@ export const getCloudPricingData = (t: TFnType): { plans: PricingPlan[] } => {
     ],
   };
 
-  const customPlan: PricingPlan = {
+  const customPlan: TPricingPlan = {
     id: "enterprise",
     name: t("environments.settings.billing.custom"),
     featured: false,

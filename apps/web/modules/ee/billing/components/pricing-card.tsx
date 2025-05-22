@@ -8,10 +8,10 @@ import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
-import { PricingPlan } from "../api/lib/constants";
+import { TPricingPlan } from "../api/lib/constants";
 
 interface PricingCardProps {
-  plan: PricingPlan;
+  plan: TPricingPlan;
   planPeriod: TOrganizationBillingPeriod;
   organization: TOrganization;
   onUpgrade: () => Promise<void>;
