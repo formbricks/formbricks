@@ -13,6 +13,7 @@ import Page from "./page";
 // Mock services and utils
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
+  EMAIL_VERIFICATION_DISABLED: true,
 }));
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),

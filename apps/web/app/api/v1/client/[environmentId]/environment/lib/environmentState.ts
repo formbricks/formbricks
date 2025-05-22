@@ -99,12 +99,8 @@ export const getEnvironmentState = async (
         getActionClassesForEnvironmentState(environmentId),
       ]);
 
-      const filteredSurveys = surveys.filter(
-        (survey) => survey.type === "app" && survey.status === "inProgress"
-      );
-
       const data: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
+        surveys: !isMonthlyResponsesLimitReached ? surveys : [],
         actionClasses,
         project: project,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),

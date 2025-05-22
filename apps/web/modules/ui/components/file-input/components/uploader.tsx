@@ -33,7 +33,7 @@ export const Uploader = ({
   return (
     <label
       htmlFor={`${id}-${name}`}
-      data-testId="upload-file-label"
+      data-testid="upload-file-label"
       className={cn(
         "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-700",
         uploaderClassName,
@@ -43,7 +43,7 @@ export const Uploader = ({
       )}
       onDragOver={(e) => !disabled && handleDragOver(e)}
       onDrop={(e) => !disabled && handleDrop(e)}>
-      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+      <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
           <span className="font-semibold">Click or drag to upload files.</span>

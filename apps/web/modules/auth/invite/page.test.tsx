@@ -24,6 +24,7 @@ vi.mock("@/lib/constants", () => ({
   FB_LOGO_URL: "https://formbricks.com/logo.png",
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: "587",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("next-auth", () => ({
@@ -56,6 +57,10 @@ vi.mock("@tolgee/react", async () => {
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
   },
 }));
 

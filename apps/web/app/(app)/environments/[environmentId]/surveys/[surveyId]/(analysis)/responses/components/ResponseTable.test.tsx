@@ -1,487 +1,494 @@
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import type { DragEndEvent } from "@dnd-kit/core";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import toast from "react-hot-toast";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser, TUserLocale } from "@formbricks/types/user";
-import { ResponseTable } from "./ResponseTable";
+import { TUserLocale } from "@formbricks/types/user";
 
-// Hoist variables used in mock factories
-const { DndContextMock, SortableContextMock, arrayMoveMock } = vi.hoisted(() => {
-  const dndMock = vi.fn(({ children, onDragEnd }) => {
-    // Store the onDragEnd prop to allow triggering it in tests
-    (dndMock as any).lastOnDragEnd = onDragEnd;
-    return <div data-testid="dnd-context">{children}</div>;
-  });
-  const sortableMock = vi.fn(({ children }) => <>{children}</>);
-  const moveMock = vi.fn((array, from, to) => {
-    const newArray = [...array];
-    const [item] = newArray.splice(from, 1);
-    newArray.splice(to, 0, item);
-    return newArray;
-  });
-  return {
-    DndContextMock: dndMock,
-    SortableContextMock: sortableMock,
-    arrayMoveMock: moveMock,
-  };
-});
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+    dismiss: vi.fn(),
+  },
+}));
 
-vi.mock("@dnd-kit/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@dnd-kit/core")>();
-  return {
-    ...actual,
-    DndContext: DndContextMock,
-    useSensor: vi.fn(),
-    useSensors: vi.fn(),
-    closestCenter: vi.fn(),
-  };
-});
+// Mock components
+vi.mock("@/modules/ui/components/button", () => ({
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} data-testid="button" {...props}>
+      {children}
+    </button>
+  ),
+}));
+
+// Mock DndContext/SortableContext
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: any) => <div>{children}</div>,
+  useSensor: vi.fn(),
+  useSensors: vi.fn(() => "sensors"),
+  closestCenter: vi.fn(),
+  MouseSensor: vi.fn(),
+  TouchSensor: vi.fn(),
+  KeyboardSensor: vi.fn(),
+}));
 
 vi.mock("@dnd-kit/modifiers", () => ({
-  restrictToHorizontalAxis: vi.fn(),
+  restrictToHorizontalAxis: "restrictToHorizontalAxis",
 }));
 
 vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: SortableContextMock,
-  arrayMove: arrayMoveMock,
-  horizontalListSortingStrategy: vi.fn(),
+  SortableContext: ({ children }: any) => <>{children}</>,
+  horizontalListSortingStrategy: "horizontalListSortingStrategy",
+  arrayMove: vi.fn((arr, oldIndex, newIndex) => {
+    const result = [...arr];
+    const [removed] = result.splice(oldIndex, 1);
+    result.splice(newIndex, 0, removed);
+    return result;
+  }),
 }));
 
-// Mock child components and hooks
+// Mock AutoAnimate
+vi.mock("@formkit/auto-animate/react", () => ({
+  useAutoAnimate: () => [vi.fn()],
+}));
+
+// Mock UI components
+vi.mock("@/modules/ui/components/data-table", () => ({
+  DataTableHeader: ({ header }: any) => <th data-testid={`header-${header.id}`}>{header.id}</th>,
+  DataTableSettingsModal: ({ open, setOpen }: any) =>
+    open ? (
+      <div data-testid="settings-modal">
+        Settings Modal <button onClick={() => setOpen(false)}>Close</button>
+      </div>
+    ) : null,
+  DataTableToolbar: ({
+    table,
+    deleteRowsAction,
+    downloadRowsAction,
+    setIsTableSettingsModalOpen,
+    setIsExpanded,
+    isExpanded,
+  }: any) => (
+    <div data-testid="table-toolbar">
+      <button
+        data-testid="toggle-expand"
+        onClick={() => setIsExpanded(!isExpanded)}
+        aria-pressed={isExpanded}>
+        Toggle Expand
+      </button>
+      <button data-testid="open-settings" onClick={() => setIsTableSettingsModalOpen(true)}>
+        Open Settings
+      </button>
+      <button
+        data-testid="delete-rows"
+        onClick={() => deleteRowsAction(Object.keys(table.getState().rowSelection))}>
+        Delete Selected
+      </button>
+      <button
+        data-testid="download-csv"
+        onClick={() => downloadRowsAction(Object.keys(table.getState().rowSelection), "csv")}>
+        Download CSV
+      </button>
+      <button
+        data-testid="download-xlsx"
+        onClick={() => downloadRowsAction(Object.keys(table.getState().rowSelection), "xlsx")}>
+        Download XLSX
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal",
   () => ({
-    ResponseCardModal: vi.fn(({ open, setOpen, selectedResponseId }) =>
+    ResponseCardModal: ({ open, setOpen }: any) =>
       open ? (
-        <div data-testid="response-card-modal">
-          Selected Response ID: {selectedResponseId}
-          <button onClick={() => setOpen(false)}>Close ResponseCardModal</button>
+        <div data-testid="response-modal">
+          Response Modal <button onClick={() => setOpen(false)}>Close</button>
         </div>
-      ) : null
-    ),
+      ) : null,
   })
 );
 
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell",
   () => ({
-    ResponseTableCell: vi.fn(({ cell, row, setSelectedResponseId }) => (
-      <td data-testid={`cell-${cell.id}`} onClick={() => setSelectedResponseId(row.original.responseId)}>
-        {typeof cell.getValue === "function" ? cell.getValue() : JSON.stringify(cell.getValue())}
+    ResponseTableCell: ({ cell, row, setSelectedResponseId }: any) => (
+      <td data-testid={`cell-${cell.id}-${row.id}`} onClick={() => setSelectedResponseId(row.id)}>
+        Cell Content
       </td>
-    )),
+    ),
   })
 );
 
-const mockGeneratedColumns = [
-  {
-    id: "select",
-    header: () => "Select",
-    cell: vi.fn(() => "SelectCell"),
-    enableSorting: false,
-    meta: { type: "select", questionType: null, hidden: false },
-  },
-  {
-    id: "createdAt",
-    header: () => "Created At",
-    cell: vi.fn(({ row }) => new Date(row.original.createdAt).toISOString()),
-    enableSorting: true,
-    meta: { type: "createdAt", questionType: null, hidden: false },
-  },
-  {
-    id: "q1",
-    header: () => "Question 1",
-    cell: vi.fn(({ row }) => row.original.responseData.q1),
-    enableSorting: true,
-    meta: { type: "question", questionType: "openText", hidden: false },
-  },
-];
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns",
   () => ({
-    generateResponseTableColumns: vi.fn(() => mockGeneratedColumns),
+    generateResponseTableColumns: vi.fn(() => [
+      { id: "select", accessorKey: "select", header: "Select" },
+      { id: "createdAt", accessorKey: "createdAt", header: "Created At" },
+      { id: "person", accessorKey: "person", header: "Person" },
+      { id: "status", accessorKey: "status", header: "Status" },
+    ]),
   })
 );
+
+vi.mock("@/modules/ui/components/table", () => ({
+  Table: ({ children, ...props }: any) => <table {...props}>{children}</table>,
+  TableBody: ({ children, ...props }: any) => <tbody {...props}>{children}</tbody>,
+  TableCell: ({ children, ...props }: any) => <td {...props}>{children}</td>,
+  TableHeader: ({ children, ...props }: any) => <thead {...props}>{children}</thead>,
+  TableRow: ({ children, ...props }: any) => <tr {...props}>{children}</tr>,
+}));
+
+vi.mock("@/modules/ui/components/skeleton", () => ({
+  Skeleton: ({ children }: any) => <div data-testid="skeleton">{children}</div>,
+}));
+
+// Mock the actions
+vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions", () => ({
+  getResponsesDownloadUrlAction: vi.fn(),
+}));
 
 vi.mock("@/modules/analysis/components/SingleResponseCard/actions", () => ({
   deleteResponseAction: vi.fn(),
 }));
 
-vi.mock("@/modules/ui/components/data-table", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/modules/ui/components/data-table")>();
-  return {
-    ...actual,
-    DataTableToolbar: vi.fn((props) => (
-      <div data-testid="data-table-toolbar">
-        <button data-testid="toolbar-expand-toggle" onClick={() => props.setIsExpanded(!props.isExpanded)}>
-          Toggle Expand
-        </button>
-        <button data-testid="toolbar-open-settings" onClick={() => props.setIsTableSettingsModalOpen(true)}>
-          Open Settings
-        </button>
-        <button
-          data-testid="toolbar-delete-selected"
-          onClick={() => props.deleteRows(props.table.getSelectedRowModel().rows.map((r) => r.id))}>
-          Delete Selected
-        </button>
-        <button data-testid="toolbar-delete-single" onClick={() => props.deleteAction("single_response_id")}>
-          Delete Single Action
-        </button>
-      </div>
-    )),
-    DataTableHeader: vi.fn(({ header }) => (
-      <th
-        data-testid={`header-${header.id}`}
-        onClick={() => header.column.getToggleSortingHandler()?.(new MouseEvent("click"))}>
-        {typeof header.column.columnDef.header === "function"
-          ? header.column.columnDef.header(header.getContext())
-          : header.column.columnDef.header}
-        <button
-          onMouseDown={header.getResizeHandler()}
-          onTouchStart={header.getResizeHandler()}
-          data-testid={`resize-${header.id}`}>
-          Resize
-        </button>
-      </th>
-    )),
-    DataTableSettingsModal: vi.fn(({ open, setOpen }) =>
-      open ? (
-        <div data-testid="data-table-settings-modal">
-          <button onClick={() => setOpen(false)}>Close Settings</button>
-        </div>
-      ) : null
-    ),
-  };
-});
-
-vi.mock("@formkit/auto-animate/react", () => ({
-  useAutoAnimate: vi.fn(() => [vi.fn()]),
+// Mock helper functions
+vi.mock("@/lib/utils/helper", () => ({
+  getFormattedErrorMessage: vi.fn(),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: vi.fn((key) => key), // Simple pass-through mock
-  }),
-}));
-
-const localStorageMock = (() => {
+// Mock localStorage
+const mockLocalStorage = (() => {
   let store: Record<string, string> = {};
   return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value.toString();
+    getItem: vi.fn((key) => store[key] || null),
+    setItem: vi.fn((key, value) => {
+      store[key] = String(value);
     }),
-    clear: () => {
+    clear: vi.fn(() => {
       store = {};
-    },
-    removeItem: vi.fn((key: string) => {
+    }),
+    removeItem: vi.fn((key) => {
       delete store[key];
     }),
   };
 })();
-Object.defineProperty(window, "localStorage", { value: localStorageMock });
+Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
 
-const mockSurvey = {
-  id: "survey1",
-  name: "Test Survey",
-  type: "app",
-  status: "inProgress",
-  questions: [
-    {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Question 1" },
-      required: true,
-    } as unknown as TSurveyQuestion,
-  ],
-  hiddenFields: { enabled: true, fieldIds: ["hidden1"] },
-  variables: [{ id: "var1", name: "Variable 1", type: "text", value: "default" }],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: "env1",
-  welcomeCard: {
-    enabled: false,
-    headline: { default: "" },
-    html: { default: "" },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
-  autoClose: null,
-  delay: 0,
-  autoComplete: null,
-  closeOnDate: null,
-  displayOption: "displayOnce",
-  recontactDays: null,
-  singleUse: { enabled: false, isEncrypted: true },
-  triggers: [],
-  languages: [],
-  styling: null,
-  surveyClosedMessage: null,
-  resultShareKey: null,
-  displayPercentage: null,
-} as unknown as TSurvey;
+// Mock Tolgee
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
+}));
 
-const mockResponses: TResponse[] = [
-  {
-    id: "res1",
-    surveyId: "survey1",
-    finished: true,
-    data: { q1: "Response 1 Text" },
-    createdAt: new Date("2023-01-01T10:00:00.000Z"),
+// Define mock data for tests
+const mockProps = {
+  data: [
+    { responseId: "resp1", createdAt: new Date().toISOString(), status: "completed", person: "Person 1" },
+    { responseId: "resp2", createdAt: new Date().toISOString(), status: "completed", person: "Person 2" },
+  ] as any[],
+  survey: {
+    id: "survey1",
+    createdAt: new Date(),
     updatedAt: new Date(),
-    meta: {},
-    singleUseId: null,
-    ttc: {},
-    tags: [],
-    notes: [],
-    variables: {},
-    language: "en",
-    contact: null,
-    contactAttributes: null,
-  },
-  {
-    id: "res2",
-    surveyId: "survey1",
-    finished: false,
-    data: { q1: "Response 2 Text" },
-    createdAt: new Date("2023-01-02T10:00:00.000Z"),
-    updatedAt: new Date(),
-    meta: {},
-    singleUseId: null,
-    ttc: {},
-    tags: [],
-    notes: [],
-    variables: {},
-    language: "en",
-    contact: null,
-    contactAttributes: null,
-  },
-];
-
-const mockResponseTableData: TResponseTableData[] = [
-  {
-    responseId: "res1",
-    responseData: { q1: "Response 1 Text" },
-    createdAt: new Date("2023-01-01T10:00:00.000Z"),
-    status: "Completed",
-    tags: [],
-    notes: [],
-    variables: {},
-    verifiedEmail: "",
-    language: "en",
-    person: null,
-    contactAttributes: null,
-  },
-  {
-    responseId: "res2",
-    responseData: { q1: "Response 2 Text" },
-    createdAt: new Date("2023-01-02T10:00:00.000Z"),
-    status: "Not Completed",
-    tags: [],
-    notes: [],
-    variables: {},
-    verifiedEmail: "",
-    language: "en",
-    person: null,
-    contactAttributes: null,
-  },
-];
-
-const mockEnvironment = {
-  id: "env1",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  type: "development",
-  appSetupCompleted: false,
-} as unknown as TEnvironment;
-
-const mockUser = {
-  id: "user1",
-  name: "Test User",
-  email: "user@test.com",
-  emailVerified: new Date(),
-  imageUrl: "",
-  twoFactorEnabled: false,
-  identityProvider: "email",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  role: "project_manager",
-  objective: "other",
-  notificationSettings: { alert: {}, weeklySummary: {} },
-} as unknown as TUser;
-
-const mockEnvironmentTags: TTag[] = [
-  { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
-];
-const mockLocale: TUserLocale = "en-US";
-
-const defaultProps = {
-  data: mockResponseTableData,
-  survey: mockSurvey,
-  responses: mockResponses,
-  environment: mockEnvironment,
-  user: mockUser,
-  environmentTags: mockEnvironmentTags,
+    name: "name",
+    type: "link",
+    environmentId: "env-1",
+    createdBy: null,
+    status: "draft",
+  } as TSurvey,
+  responses: [
+    { id: "resp1", surveyId: "survey1", data: {}, createdAt: new Date(), updatedAt: new Date() },
+    { id: "resp2", surveyId: "survey1", data: {}, createdAt: new Date(), updatedAt: new Date() },
+  ] as TResponse[],
+  environment: { id: "env1" } as TEnvironment,
+  environmentTags: [] as TTag[],
   isReadOnly: false,
   fetchNextPage: vi.fn(),
-  hasMore: true,
+  hasMore: false,
   deleteResponses: vi.fn(),
   updateResponse: vi.fn(),
   isFetchingFirstPage: false,
-  locale: mockLocale,
+  locale: "en" as TUserLocale,
 };
+
+// Setup a container for React Testing Library before each test
+beforeEach(() => {
+  const container = document.createElement("div");
+  container.id = "test-container";
+  document.body.appendChild(container);
+
+  // Reset all toast mocks before each test
+  vi.mocked(toast.error).mockClear();
+  vi.mocked(toast.success).mockClear();
+
+  // Create a mock anchor element for download tests
+  const mockAnchor = {
+    href: "",
+    click: vi.fn(),
+    style: {},
+  };
+
+  // Update how we mock the document methods to avoid infinite recursion
+  const originalCreateElement = document.createElement.bind(document);
+  vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+    if (tagName === "a") return mockAnchor as any;
+    return originalCreateElement(tagName);
+  });
+
+  vi.spyOn(document.body, "appendChild").mockReturnValue(null as any);
+  vi.spyOn(document.body, "removeChild").mockReturnValue(null as any);
+});
+
+// Cleanup after each test
+afterEach(() => {
+  const container = document.getElementById("test-container");
+  if (container) {
+    document.body.removeChild(container);
+  }
+  cleanup();
+  vi.restoreAllMocks(); // Restore mocks after each test
+});
 
 describe("ResponseTable", () => {
   afterEach(() => {
-    cleanup();
-    localStorageMock.clear();
-    vi.clearAllMocks();
+    cleanup(); // Keep cleanup within describe as per instructions
   });
 
-  test("renders skeleton when isFetchingFirstPage is true", () => {
-    render(<ResponseTable {...defaultProps} isFetchingFirstPage={true} />);
-    // Check for skeleton elements (implementation detail, might need adjustment)
-    // For now, check that data is not directly rendered
-    expect(screen.queryByText("Response 1 Text")).not.toBeInTheDocument();
-    // Check if table headers are still there
-    expect(screen.getByText("Created At")).toBeInTheDocument();
+  test("renders the table with data", () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByTestId("table-toolbar")).toBeInTheDocument();
   });
 
-  test("loads settings from localStorage on mount", () => {
-    const savedOrder = ["q1", "createdAt", "select"];
-    const savedVisibility = { createdAt: false };
-    const savedExpanded = true;
-    localStorageMock.setItem(`${mockSurvey.id}-columnOrder`, JSON.stringify(savedOrder));
-    localStorageMock.setItem(`${mockSurvey.id}-columnVisibility`, JSON.stringify(savedVisibility));
-    localStorageMock.setItem(`${mockSurvey.id}-rowExpand`, JSON.stringify(savedExpanded));
-
-    render(<ResponseTable {...defaultProps} />);
-
-    // Check if generateResponseTableColumns was called with the loaded expanded state
-    expect(vi.mocked(generateResponseTableColumns)).toHaveBeenCalledWith(
-      mockSurvey,
-      savedExpanded,
-      false,
-      expect.any(Function)
-    );
-  });
-
-  test("saves settings to localStorage when they change", async () => {
-    const { rerender } = render(<ResponseTable {...defaultProps} />);
-
-    // Simulate column order change via DND
-    const dragEvent: DragEndEvent = {
-      active: { id: "createdAt" },
-      over: { id: "q1" },
-      delta: { x: 0, y: 0 },
-      activators: { x: 0, y: 0 },
-      collisions: null,
-      overNode: null,
-      activeNode: null,
-    } as any;
-    act(() => {
-      (DndContextMock as any).lastOnDragEnd?.(dragEvent);
-    });
-    rerender(<ResponseTable {...defaultProps} />); // Rerender to reflect state change if necessary for useEffect
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(
-      `${mockSurvey.id}-columnOrder`,
-      JSON.stringify(["select", "q1", "createdAt"])
-    );
-
-    // Simulate visibility change (e.g. via settings modal - direct state change for test)
-    // This would typically happen via table.setColumnVisibility, which is internal to useReactTable
-    // For this test, we'll assume a mechanism changes columnVisibility state
-    // This part is hard to test without deeper mocking of useReactTable or exposing setColumnVisibility
-
-    // Simulate row expansion change
-    await userEvent.click(screen.getByTestId("toolbar-expand-toggle")); // Toggle to true
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(`${mockSurvey.id}-rowExpand`, "true");
-  });
-
-  test("handles column drag and drop", () => {
-    render(<ResponseTable {...defaultProps} />);
-    const dragEvent: DragEndEvent = {
-      active: { id: "createdAt" },
-      over: { id: "q1" },
-      delta: { x: 0, y: 0 },
-      activators: { x: 0, y: 0 },
-      collisions: null,
-      overNode: null,
-      activeNode: null,
-    } as any;
-    act(() => {
-      (DndContextMock as any).lastOnDragEnd?.(dragEvent);
-    });
-    expect(arrayMoveMock).toHaveBeenCalledWith(expect.arrayContaining(["createdAt", "q1"]), 1, 2); // Example indices
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(
-      `${mockSurvey.id}-columnOrder`,
-      JSON.stringify(["select", "q1", "createdAt"]) // Based on initial ['select', 'createdAt', 'q1']
-    );
-  });
-
-  test("interacts with DataTableToolbar: toggle expand, open settings, delete", async () => {
-    const deleteResponsesMock = vi.fn();
-    const deleteResponseActionMock = vi.mocked(deleteResponseAction);
-    render(<ResponseTable {...defaultProps} deleteResponses={deleteResponsesMock} />);
-
-    // Toggle expand
-    await userEvent.click(screen.getByTestId("toolbar-expand-toggle"));
-    expect(vi.mocked(generateResponseTableColumns)).toHaveBeenCalledWith(
-      mockSurvey,
-      true,
-      false,
-      expect.any(Function)
-    );
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(`${mockSurvey.id}-rowExpand`, "true");
-
-    // Open settings
-    await userEvent.click(screen.getByTestId("toolbar-open-settings"));
-    expect(screen.getByTestId("data-table-settings-modal")).toBeInTheDocument();
-    await userEvent.click(screen.getByText("Close Settings"));
-    expect(screen.queryByTestId("data-table-settings-modal")).not.toBeInTheDocument();
-
-    // Delete selected (mock table selection)
-    // This requires mocking table.getSelectedRowModel().rows
-    // For simplicity, we assume the toolbar button calls deleteRows correctly
-    // The mock for DataTableToolbar calls props.deleteRows with hardcoded IDs for now.
-    // To test properly, we'd need to mock table.getSelectedRowModel
-    // For now, let's assume the mock toolbar calls it.
-    // await userEvent.click(screen.getByTestId("toolbar-delete-selected"));
-    // expect(deleteResponsesMock).toHaveBeenCalledWith(["row1_id", "row2_id"]); // From mock toolbar
-
-    // Delete single action
-    await userEvent.click(screen.getByTestId("toolbar-delete-single"));
-    expect(deleteResponseActionMock).toHaveBeenCalledWith({ responseId: "single_response_id" });
-  });
-
-  test("calls fetchNextPage when 'Load More' is clicked", async () => {
-    const fetchNextPageMock = vi.fn();
-    render(<ResponseTable {...defaultProps} fetchNextPage={fetchNextPageMock} />);
-    await userEvent.click(screen.getByText("common.load_more"));
-    expect(fetchNextPageMock).toHaveBeenCalled();
-  });
-
-  test("does not show 'Load More' if hasMore is false", () => {
-    render(<ResponseTable {...defaultProps} hasMore={false} />);
-    expect(screen.queryByText("common.load_more")).not.toBeInTheDocument();
-  });
-
-  test("shows 'No results' when data is empty", () => {
-    render(<ResponseTable {...defaultProps} data={[]} responses={[]} />);
+  test("renders no results message when data is empty", () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} data={[]} responses={[]} />, { container: container! });
     expect(screen.getByText("common.no_results")).toBeInTheDocument();
   });
 
-  test("deleteResponse function calls deleteResponseAction", async () => {
-    render(<ResponseTable {...defaultProps} />);
-    // This function is called by DataTableToolbar's deleteAction prop
-    // We can trigger it via the mocked DataTableToolbar
-    await userEvent.click(screen.getByTestId("toolbar-delete-single"));
-    expect(vi.mocked(deleteResponseAction)).toHaveBeenCalledWith({ responseId: "single_response_id" });
+  test("renders load more button when hasMore is true", () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} hasMore={true} />, { container: container! });
+    expect(screen.getByText("common.load_more")).toBeInTheDocument();
+  });
+
+  test("calls fetchNextPage when load more button is clicked", async () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} hasMore={true} />, { container: container! });
+    const loadMoreButton = screen.getByText("common.load_more");
+    await userEvent.click(loadMoreButton);
+    expect(mockProps.fetchNextPage).toHaveBeenCalledTimes(1);
+  });
+
+  test("opens settings modal when toolbar button is clicked", async () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const openSettingsButton = screen.getByTestId("open-settings");
+    await userEvent.click(openSettingsButton);
+    expect(screen.getByTestId("settings-modal")).toBeInTheDocument();
+  });
+
+  test("toggles expanded state when toolbar button is clicked", async () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const toggleExpandButton = screen.getByTestId("toggle-expand");
+
+    // Initially might be null, first click should set it to true
+    await userEvent.click(toggleExpandButton);
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith("survey1-rowExpand", expect.any(String));
+  });
+
+  test("calls downloadSelectedRows with csv format when toolbar button is clicked", async () => {
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: "https://download.url/file.csv",
+    });
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadCsvButton = screen.getByTestId("download-csv");
+    await userEvent.click(downloadCsvButton);
+
+    expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+      surveyId: "survey1",
+      format: "csv",
+      filterCriteria: { responseIds: [] },
+    });
+
+    // Check if link was created and clicked
+    expect(document.createElement).toHaveBeenCalledWith("a");
+    const mockLink = document.createElement("a");
+    expect(mockLink.href).toBe("https://download.url/file.csv");
+    expect(document.body.appendChild).toHaveBeenCalled();
+    expect(mockLink.click).toHaveBeenCalled();
+    expect(document.body.removeChild).toHaveBeenCalled();
+  });
+
+  test("calls downloadSelectedRows with xlsx format when toolbar button is clicked", async () => {
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: "https://download.url/file.xlsx",
+    });
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadXlsxButton = screen.getByTestId("download-xlsx");
+    await userEvent.click(downloadXlsxButton);
+
+    expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+      surveyId: "survey1",
+      format: "xlsx",
+      filterCriteria: { responseIds: [] },
+    });
+
+    // Check if link was created and clicked
+    expect(document.createElement).toHaveBeenCalledWith("a");
+    const mockLink = document.createElement("a");
+    expect(mockLink.href).toBe("https://download.url/file.xlsx");
+    expect(document.body.appendChild).toHaveBeenCalled();
+    expect(mockLink.click).toHaveBeenCalled();
+    expect(document.body.removeChild).toHaveBeenCalled();
+  });
+
+  // Test response modal
+  test("opens and closes response modal when a cell is clicked", async () => {
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const cell = screen.getByTestId("cell-resp1_select-resp1");
+    await userEvent.click(cell);
+    expect(screen.getByTestId("response-modal")).toBeInTheDocument();
+    // Close the modal
+    const closeButton = screen.getByText("Close");
+    await userEvent.click(closeButton);
+
+    // Modal should be closed now
+    expect(screen.queryByTestId("response-modal")).not.toBeInTheDocument();
+  });
+
+  test("shows error toast when download action returns error", async () => {
+    const errorMsg = "Download failed";
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: undefined,
+      serverError: errorMsg,
+    });
+    vi.mocked(getFormattedErrorMessage).mockReturnValueOnce(errorMsg);
+
+    // Reset document.createElement spy to fix the last test
+    vi.mocked(document.createElement).mockClear();
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadCsvButton = screen.getByTestId("download-csv");
+    await userEvent.click(downloadCsvButton);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
+    });
+  });
+
+  test("shows default error toast when download action returns no data", async () => {
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: undefined,
+    });
+    vi.mocked(getFormattedErrorMessage).mockReturnValueOnce("");
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadCsvButton = screen.getByTestId("download-csv");
+    await userEvent.click(downloadCsvButton);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
+    });
+  });
+
+  test("shows error toast when download action throws exception", async () => {
+    vi.mocked(getResponsesDownloadUrlAction).mockRejectedValueOnce(new Error("Network error"));
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadCsvButton = screen.getByTestId("download-csv");
+    await userEvent.click(downloadCsvButton);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith("environments.surveys.responses.error_downloading_responses");
+    });
+  });
+
+  test("does not create download link when download action fails", async () => {
+    // Clear any previous calls to document.createElement
+    vi.mocked(document.createElement).mockClear();
+
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
+      data: undefined,
+      serverError: "Download failed",
+    });
+
+    // Create a fresh spy for createElement for this test only
+    const createElementSpy = vi.spyOn(document, "createElement");
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+    const downloadCsvButton = screen.getByTestId("download-csv");
+    await userEvent.click(downloadCsvButton);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalled();
+      // Check specifically for "a" element creation, not any element
+      expect(createElementSpy).not.toHaveBeenCalledWith("a");
+    });
+  });
+
+  test("loads saved settings from localStorage on mount", () => {
+    const columnOrder = ["status", "person", "createdAt", "select"];
+    const columnVisibility = { status: false };
+    const isExpanded = true;
+
+    mockLocalStorage.getItem.mockImplementation((key) => {
+      if (key === "survey1-columnOrder") return JSON.stringify(columnOrder);
+      if (key === "survey1-columnVisibility") return JSON.stringify(columnVisibility);
+      if (key === "survey1-rowExpand") return JSON.stringify(isExpanded);
+      return null;
+    });
+
+    const container = document.getElementById("test-container");
+    render(<ResponseTable {...mockProps} />, { container: container! });
+
+    // Verify localStorage calls
+    expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnOrder");
+    expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-columnVisibility");
+    expect(mockLocalStorage.getItem).toHaveBeenCalledWith("survey1-rowExpand");
+
+    // The mock for generateResponseTableColumns returns this order:
+    // ["select", "createdAt", "person", "status"]
+    // Only visible columns should be rendered, in this order
+    const expectedHeaders = ["select", "createdAt", "person"];
+    const headers = screen.getAllByTestId(/^header-/);
+    expect(headers).toHaveLength(expectedHeaders.length);
+    expectedHeaders.forEach((columnId, index) => {
+      expect(headers[index]).toHaveAttribute("data-testid", `header-${columnId}`);
+    });
+
+    // Verify column visibility is applied
+    const statusHeader = screen.queryByTestId("header-status");
+    expect(statusHeader).not.toBeInTheDocument();
+
+    // Verify row expansion is applied
+    const toggleExpandButton = screen.getByTestId("toggle-expand");
+    expect(toggleExpandButton).toHaveAttribute("aria-pressed", "true");
   });
 });

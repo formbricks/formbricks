@@ -56,7 +56,6 @@ export const env = createEnv({
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     REDIS_URL: z.string().optional(),
-    REDIS_DEFAULT_TTL: z.string().optional(),
     REDIS_HTTP_URL: z.string().optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     POSTHOG_API_HOST: z.string().optional(),
@@ -105,7 +104,8 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
-    DISABLE_USER_MANAGEMENT: z.enum(["1", "0"]).optional(),
+    USER_MANAGEMENT_MINIMUM_ROLE: z.enum(["owner", "manager", "disabled"]).optional(),
+    SESSION_MAX_AGE: z.string().transform((val) => parseInt(val)).optional(),
   },
 
   /*
@@ -163,7 +163,6 @@ export const env = createEnv({
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     REDIS_URL: process.env.REDIS_URL,
-    REDIS_DEFAULT_TTL: process.env.REDIS_DEFAULT_TTL,
     REDIS_HTTP_URL: process.env.REDIS_HTTP_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
@@ -201,6 +200,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
-    DISABLE_USER_MANAGEMENT: process.env.DISABLE_USER_MANAGEMENT,
+    USER_MANAGEMENT_MINIMUM_ROLE: process.env.USER_MANAGEMENT_MINIMUM_ROLE,
+    SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
   },
 });

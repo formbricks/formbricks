@@ -36,7 +36,7 @@ interface FileInputProps {
 interface SelectedFile {
   url: string;
   name: string;
-  uploaded: Boolean;
+  uploaded: boolean;
 }
 
 export const FileInput = ({
@@ -236,11 +236,14 @@ export const FileInput = ({
                               className={!file.uploaded ? "opacity-50" : ""}
                             />
                             {file.uploaded ? (
-                              <div
-                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                                onClick={() => handleRemove(idx)}>
+                              <button
+                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleRemove(idx);
+                                }}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                              </div>
+                              </button>
                             ) : (
                               <LoadingSpinner />
                             )}
@@ -254,11 +257,14 @@ export const FileInput = ({
                               <span className="font-semibold">{file.name}</span>
                             </p>
                             {file.uploaded ? (
-                              <div
-                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                                onClick={() => handleRemove(idx)}>
+                              <button
+                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleRemove(idx);
+                                }}>
                                 <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                              </div>
+                              </button>
                             ) : (
                               <LoadingSpinner />
                             )}
@@ -294,11 +300,14 @@ export const FileInput = ({
                           className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
                         />
                         {selectedFiles[0].uploaded ? (
-                          <div
-                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                            onClick={() => handleRemove(0)}>
+                          <button
+                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleRemove(0);
+                            }}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                          </div>
+                          </button>
                         ) : (
                           <LoadingSpinner />
                         )}
@@ -310,11 +319,14 @@ export const FileInput = ({
                           <span className="font-semibold">{selectedFiles[0].name}</span>
                         </p>
                         {selectedFiles[0].uploaded ? (
-                          <div
-                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                            onClick={() => handleRemove(0)}>
+                          <button
+                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleRemove(0);
+                            }}>
                             <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                          </div>
+                          </button>
                         ) : (
                           <LoadingSpinner />
                         )}

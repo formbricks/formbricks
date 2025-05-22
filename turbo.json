@@ -77,7 +77,6 @@
         "BREVO_LIST_ID",
         "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
-        "CUSTOM_CACHE_DISABLED",
         "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",
@@ -133,7 +132,6 @@
         "RATE_LIMITING_DISABLED",
         "REDIS_HTTP_URL",
         "REDIS_URL",
-        "REDIS_DEFAULT_TTL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_ENDPOINT_URL",
@@ -141,6 +139,7 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SESSION_MAX_AGE",
         "SENTRY_DSN",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
@@ -172,7 +171,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "DISABLE_USER_MANAGEMENT"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

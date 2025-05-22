@@ -75,6 +75,9 @@ describe("getMetadataForLinkSurvey", () => {
         title: mockSurveyName,
         images: [mockOgImageUrl],
       },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
     });
   });
 
@@ -147,6 +150,9 @@ describe("getMetadataForLinkSurvey", () => {
         title: mockSurveyName,
         images: [mockOgImageUrl],
       },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
     });
   });
 
@@ -173,6 +179,9 @@ describe("getMetadataForLinkSurvey", () => {
       openGraph: {
         title: mockSurveyName,
         images: [mockOgImageUrl],
+      },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
       },
     });
   });

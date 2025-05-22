@@ -12,8 +12,9 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
-import { createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
+import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { getTranslate } from "@/tolgee/server";
 import { render } from "@react-email/render";
@@ -33,7 +34,6 @@ import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
 import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
-import { FollowUpEmail } from "./emails/survey/follow-up";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
@@ -84,6 +84,25 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
   } catch (error) {
     logger.error(error, "Error in sendEmail");
     throw new InvalidInputError("Incorrect SMTP credentials");
+  }
+};
+
+export const sendVerificationNewEmail = async (id: string, email: string): Promise<boolean> => {
+  try {
+    const t = await getTranslate();
+    const token = createEmailChangeToken(id, email);
+    const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
+
+    const html = await render(await NewEmailVerification({ verifyLink }));
+
+    return await sendEmail({
+      to: email,
+      subject: t("emails.verification_new_email_subject"),
+      html,
+    });
+  } catch (error) {
+    logger.error(error, "Error in sendVerificationNewEmail");
+    throw error;
   }
 };
 
@@ -353,42 +372,5 @@ export const sendNoLiveSurveyNotificationEmail = async (
       projectName: notificationData.projectName,
     }),
     html,
-  });
-};
-
-export const sendFollowUpEmail = async ({
-  html,
-  replyTo,
-  subject,
-  to,
-  survey,
-  response,
-  attachResponseData = false,
-  logoUrl,
-}: {
-  html: string;
-  subject: string;
-  to: string;
-  replyTo: string[];
-  attachResponseData: boolean;
-  survey: TSurvey;
-  response: TResponse;
-  logoUrl?: string;
-}): Promise<void> => {
-  const emailHtmlBody = await render(
-    await FollowUpEmail({
-      html,
-      logoUrl,
-      attachResponseData,
-      survey,
-      response,
-    })
-  );
-
-  await sendEmail({
-    to,
-    replyTo: replyTo.join(", "),
-    subject,
-    html: emailHtmlBody,
   });
 };

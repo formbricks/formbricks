@@ -30,27 +30,31 @@ export const StartFromScratchTemplate = ({
 }: StartFromScratchTemplateProps) => {
   const { t } = useTranslate();
   const customSurvey = customSurveyTemplate(t);
-  return (
-    <div
-      onClick={() => {
-        if (noPreview) {
-          createSurvey(customSurvey);
-          return;
-        }
-        const newTemplate = replacePresetPlaceholders(customSurvey, project);
-        onTemplateClick(newTemplate);
-        setActiveTemplate(newTemplate);
-      }}
-      className={cn(
-        activeTemplate?.name === customSurvey.name
-          ? "ring-brand-dark border-transparent ring-2"
-          : "hover:border-brand-dark border-dashed border-slate-300",
-        "group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
-      )}>
+  const showCreateSurveyButton = activeTemplate?.name === customSurvey.name;
+
+  const handleCardClick = () => {
+    if (noPreview) {
+      createSurvey(customSurvey);
+      return;
+    }
+    const newTemplate = replacePresetPlaceholders(customSurvey, project);
+    onTemplateClick(newTemplate);
+    setActiveTemplate(newTemplate);
+  };
+
+  const cardClass = cn(
+    showCreateSurveyButton
+      ? "ring-brand-dark border-transparent ring-2"
+      : "hover:border-brand-dark border-dashed border-slate-300",
+    "flex flex-col group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
+  );
+
+  const cardContent = (
+    <>
       <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-      <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{customSurvey.name}</h3>
+      <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{customSurvey.name}</h3>
       <p className="text-left text-xs text-slate-600">{customSurvey.description}</p>
-      {activeTemplate?.name === customSurvey.name && (
+      {showCreateSurveyButton && (
         <div className="text-left">
           <Button
             className="mt-6 px-6 py-3"
@@ -61,6 +65,16 @@ export const StartFromScratchTemplate = ({
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
+
+  if (!showCreateSurveyButton) {
+    return (
+      <button type="button" className={cardClass} onClick={handleCardClick}>
+        {cardContent}
+      </button>
+    );
+  }
+
+  return <div className={cardClass}>{cardContent}</div>;
 };

@@ -15,11 +15,19 @@ import {
 describe("Time Utilities", () => {
   describe("convertDateString", () => {
     test("should format date string correctly", () => {
-      expect(convertDateString("2024-03-20")).toBe("Mar 20, 2024");
+      expect(convertDateString("2024-03-20:12:30:00")).toBe("Mar 20, 2024");
     });
 
     test("should return empty string for empty input", () => {
       expect(convertDateString("")).toBe("");
+    });
+
+    test("should return null for null input", () => {
+      expect(convertDateString(null as any)).toBe(null);
+    });
+
+    test("should handle invalid date strings", () => {
+      expect(convertDateString("not-a-date")).toBe("Invalid Date");
     });
   });
 
@@ -73,7 +81,7 @@ describe("Time Utilities", () => {
 
   describe("formatDate", () => {
     test("should format date correctly", () => {
-      const date = new Date("2024-03-20");
+      const date = new Date(2024, 2, 20); // March is month 2 (0-based)
       expect(formatDate(date)).toBe("March 20, 2024");
     });
   });

@@ -10,6 +10,7 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
+    "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
@@ -35,16 +36,20 @@
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
     "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json"
   },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.52.0",
     "eslint": "8.57.0",
     "husky": "9.1.7",
-    "lint-staged": "15.5.2",
+    "lint-staged": "16.0.0",
     "rimraf": "6.0.1",
     "tsx": "4.19.4",
-    "turbo": "2.5.2"
+    "turbo": "2.5.3"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -66,8 +71,5 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
-  },
-  "dependencies": {
-    "@changesets/cli": "2.29.3"
   }
 }

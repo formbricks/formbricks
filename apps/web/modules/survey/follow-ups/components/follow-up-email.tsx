@@ -17,6 +17,7 @@ import {
 } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
 import React from "react";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -24,23 +25,20 @@ const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  html: string;
-  logoUrl?: string;
-  attachResponseData: boolean;
-  survey: TSurvey;
-  response: TResponse;
+  readonly followUp: TSurveyFollowUp;
+  readonly logoUrl?: string;
+  readonly attachResponseData: boolean;
+  readonly survey: TSurvey;
+  readonly response: TResponse;
 }
 
-export async function FollowUpEmail({
-  html,
-  logoUrl,
-  attachResponseData,
-  survey,
-  response,
-}: FollowUpEmailProps): Promise<React.JSX.Element> {
-  const questions = attachResponseData ? getQuestionResponseMapping(survey, response) : [];
+export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JSX.Element> {
+  const { properties } = props.followUp.action;
+  const { body } = properties;
+
+  const questions = props.attachResponseData ? getQuestionResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
-  const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
+  const isDefaultLogo = !props.logoUrl || props.logoUrl === fbLogoUrl;
 
   return (
     <Html>
@@ -56,13 +54,13 @@ export async function FollowUpEmail({
                 <Img alt="Logo" className="mx-auto w-60" src={fbLogoUrl} />
               </Link>
             ) : (
-              <Img alt="Logo" className="mx-auto max-h-[100px] w-60 object-contain" src={logoUrl} />
+              <Img alt="Logo" className="mx-auto max-h-[100px] w-60 object-contain" src={props.logoUrl} />
             )}
           </Section>
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left text-sm">
             <div
               dangerouslySetInnerHTML={{
-                __html: dompurify.sanitize(html, {
+                __html: dompurify.sanitize(body, {
                   ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
                   ALLOWED_ATTR: ["href", "rel", "dir", "class"],
                   ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https

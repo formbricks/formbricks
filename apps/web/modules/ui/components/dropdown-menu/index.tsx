@@ -29,7 +29,7 @@ const DropdownMenuSubTrigger: React.ComponentType<
     <DropdownMenuPrimitive.SubTrigger
       ref={ref as any}
       className={cn(
-        "flex cursor-default items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-none select-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
+        "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
         inset && "pl-8",
         className
       )}
@@ -92,7 +92,7 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none select-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer select-none items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
@@ -112,7 +112,7 @@ const DropdownMenuCheckboxItem: React.ComponentType<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default items-center rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium outline-none select-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     checked={checked}
@@ -136,7 +136,7 @@ const DropdownMenuRadioItem: React.ComponentType<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default items-center rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium outline-none select-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}>

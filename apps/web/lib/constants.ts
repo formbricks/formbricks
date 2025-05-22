@@ -205,7 +205,6 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
-export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
@@ -283,4 +282,6 @@ export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
-export const DISABLE_USER_MANAGEMENT = env.DISABLE_USER_MANAGEMENT === "1";
+export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
+
+export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;

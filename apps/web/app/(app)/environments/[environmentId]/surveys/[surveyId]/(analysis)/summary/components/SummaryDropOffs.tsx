@@ -61,10 +61,10 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                 )}
               </p>
             </div>
-            <div className="text-center font-semibold whitespace-pre-wrap">
+            <div className="whitespace-pre-wrap text-center font-semibold">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="text-center font-semibold whitespace-pre-wrap">{quesDropOff.impressions}</div>
+            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.impressions}</div>
             <div className="pl-6 text-center md:px-6">
               <span className="mr-1.5 font-semibold">{quesDropOff.dropOffCount}</span>
               <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>

@@ -17,67 +17,84 @@ export default defineConfig({
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: ["app/**/*.{ts,tsx}", "modules/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
       exclude: [
+        // Build and configuration files
         "**/.next/**", // Next.js build output
+        "**/*.config.{js,ts,mjs,mts,cjs}", // All configuration files
+        "**/Dockerfile", // Dockerfiles
+        "**/vitestSetup.ts", // Vitest setup files
+        "**/*.setup.*", // Setup files
+
+        // Test and mock related files
         "**/*.spec.*", // Test files
         "**/*.test.*", // Test files
         "**/*.mock.*", // Mock files
         "**/mocks/**", // Mock directories
         "**/__mocks__/**", // Jest-style mock directories
-        "**/constants.ts", // Constants files
+        "**/playwright/**", // Playwright E2E test files
+
+        // Next.js specific files
         "**/route.{ts,tsx}", // Next.js API routes
-        "**/openapi.ts", // OpenAPI spec files
-        "**/openapi-document.ts", // OpenAPI-related document files
-        "**/types/**", // Type definition folders
-        "**/types.ts", // Files named 'types.ts'
-        "**/actions.ts", // Server actions (plural)
-        "**/action.ts", // Server actions (singular)
-        "**/stories.*", // Storybook files (e.g., .stories.tsx)
-        "**/*.config.{js,ts,mjs,mts,cjs}", // All configuration files
         "**/middleware.ts", // Next.js middleware
         "**/instrumentation.ts", // Next.js instrumentation files
         "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
-        "**/vitestSetup.ts", // Vitest setup files
-        "**/*.setup.*", // Vitest setup files
+
+        // Documentation and static files
+        "**/openapi.ts", // OpenAPI spec files
+        "**/openapi-document.ts", // OpenAPI-related document files
         "**/*.json", // JSON files
         "**/*.mdx", // MDX files
-        "**/playwright/**", // Playwright E2E test files
-        "**/Dockerfile", // Dockerfiles
         "**/*.css", // CSS files
+
+        // Type definitions and constants
+        "**/types/**", // Type definition folders
+        "**/types.ts", // Files named 'types.ts'
+        "**/constants.ts", // Constants files
+
+        // Server-side code
+        "**/actions.ts", // Server actions (plural)
+        "**/action.ts", // Server actions (singular)
+        "lib/env.ts", // Environment configuration
+        "lib/posthogServer.ts", // PostHog server integration
+        "**/cache.ts", // Cache files
+        "**/cache/**", // Cache directories
+
+        // UI Components and Templates
+        "**/stories.*", // Storybook files
         "**/templates.ts", // Project-specific template files
-        "**/*.setup.*", // Setup files
+        "modules/ui/components/icons/*", // Icon components
+        "modules/ui/components/icons/**", // Icon components (nested)
+
+        // Feature-specific modules
+        "app/**/billing-confirmation/**", // Billing confirmation pages
+        "modules/ee/billing/**", // Enterprise billing features
+        "modules/ee/multi-language-surveys/**", // Multi-language survey features
+        "modules/email/**", // Email functionality
+        "modules/integrations/**", // Integration modules
+        "modules/setup/**/intro/**", // Setup intro pages
+        "modules/setup/**/signup/**", // Setup signup pages
+        "modules/setup/**/layout.tsx", // Setup layouts
+        "app/share/**", // Share functionality
+        "lib/shortUrl/**", // Short URL functionality
+        "app/[shortUrlId]", // Short URL pages
+        "modules/ee/contacts/components/**", // Contact components
+
+        // Third-party integrations
+        "lib/slack/**", // Slack integration
+        "lib/notion/**", // Notion integration
+        "lib/googleSheet/**", // Google Sheets integration
+        "app/api/google-sheet/**", // Google Sheets API
+        "app/api/billing/**", // Billing API
+        "lib/airtable/**", // Airtable integration
+        "app/api/v1/integrations/**", // Integration APIs
+
+        // Specific components
+        "packages/surveys/src/components/general/smileys.tsx", // Smiley components
+        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx", // Analysis smiley components
+        "modules/auth/lib/mock-data.ts", // Mock data for authentication
+
+        // Other
         "**/scripts/**", // Utility scripts
-        "modules/ui/components/icons/*",
-        "**/cache.ts", // Exclude cache files
-        "packages/surveys/src/components/general/smileys.tsx",
-        "modules/auth/lib/mock-data.ts", // Exclude mock data files
-        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx",
-        "**/*.mjs",
-        "app/**/billing-confirmation/**",
-        "modules/ee/billing/**",
-        "modules/ee/multi-language-surveys/**",
-        "modules/email/**",
-        "modules/integrations/**",
-        "modules/setup/**/intro/**",
-        "modules/setup/**/signup/**",
-        "modules/setup/**/layout.tsx",
-        "modules/survey/follow-ups/**",
-        "modules/ui/components/icons/**",
-        "app/share/**",
-        "lib/shortUrl/**",
-        "app/[shortUrlId]",
-        "modules/ee/contacts/[contactId]/**",
-        "modules/ee/contacts/components/**",
-        "modules/ee/two-factor-auth/**",
-        "lib/posthogServer.ts",
-        "lib/slack/**",
-        "lib/notion/**",
-        "lib/googleSheet/**",
-        "app/api/google-sheet/**",
-        "app/api/billing/**",
-        "lib/airtable/**",
-        "app/api/v1/integrations/**",
-        "lib/env.ts",
-        "**/cache/**",
+        "**/*.mjs", // ES modules
       ],
     },
   },

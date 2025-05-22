@@ -12,13 +12,12 @@ import {
   isClientSideApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
-  isManagementApiRoute,
   isShareUrlRoute,
   isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -27,24 +26,6 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
-
-const enforceHttps = (request: NextRequest): Response | null => {
-  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
-  if (IS_PRODUCTION && !E2E_TESTING && forwardedProto !== "https") {
-    const apiError: ApiErrorResponseV2 = {
-      type: "forbidden",
-      details: [
-        {
-          field: "",
-          issue: "Only HTTPS connections are allowed on the management endpoints.",
-        },
-      ],
-    };
-    logApiError(request, apiError);
-    return NextResponse.json(apiError, { status: 403 });
-  }
-  return null;
-};
 
 const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   const token = await getToken({ req: request as any });
@@ -67,24 +48,24 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   return null;
 };
 
-const applyRateLimiting = (request: NextRequest, ip: string) => {
+const applyRateLimiting = async (request: NextRequest, ip: string) => {
   if (isLoginRoute(request.nextUrl.pathname)) {
-    loginLimiter(`login-${ip}`);
+    await loginLimiter(`login-${ip}`);
   } else if (isSignupRoute(request.nextUrl.pathname)) {
-    signupLimiter(`signup-${ip}`);
+    await signupLimiter(`signup-${ip}`);
   } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
-    verifyEmailLimiter(`verify-email-${ip}`);
+    await verifyEmailLimiter(`verify-email-${ip}`);
   } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
-    forgotPasswordLimiter(`forgot-password-${ip}`);
+    await forgotPasswordLimiter(`forgot-password-${ip}`);
   } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
-    clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
+    await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
     const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
     if (envIdAndUserId) {
       const { environmentId, userId } = envIdAndUserId;
-      syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
+      await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
     }
   } else if (isShareUrlRoute(request.nextUrl.pathname)) {
-    shareUrlLimiter(`share-${ip}`);
+    await shareUrlLimiter(`share-${ip}`);
   }
 };
 
@@ -132,12 +113,6 @@ export const middleware = async (originalRequest: NextRequest) => {
     },
   });
 
-  // Enforce HTTPS for management endpoints
-  if (isManagementApiRoute(request.nextUrl.pathname)) {
-    const httpsResponse = enforceHttps(request);
-    if (httpsResponse) return httpsResponse;
-  }
-
   // Handle authentication
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
@@ -153,7 +128,7 @@ export const middleware = async (originalRequest: NextRequest) => {
 
   if (ip) {
     try {
-      applyRateLimiting(request, ip);
+      await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
       const apiError: ApiErrorResponseV2 = {

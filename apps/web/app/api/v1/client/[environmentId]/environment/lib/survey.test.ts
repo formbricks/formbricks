@@ -100,8 +100,14 @@ describe("getSurveysForEnvironmentState", () => {
 
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId },
+      where: {
+        environmentId,
+        type: "app",
+        status: "inProgress",
+      },
       select: expect.any(Object), // Check if select is called, specific fields are in the original code
+      orderBy: { createdAt: "desc" },
+      take: 30,
     });
     expect(transformPrismaSurvey).toHaveBeenCalledWith(mockPrismaSurvey);
     expect(result).toEqual([mockTransformedSurvey]);
@@ -114,8 +120,14 @@ describe("getSurveysForEnvironmentState", () => {
     const result = await getSurveysForEnvironmentState(environmentId);
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId },
+      where: {
+        environmentId,
+        type: "app",
+        status: "inProgress",
+      },
       select: expect.any(Object),
+      orderBy: { createdAt: "desc" },
+      take: 30,
     });
     expect(transformPrismaSurvey).not.toHaveBeenCalled();
     expect(result).toEqual([]);
