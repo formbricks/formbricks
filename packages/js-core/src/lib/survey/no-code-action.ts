@@ -9,7 +9,7 @@ import { setIsSurveyRunning } from "@/lib/survey/widget";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
-const createTrackNoCodeActionWithContext = (context: string) => {
+export const createTrackNoCodeActionWithContext = (context: string) => {
   return async (actionName: string): Promise<Result<void, unknown>> => {
     const result = await trackNoCodeAction(actionName);
     if (!result.ok) {

@@ -10,6 +10,7 @@ import {
   addPageUrlEventListeners,
   addScrollDepthListener,
   checkPageUrl,
+  createTrackNoCodeActionWithContext,
   removeClickEventListener,
   removeExitIntentListener,
   removePageUrlEventListeners,
@@ -68,6 +69,43 @@ vi.mock("@/lib/survey/widget", () => ({
 vi.mock("@/lib/common/status", () => ({
   checkSetup: vi.fn(),
 }));
+
+describe("createTrackNoCodeActionWithContext", () => {
+  test("should create a trackNoCodeAction with the correct context", () => {
+    const trackNoCodeActionWithContext = createTrackNoCodeActionWithContext("pageView");
+    expect(trackNoCodeActionWithContext).toBeDefined();
+  });
+
+  test("should log error if trackNoCodeAction fails", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error");
+    vi.mocked(trackNoCodeAction).mockResolvedValue({
+      ok: false,
+      error: {
+        code: "network_error",
+        message: "Network error",
+        status: 500,
+        url: new URL("https://example.com"),
+        responseMessage: "Network error",
+      },
+    });
+
+    const trackNoCodeActionWithContext = createTrackNoCodeActionWithContext("pageView");
+
+    expect(trackNoCodeActionWithContext).toBeDefined();
+    await trackNoCodeActionWithContext("noCodeAction");
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      `🧱 Formbricks - Error in no-code pageView action 'noCodeAction': Network error`,
+      {
+        code: "network_error",
+        message: "Network error",
+        status: 500,
+        url: new URL("https://example.com"),
+        responseMessage: "Network error",
+      }
+    );
+  });
+});
 
 describe("no-code-event-listeners file", () => {
   let getInstanceConfigMock: MockInstance<() => Config>;
