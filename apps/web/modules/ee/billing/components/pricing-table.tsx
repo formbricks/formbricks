@@ -21,8 +21,8 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   stripePriceLookupKeys: {
-    STARTUP_MONTHLY: string;
-    STARTUP_YEARLY: string;
+    STARTUP_MAY25_MONTHLY: string;
+    STARTUP_MAY25_YEARLY: string;
   };
   projectFeatureKeys: {
     FREE: string;
@@ -100,7 +100,11 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      }
     }
   };
 
@@ -108,8 +112,8 @@ export const PricingTable = ({
     if (planId === "startup") {
       await upgradePlan(
         planPeriod === "monthly"
-          ? stripePriceLookupKeys.STARTUP_MONTHLY
-          : stripePriceLookupKeys.STARTUP_YEARLY
+          ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
+          : stripePriceLookupKeys.STARTUP_MAY25_YEARLY
       );
       return;
     }

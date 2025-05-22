@@ -69,12 +69,7 @@ export const PricingCard = ({
           variant="outline"
           loading={loading}
           onClick={() => {
-            window.open(
-              plan.href ||
-                "https://app.formbricks.com/s/cm7k8esy20001jp030fh8a9o5?source=billingView&delivery=cloud",
-              "_blank",
-              "noopener,noreferrer"
-            );
+            window.open(plan.href, "_blank", "noopener,noreferrer");
           }}
           className="flex justify-center bg-white">
           {t(plan.CTA || "common.request_pricing")}
