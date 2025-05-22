@@ -20,6 +20,7 @@ import {
   cloneSegment,
   createSegment,
   deleteSegment,
+  getSegment,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -88,6 +89,7 @@ export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCrea
 
     // Set the segmentId in the context to be used in the audit log
     ctx.segmentId = segment.id;
+    ctx.newObject = segment;
 
     return segment;
   })
@@ -217,9 +219,8 @@ const ZDeleteSegmentAction = z.object({
   segmentId: ZId,
 });
 
-export const deleteSegmentAction = authenticatedActionClient
-  .schema(ZDeleteSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegmentAction).action(
+  withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
 
     await checkAuthorizationUpdated({
@@ -240,8 +241,13 @@ export const deleteSegmentAction = authenticatedActionClient
 
     await checkAdvancedTargetingPermission(organizationId);
 
+    ctx.segmentId = parsedInput.segmentId;
+    ctx.oldObject = await getSegment(parsedInput.segmentId);
+    ctx.organizationId = organizationId;
+
     return await deleteSegment(parsedInput.segmentId);
-  });
+  })
+);
 
 const ZResetSegmentFiltersAction = z.object({
   surveyId: ZId,

@@ -3,12 +3,17 @@
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 
-export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
-  logApiError(request, err);
+export const handleApiError = (
+  request: Request,
+  err: ApiErrorResponseV2,
+  auditLog?: Parameters<typeof queueAuditEvent>[0]
+): Response => {
+  logApiError(request, err, auditLog);
 
   switch (err.type) {
     case "bad_request":
@@ -75,7 +80,11 @@ export const logApiRequest = (request: Request, responseStatus: number): void =>
     .info("API Request Details");
 };
 
-export const logApiError = (request: Request, error: ApiErrorResponseV2): void => {
+export const logApiError = (
+  request: Request,
+  error: ApiErrorResponseV2,
+  auditLog?: Parameters<typeof queueAuditEvent>[0]
+): void => {
   const correlationId = request.headers.get("x-request-id") ?? "";
 
   // Send the error to Sentry if the DSN is set and the error type is internal_server_error
@@ -89,6 +98,14 @@ export const logApiError = (request: Request, error: ApiErrorResponseV2): void =
         type: error.type,
         correlationId,
       },
+    });
+  }
+
+  if (auditLog) {
+    queueAuditEvent({
+      ...auditLog,
+      status: "failure",
+      eventId: correlationId,
     });
   }
 

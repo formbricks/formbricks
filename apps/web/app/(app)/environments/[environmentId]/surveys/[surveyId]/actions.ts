@@ -124,6 +124,8 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
 
     const { followUps } = parsedInput;
 
+    const oldSurvey = await getSurvey(parsedInput.id);
+
     if (parsedInput.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
     }
@@ -136,8 +138,12 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
       await checkMultiLanguagePermission(organizationId);
     }
 
+    // Context for audit log
     ctx.surveyId = parsedInput.id;
     ctx.organizationId = organizationId;
+    ctx.oldObject = oldSurvey;
+    ctx.newObject = parsedInput;
+
     return await updateSurvey(parsedInput);
   })
 );

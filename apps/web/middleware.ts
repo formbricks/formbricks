@@ -17,18 +17,11 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import {
-  AUDIT_LOG_ENABLED,
-  AUDIT_LOG_GET_USER_IP,
-  IS_PRODUCTION,
-  RATE_LIMITING_DISABLED,
-  SURVEY_URL,
-  WEBAPP_URL,
-} from "@/lib/constants";
+import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -123,25 +116,13 @@ export const middleware = async (originalRequest: NextRequest) => {
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
 
-  let ip =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    ipAddress(request);
-
-  const setClientIpCookie = (ip: string) => {
-    if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
-      nextResponseWithCustomHeader.cookies.set("client-ip", ip, { httpOnly: true, sameSite: "lax" });
-    }
-  };
+  const ip = await getClientIpFromHeaders();
 
   if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
-    if (ip) setClientIpCookie(ip);
     return nextResponseWithCustomHeader;
   }
 
   if (ip) {
-    setClientIpCookie(ip);
-
     try {
       await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
