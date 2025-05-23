@@ -4,6 +4,26 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
 
+type BrevoCreateContact = {
+  email?: string;
+  ext_id?: string;
+  attributes?: Record<string, string | string[]>;
+  emailBlacklisted?: boolean;
+  smsBlacklisted?: boolean;
+  listIds?: number[];
+  updateEnabled?: boolean;
+  smtpBlacklistSender?: string[];
+};
+
+type BrevoUpdateContact = {
+  attributes?: Record<string, string>;
+  emailBlacklisted?: boolean;
+  smsBlacklisted?: boolean;
+  listIds?: number[];
+  unlinkListIds?: number[];
+  smtpBlacklistSender?: string[];
+};
+
 export const createBrevoCustomer = async ({ id, email }: { id: string; email: TUserEmail }) => {
   if (!BREVO_API_KEY) {
     return;
@@ -12,7 +32,7 @@ export const createBrevoCustomer = async ({ id, email }: { id: string; email: TU
   validateInputs([id, ZId], [email, ZUserEmail]);
 
   try {
-    const requestBody: any = {
+    const requestBody: BrevoCreateContact = {
       email,
       ext_id: id,
       updateEnabled: false,
@@ -51,7 +71,7 @@ export const updateBrevoCustomer = async ({ id, email }: { id: string; email: TU
   validateInputs([id, ZId], [email, ZUserEmail]);
 
   try {
-    const requestBody: any = {
+    const requestBody: BrevoUpdateContact = {
       attributes: {
         EMAIL: email,
       },

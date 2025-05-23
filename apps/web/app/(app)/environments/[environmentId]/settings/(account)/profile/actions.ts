@@ -66,7 +66,7 @@ export const updateUserAction = authenticatedActionClient
       if (!doesUserExist) {
         if (EMAIL_VERIFICATION_DISABLED) {
           payload.email = inputEmail;
-          updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
+          await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
         } else {
           await sendVerificationNewEmail(ctx.user.id, inputEmail);
         }

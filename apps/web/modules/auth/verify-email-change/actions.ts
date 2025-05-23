@@ -18,6 +18,6 @@ export const verifyEmailChangeAction = actionClient
     if (!user) {
       throw new Error("User not found or email update failed");
     }
-    updateBrevoCustomer({ id: user.id, email: user.email });
+    await updateBrevoCustomer({ id: user.id, email: user.email });
     return user;
   });
