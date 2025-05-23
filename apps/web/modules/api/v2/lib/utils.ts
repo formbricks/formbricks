@@ -1,10 +1,9 @@
 // @ts-nocheck // We can remove this when we update the prisma client and the typescript version
 // if we don't add this we get build errors with prisma due to type-nesting
-import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
-import * as Sentry from "@sentry/nextjs";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 import { logApiErrorEdge } from "./utils-edge";

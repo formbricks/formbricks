@@ -12,11 +12,12 @@ export type ApiAuditLog = Omit<Parameters<typeof queueAuditEvent>[0], "userType"
  * - If not a successResponse, calls audit log, system log, and Sentry as needed.
  * - System and Sentry logs are always called for non-success responses.
  */
-export function withApiLogging(
-  handler: (req: Request, ...args: any[]) => Promise<{ response: Response; audit: ApiAuditLog }>
-) {
-  return async function (req: Request, ...args: any[]): Promise<Response> {
-    let result: { response: Response; audit: ApiAuditLog | undefined };
+export function withApiLogging<
+  TArgs extends any[],
+  TResult extends { response: Response; audit?: ApiAuditLog },
+>(handler: (req: Request, ...args: TArgs) => Promise<TResult>) {
+  return async function (req: Request, ...args: TArgs): Promise<Response> {
+    let result: { response: Response; audit?: ApiAuditLog };
     let error: any = undefined;
     try {
       result = await handler(req, ...args);

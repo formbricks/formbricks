@@ -72,7 +72,7 @@ export function deepDiff(oldObj: any, newObj: any): any {
   }
 
   const diff: Record<string, any> = {};
-  const keys = new Set([...Object.keys(oldObj || {}), ...Object.keys(newObj || {})]);
+  const keys = new Set([...Object.keys(oldObj ?? {}), ...Object.keys(newObj ?? {})]);
   for (const key of keys) {
     const valueDiff = deepDiff(oldObj?.[key], newObj?.[key]);
     if (valueDiff !== undefined) {
@@ -298,7 +298,7 @@ export function withAuditLogging(
     setImmediate(async () => {
       try {
         const userId: string = ctx.user.id;
-        let organizationId = parsedInput?.organizationId || ctx?.organizationId;
+        let organizationId = parsedInput?.organizationId || ctx?.organizationId; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
           const environmentId: string | undefined = parsedInput?.environmentId;
