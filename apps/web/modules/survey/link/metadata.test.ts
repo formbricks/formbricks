@@ -78,6 +78,15 @@ describe("getMetadataForLinkSurvey", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -153,6 +162,15 @@ describe("getMetadataForLinkSurvey", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -182,6 +200,15 @@ describe("getMetadataForLinkSurvey", () => {
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });
