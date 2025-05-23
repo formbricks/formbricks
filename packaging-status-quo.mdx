@@ -1,0 +1,353 @@
+# Enterprise Edition Access Control Analysis
+
+## Current Implementation Overview
+
+The system currently has two parallel mechanisms for controlling enterprise features:
+
+### A. Cloud Implementation (Stripe-based)
+- Uses Stripe for subscription management
+- Plans are defined in the database with hardcoded limits
+- Features are controlled based on subscription plans (free, startup, scale, enterprise)
+- Key files:
+  - `apps/web/modules/ee/billing/components/pricing-table.tsx`
+  - `apps/web/modules/ee/billing/api/lib/subscription-created-or-updated.ts`
+  - `packages/database/zod/organizations.ts`
+
+#### Default Limits Definition and Usage
+The default limits for cloud plans are defined in multiple places and used in different contexts:
+
+1. **Primary Definition (`apps/web/lib/constants.ts`)**
+   ```typescript
+   export const BILLING_LIMITS = {
+     FREE: {
+       PROJECTS: 3,
+       RESPONSES: 1500,
+       MIU: 2000,
+     },
+     STARTUP: {
+       PROJECTS: 3,
+       RESPONSES: 5000,
+       MIU: 7500,
+     },
+     SCALE: {
+       PROJECTS: 5,
+       RESPONSES: 10000,
+       MIU: 30000,
+     },
+   } as const;
+   ```
+
+#### Stripe Metadata Handling
+The system uses Stripe product metadata to dynamically set limits for organizations. This is handled in several places:
+
+1. **Product Metadata Structure**
+   - Each Stripe product has metadata fields for:
+     - `responses`: Number of monthly responses allowed (or "unlimited")
+     - `miu`: Number of monthly identified users allowed (or "unlimited")
+     - `projects`: Number of projects allowed (or "unlimited")
+     - `plan`: The plan type (free, startup, scale, enterprise)
+     - `period`: Billing period (monthly, yearly)
+
+2. **Subscription Creation/Update Flow**
+   - When a subscription is created or updated (`subscription-created-or-updated.ts`):
+     ```typescript
+     // Extract limits from product metadata
+     if (product.metadata.responses === "unlimited") {
+       responses = null;
+     } else if (parseInt(product.metadata.responses) > 0) {
+       responses = parseInt(product.metadata.responses);
+     }
+     
+     // Similar handling for miu and projects
+     ```
+   - These limits are then stored in the organization's billing object
+
+3. **Checkout Session Handling**
+   - During checkout (`checkout-session-completed.ts`):
+     - Metadata is passed from the checkout session to the subscription
+     - Includes organization ID and limit information
+     - Updates customer metadata with organization details
+
+4. **Limit Enforcement**
+   - Limits are checked in various places:
+     - Response creation (`response.ts`) to send a notification to PostHog. So far we're not doing anything with that information.
+     - Project creation
+     - User identification
+   - When limits are reached:
+     - Events are sent to PostHog for tracking
+     - Users are notified of plan limits
+
+5. **User Notifications**
+   - **Limits Reached Banner**
+     - Shows at the top of the screen when limits are reached
+     - Displays messages for MIU, response, or both limits
+     - Links to billing settings
+   - **Project Limit Modal**
+     - Appears when trying to create more projects than allowed
+     - Shows current limit and upgrade options
+   - **Billing Settings Page**
+     - Visual indicators for approaching limits
+     - Upgrade options when limits are reached
+   - **PostHog Events**
+     - Events sent when limits are reached
+     - Cached for 7 days to prevent spam
+   - **Error Messages**
+     - Clear error messages for limit violations
+     - Role permission errors
+
+6. **UI Display of Limits**
+   - Limits are displayed in the billing settings page (`pricing-table.tsx`):
+     ```typescript
+     // Unlimited checks for different metrics
+     const responsesUnlimitedCheck =
+       organization.billing.plan === "enterprise" && 
+       organization.billing.limits.monthly.responses === null;
+     const peopleUnlimitedCheck =
+       organization.billing.plan === "enterprise" && 
+       organization.billing.limits.monthly.miu === null;
+     const projectsUnlimitedCheck =
+       organization.billing.plan === "enterprise" && 
+       organization.billing.limits.projects === null;
+     ```
+   - Uses `BillingSlider` component to show:
+     - Current usage
+     - Limit thresholds
+     - Visual indicators for approaching limits
+   - Displays different UI states:
+     - Unlimited badges for enterprise plans
+     - Warning indicators when approaching limits
+     - Clear messaging about current plan limits
+   - Supports both monthly and yearly billing periods
+   - Shows upgrade options when limits are reached
+
+7. **Error Handling and Fallback Mechanisms**
+   - **API Error Handling**
+     - Retries on specific HTTP status codes (429, 502, 503, 504)
+     - Maximum retry attempts: 3
+     - Exponential backoff between retries
+     ```typescript
+     if (retryCount < CONFIG.CACHE.MAX_RETRIES && [429, 502, 503, 504].includes(res.status)) {
+       await sleep(CONFIG.CACHE.RETRY_DELAY_MS * Math.pow(2, retryCount));
+       return fetchLicenseFromServerInternal(retryCount + 1);
+     }
+     ```
+
+   - **Fallback Levels**
+     - "live": Direct API response
+     - "cached": Using cached license data
+     - "grace": Using previous valid result within grace period
+     - "default": Fallback to default limits
+     ```typescript
+     const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
+     ```
+
+   - **Grace Period System**
+     - Cache TTL: 24 hours
+     - Previous result TTL: 4 days
+     - Grace period: 3 days
+     ```typescript
+     const CONFIG = {
+       CACHE: {
+         FETCH_LICENSE_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours
+         PREVIOUS_RESULT_TTL_MS: 4 * 24 * 60 * 60 * 1000, // 4 days
+         GRACE_PERIOD_MS: 3 * 24 * 60 * 60 * 1000, // 3 days
+       }
+     };
+     ```
+
+   - **Subscription Error Handling**
+     - Handles failed subscription updates
+     - Maintains previous valid state on errors
+     - Logs errors for debugging
+     ```typescript
+     try {
+       await updateOrganization(organizationId, {
+         billing: {
+           ...organization.billing,
+           plan: updatedBillingPlan,
+           limits: {
+             projects,
+             monthly: {
+               responses,
+               miu,
+             },
+           },
+         },
+       });
+     } catch (error) {
+       logger.error(error, "Failed to update organization billing");
+       // Maintain previous state
+     }
+     ```
+
+   - **Limit Validation**
+     - Validates metadata values before applying
+     - Falls back to default limits if invalid
+     - Logs validation errors
+     ```typescript
+     if (product.metadata.responses === "unlimited") {
+       responses = null;
+     } else if (parseInt(product.metadata.responses) > 0) {
+       responses = parseInt(product.metadata.responses);
+     } else {
+       logger.error({ responses: product.metadata.responses }, "Invalid responses metadata in product");
+       throw new Error("Invalid responses metadata in product");
+     }
+     ```
+
+### B. On-Premise Implementation (License-based)
+- Uses a license key system
+- Features are controlled through license validation
+- Makes API calls to `https://ee.formbricks.com/api/licenses/check`
+- Key files:
+  - `apps/web/modules/ee/license-check/lib/license.ts`
+  - `apps/web/modules/ee/license-check/lib/utils.ts`
+
+#### License Check Implementation Details
+1. **License Validation Flow**
+   - Validates license key against `ee.formbricks.com/api/licenses/check`
+   - Includes usage metrics (e.g., response count) in validation request
+   - Supports proxy configuration for enterprise networks
+   - Implements timeout and retry logic for API calls
+
+2. **Caching System**
+   - Uses a multi-level caching strategy:
+     - Live: Direct API response
+     - Cached: Using cached license data (24 hours TTL)
+     - Grace: Using previous valid result (3 days grace period)
+     - Default: Fallback to default limits
+   - Cache keys are hashed based on license key for security
+
+3. **Feature Access Control**
+   - Features are defined in `TEnterpriseLicenseFeatures`:
+   ```typescript
+   {
+     isMultiOrgEnabled: boolean,
+     contacts: boolean,
+     projects: number | null,
+     whitelabel: boolean,
+     removeBranding: boolean,
+     twoFactorAuth: boolean,
+     sso: boolean,
+     saml: boolean,
+     spamProtection: boolean,
+     ai: boolean
+   }
+   ```
+
+4. **Error Handling**
+   - Implements retry logic for specific HTTP status codes (429, 502, 503, 504)
+   - Maximum retry attempts: 3
+   - Exponential backoff between retries
+   - Grace period system for handling API failures
+
+#### Teams & Access Roles and Multi-language Surveys Implementation
+1. **Teams & Access Roles**
+   - Controlled by both license and billing plan
+   - Permission check implementation:
+   ```typescript
+   export const getRoleManagementPermission = async (
+     billingPlan: Organization["billing"]["plan"]
+   ): Promise<boolean> => {
+     const license = await getEnterpriseLicense();
+     if (IS_FORMBRICKS_CLOUD)
+       return (
+         license.active &&
+         (billingPlan === PROJECT_FEATURE_KEYS.SCALE || 
+          billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+       );
+     else if (!IS_FORMBRICKS_CLOUD) return license.active;
+     return false;
+   };
+   ```
+   - Access control is implemented through:
+     - Organization roles (Owner, Manager, Billing, Member)
+     - Project-level permissions (Read, Read & Write, Manage)
+     - Team-level roles (Team Contributors, Team Admins)
+   - Permission checks are performed in:
+     - Team management actions
+     - Project access control
+     - Survey management
+     - Role updates
+
+2. **Multi-language Surveys**
+   - Controlled by both license and billing plan
+   - Permission check implementation:
+   ```typescript
+   export const getMultiLanguagePermission = async (
+     billingPlan: Organization["billing"]["plan"]
+   ): Promise<boolean> => {
+     const license = await getEnterpriseLicense();
+     if (IS_FORMBRICKS_CLOUD)
+       return (
+         license.active &&
+         (billingPlan === PROJECT_FEATURE_KEYS.SCALE || 
+          billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+       );
+     else if (!IS_FORMBRICKS_CLOUD) return license.active;
+     return false;
+   };
+   ```
+   - Checks are performed at multiple levels:
+     - Survey creation
+     - Survey updates
+     - Language management
+     - Response handling
+
+
+### Current Feature Control Mechanisms
+
+- License-based access control
+- Features are defined in `TEnterpriseLicenseFeatures`:
+```typescript
+{
+  isMultiOrgEnabled: boolean,
+  contacts: boolean,
+  projects: number | null,
+  whitelabel: boolean,
+  removeBranding: boolean,
+  twoFactorAuth: boolean,
+  sso: boolean,
+  saml: boolean,
+  spamProtection: boolean,
+  ai: boolean
+}
+```
+
+## Current Issues
+
+1. **Dual System Complexity**
+   - Different code paths for cloud vs on-premise
+   - Duplicate feature checks in different places
+   - Inconsistent feature access patterns
+
+2. **Hardcoded Plans**
+   - Plans and limits are hardcoded in the database
+   - Stripe integration is tightly coupled with the application
+   - Difficult to modify plans without code changes
+   - Some limits are hardcoded while others come from Stripe metadata
+
+3. **Feature Access Control**
+   - Features are checked in multiple places with different logic
+   - No centralized feature management
+   - Inconsistent handling of feature flags
+
+4. **Error Handling**
+   - Current implementation has some error handling for license checks
+   - Uses a fallback system with grace periods
+   - But could be more robust for API failures
+
+## Current Enterprise Features
+
+The system currently manages these enterprise features:
+- Multi-language surveys
+- Teams & Access Roles
+- Remove branding
+- SSO
+- SAML SSO
+- Contacts and segments
+- Audit logs
+- Service level agreement
+- Compliance checks
+- Spam protection
+- AI features

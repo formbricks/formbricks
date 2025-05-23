@@ -1,0 +1,1297 @@
+// ... existing code ...
+
+## Proposed Solution Plan
+
+### 1. Unified License & Feature Management System
+- Create a single source of truth for all features and limits
+- Move all feature flags to the license check response
+- Standardize feature check patterns across cloud and on-premise
+- Add new features to `TEnterpriseLicenseFeatures`:
+  ```typescript
+  {
+    // Existing features
+    isMultiOrgEnabled: boolean,
+    contacts: boolean,
+    projects: number | null,
+    whitelabel: boolean,
+    removeBranding: boolean,
+    twoFactorAuth: boolean,
+    sso: boolean,
+    saml: boolean,
+    spamProtection: boolean,
+    ai: boolean,
+    // New features
+    teamsAndRoles: boolean,
+    multiLanguage: boolean,
+    emailFollowUps: boolean,
+    forwardOnThankYou: boolean,
+    // New limits
+    yearlyLimits: {
+      responses: number | null,
+      projects: number | null,
+      contacts: number | null
+    }
+  }
+  ```
+
+### 2. Cloud Instance Refactoring
+- Remove all hardcoded plans and limits
+- Implement same license check system as on-premise
+- Remove Stripe integration and self-serve functionality
+- Update billing UI to reflect manual license management
+- Add license key input/management interface
+
+### 3. Limit Management System
+- Implement yearly (365-day) rolling window for all limits
+- Create centralized limit tracking system
+- Add real-time limit monitoring
+- Implement limit notifications:
+  - 80% reached (orange warning)
+  - 100% reached (red warning)
+  - 120% exceeded (critical warning)
+- Add limit usage visualization in UI
+
+### 4. Alert System Implementation
+- Create comprehensive alert system for:
+  - License validation status
+  - Limit thresholds (80%, 100%, 120%)
+  - Grace period status
+  - License expiration warnings
+- Implement notification delivery through:
+  - In-app notifications
+  - Email notifications
+  - Admin dashboard alerts
+
+### 5. Feature Migration
+- Move Teams & Access Roles to license-based control
+- Move Multi-language Surveys to license-based control
+- Migrate Email Follow-ups to Enterprise Edition
+- Migrate Forward on Thank You to Enterprise Edition
+- Update feature check implementations to use new system
+
+### 6. License Check System Enhancement
+- Improve license validation reliability
+- Enhance caching system
+- Add better error handling
+- Implement proper grace period management
+- Add support for offline validation
+
+### 7. UI/UX Updates
+- Add limit usage indicators
+- Implement warning notifications
+- Update feature availability displays
+- Add license management interface
+- Improve error messaging
+
+### 8. Testing & Monitoring
+- Add comprehensive test coverage
+- Implement monitoring for:
+  - License checks
+  - Limit tracking
+  - Alert delivery
+  - System health
+- Create alerting system for critical failures
+
+### Implementation Phases
+
+1. **Phase 1: Foundation**
+   - Implement unified license system
+   - Remove Stripe integration
+   - Set up new limit tracking
+
+2. **Phase 2: Feature Migration**
+   - Move features to license control
+   - Update feature checks
+   - Implement new limits
+
+3. **Phase 3: Alert System**
+   - Build notification system
+   - Implement limit warnings
+   - Add monitoring
+
+4. **Phase 4: UI/UX**
+   - Update interfaces
+   - Add visual indicators
+   - Improve user feedback
+
+5. **Phase 5: Testing & Documentation**
+   - Comprehensive testing
+   - Documentation updates
+   - Migration guides
+
+   
+   ## Implementation Details
+
+### Files Requiring Updates for Unified Feature Management
+
+1. **Core License Check Files**
+   - `apps/web/modules/ee/license-check/lib/utils.ts`
+     - Replace individual feature check functions with unified `getFeaturePermission` calls
+     - Update all feature checks to use the new license response format
+   - `apps/web/modules/ee/license-check/lib/license.ts`
+     - Update license validation to handle new feature format
+     - Enhance caching system for new feature structure
+
+2. **Survey Feature Checks**
+   - `apps/web/app/api/v1/management/surveys/lib/utils.ts`
+     - Update `checkFeaturePermissions` to use unified feature check system
+     - Consolidate permission checks for spam protection, follow-ups, and multi-language
+   - `apps/web/modules/survey/editor/actions.ts`
+     - Replace individual feature checks with unified system
+     - Update permission validation logic
+   - `apps/web/modules/survey/components/template-list/actions.ts`
+     - Update survey creation checks to use unified system
+     - Consolidate feature permission validation
+
+3. **Multi-language Implementation**
+   - `apps/web/modules/ee/multi-language-surveys/lib/actions.ts`
+     - Update `checkMultiLanguagePermission` to use unified system
+     - Remove direct billing plan checks
+   - `apps/web/modules/ee/languages/page.tsx`
+     - Update permission checks to use unified system
+     - Remove direct plan checks
+
+4. **Team & Access Roles**
+   - `apps/web/modules/ee/license-check/lib/utils.ts`
+     - Update `getRoleManagementPermission` to use unified system
+     - Remove direct billing plan checks
+   - `apps/web/modules/projects/settings/actions.ts`
+     - Update project update actions to use unified system
+     - Consolidate permission checks
+
+5. **Branding & Whitelabel**
+   - `apps/web/modules/ee/whitelabel/remove-branding/actions.ts`
+     - Update branding permission checks to use unified system
+     - Remove direct plan checks
+   - `apps/web/app/(app)/environments/[environmentId]/settings/(organization)/general/page.tsx`
+     - Update whitelabel permission checks
+     - Consolidate feature access validation
+
+6. **Contacts & Segments**
+   - `apps/web/modules/ee/contacts/api/v1/management/contact-attributes/route.ts`
+     - Update contacts feature check to use unified system
+     - Remove direct feature checks
+   - `apps/web/modules/ee/contacts/api/v1/management/contacts/route.ts`
+     - Update contacts access validation
+     - Use unified feature check system
+
+7. **UI Components**
+   - `apps/web/modules/survey/editor/components/survey-editor.tsx`
+     - Update props to use unified feature flags
+     - Remove individual feature checks
+   - `apps/web/modules/survey/editor/components/settings-view.tsx`
+     - Update feature access validation
+     - Use unified feature check system
+
+8. **Testing Files**
+   - `apps/web/modules/ee/license-check/lib/utils.test.ts`
+     - Update tests for new unified feature check system
+     - Add tests for new feature structure
+   - `apps/web/app/api/v1/management/surveys/lib/utils.test.ts`
+     - Update feature permission tests
+     - Add tests for unified system
+
+### Implementation Steps for Each File
+
+1. **Remove Direct Plan Checks**
+   - Replace all direct billing plan comparisons with unified feature checks
+   - Remove hardcoded plan names and constants
+   - Update error messages to be feature-specific rather than plan-specific
+
+2. **Update Feature Validation**
+   - Replace individual permission functions with unified `getFeaturePermission` calls
+   - Update error handling to use feature-specific messages
+   - Implement proper fallback behavior
+
+3. **Consolidate Permission Logic**
+   - Move all feature checks to the license check system
+   - Update UI components to use unified feature flags
+   - Implement proper caching for feature checks
+
+4. **Update Tests**
+   - Rewrite tests to use new unified system
+   - Add tests for new feature structure
+   - Update mock data to match new format
+
+5. **Documentation Updates**
+   - Update API documentation
+   - Add migration guides
+   - Document new feature check system
+
+### Unified Feature Permission System
+
+The unified feature permission system will be implemented in `apps/web/modules/ee/license-check/lib/features.ts`:
+
+```typescript
+import { TEnterpriseLicenseFeatures } from "./types/enterprise-license";
+import { getEnterpriseLicense } from "./license";
+
+// Define all available features
+export type FeatureKey = keyof TEnterpriseLicenseFeatures;
+
+// List of all enterprise features
+const ENTERPRISE_FEATURES: FeatureKey[] = [
+  "teamsAndRoles",
+  "multiLanguage",
+  "emailFollowUps",
+  "forwardOnThankYou",
+  "contacts",
+  "removeBranding",
+  "whitelabel",
+  "spamProtection",
+  "ai"
+];
+
+/**
+ * Unified feature permission check
+ * @param feature The feature to check
+ * @returns Promise<boolean> Whether the feature is enabled
+ */
+export const getFeaturePermission = async (feature: FeatureKey): Promise<boolean> => {
+  const license = await getEnterpriseLicense();
+  
+  // If no license is active, feature is disabled
+  if (!license.active) {
+    return false;
+  }
+
+  // Check if feature is enabled in license
+  return license.features[feature] ?? false;
+};
+
+/**
+ * Check multiple features at once
+ * @param features Array of features to check
+ * @returns Promise<Record<FeatureKey, boolean>> Map of feature permissions
+ */
+export const getFeaturePermissions = async (
+  features: FeatureKey[]
+): Promise<Record<FeatureKey, boolean>> => {
+  const results = await Promise.all(
+    features.map(async (feature) => {
+      const isEnabled = await getFeaturePermission(feature);
+      return [feature, isEnabled] as const;
+    })
+  );
+
+  return Object.fromEntries(results);
+};
+```
+
+### Yearly Limits System
+
+The yearly limits system will be implemented in `apps/web/modules/ee/license-check/lib/limits.ts`:
+
+```typescript
+import { getEnterpriseLicense } from "./license";
+
+export type YearlyLimit = {
+  responses: number | null;
+  projects: number | null;
+  contacts: number | null;
+};
+
+export type LimitType = keyof YearlyLimit;
+
+export type LimitStatus = {
+  current: number;
+  limit: number | null;
+  percentage: number;
+  status: "ok" | "warning" | "critical";
+};
+
+/**
+ * Get yearly limits from license
+ * @returns Promise<YearlyLimit> The yearly limits for the organization
+ */
+export const getYearlyLimits = async (): Promise<YearlyLimit> => {
+  const license = await getEnterpriseLicense();
+  
+  if (!license.active) {
+    return {
+      responses: null,
+      projects: null,
+      contacts: null
+    };
+  }
+
+  return license.limits ?? {
+    responses: null,
+    projects: null,
+    contacts: null
+  };
+};
+
+/**
+ * Get current usage for a specific limit
+ * @param limitType The type of limit to check
+ * @returns Promise<number> The current usage count
+ */
+export const getCurrentUsage = async (limitType: LimitType): Promise<number> => {
+  switch (limitType) {
+    case "responses":
+      return await getYearlyResponseCount();
+    case "projects":
+      return await getProjectCount();
+    case "contacts":
+      return await getContactCount();
+    default:
+      return 0;
+  }
+};
+
+/**
+ * Get status of a specific limit
+ * @param limitType The type of limit to check
+ * @returns Promise<LimitStatus> The current status of the limit
+ */
+export const getLimitStatus = async (limitType: LimitType): Promise<LimitStatus> => {
+  const limits = await getYearlyLimits();
+  const current = await getCurrentUsage(limitType);
+  const limit = limits[limitType];
+  
+  if (limit === null) {
+    return {
+      current,
+      limit: null,
+      percentage: 0,
+      status: "ok"
+    };
+  }
+
+  const percentage = (current / limit) * 100;
+  
+  let status: "ok" | "warning" | "critical" = "ok";
+  if (percentage >= 100) {
+    status = "critical";
+  } else if (percentage >= 80) {
+    status = "warning";
+  }
+
+  return {
+    current,
+    limit,
+    percentage,
+    status
+  };
+};
+
+/**
+ * Check if a limit has been reached
+ * @param limitType The type of limit to check
+ * @returns Promise<boolean> Whether the limit has been reached
+ */
+export const isLimitReached = async (limitType: LimitType): Promise<boolean> => {
+  const status = await getLimitStatus(limitType);
+  return status.status === "critical";
+};
+```
+
+#### Usage Examples
+
+1. **Feature Check**
+```typescript
+// In any component or action
+const canUseMultiLanguage = await getFeaturePermission("multiLanguage");
+if (!canUseMultiLanguage) {
+  throw new OperationNotAllowedError("Multi-language surveys are not enabled for this organization");
+}
+```
+
+2. **Limit Check**
+```typescript
+// Check response limit status
+const responseStatus = await getLimitStatus("responses");
+if (responseStatus.status === "warning") {
+  // Show orange warning
+} else if (responseStatus.status === "critical") {
+  // Show red warning
+  // Prevent new responses
+}
+
+// Check if limit is reached
+if (await isLimitReached("responses")) {
+  throw new OperationNotAllowedError("Response limit reached for this organization");
+}
+```
+
+3. **UI Component Usage**
+```typescript
+// Feature gate component
+const FeatureGate: React.FC<{
+  feature: FeatureKey;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}> = async ({ feature, children, fallback }) => {
+  const isEnabled = await getFeaturePermission(feature);
+  return isEnabled ? <>{children}</> : fallback ?? null;
+};
+
+// Limit status component
+const LimitStatus: React.FC<{
+  limitType: LimitType;
+  children: React.ReactNode;
+}> = async ({ limitType, children }) => {
+  const status = await getLimitStatus(limitType);
+  
+  return (
+    <div className={`limit-status ${status.status}`}>
+      <div className="usage">
+        {status.current} / {status.limit ?? "∞"}
+      </div>
+      {status.status !== "ok" && (
+        <div className="warning">
+          {status.status === "warning" ? "Approaching limit" : "Limit reached"}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+};
+```
+
+#### Benefits of the Separated Systems
+
+1. **Clear Separation of Concerns**
+   - Features are binary flags controlled by license
+   - Limits are quantitative values with status tracking
+   - Each system has its own specific purpose
+
+2. **Better Limit Management**
+   - Detailed status tracking (ok/warning/critical)
+   - Percentage-based monitoring
+   - Easy to add new limit types
+
+3. **Improved UI Integration**
+   - Separate components for features and limits
+   - Clear status indicators
+   - Flexible warning system
+
+4. **Type Safety**
+   - Strong typing for both features and limits
+   - Clear distinction between limit types
+   - Better IDE support
+
+5. **Maintainability**
+   - Easy to add new features
+   - Easy to add new limit types
+   - Clear documentation of both systems
+
+### Enterprise License Implementation
+
+The enterprise license system will be implemented in `apps/web/modules/ee/license-check/lib/license.ts`:
+
+```typescript
+import { env } from "@/lib/env";
+import { hashString } from "@/lib/hashString";
+import { getCache } from "@/modules/cache/lib/service";
+import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types/enterprise-license";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import fetch from "node-fetch";
+import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+
+// Configuration
+const CONFIG = {
+  CACHE: {
+    FETCH_LICENSE_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours
+    PREVIOUS_RESULT_TTL_MS: 4 * 24 * 60 * 60 * 1000, // 4 days
+    GRACE_PERIOD_MS: 3 * 24 * 60 * 60 * 1000, // 3 days
+    MAX_RETRIES: 3,
+    RETRY_DELAY_MS: 1000,
+  },
+  API: {
+    ENDPOINT: "https://ee.formbricks.com/api/licenses/check",
+    TIMEOUT_MS: 5000,
+  },
+} as const;
+
+// Types
+type FallbackLevel = "live" | "cached" | "grace" | "default";
+
+type TPreviousResult = {
+  active: boolean;
+  lastChecked: Date;
+  features: TEnterpriseLicenseFeatures | null;
+  limits: {
+    responses: number | null;
+    projects: number | null;
+    contacts: number | null;
+  } | null;
+  version: number;
+};
+
+// Default feature state when no license is present
+const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
+  isMultiOrgEnabled: false,
+  contacts: false,
+  projects: 3,
+  whitelabel: false,
+  removeBranding: false,
+  twoFactorAuth: false,
+  sso: false,
+  saml: false,
+  spamProtection: false,
+  ai: false,
+  teamsAndRoles: false,
+  multiLanguage: false,
+  emailFollowUps: false,
+  forwardOnThankYou: false,
+};
+
+// Default limits when no license is present
+const DEFAULT_LIMITS = {
+  responses: null, // Unlimited responses when no license
+  projects: 3,     // Still restrict projects
+  contacts: 1000,  // Still restrict contacts
+};
+
+// Cache keys
+const getHashedKey = () => {
+  if (typeof window !== "undefined") return "browser";
+  if (!env.ENTERPRISE_LICENSE_KEY) return "no-license";
+  return hashString(env.ENTERPRISE_LICENSE_KEY);
+};
+
+const getCacheKeys = () => {
+  const hashedKey = getHashedKey();
+  return {
+    FETCH_LICENSE_CACHE_KEY: `formbricksEnterpriseLicense-details-${hashedKey}`,
+    PREVIOUS_RESULT_CACHE_KEY: `formbricksEnterpriseLicense-previousResult-${hashedKey}`,
+  };
+};
+
+// Helper functions
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const validateLicenseDetails = (data: unknown): TEnterpriseLicenseDetails => {
+  // Implementation of license validation schema
+  // Returns validated license details or throws error
+};
+
+const getFallbackLevel = (
+  liveLicense: TEnterpriseLicenseDetails | null,
+  previousResult: TPreviousResult,
+  currentTime: Date
+): FallbackLevel => {
+  if (liveLicense) return "live";
+  if (previousResult.active) {
+    const elapsedTime = currentTime.getTime() - previousResult.lastChecked.getTime();
+    return elapsedTime < CONFIG.CACHE.GRACE_PERIOD_MS ? "grace" : "default";
+  }
+  return "default";
+};
+
+// API functions
+const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpriseLicenseDetails | null> => {
+  if (!env.ENTERPRISE_LICENSE_KEY) return null;
+
+  // Skip license checks during build time
+  if (process.env.NEXT_PHASE === "phase-production-build") return null;
+
+  try {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
+
+    // Get current usage metrics
+    const [responseCount, projectCount, contactCount] = await Promise.all([
+      prisma.response.count({
+        where: {
+          createdAt: {
+            gte: startOfYear,
+            lt: startOfNextYear,
+          },
+        },
+      }),
+      prisma.project.count(),
+      prisma.contact.count(),
+    ]);
+
+    const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
+    const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
+
+    const res = await fetch(CONFIG.API.ENDPOINT, {
+      body: JSON.stringify({
+        licenseKey: env.ENTERPRISE_LICENSE_KEY,
+        usage: {
+          responseCount,
+          projectCount,
+          contactCount,
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      agent,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const responseJson = (await res.json()) as { data: unknown };
+      return validateLicenseDetails(responseJson.data);
+    }
+
+    // Retry on specific status codes
+    if (retryCount < CONFIG.CACHE.MAX_RETRIES && [429, 502, 503, 504].includes(res.status)) {
+      await sleep(CONFIG.CACHE.RETRY_DELAY_MS * Math.pow(2, retryCount));
+      return fetchLicenseFromServerInternal(retryCount + 1);
+    }
+
+    return null;
+  } catch (error) {
+    logger.error(error, "Error fetching license from server");
+    return null;
+  }
+};
+
+// Main license check function
+export const getEnterpriseLicense = reactCache(
+  async (): Promise<{
+    active: boolean;
+    features: TEnterpriseLicenseFeatures;
+    limits: {
+      responses: number | null;
+      projects: number | null;
+      contacts: number | null;
+    };
+    lastChecked: Date;
+    isPendingDowngrade: boolean;
+    fallbackLevel: FallbackLevel;
+  }> => {
+    const currentTime = new Date();
+
+    // If no license key is set, return default state with unlimited responses
+    if (!env.ENTERPRISE_LICENSE_KEY) {
+      return {
+        active: false,
+        features: DEFAULT_FEATURES,
+        limits: DEFAULT_LIMITS,
+        lastChecked: currentTime,
+        isPendingDowngrade: false,
+        fallbackLevel: "default",
+      };
+    }
+
+    const formbricksCache = getCache();
+
+    // Try to get cached license
+    const cachedLicense = await formbricksCache.get<TEnterpriseLicenseDetails>(
+      getCacheKeys().FETCH_LICENSE_CACHE_KEY
+    );
+
+    if (cachedLicense) {
+      return {
+        active: cachedLicense.status === "active",
+        features: cachedLicense.features ?? DEFAULT_FEATURES,
+        limits: cachedLicense.limits ?? DEFAULT_LIMITS,
+        lastChecked: currentTime,
+        isPendingDowngrade: false,
+        fallbackLevel: "cached",
+      };
+    }
+
+    // Try to get previous result
+    const previousResult = await formbricksCache.get<TPreviousResult>(
+      getCacheKeys().PREVIOUS_RESULT_CACHE_KEY
+    );
+
+    // Fetch fresh license
+    const liveLicenseDetails = await fetchLicenseFromServerInternal();
+    const fallbackLevel = getFallbackLevel(liveLicenseDetails, previousResult, currentTime);
+
+    let currentLicenseState: TPreviousResult;
+
+    switch (fallbackLevel) {
+      case "live":
+        if (!liveLicenseDetails) throw new Error("Invalid state: live license expected");
+        currentLicenseState = {
+          active: liveLicenseDetails.status === "active",
+          features: liveLicenseDetails.features ?? DEFAULT_FEATURES,
+          limits: liveLicenseDetails.limits ?? DEFAULT_LIMITS,
+          lastChecked: currentTime,
+          version: 1,
+        };
+        await formbricksCache.set(
+          getCacheKeys().PREVIOUS_RESULT_CACHE_KEY,
+          currentLicenseState,
+          CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS
+        );
+        return {
+          active: currentLicenseState.active,
+          features: currentLicenseState.features,
+          limits: currentLicenseState.limits,
+          lastChecked: currentTime,
+          isPendingDowngrade: false,
+          fallbackLevel: "live",
+        };
+
+      case "grace":
+        if (!previousResult) {
+          return {
+            active: false,
+            features: DEFAULT_FEATURES,
+            limits: DEFAULT_LIMITS,
+            lastChecked: currentTime,
+            isPendingDowngrade: false,
+            fallbackLevel: "default",
+          };
+        }
+        return {
+          active: previousResult.active,
+          features: previousResult.features ?? DEFAULT_FEATURES,
+          limits: previousResult.limits ?? DEFAULT_LIMITS,
+          lastChecked: previousResult.lastChecked,
+          isPendingDowngrade: true,
+          fallbackLevel: "grace",
+        };
+
+      case "default":
+        const defaultState: TPreviousResult = {
+          active: false,
+          features: DEFAULT_FEATURES,
+          limits: DEFAULT_LIMITS,
+          lastChecked: currentTime,
+          version: 1,
+        };
+        await formbricksCache.set(
+          getCacheKeys().PREVIOUS_RESULT_CACHE_KEY,
+          defaultState,
+          CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS
+        );
+        return {
+          active: false,
+          features: DEFAULT_FEATURES,
+          limits: DEFAULT_LIMITS,
+          lastChecked: currentTime,
+          isPendingDowngrade: false,
+          fallbackLevel: "default",
+        };
+    }
+  }
+);
+```
+
+Key changes to ensure proper feature locking:
+
+1. **Default Feature State**
+   - Added `DEFAULT_FEATURES` constant with all features disabled
+   - Added `DEFAULT_LIMITS` constant with restrictive limits
+   - These are used when no license is present or when license check fails
+
+2. **Non-nullable Features and Limits**
+   - Changed return type to ensure features and limits are always present
+   - Uses default values when license is missing or invalid
+   - Prevents accidental feature access when license is missing
+
+3. **Consistent Default State**
+   - All fallback paths now return the same default state
+   - Features are explicitly disabled
+   - Limits are set to restrictive values
+
+4. **Grace Period Handling**
+   - Even in grace period, uses default features if previous result is missing
+   - Ensures features stay locked if license becomes invalid
+
+5. **Cache Key Strategy**
+   - Uses "no-license" as cache key when no license is present
+   - Prevents mixing of licensed and unlicensed states
+
+This ensures that:
+1. Missing license key = all features disabled
+2. Invalid license = all features disabled
+3. Failed license check = all features disabled
+4. Grace period = previous state or disabled
+5. No accidental feature access in any case
+
+### Limit Warning Notification System
+
+The limit warning notification system will be implemented in `apps/web/modules/ee/license-check/lib/notifications.ts`:
+
+```typescript
+import { getLimitStatus, LimitType } from "./limits";
+import { getEnterpriseLicense } from "./license";
+
+export type LimitWarning = {
+  type: LimitType;
+  current: number;
+  limit: number;
+  percentage: number;
+  status: "warning" | "critical";
+  message: string;
+};
+
+/**
+ * Get all active limit warnings
+ * @returns Promise<LimitWarning[]> Array of active warnings
+ */
+export const getActiveLimitWarnings = async (): Promise<LimitWarning[]> => {
+  const license = await getEnterpriseLicense();
+  
+  // Only show warnings if we have an active license
+  if (!license.active) {
+    return [];
+  }
+
+  const warnings: LimitWarning[] = [];
+  
+  // Check response limits
+  const responseStatus = await getLimitStatus("responses");
+  if (responseStatus.status !== "ok" && responseStatus.limit !== null) {
+    warnings.push({
+      type: "responses",
+      current: responseStatus.current,
+      limit: responseStatus.limit,
+      percentage: responseStatus.percentage,
+      status: responseStatus.status,
+      message: responseStatus.status === "warning" 
+        ? `You've used ${responseStatus.percentage.toFixed(0)}% of your response limit`
+        : "You've reached your response limit"
+    });
+  }
+
+  // Check contact limits
+  const contactStatus = await getLimitStatus("contacts");
+  if (contactStatus.status !== "ok" && contactStatus.limit !== null) {
+    warnings.push({
+      type: "contacts",
+      current: contactStatus.current,
+      limit: contactStatus.limit,
+      percentage: contactStatus.percentage,
+      status: contactStatus.status,
+      message: contactStatus.status === "warning" 
+        ? `You've used ${contactStatus.percentage.toFixed(0)}% of your contact limit`
+        : "You've reached your contact limit"
+    });
+  }
+
+  return warnings;
+};
+```
+
+And the notification banner component in `apps/web/modules/ee/license-check/components/LimitWarningBanner.tsx`:
+
+```typescript
+"use client";
+
+import { useEffect, useState } from "react";
+import { getActiveLimitWarnings, LimitWarning } from "../lib/notifications";
+import { AlertCircle, X } from "lucide-react";
+
+export const LimitWarningBanner = () => {
+  const [warnings, setWarnings] = useState<LimitWarning[]>([]);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const fetchWarnings = async () => {
+      const activeWarnings = await getActiveLimitWarnings();
+      setWarnings(activeWarnings);
+    };
+
+    fetchWarnings();
+    // Refresh warnings every 5 minutes
+    const interval = setInterval(fetchWarnings, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!isVisible || warnings.length === 0) {
+    return null;
+  }
+
+  // Sort warnings by severity (critical first)
+  const sortedWarnings = [...warnings].sort((a, b) => 
+    a.status === "critical" ? -1 : b.status === "critical" ? 1 : 0
+  );
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {sortedWarnings.map((warning, index) => (
+        <div
+          key={warning.type}
+          className={`flex items-center justify-between p-4 ${
+            warning.status === "critical" 
+              ? "bg-red-50 border-t border-red-200" 
+              : "bg-orange-50 border-t border-orange-200"
+          }`}
+        >
+          <div className="flex items-center space-x-3">
+            <AlertCircle 
+              className={`h-5 w-5 ${
+                warning.status === "critical" ? "text-red-500" : "text-orange-500"
+              }`} 
+            />
+            <p className={`text-sm ${
+              warning.status === "critical" ? "text-red-700" : "text-orange-700"
+            }`}>
+              {warning.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setIsVisible(false)}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+```
+
+#### Usage
+
+Add the banner to your layout component:
+
+```typescript
+// apps/web/app/(app)/layout.tsx
+import { LimitWarningBanner } from "@/modules/ee/license-check/components/LimitWarningBanner";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      {children}
+      <LimitWarningBanner />
+    </>
+  );
+}
+```
+
+#### Key Features
+
+1. **Real-time Monitoring**
+   - Automatically checks limits every 5 minutes
+   - Updates immediately when limits change
+   - Sorts warnings by severity
+
+2. **User Experience**
+   - Non-intrusive banner at bottom of screen
+   - Dismissible warnings
+   - Clear visual distinction between warning and critical states
+   - Percentage-based progress for warnings
+
+3. **Performance**
+   - Client-side component with server-side data fetching
+   - Efficient caching through the license system
+   - Minimal re-renders
+
+4. **Maintainability**
+   - Centralized warning logic
+   - Easy to add new limit types
+   - Consistent styling with design system
+
+5. **Accessibility**
+   - High contrast colors
+   - Clear iconography
+   - Dismissible with keyboard
+   - Screen reader friendly messages
+
+This implementation provides a non-intrusive but noticeable way to alert users about approaching or reached limits, while maintaining a good user experience and system performance.
+```
+
+### Internal Notification System
+
+The internal notification system will be implemented in `apps/web/modules/ee/license-check/lib/internal-notifications.ts`:
+
+```typescript
+import { env } from "@/lib/env";
+import { getEnterpriseLicense } from "./license";
+import { getLimitStatus, LimitType } from "./limits";
+import { logger } from "@formbricks/logger";
+
+type NotificationType = 
+  | "license_check_failed"
+  | "license_grace_period"
+  | "license_expired"
+  | "limit_warning"
+  | "limit_critical";
+
+type NotificationPayload = {
+  type: NotificationType;
+  organizationId: string;
+  organizationName: string;
+  instanceUrl: string;
+  timestamp: string;
+  details: {
+    // License notifications
+    licenseKey?: string;
+    error?: string;
+    gracePeriodEndsAt?: string;
+    // Limit notifications
+    limitType?: LimitType;
+    current?: number;
+    limit?: number;
+    percentage?: number;
+  };
+};
+
+const sendInternalNotification = async (payload: NotificationPayload): Promise<void> => {
+  if (!env.INTERNAL_NOTIFICATION_WEBHOOK_URL) {
+    logger.warn("No internal notification webhook URL configured");
+    return;
+  }
+
+  try {
+    const response = await fetch(env.INTERNAL_NOTIFICATION_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send notification: ${response.statusText}`);
+    }
+  } catch (error) {
+    logger.error(error, "Failed to send internal notification");
+  }
+};
+
+export const checkAndNotifyLicenseStatus = async (
+  organizationId: string,
+  organizationName: string
+): Promise<void> => {
+  const license = await getEnterpriseLicense();
+  const instanceUrl = env.NEXT_PUBLIC_SITE_URL;
+
+  // License check failed
+  if (license.fallbackLevel === "default" && env.ENTERPRISE_LICENSE_KEY) {
+    await sendInternalNotification({
+      type: "license_check_failed",
+      organizationId,
+      organizationName,
+      instanceUrl,
+      timestamp: new Date().toISOString(),
+      details: {
+        licenseKey: env.ENTERPRISE_LICENSE_KEY,
+      },
+    });
+  }
+
+  // Grace period
+  if (license.fallbackLevel === "grace") {
+    await sendInternalNotification({
+      type: "license_grace_period",
+      organizationId,
+      organizationName,
+      instanceUrl,
+      timestamp: new Date().toISOString(),
+      details: {
+        licenseKey: env.ENTERPRISE_LICENSE_KEY,
+        gracePeriodEndsAt: new Date(
+          license.lastChecked.getTime() + 3 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+      },
+    });
+  }
+
+  // License expired
+  if (!license.active && license.fallbackLevel === "default") {
+    await sendInternalNotification({
+      type: "license_expired",
+      organizationId,
+      organizationName,
+      instanceUrl,
+      timestamp: new Date().toISOString(),
+      details: {
+        licenseKey: env.ENTERPRISE_LICENSE_KEY,
+      },
+    });
+  }
+};
+
+export const checkAndNotifyLimits = async (
+  organizationId: string,
+  organizationName: string
+): Promise<void> => {
+  const license = await getEnterpriseLicense();
+  const instanceUrl = env.NEXT_PUBLIC_SITE_URL;
+
+  // Only check limits if we have an active license
+  if (!license.active) {
+    return;
+  }
+
+  const limitTypes: LimitType[] = ["responses", "contacts"];
+
+  for (const limitType of limitTypes) {
+    const status = await getLimitStatus(limitType);
+    
+    if (status.status === "warning") {
+      await sendInternalNotification({
+        type: "limit_warning",
+        organizationId,
+        organizationName,
+        instanceUrl,
+        timestamp: new Date().toISOString(),
+        details: {
+          limitType,
+          current: status.current,
+          limit: status.limit ?? 0,
+          percentage: status.percentage,
+        },
+      });
+    }
+
+    if (status.status === "critical") {
+      await sendInternalNotification({
+        type: "limit_critical",
+        organizationId,
+        organizationName,
+        instanceUrl,
+        timestamp: new Date().toISOString(),
+        details: {
+          limitType,
+          current: status.current,
+          limit: status.limit ?? 0,
+          percentage: status.percentage,
+        },
+      });
+    }
+  }
+};
+```
+
+#### Usage in License Check
+
+Update the license check function to include notifications:
+
+```typescript
+// In apps/web/modules/ee/license-check/lib/license.ts
+
+export const getEnterpriseLicense = reactCache(
+  async (organizationId: string, organizationName: string): Promise<{
+    active: boolean;
+    features: TEnterpriseLicenseFeatures;
+    limits: {
+      responses: number | null;
+      projects: number | null;
+      contacts: number | null;
+    };
+    lastChecked: Date;
+    isPendingDowngrade: boolean;
+    fallbackLevel: FallbackLevel;
+  }> => {
+    const result = await getEnterpriseLicenseInternal();
+    
+    // Send notifications after getting the result
+    await checkAndNotifyLicenseStatus(organizationId, organizationName);
+    await checkAndNotifyLimits(organizationId, organizationName);
+    
+    return result;
+  }
+);
+```
+
+#### n8n Webhook Configuration
+
+The webhook URL should be configured in the environment:
+
+```env
+INTERNAL_NOTIFICATION_WEBHOOK_URL=https://n8n.formbricks.com/webhook/your-webhook-id
+```
+
+#### n8n Workflow Example
+
+1. **Webhook Trigger**
+   - Receives POST requests with notification payload
+   - Validates payload structure
+
+2. **Notification Processing**
+   - Routes different notification types to appropriate channels
+   - Formats messages based on notification type
+
+3. **Slack Integration**
+   - Sends formatted messages to appropriate Slack channels
+   - Uses different colors for different severity levels
+   - Includes action buttons for quick responses
+
+Example Slack message format:
+```typescript
+{
+  blocks: [
+    {
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "🚨 License Check Failed",
+      },
+    },
+    {
+      type: "section",
+      fields: [
+        {
+          type: "mrkdwn",
+          text: `*Organization:*\n${organizationName}`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*Instance:*\n${instanceUrl}`,
+        },
+      ],
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "License check failed. Please investigate.",
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "View Organization",
+          },
+          url: `${instanceUrl}/organizations/${organizationId}`,
+        },
+      ],
+    },
+  ],
+}
+```
+
+#### Key Features
+
+1. **Comprehensive Monitoring**
+   - License check failures
+   - Grace period notifications
+   - License expiration
+   - Limit warnings (80%)
+   - Limit critical (100%)
+
+2. **Rich Context**
+   - Organization details
+   - Instance URL
+   - Current usage
+   - Percentage reached
+   - Timestamps
+
+3. **Reliable Delivery**
+   - Error handling
+   - Logging
+   - Retry mechanism
+   - Fallback options
+
+4. **Flexible Integration**
+   - Webhook-based
+   - Easy to extend
+   - Configurable endpoints
+   - Multiple notification types
+
+5. **Security**
+   - Environment variable configuration
+   - No sensitive data in notifications
+   - Rate limiting
+   - IP restrictions
+
+This system ensures we're promptly notified of any license or limit issues in our on-premise instances, allowing us to proactively address them.
