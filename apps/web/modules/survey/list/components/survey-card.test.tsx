@@ -25,6 +25,7 @@ vi.mock("@/lib/constants", () => ({
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
+  SESSION_MAX_AGE: 1000,
 }));
 
 describe("SurveyCard", () => {

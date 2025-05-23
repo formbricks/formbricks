@@ -32,6 +32,7 @@ vi.mock("@/lib/constants", () => ({
   IS_POSTHOG_CONFIGURED: true,
   AUDIT_LOG_PATH: "",
   AUDIT_LOG_ENABLED: true,
+  SESSION_MAX_AGE: 1000,
 }));
 
 // Create a spy for refreshSingleUseId so we can override it in tests

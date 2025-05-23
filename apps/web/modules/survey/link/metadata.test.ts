@@ -75,6 +75,18 @@ describe("getMetadataForLinkSurvey", () => {
         title: mockSurveyName,
         images: [mockOgImageUrl],
       },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -147,6 +159,18 @@ describe("getMetadataForLinkSurvey", () => {
         title: mockSurveyName,
         images: [mockOgImageUrl],
       },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -173,6 +197,18 @@ describe("getMetadataForLinkSurvey", () => {
       openGraph: {
         title: mockSurveyName,
         images: [mockOgImageUrl],
+      },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });

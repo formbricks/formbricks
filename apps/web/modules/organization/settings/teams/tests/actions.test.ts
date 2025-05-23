@@ -125,6 +125,7 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_PATH: "",
   AUDIT_LOG_ENABLED: true,
   AUDIT_LOG_GET_USER_IP: false,
+  SESSION_MAX_AGE: 1000,
 }));
 
 describe("Organization Settings Teams Actions", () => {
