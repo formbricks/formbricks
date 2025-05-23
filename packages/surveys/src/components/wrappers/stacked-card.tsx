@@ -48,11 +48,6 @@ export const StackedCard = ({
   };
 
   const calculateCardTransform = useMemo(() => {
-    if (offset > 2)
-      return () => {
-        return `opacity(0)`;
-      };
-
     let rotationCoefficient = 3;
     if (cardWidth >= 1000) {
       rotationCoefficient = 1.5;
