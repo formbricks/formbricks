@@ -51,41 +51,6 @@ export class CommandQueue {
 
         this.queue.push(newItem);
 
-        if (type === CommandType.Setup) {
-          // Remove any existing setup command and add this one to the front.
-          this.queue = this.queue.filter((item) => item.type !== CommandType.Setup);
-          this.queue.unshift(newItem);
-        } else if (type === CommandType.UserAction) {
-          let firstNonSetupIndex = 0;
-          while (
-            firstNonSetupIndex < this.queue.length &&
-            this.queue[firstNonSetupIndex].type === CommandType.Setup
-          ) {
-            firstNonSetupIndex++;
-          }
-
-          let initialActionIsGA = false;
-          if (
-            firstNonSetupIndex < this.queue.length &&
-            this.queue[firstNonSetupIndex].type === CommandType.GeneralAction
-          ) {
-            initialActionIsGA = true;
-          }
-
-          if (initialActionIsGA) {
-            let insertionPoint = firstNonSetupIndex;
-            while (
-              insertionPoint < this.queue.length &&
-              this.queue[insertionPoint].type === CommandType.GeneralAction
-            ) {
-              insertionPoint++;
-            }
-            this.queue.splice(insertionPoint, 0, newItem); // Use newItem directly
-          } else {
-            this.queue.sort((a, b) => a.type - b.type);
-          }
-        }
-
         if (!this.running) {
           this.commandPromise = new Promise((resolve) => {
             this.resolvePromise = resolve;

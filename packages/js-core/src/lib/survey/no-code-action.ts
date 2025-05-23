@@ -39,7 +39,7 @@ export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
 };
 
-export const checkPageUrl = async (): Promise<void> => {
+export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
@@ -69,6 +69,8 @@ export const checkPageUrl = async (): Promise<void> => {
       }
     }
   }
+
+  return { ok: true, data: undefined };
 };
 
 const checkPageUrlWrapper = (): void => {
