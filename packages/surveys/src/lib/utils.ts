@@ -168,3 +168,12 @@ export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): strin
 
 // Function to convert file extension to its MIME type
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
+
+/**
+ * Returns true if the string contains any RTL character.
+ * @param text The input string to test
+ */
+export function isRTL(text: string): boolean {
+  const rtlCharRegex = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+  return rtlCharRegex.test(text);
+}
