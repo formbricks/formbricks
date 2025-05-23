@@ -50,11 +50,10 @@ describe("EditProfileDetailsForm", () => {
   test("renders with initial user data and updates successfully", async () => {
     vi.mocked(updateUserAction).mockResolvedValue({ ...mockUser, name: "New Name" } as any);
 
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={true} />);
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     expect(nameInput).toHaveValue(mockUser.name);
-    expect(screen.getByDisplayValue(mockUser.email)).toBeDisabled();
     // Check initial language (English)
     expect(screen.getByText("English (US)")).toBeInTheDocument();
 
@@ -72,7 +71,11 @@ describe("EditProfileDetailsForm", () => {
     await userEvent.click(updateButton);
 
     await waitFor(() => {
-      expect(updateUserAction).toHaveBeenCalledWith({ name: "New Name", locale: "de-DE" });
+      expect(updateUserAction).toHaveBeenCalledWith({
+        name: "New Name",
+        locale: "de-DE",
+        email: mockUser.email,
+      });
     });
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
@@ -88,7 +91,7 @@ describe("EditProfileDetailsForm", () => {
     const errorMessage = "Update failed";
     vi.mocked(updateUserAction).mockRejectedValue(new Error(errorMessage));
 
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={false} />);
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     await userEvent.clear(nameInput);
@@ -106,7 +109,7 @@ describe("EditProfileDetailsForm", () => {
   });
 
   test("update button is disabled initially and enables on change", async () => {
-    render(<EditProfileDetailsForm user={mockUser} />);
+    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={false} />);
     const updateButton = screen.getByText("common.update");
     expect(updateButton).toBeDisabled();
 

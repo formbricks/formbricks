@@ -37,6 +37,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: 587,
   SMTP_USERNAME: "user@example.com",
   SMTP_PASSWORD: "password",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/modules/survey/link/actions");

@@ -7,6 +7,16 @@
     "continue_with_oidc": "Continuer avec {oidcDisplayName}",
     "continue_with_openid": "Continuer avec OpenID",
     "continue_with_saml": "Continuer avec SAML SSO",
+    "email-change": {
+      "confirm_password_description": "Veuillez confirmer votre mot de passe avant de changer votre adresse e-mail",
+      "email_already_exists": "Cet e-mail est déjà utilisé",
+      "email_change_success": "E-mail changé avec succès",
+      "email_change_success_description": "Vous avez changé votre adresse e-mail avec succès. Veuillez vous connecter avec votre nouvelle adresse e-mail.",
+      "email_verification_failed": "Échec de la vérification de l'email",
+      "invalid_or_expired_token": "Échec du changement d'email. Votre jeton est invalide ou expiré.",
+      "new_email": "Nouvel Email",
+      "old_email": "Ancien Email"
+    },
     "forgot-password": {
       "back_to_login": "Retour à la connexion",
       "email-sent": {
@@ -82,7 +92,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
-      "verification_email_successfully_sent": "Email de vérification envoyé avec succès. Veuillez vérifier votre boîte de réception.",
+      "verification_email_successfully_sent": "Email de vérification envoyé à {email}. Veuillez vérifier pour compléter la mise à jour.",
       "we_sent_an_email_to": "Nous avons envoyé un email à {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"
     },
@@ -451,6 +461,7 @@
     "live_survey_notification_view_more_responses": "Voir {responseCount} réponses supplémentaires",
     "live_survey_notification_view_previous_responses": "Voir les réponses précédentes",
     "live_survey_notification_view_response": "Voir la réponse",
+    "new_email_verification_text": "Pour confirmer votre nouvelle adresse e-mail, veuillez cliquer sur le bouton ci-dessous :",
     "notification_footer_all_the_best": "Tous mes vœux,",
     "notification_footer_in_your_settings": "dans vos paramètres \uD83D\uDE4F",
     "notification_footer_please_turn_them_off": "veuillez les éteindre",
@@ -500,6 +511,8 @@
     "verification_email_thanks": "Merci de valider votre email !",
     "verification_email_to_fill_survey": "Pour remplir le questionnaire, veuillez cliquer sur le bouton ci-dessous :",
     "verification_email_verify_email": "Vérifier l'email",
+    "verification_new_email_subject": "Vérification du changement d'email",
+    "verification_security_notice": "Si vous n'avez pas demandé ce changement d'email, veuillez ignorer cet email ou contacter le support immédiatement.",
     "verified_link_survey_email_subject": "Votre enquête est prête à être remplie.",
     "weekly_summary_create_reminder_notification_body_cal_slot": "Choisissez un créneau de 15 minutes dans le calendrier de notre PDG.",
     "weekly_summary_create_reminder_notification_body_dont_let_a_week_pass": "Ne laissez pas une semaine passer sans en apprendre davantage sur vos utilisateurs :",
@@ -971,7 +984,7 @@
         "2000_monthly_identified_users": "2000 Utilisateurs Identifiés Mensuels",
         "30000_monthly_identified_users": "30000 Utilisateurs Identifiés Mensuels",
         "3_projects": "3 Projets",
-        "5000_monthly_responses": "5000 Réponses Mensuelles",
+        "5000_monthly_responses": "5,000 Réponses Mensuelles",
         "5_projects": "5 Projets",
         "7500_monthly_identified_users": "7500 Utilisateurs Identifiés Mensuels",
         "advanced_targeting": "Ciblage Avancé",

@@ -83,8 +83,10 @@ describe("StartFromScratchTemplate", () => {
       />
     );
 
-    const templateElement = screen.getByText(mockTemplate.name).closest("div");
-    await user.click(templateElement!);
+    const cardButton = screen.getByRole("button", {
+      name: `${mockTemplate.name} ${mockTemplate.description}`,
+    });
+    await user.click(cardButton);
 
     expect(createSurveyMock).toHaveBeenCalledWith(mockTemplate);
     expect(onTemplateClickMock).not.toHaveBeenCalled();
@@ -112,8 +114,10 @@ describe("StartFromScratchTemplate", () => {
       />
     );
 
-    const templateElement = screen.getByText(mockTemplate.name).closest("div");
-    await user.click(templateElement!);
+    const cardButton = screen.getByRole("button", {
+      name: `${mockTemplate.name} ${mockTemplate.description}`,
+    });
+    await user.click(cardButton);
 
     expect(replacePresetPlaceholders).toHaveBeenCalledWith(mockTemplate, mockProject);
     expect(onTemplateClickMock).toHaveBeenCalledWith(replacedTemplate);
