@@ -46,7 +46,7 @@ const SENSITIVE_KEYS = [
   "attributes",
 ];
 
-function redactPII(obj: any): any {
+export function redactPII(obj: any): any {
   if (Array.isArray(obj)) {
     return obj.map(redactPII);
   }
@@ -63,7 +63,7 @@ function redactPII(obj: any): any {
   return obj;
 }
 
-function deepDiff(oldObj: any, newObj: any): any {
+export function deepDiff(oldObj: any, newObj: any): any {
   if (typeof oldObj !== "object" || typeof newObj !== "object" || oldObj === null || newObj === null) {
     if (JSON.stringify(oldObj) !== JSON.stringify(newObj)) {
       return newObj;
@@ -82,7 +82,7 @@ function deepDiff(oldObj: any, newObj: any): any {
   return Object.keys(diff).length > 0 ? diff : undefined;
 }
 
-async function buildAndLogAuditEvent({
+export async function buildAndLogAuditEvent({
   actionType,
   targetType,
   userId,
@@ -303,7 +303,12 @@ export function withAuditLogging(
         if (!organizationId) {
           const environmentId: string | undefined = parsedInput?.environmentId;
           if (environmentId) {
-            organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+            try {
+              organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+            } catch (err) {
+              logger.error(err, "Failed to get organizationId from environmentId in audit logging");
+              organizationId = UNKNOWN_DATA;
+            }
           } else {
             organizationId = UNKNOWN_DATA;
           }

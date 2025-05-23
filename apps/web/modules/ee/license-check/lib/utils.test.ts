@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as licenseModule from "./license";
 import {
   getBiggerUploadFileSizePermission,
+  getIsAuditLogsEnabled,
   getIsContactsEnabled,
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
@@ -45,6 +46,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   ai: false,
+  auditLogs: false,
 };
 
 const defaultLicense = {
@@ -474,6 +476,89 @@ describe("License Utils", () => {
       });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(3);
+    });
+  });
+
+  describe("getIsAuditLogsEnabled", () => {
+    const auditLogsFeature = { ...defaultFeatures, auditLogs: true };
+    const noAuditLogsFeature = { ...defaultFeatures, auditLogs: false };
+
+    test("returns true if all conditions met (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(true);
+    });
+
+    test("returns false if license inactive (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns false if auditLogs feature is false (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: noAuditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns false if AUDIT_LOG_ENABLED is false (self-hosted)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = false;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns true if all conditions met (cloud, ENTERPRISE plan)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled(constants.PROJECT_FEATURE_KEYS.ENTERPRISE);
+      expect(result).toBe(true);
+    });
+
+    test("returns false if plan is not ENTERPRISE (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled(constants.PROJECT_FEATURE_KEYS.SCALE);
+      expect(result).toBe(false);
+    });
+
+    test("returns true if billingPlan is not provided (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: auditLogsFeature,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(true);
     });
   });
 });

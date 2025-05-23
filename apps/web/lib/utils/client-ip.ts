@@ -1,7 +1,14 @@
 import { headers } from "next/headers";
+import { logger } from "@formbricks/logger";
 
 export async function getClientIpFromHeaders(): Promise<string> {
-  const headersList = await headers();
+  let headersList: any;
+  try {
+    headersList = await headers();
+  } catch (e) {
+    logger.error(e, "Failed to get headers in getClientIpFromHeaders");
+    return "::1";
+  }
 
   // Try common proxy headers first
   const cfConnectingIp = headersList.get("cf-connecting-ip");
