@@ -7,6 +7,7 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
@@ -102,9 +103,8 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const updateSurveyAction = authenticatedActionClient
-  .schema(ZSurvey)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -124,6 +124,8 @@ export const updateSurveyAction = authenticatedActionClient
 
     const { followUps } = parsedInput;
 
+    const oldSurvey = await getSurvey(parsedInput.id);
+
     if (parsedInput.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
     }
@@ -136,5 +138,12 @@ export const updateSurveyAction = authenticatedActionClient
       await checkMultiLanguagePermission(organizationId);
     }
 
+    // Context for audit log
+    ctx.surveyId = parsedInput.id;
+    ctx.organizationId = organizationId;
+    ctx.oldObject = oldSurvey;
+    ctx.newObject = parsedInput;
+
     return await updateSurvey(parsedInput);
-  });
+  })
+);

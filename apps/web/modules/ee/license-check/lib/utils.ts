@@ -1,7 +1,13 @@
 import "server-only";
-import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
+  PROJECT_FEATURE_KEYS,
+} from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
@@ -136,4 +142,15 @@ export const getOrganizationProjectsLimit = async (
     limit = license.active && license.features?.projects != null ? license.features.projects : 3;
   }
   return limit;
+};
+
+export const getIsAuditLogsEnabled = async (billingPlan?: TOrganizationBillingPlan): Promise<boolean> => {
+  const license = await getEnterpriseLicense();
+
+  return (
+    license.active &&
+    !!license.features?.auditLogs &&
+    AUDIT_LOG_ENABLED &&
+    (IS_FORMBRICKS_CLOUD && billingPlan ? billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE : true)
+  );
 };

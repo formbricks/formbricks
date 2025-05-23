@@ -14,11 +14,13 @@ import {
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/utils";
 import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
   createSegment,
   deleteSegment,
+  getSegment,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -42,9 +44,8 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
   }
 };
 
-export const createSegmentAction = authenticatedActionClient
-  .schema(ZSegmentCreateInput)
-  .action(async ({ ctx, parsedInput }) => {
+export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCreateInput).action(
+  withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
     if (parsedInput.surveyId) {
       const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
 
@@ -54,6 +55,9 @@ export const createSegmentAction = authenticatedActionClient
     }
 
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+
+    // Set the organizationId in the context to be used in the audit log
+    ctx.organizationId = organizationId;
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -81,8 +85,15 @@ export const createSegmentAction = authenticatedActionClient
       throw new Error(errMsg);
     }
 
-    return await createSegment(parsedInput);
-  });
+    const segment = await createSegment(parsedInput);
+
+    // Set the segmentId in the context to be used in the audit log
+    ctx.segmentId = segment.id;
+    ctx.newObject = segment;
+
+    return segment;
+  })
+);
 
 const ZUpdateSegmentAction = z.object({
   environmentId: ZId,
@@ -208,9 +219,8 @@ const ZDeleteSegmentAction = z.object({
   segmentId: ZId,
 });
 
-export const deleteSegmentAction = authenticatedActionClient
-  .schema(ZDeleteSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegmentAction).action(
+  withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
 
     await checkAuthorizationUpdated({
@@ -231,8 +241,13 @@ export const deleteSegmentAction = authenticatedActionClient
 
     await checkAdvancedTargetingPermission(organizationId);
 
+    ctx.segmentId = parsedInput.segmentId;
+    ctx.oldObject = await getSegment(parsedInput.segmentId);
+    ctx.organizationId = organizationId;
+
     return await deleteSegment(parsedInput.segmentId);
-  });
+  })
+);
 
 const ZResetSegmentFiltersAction = z.object({
   surveyId: ZId,
