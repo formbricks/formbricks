@@ -30,6 +30,8 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
   IS_POSTHOG_CONFIGURED: true,
+  AUDIT_LOG_PATH: "./path",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 // Create a spy for refreshSingleUseId so we can override it in tests

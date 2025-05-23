@@ -401,21 +401,23 @@ export const getOrganizationPlan = reactCache(
       const cache = getCache();
       const cacheKey = `organization-plan-${organizationId}`;
       let plan = await cache.get<string>(cacheKey);
+      let isValid = !!plan;
 
       if (!plan) {
         const org = await prisma.organization.findUnique({
           where: { id: organizationId },
           select: { billing: true },
         });
+
         plan = org?.billing?.plan ?? null;
-        if (plan) {
+        isValid = !!plan && ZOrganizationBillingPlan.safeParse(plan).success;
+
+        if (isValid) {
           await cache.set(cacheKey, plan, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
         }
       }
 
-      return plan && ZOrganizationBillingPlan.safeParse(plan).success
-        ? (plan as TOrganizationBillingPlan)
-        : undefined;
+      return isValid ? (plan as TOrganizationBillingPlan) : undefined;
     } catch (e) {
       logger.error(e, "Error getting organization plan");
       return undefined;
