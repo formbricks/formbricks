@@ -73,7 +73,7 @@ export function SubmitButton({
         </span>
       )}
       <span className={cn(isLoading ? "opacity-20" : "opacity-100")}>
-        {buttonLabel || isLastQuestion ? "Finish" : "Next"}
+        {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
       </span>
     </button>
   );
