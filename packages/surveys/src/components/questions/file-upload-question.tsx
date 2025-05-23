@@ -14,21 +14,21 @@ import { FileInput } from "../general/file-input";
 import { Subheader } from "../general/subheader";
 
 interface FileUploadQuestionProps {
-  readonly question: TSurveyFileUploadQuestion;
-  readonly value: string[];
-  readonly onChange: (responseData: TResponseData) => void;
-  readonly onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  readonly onBack: () => void;
-  readonly onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
-  readonly isFirstQuestion: boolean;
-  readonly isLastQuestion: boolean;
-  readonly surveyId: string;
-  readonly languageCode: string;
-  readonly ttc: TResponseTtc;
-  readonly setTtc: (ttc: TResponseTtc) => void;
-  readonly autoFocusEnabled: boolean;
-  readonly currentQuestionId: TSurveyQuestionId;
-  readonly isBackButtonHidden: boolean;
+  question: TSurveyFileUploadQuestion;
+  value: string[];
+  onChange: (responseData: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
+  onBack: () => void;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
+  surveyId: string;
+  languageCode: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
+  autoFocusEnabled: boolean;
+  currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function FileUploadQuestion({
@@ -46,7 +46,7 @@ export function FileUploadQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
-}: FileUploadQuestionProps) {
+}: Readonly<FileUploadQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);

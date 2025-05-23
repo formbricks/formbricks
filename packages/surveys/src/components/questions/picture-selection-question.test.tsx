@@ -171,7 +171,7 @@ describe("PictureSelectionQuestion", () => {
     render(<PictureSelectionQuestion {...mockProps} />);
 
     const images = screen.getAllByRole("img");
-    const label = images[0].closest("label");
+    const label = images[0].closest("button");
 
     fireEvent.keyDown(label!, { key: " " });
 

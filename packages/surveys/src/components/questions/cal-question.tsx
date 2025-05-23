@@ -40,7 +40,7 @@ export function CalQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
-}: CalQuestionProps) {
+}: Readonly<CalQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");

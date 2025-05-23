@@ -178,7 +178,7 @@ export const FileUploadQuestionForm = ({
           </Button>
         )}
       </div>
-      <div className="mb-8 mt-6 space-y-6">
+      <div className="mt-6 space-y-6">
         <AdvancedOptionToggle
           isChecked={question.allowMultipleFiles}
           onToggle={() => updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })}

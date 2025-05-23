@@ -122,7 +122,7 @@ describe("OpenTextQuestion", () => {
   test("renders textarea for long answers", () => {
     render(<OpenTextQuestion {...defaultProps} question={{ ...defaultQuestion, longAnswer: true }} />);
 
-    expect(screen.getByRole("textbox")).toHaveAttribute("rows", "3");
+    expect(screen.getByRole("textbox")).toHaveAttribute("rows", "5");
   });
 
   test("displays character limit when configured", () => {

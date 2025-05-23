@@ -183,7 +183,7 @@ describe("StackedCard", () => {
   test("card height is initial when offset is < 0 and not fullSizeCards", () => {
     render(<StackedCard {...defaultProps} offset={-1} fullSizeCards={false} />);
     const card = screen.getByTestId("questionCard-0");
-    expect(card).toHaveStyle("height: initial");
+    expect(card).toHaveStyle(`height: ${defaultProps.cardHeight}`);
   });
 
   test("card height is cardHeight when offset > 0 and not fullSizeCards", () => {

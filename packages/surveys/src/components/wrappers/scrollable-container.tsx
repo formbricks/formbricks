@@ -3,21 +3,23 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
 
 interface ScrollableContainerProps {
+  className?: string;
   children: JSX.Element;
 }
 
-export function ScrollableContainer({ children }: ScrollableContainerProps) {
+export function ScrollableContainer({ className, children }: Readonly<ScrollableContainerProps>) {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isSurveyPreview = Boolean(document.getElementById("survey-preview"));
+  const isMobilePreview = isSurveyPreview ? Boolean(document.getElementById("mobile-preview")) : false;
+  const previewScaleCoifficient = isSurveyPreview ? 0.66 : 1;
 
   const checkScroll = () => {
     if (!containerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
     setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
-
     setIsAtTop(scrollTop === 0);
   };
 
@@ -45,12 +47,18 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
         <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-6 fb-bg-gradient-to-b fb-to-transparent" />
       )}
       <div
+        id="scrollable-container"
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
+          maxHeight: isMobilePreview
+            ? "30dvh"
+            : `calc(var(--fb-survey-card-max-height, 42dvh) * ${previewScaleCoifficient})`,
+          minHeight: isMobilePreview
+            ? "30dvh"
+            : `calc(var(--fb-survey-card-min-height, 42dvh) * ${previewScaleCoifficient})`,
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
+        className={cn(`fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg ${className}`)}>
         {children}
       </div>
       {!isAtBottom && (

@@ -40,7 +40,7 @@ export function NPSQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
-}: NPSQuestionProps) {
+}: Readonly<NPSQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -96,17 +96,15 @@ export function NPSQuestion({
               <div className="fb-flex">
                 {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
                   return (
-                    <label
+                    <button
+                      type="button"
                       key={number}
                       tabIndex={isCurrent ? 0 : -1}
-                      onMouseOver={() => {
-                        setHoveredNumber(number);
-                      }}
-                      onMouseLeave={() => {
-                        setHoveredNumber(-1);
-                      }}
+                      onMouseOver={() => setHoveredNumber(number)}
+                      onMouseLeave={() => setHoveredNumber(-1)}
+                      onFocus={() => setHoveredNumber(number)}
+                      onBlur={() => setHoveredNumber(-1)}
                       onKeyDown={(e) => {
-                        // Accessibility: if spacebar was pressed pass this down to the input
                         if (e.key === " ") {
                           e.preventDefault();
                           document.getElementById(number.toString())?.click();
@@ -120,29 +118,29 @@ export function NPSQuestion({
                         "fb-text-heading first:fb-rounded-l-custom last:fb-rounded-r-custom focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm last:fb-border-r focus:fb-border-2 focus:fb-outline-none",
                         question.isColorCodingEnabled
                           ? "fb-h-[46px] fb-leading-[3.5em]"
-                          : "fb-h fb-leading-10",
+                          : "fb-h-[41px] fb-leading-10",
                         hoveredNumber === number ? "fb-bg-accent-bg" : ""
                       )}>
-                      {question.isColorCodingEnabled ? (
-                        <div
-                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
+                      <label className="fb-w-full fb-h-full fb-flex fb-items-center fb-justify-center">
+                        {question.isColorCodingEnabled ? (
+                          <div
+                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
+                          />
+                        ) : null}
+                        <input
+                          type="radio"
+                          id={number.toString()}
+                          name="nps"
+                          value={number}
+                          checked={value === number}
+                          className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+                          onClick={() => handleClick(number)}
+                          required={question.required}
+                          tabIndex={-1}
                         />
-                      ) : null}
-                      <input
-                        type="radio"
-                        id={number.toString()}
-                        name="nps"
-                        value={number}
-                        checked={value === number}
-                        className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-                        onClick={() => {
-                          handleClick(number);
-                        }}
-                        required={question.required}
-                        tabIndex={-1}
-                      />
-                      {number}
-                    </label>
+                        {number}
+                      </label>
+                    </button>
                   );
                 })}
               </div>

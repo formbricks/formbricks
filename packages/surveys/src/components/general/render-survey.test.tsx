@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+// Ensure screen is imported
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+// Use test consistently
 import { RenderSurvey } from "./render-survey";
 
 // Stub SurveyContainer to render children and capture props
@@ -21,17 +23,33 @@ vi.mock("./survey", () => ({
   },
 }));
 
+// Mock ResizeObserver
+let resizeCallback: Function | undefined;
+const ResizeObserverMock = vi.fn((callback) => {
+  resizeCallback = callback;
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
+global.ResizeObserver = ResizeObserverMock as any;
+
 describe("RenderSurvey", () => {
   beforeEach(() => {
     surveySpy.mockClear();
     vi.useFakeTimers();
+    // Reset styles on documentElement before each test
+    document.documentElement.style.removeProperty("--fb-survey-card-max-height");
+    document.documentElement.style.removeProperty("--fb-survey-card-min-height");
+    resizeCallback = undefined; // Reset callback for each test
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("renders with default props and handles close", () => {
+  test("renders with default props and handles close", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -63,7 +81,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished skips close if redirectToUrl", () => {
+  test("onFinished skips close if redirectToUrl", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "redirectToUrl" }] } as any;
@@ -88,7 +106,7 @@ describe("RenderSurvey", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("onFinished closes after delay for non-redirect endings", () => {
+  test("onFinished closes after delay for non-redirect endings", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -115,7 +133,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished does not auto-close when inline mode", () => {
+  test("onFinished does not auto-close when inline mode", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [] } as any;
@@ -138,5 +156,50 @@ describe("RenderSurvey", () => {
     props.onFinished();
     vi.advanceTimersByTime(5000);
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  // New tests for surveyTypeStyles
+  test("should apply correct styles for link surveys", () => {
+    const propsForLinkSurvey = {
+      survey: { type: "link", endings: [] },
+      styling: {},
+      isBrandingEnabled: false,
+      languageCode: "en",
+      onClose: vi.fn(),
+      onFinished: vi.fn(),
+      placement: "bottomRight",
+      mode: "modal",
+    } as any;
+
+    render(<RenderSurvey {...propsForLinkSurvey} />);
+    // Manually trigger the ResizeObserver callback if it was captured
+    if (resizeCallback) {
+      resizeCallback();
+    }
+
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-max-height")).toBe("56dvh");
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-min-height")).toBe("0");
+  });
+
+  test("should apply correct styles for app (non-link) surveys", () => {
+    const propsForAppSurvey = {
+      survey: { type: "app", endings: [] },
+      styling: {},
+      isBrandingEnabled: false,
+      languageCode: "en",
+      onClose: vi.fn(),
+      onFinished: vi.fn(),
+      placement: "bottomRight",
+      mode: "modal",
+    } as any;
+
+    render(<RenderSurvey {...propsForAppSurvey} />);
+    // Manually trigger the ResizeObserver callback if it was captured
+    if (resizeCallback) {
+      resizeCallback();
+    }
+
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-max-height")).toBe("40dvh");
+    expect(document.documentElement.style.getPropertyValue("--fb-survey-card-min-height")).toBe("40dvh");
   });
 });
