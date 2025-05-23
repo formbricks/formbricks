@@ -8,19 +8,10 @@ import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
+import { TPricingPlan } from "../api/lib/constants";
 
 interface PricingCardProps {
-  plan: {
-    id: string;
-    name: string;
-    featured: boolean;
-    price: {
-      monthly: string;
-      yearly: string;
-    };
-    mainFeatures: string[];
-    href: string;
-  };
+  plan: TPricingPlan;
   planPeriod: TOrganizationBillingPeriod;
   organization: TOrganization;
   onUpgrade: () => Promise<void>;
@@ -28,7 +19,7 @@ interface PricingCardProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    SCALE: string;
+    CUSTOM: string;
     ENTERPRISE: string;
   };
 }
@@ -72,18 +63,33 @@ export const PricingCard = ({
       return null;
     }
 
-    if (plan.id !== projectFeatureKeys.ENTERPRISE && plan.id !== projectFeatureKeys.FREE) {
+    if (plan.id === projectFeatureKeys.ENTERPRISE) {
+      return (
+        <Button
+          variant="outline"
+          loading={loading}
+          onClick={() => {
+            window.open(plan.href, "_blank", "noopener,noreferrer");
+          }}
+          className="flex justify-center bg-white">
+          {t(plan.CTA || "common.request_pricing")}
+        </Button>
+      );
+    }
+
+    if (plan.id === projectFeatureKeys.STARTUP) {
       if (organization.billing.plan === projectFeatureKeys.FREE) {
         return (
           <Button
             loading={loading}
+            variant="default"
             onClick={async () => {
               setLoading(true);
               await onUpgrade();
               setLoading(false);
             }}
             className="flex justify-center">
-            {t("common.start_free_trial")}
+            {t(plan.CTA || "common.start_free_trial")}
           </Button>
         );
       }
@@ -100,15 +106,20 @@ export const PricingCard = ({
       );
     }
 
-    return <></>;
+    return null;
   }, [
     isCurrentPlan,
     loading,
     onUpgrade,
     organization.billing.plan,
+    plan.CTA,
+    plan.featured,
+    plan.href,
     plan.id,
     projectFeatureKeys.ENTERPRISE,
     projectFeatureKeys.FREE,
+    projectFeatureKeys.STARTUP,
+    t,
   ]);
 
   return (
@@ -147,7 +158,7 @@ export const PricingCard = ({
                   : plan.price.yearly
                 : t(plan.price.monthly)}
             </p>
-            {plan.name !== "Enterprise" && (
+            {plan.id !== projectFeatureKeys.ENTERPRISE && (
               <div className="text-sm leading-5">
                 <p className={plan.featured ? "text-slate-700" : "text-slate-600"}>
                   / {planPeriod === "monthly" ? "Month" : "Year"}
@@ -171,16 +182,9 @@ export const PricingCard = ({
               {t("environments.settings.billing.manage_subscription")}
             </Button>
           )}
-
-          {organization.billing.plan !== plan.id && plan.id === projectFeatureKeys.ENTERPRISE && (
-            <Button loading={loading} onClick={() => onUpgrade()} className="flex justify-center">
-              {t("environments.settings.billing.contact_us")}
-            </Button>
-          )}
         </div>
         <div className="mt-8 flow-root sm:mt-10">
           <ul
-            role="list"
             className={cn(
               plan.featured
                 ? "divide-slate-900/5 border-slate-900/5 text-slate-600"
@@ -193,7 +197,6 @@ export const PricingCard = ({
                   className={cn(plan.featured ? "text-brand-dark" : "text-slate-500", "h-6 w-5 flex-none")}
                   aria-hidden="true"
                 />
-
                 {t(mainFeature)}
               </li>
             ))}
