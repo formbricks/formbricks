@@ -33,7 +33,7 @@ export const StackedCard = ({
 }: StackedCardProps) => {
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
-  const currentCardHeight = delayedOffset === 0 ? "auto" : cardHeight;
+  const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
   const isHidden = offset < 0 || offset > 2;
 
   const getBottomStyles = () => {

@@ -138,7 +138,7 @@ export function EndingCard({
                     questionId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
-                    <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                    <div className="fb-mt-4 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
                       <SubmitButton
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),

@@ -112,7 +112,7 @@ export function StackedCardsContainer({
         });
         resizeObserver.current.observe(currentElement);
       }
-    }, 200);
+    }, 0);
     return () => {
       resizeObserver.current?.disconnect();
       clearTimeout(timer);
