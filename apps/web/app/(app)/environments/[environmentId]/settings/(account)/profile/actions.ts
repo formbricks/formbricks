@@ -10,13 +10,13 @@ import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
   AuthenticationError,
   AuthorizationError,
-  InvalidInputError,
   OperationNotAllowedError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
@@ -63,14 +63,13 @@ export const updateUserAction = authenticatedActionClient
 
       const doesUserExist = await checkUserExistsByEmail(inputEmail);
 
-      if (doesUserExist) {
-        throw new InvalidInputError("This email is already in use");
-      }
-
-      if (EMAIL_VERIFICATION_DISABLED) {
-        payload.email = inputEmail;
-      } else {
-        await sendVerificationNewEmail(ctx.user.id, inputEmail);
+      if (!doesUserExist) {
+        if (EMAIL_VERIFICATION_DISABLED) {
+          payload.email = inputEmail;
+          updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
+        } else {
+          await sendVerificationNewEmail(ctx.user.id, inputEmail);
+        }
       }
     }
 

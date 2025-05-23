@@ -13,6 +13,8 @@
       "email_change_success": "Email changed successfully",
       "email_change_success_description": "You have successfully changed your email address. Please log in with your new email address.",
       "email_verification_failed": "Email verification failed",
+      "email_verification_loading": "Email verification in progress...",
+      "email_verification_loading_description": "We are updating your email address in our system. This may take a few seconds.",
       "invalid_or_expired_token": "Email change failed. Your token is invalid or expired.",
       "new_email": "New Email",
       "old_email": "Old Email"
@@ -88,6 +90,7 @@
     "verification-requested": {
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
+      "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
       "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
@@ -1154,6 +1157,7 @@
         "file_size_must_be_less_than_10mb": "File size must be less than 10MB.",
         "invalid_file_type": "Invalid file type. Only JPEG, PNG, and WEBP files are allowed.",
         "lost_access": "Lost access",
+        "new_email_update_success": "Your email change request was received.",
         "or_enter_the_following_code_manually": "Or enter the following code manually:",
         "organization_identification": "Assist your organization in identifying you on Formbricks",
         "organizations_delete_message": "You are the only owner of these organizations, so they <b>will be deleted as well.</b>",

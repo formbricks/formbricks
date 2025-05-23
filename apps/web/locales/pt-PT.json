@@ -13,6 +13,8 @@
       "email_change_success": "Email alterado com sucesso",
       "email_change_success_description": "Alterou com sucesso o seu endereço de email. Por favor, inicie sessão com o seu novo endereço de email.",
       "email_verification_failed": "Falha na verificação do email",
+      "email_verification_loading": "Verificação do email em progresso...",
+      "email_verification_loading_description": "Estamos a atualizar o seu endereço de email no nosso sistema. Isto pode demorar alguns segundos.",
       "invalid_or_expired_token": "Falha na alteração do email. O seu token é inválido ou expirou.",
       "new_email": "Novo Email",
       "old_email": "Email Antigo"
@@ -88,6 +90,7 @@
     "verification-requested": {
       "invalid_email_address": "Endereço de email inválido",
       "invalid_token": "Token inválido ☹️",
+      "new_email_verification_success": "Se o endereço for válido, um email de verificação foi enviado.",
       "no_email_provided": "Nenhum email fornecido",
       "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clique no link no email para ativar a sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme o seu endereço de email",
@@ -1154,6 +1157,7 @@
         "file_size_must_be_less_than_10mb": "O tamanho do ficheiro deve ser inferior a 10MB.",
         "invalid_file_type": "Tipo de ficheiro inválido. Apenas são permitidos ficheiros JPEG, PNG e WEBP.",
         "lost_access": "Perdeu o acesso",
+        "new_email_update_success": "O seu pedido de alteração de email foi recebido.",
         "or_enter_the_following_code_manually": "Ou insira o seguinte código manualmente:",
         "organization_identification": "Ajude a sua organização a identificá-lo no Formbricks",
         "organizations_delete_message": "É o único proprietário destas organizações, por isso <b>também serão eliminadas.</b>",

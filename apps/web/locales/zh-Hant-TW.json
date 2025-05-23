@@ -13,6 +13,8 @@
       "email_change_success": "電子郵件已成功更改",
       "email_change_success_description": "您已成功更改電子郵件地址。請使用您的新電子郵件地址登入。",
       "email_verification_failed": "電子郵件驗證失敗",
+      "email_verification_loading": "電子郵件驗證進行中...",
+      "email_verification_loading_description": "我們正在系統中更新您的電子郵件地址。這可能需要幾秒鐘。",
       "invalid_or_expired_token": "電子郵件更改失敗。您的 token 無效或已過期。",
       "new_email": "新 電子郵件",
       "old_email": "舊 電子郵件"
@@ -88,6 +90,7 @@
     "verification-requested": {
       "invalid_email_address": "無效的電子郵件地址",
       "invalid_token": "無效的權杖 ☹️",
+      "new_email_verification_success": "如果地址有效，驗證電子郵件已發送。",
       "no_email_provided": "未提供電子郵件",
       "please_click_the_link_in_the_email_to_activate_your_account": "請點擊電子郵件中的連結以啟用您的帳戶。",
       "please_confirm_your_email_address": "請確認您的電子郵件地址",
@@ -1154,6 +1157,7 @@
         "file_size_must_be_less_than_10mb": "檔案大小必須小於 10MB。",
         "invalid_file_type": "無效的檔案類型。僅允許 JPEG、PNG 和 WEBP 檔案。",
         "lost_access": "無法存取",
+        "new_email_update_success": "您的 email 更改請求已收到。",
         "or_enter_the_following_code_manually": "或手動輸入下列程式碼：",
         "organization_identification": "協助您的組織在 Formbricks 上識別您",
         "organizations_delete_message": "您是這些組織的唯一擁有者，因此它們也 <b>將被刪除。</b>",

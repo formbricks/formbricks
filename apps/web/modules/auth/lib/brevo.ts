@@ -34,11 +34,44 @@ export const createBrevoCustomer = async ({ id, email }: { id: string; email: TU
       body: JSON.stringify(requestBody),
     });
 
-    if (res.status !== 200) {
+    if (res.status !== 201) {
       const errorText = await res.text();
       logger.error({ errorText }, "Error sending user to Brevo");
     }
   } catch (error) {
     logger.error(error, "Error sending user to Brevo");
+  }
+};
+
+export const updateBrevoCustomer = async ({ id, email }: { id: string; email: TUserEmail }) => {
+  if (!BREVO_API_KEY) {
+    return;
+  }
+
+  validateInputs([id, ZId], [email, ZUserEmail]);
+
+  try {
+    const requestBody: any = {
+      attributes: {
+        EMAIL: email,
+      },
+    };
+
+    const res = await fetch(`https://api.brevo.com/v3/contacts/${id}?identifierType=ext_id`, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "api-key": BREVO_API_KEY,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (res.status !== 204) {
+      const errorText = await res.text();
+      logger.error({ errorText }, "Error updating user in Brevo");
+    }
+  } catch (error) {
+    logger.error(error, "Error updating user in Brevo");
   }
 };
