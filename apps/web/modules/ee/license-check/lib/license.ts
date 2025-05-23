@@ -11,6 +11,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TOrganizationBillingPlan, ZOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 // Configuration
 const CONFIG = {
@@ -49,6 +50,7 @@ const LicenseFeaturesSchema = z.object({
   ai: z.boolean(),
   saml: z.boolean(),
   spamProtection: z.boolean(),
+  auditLogs: z.boolean(),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -108,6 +110,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   ai: false,
   saml: false,
   spamProtection: false,
+  auditLogs: false,
 };
 
 // Helper functions
@@ -391,5 +394,33 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
     return null;
   }
 };
+
+export const getOrganizationPlan = reactCache(
+  async (organizationId: string): Promise<TOrganizationBillingPlan | undefined> => {
+    try {
+      const cache = getCache();
+      const cacheKey = `organization-plan-${organizationId}`;
+      let plan = await cache.get<string>(cacheKey);
+
+      if (!plan) {
+        const org = await prisma.organization.findUnique({
+          where: { id: organizationId },
+          select: { billing: true },
+        });
+        plan = org?.billing?.plan ?? null;
+        if (plan) {
+          await cache.set(cacheKey, plan, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
+        }
+      }
+
+      return plan && ZOrganizationBillingPlan.safeParse(plan).success
+        ? (plan as TOrganizationBillingPlan)
+        : undefined;
+    } catch (e) {
+      logger.error(e, "Error getting organization plan");
+      return undefined;
+    }
+  }
+);
 
 // All permission checking functions and their helpers have been moved to utils.ts

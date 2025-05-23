@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
@@ -34,9 +35,9 @@ export const DELETE = withApiLogging(
     const auditLog: ApiAuditLog = {
       actionType: "webhook.deleted",
       targetType: "webhook",
-      userId: "unknown",
+      userId: UNKNOWN_DATA,
       targetId: undefined,
-      organizationId: "unknown",
+      organizationId: UNKNOWN_DATA,
       status: "failure",
       oldObject: undefined,
     };

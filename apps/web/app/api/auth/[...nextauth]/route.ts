@@ -1,6 +1,7 @@
 import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions as baseAuthOptions } from "@/modules/auth/lib/authOptions";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/utils";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import NextAuth from "next-auth";
 import { logger } from "@formbricks/logger";
@@ -44,9 +45,9 @@ const handler = async (req: Request, ctx: any) => {
           const auditLog = {
             actionType: "user.signedin" as const,
             targetType: "user" as const,
-            userId: user?.id ?? "unknown",
-            targetId: user?.id ?? "unknown",
-            organizationId: "unknown",
+            userId: user?.id ?? UNKNOWN_DATA,
+            targetId: user?.id ?? UNKNOWN_DATA,
+            organizationId: UNKNOWN_DATA,
             status,
             userType: "user" as const,
             newObject: user,

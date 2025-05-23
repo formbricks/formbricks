@@ -5,6 +5,7 @@ const AuditTargets = ["segment", "survey", "webhook", "user"] as const;
 const AuditActions = ["created", "updated", "deleted", "signedin"] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;
+export const UNKNOWN_DATA = "unknown";
 
 // Use template literal for the type
 export type TAuditTarget = (typeof AuditTargets)[number];

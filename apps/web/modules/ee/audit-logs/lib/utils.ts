@@ -9,6 +9,7 @@ import {
   TAuditLogEvent,
   TAuditStatus,
   TAuditTarget,
+  UNKNOWN_DATA,
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { logger } from "@formbricks/logger";
 
@@ -130,7 +131,7 @@ async function buildAndLogAuditEvent({
       timestamp: new Date().toISOString(),
       organizationId,
       status,
-      ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : "unknown",
+      ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
       apiUrl,
       ...(changes ? { changes } : {}),
     };
@@ -304,7 +305,7 @@ export function withAuditLogging(
           if (environmentId) {
             organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
           } else {
-            organizationId = "unknown";
+            organizationId = UNKNOWN_DATA;
           }
         }
 
@@ -325,7 +326,7 @@ export function withAuditLogging(
           userType: "user",
           targetId: targetId,
           organizationId,
-          ipAddress: AUDIT_LOG_GET_USER_IP ? ctx?.ipAddress : "unknown",
+          ipAddress: AUDIT_LOG_GET_USER_IP ? ctx?.ipAddress : UNKNOWN_DATA,
           status,
           oldObject: ctx.oldObject,
           newObject: ctx.newObject,

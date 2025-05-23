@@ -1,12 +1,13 @@
 // @ts-nocheck // We can remove this when we update the prisma client and the typescript version
 // if we don't add this we get build errors with prisma due to type-nesting
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
+import { logApiErrorEdge } from "./utils-edge";
 
 export const handleApiError = (
   request: Request,
@@ -85,23 +86,11 @@ export const logApiError = (
   error: ApiErrorResponseV2,
   auditLog?: Parameters<typeof queueAuditEvent>[0]
 ): void => {
-  const correlationId = request.headers.get("x-request-id") ?? "";
+  logApiErrorEdge(request, error);
 
-  // Send the error to Sentry if the DSN is set and the error type is internal_server_error
-  // This is useful for tracking down issues without overloading Sentry with errors
-  if (SENTRY_DSN && IS_PRODUCTION && error.type === "internal_server_error") {
-    const err = new Error(`API V2 error, id: ${correlationId}`);
-
-    Sentry.captureException(err, {
-      extra: {
-        details: error.details,
-        type: error.type,
-        correlationId,
-      },
-    });
-  }
-
-  if (auditLog) {
+  // Only call queueAuditEvent if not in Edge runtime and auditLog is provided
+  if (AUDIT_LOG_ENABLED && auditLog) {
+    const correlationId = request.headers.get("x-request-id") ?? "";
     queueAuditEvent({
       ...auditLog,
       status: "failure",
@@ -109,11 +98,4 @@ export const logApiError = (
       apiUrl: request.url,
     });
   }
-
-  logger
-    .withContext({
-      correlationId,
-      error,
-    })
-    .error("API Error Details");
 };

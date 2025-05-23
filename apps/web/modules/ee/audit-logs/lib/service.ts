@@ -1,8 +1,12 @@
-import { AuditLogEventSchema, type TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
+import {
+  AuditLogEventSchema,
+  type TAuditLogEvent,
+  UNKNOWN_DATA,
+} from "@/modules/ee/audit-logs/types/audit-log";
+import { getOrganizationPlan } from "@/modules/ee/license-check/lib/license";
+import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 import { auditLogger } from "./logger";
-
-// import { getLicenseFeatures } from "@/modules/ee/license-check/lib/license";
 
 export class AuditLogService {
   private static validateEvent(event: TAuditLogEvent): void {
@@ -12,16 +16,18 @@ export class AuditLogService {
     }
   }
 
-  //   private static async hasAuditLogAccess(): Promise<boolean> {
-  //     const features = await getLicenseFeatures();
-  //     return features?.auditLogs ?? false;
-  //   }
+  private static async hasAuditLogAccess(organizationId: string): Promise<boolean> {
+    const billingPlan =
+      organizationId === UNKNOWN_DATA ? undefined : await getOrganizationPlan(organizationId);
+
+    return getIsAuditLogsEnabled(billingPlan);
+  }
 
   static async logAuditEvent(event: TAuditLogEvent): Promise<void> {
     try {
-      // if (!await this.hasAuditLogAccess()) {
-      //     return;
-      // }
+      if (!(await this.hasAuditLogAccess(event.organizationId))) {
+        return;
+      }
 
       this.validateEvent(event);
 

@@ -6,6 +6,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -65,9 +66,9 @@ export const PUT = withApiLogging(
     const auditLog: ApiAuditLog = {
       actionType: "survey.updated",
       targetType: "survey",
-      userId: "unknown",
+      userId: UNKNOWN_DATA,
       targetId: undefined,
-      organizationId: "unknown",
+      organizationId: UNKNOWN_DATA,
       status: "failure",
       oldObject: undefined,
       newObject: undefined,

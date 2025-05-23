@@ -4,6 +4,7 @@ import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
@@ -30,9 +31,9 @@ export const POST = withApiLogging(async (request: Request) => {
   const auditLog: ApiAuditLog = {
     actionType: "webhook.created",
     targetType: "webhook",
-    userId: "unknown",
+    userId: UNKNOWN_DATA,
     targetId: undefined,
-    organizationId: "unknown",
+    organizationId: UNKNOWN_DATA,
     status: "failure",
     newObject: undefined,
   };

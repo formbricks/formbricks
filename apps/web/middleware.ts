@@ -20,7 +20,7 @@ import {
 import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { isValidCallbackUrl } from "@/lib/utils/url";
-import { logApiError } from "@/modules/api/v2/lib/utils";
+import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
@@ -132,7 +132,7 @@ export const middleware = async (originalRequest: NextRequest) => {
         type: "too_many_requests",
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
       };
-      logApiError(request, apiError);
+      logApiErrorEdge(request, apiError);
       return NextResponse.json(apiError, { status: 429 });
     }
   }
