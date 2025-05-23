@@ -1,11 +1,22 @@
-import { CommandQueue } from "@/lib/common/command-queue";
-import { checkSetup } from "@/lib/common/setup";
+import { CommandQueue, CommandType } from "@/lib/common/command-queue";
+import { checkSetup } from "@/lib/common/status";
+import { UpdateQueue } from "@/lib/user/update-queue";
 import { type Result } from "@/types/error";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the setup module so we can control checkSetup()
-vi.mock("@/lib/common/setup", () => ({
+vi.mock("@/lib/common/status", () => ({
   checkSetup: vi.fn(),
+}));
+
+// Mock the UpdateQueue
+vi.mock("@/lib/user/update-queue", () => ({
+  UpdateQueue: {
+    getInstance: vi.fn(() => ({
+      isEmpty: vi.fn(),
+      processUpdates: vi.fn(),
+    })),
+  },
 }));
 
 describe("CommandQueue", () => {
@@ -51,9 +62,9 @@ describe("CommandQueue", () => {
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Enqueue commands
-    queue.add(cmdA, true);
-    queue.add(cmdB, true);
-    queue.add(cmdC, true);
+    await queue.add(cmdA, CommandType.GeneralAction, true);
+    await queue.add(cmdB, CommandType.GeneralAction, true);
+    await queue.add(cmdC, CommandType.GeneralAction, true);
 
     // Wait for them to finish
     await queue.wait();
@@ -79,7 +90,7 @@ describe("CommandQueue", () => {
       },
     });
 
-    queue.add(cmd, true);
+    await queue.add(cmd, CommandType.GeneralAction, true);
     await queue.wait();
 
     // Command should never have been called
@@ -99,7 +110,7 @@ describe("CommandQueue", () => {
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Here we pass 'false' for the second argument, so no check is performed
-    queue.add(cmd, false);
+    await queue.add(cmd, CommandType.GeneralAction, false);
     await queue.wait();
 
     expect(cmd).toHaveBeenCalledTimes(1);
@@ -128,7 +139,7 @@ describe("CommandQueue", () => {
       throw new Error("some error");
     });
 
-    queue.add(failingCmd, true);
+    await queue.add(failingCmd, CommandType.GeneralAction, true);
     await queue.wait();
 
     expect(consoleErrorSpy).toHaveBeenCalledWith("🧱 Formbricks - Global error: ", expect.any(Error));
@@ -153,13 +164,79 @@ describe("CommandQueue", () => {
 
     vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
-    queue.add(cmd1, true);
-    queue.add(cmd2, true);
+    await queue.add(cmd1, CommandType.GeneralAction, true);
+    await queue.add(cmd2, CommandType.GeneralAction, true);
 
     await queue.wait();
 
     // By the time `await queue.wait()` resolves, both commands should be done
     expect(cmd1).toHaveBeenCalled();
     expect(cmd2).toHaveBeenCalled();
+  });
+
+  test("processes UpdateQueue before executing GeneralAction commands", async () => {
+    const mockUpdateQueue = {
+      isEmpty: vi.fn().mockReturnValue(false),
+      processUpdates: vi.fn().mockResolvedValue("test"),
+    };
+
+    const mockUpdateQueueInstance = vi.spyOn(UpdateQueue, "getInstance");
+    mockUpdateQueueInstance.mockReturnValue(mockUpdateQueue as unknown as UpdateQueue);
+
+    const generalActionCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
+
+    await queue.add(generalActionCmd, CommandType.GeneralAction, true);
+    await queue.wait();
+
+    expect(mockUpdateQueue.isEmpty).toHaveBeenCalled();
+    expect(mockUpdateQueue.processUpdates).toHaveBeenCalled();
+    expect(generalActionCmd).toHaveBeenCalled();
+  });
+
+  test("implements singleton pattern correctly", () => {
+    const instance1 = CommandQueue.getInstance();
+    const instance2 = CommandQueue.getInstance();
+    expect(instance1).toBe(instance2);
+  });
+
+  test("handles multiple commands with different types and setup checks", async () => {
+    const executionOrder: string[] = [];
+
+    const cmd1 = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("cmd1");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    const cmd2 = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("cmd2");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    const cmd3 = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("cmd3");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // Setup check will fail for cmd2
+    vi.mocked(checkSetup)
+      .mockReturnValueOnce({ ok: true, data: undefined }) // for cmd1
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // for cmd2
+      .mockReturnValueOnce({ ok: true, data: undefined }); // for cmd3
+
+    await queue.add(cmd1, CommandType.Setup, true);
+    await queue.add(cmd2, CommandType.UserAction, true);
+    await queue.add(cmd3, CommandType.GeneralAction, true);
+
+    await queue.wait();
+
+    // cmd2 should be skipped due to failed setup check
+    expect(executionOrder).toEqual(["cmd1", "cmd3"]);
+    expect(cmd1).toHaveBeenCalled();
+    expect(cmd2).not.toHaveBeenCalled();
+    expect(cmd3).toHaveBeenCalled();
   });
 });

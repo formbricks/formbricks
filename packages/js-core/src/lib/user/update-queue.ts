@@ -13,9 +13,7 @@ export class UpdateQueue {
   private constructor() {}
 
   public static getInstance(): UpdateQueue {
-    if (!UpdateQueue.instance) {
-      UpdateQueue.instance = new UpdateQueue();
-    }
+    UpdateQueue.instance ??= new UpdateQueue();
 
     return UpdateQueue.instance;
   }

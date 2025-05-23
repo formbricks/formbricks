@@ -91,6 +91,7 @@ export default defineConfig({
         "packages/surveys/src/components/general/smileys.tsx", // Smiley components
         "modules/analysis/components/SingleResponseCard/components/Smileys.tsx", // Analysis smiley components
         "modules/auth/lib/mock-data.ts", // Mock data for authentication
+        "packages/js-core/src/index.ts", // JS Core index file
 
         // Other
         "**/scripts/**", // Utility scripts
