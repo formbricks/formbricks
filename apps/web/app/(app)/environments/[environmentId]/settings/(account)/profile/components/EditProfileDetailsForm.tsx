@@ -95,7 +95,7 @@ export const EditProfileDetailsForm = ({
       return;
     }
 
-    // window.location.reload();
+    window.location.reload();
     setShowModal(false);
   };
 

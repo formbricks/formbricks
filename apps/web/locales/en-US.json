@@ -1152,7 +1152,7 @@
         "disable_two_factor_authentication": "Disable two factor authentication",
         "disable_two_factor_authentication_description": "If you need to disable 2FA, we recommend re-enabling it as soon as possible.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Each backup code can be used exactly once to grant access without your authenticator.",
-        "email_change_initiated": "your email change request has been initiated.",
+        "email_change_initiated": "Your email change request has been initiated.",
         "enable_two_factor_authentication": "Enable two factor authentication",
         "enter_the_code_from_your_authenticator_app_below": "Enter the code from your authenticator app below.",
         "file_size_must_be_less_than_10mb": "File size must be less than 10MB.",
