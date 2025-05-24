@@ -28,7 +28,7 @@ describe("EmailChangeSignIn", () => {
 
   test("shows loading state initially", () => {
     render(<EmailChangeSignIn token="valid-token" />);
-    expect(screen.getByText("auth.email-change.email_verification_failed")).toBeInTheDocument();
+    expect(screen.getByText("auth.email-change.email_verification_loading")).toBeInTheDocument();
   });
 
   test("handles successful email change verification", async () => {

@@ -5,7 +5,11 @@ import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-export const EmailChangeSignIn = ({ token }: { token: string }) => {
+interface EmailChangeSignInProps {
+  token: string;
+}
+
+export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
   const { t } = useTranslate();
   const [status, setStatus] = useState<"success" | "error" | "loading">("loading");
 
@@ -37,18 +41,25 @@ export const EmailChangeSignIn = ({ token }: { token: string }) => {
     }
   }, [status]);
 
+  const text = {
+    heading: {
+      success: t("auth.email-change.email_change_success"),
+      error: t("auth.email-change.email_verification_failed"),
+      loading: t("auth.email-change.email_verification_loading"),
+    },
+    description: {
+      success: t("auth.email-change.email_change_success_description"),
+      error: t("auth.email-change.invalid_or_expired_token"),
+      loading: t("auth.email-change.email_verification_loading_description"),
+    },
+  };
+
   return (
     <>
       <h1 className={`leading-2 mb-4 text-center font-bold ${status === "error" ? "text-red-600" : ""}`}>
-        {status === "success"
-          ? t("auth.email-change.email_change_success")
-          : t("auth.email-change.email_verification_failed")}
+        {text.heading[status]}
       </h1>
-      <p className="text-center text-sm">
-        {status === "success"
-          ? t("auth.email-change.email_change_success_description")
-          : t("auth.email-change.invalid_or_expired_token")}
-      </p>
+      <p className="text-center text-sm">{text.description[status]}</p>
       <hr className="my-4" />
     </>
   );
