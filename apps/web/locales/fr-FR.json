@@ -1152,6 +1152,7 @@
         "disable_two_factor_authentication": "Désactiver l'authentification à deux facteurs",
         "disable_two_factor_authentication_description": "Si vous devez désactiver l'authentification à deux facteurs, nous vous recommandons de la réactiver dès que possible.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Chaque code de sauvegarde peut être utilisé exactement une fois pour accorder l'accès sans votre authentificateur.",
+        "email_change_initiated": "votre demande de changement d'email a été initiée.",
         "enable_two_factor_authentication": "Activer l'authentification à deux facteurs",
         "enter_the_code_from_your_authenticator_app_below": "Entrez le code de votre application d'authentification ci-dessous.",
         "file_size_must_be_less_than_10mb": "La taille du fichier doit être inférieure à 10 Mo.",

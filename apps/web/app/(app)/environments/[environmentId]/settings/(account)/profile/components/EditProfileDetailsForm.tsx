@@ -84,12 +84,10 @@ export const EditProfileDetailsForm = ({
       if (!emailVerificationDisabled) {
         toast.success(t("auth.verification-requested.new_email_verification_success"));
       } else {
-        toast.success(t("environments.settings.profile.new_email_update_success"));
-        if (user.email !== updatedUserResult?.data.email) {
-          await signOut({ redirect: false });
-          router.push(`/email-change-without-verification-success`);
-          return;
-        }
+        toast.success(t("environments.settings.profile.email_change_initiated"));
+        await signOut({ redirect: false });
+        router.push(`/email-change-without-verification-success`);
+        return;
       }
     } else {
       const errorMessage = getFormattedErrorMessage(updatedUserResult);
@@ -97,7 +95,7 @@ export const EditProfileDetailsForm = ({
       return;
     }
 
-    window.location.reload();
+    // window.location.reload();
     setShowModal(false);
   };
 

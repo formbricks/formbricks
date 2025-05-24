@@ -1152,6 +1152,7 @@
         "disable_two_factor_authentication": "停用雙重驗證",
         "disable_two_factor_authentication_description": "如果您需要停用 2FA，我們建議您盡快重新啟用它。",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "每個備份碼只能使用一次，以便在沒有驗證器的情況下授予存取權限。",
+        "email_change_initiated": "您的 email 更改請求已啟動。",
         "enable_two_factor_authentication": "啟用雙重驗證",
         "enter_the_code_from_your_authenticator_app_below": "在下方輸入您驗證器應用程式中的程式碼。",
         "file_size_must_be_less_than_10mb": "檔案大小必須小於 10MB。",
