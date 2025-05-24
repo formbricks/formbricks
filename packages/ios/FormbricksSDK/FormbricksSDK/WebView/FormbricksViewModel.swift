@@ -6,9 +6,9 @@ final class FormbricksViewModel: ObservableObject {
     @Published var htmlString: String?
     let surveyId: String
     
-    init(environmentResponse: EnvironmentResponse, surveyId: String) {
+    init(environmentResponse: EnvironmentResponse, surveyId: String, hiddenFields: [String: Any]? = nil) {
         self.surveyId = surveyId
-        if let webviewDataJson = WebViewData(environmentResponse: environmentResponse, surveyId: surveyId).getJsonString() {
+        if let webviewDataJson = WebViewData(environmentResponse: environmentResponse, surveyId: surveyId, hiddenFields: hiddenFields).getJsonString() {
             htmlString = htmlTemplate.replacingOccurrences(of: "{{WEBVIEW_DATA}}", with: webviewDataJson)
         }
     }
@@ -21,7 +21,7 @@ private extension FormbricksViewModel {
         <!doctype html>
         <html>
             <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
-            
+
             <head>
                 <title>Formbricks WebView Survey</title>
             </head>
@@ -41,11 +41,11 @@ private extension FormbricksViewModel {
                 function onDisplayCreated() {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onDisplayCreated" }));
                 };
-        
+
                 function onResponseCreated() {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onResponseCreated" }));
                 };
-        
+
                 function onOpenExternalURL(url) {
                     window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onOpenExternalURL", onOpenExternalURLParams: { url: url } }));
                 };
@@ -76,35 +76,38 @@ private extension FormbricksViewModel {
         </html>
         """
     }
-    
+
 }
 
 // MARK: - Helper class -
 private class WebViewData {
     var data: [String: Any] = [:]
-    
-    init(environmentResponse: EnvironmentResponse, surveyId: String) {
+
+    init(environmentResponse: EnvironmentResponse, surveyId: String, hiddenFields: [String: Any]? = nil) {
         data["survey"] = environmentResponse.getSurveyJson(forSurveyId: surveyId)
         data["isBrandingEnabled"] = true
         data["appUrl"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
         data["contactId"] = Formbricks.userManager?.contactId
         data["isWebEnvironment"] = false
-        
+        if let hiddenFields = hiddenFields, !hiddenFields.isEmpty {
+            data["hiddenFieldsRecord"] = hiddenFields
+        }
+
         let isMultiLangSurvey = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.languages?.count ?? 0 > 1
-        
+
         if isMultiLangSurvey {
             data["languageCode"] = Formbricks.language
         } else {
             data["languageCode"] = "default"
         }
-        
+
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false
-            
+
         data["styling"] = hasCustomStyling && enabled ? environmentResponse.getSurveyStylingJson(forSurveyId: surveyId): environmentResponse.getProjectStylingJson()
     }
-    
+
     func getJsonString() -> String? {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])

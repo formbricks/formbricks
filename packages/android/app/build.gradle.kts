@@ -1,17 +1,41 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    kotlin("kapt")
+    id("com.android.application")
+    id("kotlin-android")
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.formbricks.demo"
-    compileSdk = 35
+    compileSdk = 34
+
+    packagingOptions {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module",
+                "classes.dex"
+            )
+
+            pickFirsts += setOf(
+                "**/DataBinderMapperImpl.class",
+                "**/DataBinderMapperImpl.java",
+                "**/formbrickssdk/DataBinderMapperImpl.java",
+                "**/formbrickssdk/DataBinderMapperImpl.class"
+            )
+        }
+    }
 
     defaultConfig {
         applicationId = "com.formbricks.demo"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -44,11 +68,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(enforcedPlatform("org.jetbrains.kotlin:kotlin-bom:1.7.20"))
 }

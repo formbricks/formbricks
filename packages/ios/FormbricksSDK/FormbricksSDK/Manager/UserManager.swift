@@ -3,11 +3,11 @@ import Foundation
 /// Store and manage user state and sync with the server when needed.
 final class UserManager: UserManagerSyncable {
     weak var surveyManager: SurveyManager?
-    
+
     init(surveyManager: SurveyManager? = nil) {
         self.surveyManager = surveyManager
     }
-    
+
     private static let userIdKey = "userIdKey"
     private static let contactIdKey = "contactIdKey"
     private static let segmentsKey = "segmentsKey"
@@ -15,9 +15,9 @@ final class UserManager: UserManagerSyncable {
     private static let responsesKey = "responsesKey"
     private static let lastDisplayedAtKey = "lastDisplayedAtKey"
     private static let expiresAtKey = "expiresAtKey"
-    
+
     internal var service = FormbricksService()
-    
+
     private var backingUserId: String?
     private var backingContactId: String?
     private var backingSegments: [String]?
@@ -25,33 +25,33 @@ final class UserManager: UserManagerSyncable {
     private var backingResponses: [String]?
     private var backingLastDisplayedAt: Date?
     private var backingExpiresAt: Date?
-    
+
     lazy private var updateQueue: UpdateQueue? = {
         return UpdateQueue(userManager: self)
     }()
-    
+
     internal var syncTimer: Timer?
-    
+
     /// Starts an update queue with the given user id.
     func set(userId: String) {
         updateQueue?.set(userId: userId)
     }
-    
+
     /// Starts an update queue with the given attribute.
     func add(attribute: String, forKey key: String) {
         updateQueue?.add(attribute: attribute, forKey: key)
     }
-    
+
     /// Starts an update queue with the given attributes.
     func set(attributes: [String: String]) {
         updateQueue?.set(attributes: attributes)
     }
-    
+
     /// Starts an update queue with the given language..
     func set(language: String) {
         updateQueue?.set(language: language)
     }
-    
+
     /// Saves `surveyId` to the `displays` property and the current date to the `lastDisplayedAt` property.
     func onDisplay(surveyId: String) {
         let lastDisplayedAt = Date()
@@ -61,7 +61,7 @@ final class UserManager: UserManagerSyncable {
         self.lastDisplayedAt = lastDisplayedAt
         surveyManager?.filterSurveys()
     }
-    
+
     /// Saves `surveyId` to the `responses` property.
     func onResponse(surveyId: String) {
         var newResponses = responses ?? []
@@ -69,7 +69,7 @@ final class UserManager: UserManagerSyncable {
         responses = newResponses
         surveyManager?.filterSurveys()
     }
-    
+
     /// Syncs the user state with the server if the user id is set and the expiration date has passed.
     func syncUserStateIfNeeded() {
         guard let id = userId, let expiresAt = self.expiresAt, expiresAt.timeIntervalSinceNow <= 0 else {
@@ -78,7 +78,7 @@ final class UserManager: UserManagerSyncable {
             backingResponses = []
             return
         }
-        
+
         syncUser(withId: id)
     }
 
@@ -94,10 +94,10 @@ final class UserManager: UserManagerSyncable {
                 self?.responses = userResponse.data.state?.data?.responses
                 self?.lastDisplayedAt = userResponse.data.state?.data?.lastDisplayAt
                 self?.expiresAt = userResponse.data.state?.expiresAt
-                
+
                 let serverLanguage = userResponse.data.state?.data?.language
                 Formbricks.language = serverLanguage ?? "default"
-                
+
                 self?.updateQueue?.reset()
                 self?.surveyManager?.filterSurveys()
                 self?.startSyncTimer()
@@ -107,17 +107,17 @@ final class UserManager: UserManagerSyncable {
             }
         }
     }
-    
+
     /// Logs out the user and clears the user state.
     func logout() {
         var isUserIdDefined = false
-        
+
         if userId != nil {
             isUserIdDefined = true
         } else {
             Formbricks.logger?.error("no userId is set, please set a userId first using the setUserId function")
         }
-        
+
         UserDefaults.standard.removeObject(forKey: UserManager.userIdKey)
         UserDefaults.standard.removeObject(forKey: UserManager.contactIdKey)
         UserDefaults.standard.removeObject(forKey: UserManager.segmentsKey)
@@ -133,22 +133,22 @@ final class UserManager: UserManagerSyncable {
         backingLastDisplayedAt = nil
         backingExpiresAt = nil
         Formbricks.language = "default"
-        
+
         syncTimer?.invalidate()
         syncTimer = nil
         updateQueue?.cleanup()
-        
+
         if isUserIdDefined {
             Formbricks.logger?.debug("Successfully logged out user and reset the user state.")
         }
-        
+
     }
-    
+
     func cleanupUpdateQueue() {
         updateQueue?.cleanup()
         updateQueue = nil  // Release the instance so memory can be reclaimed.
     }
-    
+
     deinit {
         Formbricks.logger?.debug("Deinitializing \(self)")
     }
