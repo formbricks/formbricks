@@ -1,6 +1,4 @@
-// ... existing code ...
-
-## Proposed Solution Plan
+# Proposed Solution Plan
 
 ### 1. Unified License & Feature Management System
 - Create a single source of truth for all features and limits
@@ -25,12 +23,6 @@
     multiLanguage: boolean,
     emailFollowUps: boolean,
     forwardOnThankYou: boolean,
-    // New limits
-    yearlyLimits: {
-      responses: number | null,
-      projects: number | null,
-      contacts: number | null
-    }
   }
   ```
 
@@ -79,8 +71,6 @@
 ### 7. UI/UX Updates
 - Add limit usage indicators
 - Implement warning notifications
-- Update feature availability displays
-- Add license management interface
 - Improve error messaging
 
 ### 8. Testing & Monitoring
@@ -239,7 +229,11 @@ const ENTERPRISE_FEATURES: FeatureKey[] = [
   "removeBranding",
   "whitelabel",
   "spamProtection",
-  "ai"
+  "ai",
+  "isMultiOrgEnabled",
+  "twoFactorAuth",
+  "sso",
+  "saml"
 ];
 
 /**

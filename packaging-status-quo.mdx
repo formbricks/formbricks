@@ -75,7 +75,7 @@ The system uses Stripe product metadata to dynamically set limits for organizati
      - User identification
    - When limits are reached:
      - Events are sent to PostHog for tracking
-     - Users are notified of plan limits
+     - Users are notified of plan limits with a banner at the top of the screen
 
 5. **User Notifications**
    - **Limits Reached Banner**
@@ -295,25 +295,6 @@ The system uses Stripe product metadata to dynamically set limits for organizati
      - Response handling
 
 
-### Current Feature Control Mechanisms
-
-- License-based access control
-- Features are defined in `TEnterpriseLicenseFeatures`:
-```typescript
-{
-  isMultiOrgEnabled: boolean,
-  contacts: boolean,
-  projects: number | null,
-  whitelabel: boolean,
-  removeBranding: boolean,
-  twoFactorAuth: boolean,
-  sso: boolean,
-  saml: boolean,
-  spamProtection: boolean,
-  ai: boolean
-}
-```
-
 ## Current Issues
 
 1. **Dual System Complexity**
@@ -337,17 +318,3 @@ The system uses Stripe product metadata to dynamically set limits for organizati
    - Uses a fallback system with grace periods
    - But could be more robust for API failures
 
-## Current Enterprise Features
-
-The system currently manages these enterprise features:
-- Multi-language surveys
-- Teams & Access Roles
-- Remove branding
-- SSO
-- SAML SSO
-- Contacts and segments
-- Audit logs
-- Service level agreement
-- Compliance checks
-- Spam protection
-- AI features
