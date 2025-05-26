@@ -11,7 +11,7 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getSummaryBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -70,47 +70,36 @@ export const SummaryPage = ({
     [selectedFilter, dateRange, survey]
   );
 
-  // Use a ref to keep the latest state and props
-  const latestFiltersRef = useRef(filters);
-  latestFiltersRef.current = filters;
-
-  const getSummary = useCallback(() => {
-    if (isSharingPage)
-      return getSummaryBySurveySharingKeyAction({
-        sharingKey,
-        filterCriteria: latestFiltersRef.current,
-      });
-
-    return getSurveySummaryAction({
-      surveyId,
-      filterCriteria: latestFiltersRef.current,
-    });
-  }, [isSharingPage, sharingKey, surveyId]);
-
-  const handleInitialData = useCallback(
-    async (isInitialLoad = false) => {
-      if (isInitialLoad) {
-        setIsLoading(true);
-      }
+  useEffect(() => {
+    const fetchSummary = async () => {
+      setIsLoading(true);
 
       try {
-        const updatedSurveySummary = await getSummary();
+        let updatedSurveySummary;
+
+        if (isSharingPage) {
+          updatedSurveySummary = await getSummaryBySurveySharingKeyAction({
+            sharingKey,
+            filterCriteria: filters,
+          });
+        } else {
+          updatedSurveySummary = await getSurveySummaryAction({
+            surveyId,
+            filterCriteria: filters,
+          });
+        }
+
         const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
         setSurveySummary(surveySummary);
       } catch (error) {
         console.error(error);
       } finally {
-        if (isInitialLoad) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    },
-    [getSummary]
-  );
+    };
 
-  useEffect(() => {
-    handleInitialData(true);
-  }, [filters, isSharingPage, sharingKey, surveyId, handleInitialData]);
+    fetchSummary();
+  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

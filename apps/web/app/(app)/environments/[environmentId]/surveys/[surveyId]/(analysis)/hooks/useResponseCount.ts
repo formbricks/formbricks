@@ -28,26 +28,67 @@ export const useResponseCount = ({ survey, initialCount = 0 }: UseResponseCountP
     [selectedFilter, dateRange, survey]
   );
 
-  // Use a ref to keep the latest state and props
-  const latestFiltersRef = useRef(filters);
-  latestFiltersRef.current = filters;
-
   // Use a ref to track the current abort controller
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const getResponseCount = useCallback(() => {
-    if (isSharingPage)
-      return getResponseCountBySurveySharingKeyAction({
-        sharingKey,
-        filterCriteria: latestFiltersRef.current,
-      });
-    return getResponseCountAction({
-      surveyId: survey.id,
-      filterCriteria: latestFiltersRef.current,
-    });
-  }, [isSharingPage, sharingKey, survey.id]);
+  useEffect(() => {
+    const fetchData = async () => {
+      // Cancel any previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-  const fetchResponseCount = useCallback(async () => {
+      // Create new abort controller for this request
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      setIsLoading(true);
+      try {
+        let count;
+
+        if (isSharingPage) {
+          count = await getResponseCountBySurveySharingKeyAction({
+            sharingKey,
+            filterCriteria: filters,
+          });
+        } else {
+          count = await getResponseCountAction({
+            surveyId: survey.id,
+            filterCriteria: filters,
+          });
+        }
+
+        // Check if this request was cancelled
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        const responseCount = count?.data ?? 0;
+        setResponseCount(responseCount);
+      } catch (error) {
+        // Don't log errors for cancelled requests
+        if (!abortController.signal.aborted) {
+          console.error("Error fetching response count:", error);
+        }
+      } finally {
+        // Only update loading state if this request wasn't cancelled
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    // Cleanup function to cancel any pending requests
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filters, isSharingPage, sharingKey, survey.id]);
+
+  const refetch = useCallback(async () => {
     // Cancel any previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -59,7 +100,19 @@ export const useResponseCount = ({ survey, initialCount = 0 }: UseResponseCountP
 
     setIsLoading(true);
     try {
-      const count = await getResponseCount();
+      let count;
+
+      if (isSharingPage) {
+        count = await getResponseCountBySurveySharingKeyAction({
+          sharingKey,
+          filterCriteria: filters,
+        });
+      } else {
+        count = await getResponseCountAction({
+          surveyId: survey.id,
+          filterCriteria: filters,
+        });
+      }
 
       // Check if this request was cancelled
       if (abortController.signal.aborted) {
@@ -79,22 +132,11 @@ export const useResponseCount = ({ survey, initialCount = 0 }: UseResponseCountP
         setIsLoading(false);
       }
     }
-  }, [getResponseCount]);
-
-  useEffect(() => {
-    fetchResponseCount();
-
-    // Cleanup function to cancel any pending requests
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [filters, isSharingPage, sharingKey, survey.id]);
 
   return {
     responseCount,
     isLoading,
-    refetch: fetchResponseCount,
+    refetch,
   };
 };
