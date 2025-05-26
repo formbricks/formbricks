@@ -6,8 +6,9 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { isRTL } from "@/lib/utils";
 import { type RefObject } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -80,6 +81,12 @@ export function OpenTextQuestion({
     onSubmit({ [question.id]: value }, updatedTtc);
   };
 
+  const dir = useMemo(() => {
+    const placeholder = getLocalizedValue(question.placeholder, languageCode);
+    if (!value) return isRTL(placeholder) ? "rtl" : "ltr";
+    return "auto";
+  }, [value, languageCode, question.placeholder]);
+
   return (
     <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
       <ScrollableContainer>
@@ -105,7 +112,7 @@ export function OpenTextQuestion({
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
-                dir="auto"
+                dir={dir}
                 step="any"
                 required={question.required}
                 value={value ? value : ""}
@@ -135,7 +142,7 @@ export function OpenTextQuestion({
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
-                dir="auto"
+                dir={dir}
                 required={question.required}
                 value={value}
                 onInput={(e) => {

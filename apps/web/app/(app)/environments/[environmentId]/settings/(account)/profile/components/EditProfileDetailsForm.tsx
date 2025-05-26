@@ -21,11 +21,13 @@ import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { TUser, TUserUpdateInput, ZUser } from "@formbricks/types/user";
+import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { updateUserAction } from "../actions";
 
 // Schema & types
-const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true });
+const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true }).extend({
+  email: ZUserEmail.transform((val) => val?.trim().toLowerCase()),
+});
 type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
 
 export const EditProfileDetailsForm = ({
@@ -80,9 +82,9 @@ export const EditProfileDetailsForm = ({
 
     if (updatedUserResult?.data) {
       if (!emailVerificationDisabled) {
-        toast.success(t("auth.verification-requested.verification_email_successfully_sent", { email }));
+        toast.success(t("auth.verification-requested.new_email_verification_success"));
       } else {
-        toast.success(t("environments.settings.profile.profile_updated_successfully"));
+        toast.success(t("environments.settings.profile.email_change_initiated"));
         await signOut({ redirect: false });
         router.push(`/email-change-without-verification-success`);
         return;
@@ -98,11 +100,6 @@ export const EditProfileDetailsForm = ({
   };
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
-    if (data.email !== user.email && data.email.toLowerCase() === user.email.toLowerCase()) {
-      toast.error(t("auth.email-change.email_already_exists"));
-      return;
-    }
-
     if (data.email !== user.email) {
       setShowModal(true);
     } else {
