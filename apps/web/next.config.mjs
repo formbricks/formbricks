@@ -21,8 +21,6 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  skipTrailingSlashRedirect: true,
-  trailingSlash: false,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
