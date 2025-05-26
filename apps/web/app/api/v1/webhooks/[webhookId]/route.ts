@@ -36,7 +36,7 @@ export const DELETE = withApiLogging(
       actionType: "webhook.deleted",
       targetType: "webhook",
       userId: UNKNOWN_DATA,
-      targetId: undefined,
+      targetId: UNKNOWN_DATA,
       organizationId: UNKNOWN_DATA,
       status: "failure",
       oldObject: undefined,

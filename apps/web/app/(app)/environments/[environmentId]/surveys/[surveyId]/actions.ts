@@ -107,7 +107,7 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
-      userId: ctx.user.id,
+      userId: ctx.user?.id!,
       organizationId,
       access: [
         {
@@ -139,10 +139,10 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
     }
 
     // Context for audit log
-    ctx.surveyId = parsedInput.id;
-    ctx.organizationId = organizationId;
-    ctx.oldObject = oldSurvey;
-    ctx.newObject = parsedInput;
+    ctx.auditLoggingCtx.surveyId = parsedInput.id;
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.oldObject = oldSurvey;
+    ctx.auditLoggingCtx.newObject = parsedInput;
 
     return await updateSurvey(parsedInput);
   })

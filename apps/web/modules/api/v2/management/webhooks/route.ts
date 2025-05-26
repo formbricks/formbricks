@@ -5,6 +5,7 @@ import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/h
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 
@@ -52,7 +53,7 @@ export const POST = async (request: NextRequest) =>
         targetType: "webhook" as const,
         userId: authentication.apiKeyId,
         userType: "api" as const,
-        targetId: undefined,
+        targetId: UNKNOWN_DATA,
         organizationId: authentication.organizationId,
         status: "failure" as const,
         apiUrl: request.url,

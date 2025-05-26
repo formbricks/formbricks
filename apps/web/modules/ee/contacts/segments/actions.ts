@@ -57,10 +57,10 @@ export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCrea
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
 
     // Set the organizationId in the context to be used in the audit log
-    ctx.organizationId = organizationId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
 
     await checkAuthorizationUpdated({
-      userId: ctx.user.id,
+      userId: ctx.user?.id!,
       organizationId,
       access: [
         {
@@ -88,8 +88,8 @@ export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCrea
     const segment = await createSegment(parsedInput);
 
     // Set the segmentId in the context to be used in the audit log
-    ctx.segmentId = segment.id;
-    ctx.newObject = segment;
+    ctx.auditLoggingCtx.segmentId = segment.id;
+    ctx.auditLoggingCtx.newObject = segment;
 
     return segment;
   })
@@ -224,7 +224,7 @@ export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegme
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
 
     await checkAuthorizationUpdated({
-      userId: ctx.user.id,
+      userId: ctx.user?.id!,
       organizationId,
       access: [
         {
@@ -241,9 +241,9 @@ export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegme
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    ctx.segmentId = parsedInput.segmentId;
-    ctx.oldObject = await getSegment(parsedInput.segmentId);
-    ctx.organizationId = organizationId;
+    ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
+    ctx.auditLoggingCtx.oldObject = await getSegment(parsedInput.segmentId);
+    ctx.auditLoggingCtx.organizationId = organizationId;
 
     return await deleteSegment(parsedInput.segmentId);
   })

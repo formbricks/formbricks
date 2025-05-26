@@ -179,6 +179,20 @@ x-environment: &environment
     # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
     # REDIS_HTTP_URL:
 
+    ########################################## OPTIONAL (AUDIT LOGGING) ########################################### 
+
+    # Set the below to 1 to enable audit logging
+    # AUDIT_LOG_ENABLED: 1
+
+    # Set the below to the path of the audit log file, the default is /apps/web/logs/audit.log
+    # AUDIT_LOG_PATH: /apps/web/logs/audit.log
+
+    # Set the below to the secret for the audit log (required for audit logging)
+    # AUDIT_LOG_SECRET:
+
+    # Set the below to get the ip address of the user from the request headers
+    # AUDIT_LOG_GET_USER_IP: 1
+
     ############################################# OPTIONAL (OTHER) #############################################
 
     # signup is disabled by default for self-hosted instances, users can only signup using an invite link, in order to allow signup from SSO(without invite), set the below to 1

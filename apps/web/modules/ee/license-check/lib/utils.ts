@@ -7,7 +7,6 @@ import {
 } from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
@@ -144,13 +143,8 @@ export const getOrganizationProjectsLimit = async (
   return limit;
 };
 
-export const getIsAuditLogsEnabled = async (billingPlan?: TOrganizationBillingPlan): Promise<boolean> => {
+export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
   const license = await getEnterpriseLicense();
 
-  return (
-    license.active &&
-    !!license.features?.auditLogs &&
-    AUDIT_LOG_ENABLED &&
-    (IS_FORMBRICKS_CLOUD && billingPlan ? billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE : true)
-  );
+  return license.active && !!license.features?.auditLogs && AUDIT_LOG_ENABLED;
 };

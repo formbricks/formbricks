@@ -32,7 +32,7 @@ export const POST = withApiLogging(async (request: Request) => {
     actionType: "webhook.created",
     targetType: "webhook",
     userId: UNKNOWN_DATA,
-    targetId: undefined,
+    targetId: UNKNOWN_DATA,
     organizationId: UNKNOWN_DATA,
     status: "failure",
     newObject: undefined,

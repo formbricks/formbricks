@@ -1,9 +1,4 @@
-import {
-  AuditLogEventSchema,
-  type TAuditLogEvent,
-  UNKNOWN_DATA,
-} from "@/modules/ee/audit-logs/types/audit-log";
-import { getOrganizationPlan } from "@/modules/ee/license-check/lib/license";
+import { AuditLogEventSchema, type TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 import { auditLogger } from "./logger";
@@ -15,15 +10,13 @@ function validateEvent(event: TAuditLogEvent): void {
   }
 }
 
-async function hasAuditLogAccess(organizationId: string): Promise<boolean> {
-  const billingPlan = organizationId === UNKNOWN_DATA ? undefined : await getOrganizationPlan(organizationId);
-
-  return getIsAuditLogsEnabled(billingPlan);
+async function hasAuditLogAccess(): Promise<boolean> {
+  return getIsAuditLogsEnabled();
 }
 
 export async function logAuditEvent(event: TAuditLogEvent): Promise<void> {
   try {
-    if (!(await hasAuditLogAccess(event.organizationId))) {
+    if (!(await hasAuditLogAccess())) {
       return;
     }
 

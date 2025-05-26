@@ -112,6 +112,7 @@ export const env = createEnv({
       .string()
       .transform((val) => parseInt(val))
       .optional(),
+    AUDIT_LOG_SECRET: z.string().optional(),
   },
 
   /*
@@ -211,5 +212,6 @@ export const env = createEnv({
     AUDIT_LOG_PATH: process.env.AUDIT_LOG_PATH,
     AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
+    AUDIT_LOG_SECRET: process.env.AUDIT_LOG_SECRET,
   },
 });

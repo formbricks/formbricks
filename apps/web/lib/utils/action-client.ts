@@ -2,6 +2,8 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { AuditLoggingCtx } from "@/modules/ee/audit-logs/lib/utils";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
@@ -16,6 +18,12 @@ import {
   TooManyRequestsError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
+
+export type ActionClientCtx = {
+  auditLoggingCtx: AuditLoggingCtx;
+  user?: TUser;
+};
 
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
@@ -45,13 +53,11 @@ export const actionClient = createSafeActionClient({
 }).use(async ({ next }) => {
   // Create a unique event id
   const eventId = uuidv4();
-  const ctx: Record<string, any> = { eventId };
+  const ctx: ActionClientCtx = { auditLoggingCtx: { eventId, ipAddress: UNKNOWN_DATA } };
 
   if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
     const ipAddress = await getClientIpFromHeaders();
-    ctx.ipAddress = ipAddress;
-
-    return next({ ctx });
+    ctx.auditLoggingCtx.ipAddress = ipAddress;
   }
 
   return next({ ctx });

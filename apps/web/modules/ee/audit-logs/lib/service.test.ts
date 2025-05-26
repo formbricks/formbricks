@@ -5,9 +5,6 @@ import { logAuditEvent } from "./service";
 // Mocks
 globalThis.console = { ...globalThis.console, error: vi.fn() };
 
-vi.mock("../../../ee/license-check/lib/license", () => ({
-  getOrganizationPlan: vi.fn(),
-}));
 vi.mock("../../../ee/license-check/lib/utils", () => ({
   getIsAuditLogsEnabled: vi.fn(),
 }));
@@ -25,24 +22,24 @@ const validEvent = {
   status: "success" as const,
   timestamp: new Date().toISOString(),
   organizationId: "org-1",
+  integrityHash: "hash",
+  previousHash: null,
+  chainStart: true,
 };
 
 describe("logAuditEvent", () => {
-  let getOrganizationPlan: any;
   let getIsAuditLogsEnabled: any;
   let auditLogger: any;
   let logger: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    getOrganizationPlan = (await import("@/modules/ee/license-check/lib/license")).getOrganizationPlan;
     getIsAuditLogsEnabled = (await import("@/modules/ee/license-check/lib/utils")).getIsAuditLogsEnabled;
     auditLogger = (await import("./logger")).auditLogger;
     logger = (await import("@formbricks/logger")).logger;
   });
 
   test("logs event if access is granted and event is valid", async () => {
-    getOrganizationPlan.mockResolvedValue("enterprise");
     getIsAuditLogsEnabled.mockResolvedValue(true);
     await logAuditEvent(validEvent);
     expect(auditLogger.info).toHaveBeenCalledWith(validEvent);
@@ -50,7 +47,6 @@ describe("logAuditEvent", () => {
   });
 
   test("does not log event if access is denied", async () => {
-    getOrganizationPlan.mockResolvedValue("free");
     getIsAuditLogsEnabled.mockResolvedValue(false);
     await logAuditEvent(validEvent);
     expect(auditLogger.info).not.toHaveBeenCalled();
@@ -58,7 +54,6 @@ describe("logAuditEvent", () => {
   });
 
   test("throws and logs error for invalid event", async () => {
-    getOrganizationPlan.mockResolvedValue("enterprise");
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const invalidEvent = { ...validEvent, action: "invalid.action" };
     await logAuditEvent(invalidEvent as any);
@@ -74,7 +69,6 @@ describe("logAuditEvent", () => {
   });
 
   test("does not throw if auditLogger.info throws", async () => {
-    getOrganizationPlan.mockResolvedValue("enterprise");
     getIsAuditLogsEnabled.mockResolvedValue(true);
     auditLogger.info.mockImplementation(() => {
       throw new Error("fail");

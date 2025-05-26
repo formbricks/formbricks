@@ -1,4 +1,5 @@
-import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP, AUDIT_LOG_SECRET } from "@/lib/constants";
+import { ActionClientCtx } from "@/lib/utils/action-client";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
@@ -11,6 +12,7 @@ import {
   TAuditTarget,
   UNKNOWN_DATA,
 } from "@/modules/ee/audit-logs/types/audit-log";
+import { createHash } from "crypto";
 import { logger } from "@formbricks/logger";
 
 const SENSITIVE_KEYS = [
@@ -46,7 +48,40 @@ const SENSITIVE_KEYS = [
   "attributes",
 ];
 
-export function redactPII(obj: any): any {
+let previousAuditLogHash: string | null = null;
+let isChainStart = true;
+
+/**
+ * Computes the hash of the audit log event using the SHA256 algorithm.
+ * @param event - The audit log event.
+ * @param prevHash - The previous hash of the audit log event.
+ * @returns The hash of the audit log event. The hash is computed by concatenating the secret, the previous hash, and the event and then hashing the result.
+ */
+export const computeAuditLogHash = (
+  event: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart">,
+  prevHash: string | null
+): string => {
+  let secret = AUDIT_LOG_SECRET;
+
+  if (!secret) {
+    // Log an error but don't throw an error to avoid blocking the main request
+    logger.error(
+      "AUDIT_LOG_SECRET is not set, creating audit log hash without it. Please set AUDIT_LOG_SECRET in the environment variables to avoid security issues."
+    );
+    secret = "";
+  }
+
+  const hash = createHash("sha256");
+  hash.update(secret + (prevHash ?? "") + JSON.stringify(event));
+  return hash.digest("hex");
+};
+
+/**
+ * Redacts sensitive data from the object by replacing the sensitive keys with "********".
+ * @param obj - The object to redact.
+ * @returns The object with the sensitive data redacted.
+ */
+export const redactPII = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map(redactPII);
   }
@@ -61,9 +96,15 @@ export function redactPII(obj: any): any {
     );
   }
   return obj;
-}
+};
 
-export function deepDiff(oldObj: any, newObj: any): any {
+/**
+ * Computes the difference between two objects and returns the new object with the changes.
+ * @param oldObj - The old object.
+ * @param newObj - The new object.
+ * @returns The difference between the two objects.
+ */
+export const deepDiff = (oldObj: any, newObj: any): any => {
   if (typeof oldObj !== "object" || typeof newObj !== "object" || oldObj === null || newObj === null) {
     if (JSON.stringify(oldObj) !== JSON.stringify(newObj)) {
       return newObj;
@@ -80,9 +121,26 @@ export function deepDiff(oldObj: any, newObj: any): any {
     }
   }
   return Object.keys(diff).length > 0 ? diff : undefined;
-}
+};
 
-export async function buildAndLogAuditEvent({
+/**
+ * Builds an audit event and logs it.
+ * Redacts sensitive data from the old and new objects and computes the hash of the event before logging it.
+ *
+ * @param actionType - The type of action to audit.
+ * @param targetType - The type of target (e.g., "segment", "survey").
+ * @param userId - The ID of the user performing the action.
+ * @param userType - The type of user (e.g., "user", "api").
+ * @param targetId - The ID of the target (e.g., segment ID, survey ID).
+ * @param organizationId - The ID of the organization.
+ * @param ipAddress - The IP address of the user.
+ * @param status - The status of the action ("success" or "failure").
+ * @param oldObject - The old object (optional).
+ * @param newObject - The new object (optional).
+ * @param eventId - The ID of the event.
+ * @param apiUrl - The URL of the API request.
+ */
+export const buildAndLogAuditEvent = async ({
   actionType,
   targetType,
   userId,
@@ -100,7 +158,7 @@ export async function buildAndLogAuditEvent({
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
-  targetId: string | undefined;
+  targetId: string;
   organizationId: string;
   ipAddress: string;
   status: TAuditStatus;
@@ -108,7 +166,7 @@ export async function buildAndLogAuditEvent({
   newObject?: any;
   eventId?: string;
   apiUrl?: string;
-}) {
+}) => {
   if (!AUDIT_LOG_ENABLED) {
     return;
   }
@@ -124,7 +182,7 @@ export async function buildAndLogAuditEvent({
       changes = redactPII(oldObject);
     }
 
-    const auditEvent: TAuditLogEvent = {
+    const eventBase: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart"> = {
       actor: { id: userId, type: userType },
       action: actionType,
       target: { id: targetId, type: targetType },
@@ -134,17 +192,27 @@ export async function buildAndLogAuditEvent({
       ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
       apiUrl,
       ...(changes ? { changes } : {}),
+      ...(status === "failure" && eventId ? { eventId } : {}),
     };
 
-    if (status === "failure") {
-      auditEvent.eventId = eventId;
-    }
+    // Compute hash
+    const integrityHash = computeAuditLogHash(eventBase, previousAuditLogHash);
+
+    const auditEvent: TAuditLogEvent = {
+      ...eventBase,
+      integrityHash,
+      previousHash: previousAuditLogHash,
+      ...(isChainStart ? { chainStart: true } : {}),
+    };
+
+    previousAuditLogHash = integrityHash;
+    isChainStart = false;
 
     await logAuditEvent(auditEvent);
   } catch (logError) {
     logger.error(logError, "Failed to create audit log event");
   }
-}
+};
 
 /**
  * Logs an audit event.
@@ -161,7 +229,7 @@ export async function buildAndLogAuditEvent({
  * @param status - The status of the action ("success" or "failure").
  * @param apiUrl - The URL of the API request.
  **/
-export async function queueAuditEventBackground({
+export const queueAuditEventBackground = async ({
   actionType,
   targetType,
   userId,
@@ -178,14 +246,14 @@ export async function queueAuditEventBackground({
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
-  targetId: string | undefined;
+  targetId: string;
   organizationId: string;
   oldObject?: any;
   newObject?: any;
   status: TAuditStatus;
   eventId?: string;
   apiUrl?: string;
-}) {
+}) => {
   setImmediate(async () => {
     const ipAddress = await getClientIpFromHeaders();
 
@@ -204,7 +272,7 @@ export async function queueAuditEventBackground({
       apiUrl,
     });
   });
-}
+};
 
 /**
  * Logs an audit event.
@@ -221,7 +289,7 @@ export async function queueAuditEventBackground({
  * @param status - The status of the action ("success" or "failure").
  * @param apiUrl - The URL of the API request.
  **/
-export async function queueAuditEvent({
+export const queueAuditEvent = async ({
   actionType,
   targetType,
   userId,
@@ -238,14 +306,14 @@ export async function queueAuditEvent({
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
-  targetId: string | undefined;
+  targetId: string;
   organizationId: string;
   oldObject?: any;
   newObject?: any;
   status: TAuditStatus;
   eventId?: string;
   apiUrl?: string;
-}) {
+}) => {
   const ipAddress = await getClientIpFromHeaders();
 
   await buildAndLogAuditEvent({
@@ -262,24 +330,36 @@ export async function queueAuditEvent({
     eventId,
     apiUrl,
   });
-}
+};
+
+// Type for the auditLoggingCtx field in the ActionClientCtx
+export type AuditLoggingCtx = {
+  organizationId?: string;
+  ipAddress: string;
+  segmentId?: string;
+  surveyId?: string;
+  oldObject?: any;
+  newObject?: any;
+  eventId?: string;
+};
 
 /**
  * Wraps a handler function with audit logging.
- * Logs audit events for server actions.
+ * Logs audit events for server actions. Specifically for server actions that use next-server-action library middleware and it's context.
  * The audit logging runs in the background to avoid blocking the main request.
  *
  * @param actionType - The type of action to audit.
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap.
  **/
-export function withAuditLogging(
+export const withAuditLogging = (
   actionType: TAuditAction,
   targetType: TAuditTarget,
-  handler: (args: { ctx: any; parsedInput: any }) => Promise<any>
-) {
-  return async function wrappedAction(args: { ctx: any; parsedInput: any }) {
+  handler: (args: { ctx: ActionClientCtx; parsedInput: any }) => Promise<any>
+) => {
+  return async function wrappedAction(args: { ctx: ActionClientCtx; parsedInput: any }) {
     const { ctx, parsedInput } = args;
+    const { auditLoggingCtx } = ctx;
     let result: any;
     let status: "success" | "failure" = "success";
     let error: any = undefined;
@@ -297,8 +377,9 @@ export function withAuditLogging(
 
     setImmediate(async () => {
       try {
-        const userId: string = ctx.user.id;
-        let organizationId = parsedInput?.organizationId || ctx?.organizationId; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
+        const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
+        let organizationId: string =
+          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
           const environmentId: string | undefined = parsedInput?.environmentId;
@@ -314,13 +395,16 @@ export function withAuditLogging(
           }
         }
 
-        let targetId: string | undefined;
+        let targetId: string;
         switch (targetType) {
           case "segment":
-            targetId = ctx?.segmentId;
+            targetId = auditLoggingCtx?.segmentId ?? UNKNOWN_DATA;
             break;
           case "survey":
-            targetId = ctx?.surveyId;
+            targetId = auditLoggingCtx?.surveyId ?? UNKNOWN_DATA;
+            break;
+          default:
+            targetId = UNKNOWN_DATA;
             break;
         }
 
@@ -329,13 +413,13 @@ export function withAuditLogging(
           targetType,
           userId,
           userType: "user",
-          targetId: targetId,
+          targetId,
           organizationId,
-          ipAddress: AUDIT_LOG_GET_USER_IP ? ctx?.ipAddress : UNKNOWN_DATA,
+          ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx?.ipAddress : UNKNOWN_DATA,
           status,
-          oldObject: ctx.oldObject,
-          newObject: ctx.newObject,
-          eventId: ctx.eventId,
+          oldObject: auditLoggingCtx.oldObject,
+          newObject: auditLoggingCtx.newObject,
+          eventId: auditLoggingCtx.eventId,
         });
       } catch (logError) {
         logger.error(logError, "Failed to create audit log event");
@@ -345,4 +429,10 @@ export function withAuditLogging(
     if (status === "failure") throw error;
     return result;
   };
+};
+
+if (AUDIT_LOG_ENABLED && !AUDIT_LOG_SECRET) {
+  throw new Error(
+    "AUDIT_LOG_SECRET must be set when AUDIT_LOG_ENABLED is enabled. Refusing to start for security reasons."
+  );
 }

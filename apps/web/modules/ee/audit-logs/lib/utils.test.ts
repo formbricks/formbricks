@@ -1,25 +1,31 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
 
+// Move all relevant mocks to the very top
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn() },
+}));
+vi.mock("@/lib/utils/helper", () => ({
+  getOrganizationIdFromEnvironmentId: vi.fn().mockResolvedValue("org-env-id"),
+}));
+
 // Do NOT import buildAndLogAuditEvent, queueAuditEventBackground, or queueAuditEvent as named imports for spy to work
 
 // Mocks
 vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
   AUDIT_LOG_GET_USER_IP: true,
+  AUDIT_LOG_SECRET: "testsecret",
 }));
 vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn().mockResolvedValue("127.0.0.1"),
 }));
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn().mockResolvedValue("org-env-id"),
-}));
 vi.mock("@/modules/ee/audit-logs/lib/service", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn() },
-}));
+
+// Set AUDIT_LOG_SECRET for all tests unless explicitly testing its absence
+process.env.AUDIT_LOG_SECRET = "testsecret";
 
 describe("redactPII", () => {
   test("redacts sensitive keys in objects", () => {
@@ -68,9 +74,10 @@ describe("queueAuditEventBackground", () => {
   let utils: any;
   let logAuditEventMock: any;
   beforeEach(async () => {
-    await vi.resetModules();
+    vi.resetModules();
     utils = await import("./utils");
-    logAuditEventMock = (await import("@/modules/ee/audit-logs/lib/service")).logAuditEvent;
+    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
+    logAuditEventMock = serviceModule.logAuditEvent;
     logAuditEventMock.mockClear();
   });
   test("calls logAuditEvent in the background", async () => {
@@ -96,9 +103,10 @@ describe("queueAuditEvent", () => {
   let utils: any;
   let logAuditEventMock: any;
   beforeEach(async () => {
-    await vi.resetModules();
+    vi.resetModules();
     utils = await import("./utils");
-    logAuditEventMock = (await import("@/modules/ee/audit-logs/lib/service")).logAuditEvent;
+    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
+    logAuditEventMock = serviceModule.logAuditEvent;
     logAuditEventMock.mockClear();
   });
   test("calls logAuditEvent synchronously", async () => {
@@ -126,7 +134,37 @@ describe("withAuditLogging", () => {
     const handler = vi.fn().mockResolvedValue("ok");
     const { withAuditLogging } = await import("./utils");
     const wrapped = withAuditLogging("created", "survey", handler);
-    const ctx = { user: { id: "u1" }, organizationId: "org1", ipAddress: "127.0.0.1" };
+    const ctx = {
+      user: {
+        id: "u1",
+        name: "Test User",
+        email: "test@example.com",
+        emailVerified: null,
+        imageUrl: null,
+        twoFactorEnabled: false,
+        identityProvider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: null,
+        organizationId: "org1",
+        isActive: true,
+        lastLoginAt: null,
+        locale: "en-US" as const,
+        teams: [],
+        organizations: [],
+        objective: null,
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+        },
+      },
+      organizationId: "org1",
+      ipAddress: "127.0.0.1",
+      auditLoggingCtx: {
+        ipAddress: "127.0.0.1",
+        organizationId: "org1",
+      },
+    };
     const parsedInput = {};
     await wrapped({ ctx, parsedInput });
     // Wait for setImmediate
@@ -137,28 +175,173 @@ describe("withAuditLogging", () => {
     const handler = vi.fn().mockRejectedValue(new Error("fail"));
     const { withAuditLogging } = await import("./utils");
     const wrapped = withAuditLogging("created", "survey", handler);
-    const ctx = { user: { id: "u1" }, organizationId: "org1", ipAddress: "127.0.0.1" };
+    const ctx = {
+      user: {
+        id: "u1",
+        name: "Test User",
+        email: "test@example.com",
+        emailVerified: null,
+        imageUrl: null,
+        twoFactorEnabled: false,
+        identityProvider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        role: null,
+        organizationId: "org1",
+        isActive: true,
+        lastLoginAt: null,
+        locale: "en-US" as const,
+        teams: [],
+        organizations: [],
+        objective: null,
+        notificationSettings: {
+          alert: {},
+          weeklySummary: {},
+        },
+      },
+      organizationId: "org1",
+      ipAddress: "127.0.0.1",
+      auditLoggingCtx: {
+        ipAddress: "127.0.0.1",
+        organizationId: "org1",
+      },
+    };
     const parsedInput = {};
     await expect(wrapped({ ctx, parsedInput })).rejects.toThrow("fail");
     // Wait for setImmediate
     await new Promise((r) => setTimeout(r, 10));
     expect(handler).toHaveBeenCalled();
   });
-  test("sets organizationId to UNKNOWN_DATA and logs error if getOrganizationIdFromEnvironmentId throws", async () => {
-    const handler = vi.fn().mockResolvedValue("ok");
-    const { withAuditLogging } = await import("./utils");
-    const wrapped = withAuditLogging("created", "survey", handler);
-    const ctx = { user: { id: "u1" }, ipAddress: "127.0.0.1" };
-    const parsedInput = { environmentId: "env1" };
-    const helper = await import("@/lib/utils/helper");
-    const loggerModule = await import("@formbricks/logger");
-    (helper.getOrganizationIdFromEnvironmentId as any).mockRejectedValueOnce(new Error("fail to get orgId"));
-    await wrapped({ ctx, parsedInput });
-    // Wait for setImmediate
-    await new Promise((r) => setTimeout(r, 10));
-    expect(loggerModule.logger.error).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.stringContaining("Failed to get organizationId from environmentId")
+});
+
+describe("runtime config checks", () => {
+  test("throws if AUDIT_LOG_ENABLED is true and AUDIT_LOG_SECRET is missing", async () => {
+    // Unset the secret and reload the module
+    process.env.AUDIT_LOG_SECRET = "";
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      AUDIT_LOG_ENABLED: true,
+      AUDIT_LOG_GET_USER_IP: true,
+      AUDIT_LOG_SECRET: undefined,
+    }));
+    await expect(import("./utils")).rejects.toThrow(
+      /AUDIT_LOG_SECRET must be set when AUDIT_LOG_ENABLED is enabled/
     );
+    // Restore for other tests
+    process.env.AUDIT_LOG_SECRET = "testsecret";
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      AUDIT_LOG_ENABLED: true,
+      AUDIT_LOG_GET_USER_IP: true,
+      AUDIT_LOG_SECRET: "testsecret",
+    }));
+  });
+});
+
+describe("computeAuditLogHash", () => {
+  let utils: any;
+  beforeEach(async () => {
+    vi.unmock("crypto");
+    utils = await import("./utils");
+  });
+  test("produces deterministic hash for same input", () => {
+    const event = {
+      actor: { id: "u1", type: "user" },
+      action: "survey.created",
+      target: { id: "t1", type: "survey" },
+      timestamp: "2024-01-01T00:00:00.000Z",
+      organizationId: "org1",
+      status: "success",
+      ipAddress: "127.0.0.1",
+      apiUrl: "/api/test",
+    };
+    const hash1 = utils.computeAuditLogHash(event, null);
+    const hash2 = utils.computeAuditLogHash(event, null);
+    expect(hash1).toBe(hash2);
+  });
+  test("hash changes if previous hash changes", () => {
+    const event = {
+      actor: { id: "u1", type: "user" },
+      action: "survey.created",
+      target: { id: "t1", type: "survey" },
+      timestamp: "2024-01-01T00:00:00.000Z",
+      organizationId: "org1",
+      status: "success",
+      ipAddress: "127.0.0.1",
+      apiUrl: "/api/test",
+    };
+    const hash1 = utils.computeAuditLogHash(event, "prev1");
+    const hash2 = utils.computeAuditLogHash(event, "prev2");
+    expect(hash1).not.toBe(hash2);
+  });
+});
+
+describe("buildAndLogAuditEvent", () => {
+  let utils: any;
+  let logAuditEventMock: any;
+  beforeEach(async () => {
+    vi.resetModules();
+    utils = await import("./utils");
+    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
+    logAuditEventMock = serviceModule.logAuditEvent;
+    logAuditEventMock.mockClear();
+    // Reset hash chain state
+    utils.previousAuditLogHash = null;
+    utils.isChainStart = true;
+  });
+  test("includes correct integrityHash, previousHash, and chainStart in first event", async () => {
+    await utils.buildAndLogAuditEvent({
+      actionType: "survey.created",
+      targetType: "survey",
+      userId: "u1",
+      userType: "user",
+      targetId: "t1",
+      organizationId: "org1",
+      ipAddress: "127.0.0.1",
+      status: "success",
+      apiUrl: "/api/test",
+    });
+    expect(logAuditEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrityHash: expect.any(String),
+        previousHash: null,
+        chainStart: true,
+      })
+    );
+  });
+  test("includes correct previousHash and omits chainStart in subsequent event", async () => {
+    // First event
+    await utils.buildAndLogAuditEvent({
+      actionType: "survey.created",
+      targetType: "survey",
+      userId: "u1",
+      userType: "user",
+      targetId: "t1",
+      organizationId: "org1",
+      ipAddress: "127.0.0.1",
+      status: "success",
+      apiUrl: "/api/test",
+    });
+    const firstHash = logAuditEventMock.mock.calls[0][0].integrityHash;
+    // Second event
+    await utils.buildAndLogAuditEvent({
+      actionType: "survey.created",
+      targetType: "survey",
+      userId: "u1",
+      userType: "user",
+      targetId: "t1",
+      organizationId: "org1",
+      ipAddress: "127.0.0.1",
+      status: "success",
+      apiUrl: "/api/test",
+    });
+    const lastCall = logAuditEventMock.mock.calls[1][0];
+    expect(lastCall).toEqual(
+      expect.objectContaining({
+        integrityHash: expect.any(String),
+        previousHash: firstHash,
+      })
+    );
+    expect(lastCall).not.toHaveProperty("chainStart");
   });
 });

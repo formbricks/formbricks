@@ -67,7 +67,7 @@ export const PUT = withApiLogging(
       actionType: "survey.updated",
       targetType: "survey",
       userId: UNKNOWN_DATA,
-      targetId: undefined,
+      targetId: UNKNOWN_DATA,
       organizationId: UNKNOWN_DATA,
       status: "failure",
       oldObject: undefined,

@@ -35,6 +35,9 @@ export const AuditLogEventSchema = z.object({
   changes: z.record(z.any()).optional(),
   eventId: z.string().optional(),
   apiUrl: z.string().url().optional(),
+  integrityHash: z.string(),
+  previousHash: z.string().nullable(),
+  chainStart: z.boolean().optional(),
 });
 
 export type TAuditLogEvent = z.infer<typeof AuditLogEventSchema>;
