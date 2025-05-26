@@ -32,6 +32,9 @@ export const useResponseCount = ({ survey, initialCount = 0 }: UseResponseCountP
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
 
+  // Use a ref to track the current abort controller
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const getResponseCount = useCallback(() => {
     if (isSharingPage)
       return getResponseCountBySurveySharingKeyAction({
@@ -45,21 +48,49 @@ export const useResponseCount = ({ survey, initialCount = 0 }: UseResponseCountP
   }, [isSharingPage, sharingKey, survey.id]);
 
   const fetchResponseCount = useCallback(async () => {
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setIsLoading(true);
     try {
       const count = await getResponseCount();
+
+      // Check if this request was cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+
       const responseCount = count?.data ?? 0;
       setResponseCount(responseCount);
     } catch (error) {
-      console.error("Error fetching response count:", error);
+      // Don't log errors for cancelled requests
+      if (!abortController.signal.aborted) {
+        console.error("Error fetching response count:", error);
+      }
     } finally {
-      setIsLoading(false);
+      // Only update loading state if this request wasn't cancelled
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [getResponseCount]);
 
   useEffect(() => {
     fetchResponseCount();
-  }, [filters, isSharingPage, sharingKey, survey.id, fetchResponseCount]);
+
+    // Cleanup function to cancel any pending requests
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filters, isSharingPage, sharingKey, survey.id]);
 
   return {
     responseCount,

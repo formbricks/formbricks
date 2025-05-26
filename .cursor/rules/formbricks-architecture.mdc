@@ -5,54 +5,330 @@ alwaysApply: false
 ---
 # Formbricks Architecture & Patterns
 
-## Project Structure
+## Monorepo Structure
 
-### Monorepo Organization
+### Apps Directory
 - `apps/web/` - Main Next.js web application
-- `apps/storybook/` - Component documentation and testing
-- `packages/` - Shared libraries and utilities
-  - `packages/database/` - Prisma schema and database utilities
-  - `packages/types/` - TypeScript type definitions
-  - `packages/surveys/` - Survey-related components and logic
+- `packages/` - Shared packages and utilities
 
 ### Key Directories in Web App
-- `app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/` - Survey analysis pages
-- `lib/` - Server-side utilities and services
-- `modules/` - Feature-specific code organization
-- `components/` - Reusable UI components
+```
+apps/web/
+├── app/                    # Next.js 13+ app directory
+│   ├── (app)/             # Main application routes
+│   ├── (auth)/            # Authentication routes
+│   ├── api/               # API routes
+│   └── share/             # Public sharing routes
+├── components/            # Shared components
+├── lib/                   # Utility functions and services
+└── modules/               # Feature-specific modules
+```
 
-## Architecture Patterns
+## Routing Patterns
 
-### Service Layer Pattern
-- Services in `lib/` handle data fetching and business logic
-- Use React Cache for performance optimization
-- Implement proper error handling with custom error types
-- Example: [apps/web/lib/response/service.ts](mdc:apps/web/lib/response/service.ts)
+### App Router Structure
+The application uses Next.js 13+ app router with route groups:
 
-### API Layer Structure
-- V2 API in `modules/api/v2/` with proper versioning
-- Management APIs for different resources (responses, surveys, etc.)
-- Consistent error handling and response formatting
+```
+(app)/environments/[environmentId]/
+├── surveys/[surveyId]/
+│   ├── (analysis)/        # Analysis views
+│   │   ├── responses/     # Response management
+│   │   ├── summary/       # Survey summary
+│   │   └── hooks/         # Analysis-specific hooks
+│   ├── edit/              # Survey editing
+│   └── settings/          # Survey settings
+```
 
-### Caching Strategy
-- React Cache for server-side caching
-- Custom cache tags for invalidation
-- Cache keys include relevant parameters for proper invalidation
-- Example pattern: `[functionName-${param1}-${param2}]`
+### Dynamic Routes
+- `[environmentId]` - Environment-specific routes
+- `[surveyId]` - Survey-specific routes
+- `[sharingKey]` - Public sharing routes
 
-### Database Layer
-- Prisma ORM with schema in [packages/database/schema.prisma](mdc:packages/database/schema.prisma)
-- Proper indexing for performance
-- Response model with relationships to Survey, Contact, and Tags
+## Service Layer Pattern
+
+### Service Organization
+Services are organized by domain in `apps/web/lib/`:
+
+```typescript
+// Example: Response service
+// apps/web/lib/response/service.ts
+export const getResponseCountAction = async ({
+  surveyId,
+  filterCriteria,
+}: {
+  surveyId: string;
+  filterCriteria: any;
+}) => {
+  // Service implementation
+};
+```
+
+### Action Pattern
+Server actions follow a consistent pattern:
+
+```typescript
+// Action wrapper for service calls
+export const getResponseCountAction = async (params) => {
+  try {
+    const result = await responseService.getCount(params);
+    return { data: result };
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+```
+
+## Context Patterns
+
+### Provider Structure
+Context providers follow a consistent pattern:
+
+```typescript
+// Provider component
+export const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => {
+  const [selectedFilter, setSelectedFilter] = useState(defaultFilter);
+  
+  const value = {
+    selectedFilter,
+    setSelectedFilter,
+    // ... other state and methods
+  };
+
+  return (
+    <ResponseFilterContext.Provider value={value}>
+      {children}
+    </ResponseFilterContext.Provider>
+  );
+};
+
+// Hook for consuming context
+export const useResponseFilter = () => {
+  const context = useContext(ResponseFilterContext);
+  if (!context) {
+    throw new Error('useResponseFilter must be used within ResponseFilterProvider');
+  }
+  return context;
+};
+```
+
+### Context Composition
+Multiple contexts are often composed together:
+
+```typescript
+// Layout component with multiple providers
+export default function AnalysisLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ResponseFilterProvider>
+      <ResponseCountProvider>
+        {children}
+      </ResponseCountProvider>
+    </ResponseFilterProvider>
+  );
+}
+```
+
+## Component Patterns
+
+### Page Components
+Page components are located in the app directory and follow this pattern:
+
+```typescript
+// apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page.tsx
+export default function ResponsesPage() {
+  return (
+    <div>
+      <ResponsesTable />
+      <ResponsesPagination />
+    </div>
+  );
+}
+```
 
 ### Component Organization
-- Page components in route directories
-- Shared components in dedicated directories
-- Context providers for shared state management
-- Proper TypeScript interfaces for all props
+- **Pages** - Route components in app directory
+- **Components** - Reusable UI components
+- **Modules** - Feature-specific components and logic
 
-### Testing Strategy
-- Vitest for unit and integration tests
-- Test files co-located with source files
-- Comprehensive mocking of external dependencies
-- Follow patterns in [.github/copilot-instructions.md](mdc:.github/copilot-instructions.md)
+### Shared Components
+Common components are in `apps/web/components/`:
+- UI components (buttons, inputs, modals)
+- Layout components (headers, sidebars)
+- Data display components (tables, charts)
+
+## Hook Patterns
+
+### Custom Hook Structure
+Custom hooks follow consistent patterns:
+
+```typescript
+export const useResponseCount = ({ 
+  survey, 
+  initialCount 
+}: {
+  survey: TSurvey;
+  initialCount?: number;
+}) => {
+  const [responseCount, setResponseCount] = useState(initialCount ?? 0);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Hook logic...
+  
+  return {
+    responseCount,
+    isLoading,
+    refetch,
+  };
+};
+```
+
+### Hook Dependencies
+- Use context hooks for shared state
+- Implement proper cleanup with AbortController
+- Optimize dependency arrays to prevent unnecessary re-renders
+
+## Data Fetching Patterns
+
+### Server Actions
+The app uses Next.js server actions for data fetching:
+
+```typescript
+// Server action
+export async function getResponsesAction(params: GetResponsesParams) {
+  const responses = await getResponses(params);
+  return { data: responses };
+}
+
+// Client usage
+const { data } = await getResponsesAction(params);
+```
+
+### Error Handling
+Consistent error handling across the application:
+
+```typescript
+try {
+  const result = await apiCall();
+  return { data: result };
+} catch (error) {
+  console.error("Operation failed:", error);
+  return { error: error.message };
+}
+```
+
+## Type Safety
+
+### Type Organization
+Types are organized in packages:
+- `@formbricks/types` - Shared type definitions
+- Local types in component/hook files
+
+### Common Types
+```typescript
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TResponse } from "@formbricks/types/responses";
+import { TEnvironment } from "@formbricks/types/environment";
+```
+
+## State Management
+
+### Local State
+- Use `useState` for component-specific state
+- Use `useReducer` for complex state logic
+- Use refs for mutable values that don't trigger re-renders
+
+### Global State
+- React Context for feature-specific shared state
+- URL state for filters and pagination
+- Server state through server actions
+
+## Performance Considerations
+
+### Code Splitting
+- Dynamic imports for heavy components
+- Route-based code splitting with app router
+- Lazy loading for non-critical features
+
+### Caching Strategy
+- Server-side caching for database queries
+- Client-side caching with React Query (where applicable)
+- Static generation for public pages
+
+## Testing Strategy
+
+### Test Organization
+```
+component/
+├── Component.tsx
+├── Component.test.tsx
+└── hooks/
+    ├── useHook.ts
+    └── useHook.test.tsx
+```
+
+### Test Patterns
+- Unit tests for utilities and services
+- Integration tests for components with context
+- Hook tests with proper mocking
+
+## Build & Deployment
+
+### Build Process
+- TypeScript compilation
+- Next.js build optimization
+- Asset optimization and bundling
+
+### Environment Configuration
+- Environment-specific configurations
+- Feature flags for gradual rollouts
+- Database connection management
+
+## Security Patterns
+
+### Authentication
+- Session-based authentication
+- Environment-based access control
+- API route protection
+
+### Data Validation
+- Input validation on both client and server
+- Type-safe API contracts
+- Sanitization of user inputs
+
+## Monitoring & Observability
+
+### Error Tracking
+- Client-side error boundaries
+- Server-side error logging
+- Performance monitoring
+
+### Analytics
+- User interaction tracking
+- Performance metrics
+- Database query monitoring
+
+## Best Practices Summary
+
+### Code Organization
+- ✅ Follow the established directory structure
+- ✅ Use consistent naming conventions
+- ✅ Separate concerns (UI, logic, data)
+- ✅ Keep components focused and small
+
+### Performance
+- ✅ Implement proper loading states
+- ✅ Use AbortController for async operations
+- ✅ Optimize database queries
+- ✅ Implement proper caching strategies
+
+### Type Safety
+- ✅ Use TypeScript throughout
+- ✅ Define proper interfaces for props
+- ✅ Use type guards for runtime validation
+- ✅ Leverage shared type packages
+
+### Testing
+- ✅ Write tests for critical functionality
+- ✅ Mock external dependencies properly
+- ✅ Test error scenarios and edge cases
+- ✅ Maintain good test coverage
