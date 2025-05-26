@@ -7,6 +7,43 @@ import {
   setPreviousAuditLogHash,
 } from "./cache";
 
+// Mock redis module
+vi.mock("@/lib/redis", () => {
+  let store: Record<string, string | null> = {};
+  return {
+    default: {
+      del: vi.fn(async (key: string) => {
+        store[key] = null;
+        return 1;
+      }),
+      quit: vi.fn(async () => {
+        return "OK";
+      }),
+      get: vi.fn(async (key: string) => {
+        return store[key] ?? null;
+      }),
+      set: vi.fn(async (key: string, value: string) => {
+        store[key] = value;
+        return "OK";
+      }),
+      watch: vi.fn(async (_key: string) => {
+        return "OK";
+      }),
+      multi: vi.fn(() => {
+        return {
+          set: vi.fn(function (key: string, value: string) {
+            store[key] = value;
+            return this;
+          }),
+          exec: vi.fn(async () => {
+            return [[null, "OK"]];
+          }),
+        } as unknown as import("ioredis").ChainableCommander;
+      }),
+    },
+  };
+});
+
 describe("audit log cache utils", () => {
   beforeEach(async () => {
     await redis.del(AUDIT_LOG_HASH_KEY);
@@ -40,21 +77,18 @@ describe("audit log cache utils", () => {
   test("should retry and eventually throw if the hash keeps changing", async () => {
     // Simulate another process changing the hash every time
     let callCount = 0;
-    const originalWatch = redis.watch.bind(redis);
-    vi.spyOn(redis, "watch").mockImplementation(async (key) => {
-      await originalWatch(key);
-      return "OK";
+    const originalMulti = redis.multi;
+    (redis.multi as any).mockImplementation(() => {
+      return {
+        set: vi.fn(function (key: string, value: string) {
+          return this;
+        }),
+        exec: vi.fn(async () => {
+          callCount++;
+          return null; // Simulate transaction failure
+        }),
+      } as unknown as import("ioredis").ChainableCommander;
     });
-    vi.spyOn(redis, "multi").mockImplementation(
-      () =>
-        ({
-          set: () => {},
-          exec: async () => {
-            callCount++;
-            return null;
-          },
-        }) as unknown as import("ioredis").ChainableCommander
-    );
     let errorCaught = false;
     try {
       await runAuditLogHashTransaction(async () => {
@@ -63,7 +97,6 @@ describe("audit log cache utils", () => {
           integrityHash: "conflict-hash",
         };
       });
-      // If we get here, the error was not thrown
       expect.fail("Error was not thrown by runAuditLogHashTransaction");
     } catch (e) {
       errorCaught = true;
@@ -72,7 +105,6 @@ describe("audit log cache utils", () => {
     expect(errorCaught).toBe(true);
     expect(callCount).toBe(5);
     // Restore
-    (redis.watch as any).mockRestore();
-    (redis.multi as any).mockRestore();
+    (redis.multi as any).mockImplementation(originalMulti);
   });
 });
