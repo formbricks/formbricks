@@ -9,7 +9,6 @@
     "continue_with_saml": "Continuer avec SAML SSO",
     "email-change": {
       "confirm_password_description": "Veuillez confirmer votre mot de passe avant de changer votre adresse e-mail",
-      "email_already_exists": "Cet e-mail est déjà utilisé",
       "email_change_success": "E-mail changé avec succès",
       "email_change_success_description": "Vous avez changé votre adresse e-mail avec succès. Veuillez vous connecter avec votre nouvelle adresse e-mail.",
       "email_verification_failed": "Échec de la vérification de l'email",
@@ -95,6 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
+      "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
       "verification_email_successfully_sent": "Email de vérification envoyé à {email}. Veuillez vérifier pour compléter la mise à jour.",
       "we_sent_an_email_to": "Nous avons envoyé un email à {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"
@@ -1158,7 +1158,6 @@
         "file_size_must_be_less_than_10mb": "La taille du fichier doit être inférieure à 10 Mo.",
         "invalid_file_type": "Type de fichier invalide. Seuls les fichiers JPEG, PNG et WEBP sont autorisés.",
         "lost_access": "Accès perdu",
-        "new_email_update_success": "Votre demande de changement d'email a été reçue.",
         "or_enter_the_following_code_manually": "Ou entrez le code suivant manuellement :",
         "organization_identification": "Aidez votre organisation à vous identifier sur Formbricks",
         "organizations_delete_message": "Tu es le seul propriétaire de ces organisations, elles <b>seront aussi supprimées.</b>",

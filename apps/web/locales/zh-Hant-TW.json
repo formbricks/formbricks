@@ -9,7 +9,6 @@
     "continue_with_saml": "使用 SAML SSO 繼續",
     "email-change": {
       "confirm_password_description": "在更改您的電子郵件地址之前，請確認您的密碼",
-      "email_already_exists": "此電子郵件地址已被使用",
       "email_change_success": "電子郵件已成功更改",
       "email_change_success_description": "您已成功更改電子郵件地址。請使用您的新電子郵件地址登入。",
       "email_verification_failed": "電子郵件驗證失敗",
@@ -95,6 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "請點擊電子郵件中的連結以啟用您的帳戶。",
       "please_confirm_your_email_address": "請確認您的電子郵件地址",
       "resend_verification_email": "重新發送驗證電子郵件",
+      "verification_email_resent_successfully": "驗證電子郵件已發送！請檢查您的收件箱。",
       "verification_email_successfully_sent": "验证电子邮件已发送至 {email}。请验证以完成更新。",
       "we_sent_an_email_to": "我們已發送一封電子郵件至 <email>'{'email'}'</email>。",
       "you_didnt_receive_an_email_or_your_link_expired": "您沒有收到電子郵件或您的連結已過期？"
@@ -1158,7 +1158,6 @@
         "file_size_must_be_less_than_10mb": "檔案大小必須小於 10MB。",
         "invalid_file_type": "無效的檔案類型。僅允許 JPEG、PNG 和 WEBP 檔案。",
         "lost_access": "無法存取",
-        "new_email_update_success": "您的 email 更改請求已收到。",
         "or_enter_the_following_code_manually": "或手動輸入下列程式碼：",
         "organization_identification": "協助您的組織在 Formbricks 上識別您",
         "organizations_delete_message": "您是這些組織的唯一擁有者，因此它們也 <b>將被刪除。</b>",

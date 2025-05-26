@@ -9,7 +9,6 @@
     "continue_with_saml": "Login mit SAML SSO",
     "email-change": {
       "confirm_password_description": "Bitte bestätige dein Passwort, bevor du deine E-Mail-Adresse änderst",
-      "email_already_exists": "Diese E-Mail wird bereits verwendet",
       "email_change_success": "E-Mail erfolgreich geändert",
       "email_change_success_description": "Du hast deine E-Mail-Adresse erfolgreich geändert. Bitte logge dich mit deiner neuen E-Mail-Adresse ein.",
       "email_verification_failed": "E-Mail-Bestätigung fehlgeschlagen",
@@ -95,6 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
+      "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
       "verification_email_successfully_sent": "Bestätigungs-E-Mail an {email} gesendet. Bitte überprüfen Sie, um das Update abzuschließen.",
       "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
@@ -1158,7 +1158,6 @@
         "file_size_must_be_less_than_10mb": "Dateigröße muss weniger als 10MB sein.",
         "invalid_file_type": "Ungültiger Dateityp. Nur JPEG-, PNG- und WEBP-Dateien sind erlaubt.",
         "lost_access": "Zugriff verloren",
-        "new_email_update_success": "Deine Anfrage zur Änderung der E-Mail wurde erhalten.",
         "or_enter_the_following_code_manually": "Oder gib den folgenden Code manuell ein:",
         "organization_identification": "Hilf deiner Organisation, Dich auf Formbricks zu identifizieren",
         "organizations_delete_message": "Du bist der einzige Besitzer dieser Organisationen, also werden sie <b>auch gelöscht.</b>",
