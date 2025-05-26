@@ -1,15 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "../button";
 import {
   MyDialog,
   MyDialogContent,
   MyDialogDescription,
+  MyDialogFooter,
   MyDialogHeader,
   MyDialogTitle,
   MyDialogTrigger,
 } from "./index";
 
 interface ModalStoryProps {
+  icon: boolean;
   triggerText: string;
   title: string;
   description: string;
@@ -22,9 +25,16 @@ const ModalStory = ({ triggerText, title, description }: ModalStoryProps) => (
     </MyDialogTrigger>
     <MyDialogContent>
       <MyDialogHeader>
+        <AlertCircle />
         <MyDialogTitle>{title}</MyDialogTitle>
         <MyDialogDescription>{description}</MyDialogDescription>
       </MyDialogHeader>
+      Hello
+      <MyDialogFooter>
+        <Button variant="ghost">Cancel</Button>
+        <Button variant="secondary">Confirm</Button>
+        <Button className="self-start">Confirm</Button>
+      </MyDialogFooter>
     </MyDialogContent>
   </MyDialog>
 );
@@ -37,6 +47,10 @@ const meta = {
   },
   tags: ["autodocs"],
   argTypes: {
+    icon: {
+      control: "boolean",
+      description: "Whether to show an icon in the header",
+    },
     triggerText: {
       control: "text",
       description: "Text for the trigger button",

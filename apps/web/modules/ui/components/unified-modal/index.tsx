@@ -42,13 +42,13 @@ const MyDialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "bg-background animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0 fixed z-50 grid gap-4 rounded-b-lg border p-6 shadow-lg sm:rounded-lg",
+        "bg-background animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0 fixed z-50 grid w-full gap-4 rounded-b-lg border p-4 shadow-lg sm:w-[720px] sm:rounded-lg",
         className
       )}
       {...props}>
       {children}
-      <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none">
-        {!hideCloseButton ? <X className="h-4 w-4" /> : null}
+      <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute right-3 top-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none">
+        {!hideCloseButton ? <X className="size-4" /> : null}
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -58,12 +58,19 @@ MyDialogContent.displayName = DialogPrimitive.Content.displayName;
 
 type MyDialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerouslySetInnerHTML"> & {
   dangerouslySetInnerHTML?: {
+    icon?: React.ReactNode;
     __html: string;
   };
 };
 
 const MyDialogHeader = ({ className, ...props }: MyDialogHeaderProps) => (
-  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+  <div
+    className={cn(
+      "flex flex-col gap-y-1.5 text-center sm:text-left [&>svg]:size-6 sm:[&>svg]:absolute sm:[&>svg]:left-4 sm:[&>svg]:top-5 sm:[&>svg~*]:pl-8",
+      className
+    )}
+    {...props}
+  />
 );
 MyDialogHeader.displayName = "DialogHeader";
 
@@ -75,7 +82,7 @@ type MyDialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerous
 
 const MyDialogFooter = ({ className, ...props }: MyDialogFooterProps) => (
   <div
-    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-1.5", className)}
     {...props}
   />
 );
@@ -88,7 +95,7 @@ const MyDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("text-sm font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ));
@@ -100,7 +107,7 @@ const MyDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-muted-foreground text-sm", className)}
+    className={cn("text-muted-foreground font-regular text-sm", className)} //muted does not work here for some reason
     {...props}
   />
 ));
