@@ -189,7 +189,6 @@ export const EditProfileDetailsForm = ({
                           <DropdownMenuRadioItem
                             key={lang.code}
                             value={lang.code}
-                            onClick={() => field.onChange(lang.code)}
                             className="min-h-8 cursor-pointer">
                             {lang.label["en-US"]}
                           </DropdownMenuRadioItem>
