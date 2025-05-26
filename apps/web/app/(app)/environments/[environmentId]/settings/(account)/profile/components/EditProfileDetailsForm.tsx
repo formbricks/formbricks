@@ -7,7 +7,6 @@ import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -177,7 +176,7 @@ export const EditProfileDetailsForm = ({
                         variant="ghost"
                         className="h-10 w-full border border-slate-300 px-3 text-left">
                         <div className="flex w-full items-center justify-between">
-                          {appLanguages.find((l) => l.code === field.value)?.label[field.value] ?? "NA"}
+                          {appLanguages.find((l) => l.code === field.value)?.label["en-US"] ?? "NA"}
                           <ChevronDownIcon className="h-4 w-4 text-slate-500" />
                         </div>
                       </Button>
@@ -185,14 +184,14 @@ export const EditProfileDetailsForm = ({
                     <DropdownMenuContent
                       className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-slate-50 text-slate-700"
                       align="start">
-                      <DropdownMenuRadioGroup value={field.value}>
+                      <DropdownMenuRadioGroup value={field.value} onValueChange={field.onChange}>
                         {appLanguages.map((lang) => (
                           <DropdownMenuRadioItem
                             key={lang.code}
                             value={lang.code}
                             onClick={() => field.onChange(lang.code)}
                             className="min-h-8 cursor-pointer">
-                            {lang.label[field.value]}
+                            {lang.label["en-US"]}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
