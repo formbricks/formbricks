@@ -193,6 +193,7 @@ export const setup = async (
 
         if (environmentStateResponse.ok) {
           environmentState = environmentStateResponse.data;
+          logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
         } else {
           logger.error(
             `Error fetching environment state: ${environmentStateResponse.error.code} - ${environmentStateResponse.error.responseMessage ?? ""}`
@@ -257,7 +258,9 @@ export const setup = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -303,6 +306,7 @@ export const setup = async (
       }
 
       const environmentState = environmentStateResponse.data;
+      logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
       const filteredSurveys = filterSurveys(environmentState, userState);
 
       config.update({
@@ -312,6 +316,11 @@ export const setup = async (
         environment: environmentState,
         filteredSurveys,
       });
+
+      const surveyNames = filteredSurveys.map((s) => s.name);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch (e) {
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }
