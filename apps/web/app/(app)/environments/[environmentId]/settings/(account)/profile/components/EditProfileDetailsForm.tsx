@@ -8,6 +8,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -180,15 +182,20 @@ export const EditProfileDetailsForm = ({
                         </div>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-40 bg-slate-50 text-slate-700" align="start">
-                      {appLanguages.map((lang) => (
-                        <DropdownMenuItem
-                          key={lang.code}
-                          onClick={() => field.onChange(lang.code)}
-                          className="min-h-8 cursor-pointer">
-                          {lang.label[field.value]}
-                        </DropdownMenuItem>
-                      ))}
+                    <DropdownMenuContent
+                      className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-slate-50 text-slate-700"
+                      align="start">
+                      <DropdownMenuRadioGroup value={field.value}>
+                        {appLanguages.map((lang) => (
+                          <DropdownMenuRadioItem
+                            key={lang.code}
+                            value={lang.code}
+                            onClick={() => field.onChange(lang.code)}
+                            className="min-h-8 cursor-pointer">
+                            {lang.label[field.value]}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </FormControl>
