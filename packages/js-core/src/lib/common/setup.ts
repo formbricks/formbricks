@@ -1,11 +1,7 @@
 /* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
-import {
-  addCleanupEventListeners,
-  addEventListeners,
-  removeAllEventListeners,
-} from "@/lib/common/event-listeners";
+import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
@@ -327,17 +323,22 @@ export const tearDown = (): void => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
+  const { environment } = appConfig.get();
+  const filteredSurveys = filterSurveys(environment, DEFAULT_USER_STATE_NO_USER_ID);
+
   logger.debug("Setting user state to default");
+
   // clear the user state and set it to the default value
   appConfig.update({
     ...appConfig.get(),
     user: DEFAULT_USER_STATE_NO_USER_ID,
+    filteredSurveys,
   });
 
+  // remove container element from DOM
   removeWidgetContainer();
+  addWidgetContainer();
   setIsSurveyRunning(false);
-  removeAllEventListeners();
-  setIsSetup(false);
 };
 
 export const handleErrorOnFirstSetup = (e: { code: string; responseMessage: string }): Promise<never> => {
