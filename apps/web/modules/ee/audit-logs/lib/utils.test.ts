@@ -1,6 +1,20 @@
-import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
+
+// Patch redis multi before any imports
+beforeEach(async () => {
+  const redis = (await import("@/lib/redis")).default;
+  if ((redis.multi as any)?.mockReturnValue) {
+    (redis.multi as any).mockReturnValue({
+      set: vi.fn(),
+      exec: vi.fn().mockResolvedValue([["OK"]]),
+    });
+  }
+});
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsAuditLogsEnabled: vi.fn().mockResolvedValue(true),
+}));
 
 // Move all relevant mocks to the very top
 vi.mock("@formbricks/logger", () => ({
@@ -30,7 +44,7 @@ vi.mock("@/lib/redis", () => ({
     watch: vi.fn().mockResolvedValue("OK"),
     multi: vi.fn().mockReturnValue({
       set: vi.fn(),
-      exec: vi.fn().mockResolvedValue([["OK"]]), // Simulate success
+      exec: vi.fn().mockResolvedValue([["OK"]]),
     }),
     get: vi.fn().mockResolvedValue(null),
   },
@@ -84,15 +98,12 @@ describe("deepDiff", () => {
 
 describe("queueAuditEventBackground", () => {
   let utils: any;
-  let logAuditEventMock: any;
   beforeEach(async () => {
     vi.resetModules();
     utils = await import("./utils");
-    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
-    logAuditEventMock = serviceModule.logAuditEvent;
-    logAuditEventMock.mockClear();
   });
   test("calls logAuditEvent in the background", async () => {
+    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
     await utils.queueAuditEventBackground({
       actionType: "survey.created",
       targetType: "survey",
@@ -107,21 +118,18 @@ describe("queueAuditEventBackground", () => {
     });
     // Wait for setImmediate
     await new Promise((r) => setTimeout(r, 10));
-    expect(logAuditEventMock).toHaveBeenCalled();
+    expect(logAuditEvent).toHaveBeenCalled();
   });
 });
 
 describe("queueAuditEvent", () => {
   let utils: any;
-  let logAuditEventMock: any;
   beforeEach(async () => {
     vi.resetModules();
     utils = await import("./utils");
-    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
-    logAuditEventMock = serviceModule.logAuditEvent;
-    logAuditEventMock.mockClear();
   });
   test("calls logAuditEvent synchronously", async () => {
+    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
     await utils.queueAuditEvent({
       actionType: "survey.created",
       targetType: "survey",
@@ -134,7 +142,7 @@ describe("queueAuditEvent", () => {
       status: "success",
       apiUrl: "/api/test",
     });
-    expect(logAuditEventMock).toHaveBeenCalled();
+    expect(logAuditEvent).toHaveBeenCalled();
   });
 });
 
@@ -293,12 +301,12 @@ describe("buildAndLogAuditEvent", () => {
   let redis: any;
   beforeEach(async () => {
     vi.clearAllMocks();
-    // Dynamically import after mocks are set up
     ({ buildAndLogAuditEvent } = await import("./utils"));
     redis = (await import("@/lib/redis")).default;
   });
 
   test("logs audit event and updates hash on success", async () => {
+    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
     await buildAndLogAuditEvent({
       actionType: "survey.created",
       targetType: "survey",
@@ -320,6 +328,7 @@ describe("buildAndLogAuditEvent", () => {
       set: vi.fn(),
       exec: vi.fn().mockResolvedValue(null),
     });
+    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
     await buildAndLogAuditEvent({
       actionType: "survey.created",
       targetType: "survey",
@@ -333,7 +342,7 @@ describe("buildAndLogAuditEvent", () => {
       newObject: { foo: "baz" },
       apiUrl: "/api/test",
     });
-    expect(logAuditEvent).toHaveBeenCalled();
+    expect(logAuditEvent).not.toHaveBeenCalled();
     // The error is caught and logged, not thrown
   });
 });

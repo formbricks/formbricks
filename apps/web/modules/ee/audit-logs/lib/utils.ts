@@ -14,6 +14,7 @@ import {
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { createHash } from "crypto";
 import { logger } from "@formbricks/logger";
+import { runAuditLogHashTransaction } from "./cache";
 
 const SENSITIVE_KEYS = [
   "email",
@@ -47,9 +48,6 @@ const SENSITIVE_KEYS = [
   "userid",
   "attributes",
 ];
-
-let previousAuditLogHash: string | null = null;
-let isChainStart = true;
 
 /**
  * Computes the hash of the audit log event using the SHA256 algorithm.
@@ -195,20 +193,20 @@ export const buildAndLogAuditEvent = async ({
       ...(status === "failure" && eventId ? { eventId } : {}),
     };
 
-    // Compute hash
-    const integrityHash = computeAuditLogHash(eventBase, previousAuditLogHash);
-
-    const auditEvent: TAuditLogEvent = {
-      ...eventBase,
-      integrityHash,
-      previousHash: previousAuditLogHash,
-      ...(isChainStart ? { chainStart: true } : {}),
-    };
-
-    previousAuditLogHash = integrityHash;
-    isChainStart = false;
-
-    await logAuditEvent(auditEvent);
+    await runAuditLogHashTransaction(async (previousHash) => {
+      const isChainStart = !previousHash;
+      const integrityHash = computeAuditLogHash(eventBase, previousHash);
+      const auditEvent: TAuditLogEvent = {
+        ...eventBase,
+        integrityHash,
+        previousHash,
+        ...(isChainStart ? { chainStart: true } : {}),
+      };
+      return {
+        auditEvent: async () => await logAuditEvent(auditEvent),
+        integrityHash,
+      };
+    });
   } catch (logError) {
     logger.error(logError, "Failed to create audit log event");
   }
