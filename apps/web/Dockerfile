@@ -103,12 +103,6 @@ RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.n
 COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
-COPY --from=installer /app/apps/web/public/favicon/favicon.ico ./apps/web/favicon.ico
-RUN chown nextjs:nextjs ./apps/web/favicon.ico && chmod 644 ./apps/web/favicon.ico
-
-COPY --from=installer /app/apps/web/public/favicon/favicon.ico ./favicon.ico
-RUN chown nextjs:nextjs ./favicon.ico && chmod 644 ./favicon.ico
-
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 

@@ -272,6 +272,10 @@ const nextConfig = {
         source: "/api/v1/management/attribute-classes/:id*",
         destination: "/api/v1/management/contact-attribute-keys/:id*",
       },
+      {
+        source: "/favicon.ico",
+        destination: "/public/favicon/favicon.ico",
+      },
     ];
   },
   env: {
