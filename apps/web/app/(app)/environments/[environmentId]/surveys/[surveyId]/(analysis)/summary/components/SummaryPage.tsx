@@ -65,9 +65,10 @@ export const SummaryPage = ({
   // Use the shared response count context to avoid duplicate API calls
   const { responseCount } = useResponseCountContext();
 
-  const filters = useMemo(
-    () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [selectedFilter, dateRange, survey]
+  // Create a stable string representation of filters to prevent unnecessary re-renders
+  const filtersKey = useMemo(
+    () => JSON.stringify({ selectedFilter, dateRange, surveyId: survey.id }),
+    [selectedFilter, dateRange, survey.id]
   );
 
   useEffect(() => {
@@ -75,17 +76,19 @@ export const SummaryPage = ({
       setIsLoading(true);
 
       try {
+        // Recalculate filters inside the effect to ensure we have the latest values
+        const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
         let updatedSurveySummary;
 
         if (isSharingPage) {
           updatedSurveySummary = await getSummaryBySurveySharingKeyAction({
             sharingKey,
-            filterCriteria: filters,
+            filterCriteria: currentFilters,
           });
         } else {
           updatedSurveySummary = await getSurveySummaryAction({
             surveyId,
-            filterCriteria: filters,
+            filterCriteria: currentFilters,
           });
         }
 
@@ -99,7 +102,7 @@ export const SummaryPage = ({
     };
 
     fetchSummary();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
+  }, [filtersKey, isSharingPage, sharingKey, surveyId, selectedFilter, dateRange, survey]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
