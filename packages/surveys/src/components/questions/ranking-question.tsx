@@ -199,7 +199,7 @@ export function RankingQuestion({
                           )}>
                           {(idx + 1).toString()}
                         </span>
-                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm">
+                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
                           {getLocalizedValue(item.label, languageCode)}
                         </div>
                       </button>

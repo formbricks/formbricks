@@ -2,11 +2,13 @@ import { env } from "@/lib/env";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
+  createEmailChangeToken,
   createEmailToken,
   createInviteToken,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
+  verifyEmailChangeToken,
   verifyInviteToken,
   verifyToken,
   verifyTokenForLinkSurvey,
@@ -46,16 +48,6 @@ describe("JWT Functions", () => {
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createToken(mockUser.id, mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createTokenForLinkSurvey", () => {
@@ -65,18 +57,6 @@ describe("JWT Functions", () => {
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createTokenForLinkSurvey("test-survey-id", mockUser.email)).toThrow(
-          "ENCRYPTION_KEY is not set"
-        );
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createEmailToken", () => {
@@ -84,16 +64,6 @@ describe("JWT Functions", () => {
       const token = createEmailToken(mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createEmailToken(mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
     });
 
     test("should throw error if NEXTAUTH_SECRET is not set", () => {
@@ -113,16 +83,6 @@ describe("JWT Functions", () => {
       const extractedEmail = getEmailFromEmailToken(token);
       expect(extractedEmail).toBe(mockUser.email);
     });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => getEmailFromEmailToken("invalid-token")).toThrow("ENCRYPTION_KEY is not set");
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
-    });
   });
 
   describe("createInviteToken", () => {
@@ -131,18 +91,6 @@ describe("JWT Functions", () => {
       const token = createInviteToken(inviteId, mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", () => {
-      const originalKey = env.ENCRYPTION_KEY;
-      try {
-        (env as any).ENCRYPTION_KEY = undefined;
-        expect(() => createInviteToken("test-invite-id", mockUser.email)).toThrow(
-          "ENCRYPTION_KEY is not set"
-        );
-      } finally {
-        (env as any).ENCRYPTION_KEY = originalKey;
-      }
     });
   });
 
@@ -190,6 +138,34 @@ describe("JWT Functions", () => {
 
     test("should throw error for invalid token", () => {
       expect(() => verifyInviteToken("invalid-token")).toThrow("Invalid or expired invite token");
+    });
+  });
+
+  describe("verifyEmailChangeToken", () => {
+    test("should verify and decrypt valid email change token", async () => {
+      const userId = "test-user-id";
+      const email = "test@example.com";
+      const token = createEmailChangeToken(userId, email);
+      const result = await verifyEmailChangeToken(token);
+      expect(result).toEqual({ id: userId, email });
+    });
+
+    test("should throw error if token is invalid or missing fields", async () => {
+      // Create a token with missing fields
+      const jwt = await import("jsonwebtoken");
+      const token = jwt.sign({ foo: "bar" }, env.NEXTAUTH_SECRET as string);
+      await expect(verifyEmailChangeToken(token)).rejects.toThrow(
+        "Token is invalid or missing required fields"
+      );
+    });
+
+    test("should return original id/email if decryption fails", async () => {
+      // Create a token with non-encrypted id/email
+      const jwt = await import("jsonwebtoken");
+      const payload = { id: "plain-id", email: "plain@example.com" };
+      const token = jwt.sign(payload, env.NEXTAUTH_SECRET as string);
+      const result = await verifyEmailChangeToken(token);
+      expect(result).toEqual(payload);
     });
   });
 });

@@ -62,6 +62,7 @@ vi.mock("@/lib/ttc", () => ({
 vi.mock("@/lib/utils", () => ({
   cn: vi.fn((...args) => args.filter(Boolean).join(" ")),
   getShuffledChoicesIds: vi.fn((choices) => choices.map((choice: any) => choice.id)),
+  isRTL: vi.fn((text) => text.includes("rtl")),
 }));
 
 // Test data
