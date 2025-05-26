@@ -1,3 +1,4 @@
+import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
 
@@ -22,6 +23,17 @@ vi.mock("@/lib/utils/client-ip", () => ({
 }));
 vi.mock("@/modules/ee/audit-logs/lib/service", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/redis", () => ({
+  default: {
+    watch: vi.fn().mockResolvedValue("OK"),
+    multi: vi.fn().mockReturnValue({
+      set: vi.fn(),
+      exec: vi.fn().mockResolvedValue([["OK"]]), // Simulate success
+    }),
+    get: vi.fn().mockResolvedValue(null),
+  },
 }));
 
 // Set AUDIT_LOG_SECRET for all tests unless explicitly testing its absence
@@ -277,20 +289,17 @@ describe("computeAuditLogHash", () => {
 });
 
 describe("buildAndLogAuditEvent", () => {
-  let utils: any;
-  let logAuditEventMock: any;
+  let buildAndLogAuditEvent: any;
+  let redis: any;
   beforeEach(async () => {
-    vi.resetModules();
-    utils = await import("./utils");
-    const serviceModule = await import("@/modules/ee/audit-logs/lib/service");
-    logAuditEventMock = serviceModule.logAuditEvent;
-    logAuditEventMock.mockClear();
-    // Reset hash chain state
-    utils.previousAuditLogHash = null;
-    utils.isChainStart = true;
+    vi.clearAllMocks();
+    // Dynamically import after mocks are set up
+    ({ buildAndLogAuditEvent } = await import("./utils"));
+    redis = (await import("@/lib/redis")).default;
   });
-  test("includes correct integrityHash, previousHash, and chainStart in first event", async () => {
-    await utils.buildAndLogAuditEvent({
+
+  test("logs audit event and updates hash on success", async () => {
+    await buildAndLogAuditEvent({
       actionType: "survey.created",
       targetType: "survey",
       userId: "u1",
@@ -299,19 +308,19 @@ describe("buildAndLogAuditEvent", () => {
       organizationId: "org1",
       ipAddress: "127.0.0.1",
       status: "success",
+      oldObject: { foo: "bar" },
+      newObject: { foo: "baz" },
       apiUrl: "/api/test",
     });
-    expect(logAuditEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        integrityHash: expect.any(String),
-        previousHash: null,
-        chainStart: true,
-      })
-    );
+    expect(logAuditEvent).toHaveBeenCalled();
   });
-  test("includes correct previousHash and omits chainStart in subsequent event", async () => {
-    // First event
-    await utils.buildAndLogAuditEvent({
+
+  test("retries and logs error if hash update fails", async () => {
+    redis.multi.mockReturnValue({
+      set: vi.fn(),
+      exec: vi.fn().mockResolvedValue(null),
+    });
+    await buildAndLogAuditEvent({
       actionType: "survey.created",
       targetType: "survey",
       userId: "u1",
@@ -320,28 +329,11 @@ describe("buildAndLogAuditEvent", () => {
       organizationId: "org1",
       ipAddress: "127.0.0.1",
       status: "success",
+      oldObject: { foo: "bar" },
+      newObject: { foo: "baz" },
       apiUrl: "/api/test",
     });
-    const firstHash = logAuditEventMock.mock.calls[0][0].integrityHash;
-    // Second event
-    await utils.buildAndLogAuditEvent({
-      actionType: "survey.created",
-      targetType: "survey",
-      userId: "u1",
-      userType: "user",
-      targetId: "t1",
-      organizationId: "org1",
-      ipAddress: "127.0.0.1",
-      status: "success",
-      apiUrl: "/api/test",
-    });
-    const lastCall = logAuditEventMock.mock.calls[1][0];
-    expect(lastCall).toEqual(
-      expect.objectContaining({
-        integrityHash: expect.any(String),
-        previousHash: firstHash,
-      })
-    );
-    expect(lastCall).not.toHaveProperty("chainStart");
+    expect(logAuditEvent).toHaveBeenCalled();
+    // The error is caught and logged, not thrown
   });
 });

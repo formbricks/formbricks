@@ -9,10 +9,11 @@
     "continue_with_saml": "Login mit SAML SSO",
     "email-change": {
       "confirm_password_description": "Bitte bestätige dein Passwort, bevor du deine E-Mail-Adresse änderst",
-      "email_already_exists": "Diese E-Mail wird bereits verwendet",
       "email_change_success": "E-Mail erfolgreich geändert",
       "email_change_success_description": "Du hast deine E-Mail-Adresse erfolgreich geändert. Bitte logge dich mit deiner neuen E-Mail-Adresse ein.",
       "email_verification_failed": "E-Mail-Bestätigung fehlgeschlagen",
+      "email_verification_loading": "E-Mail-Bestätigung läuft...",
+      "email_verification_loading_description": "Wir aktualisieren Ihre E-Mail-Adresse in unserem System. Dies kann einige Sekunden dauern.",
       "invalid_or_expired_token": "E-Mail-Änderung fehlgeschlagen. Dein Token ist ungültig oder abgelaufen.",
       "new_email": "Neue E-Mail",
       "old_email": "Alte E-Mail"
@@ -88,6 +89,7 @@
     "verification-requested": {
       "invalid_email_address": "Ungültige E-Mail-Adresse",
       "invalid_token": "Ungültiges Token ☹️",
+      "new_email_verification_success": "Wenn die Adresse gültig ist, wurde eine Bestätigungs-E-Mail gesendet.",
       "no_email_provided": "Keine E-Mail bereitgestellt",
       "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
@@ -1149,6 +1151,7 @@
         "disable_two_factor_authentication": "Zwei-Faktor-Authentifizierung deaktivieren",
         "disable_two_factor_authentication_description": "Wenn Du die Zwei-Faktor-Authentifizierung deaktivieren musst, empfehlen wir, sie so schnell wie möglich wieder zu aktivieren.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Jeder Backup-Code kann genau einmal verwendet werden, um Zugang ohne deinen Authenticator zu gewähren.",
+        "email_change_initiated": "Deine Anfrage zur Änderung der E-Mail wurde eingeleitet.",
         "enable_two_factor_authentication": "Zwei-Faktor-Authentifizierung aktivieren",
         "enter_the_code_from_your_authenticator_app_below": "Gib den Code aus deiner Authentifizierungs-App unten ein.",
         "file_size_must_be_less_than_10mb": "Dateigröße muss weniger als 10MB sein.",

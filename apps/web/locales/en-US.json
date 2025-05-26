@@ -9,10 +9,11 @@
     "continue_with_saml": "Continue with SAML SSO",
     "email-change": {
       "confirm_password_description": "Please confirm your password before changing your email address",
-      "email_already_exists": "This email is already in use",
       "email_change_success": "Email changed successfully",
       "email_change_success_description": "You have successfully changed your email address. Please log in with your new email address.",
       "email_verification_failed": "Email verification failed",
+      "email_verification_loading": "Email verification in progress...",
+      "email_verification_loading_description": "We are updating your email address in our system. This may take a few seconds.",
       "invalid_or_expired_token": "Email change failed. Your token is invalid or expired.",
       "new_email": "New Email",
       "old_email": "Old Email"
@@ -88,6 +89,7 @@
     "verification-requested": {
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
+      "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
       "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
@@ -1149,6 +1151,7 @@
         "disable_two_factor_authentication": "Disable two factor authentication",
         "disable_two_factor_authentication_description": "If you need to disable 2FA, we recommend re-enabling it as soon as possible.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Each backup code can be used exactly once to grant access without your authenticator.",
+        "email_change_initiated": "Your email change request has been initiated.",
         "enable_two_factor_authentication": "Enable two factor authentication",
         "enter_the_code_from_your_authenticator_app_below": "Enter the code from your authenticator app below.",
         "file_size_must_be_less_than_10mb": "File size must be less than 10MB.",
