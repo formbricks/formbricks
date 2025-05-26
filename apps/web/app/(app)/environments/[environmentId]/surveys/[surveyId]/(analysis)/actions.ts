@@ -75,7 +75,6 @@ export const getSurveySummaryAction = authenticatedActionClient
         },
       ],
     });
-
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
   });
 

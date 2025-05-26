@@ -1,19 +1,14 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import {
-  getResponseCountAction,
-  getSurveySummaryAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { useResponseCountContext } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import {
-  getResponseCountBySurveySharingKeyAction,
-  getSummaryBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/actions";
+import { getSummaryBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -43,7 +38,6 @@ interface SummaryPageProps {
   survey: TSurvey;
   surveyId: string;
   webAppUrl: string;
-  totalResponseCount: number;
   locale: TUserLocale;
   isReadOnly: boolean;
 }
@@ -53,7 +47,6 @@ export const SummaryPage = ({
   survey,
   surveyId,
   webAppUrl,
-  totalResponseCount,
   locale,
   isReadOnly,
 }: SummaryPageProps) => {
@@ -63,12 +56,14 @@ export const SummaryPage = ({
 
   const searchParams = useSearchParams();
 
-  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
+  // Use the shared response count context to avoid duplicate API calls
+  const { responseCount } = useResponseCountContext();
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -78,18 +73,6 @@ export const SummaryPage = ({
   // Use a ref to keep the latest state and props
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
-
-  const getResponseCount = useCallback(() => {
-    if (isSharingPage)
-      return getResponseCountBySurveySharingKeyAction({
-        sharingKey,
-        filterCriteria: latestFiltersRef.current,
-      });
-    return getResponseCountAction({
-      surveyId,
-      filterCriteria: latestFiltersRef.current,
-    });
-  }, [isSharingPage, sharingKey, surveyId]);
 
   const getSummary = useCallback(() => {
     if (isSharingPage)
@@ -111,15 +94,8 @@ export const SummaryPage = ({
       }
 
       try {
-        const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
-          getResponseCount(),
-          getSummary(),
-        ]);
-
-        const responseCount = updatedResponseCountData?.data ?? 0;
+        const updatedSurveySummary = await getSummary();
         const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
-
-        setResponseCount(responseCount);
         setSurveySummary(surveySummary);
       } catch (error) {
         console.error(error);
@@ -129,7 +105,7 @@ export const SummaryPage = ({
         }
       }
     },
-    [getResponseCount, getSummary]
+    [getSummary]
   );
 
   useEffect(() => {
@@ -167,7 +143,6 @@ export const SummaryPage = ({
         responseCount={responseCount}
         survey={surveyMemoized}
         environment={environment}
-        totalResponseCount={totalResponseCount}
         locale={locale}
       />
     </>

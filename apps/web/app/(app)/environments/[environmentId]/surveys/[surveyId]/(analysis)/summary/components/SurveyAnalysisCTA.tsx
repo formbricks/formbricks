@@ -1,5 +1,6 @@
 "use client";
 
+import { useResponseCountContext } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
@@ -25,7 +26,6 @@ interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
   user: TUser;
   surveyDomain: string;
-  responseCount: number;
 }
 
 interface ModalState {
@@ -41,13 +41,15 @@ export const SurveyAnalysisCTA = ({
   isReadOnly,
   user,
   surveyDomain,
-  responseCount,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // Get response count from context
+  const { responseCount } = useResponseCountContext();
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -171,7 +173,7 @@ export const SurveyAnalysisCTA = ({
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => {
-        responseCount && responseCount > 0
+        (responseCount ?? 0) > 0
           ? setIsCautionDialogOpen(true)
           : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
       },
@@ -213,7 +215,7 @@ export const SurveyAnalysisCTA = ({
         </>
       )}
 
-      {responseCount > 0 && (
+      {(responseCount ?? 0) > 0 && (
         <EditPublicSurveyAlertDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}

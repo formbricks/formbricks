@@ -1,7 +1,8 @@
+import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import SurveyPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/page";
-import { DEFAULT_LOCALE, DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -38,7 +39,7 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
   WEBAPP_URL: "http://localhost:3000",
   RESPONSES_PER_PAGE: 10,
-  DOCUMENTS_PER_PAGE: 10,
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock(
@@ -100,6 +101,11 @@ vi.mock("@/tolgee/server", () => ({
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
+  useParams: () => ({
+    environmentId: "test-environment-id",
+    surveyId: "test-survey-id",
+    sharingKey: null,
+  }),
 }));
 
 const mockEnvironmentId = "test-environment-id";
@@ -193,7 +199,8 @@ describe("SurveyPage", () => {
 
   test("renders correctly with valid data", async () => {
     const params = Promise.resolve({ environmentId: mockEnvironmentId, surveyId: mockSurveyId });
-    render(await SurveyPage({ params }));
+    const jsx = await SurveyPage({ params });
+    render(<ResponseFilterProvider>{jsx}</ResponseFilterProvider>);
 
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
@@ -204,7 +211,6 @@ describe("SurveyPage", () => {
     expect(vi.mocked(getEnvironmentAuth)).toHaveBeenCalledWith(mockEnvironmentId);
     expect(vi.mocked(getSurvey)).toHaveBeenCalledWith(mockSurveyId);
     expect(vi.mocked(getUser)).toHaveBeenCalledWith(mockUserId);
-    expect(vi.mocked(getResponseCountBySurveyId)).toHaveBeenCalledWith(mockSurveyId);
     expect(vi.mocked(getSurveyDomain)).toHaveBeenCalled();
 
     expect(vi.mocked(SurveyAnalysisNavigation).mock.calls[0][0]).toEqual(
@@ -212,7 +218,6 @@ describe("SurveyPage", () => {
         environmentId: mockEnvironmentId,
         survey: mockSurvey,
         activeId: "summary",
-        initialTotalResponseCount: 10,
       })
     );
 
@@ -222,9 +227,6 @@ describe("SurveyPage", () => {
         survey: mockSurvey,
         surveyId: mockSurveyId,
         webAppUrl: WEBAPP_URL,
-        user: mockUser,
-        totalResponseCount: 10,
-        documentsPerPage: DOCUMENTS_PER_PAGE,
         isReadOnly: false,
         locale: mockUser.locale ?? DEFAULT_LOCALE,
       })
@@ -233,7 +235,8 @@ describe("SurveyPage", () => {
 
   test("calls notFound if surveyId is not present in params", async () => {
     const params = Promise.resolve({ environmentId: mockEnvironmentId, surveyId: undefined }) as any;
-    render(await SurveyPage({ params }));
+    const jsx = await SurveyPage({ params });
+    render(<ResponseFilterProvider>{jsx}</ResponseFilterProvider>);
     expect(vi.mocked(notFound)).toHaveBeenCalled();
   });
 
@@ -243,7 +246,7 @@ describe("SurveyPage", () => {
     try {
       // We need to await the component itself because it's an async component
       const SurveyPageComponent = await SurveyPage({ params });
-      render(SurveyPageComponent);
+      render(<ResponseFilterProvider>{SurveyPageComponent}</ResponseFilterProvider>);
     } catch (e: any) {
       expect(e.message).toBe("common.survey_not_found");
     }
@@ -256,7 +259,7 @@ describe("SurveyPage", () => {
     const params = Promise.resolve({ environmentId: mockEnvironmentId, surveyId: mockSurveyId });
     try {
       const SurveyPageComponent = await SurveyPage({ params });
-      render(SurveyPageComponent);
+      render(<ResponseFilterProvider>{SurveyPageComponent}</ResponseFilterProvider>);
     } catch (e: any) {
       expect(e.message).toBe("common.user_not_found");
     }

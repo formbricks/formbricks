@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Formbricks Architecture & Patterns
+
+## Project Structure
+
+### Monorepo Organization
+- `apps/web/` - Main Next.js web application
+- `apps/storybook/` - Component documentation and testing
+- `packages/` - Shared libraries and utilities
+  - `packages/database/` - Prisma schema and database utilities
+  - `packages/types/` - TypeScript type definitions
+  - `packages/surveys/` - Survey-related components and logic
+
+### Key Directories in Web App
+- `app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/` - Survey analysis pages
+- `lib/` - Server-side utilities and services
+- `modules/` - Feature-specific code organization
+- `components/` - Reusable UI components
+
+## Architecture Patterns
+
+### Service Layer Pattern
+- Services in `lib/` handle data fetching and business logic
+- Use React Cache for performance optimization
+- Implement proper error handling with custom error types
+- Example: [apps/web/lib/response/service.ts](mdc:apps/web/lib/response/service.ts)
+
+### API Layer Structure
+- V2 API in `modules/api/v2/` with proper versioning
+- Management APIs for different resources (responses, surveys, etc.)
+- Consistent error handling and response formatting
+
+### Caching Strategy
+- React Cache for server-side caching
+- Custom cache tags for invalidation
+- Cache keys include relevant parameters for proper invalidation
+- Example pattern: `[functionName-${param1}-${param2}]`
+
+### Database Layer
+- Prisma ORM with schema in [packages/database/schema.prisma](mdc:packages/database/schema.prisma)
+- Proper indexing for performance
+- Response model with relationships to Survey, Contact, and Tags
+
+### Component Organization
+- Page components in route directories
+- Shared components in dedicated directories
+- Context providers for shared state management
+- Proper TypeScript interfaces for all props
+
+### Testing Strategy
+- Vitest for unit and integration tests
+- Test files co-located with source files
+- Comprehensive mocking of external dependencies
+- Follow patterns in [.github/copilot-instructions.md](mdc:.github/copilot-instructions.md)

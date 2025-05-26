@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { ResponseCountProvider } from "../../components/ResponseCountProvider";
 import { SummaryPage } from "./SummaryPage";
 
 // Mock actions
@@ -176,14 +177,22 @@ describe("SummaryPage", () => {
   };
 
   test("renders loading state initially", () => {
-    render(<SummaryPage {...defaultProps} />);
+    render(
+      <ResponseCountProvider survey={mockSurvey} initialCount={50}>
+        <SummaryPage {...defaultProps} />
+      </ResponseCountProvider>
+    );
 
     expect(screen.getByTestId("summary-metadata")).toBeInTheDocument();
     expect(screen.getByText("Is Loading: true")).toBeInTheDocument();
   });
 
   test("renders summary components after loading", async () => {
-    render(<SummaryPage {...defaultProps} />);
+    render(
+      <ResponseCountProvider survey={mockSurvey} initialCount={50}>
+        <SummaryPage {...defaultProps} />
+      </ResponseCountProvider>
+    );
 
     // Wait for loading to complete
     await waitFor(() => {
@@ -198,7 +207,11 @@ describe("SummaryPage", () => {
 
   test("shows drop-offs component when toggled", async () => {
     const user = userEvent.setup();
-    render(<SummaryPage {...defaultProps} />);
+    render(
+      <ResponseCountProvider survey={mockSurvey} initialCount={50}>
+        <SummaryPage {...defaultProps} />
+      </ResponseCountProvider>
+    );
 
     // Wait for loading to complete
     await waitFor(() => {
@@ -216,7 +229,11 @@ describe("SummaryPage", () => {
   });
 
   test("doesn't show share button in read-only mode", async () => {
-    render(<SummaryPage {...defaultProps} isReadOnly={true} />);
+    render(
+      <ResponseCountProvider survey={mockSurvey} initialCount={50}>
+        <SummaryPage {...defaultProps} isReadOnly={true} />
+      </ResponseCountProvider>
+    );
 
     // Wait for loading to complete
     await waitFor(() => {
