@@ -5,7 +5,6 @@ import { displayCache } from "@/lib/display/cache";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { responseCache } from "@/lib/response/cache";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { buildWhereClause } from "@/lib/response/utils";
 import { surveyCache } from "@/lib/survey/cache";
 import { getSurvey } from "@/lib/survey/service";

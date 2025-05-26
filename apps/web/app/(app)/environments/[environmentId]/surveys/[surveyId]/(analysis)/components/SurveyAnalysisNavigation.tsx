@@ -7,11 +7,10 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getResponseCountBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
-import { useIntervalWhenFocused } from "@/lib/utils/hooks/useIntervalWhenFocused";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon, PresentationIcon } from "lucide-react";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -32,12 +31,8 @@ export const SurveyAnalysisNavigation = ({
   const { t } = useTranslate();
   const params = useParams();
   const [filteredResponseCount, setFilteredResponseCount] = useState<number | null>(null);
-  const [totalResponseCount, setTotalResponseCount] = useState<number | null>(initialTotalResponseCount);
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
-
-  const searchParams = useSearchParams();
-  const isShareEmbedModalOpen = searchParams.get("share") === "true";
 
   const url = isSharingPage ? `/share/${sharingKey}` : `/environments/${environmentId}/surveys/${survey.id}`;
   const { selectedFilter, dateRange } = useResponseFilter();
@@ -49,17 +44,6 @@ export const SurveyAnalysisNavigation = ({
 
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
-
-  const getResponseCount = () => {
-    if (isSharingPage) return getResponseCountBySurveySharingKeyAction({ sharingKey });
-    return getResponseCountAction({ surveyId: survey.id });
-  };
-
-  const fetchResponseCount = async () => {
-    const count = await getResponseCount();
-    const responseCount = count?.data ?? 0;
-    setTotalResponseCount(responseCount);
-  };
 
   const getFilteredResponseCount = useCallback(() => {
     if (isSharingPage)
@@ -80,21 +64,11 @@ export const SurveyAnalysisNavigation = ({
     fetchFilteredResponseCount();
   }, [filters, isSharingPage, sharingKey, survey.id, fetchFilteredResponseCount]);
 
-  useIntervalWhenFocused(
-    () => {
-      fetchResponseCount();
-      fetchFilteredResponseCount();
-    },
-    10000,
-    !isShareEmbedModalOpen,
-    false
-  );
-
   const getResponseCountString = () => {
-    if (totalResponseCount === null) return "";
-    if (filteredResponseCount === null) return `(${totalResponseCount})`;
+    if (initialTotalResponseCount === null) return "";
+    if (filteredResponseCount === null) return `(${initialTotalResponseCount})`;
 
-    const totalCount = Math.max(totalResponseCount, filteredResponseCount);
+    const totalCount = Math.max(initialTotalResponseCount, filteredResponseCount);
 
     if (totalCount === filteredResponseCount) return `(${totalCount})`;
 

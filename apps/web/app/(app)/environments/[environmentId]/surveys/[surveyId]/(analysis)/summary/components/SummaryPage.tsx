@@ -14,13 +14,12 @@ import {
   getResponseCountBySurveySharingKeyAction,
   getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/actions";
-import { useIntervalWhenFocused } from "@/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
@@ -44,9 +43,7 @@ interface SummaryPageProps {
   survey: TSurvey;
   surveyId: string;
   webAppUrl: string;
-  user?: TUser;
   totalResponseCount: number;
-  documentsPerPage?: number;
   locale: TUserLocale;
   isReadOnly: boolean;
 }
@@ -65,7 +62,6 @@ export const SummaryPage = ({
   const isSharingPage = !!sharingKey;
 
   const searchParams = useSearchParams();
-  const isShareEmbedModalOpen = searchParams.get("share") === "true";
 
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
@@ -139,15 +135,6 @@ export const SummaryPage = ({
   useEffect(() => {
     handleInitialData(true);
   }, [filters, isSharingPage, sharingKey, surveyId, handleInitialData]);
-
-  useIntervalWhenFocused(
-    () => {
-      handleInitialData(false);
-    },
-    10000,
-    !isShareEmbedModalOpen,
-    false
-  );
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

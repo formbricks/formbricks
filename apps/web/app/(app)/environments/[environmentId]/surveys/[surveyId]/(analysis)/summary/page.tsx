@@ -1,7 +1,7 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { DEFAULT_LOCALE, DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -70,9 +70,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         survey={survey}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
-        user={user}
         totalResponseCount={totalResponseCount}
-        documentsPerPage={DOCUMENTS_PER_PAGE}
         isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}
       />
