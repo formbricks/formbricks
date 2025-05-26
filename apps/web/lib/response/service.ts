@@ -98,7 +98,7 @@ export const getResponseContact = (
   if (!responsePrisma.contact) return null;
 
   return {
-    id: responsePrisma.contact.id as string,
+    id: responsePrisma.contact.id,
     userId: responsePrisma.contact.attributes.find((attribute) => attribute.attributeKey.key === "userId")
       ?.value as string,
   };
@@ -291,7 +291,8 @@ export const getResponses = reactCache(
     surveyId: string,
     limit?: number,
     offset?: number,
-    filterCriteria?: TResponseFilterCriteria
+    filterCriteria?: TResponseFilterCriteria,
+    cursor?: string
   ): Promise<TResponse[]> =>
     cache(
       async () => {
@@ -306,19 +307,31 @@ export const getResponses = reactCache(
         const survey = await getSurvey(surveyId);
         if (!survey) return [];
         try {
+          const whereClause: any = {
+            surveyId,
+            ...buildWhereClause(survey, filterCriteria),
+          };
+
+          // Add cursor condition for cursor-based pagination
+          if (cursor) {
+            whereClause.id = {
+              lt: cursor, // Get responses with ID less than cursor (for desc order)
+            };
+          }
+
           const responses = await prisma.response.findMany({
-            where: {
-              surveyId,
-              ...buildWhereClause(survey, filterCriteria),
-            },
+            where: whereClause,
             select: responseSelection,
             orderBy: [
               {
                 createdAt: "desc",
               },
+              {
+                id: "desc", // Secondary sort by ID for consistent pagination
+              },
             ],
-            take: limit ? limit : undefined,
-            skip: offset ? offset : undefined,
+            take: limit,
+            skip: offset,
           });
 
           const transformedResponses: TResponse[] = await Promise.all(
@@ -340,7 +353,7 @@ export const getResponses = reactCache(
           throw error;
         }
       },
-      [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}-${cursor}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }
@@ -360,19 +373,27 @@ export const getResponseDownloadUrl = async (
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const environmentId = survey.environmentId as string;
+    const environmentId = survey.environmentId;
 
     const accessType = "private";
     const batchSize = 3000;
-    const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-    const pages = Math.ceil(responseCount / batchSize);
 
-    const responsesArray = await Promise.all(
-      Array.from({ length: pages }, (_, i) => {
-        return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
-      })
-    );
-    const responses = responsesArray.flat();
+    // Use cursor-based pagination instead of count + offset to avoid expensive queries
+    const responses: TResponse[] = [];
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+
+    while (hasMore) {
+      const batch = await getResponses(surveyId, batchSize, 0, filterCriteria, cursor);
+      responses.push(...batch);
+
+      if (batch.length < batchSize) {
+        hasMore = false;
+      } else {
+        // Use the last response's ID as cursor for next batch
+        cursor = batch[batch.length - 1].id;
+      }
+    }
 
     const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
@@ -442,8 +463,8 @@ export const getResponsesByEnvironmentId = reactCache(
                 createdAt: "desc",
               },
             ],
-            take: limit ? limit : undefined,
-            skip: offset ? offset : undefined,
+            take: limit,
+            skip: offset,
           });
 
           const transformedResponses: TResponse[] = await Promise.all(
@@ -478,8 +499,6 @@ export const updateResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
-    // const currentResponse = await getResponse(responseId);
-
     // use direct prisma call to avoid cache issues
     const currentResponse = await prisma.response.findUnique({
       where: {

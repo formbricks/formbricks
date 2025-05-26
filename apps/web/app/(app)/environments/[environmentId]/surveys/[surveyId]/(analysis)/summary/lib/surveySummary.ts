@@ -917,22 +917,24 @@ export const getSurveySummary = reactCache(
           }
 
           const batchSize = 5000;
-          const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-
           const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
 
-          const pages = Math.ceil(responseCount / batchSize);
+          // Use cursor-based pagination instead of count + offset to avoid expensive queries
+          const responses: TSurveySummaryResponse[] = [];
+          let cursor: string | undefined = undefined;
+          let hasMore = true;
 
-          // Create an array of batch fetch promises
-          const batchPromises = Array.from({ length: pages }, (_, i) =>
-            getResponsesForSummary(surveyId, batchSize, i * batchSize, filterCriteria)
-          );
+          while (hasMore) {
+            const batch = await getResponsesForSummary(surveyId, batchSize, 0, filterCriteria, cursor);
+            responses.push(...batch);
 
-          // Fetch all batches in parallel
-          const batchResults = await Promise.all(batchPromises);
-
-          // Combine all batch results
-          const responses = batchResults.flat();
+            if (batch.length < batchSize) {
+              hasMore = false;
+            } else {
+              // Use the last response's ID as cursor for next batch
+              cursor = batch[batch.length - 1].id;
+            }
+          }
 
           const responseIds = hasFilter ? responses.map((response) => response.id) : [];
 
@@ -972,7 +974,8 @@ export const getResponsesForSummary = reactCache(
     surveyId: string,
     limit: number,
     offset: number,
-    filterCriteria?: TResponseFilterCriteria
+    filterCriteria?: TResponseFilterCriteria,
+    cursor?: string
   ): Promise<TSurveySummaryResponse[]> =>
     cache(
       async () => {
@@ -980,18 +983,28 @@ export const getResponsesForSummary = reactCache(
           [surveyId, ZId],
           [limit, ZOptionalNumber],
           [offset, ZOptionalNumber],
-          [filterCriteria, ZResponseFilterCriteria.optional()]
+          [filterCriteria, ZResponseFilterCriteria.optional()],
+          [cursor, ZId.optional()]
         );
 
         const queryLimit = limit ?? RESPONSES_PER_PAGE;
         const survey = await getSurvey(surveyId);
         if (!survey) return [];
         try {
+          const whereClause: any = {
+            surveyId,
+            ...buildWhereClause(survey, filterCriteria),
+          };
+
+          // Add cursor condition for cursor-based pagination
+          if (cursor) {
+            whereClause.id = {
+              lt: cursor, // Get responses with ID less than cursor (for desc order)
+            };
+          }
+
           const responses = await prisma.response.findMany({
-            where: {
-              surveyId,
-              ...buildWhereClause(survey, filterCriteria),
-            },
+            where: whereClause,
             select: {
               id: true,
               data: true,
@@ -1012,6 +1025,9 @@ export const getResponsesForSummary = reactCache(
             orderBy: [
               {
                 createdAt: "desc",
+              },
+              {
+                id: "desc", // Secondary sort by ID for consistent pagination
               },
             ],
             take: queryLimit,
@@ -1043,7 +1059,9 @@ export const getResponsesForSummary = reactCache(
           throw error;
         }
       },
-      [`getResponsesForSummary-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [
+        `getResponsesForSummary-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}-${cursor || ""}`,
+      ],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }
