@@ -18,7 +18,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
-const initialSurveySummary: TSurveySummary = {
+const defaultSurveySummary: TSurveySummary = {
   meta: {
     completedPercentage: 0,
     completedResponses: 0,
@@ -40,6 +40,7 @@ interface SummaryPageProps {
   webAppUrl: string;
   locale: TUserLocale;
   isReadOnly: boolean;
+  initialSurveySummary?: TSurveySummary;
 }
 
 export const SummaryPage = ({
@@ -49,6 +50,7 @@ export const SummaryPage = ({
   webAppUrl,
   locale,
   isReadOnly,
+  initialSurveySummary,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -56,22 +58,31 @@ export const SummaryPage = ({
 
   const searchParams = useSearchParams();
 
-  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
+    initialSurveySummary || defaultSurveySummary
+  );
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   // Use the shared response count context to avoid duplicate API calls
   const { responseCount } = useResponseCountContext();
 
-  // Create a stable string representation of filters to prevent unnecessary re-renders
-  const filtersKey = useMemo(
-    () => JSON.stringify({ selectedFilter, dateRange, surveyId: survey.id }),
-    [selectedFilter, dateRange, survey.id]
-  );
-
+  // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
+    // If we have initial data and no filters are applied, don't fetch
+    const hasNoFilters =
+      (!selectedFilter ||
+        Object.keys(selectedFilter).length === 0 ||
+        (selectedFilter.filter && selectedFilter.filter.length === 0)) &&
+      (!dateRange || (!dateRange.from && !dateRange.to));
+
+    if (initialSurveySummary && hasNoFilters) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSummary = async () => {
       setIsLoading(true);
 
@@ -92,7 +103,7 @@ export const SummaryPage = ({
           });
         }
 
-        const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+        const surveySummary = updatedSurveySummary?.data ?? defaultSurveySummary;
         setSurveySummary(surveySummary);
       } catch (error) {
         console.error(error);
@@ -102,7 +113,7 @@ export const SummaryPage = ({
     };
 
     fetchSummary();
-  }, [filtersKey, isSharingPage, sharingKey, surveyId, selectedFilter, dateRange, survey]);
+  }, [selectedFilter, dateRange, survey.id, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

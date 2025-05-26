@@ -1,6 +1,7 @@
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import SurveyPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/page";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
@@ -78,6 +79,13 @@ vi.mock("@/lib/survey/service", () => ({
 vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
+
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary",
+  () => ({
+    getSurveySummary: vi.fn(),
+  })
+);
 
 vi.mock("@/modules/environments/lib/utils", () => ({
   getEnvironmentAuth: vi.fn(),
@@ -178,6 +186,21 @@ const mockSession = {
   expires: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
 } as any;
 
+const mockSurveySummary = {
+  meta: {
+    completedPercentage: 75,
+    completedResponses: 15,
+    displayCount: 20,
+    dropOffPercentage: 25,
+    dropOffCount: 5,
+    startsPercentage: 80,
+    totalResponses: 20,
+    ttcAverage: 120,
+  },
+  dropOff: [],
+  summary: [],
+};
+
 describe("SurveyPage", () => {
   beforeEach(() => {
     vi.mocked(getEnvironmentAuth).mockResolvedValue({
@@ -189,6 +212,7 @@ describe("SurveyPage", () => {
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
     vi.mocked(getSurveyDomain).mockReturnValue("test.domain.com");
+    vi.mocked(getSurveySummary).mockResolvedValue(mockSurveySummary);
     vi.mocked(notFound).mockClear();
   });
 
@@ -229,6 +253,7 @@ describe("SurveyPage", () => {
         webAppUrl: WEBAPP_URL,
         isReadOnly: false,
         locale: mockUser.locale ?? DEFAULT_LOCALE,
+        initialSurveySummary: mockSurveySummary,
       })
     );
   });
