@@ -203,20 +203,6 @@ const nextConfig = {
           },
         ],
       },
-      {
-        source: "/favicon.ico",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-          {
-            key: "Content-Type",
-            value: "image/x-icon",
-          },
-        ],
-      },
-
       // headers for /api/packages/(.*) -- the api route does not exist, but we still need the headers for the rewrites to work correctly!
       {
         source: "/api/packages/(.*)",
