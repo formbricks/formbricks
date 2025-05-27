@@ -63,6 +63,8 @@ export function SurveyContainer({
     }
   };
 
+  if (!isOpen) return null;
+
   if (!isModal) {
     return (
       <div id="fbjs" className="fb-formbricks-form" style={{ height: "100%", width: "100%" }}>

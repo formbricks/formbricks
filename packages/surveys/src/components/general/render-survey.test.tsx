@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RenderSurvey } from "./render-survey";
 
 // Stub SurveyContainer to render children and capture props
@@ -31,7 +31,7 @@ describe("RenderSurvey", () => {
     vi.useRealTimers();
   });
 
-  it("renders with default props and handles close", () => {
+  test("renders with default props and handles close", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -63,7 +63,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished skips close if redirectToUrl", () => {
+  test("onFinished skips close if redirectToUrl", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "redirectToUrl" }] } as any;
@@ -88,7 +88,7 @@ describe("RenderSurvey", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("onFinished closes after delay for non-redirect endings", () => {
+  test("onFinished closes after delay for non-redirect endings", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [{ id: "e1", type: "question" }] } as any;
@@ -115,7 +115,7 @@ describe("RenderSurvey", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("onFinished does not auto-close when inline mode", () => {
+  test("onFinished does not auto-close when inline mode", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
     const survey = { endings: [] } as any;
