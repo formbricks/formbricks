@@ -3,6 +3,11 @@ import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
 
+const removeTolgeeInvisibleMarks = (str: string) => {
+  // Remove zero-width joiners, non-joiners, and other invisible Unicode chars
+  return str.replace(/[\u200C-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
+};
+
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (
   text: string | TI18nString,
@@ -30,7 +35,7 @@ export const createI18nString = (
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: any = {
-      [targetLanguageCode ?? "default"]: text as string, // Type assertion to assure TypeScript `text` is a string
+      [targetLanguageCode ?? "default"]: removeTolgeeInvisibleMarks(text as string), // Type assertion to assure TypeScript `text` is a string
     };
 
     // Initialize all provided languages with empty strings

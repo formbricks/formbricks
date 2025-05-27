@@ -12,6 +12,7 @@ import {
   getDefaultSurveyPreset,
   hiddenFieldsDefault,
 } from "@/app/lib/survey-builder";
+import { createI18nString } from "@/lib/i18n/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
 import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -3479,9 +3480,9 @@ export const customSurveyTemplate = (t: TFnType): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: t("templates.custom_survey_question_1_headline") },
-          placeholder: { default: t("templates.custom_survey_question_1_placeholder") },
-          buttonLabel: { default: t("templates.next") },
+          headline: createI18nString(t("templates.custom_survey_question_1_headline"), []),
+          placeholder: createI18nString(t("templates.custom_survey_question_1_placeholder"), []),
+          buttonLabel: createI18nString(t("templates.next"), []),
           required: true,
           inputType: "text",
           charLimit: {
@@ -3504,13 +3505,9 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress",
     welcomeCard: {
-      html: {
-        default: t("templates.preview_survey_welcome_card_html"),
-      },
+      html: createI18nString(t("templates.preview_survey_welcome_card_html"), []),
       enabled: false,
-      headline: {
-        default: t("templates.preview_survey_welcome_card_headline"),
-      },
+      headline: createI18nString(t("templates.preview_survey_welcome_card_headline"), []),
       timeToFinish: false,
       showResponseCount: false,
     },
