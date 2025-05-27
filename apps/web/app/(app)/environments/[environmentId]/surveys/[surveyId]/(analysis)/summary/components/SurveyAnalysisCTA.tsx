@@ -171,7 +171,7 @@ export const SurveyAnalysisCTA = ({
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => {
-        responseCount && responseCount > 0
+        responseCount > 0
           ? setIsCautionDialogOpen(true)
           : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
       },

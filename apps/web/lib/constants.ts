@@ -95,8 +95,6 @@ export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 25;
 export const TEXT_RESPONSES_PER_PAGE = 5;
-export const INSIGHTS_PER_PAGE = 10;
-export const DOCUMENTS_PER_PAGE = 10;
 export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const MAX_OTHER_OPTION_LENGTH = 250;
 

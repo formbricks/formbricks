@@ -47,7 +47,7 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
   return true;
 };
 
-export const checkUserExistsByEmail = reactCache(
+export const getIsEmailUnique = reactCache(
   async (email: string): Promise<boolean> =>
     cache(
       async () => {
@@ -60,9 +60,9 @@ export const checkUserExistsByEmail = reactCache(
           },
         });
 
-        return !!user;
+        return !user;
       },
-      [`checkUserExistsByEmail-${email}`],
+      [`getIsEmailUnique-${email}`],
       {
         tags: [userCache.tag.byEmail(email)],
       }

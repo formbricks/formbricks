@@ -758,7 +758,6 @@ describe("getSurveySummary", () => {
     expect(summary.dropOff).toBeDefined();
     expect(summary.summary).toBeDefined();
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
-    expect(getResponseCountBySurveyId).toHaveBeenCalledWith(mockSurveyId, undefined);
     expect(prisma.response.findMany).toHaveBeenCalled(); // Check if getResponsesForSummary was effectively called
     expect(getDisplayCountBySurveyId).toHaveBeenCalled();
   });
@@ -770,7 +769,6 @@ describe("getSurveySummary", () => {
 
   test("handles filterCriteria", async () => {
     const filterCriteria: TResponseFilterCriteria = { finished: true };
-    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(2); // Assume 2 finished responses
     const finishedResponses = mockResponses
       .filter((r) => r.finished)
       .map((r) => ({ ...r, contactId: null, personAttributes: {} }));
@@ -778,7 +776,6 @@ describe("getSurveySummary", () => {
 
     await getSurveySummary(mockSurveyId, filterCriteria);
 
-    expect(getResponseCountBySurveyId).toHaveBeenCalledWith(mockSurveyId, filterCriteria);
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ surveyId: mockSurveyId }), // buildWhereClause is mocked
