@@ -181,3 +181,31 @@ export const getAvailableUserCommunities = async ({
     return [];
   }
 };
+
+export const editCommunityFields = async ({
+  userId,
+  communityName,
+  communityDescription,
+}: {
+  userId: string;
+  communityName: string;
+  communityDescription: string;
+}): Promise<string> => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        communityName: communityName,
+        communityDescription: communityDescription,
+      },
+    });
+
+    return user.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

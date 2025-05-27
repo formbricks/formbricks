@@ -845,6 +845,8 @@ model User {
   whitelist                 Boolean          @default(false)
   communities               UserCommunity[]  @relation("user")
   communitiesCreated        UserCommunity[]  @relation("creator")
+  communityName             String?
+  communityDescription      String?
 
   @@index([email])
 }
