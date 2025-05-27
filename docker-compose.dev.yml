@@ -36,6 +36,18 @@ services:
     volumes:
       - minio-data:/data
 
+  logrotate:
+    image: blacklabelops/logrotate
+    volumes:
+      - ./apps/web/logs:/logs  # <-- Update this if you change AUDIT_LOG_PATH in .env. The default value for the path is ./apps/web/logs.
+    environment:
+      - LOGS_DIRECTORIES=/logs
+      - LOGROTATE_CRONSCHEDULE=0 0 * * * # Every day at midnight
+      - LOGROTATE_COPIES=90 # Keep 90 days of logs
+      - LOGROTATE_COMPRESSION=compress # Compress logs into .gz files
+      - LOGROTATE_LOGFILES=audit.log
+      - LOGROTATE_SIZE=100M # Rotate logs when they reach 100MB
+
 volumes:
   postgres:
     driver: local
