@@ -48,11 +48,20 @@ jobs:
           --health-retries=5
       valkey:
         image: valkey/valkey:8.1.1
-        command: "valkey-server"
         ports:
           - 6379:6379
         options: >-
+          --entrypoint "valkey-server"
           --health-cmd="valkey-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd="redis-cli ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
