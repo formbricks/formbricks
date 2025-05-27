@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ProgressBar } from "./progress-bar";
 
 // Mock Progress component to capture progress prop
@@ -24,12 +24,12 @@ describe("ProgressBar", () => {
     endings: [{ id: "end1" }],
   };
 
-  it("renders 0 for start", () => {
+  test("renders 0 for start", () => {
     render(<ProgressBar survey={baseSurvey} questionId="start" />);
     expect(screen.getByTestId("progress")).toHaveTextContent("0");
   });
 
-  it("renders correct progress for questions", () => {
+  test("renders correct progress for questions", () => {
     // totalCards = questions.length + 1 = 3
     render(<ProgressBar survey={baseSurvey} questionId="q1" />);
     expect(screen.getByTestId("progress")).toHaveTextContent("0");
@@ -41,7 +41,7 @@ describe("ProgressBar", () => {
     expect(screen.getByTestId("progress")).toHaveTextContent((1 / 3).toString());
   });
 
-  it("renders 1 for ending card", () => {
+  test("renders 1 for ending card", () => {
     render(<ProgressBar survey={baseSurvey} questionId="end1" />);
     expect(screen.getByTestId("progress")).toHaveTextContent("1");
   });
