@@ -6,7 +6,7 @@ icon: "envelope"
 
 ## Overview
 
-The email followup feature allows survey creators to automatically send customized emails to respondents based on their survey responses or when they reach specific survey endings. This feature is particularly useful for following up with respondents, sending thank you notes, or providing additional information.
+The email followup feature allows survey creators to automatically send customized emails to respondents based on their survey responses or when they reach specific survey endings. This feature is particularly useful for following up with respondents, sending thank you notes, or providing additional information. You can also optionally include detailed survey response data in the emails.
 
 <Note>
   Email followups is a paid feature. It is only available for users on paid plans or if you have [Enterprise Edition](/self-hosting/advanced/license).
@@ -30,9 +30,11 @@ Each followup email can be configured with:
   - Open text questions with email input type
   - Contact info questions
   - Hidden fields
+  - Team member emails
 - **Reply-To**: One or more email addresses for replies
 - **Subject**: Email subject line
 - **Body**: HTML-formatted email content
+- **Survey Response Data**: Option to attach detailed survey response data
 
 ## Setup Process
 
@@ -53,7 +55,7 @@ Each followup email can be configured with:
    The "To" field can be configured to use:
 
    - Responses from email-type open text questions
-   - Your or team members email address 
+   - Team member emails (selectable directly from the survey editor)
    - Responses from contact info questions
    - Values from hidden fields
 
@@ -69,7 +71,18 @@ Each followup email can be configured with:
 
    - Subject
    - Body: Supports basic HTML formatting (p, span, b, strong, i, em, a, br tags)
+   - Survey Response Data: Option to include detailed survey response data with supported rendering for:
+     - File uploads
+     - Images
+     - Rankings
+     - Translations
 
 ![Followup content](/images/xm-and-surveys/core-features/email-followups/followup-content.webp)
 
-8. **Save and Activate**
+8. **Additional Options**:
+
+   - **Duplicate**: You can duplicate existing follow-up configurations for quick reuse
+   
+   <img src="/images/xm-and-surveys/core-features/email-followups/duplicate-follow-up.webp" alt="Duplicate follow-up option" width="70%" />
+
+9. **Save and Activate**
