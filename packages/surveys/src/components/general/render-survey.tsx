@@ -12,8 +12,12 @@ export function RenderSurvey(props: SurveyContainerProps) {
       if (props.onClose) {
         props.onClose();
       }
-    }, 1000); // wait for animation to finish}
+    }, 1000);
   };
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <SurveyContainer
