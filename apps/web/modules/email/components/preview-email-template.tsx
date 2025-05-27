@@ -1,9 +1,9 @@
 import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
-import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -44,6 +44,46 @@ export const getPreviewEmailTemplateHtml = async (
       pretty: true,
     }
   );
+};
+
+// Helper function to get smiley image URL based on index and range
+const getSmileyImageUrl = (idx: number, range: number): string => {
+  let iconType = "";
+
+  const totalOptions = [
+    "tired",
+    "weary",
+    "persevering",
+    "frowning",
+    "confused",
+    "neutral",
+    "slightly-smiling",
+    "smiling-face-with-smiling-eyes",
+    "grinning-face-with-smiling-eyes",
+    "grinning-squinting-face",
+  ];
+
+  if (range === 10) {
+    const indexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    iconType = totalOptions[indexes[idx]];
+  } else if (range === 7) {
+    const indexes = [1, 3, 4, 5, 6, 8, 9];
+    iconType = totalOptions[indexes[idx]];
+  } else if (range === 6) {
+    const indexes = [0, 2, 4, 5, 7, 9];
+    iconType = totalOptions[indexes[idx]];
+  } else if (range === 5) {
+    const indexes = [3, 4, 5, 6, 7];
+    iconType = totalOptions[indexes[idx]];
+  } else if (range === 4) {
+    const indexes = [4, 5, 6, 7];
+    iconType = totalOptions[indexes[idx]];
+  } else if (range === 3) {
+    const indexes = [4, 5, 7];
+    iconType = totalOptions[indexes[idx]];
+  }
+
+  return `${WEBAPP_URL}/smiley-icons/${iconType}-face.png`;
 };
 
 export async function PreviewEmailTemplate({
@@ -124,16 +164,13 @@ export async function PreviewEmailTemplate({
                         href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
                         key={i}
                         className={cn(
-                          firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
+                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                            ? `h-[46px] border border-t-[6px] border-t-${getNPSOptionColor(i + 1).replace("bg-", "")}`
+                            : "h-10",
                           "relative m-0 w-full overflow-hidden border border-l-0 border-solid border-slate-200 p-0 text-center align-middle leading-10 text-slate-800",
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === 10 }
                         )}>
-                        {firstQuestion.isColorCodingEnabled ? (
-                          <Section
-                            className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`}
-                          />
-                        ) : null}
                         {i}
                       </EmailButton>
                     ))}
@@ -204,36 +241,30 @@ export async function PreviewEmailTemplate({
                     {Array.from({ length: firstQuestion.range }, (_, i) => (
                       <EmailButton
                         className={cn(
-                          "relative m-0 flex w-full items-center justify-center overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
+                          "relative m-0 w-full overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
 
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                            ? "h-[46px]"
+                            ? `h-[46px] border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1).replace("bg-", "")}`
                             : "h-10",
-                          firstQuestion.scale === "star" ? "h-12" : "h-10"
+                          (firstQuestion.scale === "smiley" || firstQuestion.scale === "star") &&
+                            "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                         key={i}>
-                        {firstQuestion.scale === "smiley" && (
-                          <RatingSmiley
-                            active={false}
-                            idx={i}
-                            range={firstQuestion.range}
-                            addColors={firstQuestion.isColorCodingEnabled}
+                        {firstQuestion.scale === "smiley" ? (
+                          <img
+                            src={getSmileyImageUrl(i, firstQuestion.range)}
+                            alt={`Smiley ${i + 1}`}
+                            width={36}
+                            height={36}
                           />
-                        )}
-                        {firstQuestion.scale === "number" && (
-                          <>
-                            {firstQuestion.isColorCodingEnabled ? (
-                              <Section
-                                className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
-                              />
-                            ) : null}
-                            <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
-                          </>
-                        )}
-                        {firstQuestion.scale === "star" && <Text className="m-0 text-3xl">⭐</Text>}
+                        ) : firstQuestion.scale === "number" ? (
+                          <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                        ) : firstQuestion.scale === "star" ? (
+                          <Text className="m-auto text-3xl">⭐</Text>
+                        ) : null}
                       </EmailButton>
                     ))}
                   </Column>
