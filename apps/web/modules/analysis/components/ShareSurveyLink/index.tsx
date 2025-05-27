@@ -2,14 +2,14 @@
 
 import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Copy, QrCode, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getSurveyUrl } from "../../utils";
 import { LanguageDropdown } from "./components/LanguageDropdown";
 import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
@@ -31,45 +31,27 @@ export const ShareSurveyLink = ({
   const { t } = useTranslate();
   const [language, setLanguage] = useState("default");
 
-  const getUrl = useCallback(async () => {
-    let url = `${surveyDomain}/s/${survey.id}`;
-    const queryParams: string[] = [];
-
-    if (survey.singleUse?.enabled) {
-      const singleUseIdResponse = await generateSingleUseIdAction({
-        surveyId: survey.id,
-        isEncrypted: survey.singleUse.isEncrypted,
-      });
-
-      if (singleUseIdResponse?.data) {
-        queryParams.push(`suId=${singleUseIdResponse.data}`);
+  useEffect(() => {
+    getSurveyUrl(survey, surveyDomain, language).then((url) => {
+      if (url) {
+        setSurveyUrl(url);
       } else {
-        const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+        const errorMessage = getFormattedErrorMessage("Failed to generate survey URL. Please try again.");
         toast.error(errorMessage);
       }
+    });
+  }, [survey, language, surveyDomain, setSurveyUrl]);
+
+  const generateNewSingleUseLink = async () => {
+    try {
+      const newUrl = await getSurveyUrl(survey, surveyDomain, language);
+      setSurveyUrl(newUrl);
+      toast.success(t("environments.surveys.new_single_use_link_generated"));
+    } catch (error) {
+      const errorMessage = getFormattedErrorMessage(error);
+      toast.error(errorMessage);
     }
-
-    if (language !== "default") {
-      queryParams.push(`lang=${language}`);
-    }
-
-    if (queryParams.length) {
-      url += `?${queryParams.join("&")}`;
-    }
-
-    setSurveyUrl(url);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey, surveyDomain, language]);
-
-  const generateNewSingleUseLink = () => {
-    getUrl();
-    toast.success(t("environments.surveys.new_single_use_link_generated"));
   };
-
-  useEffect(() => {
-    getUrl();
-  }, [survey, getUrl, language]);
 
   const { downloadQRCode } = useSurveyQRCode(surveyUrl);
 
