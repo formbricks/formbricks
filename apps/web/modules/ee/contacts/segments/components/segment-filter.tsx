@@ -236,7 +236,7 @@ function AttributeSegmentFilter({
         setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
-  }, [resource.qualifier, resource.value]);
+  }, [resource.qualifier, resource.value, t]);
 
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
     return {
@@ -327,7 +327,7 @@ function AttributeSegmentFilter({
         <SelectContent>
           {contactAttributeKeys.map((attrClass) => (
             <SelectItem key={attrClass.id} value={attrClass.key}>
-              {attrClass.name}
+              {attrClass.name ?? attrClass.key}
             </SelectItem>
           ))}
         </SelectContent>
@@ -422,7 +422,7 @@ function PersonSegmentFilter({
         setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
-  }, [resource.qualifier, resource.value]);
+  }, [resource.qualifier, resource.value, t]);
 
   const operatorArr = PERSON_OPERATORS.map((operator) => {
     return {
