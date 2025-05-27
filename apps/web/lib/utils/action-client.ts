@@ -2,7 +2,6 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { AuditLoggingCtx } from "@/modules/ee/audit-logs/lib/utils";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { getServerSession } from "next-auth";
@@ -19,6 +18,16 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
+
+export type AuditLoggingCtx = {
+  organizationId?: string;
+  ipAddress: string;
+  segmentId?: string;
+  surveyId?: string;
+  oldObject?: any;
+  newObject?: any;
+  eventId?: string;
+};
 
 export type ActionClientCtx = {
   auditLoggingCtx: AuditLoggingCtx;

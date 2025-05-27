@@ -330,17 +330,6 @@ export const queueAuditEvent = async ({
   });
 };
 
-// Type for the auditLoggingCtx field in the ActionClientCtx
-export type AuditLoggingCtx = {
-  organizationId?: string;
-  ipAddress: string;
-  segmentId?: string;
-  surveyId?: string;
-  oldObject?: any;
-  newObject?: any;
-  eventId?: string;
-};
-
 /**
  * Wraps a handler function with audit logging.
  * Logs audit events for server actions. Specifically for server actions that use next-server-action library middleware and it's context.
