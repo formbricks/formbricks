@@ -1,5 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment } from "@/lib/environment/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
@@ -46,6 +47,9 @@ const Page = async (props: SummaryPageProps) => {
     throw new Error(t("common.project_not_found"));
   }
 
+  // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
+  const initialSurveySummary = await getSurveySummary(surveyId);
+
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
@@ -59,6 +63,7 @@ const Page = async (props: SummaryPageProps) => {
           webAppUrl={WEBAPP_URL}
           isReadOnly={true}
           locale={DEFAULT_LOCALE}
+          initialSurveySummary={initialSurveySummary}
         />
       </PageContentWrapper>
     </div>
