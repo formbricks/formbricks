@@ -150,6 +150,9 @@ jobs:
         run: |
           pnpm test:e2e
 
+      - name: List playwright-report contents
+        run: ls -lR playwright-report || true
+
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: always()
         with:
