@@ -11,12 +11,14 @@ interface CompletedSurveysProps {
   searchQuery: string;
   creatorId?: string;
   setActiveTab: (id: string) => void;
+  sortBy?: string;
 }
 
 export function CompletedSurveys({
   searchQuery,
   creatorId,
   setActiveTab,
+  sortBy = "updatedAt",
 }: CompletedSurveysProps): React.JSX.Element {
   const [completedSurveys, setCompletedSurveys] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +32,7 @@ export function CompletedSurveys({
           skip: 0,
           searchQuery: searchQuery,
           creatorId: creatorId,
+          sortBy: sortBy,
         });
 
         if (completedSurveys?.data) {
@@ -41,7 +44,7 @@ export function CompletedSurveys({
         setIsLoading(false);
       }
     })();
-  }, [searchQuery, creatorId]);
+  }, [searchQuery, creatorId, sortBy]);
 
   if (isLoading) {
     return (

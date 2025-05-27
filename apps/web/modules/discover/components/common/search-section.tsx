@@ -1,18 +1,39 @@
 "use client";
 
 import { Input } from "@/modules/ui/components/input";
+import { cn } from "@/modules/ui/lib/utils";
 import { useTranslate } from "@tolgee/react";
-import { Search as SearchIcon, X as XIcon } from "lucide-react";
+import { ChevronDown, Search as SearchIcon, X as XIcon } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
+import { TSortOption } from "@formbricks/types/surveys/types";
 
 interface SearchSectionProps {
   setSearchQuery: (query: string) => void;
+  sortBy?: string;
+  setSortBy?: (sortBy: string) => void;
 }
 
-export function SearchSection({ setSearchQuery }: SearchSectionProps) {
+const getSortOptions = (t: (key: string) => string): TSortOption[] => [
+  {
+    label: t("common.updated_at"),
+    value: "updatedAt",
+  },
+  {
+    label: t("common.created_at"),
+    value: "createdAt",
+  },
+  {
+    label: t("environments.surveys.alphabetical"),
+    value: "name",
+  },
+];
+
+export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy }: SearchSectionProps) {
   const { t } = useTranslate();
   const [query, setQuery] = useState<string>("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const sortOptions = getSortOptions(t);
 
   useDebounce(
     () => {
@@ -27,8 +48,20 @@ export function SearchSection({ setSearchQuery }: SearchSectionProps) {
     setSearchQuery("");
   };
 
+  const handleSortChange = (option: TSortOption) => {
+    if (setSortBy) {
+      setSortBy(option.value);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const getCurrentSortLabel = () => {
+    const currentOption = sortOptions.find((option) => option.value === sortBy);
+    return currentOption?.label || t("environments.surveys.updated_at");
+  };
+
   return (
-    <div className="w-full">
+    <div className="flex h-10 w-1/2 gap-2">
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3">
           <SearchIcon className="h-4 w-4 text-slate-400" />
@@ -48,6 +81,37 @@ export function SearchSection({ setSearchQuery }: SearchSectionProps) {
               className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
               <XIcon className="h-4 w-4" />
             </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative">
+        <button
+          className="flex h-10 items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+          <span className="text-slate-900">
+            {t("common.sort_by")}: {getCurrentSortLabel()}
+          </span>
+          <ChevronDown className="h-4 w-4" />
+        </button>
+
+        {isDropdownOpen && (
+          <div className="absolute right-0 z-10 mt-1 w-full origin-top-right rounded-md bg-white shadow-lg">
+            <div className="py-1">
+              {sortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  className={cn(
+                    "w-full px-4 py-2 text-left text-sm",
+                    sortBy == option.value
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+                  )}
+                  onClick={() => handleSortChange(option)}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

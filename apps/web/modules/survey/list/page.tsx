@@ -65,7 +65,7 @@ export const SurveysPage = async ({
     return (
       <Button size="sm" asChild>
         <Link href={`/environments/${environment.id}/engagements/templates`}>
-          {t("environments.surveys.new_survey")}
+          <span className="hidden sm:inline">{t("environments.surveys.new_survey")}</span>
           <PlusIcon />
         </Link>
       </Button>
@@ -103,6 +103,7 @@ export const SurveysPage = async ({
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}
+          isMobile={isMobile}
         />
       </>
     );
