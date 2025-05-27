@@ -132,10 +132,9 @@ externalSecret:
 ingress:
   annotations:
     alb.ingress.kubernetes.io/certificate-arn: {{ requiredEnv "FORMBRICKS_INGRESS_CERT_ARN" }}
-    alb.ingress.kubernetes.io/group.name: formbricks-stage
+    alb.ingress.kubernetes.io/group.name: internal
     alb.ingress.kubernetes.io/healthcheck-path: /health
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/target-type: ip
