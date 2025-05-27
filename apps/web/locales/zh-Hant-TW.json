@@ -1770,6 +1770,7 @@
         "make_sure_the_survey_type_is_set_to": "請確保問卷類型設定為",
         "mobile_app": "行動應用程式",
         "no_response_matches_filter": "沒有任何回應符合您的篩選器",
+        "no_responses_found": "找不到回應",
         "only_completed": "僅已完成",
         "other_values_found": "找到其他值",
         "overall": "整體",

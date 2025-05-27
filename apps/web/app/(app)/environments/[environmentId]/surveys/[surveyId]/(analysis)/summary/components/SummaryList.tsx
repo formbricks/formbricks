@@ -107,7 +107,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
-          emptyMessage={t("environments.surveys.summary.no_response_matches_filter")}
+          emptyMessage={t("environments.surveys.summary.no_responses_found")}
         />
       ) : (
         summary.map((questionSummary) => {
