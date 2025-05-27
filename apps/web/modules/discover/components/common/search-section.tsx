@@ -61,7 +61,7 @@ export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy 
   };
 
   return (
-    <div className="flex h-10 w-1/2 gap-2">
+    <div className="flex h-10 w-full gap-2">
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3">
           <SearchIcon className="h-4 w-4 text-slate-400" />
@@ -70,7 +70,7 @@ export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy 
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("environments.activity.search.search_by_engagement_name_or_description")}
+          placeholder={t("environments.activity.search.search_engagements")}
           className="w-full border-slate-300 px-10 focus:border-slate-400"
         />
 

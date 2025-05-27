@@ -2,7 +2,7 @@ import { cn } from "@formbricks/lib/cn";
 
 interface BadgeProps {
   text: string;
-  type: "warning" | "success" | "error" | "gray";
+  type: "warning" | "success" | "error" | "gray" | "brand";
   size: "tiny" | "normal" | "large";
   className?: string;
   role?: string;
@@ -14,6 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "bg-emerald-100",
     error: "bg-red-100",
     gray: "bg-slate-100",
+    brand: "bg-primary",
   };
 
   const borderColor = {
@@ -21,6 +22,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "border-emerald-200",
     error: "border-red-200",
     gray: "border-slate-200",
+    brand: "border-primary",
   };
 
   const textColor = {
@@ -28,6 +30,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "text-emerald-800",
     error: "text-red-800",
     gray: "text-slate-600",
+    brand: "text-white",
   };
 
   const padding = {

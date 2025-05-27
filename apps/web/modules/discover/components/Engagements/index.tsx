@@ -1,12 +1,13 @@
 "use client";
 
-import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
+// import { getCompletedSurveysAction } from "@/modules/discover/components/Engagements/actions";
 import { AvailableEngagements } from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
-import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
+// import { SearchSection } from "@/modules/discover/components/common/search-section";
+// import WelcomeBanner from "@/modules/discover/components/common/welcome-banner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { ClipboardCheckIcon, ClipboardListIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 
 interface EngagementsProps {
@@ -36,40 +37,41 @@ export function Engagements({
     },
   ];
   const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  // const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkCompletedSurveys = async () => {
-      setIsLoading(true);
-      try {
-        const completedSurveys = await getCompletedSurveysAction({
-          take: 1,
-          skip: 0,
-          searchQuery: "",
-        });
+  // useEffect(() => {
+  //   const checkCompletedSurveys = async () => {
+  //     // setIsLoading(true);
+  //     try {
+  //       const completedSurveys = await getCompletedSurveysAction({
+  //         take: 1,
+  //         skip: 0,
+  //         searchQuery: "",
+  //       });
 
-        setShowWelcomeBanner(completedSurveys?.data?.length == 0);
-      } catch (error) {
-        console.error("Error checking completed surveys:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       setShowWelcomeBanner(completedSurveys?.data?.length == 0);
+  //     } catch (error) {
+  //       console.error("Error checking completed surveys:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    checkCompletedSurveys();
-  }, []);
+  //   checkCompletedSurveys();
+  // }, []);
 
   return (
     <>
       <div className={cn("relative my-4 flex w-full flex-col gap-2", className)} id={"surveys"}>
-        {showWelcomeBanner && !isLoading && (
+        {/* Hiding for now to match designs */}
+        {/* {showWelcomeBanner && !isLoading && (
           <WelcomeBanner
             showWelcomeBanner={showWelcomeBanner}
             isLoading={isLoading}
             setShowWelcomeBanner={setShowWelcomeBanner}
           />
-        )}
+        )} */}
         <TabBar
           tabs={tabs}
           activeId={activeTab}

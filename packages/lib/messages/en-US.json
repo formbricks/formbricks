@@ -175,6 +175,7 @@
     "disallow": "Don't allow",
     "discard": "Discard",
     "discover": "Discover",
+    "discover_banner_description": "Discover and engage with surveys to earn rewards",
     "dismissed": "Dismissed",
     "docs": "Documentation",
     "documentation": "Documentation",
@@ -182,9 +183,11 @@
     "draft": "Draft",
     "duplicate": "Duplicate",
     "e_commerce": "E-Commerce",
+    "earn_more": "Earn more",
     "edit": "Edit",
     "email": "Email",
     "embed": "Embed",
+    "engage_more": "Engage more",
     "engagement": "Engagement",
     "enterprise_license": "Enterprise License",
     "environment_not_found": "Environment not found",
@@ -621,7 +624,7 @@
         "view_info": "View Info"
       },
       "search": {
-        "search_by_engagement_name_or_description": "Search by engagement name or description"
+        "search_engagements": "Search engagements"
       }
     },
     "community": {
