@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { FileInput } from "./file-input";
 
 // Mock auto-animate hook to prevent React useState errors in Preact tests
@@ -37,7 +37,7 @@ describe("FileInput", () => {
     vi.clearAllMocks();
   });
 
-  it("uploads valid file and calls callbacks", async () => {
+  test("uploads valid file and calls callbacks", async () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -62,7 +62,7 @@ describe("FileInput", () => {
     });
   });
 
-  it("alerts on invalid file type", async () => {
+  test("alerts on invalid file type", async () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -82,7 +82,7 @@ describe("FileInput", () => {
     expect(onUploadCallback).not.toHaveBeenCalled();
   });
 
-  it("alerts when multiple files not allowed", () => {
+  test("alerts when multiple files not allowed", () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -100,7 +100,7 @@ describe("FileInput", () => {
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
-  it("renders existing fileUrls and handles delete", () => {
+  test("renders existing fileUrls and handles delete", () => {
     const initialUrls = ["fileA.txt", "fileB.txt"];
     render(
       <FileInput
@@ -121,7 +121,7 @@ describe("FileInput", () => {
     expect(onUploadCallback).toHaveBeenCalledWith(["fileB.txt"]);
   });
 
-  it("alerts when duplicate files selected", () => {
+  test("alerts when duplicate files selected", () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -140,7 +140,7 @@ describe("FileInput", () => {
     );
   });
 
-  it("handles native file upload event", async () => {
+  test("handles native file upload event", async () => {
     // Import the actual constant to ensure we're using the right event name
     const FILE_PICK_EVENT = "formbricks:onFilePick";
     const nativeFile = { name: "native.txt", type: "text/plain", base64: btoa("native content") };
@@ -174,7 +174,7 @@ describe("FileInput", () => {
     });
   });
 
-  it("tests file size validation", async () => {
+  test("tests file size validation", async () => {
     // Instead of testing the alert directly, test that large files don't get uploaded
     const largeFile = createFile("large.txt", 2 * 1024 * 1024, "text/plain"); // 2MB file
     const smallFile = createFile("small.txt", 500, "text/plain"); // 500B file
@@ -215,7 +215,7 @@ describe("FileInput", () => {
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
-  it("does not upload when no valid files are selected", async () => {
+  test("does not upload when no valid files are selected", async () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -235,7 +235,7 @@ describe("FileInput", () => {
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
-  it("does not upload duplicates", async () => {
+  test("does not upload duplicates", async () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -257,7 +257,7 @@ describe("FileInput", () => {
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
-  it("handles native file upload with size limits", async () => {
+  test("handles native file upload with size limits", async () => {
     // Import the actual constant to ensure we're using the right event name
     const FILE_PICK_EVENT = "formbricks:onFilePick";
 
@@ -297,7 +297,7 @@ describe("FileInput", () => {
     );
   });
 
-  it("handles case when no files remain after filtering", async () => {
+  test("handles case when no files remain after filtering", async () => {
     // Import the actual constant
     const FILE_PICK_EVENT = "formbricks:onFilePick";
 
@@ -331,7 +331,7 @@ describe("FileInput", () => {
     expect(onUploadCallback).not.toHaveBeenCalled();
   });
 
-  it("deletes a file", () => {
+  test("deletes a file", () => {
     const initialUrls = ["fileA.txt", "fileB.txt"];
     render(
       <FileInput
@@ -352,7 +352,7 @@ describe("FileInput", () => {
     expect(onUploadCallback).toHaveBeenCalledWith(["fileB.txt"]);
   });
 
-  it("handles drag and drop", async () => {
+  test("handles drag and drop", async () => {
     render(
       <FileInput
         surveyId="survey1"
@@ -389,7 +389,7 @@ describe("FileInput", () => {
     });
   });
 
-  it("handles file upload errors", async () => {
+  test("handles file upload errors", async () => {
     // Mock the toBase64 function to fail by making onFileUpload throw an error
     // during the Promise.all for uploadPromises
     onFileUpload.mockImplementationOnce(() => {
@@ -419,7 +419,7 @@ describe("FileInput", () => {
     });
   });
 
-  it("enforces file limit", () => {
+  test("enforces file limit", () => {
     render(
       <FileInput
         surveyId="survey1"

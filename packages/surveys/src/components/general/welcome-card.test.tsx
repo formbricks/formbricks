@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen } from "@testing-library/preact";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { WelcomeCard } from "./welcome-card";
 
 describe("WelcomeCard", () => {
@@ -35,7 +35,7 @@ describe("WelcomeCard", () => {
     variablesData: {},
   };
 
-  it("renders welcome card with basic content", () => {
+  test("renders welcome card with basic content", () => {
     const { container } = render(<WelcomeCard {...defaultProps} />);
 
     expect(container.querySelector(".fb-text-heading")).toHaveTextContent("Welcome to our survey");
@@ -43,7 +43,7 @@ describe("WelcomeCard", () => {
     expect(container.querySelector("button")).toHaveTextContent("Start");
   });
 
-  it("shows time to complete when timeToFinish is true", () => {
+  test("shows time to complete when timeToFinish is true", () => {
     const { container } = render(<WelcomeCard {...defaultProps} />);
 
     const timeDisplay = container.querySelector(".fb-text-subheading");
@@ -51,14 +51,14 @@ describe("WelcomeCard", () => {
     expect(timeDisplay).toHaveTextContent(/Takes/);
   });
 
-  it("shows response count when showResponseCount is true and count > 3", () => {
+  test("shows response count when showResponseCount is true and count > 3", () => {
     const { container } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
 
     const responseText = container.querySelector(".fb-text-xs");
     expect(responseText).toHaveTextContent(/10 people responded/);
   });
 
-  it("handles submit button click", () => {
+  test("handles submit button click", () => {
     const { container } = render(<WelcomeCard {...defaultProps} />);
 
     const button = container.querySelector("button");
@@ -68,7 +68,7 @@ describe("WelcomeCard", () => {
     expect(defaultProps.onSubmit).toHaveBeenCalledWith({ welcomeCard: "clicked" }, {});
   });
 
-  it("handles Enter key press when survey type is link", () => {
+  test("handles Enter key press when survey type is link", () => {
     render(<WelcomeCard {...defaultProps} />);
 
     fireEvent.keyDown(document, { key: "Enter" });
@@ -76,14 +76,14 @@ describe("WelcomeCard", () => {
     expect(defaultProps.onSubmit).toHaveBeenCalledWith({ welcomeCard: "clicked" }, {});
   });
 
-  it("does not show response count when count <= 3", () => {
+  test("does not show response count when count <= 3", () => {
     const { container } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
 
     const responseText = container.querySelector(".fb-text-xs");
     expect(responseText).not.toHaveTextContent(/3 people responded/);
   });
 
-  it("shows company logo when fileUrl is provided", () => {
+  test("shows company logo when fileUrl is provided", () => {
     const propsWithLogo = {
       ...defaultProps,
       fileUrl: "https://example.com/logo.png",
@@ -96,7 +96,7 @@ describe("WelcomeCard", () => {
     expect(logo).toHaveAttribute("src", "https://example.com/logo.png");
   });
 
-  it("calculates time to complete correctly for different survey lengths", () => {
+  test("calculates time to complete correctly for different survey lengths", () => {
     // Test short survey (2 questions)
     const { container } = render(<WelcomeCard {...defaultProps} />);
     const timeDisplay = container.querySelector(".fb-text-subheading");
@@ -121,7 +121,7 @@ describe("WelcomeCard", () => {
     expect(longTimeDisplay).toHaveTextContent(/Takes 6\+ minutes/);
   });
 
-  it("shows both time and response count when both flags are true", () => {
+  test("shows both time and response count when both flags are true", () => {
     const { container } = render(
       <WelcomeCard
         {...defaultProps}
@@ -141,7 +141,7 @@ describe("WelcomeCard", () => {
     expect(textDisplay).toHaveTextContent(/Takes.*10 people responded/);
   });
 
-  it("handles missing optional props gracefully", () => {
+  test("handles missing optional props gracefully", () => {
     const minimalProps = {
       ...defaultProps,
       headline: undefined,
@@ -157,7 +157,7 @@ describe("WelcomeCard", () => {
     expect(container.querySelector("button")).toBeInTheDocument();
   });
 
-  it("handles Enter key press correctly based on survey type and isCurrent", () => {
+  test("handles Enter key press correctly based on survey type and isCurrent", () => {
     const mockOnSubmit = vi.fn();
     // Test when survey is not link type
     const { rerender, unmount } = render(
@@ -177,7 +177,7 @@ describe("WelcomeCard", () => {
     unmount();
   });
 
-  it("prevents default on Enter key in button", () => {
+  test("prevents default on Enter key in button", () => {
     const { container } = render(<WelcomeCard {...defaultProps} />);
     const button = container.querySelector("button");
     const event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true });
@@ -188,7 +188,7 @@ describe("WelcomeCard", () => {
     expect(event.preventDefault).toHaveBeenCalled();
   });
 
-  it("properly cleans up event listeners on unmount", () => {
+  test("properly cleans up event listeners on unmount", () => {
     const { unmount } = render(<WelcomeCard {...defaultProps} />);
     const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
 
@@ -198,7 +198,7 @@ describe("WelcomeCard", () => {
     removeEventListenerSpy.mockRestore();
   });
 
-  it("handles response counts at boundary conditions", () => {
+  test("handles response counts at boundary conditions", () => {
     // Test with exactly 3 responses (boundary)
     const { container: container3 } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
     expect(container3.querySelector(".fb-text-xs")).not.toHaveTextContent(/3 people responded/);
@@ -208,7 +208,7 @@ describe("WelcomeCard", () => {
     expect(container4.querySelector(".fb-text-xs")).toHaveTextContent(/4 people responded/);
   });
 
-  it("handles time calculation edge cases", () => {
+  test("handles time calculation edge cases", () => {
     // Test with no questions
     const emptyQuestionsSurvey = {
       ...mockSurvey,
@@ -231,7 +231,7 @@ describe("WelcomeCard", () => {
     expect(boundaryContainer.querySelector(".fb-text-subheading")).toHaveTextContent(/Takes 6 minutes/);
   });
 
-  it("correctly processes localized content", () => {
+  test("correctly processes localized content", () => {
     const localizedProps = {
       ...defaultProps,
       headline: { default: "Welcome", es: "Bienvenido" },
@@ -247,7 +247,7 @@ describe("WelcomeCard", () => {
     expect(container.querySelector("button")).toHaveTextContent("Comenzar");
   });
 
-  it("handles variable replacement in content", () => {
+  test("handles variable replacement in content", () => {
     const propsWithVariables = {
       ...defaultProps,
       headline: { default: "Welcome #recall:name/fallback:Guest#" },
