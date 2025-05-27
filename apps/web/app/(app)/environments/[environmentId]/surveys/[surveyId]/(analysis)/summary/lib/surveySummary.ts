@@ -12,6 +12,7 @@ import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -983,7 +984,7 @@ export const getResponsesForSummary = reactCache(
           [limit, ZOptionalNumber],
           [offset, ZOptionalNumber],
           [filterCriteria, ZResponseFilterCriteria.optional()],
-          [cursor, ZId.optional()]
+          [cursor, z.string().cuid2().optional()]
         );
 
         const queryLimit = limit ?? RESPONSES_PER_PAGE;

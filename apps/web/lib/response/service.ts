@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "@/lib/cache";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -300,7 +301,8 @@ export const getResponses = reactCache(
           [surveyId, ZId],
           [limit, ZOptionalNumber],
           [offset, ZOptionalNumber],
-          [filterCriteria, ZResponseFilterCriteria.optional()]
+          [filterCriteria, ZResponseFilterCriteria.optional()],
+          [cursor, z.string().cuid2().optional()]
         );
 
         limit = limit ?? RESPONSES_PER_PAGE;
