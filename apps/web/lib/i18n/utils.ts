@@ -1,11 +1,12 @@
+import { INVISIBLE_REGEX } from "@/lib/i18n/constants";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
 
+// https://github.com/tolgee/tolgee-js/blob/main/packages/web/src/package/observers/invisible/secret.ts
 const removeTolgeeInvisibleMarks = (str: string) => {
-  // Remove zero-width joiners, non-joiners, and other invisible Unicode chars
-  return str.replace(/[\u200C-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
+  return str.replace(INVISIBLE_REGEX, "");
 };
 
 // Helper function to create an i18nString from a regular string.
