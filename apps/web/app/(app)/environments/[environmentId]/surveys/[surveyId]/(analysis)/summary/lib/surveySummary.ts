@@ -990,7 +990,7 @@ export const getResponsesForSummary = reactCache(
         const survey = await getSurvey(surveyId);
         if (!survey) return [];
         try {
-          const whereClause: any = {
+          const whereClause: Prisma.ResponseWhereInput = {
             surveyId,
             ...buildWhereClause(survey, filterCriteria),
           };
