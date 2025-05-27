@@ -31,21 +31,32 @@ export const renderHyperlinkedContent = (data: string): JSX.Element[] => {
   );
 };
 
-export const getSurveyUrl = async (survey: TSurvey, surveyDomain: string, language: string) => {
+export const getSurveyUrl = async (
+  survey: TSurvey,
+  surveyDomain: string,
+  language: string
+): Promise<string> => {
   let url = `${surveyDomain}/s/${survey.id}`;
   const queryParams: string[] = [];
 
   if (survey.singleUse?.enabled) {
-    const singleUseIdResponse = await generateSingleUseIdAction({
-      surveyId: survey.id,
-      isEncrypted: survey.singleUse.isEncrypted,
-    });
+    try {
+      const singleUseIdResponse = await generateSingleUseIdAction({
+        surveyId: survey.id,
+        isEncrypted: survey.singleUse.isEncrypted,
+      });
 
-    if (singleUseIdResponse?.data) {
-      queryParams.push(`suId=${singleUseIdResponse.data}`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+      if (singleUseIdResponse?.data) {
+        queryParams.push(`suId=${singleUseIdResponse.data}`);
+      } else {
+        const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate single-use ID";
       toast.error(errorMessage);
+      throw error;
     }
   }
 

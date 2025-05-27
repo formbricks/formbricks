@@ -65,8 +65,14 @@ export const ShareEmbedSurvey = ({
 
   useEffect(() => {
     const fetchSurveyUrl = async () => {
-      const url = await getSurveyUrl(survey, surveyDomain, "default");
-      setSurveyUrl(url);
+      try {
+        const url = await getSurveyUrl(survey, surveyDomain, "default");
+        setSurveyUrl(url);
+      } catch (error) {
+        console.error("Failed to fetch survey URL:", error);
+        // Fallback to a default URL if fetching fails
+        setSurveyUrl(`${surveyDomain}/s/${survey.id}`);
+      }
     };
     fetchSurveyUrl();
   }, [survey, surveyDomain]);

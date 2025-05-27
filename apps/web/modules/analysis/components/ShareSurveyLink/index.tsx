@@ -32,14 +32,16 @@ export const ShareSurveyLink = ({
   const [language, setLanguage] = useState("default");
 
   useEffect(() => {
-    getSurveyUrl(survey, surveyDomain, language).then((url) => {
-      if (url) {
+    const fetchSurveyUrl = async () => {
+      try {
+        const url = await getSurveyUrl(survey, surveyDomain, language);
         setSurveyUrl(url);
-      } else {
-        const errorMessage = getFormattedErrorMessage("Failed to generate survey URL. Please try again.");
+      } catch (error) {
+        const errorMessage = getFormattedErrorMessage(error);
         toast.error(errorMessage);
       }
-    });
+    };
+    fetchSurveyUrl();
   }, [survey, language, surveyDomain, setSurveyUrl]);
 
   const generateNewSingleUseLink = async () => {
