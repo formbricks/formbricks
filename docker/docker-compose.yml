@@ -181,7 +181,7 @@ x-environment: &environment
 
     ########################################## OPTIONAL (AUDIT LOGGING) ########################################### 
 
-    # Set the below to 1 to enable audit logging
+    # Set the below to 1 to enable audit logging. The audit log requires Redis to be configured with the REDIS_URL env variable.
     # AUDIT_LOG_ENABLED: 1
 
     # Set the below to the path of the audit log file, the default is /apps/web/logs/audit.log
