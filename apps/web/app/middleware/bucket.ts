@@ -1,4 +1,3 @@
-import { rateLimit } from "@/app/middleware/rate-limit";
 import {
   CLIENT_SIDE_API_RATE_LIMIT,
   FORGET_PASSWORD_RATE_LIMIT,
@@ -8,6 +7,7 @@ import {
   SYNC_USER_IDENTIFICATION_RATE_LIMIT,
   VERIFY_EMAIL_RATE_LIMIT,
 } from "@/lib/constants";
+import { rateLimit } from "@/lib/utils/rate-limit";
 
 export const loginLimiter = rateLimit({
   interval: LOGIN_RATE_LIMIT.interval,

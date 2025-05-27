@@ -35,6 +35,7 @@ export const HiddenFieldsCard = ({
   const { t } = useTranslate();
   const setOpen = (open: boolean) => {
     if (open) {
+      // NOSONAR typescript:S2301 // the function usage is clear
       setActiveQuestionId("hidden");
     } else {
       setActiveQuestionId(null);
@@ -112,7 +113,7 @@ export const HiddenFieldsCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <EyeOff className="h-4 w-4" />
       </div>
@@ -160,7 +161,7 @@ export const HiddenFieldsCard = ({
                 );
               })
             ) : (
-              <p className="mt-2 text-sm text-slate-500 italic">
+              <p className="mt-2 text-sm italic text-slate-500">
                 {t("environments.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
               </p>
             )}

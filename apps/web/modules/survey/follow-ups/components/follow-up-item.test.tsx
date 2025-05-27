@@ -337,7 +337,7 @@ describe("FollowUpItem", () => {
     );
 
     // Find the clickable area
-    const clickableArea = screen.getByText("Test Follow-up").closest("div");
+    const clickableArea = screen.getByText("Test Follow-up").closest("button");
     expect(clickableArea).toBeInTheDocument();
 
     // Simulate a click on the clickable area

@@ -232,6 +232,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
             variant="secondary"
             className="col-span-3 mt-3 flex items-center justify-center"
             type="button"
+            data-testid="unsplash-select-button"
             onClick={handleLoadMore}>
             {t("common.load_more")}
           </Button>

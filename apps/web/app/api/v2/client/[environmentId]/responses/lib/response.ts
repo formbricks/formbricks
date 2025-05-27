@@ -31,6 +31,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
     contactId,
     surveyId,
     displayId,
+    endingId,
     finished,
     data,
     meta,
@@ -64,7 +65,8 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
         },
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
+      finished,
+      endingId,
       data: data,
       language: language,
       ...(contact?.id && {

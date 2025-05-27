@@ -1,7 +1,5 @@
 import {
   AZURE_OAUTH_ENABLED,
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -19,7 +17,7 @@ import {
 } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 
@@ -31,7 +29,7 @@ export const metadata: Metadata = {
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
 
-  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([getisSsoEnabled(), getIsSamlSsoEnabled()]);
+  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([getIsSsoEnabled(), getIsSamlSsoEnabled()]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 
@@ -53,8 +51,6 @@ export const SignupPage = async () => {
         oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
-        defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
-        defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
         isSsoEnabled={isSsoEnabled}
         samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

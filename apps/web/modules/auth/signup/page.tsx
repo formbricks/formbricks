@@ -1,7 +1,5 @@
 import {
   AZURE_OAUTH_ENABLED,
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -26,7 +24,7 @@ import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
-  getisSsoEnabled,
+  getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import { SignupForm } from "./components/signup-form";
@@ -36,7 +34,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getisSsoEnabled(),
+    getIsSsoEnabled(),
     getIsSamlSsoEnabled(),
   ]);
 
@@ -77,8 +75,6 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             oidcDisplayName={OIDC_DISPLAY_NAME}
             userLocale={locale}
             emailFromSearchParams={emailFromSearchParams}
-            defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
-            defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
             isSsoEnabled={isSsoEnabled}
             samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

@@ -126,7 +126,7 @@ export const setup = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && isNowExpired(expiresAt)) {
+    if (expiresAt && isNowExpired(new Date(expiresAt))) {
       console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
     }
@@ -164,13 +164,15 @@ export const setup = async (
     let isEnvironmentStateExpired = false;
     let isUserStateExpired = false;
 
-    if (isNowExpired(existingConfig.environment.expiresAt)) {
+    const environmentStateExpiresAt = new Date(existingConfig.environment.expiresAt);
+
+    if (isNowExpired(environmentStateExpiresAt)) {
       logger.debug("Environment state expired. Syncing.");
       isEnvironmentStateExpired = true;
     }
 
-    if (existingConfig.user.expiresAt && isNowExpired(existingConfig.user.expiresAt)) {
-      logger.debug("Person state expired. Syncing.");
+    if (existingConfig.user.expiresAt && isNowExpired(new Date(existingConfig.user.expiresAt))) {
+      logger.debug("User state expired. Syncing.");
       isUserStateExpired = true;
     }
 
@@ -191,6 +193,7 @@ export const setup = async (
 
         if (environmentStateResponse.ok) {
           environmentState = environmentStateResponse.data;
+          logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
         } else {
           logger.error(
             `Error fetching environment state: ${environmentStateResponse.error.code} - ${environmentStateResponse.error.responseMessage ?? ""}`
@@ -255,7 +258,7 @@ export const setup = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -301,6 +304,7 @@ export const setup = async (
       }
 
       const environmentState = environmentStateResponse.data;
+      logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
       const filteredSurveys = filterSurveys(environmentState, userState);
 
       config.update({
@@ -310,6 +314,9 @@ export const setup = async (
         environment: environmentState,
         filteredSurveys,
       });
+      
+      const surveyNames = filteredSurveys.map((s) => s.name);
+      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
     } catch (e) {
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }

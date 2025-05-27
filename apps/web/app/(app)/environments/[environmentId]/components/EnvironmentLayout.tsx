@@ -12,7 +12,8 @@ import {
 } from "@/lib/organization/service";
 import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";

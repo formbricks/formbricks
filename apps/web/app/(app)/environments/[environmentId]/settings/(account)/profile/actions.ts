@@ -1,17 +1,87 @@
 "use server";
 
+import {
+  getIsEmailUnique,
+  verifyUserPassword,
+} from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/lib/user";
+import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { deleteFile } from "@/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { rateLimit } from "@/lib/utils/rate-limit";
+import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZUserUpdateInput } from "@formbricks/types/user";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
+import { TUserUpdateInput, ZUserPassword, ZUserUpdateInput } from "@formbricks/types/user";
+
+const limiter = rateLimit({
+  interval: 60 * 60, // 1 hour
+  allowedPerInterval: 3, // max 3 calls for email verification per hour
+});
 
 export const updateUserAction = authenticatedActionClient
-  .schema(ZUserUpdateInput.partial())
+  .schema(
+    ZUserUpdateInput.pick({ name: true, email: true, locale: true }).extend({
+      password: ZUserPassword.optional(),
+    })
+  )
   .action(async ({ parsedInput, ctx }) => {
-    return await updateUser(ctx.user.id, parsedInput);
+    const inputEmail = parsedInput.email?.trim().toLowerCase();
+
+    let payload: TUserUpdateInput = {
+      ...(parsedInput.name && { name: parsedInput.name }),
+      ...(parsedInput.locale && { locale: parsedInput.locale }),
+    };
+
+    // Only process email update if a new email is provided and it's different from current email
+    if (inputEmail && ctx.user.email !== inputEmail) {
+      // Check rate limit
+      try {
+        await limiter(ctx.user.id);
+      } catch {
+        throw new TooManyRequestsError("Too many requests");
+      }
+      if (ctx.user.identityProvider !== "email") {
+        throw new OperationNotAllowedError("Email update is not allowed for non-credential users.");
+      }
+
+      if (!parsedInput.password) {
+        throw new AuthenticationError("Password is required to update email.");
+      }
+
+      const isCorrectPassword = await verifyUserPassword(ctx.user.id, parsedInput.password);
+      if (!isCorrectPassword) {
+        throw new AuthorizationError("Incorrect credentials");
+      }
+
+      // Check if the new email is unique, no user exists with the new email
+      const isEmailUnique = await getIsEmailUnique(inputEmail);
+
+      // If the new email is unique, proceed with the email update
+      if (isEmailUnique) {
+        if (EMAIL_VERIFICATION_DISABLED) {
+          payload.email = inputEmail;
+          await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
+        } else {
+          await sendVerificationNewEmail(ctx.user.id, inputEmail);
+        }
+      }
+    }
+
+    // Only proceed with updateUser if we have actual changes to make
+    if (Object.keys(payload).length > 0) {
+      await updateUser(ctx.user.id, payload);
+    }
+
+    return true;
   });
 
 const ZUpdateAvatarAction = z.object({

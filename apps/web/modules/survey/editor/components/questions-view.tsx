@@ -193,8 +193,7 @@ export const QuestionsView = ({
     if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
       setInvalidQuestions(updatedInvalidQuestions);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey.languages, localSurvey.endings, localSurvey.welcomeCard]);
+  }, [localSurvey.welcomeCard, localSurvey.endings, surveyLanguages, invalidQuestions, setInvalidQuestions]);
 
   // function to validate individual questions
   const validateSurveyQuestion = (question: TSurveyQuestion) => {
@@ -327,15 +326,17 @@ export const QuestionsView = ({
 
   const addQuestion = (question: TSurveyQuestion, index?: number) => {
     const updatedSurvey = { ...localSurvey };
+    const newQuestions = [...localSurvey.questions];
 
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
 
-    if (index) {
-      updatedSurvey.questions.splice(index, 0, { ...updatedQuestion, isDraft: true });
+    if (index !== undefined) {
+      newQuestions.splice(index, 0, { ...updatedQuestion, isDraft: true });
     } else {
-      updatedSurvey.questions.push({ ...updatedQuestion, isDraft: true });
+      newQuestions.push({ ...updatedQuestion, isDraft: true });
     }
+    updatedSurvey.questions = newQuestions;
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -378,8 +379,7 @@ export const QuestionsView = ({
     if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
       setInvalidQuestions(updatedInvalidQuestions);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey.languages, localSurvey.questions, localSurvey.endings, localSurvey.welcomeCard]);
+  }, [localSurvey.questions, surveyLanguages, invalidQuestions, setInvalidQuestions]);
 
   useEffect(() => {
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -502,11 +502,7 @@ export const QuestionsView = ({
 
         {!isCxMode && (
           <>
-            <AddEndingCardButton
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              addEndingCard={addEndingCard}
-            />
+            <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
             <hr />
 
             <HiddenFieldsCard

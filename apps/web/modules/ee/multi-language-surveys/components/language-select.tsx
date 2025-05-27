@@ -65,7 +65,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
-        className={`ring-opacity-5 absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ${isOpen ? "" : "hidden"}`}>
+        className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 ${isOpen ? "" : "hidden"}`}>
         <Input
           autoComplete="off"
           onChange={(e) => {
@@ -78,14 +78,14 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         />
         <div className="max-h-96 overflow-auto">
           {filteredItems.map((item, index) => (
-            <div
-              className="block cursor-pointer rounded-md px-4 py-2 text-slate-700 hover:bg-slate-100 active:bg-blue-100"
+            <button
+              className="block w-full cursor-pointer rounded-md px-4 py-2 text-left text-slate-700 hover:bg-slate-100 active:bg-blue-100"
               key={index}
               onClick={() => {
                 handleOptionSelect(item);
               }}>
               {item.label[locale]}
-            </div>
+            </button>
           ))}
         </div>
       </div>

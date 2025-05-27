@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import * as Sentry from "@sentry/nextjs";
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
 import { logger } from "@formbricks/logger";
@@ -9,18 +10,22 @@ import {
   InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
+  TooManyRequestsError,
   UnknownError,
 } from "@formbricks/types/errors";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
+    Sentry.captureException(e);
+
     if (
       e instanceof ResourceNotFoundError ||
       e instanceof AuthorizationError ||
       e instanceof InvalidInputError ||
       e instanceof UnknownError ||
       e instanceof AuthenticationError ||
-      e instanceof OperationNotAllowedError
+      e instanceof OperationNotAllowedError ||
+      e instanceof TooManyRequestsError
     ) {
       return e.message;
     }

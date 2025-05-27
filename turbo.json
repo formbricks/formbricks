@@ -11,14 +11,6 @@
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
-    "@formbricks/demo#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/js#build"],
-      "persistent": true
-    },
-    "@formbricks/demo#lint": {
-      "dependsOn": ["@formbricks/js#build"]
-    },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
       "outputs": ["packages/i18n-utils/dist/**"]
@@ -29,29 +21,13 @@
     "@formbricks/i18n-utils#test": {
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
-    "@formbricks/js#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/js#build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/js#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/js#build"],
-      "persistent": true
-    },
-    "@formbricks/js#lint": {
-      "dependsOn": ["@formbricks/js-core#build"]
-    },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
     "@formbricks/react-native#build": {
@@ -78,14 +54,14 @@
     },
     "@formbricks/web#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -95,13 +71,12 @@
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
+        "AUTH_SSO_DEFAULT_TEAM_ID",
+        "AUTH_SKIP_INVITE_FOR_SSO",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
-        "DEFAULT_ORGANIZATION_ID",
-        "DEFAULT_ORGANIZATION_ROLE",
         "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
-        "CUSTOM_CACHE_DISABLED",
         "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",
@@ -109,8 +84,6 @@
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
-        "FORMBRICKS_API_HOST",
-        "FORMBRICKS_ENVIRONMENT_ID",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -159,7 +132,6 @@
         "RATE_LIMITING_DISABLED",
         "REDIS_HTTP_URL",
         "REDIS_URL",
-        "REDIS_DEFAULT_TTL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_ENDPOINT_URL",
@@ -167,8 +139,8 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SESSION_MAX_AGE",
         "SENTRY_DSN",
-        "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
@@ -187,6 +159,8 @@
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
+        "RECAPTCHA_SITE_KEY",
+        "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -197,7 +171,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "DISABLE_USER_MANAGEMENT"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

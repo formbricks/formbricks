@@ -16,7 +16,7 @@ import { Testimonial } from "@/modules/auth/components/testimonial";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
-  getisSsoEnabled,
+  getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import { LoginForm } from "./components/login-form";
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export const LoginPage = async () => {
   const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getisSsoEnabled(),
+    getIsSsoEnabled(),
     getIsSamlSsoEnabled(),
   ]);
 

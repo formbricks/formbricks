@@ -1,4 +1,9 @@
-import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY } from "@/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  ENCRYPTION_KEY,
+  ENTERPRISE_LICENSE_KEY,
+  SESSION_MAX_AGE,
+} from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
@@ -178,7 +183,7 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
-    maxAge: 3600,
+    maxAge: SESSION_MAX_AGE,
   },
   callbacks: {
     async jwt({ token }) {
@@ -219,6 +224,7 @@ export const authOptions: NextAuthOptions = {
       }
       if (ENTERPRISE_LICENSE_KEY) {
         const result = await handleSsoCallback({ user, account, callbackUrl });
+
         if (result) {
           await updateUserLastLoginAt(user.email);
         }

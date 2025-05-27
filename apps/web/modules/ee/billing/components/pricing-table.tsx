@@ -73,7 +73,7 @@ export const PricingTable = ({
     const manageSubscriptionResponse = await manageSubscriptionAction({
       environmentId,
     });
-    if (manageSubscriptionResponse?.data) {
+    if (manageSubscriptionResponse?.data && typeof manageSubscriptionResponse.data === "string") {
       router.push(manageSubscriptionResponse.data);
     }
   };
@@ -146,7 +146,7 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
+            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
               {capitalizeFirstLetter(organization.billing.plan)}
               {cancellingOn && (
@@ -154,7 +154,17 @@ export const PricingTable = ({
                   className="mx-2"
                   size="normal"
                   type="warning"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                  text={`Cancelling: ${
+                    cancellingOn
+                      ? cancellingOn.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })
+                      : ""
+                  }`}
                 />
               )}
             </h2>
@@ -201,7 +211,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 mb-8 flex flex-col gap-4",
-                peopleUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
+                peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">
                 {t("environments.settings.billing.monthly_identified_users")}
@@ -224,7 +234,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 flex flex-col gap-4 pb-12",
-                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
+                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
               {organization.billing.limits.projects && (
@@ -252,15 +262,17 @@ export const PricingTable = ({
           <div className="mx-auto mb-12">
             <div className="gap-x-2">
               <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-                <div
+                <button
+                  aria-pressed={planPeriod === "monthly"}
                   className={`flex-1 rounded-md px-4 py-0.5 text-center ${
                     planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("monthly")}>
                   {t("environments.settings.billing.monthly")}
-                </div>
-                <div
-                  className={`flex-1 items-center rounded-md py-0.5 pr-2 pl-4 text-center whitespace-nowrap ${
+                </button>
+                <button
+                  aria-pressed={planPeriod === "yearly"}
+                  className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("yearly")}>
@@ -268,11 +280,11 @@ export const PricingTable = ({
                   <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                     {t("environments.settings.billing.get_2_months_free")} 🔥
                   </span>
-                </div>
+                </button>
               </div>
               <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
                 <div
-                  className="hidden lg:absolute lg:inset-x-px lg:top-4 lg:bottom-0 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
+                  className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"
                 />
                 {getCloudPricingData(t).plans.map((plan) => (

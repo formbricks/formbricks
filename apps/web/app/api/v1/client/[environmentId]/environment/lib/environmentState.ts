@@ -1,6 +1,6 @@
 import { actionClassCache } from "@/lib/actionClass/cache";
 import { cache } from "@/lib/cache";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { environmentCache } from "@/lib/environment/cache";
 import { getEnvironment } from "@/lib/environment/service";
 import { organizationCache } from "@/lib/organization/cache";
@@ -99,14 +99,11 @@ export const getEnvironmentState = async (
         getActionClassesForEnvironmentState(environmentId),
       ]);
 
-      const filteredSurveys = surveys.filter(
-        (survey) => survey.type === "app" && survey.status === "inProgress"
-      );
-
       const data: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
+        surveys: !isMonthlyResponsesLimitReached ? surveys : [],
         actionClasses,
         project: project,
+        ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       };
 
       return {

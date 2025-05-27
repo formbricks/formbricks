@@ -11,7 +11,7 @@ The image is pre-built and requires minimal setup—just download it and start t
 Make sure Docker and Docker Compose are installed on your system. These are usually included in tools like Docker Desktop and Rancher Desktop.
 
 <Note>
-  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the Docker documentation.
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the Docker documentation.
 </Note>
 
 ## Start
@@ -34,31 +34,55 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 1. **Generate NextAuth Secret**
 
-   You need a NextAuth secret for session signing and encryption. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
+   You need a NextAuth secret for session signing and encryption. Run one of the commands below based on your operating system:
+
+   For Linux:
 
    ```bash
    sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+   For macOS:
+
+   ```bash
+   sed -i '' "s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
 1. **Generate Encryption Key**
 
-   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. The `sed` command below generates a random string using `openssl`, then replaces the `ENCRYPTION_KEY:` placeholder in the `docker-compose.yml` file with this generated secret:
+   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. Run one of the commands below based on your operating system:
+
+   For Linux:
 
    ```bash
    sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+   For macOS:
+
+   ```bash
+   sed -i '' "s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
 1. **Generate Cron Secret**
 
-   You require a Cron secret to secure API access for running cron jobs. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
+   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:
+
+   For Linux:
 
    ```bash
    sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+   For macOS:
+
+   ```bash
+   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
 1. **Start the Docker Setup**
 
-   Now, you’re ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
 
    ```bash
    docker compose up -d
@@ -72,7 +96,7 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 ## Update
 
-Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
+Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
 
 1. Pull the latest Formbricks image
 
@@ -135,12 +159,13 @@ formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/w
 formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
 ```
 
-You can close the logs again by hitting `CTRL + C`.
+You can close the logs again by hitting `CTRL + C`.
 
 <Note>
   **Customizing environment variables**
 
-  To edit any of the available environment variables, check out our [Configuration](/self-hosting/configuration/environment-variables) section!
+To edit any of the available environment variables, check out our [Configuration](/self-hosting/configuration/environment-variables) section!
+
 </Note>
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

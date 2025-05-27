@@ -2,7 +2,6 @@
 
 import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -110,7 +109,7 @@ export const MainNavigation = ({
 
   useEffect(() => {
     const toggleTextOpacity = () => {
-      setIsTextVisible(isCollapsed ? true : false);
+      setIsTextVisible(isCollapsed);
     };
     const timeoutId = setTimeout(toggleTextOpacity, 150);
     return () => clearTimeout(timeoutId);
@@ -171,7 +170,7 @@ export const MainNavigation = ({
         name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
-        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+        isActive: pathname?.includes("/actions"),
       },
       {
         name: t("common.integrations"),
@@ -265,7 +264,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-none"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />
@@ -392,7 +391,6 @@ export const MainNavigation = ({
                     onClick={async () => {
                       const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
                       router.push(route.url);
-                      await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}
