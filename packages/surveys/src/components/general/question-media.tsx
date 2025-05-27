@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 import { useState } from "preact/hooks";
 
@@ -26,7 +27,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
+    <div className="fb-group/image fb-relative fb-mb-6 fb-block fb-min-h-40 fb-rounded-md">
       {isLoading ? (
         <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
       ) : null}
@@ -35,7 +36,10 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           key={imgUrl}
           src={imgUrl}
           alt={altText}
-          className="fb-rounded-custom"
+          className={cn(
+            "fb-rounded-custom fb-max-h-[40dvh] fb-mx-auto fb-object-contain",
+            isLoading ? "fb-opacity-0" : ""
+          )}
           onLoad={() => {
             setIsLoading(false);
           }}
@@ -48,7 +52,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
               src={videoUrlWithParams}
               title="Question Video"
               frameBorder="0"
-              className="fb-rounded-custom fb-aspect-video fb-w-full"
+              className={cn("fb-rounded-custom fb-aspect-video fb-w-full", isLoading ? "fb-opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}

@@ -258,7 +258,9 @@ export const setup = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -314,9 +316,11 @@ export const setup = async (
         environment: environmentState,
         filteredSurveys,
       });
-      
+
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch (e) {
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }

@@ -30,7 +30,7 @@ export function StackedCardsContainer({
   setQuestionId,
   shouldResetQuestionId = true,
   fullSizeCards = false,
-}: StackedCardsContainerProps) {
+}: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.highlightBorderColor?.light
@@ -40,7 +40,7 @@ export function StackedCardsContainer({
     : styling.cardBorderColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
-  const [cardHeight, setCardHeight] = useState("auto");
+  const [cardHeight, setCardHeight] = useState("inital");
   const [cardWidth, setCardWidth] = useState<number>(0);
 
   const questionIdxTemp = useMemo(() => {
@@ -130,7 +130,7 @@ export function StackedCardsContainer({
   return (
     <div
       data-testid="stacked-cards-container"
-      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
+      className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-start"
       onMouseEnter={() => {
         setHovered(true);
       }}
@@ -148,7 +148,8 @@ export function StackedCardsContainer({
         </div>
       ) : (
         questionIdxTemp !== undefined &&
-        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
+        [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1, nextQuestionIdx + 2].map(
+          // [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (dynamicQuestionIndex, index) => {
             const hasEndingCard = survey.endings.length > 0;
             // Check for hiding extra card

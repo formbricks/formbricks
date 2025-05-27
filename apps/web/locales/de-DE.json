@@ -9,7 +9,6 @@
     "continue_with_saml": "Login mit SAML SSO",
     "email-change": {
       "confirm_password_description": "Bitte bestätige dein Passwort, bevor du deine E-Mail-Adresse änderst",
-      "email_already_exists": "Diese E-Mail wird bereits verwendet",
       "email_change_success": "E-Mail erfolgreich geändert",
       "email_change_success_description": "Du hast deine E-Mail-Adresse erfolgreich geändert. Bitte logge dich mit deiner neuen E-Mail-Adresse ein.",
       "email_verification_failed": "E-Mail-Bestätigung fehlgeschlagen",
@@ -1158,7 +1157,6 @@
         "file_size_must_be_less_than_10mb": "Dateigröße muss weniger als 10MB sein.",
         "invalid_file_type": "Ungültiger Dateityp. Nur JPEG-, PNG- und WEBP-Dateien sind erlaubt.",
         "lost_access": "Zugriff verloren",
-        "new_email_update_success": "Deine Anfrage zur Änderung der E-Mail wurde erhalten.",
         "or_enter_the_following_code_manually": "Oder gib den folgenden Code manuell ein:",
         "organization_identification": "Hilf deiner Organisation, Dich auf Formbricks zu identifizieren",
         "organizations_delete_message": "Du bist der einzige Besitzer dieser Organisationen, also werden sie <b>auch gelöscht.</b>",

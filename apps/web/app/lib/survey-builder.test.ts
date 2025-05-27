@@ -41,7 +41,7 @@ describe("Survey Builder", () => {
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
         shuffleOption: "none",
-        required: true,
+        required: false,
       });
       expect(question.choices.length).toBe(3);
       expect(question.id).toBeDefined();
@@ -141,7 +141,7 @@ describe("Survey Builder", () => {
         inputType: "text",
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
-        required: true,
+        required: false,
         charLimit: {
           enabled: false,
         },
@@ -204,7 +204,7 @@ describe("Survey Builder", () => {
         range: 5,
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
-        required: true,
+        required: false,
         isColorCodingEnabled: false,
       });
       expect(question.id).toBeDefined();
@@ -265,7 +265,7 @@ describe("Survey Builder", () => {
         headline: { default: "NPS Question" },
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
-        required: true,
+        required: false,
         isColorCodingEnabled: false,
       });
       expect(question.id).toBeDefined();
@@ -324,7 +324,7 @@ describe("Survey Builder", () => {
         label: { default: "I agree to terms" },
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
-        required: true,
+        required: false,
       });
       expect(question.id).toBeDefined();
     });
@@ -377,7 +377,7 @@ describe("Survey Builder", () => {
         headline: { default: "CTA Question" },
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
-        required: true,
+        required: false,
         buttonExternal: false,
       });
       expect(question.id).toBeDefined();

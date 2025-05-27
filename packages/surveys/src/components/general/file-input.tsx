@@ -342,7 +342,7 @@ export function FileInput({
           {showUploader ? (
             <button
               type="button"
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-10 hover:fb-cursor-pointer w-full"
               aria-label="Upload files by clicking or dragging them here"
               onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg

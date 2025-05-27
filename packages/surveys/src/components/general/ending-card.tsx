@@ -109,8 +109,10 @@ export function EndingCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when isCurrent changes
   }, [isCurrent]);
 
+  const marginPreservingHeight = survey.type === "app" ? "fb-my-[37px]" : "";
+
   return (
-    <ScrollableContainer>
+    <ScrollableContainer className={marginPreservingHeight}>
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
@@ -136,7 +138,7 @@ export function EndingCard({
                     questionId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
-                    <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                    <div className="fb-mt-4 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
                       <SubmitButton
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
