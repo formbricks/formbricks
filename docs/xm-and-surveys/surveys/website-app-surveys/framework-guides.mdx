@@ -33,6 +33,10 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   [Use our iOS SDK to quickly integrate surveys into your iOS applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
   </Card>
 
+  <Card title="Android" icon="android" color="green" href="#android">
+  [Integrate surveys into your Android applications using our native Kotlin SDK.](https://formbricks.com/docs/app-surveys/framework-guides#android)
+  </Card>
+
 </CardGroup>
 
 ## Prerequisites
@@ -400,6 +404,77 @@ Formbricks.logout()
 Formbricks.cleanup(waitForOperations: true) {
     print("SDK torn down")
 }
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| app-url        | string | URL of the hosted Formbricks instance. |
+
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## Android
+
+Install the Formbricks Android SDK using the following steps:
+
+### Installation
+
+Add the Maven Central repository and the Formbricks SDK dependency to your application's `build.gradle.kts`:
+
+```kotlin
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("com.formbricks:android:1.0.0") // replace with latest version
+}
+```
+
+Enable DataBinding in your app's module build.gradle.kts:
+
+```kotlin
+android {
+  buildFeatures {
+    dataBinding = true
+  }
+}
+```
+
+### Usage
+
+```kotlin
+// 1. Initialize the SDK
+val config = FormbricksConfig.Builder(
+    "https://your-formbricks-server.com",
+    "YOUR_ENVIRONMENT_ID"
+)
+  .setLoggingEnabled(true)
+  .setFragmentManager(supportFragmentManager)
+  .build()
+
+// 2. Setup Formbricks
+Formbricks.setup(this, config)
+
+// 3. Identify the user
+Formbricks.setUserId("user‑123")
+
+// 4. Track events
+Formbricks.track("button_pressed")
+
+// 5. Set or add user attributes
+Formbricks.setAttribute("test@web.com", "email")
+Formbricks.setAttributes(mapOf(Pair("attr1", "val1"), Pair("attr2", "val2")))
+
+// 6. Change language (no userId required):
+Formbricks.setLanguage("de")
+
+// 7. Log out:
+Formbricks.logout()
 ```
 
 ### Required Customizations
