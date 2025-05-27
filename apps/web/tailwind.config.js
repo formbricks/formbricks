@@ -130,6 +130,8 @@ const config = {
         "close-button": "var(--close-btn-color)",
         "close-button-focus": "var(--close-btn-hover-color)",
         "calendar-tile": "var(--calendar-tile-color)",
+        "accent-light-blue": "var(--accent-light-blue)",
+        "accent-blue": "var(--accent-blue)",
       },
       keyframes: {
         fadeIn: {
