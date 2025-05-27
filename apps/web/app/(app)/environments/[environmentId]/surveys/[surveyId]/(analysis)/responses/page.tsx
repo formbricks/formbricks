@@ -1,9 +1,9 @@
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
 import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
@@ -33,38 +33,40 @@ const Page = async (props) => {
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
+  // Get response count for the CTA component
+  const responseCount = await getResponseCountBySurveyId(params.surveyId);
+
   const locale = await findMatchingLocale();
   const surveyDomain = getSurveyDomain();
 
   return (
-    <ResponseCountProvider survey={survey}>
-      <PageContentWrapper>
-        <PageHeader
-          pageTitle={survey.name}
-          cta={
-            <SurveyAnalysisCTA
-              environment={environment}
-              survey={survey}
-              isReadOnly={isReadOnly}
-              user={user}
-              surveyDomain={surveyDomain}
-            />
-          }>
-          <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />
-        </PageHeader>
-        <ResponsePage
-          environment={environment}
-          survey={survey}
-          surveyId={params.surveyId}
-          webAppUrl={WEBAPP_URL}
-          environmentTags={tags}
-          user={user}
-          responsesPerPage={RESPONSES_PER_PAGE}
-          locale={locale}
-          isReadOnly={isReadOnly}
-        />
-      </PageContentWrapper>
-    </ResponseCountProvider>
+    <PageContentWrapper>
+      <PageHeader
+        pageTitle={survey.name}
+        cta={
+          <SurveyAnalysisCTA
+            environment={environment}
+            survey={survey}
+            isReadOnly={isReadOnly}
+            user={user}
+            surveyDomain={surveyDomain}
+            responseCount={responseCount}
+          />
+        }>
+        <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />
+      </PageHeader>
+      <ResponsePage
+        environment={environment}
+        survey={survey}
+        surveyId={params.surveyId}
+        webAppUrl={WEBAPP_URL}
+        environmentTags={tags}
+        user={user}
+        responsesPerPage={RESPONSES_PER_PAGE}
+        locale={locale}
+        isReadOnly={isReadOnly}
+      />
+    </PageContentWrapper>
   );
 };
 

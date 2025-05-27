@@ -1,4 +1,3 @@
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
@@ -50,23 +49,21 @@ const Page = async (props: ResponsesPageProps) => {
 
   return (
     <div className="flex w-full justify-center">
-      <ResponseCountProvider survey={survey}>
-        <PageContentWrapper className="w-full">
-          <PageHeader pageTitle={survey.name}>
-            <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="responses" />
-          </PageHeader>
-          <ResponsePage
-            environment={environment}
-            survey={survey}
-            surveyId={surveyId}
-            webAppUrl={WEBAPP_URL}
-            environmentTags={tags}
-            responsesPerPage={RESPONSES_PER_PAGE}
-            locale={locale}
-            isReadOnly={true}
-          />
-        </PageContentWrapper>
-      </ResponseCountProvider>
+      <PageContentWrapper className="w-full">
+        <PageHeader pageTitle={survey.name}>
+          <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="responses" />
+        </PageHeader>
+        <ResponsePage
+          environment={environment}
+          survey={survey}
+          surveyId={surveyId}
+          webAppUrl={WEBAPP_URL}
+          environmentTags={tags}
+          responsesPerPage={RESPONSES_PER_PAGE}
+          locale={locale}
+          isReadOnly={true}
+        />
+      </PageContentWrapper>
     </div>
   );
 };

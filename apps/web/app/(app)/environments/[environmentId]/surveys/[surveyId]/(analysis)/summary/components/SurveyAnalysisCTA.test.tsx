@@ -1,4 +1,3 @@
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
@@ -117,15 +116,14 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
 
   test("calls copySurveyLink and clipboard.writeText on success", async () => {
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     const copyButton = screen.getByRole("button", { name: "common.copy_link" });
@@ -143,15 +141,14 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
   test("shows error toast on failure", async () => {
     refreshSingleUseIdSpy.mockImplementationOnce(() => Promise.reject(new Error("fail")));
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     const copyButton = screen.getByRole("button", { name: "common.copy_link" });
@@ -177,15 +174,14 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
 
   test("opens EditPublicSurveyAlertDialog when edit icon is clicked and response count > 0", async () => {
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Find the edit button
@@ -199,15 +195,14 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
 
   test("navigates directly to edit page when response count = 0", async () => {
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={0}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={0}
+      />
     );
 
     // Find the edit button
@@ -222,15 +217,14 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
 
   test("doesn't show edit button when isReadOnly is true", () => {
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={true}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={true}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Try to find the edit button (it shouldn't exist)
@@ -252,15 +246,14 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
     });
 
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Find and click the edit button to show dialog
@@ -296,15 +289,14 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
     });
 
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Open dialog
@@ -323,15 +315,14 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
 
   test("navigates to edit page when cancel button is clicked in dialog", async () => {
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Open dialog
@@ -358,15 +349,14 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
     mockCopySurveyToOtherEnvironmentAction.mockImplementation(() => promise);
 
     render(
-      <ResponseCountProvider survey={dummySurvey} initialCount={5}>
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          surveyDomain={surveyDomain}
-          user={dummyUser}
-        />
-      </ResponseCountProvider>
+      <SurveyAnalysisCTA
+        survey={dummySurvey}
+        environment={dummyEnvironment}
+        isReadOnly={false}
+        surveyDomain={surveyDomain}
+        user={dummyUser}
+        responseCount={5}
+      />
     );
 
     // Open dialog

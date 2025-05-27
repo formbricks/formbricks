@@ -1,4 +1,3 @@
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
@@ -44,34 +43,33 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const surveyDomain = getSurveyDomain();
 
   return (
-    <ResponseCountProvider survey={survey}>
-      <PageContentWrapper>
-        <PageHeader
-          pageTitle={survey.name}
-          cta={
-            <SurveyAnalysisCTA
-              environment={environment}
-              survey={survey}
-              isReadOnly={isReadOnly}
-              user={user}
-              surveyDomain={surveyDomain}
-            />
-          }>
-          <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="summary" />
-        </PageHeader>
-        <SummaryPage
-          environment={environment}
-          survey={survey}
-          surveyId={params.surveyId}
-          webAppUrl={WEBAPP_URL}
-          isReadOnly={isReadOnly}
-          locale={user.locale ?? DEFAULT_LOCALE}
-          initialSurveySummary={initialSurveySummary}
-        />
+    <PageContentWrapper>
+      <PageHeader
+        pageTitle={survey.name}
+        cta={
+          <SurveyAnalysisCTA
+            environment={environment}
+            survey={survey}
+            isReadOnly={isReadOnly}
+            user={user}
+            surveyDomain={surveyDomain}
+            responseCount={initialSurveySummary?.meta.totalResponses ?? 0}
+          />
+        }>
+        <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="summary" />
+      </PageHeader>
+      <SummaryPage
+        environment={environment}
+        survey={survey}
+        surveyId={params.surveyId}
+        webAppUrl={WEBAPP_URL}
+        isReadOnly={isReadOnly}
+        locale={user.locale ?? DEFAULT_LOCALE}
+        initialSurveySummary={initialSurveySummary}
+      />
 
-        <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
-      </PageContentWrapper>
-    </ResponseCountProvider>
+      <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
+    </PageContentWrapper>
   );
 };
 

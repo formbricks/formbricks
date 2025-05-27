@@ -1,4 +1,3 @@
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -157,11 +156,7 @@ describe("ResponsePage", () => {
   });
 
   test("renders correctly with default props", async () => {
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(screen.getByTestId("custom-filter")).toBeInTheDocument();
       expect(screen.getByTestId("results-share-button")).toBeInTheDocument();
@@ -171,11 +166,7 @@ describe("ResponsePage", () => {
   });
 
   test("does not render ResultsShareButton when isReadOnly is true", async () => {
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} isReadOnly={true} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} isReadOnly={true} />);
     await waitFor(() => {
       expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
     });
@@ -183,11 +174,7 @@ describe("ResponsePage", () => {
 
   test("does not render ResultsShareButton when on sharing page", async () => {
     mockUseParams.mockReturnValue({ sharingKey: "share123" });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
     });
@@ -195,11 +182,7 @@ describe("ResponsePage", () => {
   });
 
   test("fetches next page of responses", async () => {
-    const { rerender } = render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    const { rerender } = render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(1);
     });
@@ -213,11 +196,7 @@ describe("ResponsePage", () => {
       await responseDataViewProps.fetchNextPage();
     });
 
-    rerender(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    ); // Rerender to reflect state changes
+    rerender(<ResponsePage {...defaultProps} />); // Rerender to reflect state changes
 
     await waitFor(() => {
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(2); // Initial fetch + next page
@@ -230,11 +209,7 @@ describe("ResponsePage", () => {
   });
 
   test("deletes responses and updates count", async () => {
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(1);
     });
@@ -271,11 +246,7 @@ describe("ResponsePage", () => {
   });
 
   test("updates a response", async () => {
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(1);
     });
@@ -311,11 +282,7 @@ describe("ResponsePage", () => {
   });
 
   test("resets pagination and responses when filters change", async () => {
-    const { rerender } = render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    const { rerender } = render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(1);
     });
@@ -325,11 +292,7 @@ describe("ResponsePage", () => {
     mockUseResponseFilter.mockReturnValue(newFilterState);
     mockGetFormattedFilters.mockReturnValue({ someNewFilter: "value" } as any); // Simulate new formatted filters
 
-    rerender(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    rerender(<ResponsePage {...defaultProps} />);
 
     await waitFor(() => {
       // Should fetch responses again due to filter change
@@ -346,32 +309,20 @@ describe("ResponsePage", () => {
 
   test("calls resetState when referer search param is not present", () => {
     mockUseSearchParams.mockReturnValue({ get: vi.fn().mockReturnValue(null) } as any);
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     expect(mockResponseFilterState.resetState).toHaveBeenCalled();
   });
 
   test("does not call resetState when referer search param is present", () => {
     mockUseSearchParams.mockReturnValue({ get: vi.fn().mockReturnValue("someReferer") } as any);
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     expect(mockResponseFilterState.resetState).not.toHaveBeenCalled();
   });
 
   test("handles empty responses from API", async () => {
     mockGetResponsesAction.mockResolvedValue({ data: [] });
     mockGetResponseCountAction.mockResolvedValue({ data: 0 });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={0}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(async () => {
       const latestCallArgs = vi
         .mocked(
@@ -391,11 +342,7 @@ describe("ResponsePage", () => {
 
   test("handles API errors gracefully for getResponsesAction", async () => {
     mockGetResponsesAction.mockResolvedValue({ data: null as any });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     await waitFor(async () => {
       const latestCallArgs = vi
         .mocked(
@@ -415,11 +362,7 @@ describe("ResponsePage", () => {
 
   test("handles API errors gracefully for getResponseCountAction", async () => {
     mockGetResponseCountAction.mockResolvedValue({ data: null as any });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={20}>
-        <ResponsePage {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<ResponsePage {...defaultProps} />);
     // No direct visual change, but ensure no crash and component renders
     await waitFor(() => {
       expect(screen.getByTestId("response-data-view")).toBeInTheDocument();

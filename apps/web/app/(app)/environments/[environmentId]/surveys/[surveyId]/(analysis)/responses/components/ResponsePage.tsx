@@ -2,7 +2,6 @@
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { useResponseCountContext } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -50,9 +49,6 @@ export const ResponsePage = ({
   const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  // Use the shared response count context to avoid duplicate API calls
-  const { refetch: refetchResponseCount } = useResponseCountContext();
-
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -94,8 +90,6 @@ export const ResponsePage = ({
 
   const deleteResponses = (responseIds: string[]) => {
     setResponses(responses.filter((response) => !responseIds.includes(response.id)));
-    // Refetch the response count after deletion
-    refetchResponseCount();
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {

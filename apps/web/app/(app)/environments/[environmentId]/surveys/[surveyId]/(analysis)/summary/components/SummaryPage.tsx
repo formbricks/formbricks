@@ -2,7 +2,6 @@
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { useResponseCountContext } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
@@ -65,9 +64,6 @@ export const SummaryPage = ({
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-
-  // Use the shared response count context to avoid duplicate API calls
-  const { responseCount } = useResponseCountContext();
 
   // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
@@ -143,7 +139,7 @@ export const SummaryPage = ({
       <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}
-        responseCount={responseCount}
+        responseCount={surveySummary.meta.totalResponses}
         survey={surveyMemoized}
         environment={environment}
         locale={locale}

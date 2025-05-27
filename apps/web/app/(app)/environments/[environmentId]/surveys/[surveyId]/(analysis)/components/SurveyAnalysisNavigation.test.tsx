@@ -3,7 +3,6 @@ import {
   getResponseCountAction,
   revalidateSurveyIdPath,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { ResponseCountProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
@@ -118,7 +117,6 @@ const mockSurvey = {
 const defaultProps = {
   environmentId: "testEnvId",
   survey: mockSurvey,
-  initialTotalResponseCount: 10,
   activeId: "summary",
 };
 
@@ -138,11 +136,7 @@ describe("SurveyAnalysisNavigation", () => {
     mockGetFormattedFilters.mockReturnValue([] as any);
     mockGetResponseCountAction.mockResolvedValue({ data: 5 });
 
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={10}>
-        <SurveyAnalysisNavigation {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<SurveyAnalysisNavigation {...defaultProps} />);
     await waitFor(() => expect(MockSecondaryNavigation).toHaveBeenCalled());
 
     const lastCallArgs = MockSecondaryNavigation.mock.calls[MockSecondaryNavigation.mock.calls.length - 1][0];
@@ -178,11 +172,7 @@ describe("SurveyAnalysisNavigation", () => {
     mockGetFormattedFilters.mockReturnValue([] as any);
     mockGetResponseCountAction.mockResolvedValue({ data: 5 });
 
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={10}>
-        <SurveyAnalysisNavigation {...defaultProps} />
-      </ResponseCountProvider>
-    );
+    render(<SurveyAnalysisNavigation {...defaultProps} />);
 
     expect(MockSecondaryNavigation).toHaveBeenCalled();
     const lastCallArgs = MockSecondaryNavigation.mock.calls[MockSecondaryNavigation.mock.calls.length - 1][0];
@@ -199,12 +189,8 @@ describe("SurveyAnalysisNavigation", () => {
     mockGetFormattedFilters.mockReturnValue([] as any);
 
     // Scenario 1: total = 10, filtered = null (initial state)
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={10}>
-        <SurveyAnalysisNavigation {...defaultProps} initialTotalResponseCount={10} />
-      </ResponseCountProvider>
-    );
-    expect(MockSecondaryNavigation.mock.calls[0][0].navigation[1].label).toBe("common.responses (10)");
+    render(<SurveyAnalysisNavigation {...defaultProps} />);
+    expect(MockSecondaryNavigation.mock.calls[0][0].navigation[1].label).toBe("common.responses");
     cleanup();
     vi.resetAllMocks(); // Reset mocks for next case
 
@@ -220,15 +206,11 @@ describe("SurveyAnalysisNavigation", () => {
       if (args && "filterCriteria" in args) return { data: 15, error: null, success: true };
       return { data: 15, error: null, success: true };
     });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={15}>
-        <SurveyAnalysisNavigation {...defaultProps} initialTotalResponseCount={15} />
-      </ResponseCountProvider>
-    );
+    render(<SurveyAnalysisNavigation {...defaultProps} />);
     await waitFor(() => {
       const lastCallArgs =
         MockSecondaryNavigation.mock.calls[MockSecondaryNavigation.mock.calls.length - 1][0];
-      expect(lastCallArgs.navigation[1].label).toBe("common.responses (15)");
+      expect(lastCallArgs.navigation[1].label).toBe("common.responses");
     });
     cleanup();
     vi.resetAllMocks();
@@ -245,15 +227,11 @@ describe("SurveyAnalysisNavigation", () => {
       if (args && "filterCriteria" in args) return { data: 15, error: null, success: true };
       return { data: 10, error: null, success: true };
     });
-    render(
-      <ResponseCountProvider survey={mockSurvey} initialCount={15}>
-        <SurveyAnalysisNavigation {...defaultProps} initialTotalResponseCount={10} />
-      </ResponseCountProvider>
-    );
+    render(<SurveyAnalysisNavigation {...defaultProps} />);
     await waitFor(() => {
       const lastCallArgs =
         MockSecondaryNavigation.mock.calls[MockSecondaryNavigation.mock.calls.length - 1][0];
-      expect(lastCallArgs.navigation[1].label).toBe("common.responses (15)");
+      expect(lastCallArgs.navigation[1].label).toBe("common.responses");
     });
   });
 });
