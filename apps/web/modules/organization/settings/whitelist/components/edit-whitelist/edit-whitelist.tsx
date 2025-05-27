@@ -11,7 +11,7 @@ interface EditWhitelistProps {
 }
 
 export const EditWhitelist = async ({ organization, role }: EditWhitelistProps) => {
-  const whitelistedUsers: TUserWhitelistInfo[] = (await getWhitelistedUsers()) ?? [];
+  const whitelistedUsers: TUserWhitelistInfo[] = (await getWhitelistedUsers({})) ?? [];
   const t = await getTranslate();
 
   return (
