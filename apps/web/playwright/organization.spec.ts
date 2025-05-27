@@ -2,15 +2,6 @@ import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
 import { invites } from "./utils/mock";
 
-const fs = require("fs");
-const path = require("path");
-function ensureReportDir() {
-  const reportDir = path.resolve("playwright-report");
-  if (!fs.existsSync(reportDir)) {
-    fs.mkdirSync(reportDir, { recursive: true });
-  }
-}
-
 test.describe("Invite, accept and remove organization member", async () => {
   test.beforeEach(async ({ page, users }) => {
     const user = await users.create();
@@ -152,14 +143,7 @@ test.describe("Create, update and delete team", async () => {
     await expect(page.getByText("Access Control")).toBeVisible();
     await page.getByText("Access Control").click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
-    await page.waitForLoadState("networkidle");
-
-    ensureReportDir();
-    await page.screenshot({ path: "playwright-report/debug-before-create-team.png", fullPage: true });
-    let html = await page.content();
-    fs.writeFileSync("playwright-report/debug-before-create-team.html", html);
-
-    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
     await page.getByRole("button", { name: "Create" }).click();
@@ -196,10 +180,5 @@ test.describe("Create, update and delete team", async () => {
     await expect(page.getByRole("heading", { name: "Organization Settings" })).toBeVisible();
 
     await expect(page.getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
-
-    await page.screenshot({ path: "debug-before-create-team.png", fullPage: true });
-    await page.locator("body").screenshot({ path: "debug-body.png" });
-    html = await page.content();
-    require("fs").writeFileSync("debug-before-create-team.html", html);
   });
 });
