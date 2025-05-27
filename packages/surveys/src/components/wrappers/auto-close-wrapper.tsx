@@ -56,6 +56,11 @@ export function AutoCloseWrapper({
   };
 
   useEffect(() => {
+    if (survey.autoClose) {
+      // Reset interaction state when auto-close is enabled
+      setHasInteracted(false);
+      setCountDownActive(true);
+    }
     startCountdown();
     return stopCountdown;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to run this effect on every render
