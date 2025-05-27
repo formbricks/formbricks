@@ -20,6 +20,7 @@ env:
   TELEMETRY_DISABLED: 1
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  REDIS_URL: redis://localhost:6379
 
 permissions:
   id-token: write
@@ -42,6 +43,16 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd="pg_isready -U testuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      valkey:
+        image: valkey/valkey:8.1.1
+        command: "valkey-server"
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="valkey-cli ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
