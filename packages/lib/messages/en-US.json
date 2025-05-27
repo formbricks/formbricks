@@ -100,6 +100,7 @@
     "activity": "Activity",
     "add": "Add",
     "add_action": "Add action",
+    "add_community": "Add community",
     "add_filter": "Add filter",
     "add_logo": "Add logo",
     "add_project": "Add project",
@@ -328,6 +329,7 @@
     "questions": "Questions",
     "read_docs": "Read Docs",
     "remove": "Remove",
+    "remove_community": "Remove community",
     "reorder_and_hide_columns": "Reorder and hide columns",
     "report_survey": "Report engagement",
     "request_trial_license": "Request trial license",
@@ -423,6 +425,7 @@
     "verified_address": "Verified Address",
     "verified_email": "Verified Email",
     "video": "Video",
+    "view_community": "View Community",
     "wallet": "Wallet",
     "warning": "Warning",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "We were unable to verify your license because the license server is unreachable.",
@@ -619,6 +622,14 @@
       },
       "search": {
         "search_by_engagement_name_or_description": "Search by engagement name or description"
+      }
+    },
+    "community": {
+      "add": {
+        "community_successfully_added": "Community successfully added"
+      },
+      "remove": {
+        "community_successfully_removed": "Community successfully removed"
       }
     },
     "connect": {

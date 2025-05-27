@@ -23,8 +23,8 @@ import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
   BlocksIcon,
+  BookUserIcon,
   // MousePointerClick,
-  // BookUserIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
@@ -80,40 +80,12 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  // const [isFetchingCommunities, setIsFetchingCommunities] = useState(false);
-  // const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
-  // const searchParams = useSearchParams();
-  // const communityId = searchParams.get("community");
-
   const project = projects.find((project) => project.id === environment.projectId);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
-
-  // Fetching whitelisted users
-  // const fetchCommunities = useCallback(async () => {
-  //   if (!currentOrganizationId) {
-  //     return;
-  //   }
-  //   setIsFetchingCommunities(true);
-  //   const data = await getWhitelistedUsersAction({
-  //     take: 10,
-  //     skip: 0,
-  //     organizationId: currentOrganizationId,
-  //   });
-  //   if (data && data.data) {
-  //     setCommunities(data.data);
-  //   } else {
-  //     setCommunities([]);
-  //   }
-  //   setIsFetchingCommunities(false);
-  // }, [currentOrganizationId]);
-
-  // useEffect(() => {
-  //   fetchCommunities();
-  // }, [fetchCommunities]);
 
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
@@ -170,13 +142,13 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/wallet"),
         isHidden: false,
       },
-      // {
-      //   name: t("common.communities"),
-      //   href: `/environments/${environment.id}/communities`,
-      //   icon: BookUserIcon,
-      //   isActive: pathname?.includes("/communities"),
-      //   isHidden: false,
-      // },
+      {
+        name: t("common.communities"),
+        href: `/environments/${environment.id}/communities`,
+        icon: BookUserIcon,
+        isActive: pathname?.includes("/communities"),
+        isHidden: false,
+      },
       ...(hasAccess
         ? [
             // {
@@ -238,7 +210,6 @@ export const MainNavigation = ({
           )}>
           <div>
             {/* Logo and Toggle */}
-
             <div className="flex items-center justify-between px-3 pb-4">
               {!isCollapsed && (
                 <Link
@@ -281,56 +252,6 @@ export const MainNavigation = ({
                   )
               )}
             </ul>
-
-            {/* Communities */}
-            {/* 
-            <div className="flex w-full flex-1 flex-col items-start py-4">
-              <div className={`px-4 ${isCollapsed && "hidden"}`}>Communities</div>
-              {isFetchingCommunities ? (
-                <>
-                  <ul className="max-h-[200px] w-full flex-1">
-                    {[...Array(3)].map((_, index) => {
-                      return (
-                        <NavigationLink
-                          key={"loading-" + index}
-                          href={`/environments/${environment.id}/discover`}
-                          linkText={"Loading"}
-                          isActive={false}
-                          loading={true}
-                          isCollapsed={isCollapsed}
-                          isTextVisible={isTextVisible}>
-                          <BookUserIcon className="" strokeWidth={1.5} />
-                        </NavigationLink>
-                      );
-                    })}
-                  </ul>
-                </>
-              ) : (
-                <ul className="max-h-[200px] w-full flex-1 overflow-y-scroll">
-                  {communities && communities.length > 0 ? (
-                    communities.map((community) => {
-                      return (
-                        <NavigationLink
-                          key={community.id}
-                          href={`/environments/${environment.id}/discover`}
-                          query={{ community: community.id }}
-                          linkText={community.name ? community.name : community.email}
-                          isActive={community.id == communityId}
-                          isCollapsed={isCollapsed}
-                          isTextVisible={isTextVisible}>
-                          <BookUserIcon className="" strokeWidth={1.5} />
-                        </NavigationLink>
-                      );
-                    })
-                  ) : (
-                    <li className="mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700">
-                      No Communities
-                    </li>
-                  )}
-                </ul>
-              )}
-            </div> 
-          */}
           </div>
 
           <div>
