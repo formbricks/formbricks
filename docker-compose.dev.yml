@@ -38,6 +38,7 @@ services:
 
   logrotate:
     image: blacklabelops/logrotate
+    restart: always
     volumes:
       - ./apps/web/logs:/logs  # <-- Update this if you change AUDIT_LOG_PATH in .env. The default value for the path is ./apps/web/logs.
     environment:

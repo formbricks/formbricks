@@ -228,10 +228,12 @@ services:
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
+      - ./apps/web/logs:/apps/web/logs # <-- Update this if you change AUDIT_LOG_PATH in .env. The default value for the path is ./apps/web/logs.
     <<: *environment
 
   logrotate:
     image: blacklabelops/logrotate
+    restart: always
     volumes:
       - ./apps/web/logs:/logs  # <-- Update this if you change AUDIT_LOG_PATH in .env. The default value for the path is ./apps/web/logs.
     environment:
