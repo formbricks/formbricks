@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# React Context & Provider Patterns
+
+## Context Provider Best Practices
+
+### Provider Implementation
+- Use TypeScript interfaces for provider props with optional `initialCount` for testing
+- Implement proper cleanup in `useEffect` to avoid React hooks warnings
+- Reference: [apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider.tsx](mdc:apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponseCountProvider.tsx)
+
+### Cleanup Pattern for Refs
+```typescript
+useEffect(() => {
+  const currentPendingRequests = pendingRequests.current;
+  const currentAbortController = abortController.current;
+  
+  return () => {
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentPendingRequests.clear();
+  };
+}, []);
+```
+
+### Testing Context Providers
+- Always wrap components using context in the provider during tests
+- Use `initialCount` prop for predictable test scenarios
+- Mock context dependencies like `useParams`, `useResponseFilter`
+- Example from [apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA.test.tsx](mdc:apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA.test.tsx):
+
+```typescript
+render(
+  <ResponseCountProvider survey={dummySurvey} initialCount={5}>
+    <ComponentUnderTest />
+  </ResponseCountProvider>
+);
+```
+
+### Required Mocks for Context Testing
+- Mock `next/navigation` with `useParams` returning environment and survey IDs
+- Mock response filter context and actions
+- Mock API actions that the provider depends on
+
+### Context Hook Usage
+- Create custom hooks like `useResponseCountContext()` for consuming context
+- Provide meaningful error messages when context is used outside provider
+- Use context for shared state that multiple components need to access

@@ -1,18 +1,12 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import {
-  getResponseCountAction,
-  getResponsesAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import {
-  getResponseCountBySurveySharingKeyAction,
-  getResponsesBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/actions";
+import { getResponsesBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -49,7 +43,6 @@ export const ResponsePage = ({
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
-  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -97,9 +90,6 @@ export const ResponsePage = ({
 
   const deleteResponses = (responseIds: string[]) => {
     setResponses(responses.filter((response) => !responseIds.includes(response.id)));
-    if (responseCount) {
-      setResponseCount(responseCount - responseIds.length);
-    }
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
@@ -117,29 +107,6 @@ export const ResponsePage = ({
       resetState();
     }
   }, [searchParams, resetState]);
-
-  useEffect(() => {
-    const handleResponsesCount = async () => {
-      let responseCount = 0;
-
-      if (isSharingPage) {
-        const responseCountActionResponse = await getResponseCountBySurveySharingKeyAction({
-          sharingKey,
-          filterCriteria: filters,
-        });
-        responseCount = responseCountActionResponse?.data || 0;
-      } else {
-        const responseCountActionResponse = await getResponseCountAction({
-          surveyId,
-          filterCriteria: filters,
-        });
-        responseCount = responseCountActionResponse?.data || 0;
-      }
-
-      setResponseCount(responseCount);
-    };
-    handleResponsesCount();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   useEffect(() => {
     const fetchInitialResponses = async () => {

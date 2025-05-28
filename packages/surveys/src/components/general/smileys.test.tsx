@@ -1,5 +1,5 @@
 import { render } from "@testing-library/preact";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   ConfusedFace,
   FrowningFace,
@@ -34,7 +34,7 @@ describe("Smiley Components", () => {
 
   components.forEach(({ name, Component }) => {
     describe(name, () => {
-      it("renders with default props", () => {
+      test("renders with default props", () => {
         const { container } = render(<Component />);
         const svg = container.querySelector("svg");
         expect(svg).to.exist;
@@ -53,7 +53,7 @@ describe("Smiley Components", () => {
         expect(paths.length).to.be.greaterThan(0);
       });
 
-      it("applies custom props correctly", () => {
+      test("applies custom props correctly", () => {
         const { container } = render(
           <Component {...testProps} style={{ stroke: "red", strokeWidth: 3, fill: "blue" }} />
         );
@@ -65,7 +65,7 @@ describe("Smiley Components", () => {
         expect(circle?.getAttribute("style")).to.include("fill: blue");
       });
 
-      it("maintains accessibility", () => {
+      test("maintains accessibility", () => {
         const { container } = render(<Component aria-label={`${name} emoji`} data-testid="smiley-svg" />);
         const svg = container.querySelector("[data-testid='smiley-svg']");
         expect(svg).to.exist;
