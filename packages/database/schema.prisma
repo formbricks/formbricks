@@ -844,7 +844,7 @@ model User {
   teamUsers                 TeamUser[]
   whitelist                 Boolean          @default(false)
   communities               UserCommunity[]  @relation("user")
-  communitiesCreated        UserCommunity[]  @relation("creator")
+  communityMembers          UserCommunity[]  @relation("creator")
   communityName             String?
   communityDescription      String?
 
