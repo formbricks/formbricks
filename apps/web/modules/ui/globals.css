@@ -24,6 +24,9 @@
   /* Functional Colors */
   --formbricks-focus: #1982fc;
   --formbricks-error: #d13a3a;
+
+  --accent-light-blue: #38B5DB33;
+  --accent-blue: #38B5DB80;
 }
 
 .dark {
