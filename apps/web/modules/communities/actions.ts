@@ -6,6 +6,7 @@ import {
   getAvailableUserCommunities,
   getCurrentUserCommunities,
   removeUserCommunity,
+  updateUserCommunityFields,
 } from "@/modules/communities/lib/communities";
 import { z } from "zod";
 
@@ -65,6 +66,21 @@ export const getCurrentUserCommunitiesAction = authenticatedActionClient
     return await getCurrentUserCommunities({
       userId: ctx.user.id,
       query: parsedInput.query,
+    });
+  });
+
+const ZUpdateUserCommunityFieldsAction = z.object({
+  communityName: z.string().optional(),
+  communityDescription: z.string().optional(),
+});
+
+export const updateUserCommunityFieldsAction = authenticatedActionClient
+  .schema(ZUpdateUserCommunityFieldsAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await updateUserCommunityFields({
+      userId: ctx.user.id,
+      communityName: parsedInput.communityName,
+      communityDescription: parsedInput.communityDescription,
     });
   });
 

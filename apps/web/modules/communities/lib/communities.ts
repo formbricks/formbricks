@@ -105,7 +105,16 @@ export const getCurrentUserCommunities = async ({
         },
       },
       select: {
-        creator: { select: whitelistSelection },
+        creator: {
+          select: {
+            ...whitelistSelection,
+            _count: {
+              select: {
+                communityMembers: true,
+              },
+            },
+          },
+        },
       },
     });
     return currentUserCommunities.map((community) => community.creator) || [];
@@ -170,7 +179,14 @@ export const getAvailableUserCommunities = async ({
             }
           : {}),
       },
-      select: whitelistSelection,
+      select: {
+        ...whitelistSelection,
+        _count: {
+          select: {
+            communityMembers: true,
+          },
+        },
+      },
     });
 
     return availableUserCommunities;
@@ -182,21 +198,21 @@ export const getAvailableUserCommunities = async ({
   }
 };
 
-export const editCommunityFields = async ({
+export const updateUserCommunityFields = async ({
   userId,
   communityName,
   communityDescription,
 }: {
   userId: string;
-  communityName: string;
-  communityDescription: string;
+  communityName: string | undefined;
+  communityDescription: string | undefined;
 }): Promise<string> => {
   try {
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
-        communityName: communityName,
-        communityDescription: communityDescription,
+        ...(communityName ? { communityName: communityName } : {}),
+        ...(communityDescription ? { communityDescription: communityDescription } : {}),
       },
     });
 

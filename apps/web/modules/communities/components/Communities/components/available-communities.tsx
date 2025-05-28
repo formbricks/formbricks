@@ -36,6 +36,7 @@ export function AvailableCommunities({
     fetchCommunities();
   }, [fetchCommunities, searchQuery]);
 
+  console.log(communities);
   if (isLoading) {
     return (
       <>
