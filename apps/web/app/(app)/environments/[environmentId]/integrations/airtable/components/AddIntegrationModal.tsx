@@ -10,8 +10,16 @@ import { AdditionalIntegrationSettings } from "@/modules/ui/components/additiona
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import {
   Select,
   SelectContent,
@@ -210,182 +218,181 @@ export const AddIntegrationModal = ({
   };
 
   return (
-    <Modal open={open} setOpen={handleClose} noPadding>
-      <div className="rounded-t-lg bg-slate-100">
-        <div className="flex w-full items-center justify-between p-6">
+    <Dialog open={open} onOpenChange={setOpenWithStates}>
+      <DialogContent>
+        <DialogHeader>
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
               <Image className="w-12" src={AirtableLogo} alt="Airtable logo" />
             </div>
             <div>
-              <div className="text-xl font-medium text-slate-700">
-                {t("environments.integrations.airtable.link_airtable_table")}
-              </div>
-              <div className="text-sm text-slate-500">
+              <DialogTitle>{t("environments.integrations.airtable.link_airtable_table")}</DialogTitle>
+              <DialogDescription>
                 {t("environments.integrations.airtable.sync_responses_with_airtable")}
-              </div>
+              </DialogDescription>
             </div>
           </div>
-        </div>
-      </div>
-      <form onSubmit={handleSubmit(submitHandler)}>
-        <div className="flex rounded-lg p-6">
-          <div className="flex w-full flex-col gap-y-4 pt-5">
-            {airtableArray.length ? (
-              <BaseSelectDropdown
-                control={control}
-                isLoading={isLoading}
-                fetchTable={fetchTable}
-                airtableArray={airtableArray}
-                setValue={setValue}
-                defaultValue={defaultData?.base}
-              />
-            ) : (
-              <NoBaseFoundError />
-            )}
-
-            <div className="flex w-full flex-col">
-              <Label htmlFor="table">{t("environments.integrations.airtable.table_name")}</Label>
-              <div className="mt-1 flex">
-                <Controller
+        </DialogHeader>
+        <form onSubmit={handleSubmit(submitHandler)}>
+          <DialogBody>
+            <div className="flex w-full flex-col gap-y-4">
+              {airtableArray.length ? (
+                <BaseSelectDropdown
                   control={control}
-                  name="table"
-                  render={({ field }) => (
-                    <Select
-                      required
-                      disabled={!tables.length}
-                      onValueChange={(val) => {
-                        field.onChange(val);
-                      }}
-                      defaultValue={defaultData?.table}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      {tables.length ? (
-                        <SelectContent>
-                          {tables.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      ) : null}
-                    </Select>
-                  )}
+                  isLoading={isLoading}
+                  fetchTable={fetchTable}
+                  airtableArray={airtableArray}
+                  setValue={setValue}
+                  defaultValue={defaultData?.base}
                 />
-              </div>
-            </div>
+              ) : (
+                <NoBaseFoundError />
+              )}
 
-            {surveys.length ? (
               <div className="flex w-full flex-col">
-                <Label htmlFor="survey">{t("common.select_survey")}</Label>
+                <Label htmlFor="table">{t("environments.integrations.airtable.table_name")}</Label>
                 <div className="mt-1 flex">
                   <Controller
                     control={control}
-                    name="survey"
+                    name="table"
                     render={({ field }) => (
                       <Select
                         required
+                        disabled={!tables.length}
                         onValueChange={(val) => {
                           field.onChange(val);
-                          setValue("questions", []);
                         }}
-                        defaultValue={defaultData?.survey}>
+                        defaultValue={defaultData?.table}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          {surveys.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                        {tables.length ? (
+                          <SelectContent>
+                            {tables.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        ) : null}
                       </Select>
                     )}
                   />
                 </div>
               </div>
-            ) : null}
 
-            {!surveys.length ? (
-              <p className="m-1 text-xs text-slate-500">
-                {t("environments.integrations.create_survey_warning")}
-              </p>
-            ) : null}
-
-            {survey && selectedSurvey && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                  <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
-                    <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
-                        <Controller
-                          key={question.id}
-                          control={control}
-                          name={"questions"}
-                          render={({ field }) => (
-                            <div className="my-1 flex items-center space-x-2">
-                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                <Checkbox
-                                  type="button"
-                                  id={question.id}
-                                  value={question.id}
-                                  className="bg-white"
-                                  checked={field.value?.includes(question.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, question.id])
-                                      : field.onChange(field.value?.filter((value) => value !== question.id));
-                                  }}
-                                />
-                                <span className="ml-2">
-                                  {getLocalizedValue(question.headline, "default")}
-                                </span>
-                              </label>
-                            </div>
-                          )}
-                        />
-                      ))}
-                    </div>
+              {surveys.length ? (
+                <div className="flex w-full flex-col">
+                  <Label htmlFor="survey">{t("common.select_survey")}</Label>
+                  <div className="mt-1 flex">
+                    <Controller
+                      control={control}
+                      name="survey"
+                      render={({ field }) => (
+                        <Select
+                          required
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            setValue("questions", []);
+                          }}
+                          defaultValue={defaultData?.survey}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {surveys.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
-                <AdditionalIntegrationSettings
-                  includeVariables={includeVariables}
-                  setIncludeVariables={setIncludeVariables}
-                  includeHiddenFields={includeHiddenFields}
-                  includeMetadata={includeMetadata}
-                  setIncludeHiddenFields={setIncludeHiddenFields}
-                  setIncludeMetadata={setIncludeMetadata}
-                  includeCreatedAt={includeCreatedAt}
-                  setIncludeCreatedAt={setIncludeCreatedAt}
-                />
-              </div>
+              ) : null}
+
+              {!surveys.length ? (
+                <p className="m-1 text-xs text-slate-500">
+                  {t("environments.integrations.create_survey_warning")}
+                </p>
+              ) : null}
+
+              {survey && selectedSurvey && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="Surveys">{t("common.questions")}</Label>
+                    <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
+                      <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+                          <Controller
+                            key={question.id}
+                            control={control}
+                            name={"questions"}
+                            render={({ field }) => (
+                              <div className="my-1 flex items-center space-x-2">
+                                <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                  <Checkbox
+                                    type="button"
+                                    id={question.id}
+                                    value={question.id}
+                                    className="bg-white"
+                                    checked={field.value?.includes(question.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, question.id])
+                                        : field.onChange(
+                                            field.value?.filter((value) => value !== question.id)
+                                          );
+                                    }}
+                                  />
+                                  <span className="ml-2">
+                                    {getLocalizedValue(question.headline, "default")}
+                                  </span>
+                                </label>
+                              </div>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <AdditionalIntegrationSettings
+                    includeVariables={includeVariables}
+                    setIncludeVariables={setIncludeVariables}
+                    includeHiddenFields={includeHiddenFields}
+                    includeMetadata={includeMetadata}
+                    setIncludeHiddenFields={setIncludeHiddenFields}
+                    setIncludeMetadata={setIncludeMetadata}
+                    includeCreatedAt={includeCreatedAt}
+                    setIncludeCreatedAt={setIncludeCreatedAt}
+                  />
+                </div>
+              )}
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            {isEditMode ? (
+              <Button
+                onClick={async () => {
+                  await handleDelete(defaultData.index);
+                }}
+                type="button"
+                loading={isLoading}
+                variant="destructive">
+                {t("common.delete")}
+              </Button>
+            ) : (
+              <Button type="button" loading={isLoading} variant="ghost" onClick={handleClose}>
+                {t("common.cancel")}
+              </Button>
             )}
 
-            <div className="flex justify-end gap-x-2">
-              {isEditMode ? (
-                <Button
-                  onClick={async () => {
-                    await handleDelete(defaultData.index);
-                  }}
-                  type="button"
-                  loading={isLoading}
-                  variant="destructive">
-                  {t("common.delete")}
-                </Button>
-              ) : (
-                <Button type="button" loading={isLoading} variant="ghost" onClick={handleClose}>
-                  {t("common.cancel")}
-                </Button>
-              )}
-
-              <Button type="submit">{t("common.save")}</Button>
-            </div>
-          </div>
-        </div>
-      </form>
-    </Modal>
+            <Button type="submit">{t("common.save")}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
