@@ -1,4 +1,4 @@
-import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP, AUDIT_LOG_SECRET } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP, ENCRYPTION_KEY } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -59,12 +59,12 @@ export const computeAuditLogHash = (
   event: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart">,
   prevHash: string | null
 ): string => {
-  let secret = AUDIT_LOG_SECRET;
+  let secret = ENCRYPTION_KEY;
 
   if (!secret) {
     // Log an error but don't throw an error to avoid blocking the main request
     logger.error(
-      "AUDIT_LOG_SECRET is not set, creating audit log hash without it. Please set AUDIT_LOG_SECRET in the environment variables to avoid security issues."
+      "ENCRYPTION_KEY is not set, creating audit log hash without it. Please set ENCRYPTION_KEY in the environment variables to avoid security issues."
     );
     secret = "";
   }
@@ -418,8 +418,8 @@ export const withAuditLogging = (
   };
 };
 
-if (AUDIT_LOG_ENABLED && !AUDIT_LOG_SECRET) {
+if (AUDIT_LOG_ENABLED && !ENCRYPTION_KEY) {
   throw new Error(
-    "AUDIT_LOG_SECRET must be set when AUDIT_LOG_ENABLED is enabled. Refusing to start for security reasons."
+    "ENCRYPTION_KEY must be set when AUDIT_LOG_ENABLED is enabled. Refusing to start for security reasons."
   );
 }

@@ -20,7 +20,7 @@ vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: true,
   AUDIT_LOG_PATH: "",
   AUDIT_LOG_ENABLED: true,
-  AUDIT_LOG_SECRET: "mocked-audit-log-secret",
+  ENCRYPTION_KEY: "mocked-encryption-key",
 }));
 
 describe("utils", () => {

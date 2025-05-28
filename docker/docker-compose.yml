@@ -187,9 +187,6 @@ x-environment: &environment
     # Set the below to the path of the audit log file, the default is /apps/web/logs/audit.log
     # AUDIT_LOG_PATH: /apps/web/logs/audit.log
 
-    # Set the below to the secret for the audit log (required for audit logging)
-    # AUDIT_LOG_SECRET:
-
     # Set the below to get the ip address of the user from the request headers
     # AUDIT_LOG_GET_USER_IP: 1
 

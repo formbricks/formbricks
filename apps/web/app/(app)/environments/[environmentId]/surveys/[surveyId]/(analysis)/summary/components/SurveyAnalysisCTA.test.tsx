@@ -33,7 +33,6 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_PATH: "",
   AUDIT_LOG_ENABLED: true,
   SESSION_MAX_AGE: 1000,
-  AUDIT_LOG_SECRET: "mocked-audit-log-secret",
 }));
 
 // Create a spy for refreshSingleUseId so we can override it in tests

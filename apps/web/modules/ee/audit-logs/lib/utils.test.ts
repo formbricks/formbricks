@@ -30,7 +30,7 @@ vi.mock("@/lib/utils/helper", () => ({
 vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
   AUDIT_LOG_GET_USER_IP: true,
-  AUDIT_LOG_SECRET: "testsecret",
+  ENCRYPTION_KEY: "testsecret",
 }));
 vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn().mockResolvedValue("127.0.0.1"),
@@ -50,8 +50,8 @@ vi.mock("@/lib/redis", () => ({
   },
 }));
 
-// Set AUDIT_LOG_SECRET for all tests unless explicitly testing its absence
-process.env.AUDIT_LOG_SECRET = "testsecret";
+// Set ENCRYPTION_KEY for all tests unless explicitly testing its absence
+process.env.ENCRYPTION_KEY = "testsecret";
 
 describe("redactPII", () => {
   test("redacts sensitive keys in objects", () => {
@@ -235,25 +235,25 @@ describe("withAuditLogging", () => {
 });
 
 describe("runtime config checks", () => {
-  test("throws if AUDIT_LOG_ENABLED is true and AUDIT_LOG_SECRET is missing", async () => {
+  test("throws if AUDIT_LOG_ENABLED is true and ENCRYPTION_KEY is missing", async () => {
     // Unset the secret and reload the module
-    process.env.AUDIT_LOG_SECRET = "";
+    process.env.ENCRYPTION_KEY = "";
     vi.resetModules();
     vi.doMock("@/lib/constants", () => ({
       AUDIT_LOG_ENABLED: true,
       AUDIT_LOG_GET_USER_IP: true,
-      AUDIT_LOG_SECRET: undefined,
+      ENCRYPTION_KEY: undefined,
     }));
     await expect(import("./utils")).rejects.toThrow(
-      /AUDIT_LOG_SECRET must be set when AUDIT_LOG_ENABLED is enabled/
+      /ENCRYPTION_KEY must be set when AUDIT_LOG_ENABLED is enabled/
     );
     // Restore for other tests
-    process.env.AUDIT_LOG_SECRET = "testsecret";
+    process.env.ENCRYPTION_KEY = "testsecret";
     vi.resetModules();
     vi.doMock("@/lib/constants", () => ({
       AUDIT_LOG_ENABLED: true,
       AUDIT_LOG_GET_USER_IP: true,
-      AUDIT_LOG_SECRET: "testsecret",
+      ENCRYPTION_KEY: "testsecret",
     }));
   });
 });
