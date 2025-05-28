@@ -62,9 +62,7 @@ export const AddActionModal = ({
       open={open}
       setOpen={setOpen}
       tabs={tabs}
-      size="md"
       closeOnOutsideClick={false}
-      restrictOverflow
     />
   );
 };
