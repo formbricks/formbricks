@@ -55,6 +55,7 @@ const config = {
         primary: {
           DEFAULT: "#38B5DB",
           foreground: "#fefefe",
+          20: "#38B5DB33",
         },
         destructive: {
           DEFAULT: "#FF6B6B", // A softer, coral-like red
