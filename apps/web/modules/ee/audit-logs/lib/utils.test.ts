@@ -1,17 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
 
-// Custom utility to wait for a spy to be called
-async function waitForSpyToBeCalled(spy, timeout = 1000) {
-  const start = Date.now();
-  while (spy.mock.calls.length === 0) {
-    if (Date.now() - start > timeout) {
-      throw new Error("Timeout waiting for spy to be called");
-    }
-    await new Promise((res) => setTimeout(res, 10));
-  }
-}
-
 // Patch redis multi before any imports
 beforeEach(async () => {
   const redis = (await import("@/lib/redis")).default;
@@ -34,8 +23,6 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromEnvironmentId: vi.fn().mockResolvedValue("org-env-id"),
 }));
-
-// Do NOT import buildAndLogAuditEvent, queueAuditEventBackground, or queueAuditEvent as named imports for spy to work
 
 // Mocks
 vi.mock("@/lib/constants", () => ({

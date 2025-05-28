@@ -36,7 +36,7 @@ describe("EmailChangeSignIn", () => {
       data: {
         id: "123",
         email: "test@example.com",
-        emailVerified: new Date().toISOString(),
+        emailVerified: new Date().toISOString() as unknown as Date,
         locale: "en-US",
       },
     });

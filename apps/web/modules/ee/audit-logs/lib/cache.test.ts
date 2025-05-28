@@ -49,11 +49,11 @@ vi.mock("@/lib/redis", () => {
 
 describe("audit log cache utils", () => {
   beforeEach(async () => {
-    await redis.del(AUDIT_LOG_HASH_KEY);
+    await redis?.del(AUDIT_LOG_HASH_KEY);
   });
 
   afterAll(async () => {
-    await redis.quit();
+    await redis?.quit();
   });
 
   test("should get and set the previous audit log hash", async () => {
@@ -80,10 +80,10 @@ describe("audit log cache utils", () => {
   test("should retry and eventually throw if the hash keeps changing", async () => {
     // Simulate another process changing the hash every time
     let callCount = 0;
-    const originalMulti = redis.multi;
-    (redis.multi as any).mockImplementation(() => {
+    const originalMulti = redis?.multi;
+    (redis?.multi as any).mockImplementation(() => {
       return {
-        set: vi.fn(function (key: string, value: string) {
+        set: vi.fn(function () {
           return this;
         }),
         exec: vi.fn(async () => {
@@ -108,6 +108,6 @@ describe("audit log cache utils", () => {
     expect(errorCaught).toBe(true);
     expect(callCount).toBe(5);
     // Restore
-    (redis.multi as any).mockImplementation(originalMulti);
+    (redis?.multi as any).mockImplementation(originalMulti);
   });
 });
