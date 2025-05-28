@@ -38,18 +38,10 @@ interface SummaryListProps {
   responseCount: number | null;
   environment: TEnvironment;
   survey: TSurvey;
-  totalResponseCount: number;
   locale: TUserLocale;
 }
 
-export const SummaryList = ({
-  summary,
-  environment,
-  responseCount,
-  survey,
-  totalResponseCount,
-  locale,
-}: SummaryListProps) => {
+export const SummaryList = ({ summary, environment, responseCount, survey, locale }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslate();
   const setFilter = (
@@ -115,11 +107,7 @@ export const SummaryList = ({
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
-          emptyMessage={
-            totalResponseCount === 0
-              ? undefined
-              : t("environments.surveys.summary.no_response_matches_filter")
-          }
+          emptyMessage={t("environments.surveys.summary.no_responses_found")}
         />
       ) : (
         summary.map((questionSummary) => {
