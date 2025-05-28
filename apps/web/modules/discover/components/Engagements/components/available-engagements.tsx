@@ -55,10 +55,9 @@ export function AvailableEngagements({
 
   return (
     <>
-      {availableEngagements &&
-        availableEngagements.map((survey) => {
-          return <AvailableSurveyCard type={"survey"} key={survey.id} survey={survey} />;
-        })}
+      {availableEngagements?.map((survey) => {
+        return <AvailableSurveyCard type={"survey"} key={survey.id} survey={survey} />;
+      })}
     </>
   );
 }

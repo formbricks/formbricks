@@ -8,10 +8,17 @@ import { useState } from "react";
 
 interface DiscoverClientProps {
   communityId: string;
-  translatedTitle: string;
+  translatedTitle: string | React.ReactNode;
+  translatedSubTitle?: string;
+  bannerImage?: string;
 }
 
-export function DiscoverClient({ translatedTitle, communityId }: DiscoverClientProps) {
+export function DiscoverClient({
+  translatedTitle,
+  translatedSubTitle,
+  bannerImage,
+  communityId,
+}: DiscoverClientProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("updatedAt");
 
@@ -19,7 +26,14 @@ export function DiscoverClient({ translatedTitle, communityId }: DiscoverClientP
     <PageContentWrapper>
       <PageHeader
         pageTitle={translatedTitle}
-        cta={<SearchSection setSearchQuery={setSearchQuery} sortBy={sortBy} setSortBy={setSortBy} />}
+        pageSubTitle={translatedSubTitle}
+        pageBannerImage={bannerImage}
+        hideBottomBorder={true}
+        ctaVertical={
+          <div>
+            <SearchSection setSearchQuery={setSearchQuery} sortBy={sortBy} setSortBy={setSortBy} />
+          </div>
+        }
       />
       <Engagements
         communityId={communityId}

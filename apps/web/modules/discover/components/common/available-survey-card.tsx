@@ -10,6 +10,7 @@ import { Clock } from "lucide-react";
 import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 
+const defaultEngageCardImg = "/illustrations/default-engage-card.png";
 interface AvailableSurveyCardProps {
   survey: TExtendedSurvey;
   type: String;
@@ -30,10 +31,27 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
 
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex min-h-[200px] flex-col justify-between p-6 pb-3">
+      <div
+        className={`bg-tertiary flex h-[124px] w-full items-start rounded-t-xl px-[18px] ${
+          chainName ? "justify-between" : "justify-end" // Pushes the image to the right if no chain name
+        }`}>
+        {chainName && (
+          <div className="mt-4 flex h-[34px] items-center gap-2 rounded-lg bg-white/50 pl-4 pr-4">
+            <span className="text-sm font-medium text-slate-700">{`Reward: ${survey.reward?.amount} ${survey.reward?.symbol}`}</span>
+          </div>
+        )}
+        <Image
+          src={defaultEngageCardImg}
+          alt={t("default-engage-card-png")}
+          width={133}
+          height={124}
+          className="object-contain"
+        />
+      </div>
+      <div className="flex flex-col justify-between p-6 pb-3">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge size="tiny" type="gray" text={surveyTypeLabel} />
+            <Badge size="large" type="brand" text={surveyTypeLabel} />
           </div>
 
           <div className="flex items-center gap-1 text-slate-700">

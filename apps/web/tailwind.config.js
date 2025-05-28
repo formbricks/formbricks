@@ -32,6 +32,7 @@ const config = {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "text-gradient": "linear-gradient(90deg, #69B6FF 1%, #B7ABFF 100%)",
       },
       boxShadow: {
         "card-sm": "0px 0.5px 12px -5px rgba(30,41,59,0.20)",
@@ -44,7 +45,7 @@ const config = {
       },
       colors: {
         brand: {
-          DEFAULT: "#38B5DB",
+          DEFAULT: "var(--brand-color)",
           light: "#38B5DB",
           dark: "#38B5DB",
         },
@@ -52,7 +53,7 @@ const config = {
         // error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #38B5DB)",
         primary: {
-          DEFAULT: "#0f172a",
+          DEFAULT: "#38B5DB",
           foreground: "#fefefe",
         },
         destructive: {
@@ -61,11 +62,14 @@ const config = {
         },
         secondary: {
           DEFAULT: "#f1f5f9",
-          foreground: "#0f172a",
+          foreground: "#38B5DB",
+        },
+        tertiary: {
+          DEFAULT: "#EFDCFF",
         },
         accent: {
           DEFAULT: "#f4f6f8", // light gray background
-          foreground: "#0f172a", // same as primary default for consistency
+          foreground: "#38B5DB", // same as primary default for consistency
         },
         info: {
           DEFAULT: colors.blue[600],
@@ -95,9 +99,11 @@ const config = {
           background: colors.red[50],
           "background-muted": colors.red[100],
         },
-        brand: "var(--brand-color)",
         "on-brand": "var(--brand-text-color)",
-        border: "var(--border-color)",
+        border: {
+          DEFAULT: "var(--border-color)",
+          primary: "#38B5DB",
+        },
         "border-highlight": "var(--border-color-highlight)",
         focus: "var(--focus-color)",
         heading: "var(--heading-color)",
