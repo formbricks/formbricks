@@ -94,6 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
+      "verification_email_successfully_sent": "Bestätigungs-E-Mail an {email} gesendet. Bitte überprüfen Sie, um das Update abzuschließen.",
       "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },

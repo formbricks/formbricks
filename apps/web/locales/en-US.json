@@ -94,6 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
+      "verification_email_successfully_sent": "Verification email sent to {email}. Please verify to complete the update.",
       "we_sent_an_email_to": "We sent an email to {email}. ",
       "you_didnt_receive_an_email_or_your_link_expired": "You didn't receive an email or your link expired?"
     },

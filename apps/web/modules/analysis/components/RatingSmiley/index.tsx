@@ -34,7 +34,7 @@ const getSmiley = (
   const activeColor = "fill-rating-fill";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
-  const totalOptions = [
+  const faceIcons = [
     "tired",
     "weary",
     "persevering",
@@ -44,14 +44,14 @@ const getSmiley = (
     "slightly-smiling",
     "smiling-face-with-smiling-eyes",
     "grinning-face-with-smiling-eyes",
-    "grinning-squinting-face",
+    "grinning-squinting",
   ];
 
   const icon = (
     <img
       className={active ? activeColor : inactiveColor}
-      src={`/smiley-icons/${totalOptions[iconIdx]}-face.png`}
-      alt={totalOptions[iconIdx]}
+      src={`/smiley-icons/${faceIcons[iconIdx]}-face.png`}
+      alt={faceIcons[iconIdx]}
       width={36}
       height={36}
     />
