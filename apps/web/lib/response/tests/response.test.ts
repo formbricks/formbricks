@@ -238,14 +238,14 @@ describe("Tests for getResponseDownloadUrl service", () => {
       expect(fileExtension).not.toEqual("xlsx");
     });
 
-    test("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
+    test("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.response.count.mockRejectedValue(errToThrow);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
     });
