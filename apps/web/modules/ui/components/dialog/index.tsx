@@ -11,7 +11,7 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = ({ children, ...props }: DialogPrimitive.DialogPortalProps) => (
   <DialogPrimitive.Portal {...props}>
-    <div className="fixed inset-0 z-50 flex items-start justify-center md:items-center">{children}</div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">{children}</div>
   </DialogPrimitive.Portal>
 );
 DialogPortal.displayName = DialogPrimitive.Portal.displayName;
@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex w-full flex-col space-y-4 overflow-hidden rounded-b-lg border bg-white p-4 shadow-lg md:max-h-[90dvh] md:rounded-lg",
+          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex w-full flex-col space-y-4 overflow-hidden rounded-b-lg border bg-white p-4 shadow-lg sm:max-h-[90dvh] sm:rounded-lg",
           width === "default" ? "md:w-[720px]" : "md:w-[720px] lg:w-[960px]",
           className
         )}
@@ -79,7 +79,7 @@ type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
-      "sticky top-0 z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left [&>svg]:absolute [&>svg]:top-1.5 [&>svg]:size-6 md:[&>svg~*]:pl-8",
+      "sticky top-0 z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left [&>svg]:absolute [&>svg]:top-1.5 [&>svg]:size-6 sm:[&>svg~*]:pl-8",
       className
     )}
     {...props}
@@ -96,7 +96,7 @@ type DialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      "sticky bottom-0 z-10 flex flex-shrink-0 flex-col-reverse bg-white md:flex-row md:justify-end md:space-x-2",
+      "sticky bottom-0 z-10 flex flex-shrink-0 flex-col-reverse bg-white sm:flex-row sm:justify-end sm:space-x-2",
       className
     )}
     {...props}

@@ -26,7 +26,6 @@ vi.mock("@/modules/ui/components/modal-with-tabs", () => ({
         <button onClick={() => setOpen(false)}>Close</button>
         <div>Size: {size}</div>
         <div>Close on outside click: {closeOnOutsideClick.toString()}</div>
-        <div>Restrict overflow: {restrictOverflow.toString()}</div>
         {tabs.map((tab) => (
           <div key={tab.title}>
             <h2>{tab.title}</h2>
@@ -135,9 +134,7 @@ describe("AddActionModal", () => {
         open: true,
         setOpen: mockSetOpen,
         tabs: expect.any(Array),
-        size: "md",
         closeOnOutsideClick: false,
-        restrictOverflow: true,
       }),
       undefined
     );
@@ -185,9 +182,7 @@ describe("AddActionModal", () => {
         open: false, // Check that open is false
         setOpen: mockSetOpen,
         tabs: expect.any(Array),
-        size: "md",
         closeOnOutsideClick: false,
-        restrictOverflow: true,
       }),
       undefined
     );
