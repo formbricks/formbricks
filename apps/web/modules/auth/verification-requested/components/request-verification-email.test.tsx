@@ -12,8 +12,8 @@ vi.mock("@tolgee/react", () => ({
       if (key === "auth.verification-requested.no_email_provided") {
         return "No email provided";
       }
-      if (key === "auth.verification-requested.verification_email_successfully_sent") {
-        return `Verification email sent to ${params?.email}`;
+      if (key === "auth.verification-requested.verification_email_resent_successfully") {
+        return `Verification email sent! Please check your inbox.`;
       }
       if (key === "auth.verification-requested.resend_verification_email") {
         return "Resend verification email";
@@ -61,7 +61,7 @@ describe("RequestVerificationEmail", () => {
     await fireEvent.click(button);
 
     expect(resendVerificationEmailAction).toHaveBeenCalledWith({ email: mockEmail });
-    expect(toast.success).toHaveBeenCalledWith(`Verification email sent to ${mockEmail}`);
+    expect(toast.success).toHaveBeenCalledWith(`Verification email sent! Please check your inbox.`);
   });
 
   test("reloads page when visibility changes to visible", () => {
