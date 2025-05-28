@@ -2,14 +2,14 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "../button";
 import {
-  MyDialog,
-  MyDialogBody,
-  MyDialogContent,
-  MyDialogDescription,
-  MyDialogFooter,
-  MyDialogHeader,
-  MyDialogTitle,
-  MyDialogTrigger,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "./index";
 
 // Story options separate from component props
@@ -28,7 +28,7 @@ interface StoryOptions {
   bodyElementCount: number;
 }
 
-type StoryProps = React.ComponentProps<typeof MyDialogContent> & StoryOptions;
+type StoryProps = React.ComponentProps<typeof DialogContent> & StoryOptions;
 
 const DefaultBodyContent = (elementCount: number): React.ReactNode => {
   return (
@@ -44,7 +44,7 @@ const DefaultBodyContent = (elementCount: number): React.ReactNode => {
 
 const meta: Meta<StoryProps> = {
   title: "UI/Unified Modal",
-  component: MyDialogContent,
+  component: DialogContent,
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
@@ -63,7 +63,7 @@ const meta: Meta<StoryProps> = {
         type: { summary: "boolean" },
         defaultValue: { summary: "false" },
       },
-      order: 1,
+      order: 2,
     },
     disableCloseOnOutsideClick: {
       control: "boolean",
@@ -73,8 +73,10 @@ const meta: Meta<StoryProps> = {
         type: { summary: "boolean" },
         defaultValue: { summary: "false" },
       },
-      order: 2,
+      order: 1,
     },
+
+    // Story Options - Appearance Category
     width: {
       control: "select",
       options: ["default", "wide"],
@@ -86,20 +88,18 @@ const meta: Meta<StoryProps> = {
       },
       order: 1,
     },
-
-    // Story Options - Appearance Category
-    showIcon: {
+    showHeader: {
       control: "boolean",
-      description: "Whether to show an icon in the header",
+      description: "Whether to show the header section",
       table: {
         category: "Appearance",
         type: { summary: "boolean" },
       },
       order: 2,
     },
-    showHeader: {
+    showIcon: {
       control: "boolean",
-      description: "Whether to show the header section",
+      description: "Whether to show an icon in the header",
       table: {
         category: "Appearance",
         type: { summary: "boolean" },
@@ -195,7 +195,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof MyDialogContent> & { args: StoryOptions };
+type Story = StoryObj<typeof DialogContent> & { args: StoryOptions };
 
 // Create a common render function to reduce duplication
 const renderModal = (args: StoryProps) => {
@@ -225,25 +225,25 @@ const renderModal = (args: StoryProps) => {
   const bodyContent = DefaultBodyContent(bodyElementCount);
 
   return (
-    <MyDialog>
-      <MyDialogTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <Button variant="outline">{triggerText}</Button>
-      </MyDialogTrigger>
-      <MyDialogContent
+      </DialogTrigger>
+      <DialogContent
         hideCloseButton={hideCloseButton}
         disableCloseOnOutsideClick={disableCloseOnOutsideClick}
         width={width}
         className={className}>
         {showHeader && (
-          <MyDialogHeader>
+          <DialogHeader>
             {showIcon && <AlertCircle />}
-            <MyDialogTitle>{title}</MyDialogTitle>
-            <MyDialogDescription>{description}</MyDialogDescription>
-          </MyDialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
         )}
-        <MyDialogBody>{bodyContent}</MyDialogBody>
+        <DialogBody>{bodyContent}</DialogBody>
         {showFooter && footerButtonConfiguration === "3" && (
-          <MyDialogFooter className="md:justify-between">
+          <DialogFooter className="md:justify-between">
             <Button className="justify-self-start" variant="ghost">
               {tertiaryButtonText}
             </Button>
@@ -251,20 +251,20 @@ const renderModal = (args: StoryProps) => {
               <Button variant="secondary">{secondaryButtonText}</Button>
               <Button>{primaryButtonText}</Button>
             </div>
-          </MyDialogFooter>
+          </DialogFooter>
         )}
         {showFooter && footerButtonConfiguration !== "3" && (
-          <MyDialogFooter>
+          <DialogFooter>
             <div className="flex md:space-x-2">
               {footerButtonConfiguration !== "1" && (
                 <Button variant="secondary">{secondaryButtonText}</Button>
               )}
               <Button>{primaryButtonText}</Button>
             </div>
-          </MyDialogFooter>
+          </DialogFooter>
         )}
-      </MyDialogContent>
-    </MyDialog>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -435,25 +435,25 @@ export const WideModal: Story = {
     );
 
     return (
-      <MyDialog>
-        <MyDialogTrigger asChild>
+      <Dialog>
+        <DialogTrigger asChild>
           <Button variant="outline">{triggerText}</Button>
-        </MyDialogTrigger>
-        <MyDialogContent
+        </DialogTrigger>
+        <DialogContent
           hideCloseButton={hideCloseButton}
           disableCloseOnOutsideClick={disableCloseOnOutsideClick}
           width={width}
           className={className}>
           {showHeader && (
-            <MyDialogHeader>
+            <DialogHeader>
               {showIcon && <AlertCircle />}
-              <MyDialogTitle>{title}</MyDialogTitle>
-              <MyDialogDescription>{description}</MyDialogDescription>
-            </MyDialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
           )}
-          <MyDialogBody>{wideBodyContent}</MyDialogBody>
+          <DialogBody>{wideBodyContent}</DialogBody>
           {showFooter && (
-            <MyDialogFooter className="md:justify-between">
+            <DialogFooter className="md:justify-between">
               {footerButtonConfiguration === "3" && (
                 <Button className="justify-self-start" variant="ghost">
                   {tertiaryButtonText}
@@ -465,10 +465,10 @@ export const WideModal: Story = {
                 )}
                 <Button>{primaryButtonText}</Button>
               </div>
-            </MyDialogFooter>
+            </DialogFooter>
           )}
-        </MyDialogContent>
-      </MyDialog>
+        </DialogContent>
+      </Dialog>
     );
   },
   args: {
