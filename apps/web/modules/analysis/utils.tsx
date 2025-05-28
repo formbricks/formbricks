@@ -1,7 +1,6 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { JSX } from "react";
-import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Utility function to render hyperlinked content
@@ -55,7 +54,6 @@ export const getSurveyUrl = async (
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to generate single-use ID";
-      toast.error(errorMessage);
       throw error;
     }
   }
