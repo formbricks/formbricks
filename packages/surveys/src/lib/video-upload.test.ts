@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect } from "vitest";
 import {
   checkForLoomUrl,
   checkForVimeoUrl,
@@ -22,13 +22,13 @@ describe("checkForYoutubeUrl", () => {
   ];
 
   validUrls.forEach((url) => {
-    it(`should return true for valid YouTube URL: ${url}`, () => {
+    test(`should return true for valid YouTube URL: ${url}`, () => {
       expect(checkForYoutubeUrl(url)).toBe(true);
     });
   });
 
   invalidUrls.forEach((url) => {
-    it(`should return false for invalid YouTube URL: ${url}`, () => {
+    test(`should return false for invalid YouTube URL: ${url}`, () => {
       expect(checkForYoutubeUrl(url)).toBe(false);
     });
   });
@@ -44,13 +44,13 @@ describe("checkForVimeoUrl", () => {
   ];
 
   validUrls.forEach((url) => {
-    it(`should return true for valid Vimeo URL: ${url}`, () => {
+    test(`should return true for valid Vimeo URL: ${url}`, () => {
       expect(checkForVimeoUrl(url)).toBe(true);
     });
   });
 
   invalidUrls.forEach((url) => {
-    it(`should return false for invalid Vimeo URL: ${url}`, () => {
+    test(`should return false for invalid Vimeo URL: ${url}`, () => {
       expect(checkForVimeoUrl(url)).toBe(false);
     });
   });
@@ -66,13 +66,13 @@ describe("checkForLoomUrl", () => {
   ];
 
   validUrls.forEach((url) => {
-    it(`should return true for valid Loom URL: ${url}`, () => {
+    test(`should return true for valid Loom URL: ${url}`, () => {
       expect(checkForLoomUrl(url)).toBe(true);
     });
   });
 
   invalidUrls.forEach((url) => {
-    it(`should return false for invalid Loom URL: ${url}`, () => {
+    test(`should return false for invalid Loom URL: ${url}`, () => {
       expect(checkForLoomUrl(url)).toBe(false);
     });
   });
@@ -91,7 +91,7 @@ describe("extractYoutubeId", () => {
   ];
 
   urlsAndIds.forEach(([url, expectedId]) => {
-    it(`should extract ID "${expectedId}" from URL: ${url}`, () => {
+    test(`should extract ID "${expectedId}" from URL: ${url}`, () => {
       expect(extractYoutubeId(url)).toBe(expectedId);
     });
   });
@@ -111,7 +111,7 @@ describe("convertToEmbedUrl", () => {
   ];
 
   urlsAndEmbeds.forEach(([url, expectedEmbedUrl]) => {
-    it(`should convert "${url}" to "${expectedEmbedUrl}"`, () => {
+    test(`should convert "${url}" to "${expectedEmbedUrl}"`, () => {
       expect(convertToEmbedUrl(url)).toBe(expectedEmbedUrl);
     });
   });

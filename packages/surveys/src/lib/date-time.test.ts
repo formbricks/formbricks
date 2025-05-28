@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect } from "vitest";
 import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString } from "./date-time";
 
 // Manually define getOrdinalSuffix for testing as it's not exported
@@ -14,42 +14,42 @@ const getOrdinalSuffix = (day: number): string => {
 };
 
 describe("getMonthName", () => {
-  it("should return correct month name for en-US", () => {
+  test("should return correct month name for en-US", () => {
     expect(getMonthName(0)).toBe("January");
     expect(getMonthName(6)).toBe("July");
     expect(getMonthName(11)).toBe("December");
   });
 
-  it("should return correct month name for a different locale (es-ES)", () => {
+  test("should return correct month name for a different locale (es-ES)", () => {
     expect(getMonthName(0, "es-ES")).toBe("enero");
     expect(getMonthName(6, "es-ES")).toBe("julio");
     expect(getMonthName(11, "es-ES")).toBe("diciembre");
   });
 
-  it("should throw an error for invalid month index", () => {
+  test("should throw an error for invalid month index", () => {
     expect(() => getMonthName(-1)).toThrow("Month index must be between 0 and 11");
     expect(() => getMonthName(12)).toThrow("Month index must be between 0 and 11");
   });
 });
 
 describe("getOrdinalDate", () => {
-  it('should return date with "st" for 1, 21, 31 (but not 11)', () => {
+  test('should return date with "st" for 1, 21, 31 (but not 11)', () => {
     expect(getOrdinalDate(1)).toBe("1st");
     expect(getOrdinalDate(21)).toBe("21st");
     expect(getOrdinalDate(31)).toBe("31st");
   });
 
-  it('should return date with "nd" for 2, 22 (but not 12)', () => {
+  test('should return date with "nd" for 2, 22 (but not 12)', () => {
     expect(getOrdinalDate(2)).toBe("2nd");
     expect(getOrdinalDate(22)).toBe("22nd");
   });
 
-  it('should return date with "rd" for 3, 23 (but not 13)', () => {
+  test('should return date with "rd" for 3, 23 (but not 13)', () => {
     expect(getOrdinalDate(3)).toBe("3rd");
     expect(getOrdinalDate(23)).toBe("23rd");
   });
 
-  it('should return date with "th" for 11, 12, 13 and others', () => {
+  test('should return date with "th" for 11, 12, 13 and others', () => {
     expect(getOrdinalDate(4)).toBe("4th");
     expect(getOrdinalDate(11)).toBe("11th");
     expect(getOrdinalDate(12)).toBe("12th");
@@ -61,24 +61,24 @@ describe("getOrdinalDate", () => {
 });
 
 describe("isValidDateString", () => {
-  it("should return true for valid YYYY-MM-DD format", () => {
+  test("should return true for valid YYYY-MM-DD format", () => {
     expect(isValidDateString("2023-01-15")).toBe(true);
     expect(isValidDateString("2024-02-29")).toBe(true); // Leap year
   });
 
-  it("should return true for valid DD-MM-YYYY format", () => {
+  test("should return true for valid DD-MM-YYYY format", () => {
     expect(isValidDateString("15-01-2023")).toBe(false);
     expect(isValidDateString("29-02-2024")).toBe(false);
   });
 
-  it("should return false for invalid dates in valid format", () => {
+  test("should return false for invalid dates in valid format", () => {
     expect(isValidDateString("2023-02-30")).toBe(true);
     expect(isValidDateString("2023-13-01")).toBe(false);
     expect(isValidDateString("32-01-2023")).toBe(false);
     expect(isValidDateString("01-13-2023")).toBe(true);
   });
 
-  it("should return false for invalid formats", () => {
+  test("should return false for invalid formats", () => {
     expect(isValidDateString("2023/01/15")).toBe(false);
     expect(isValidDateString("01/15/2023")).toBe(false);
     expect(isValidDateString("Jan 15, 2023")).toBe(false);
@@ -89,25 +89,25 @@ describe("isValidDateString", () => {
 });
 
 describe("getOrdinalSuffix (helper)", () => {
-  it('should return "st" for 1, 21, 31', () => {
+  test('should return "st" for 1, 21, 31', () => {
     expect(getOrdinalSuffix(1)).toBe("st");
     expect(getOrdinalSuffix(21)).toBe("st");
     expect(getOrdinalSuffix(31)).toBe("st");
   });
 
-  it('should return "nd" for 2, 22', () => {
+  test('should return "nd" for 2, 22', () => {
     expect(getOrdinalSuffix(2)).toBe("nd");
     expect(getOrdinalSuffix(22)).toBe("nd");
     expect(getOrdinalSuffix(32)).toBe("nd"); // Test for day >= 30 leading to relevantDigits = 2
   });
 
-  it('should return "rd" for 3, 23', () => {
+  test('should return "rd" for 3, 23', () => {
     expect(getOrdinalSuffix(3)).toBe("rd");
     expect(getOrdinalSuffix(23)).toBe("rd");
     expect(getOrdinalSuffix(33)).toBe("rd"); // Test for day >= 30 leading to relevantDigits = 3
   });
 
-  it('should return "th" for 4-20, 24-30, and 11, 12, 13 variants', () => {
+  test('should return "th" for 4-20, 24-30, and 11, 12, 13 variants', () => {
     expect(getOrdinalSuffix(4)).toBe("th");
     expect(getOrdinalSuffix(11)).toBe("th");
     expect(getOrdinalSuffix(12)).toBe("th");
@@ -121,7 +121,7 @@ describe("getOrdinalSuffix (helper)", () => {
 });
 
 describe("formatDateWithOrdinal", () => {
-  it("should format date correctly for en-US", () => {
+  test("should format date correctly for en-US", () => {
     // Test with a few specific dates
     // Monday, January 1st, 2024
     const date1 = new Date(2024, 0, 1);
@@ -136,7 +136,7 @@ describe("formatDateWithOrdinal", () => {
     expect(formatDateWithOrdinal(date3)).toBe("Sunday, March 13th, 2022");
   });
 
-  it("should format date correctly for a different locale (fr-FR)", () => {
+  test("should format date correctly for a different locale (fr-FR)", () => {
     const date1 = new Date(2024, 0, 1);
     // The exact output depends on Intl and Node version, it might include periods or different capitalization.
     // For consistency, we'll check for key parts.
@@ -161,7 +161,7 @@ describe("formatDateWithOrdinal", () => {
     expect(formattedDate2).toContain("2023");
   });
 
-  it("should handle the 1st with French locale (specific check for 1er)", () => {
+  test("should handle the 1st with French locale (specific check for 1er)", () => {
     const date = new Date(2024, 0, 1); // January 1st
     // The original getOrdinalSuffix is English-specific. It will produce '1st'.
     // A truly internationalized getOrdinalSuffix would be needed for '1er'.
@@ -170,7 +170,7 @@ describe("formatDateWithOrdinal", () => {
     expect(formatDateWithOrdinal(date, "fr-FR")).toBe("lundi, janvier 1st, 2024");
   });
 
-  it("should handle other dates with French locale", () => {
+  test("should handle other dates with French locale", () => {
     const date = new Date(2024, 0, 2); // January 2nd
     expect(formatDateWithOrdinal(date, "fr-FR")).toBe("mardi, janvier 2nd, 2024");
 

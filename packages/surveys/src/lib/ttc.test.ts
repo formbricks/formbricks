@@ -1,24 +1,24 @@
 import { act, renderHook } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getUpdatedTtc, useTtc } from "./ttc";
 
 describe("getUpdatedTtc", () => {
-  it("should add time to an existing questionId", () => {
+  test("should add time to an existing questionId", () => {
     const ttc: TResponseTtc = { q1: 1000 };
     const updatedTtc = getUpdatedTtc(ttc, "q1", 500);
     expect(updatedTtc.q1).toBe(1500);
   });
 
-  it("should add a new questionId and time if it does not exist", () => {
+  test("should add a new questionId and time if it does not exist", () => {
     const ttc: TResponseTtc = { q1: 1000 };
     const updatedTtc = getUpdatedTtc(ttc, "q2", 500);
     expect(updatedTtc.q2).toBe(500);
     expect(updatedTtc.q1).toBe(1000); // Ensure existing entries are preserved
   });
 
-  it("should return a new object and not mutate the original", () => {
+  test("should return a new object and not mutate the original", () => {
     const ttc: TResponseTtc = { q1: 1000 };
     const updatedTtc = getUpdatedTtc(ttc, "q1", 500);
     expect(updatedTtc).not.toBe(ttc);
@@ -66,7 +66,7 @@ describe("useTtc", () => {
     });
   });
 
-  it("should set initial start time if isCurrentQuestion is true", () => {
+  test("should set initial start time if isCurrentQuestion is true", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -80,7 +80,7 @@ describe("useTtc", () => {
     expect(mockSetStartTime).toHaveBeenCalledWith(currentTime);
   });
 
-  it("should not set initial start time if isCurrentQuestion is false", () => {
+  test("should not set initial start time if isCurrentQuestion is false", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -94,7 +94,7 @@ describe("useTtc", () => {
     expect(mockSetStartTime).not.toHaveBeenCalled();
   });
 
-  it("should add event listener if isCurrentQuestion is true", () => {
+  test("should add event listener if isCurrentQuestion is true", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -108,7 +108,7 @@ describe("useTtc", () => {
     expect(document.addEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
   });
 
-  it("should not add event listener if isCurrentQuestion is false", () => {
+  test("should not add event listener if isCurrentQuestion is false", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -122,7 +122,7 @@ describe("useTtc", () => {
     expect(document.addEventListener).not.toHaveBeenCalled();
   });
 
-  it("should update ttc when visibility changes to hidden and isCurrentQuestion is true", () => {
+  test("should update ttc when visibility changes to hidden and isCurrentQuestion is true", () => {
     const currentTtc = { q1: 50 };
     const currentStartTime = 1000;
     currentTime = 1500; // 500ms passed
@@ -142,7 +142,7 @@ describe("useTtc", () => {
     expect(mockSetTtc).toHaveBeenCalledWith({ q1: 550 }); // 50 (existing) + 500 (passed)
   });
 
-  it("should restart startTime when visibility changes to visible and isCurrentQuestion is true", () => {
+  test("should restart startTime when visibility changes to visible and isCurrentQuestion is true", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -166,7 +166,7 @@ describe("useTtc", () => {
     expect(mockSetStartTime).toHaveBeenCalledWith(2000);
   });
 
-  it("should not update ttc or startTime if visibility changes but isCurrentQuestion is false", () => {
+  test("should not update ttc or startTime if visibility changes but isCurrentQuestion is false", () => {
     renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -197,7 +197,7 @@ describe("useTtc", () => {
     expect(mockSetStartTime).not.toHaveBeenCalled(); // It was not called initially either
   });
 
-  it("should remove event listener on unmount if it was added", () => {
+  test("should remove event listener on unmount if it was added", () => {
     const { unmount } = renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -212,7 +212,7 @@ describe("useTtc", () => {
     expect(document.removeEventListener).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
   });
 
-  it("should not attempt to remove event listener on unmount if not added", () => {
+  test("should not attempt to remove event listener on unmount if not added", () => {
     const { unmount } = renderHook(() =>
       useTtc(
         initialProps.questionId,
@@ -227,7 +227,7 @@ describe("useTtc", () => {
     expect(document.removeEventListener).not.toHaveBeenCalled();
   });
 
-  it("should set startTime when isCurrentQuestion becomes true", () => {
+  test("should set startTime when isCurrentQuestion becomes true", () => {
     const { rerender } = renderHook(
       (props) =>
         useTtc(

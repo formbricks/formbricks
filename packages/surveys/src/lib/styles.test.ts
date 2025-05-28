@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { addCustomThemeToDom, addStylesToDom } from "./styles";
@@ -54,7 +54,7 @@ describe("addStylesToDom", () => {
     }
   });
 
-  it("should add a style element to the head with combined CSS", () => {
+  test("should add a style element to the head with combined CSS", () => {
     addStylesToDom();
     const styleElement = document.getElementById("formbricks__css") as HTMLStyleElement;
     expect(styleElement).not.toBeNull();
@@ -65,7 +65,7 @@ describe("addStylesToDom", () => {
     expect(styleElement.innerHTML).toBe(expectedCss);
   });
 
-  it("should not add a new style element if one already exists", () => {
+  test("should not add a new style element if one already exists", () => {
     addStylesToDom(); // First call
     const firstStyleElement = document.getElementById("formbricks__css");
     const initialInnerHTML = firstStyleElement?.innerHTML;
@@ -113,7 +113,7 @@ describe("addCustomThemeToDom", () => {
     return variables;
   };
 
-  it("should add a custom theme style element to the head", () => {
+  test("should add a custom theme style element to the head", () => {
     const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -122,7 +122,7 @@ describe("addCustomThemeToDom", () => {
     expect(document.head.contains(styleElement)).toBe(true);
   });
 
-  it("should reuse existing custom theme style element", () => {
+  test("should reuse existing custom theme style element", () => {
     const styling1 = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling: styling1 });
     const firstElement = document.getElementById("formbricks__css__custom");
@@ -136,7 +136,7 @@ describe("addCustomThemeToDom", () => {
     expect(secondElement).toBe(firstElement);
   });
 
-  it("should apply minimal styling with brandColor and default roundness", () => {
+  test("should apply minimal styling with brandColor and default roundness", () => {
     const styling = getBaseProjectStyling({ brandColor: { light: "#0000FF" } }); // A dark color, roundness will use default
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -148,7 +148,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-border-radius"]).toBe("8px"); // Default roundness
   });
 
-  it("should apply brand-text-color as black for light brandColor", () => {
+  test("should apply brand-text-color as black for light brandColor", () => {
     const styling = getBaseProjectStyling({ brandColor: { light: "#FFFF00" } }); // A light color
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -156,7 +156,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-brand-text-color"]).toBe("black"); // isLight('#FFFF00') is true
   });
 
-  it("should default brand-text-color to white if brandColor is undefined", () => {
+  test("should default brand-text-color to white if brandColor is undefined", () => {
     const styling = getBaseProjectStyling({ brandColor: null }); // Explicitly null brandColor
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -164,7 +164,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-brand-text-color"]).toBe("#ffffff");
   });
 
-  it("should apply all survey styling properties", () => {
+  test("should apply all survey styling properties", () => {
     const styling: TSurveyStyling = {
       brandColor: { light: "#112233" },
       questionColor: { light: "#AABBCC" },
@@ -205,7 +205,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-calendar-tile-color"]).toBeUndefined(); // isLight('#112233') is false, so this should be undefined
   });
 
-  it("should set signature and branding text colors for dark questionColor", () => {
+  test("should set signature and branding text colors for dark questionColor", () => {
     const styling = getBaseProjectStyling({
       questionColor: { light: "#202020" }, // A dark color
       brandColor: { light: "#123456" }, // brandColor needed for some default fallbacks if not directly testing them
@@ -219,7 +219,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-branding-text-color"]).toBeDefined();
   });
 
-  it("should handle roundness 0 correctly", () => {
+  test("should handle roundness 0 correctly", () => {
     const styling = getBaseProjectStyling({ roundness: 0, brandColor: { light: "#123456" } });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -227,7 +227,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-border-radius"]).toBe("0px");
   });
 
-  it("should set input-background-color-selected to slate-50 for white inputColor", () => {
+  test("should set input-background-color-selected to slate-50 for white inputColor", () => {
     const whiteColors = ["#fff", "#ffffff", "white"];
     whiteColors.forEach((color) => {
       const styling = getBaseProjectStyling({ inputColor: { light: color }, brandColor: { light: "#123" } });
@@ -238,7 +238,7 @@ describe("addCustomThemeToDom", () => {
     });
   });
 
-  it("should mix input-background-color-selected for non-white inputColor", () => {
+  test("should mix input-background-color-selected for non-white inputColor", () => {
     const styling = getBaseProjectStyling({
       inputColor: { light: "#E0E0E0" },
       brandColor: { light: "#123" },
@@ -252,7 +252,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-input-background-color-selected"]).not.toBe("var(--slate-50)");
   });
 
-  it("should not set calendar-tile-color if brandColor is undefined", () => {
+  test("should not set calendar-tile-color if brandColor is undefined", () => {
     const styling = getBaseProjectStyling({ brandColor: null });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -260,7 +260,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-calendar-tile-color"]).toBeUndefined();
   });
 
-  it("should not define variables for undefined styling properties", () => {
+  test("should not define variables for undefined styling properties", () => {
     const styling = getBaseProjectStyling({ brandColor: { light: "#ABC" } }); // Only brandColor is defined
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -275,7 +275,7 @@ describe("addCustomThemeToDom", () => {
 });
 
 describe("getBaseProjectStyling_Helper", () => {
-  it("should return default values for all properties when no overrides are provided", () => {
+  test("should return default values for all properties when no overrides are provided", () => {
     const baseStyling = getBaseProjectStyling();
     expect(baseStyling.brandColor).toBeNull();
     expect(baseStyling.cardBackgroundColor).toBeNull();
@@ -293,7 +293,7 @@ describe("getBaseProjectStyling_Helper", () => {
     expect(baseStyling.isLogoHidden).toBeNull();
   });
 
-  it("should correctly apply overrides to specified properties", () => {
+  test("should correctly apply overrides to specified properties", () => {
     const overrides: Partial<TProjectStyling> = {
       inputColor: { light: "#111" },
       inputBorderColor: { light: "#222" },

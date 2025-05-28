@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect } from "vitest";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { SurveyState } from "./survey-state";
 
@@ -10,7 +10,7 @@ describe("SurveyState", () => {
     surveyState = new SurveyState(initialSurveyId);
   });
 
-  it("should initialize with a surveyId and default values", () => {
+  test("should initialize with a surveyId and default values", () => {
     expect(surveyState.surveyId).toBe(initialSurveyId);
     expect(surveyState.responseId).toBeNull();
     expect(surveyState.displayId).toBeNull();
@@ -20,7 +20,7 @@ describe("SurveyState", () => {
     expect(surveyState.responseAcc).toEqual({ finished: false, data: {}, ttc: {}, variables: {} });
   });
 
-  it("should initialize with all optional parameters", () => {
+  test("should initialize with all optional parameters", () => {
     const singleUseId = "singleUse123";
     const responseId = "response123";
     const userId = "user123";
@@ -34,7 +34,7 @@ describe("SurveyState", () => {
   });
 
   describe("setSurveyId", () => {
-    it("should update surveyId and clear the state", () => {
+    test("should update surveyId and clear the state", () => {
       surveyState.responseId = "res1";
       surveyState.responseAcc = { finished: true, data: { q1: "ans1" }, ttc: { q1: 100 }, variables: {} };
       const newSurveyId = "survey2";
@@ -46,7 +46,7 @@ describe("SurveyState", () => {
   });
 
   describe("copy", () => {
-    it("should create a deep copy of the survey state", () => {
+    test("should create a deep copy of the survey state", () => {
       surveyState.responseId = "res123";
       surveyState.responseAcc = {
         finished: true,
@@ -74,7 +74,7 @@ describe("SurveyState", () => {
       expect(copiedState.responseAcc.variables).toBe(surveyState.responseAcc.variables);
     });
 
-    it("should correctly copy when optional IDs are null", () => {
+    test("should correctly copy when optional IDs are null", () => {
       // surveyState is in its initial state from beforeEach,
       // where singleUseId, responseId, userId, contactId are null.
       const copiedState = surveyState.copy();
@@ -91,32 +91,32 @@ describe("SurveyState", () => {
     });
   });
 
-  it("should update responseId", () => {
+  test("should update responseId", () => {
     const newResponseId = "res456";
     surveyState.updateResponseId(newResponseId);
     expect(surveyState.responseId).toBe(newResponseId);
   });
 
-  it("should update displayId", () => {
+  test("should update displayId", () => {
     const newDisplayId = "disp789";
     surveyState.updateDisplayId(newDisplayId);
     expect(surveyState.displayId).toBe(newDisplayId);
   });
 
-  it("should update userId", () => {
+  test("should update userId", () => {
     const newUserId = "userXYZ";
     surveyState.updateUserId(newUserId);
     expect(surveyState.userId).toBe(newUserId);
   });
 
-  it("should update contactId", () => {
+  test("should update contactId", () => {
     const newContactId = "contactABC";
     surveyState.updateContactId(newContactId);
     expect(surveyState.contactId).toBe(newContactId);
   });
 
   describe("accumulateResponse", () => {
-    it("should accumulate response data correctly", () => {
+    test("should accumulate response data correctly", () => {
       const initialResponse: TResponseUpdate = {
         finished: false,
         data: { q1: "ans1" },
@@ -144,19 +144,19 @@ describe("SurveyState", () => {
   });
 
   describe("isResponseFinished", () => {
-    it("should return true if responseAcc.finished is true", () => {
+    test("should return true if responseAcc.finished is true", () => {
       surveyState.responseAcc.finished = true;
       expect(surveyState.isResponseFinished()).toBe(true);
     });
 
-    it("should return false if responseAcc.finished is false", () => {
+    test("should return false if responseAcc.finished is false", () => {
       surveyState.responseAcc.finished = false;
       expect(surveyState.isResponseFinished()).toBe(false);
     });
   });
 
   describe("clear", () => {
-    it("should reset responseId and responseAcc", () => {
+    test("should reset responseId and responseAcc", () => {
       surveyState.responseId = "someId";
       surveyState.responseAcc = { finished: true, data: { q: "a" }, ttc: { q: 1 }, variables: { v: "1" } };
       surveyState.clear();
