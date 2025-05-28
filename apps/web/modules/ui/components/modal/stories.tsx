@@ -3,7 +3,7 @@ import { fn } from "@storybook/test";
 import { Modal } from "./index";
 
 const meta = {
-  title: "UI/Modal",
+  title: "Deprecated/Modal",
   component: Modal,
   tags: ["autodocs"],
   parameters: {
