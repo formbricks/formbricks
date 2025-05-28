@@ -1768,7 +1768,7 @@
         "link_to_public_results_copied": "Link para resultados públicos copiado",
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de inquérito está definido para",
         "mobile_app": "Aplicação móvel",
-        "no_response_matches_filter": "Nenhuma resposta corresponde ao seu filtro",
+        "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Apenas concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "Geral",

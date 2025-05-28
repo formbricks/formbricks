@@ -1768,7 +1768,7 @@
         "link_to_public_results_copied": "Link to public results copied",
         "make_sure_the_survey_type_is_set_to": "Make sure the survey type is set to",
         "mobile_app": "Mobile app",
-        "no_response_matches_filter": "No response matches your filter",
+        "no_responses_found": "No responses found",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
