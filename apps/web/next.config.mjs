@@ -201,7 +201,6 @@ const nextConfig = {
           },
         ],
       },
-
       // headers for /api/packages/(.*) -- the api route does not exist, but we still need the headers for the rewrites to work correctly!
       {
         source: "/api/packages/(.*)",
