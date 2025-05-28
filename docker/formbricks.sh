@@ -180,25 +180,23 @@ tls:
     default:
       minVersion: VersionTLS12
       cipherSuites:
-        # TLS 1.2 Ciphers
+        # TLS 1.2 strong ciphers
         - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
-        - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
-        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
         - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
         - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
         - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
         - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-
-        # TLS 1.3 Ciphers (These are automatically used for TLS 1.3 connections)
-        - TLS_AES_128_GCM_SHA256
-        - TLS_AES_256_GCM_SHA384
-        - TLS_CHACHA20_POLY1305_SHA256
-
-        # Fallback
-        - TLS_FALLBACK_SCSV
+        # TLS 1.3 ciphers are not configurable in Traefik; they are enabled by default
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+      sniStrict: true
+      alpnProtocols:
+        - h2
+        - http/1.1
 EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."

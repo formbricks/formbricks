@@ -65,6 +65,7 @@ vi.mock("@/lib/utils", () => ({
     }
     return choices.map((choice: { id: string }) => choice.id);
   }),
+  isRTL: vi.fn((text) => text.includes("rtl")),
 }));
 
 describe("MultipleChoiceMultiQuestion", () => {

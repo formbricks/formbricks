@@ -10,6 +10,7 @@ import {
   InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
+  TooManyRequestsError,
   UnknownError,
 } from "@formbricks/types/errors";
 
@@ -23,7 +24,8 @@ export const actionClient = createSafeActionClient({
       e instanceof InvalidInputError ||
       e instanceof UnknownError ||
       e instanceof AuthenticationError ||
-      e instanceof OperationNotAllowedError
+      e instanceof OperationNotAllowedError ||
+      e instanceof TooManyRequestsError
     ) {
       return e.message;
     }
