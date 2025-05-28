@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
+import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
 
