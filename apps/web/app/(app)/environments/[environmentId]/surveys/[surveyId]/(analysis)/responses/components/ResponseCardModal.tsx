@@ -1,7 +1,7 @@
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { Button } from "@/modules/ui/components/button";
 import { Dialog, DialogBody, DialogContent, DialogFooter } from "@/modules/ui/components/dialog";
-import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
