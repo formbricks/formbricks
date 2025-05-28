@@ -49,11 +49,9 @@ export const getSurveyUrl = async (
         queryParams.push(`suId=${singleUseIdResponse.data}`);
       } else {
         const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
-        toast.error(errorMessage);
         throw new Error(errorMessage);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to generate single-use ID";
       throw error;
     }
   }
