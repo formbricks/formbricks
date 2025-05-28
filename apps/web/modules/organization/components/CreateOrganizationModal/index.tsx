@@ -3,9 +3,17 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createOrganizationAction } from "@/modules/organization/actions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -50,57 +58,44 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-10 w-10 text-slate-500">
-                <PlusCircleIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.settings.general.create_new_organization")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.settings.general.create_new_organization_description")}
-                </div>
-              </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent disableCloseOnOutsideClick={true}>
+        <DialogHeader>
+          <PlusCircleIcon />
+          <DialogTitle>{t("environments.settings.general.create_new_organization")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.settings.general.create_new_organization_description")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(submitOrganization)} className="gap-y-4">
+          <DialogBody>
+            <div className="grid w-full gap-y-2">
+              <Label>{t("environments.settings.general.organization_name")}</Label>
+              <Input
+                autoFocus
+                placeholder={t("environments.settings.general.organization_name_placeholder")}
+                {...register("name", { required: true })}
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+              />
             </div>
-          </div>
-        </div>
-        <form onSubmit={handleSubmit(submitOrganization)}>
-          <div className="flex w-full justify-between space-y-4 rounded-lg p-6">
-            <div className="grid w-full gap-x-2">
-              <div>
-                <Label>{t("environments.settings.general.organization_name")}</Label>
-                <Input
-                  autoFocus
-                  placeholder={t("environments.settings.general.organization_name_placeholder")}
-                  {...register("name", { required: true })}
-                  value={organizationName}
-                  onChange={(e) => setOrganizationName(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setOpen(false);
-                }}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="submit" loading={loading} disabled={!isOrganizationNameValid}>
-                {t("environments.settings.general.create_new_organization")}
-              </Button>
-            </div>
-          </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+              }}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" loading={loading} disabled={!isOrganizationNameValid}>
+              {t("environments.settings.general.create_new_organization")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
