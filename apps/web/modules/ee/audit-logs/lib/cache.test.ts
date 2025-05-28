@@ -29,6 +29,9 @@ vi.mock("@/lib/redis", () => {
       watch: vi.fn(async (_key: string) => {
         return "OK";
       }),
+      unwatch: vi.fn(async () => {
+        return "OK";
+      }),
       multi: vi.fn(() => {
         return {
           set: vi.fn(function (key: string, value: string) {
@@ -97,7 +100,7 @@ describe("audit log cache utils", () => {
           integrityHash: "conflict-hash",
         };
       });
-      expect.fail("Error was not thrown by runAuditLogHashTransaction");
+      throw new Error("Error was not thrown by runAuditLogHashTransaction");
     } catch (e) {
       errorCaught = true;
       expect((e as Error).message).toContain("Failed to update audit log hash after multiple retries");

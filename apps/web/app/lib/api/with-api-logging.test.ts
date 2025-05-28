@@ -85,7 +85,14 @@ describe("withApiLogging", () => {
   test("logs and audits on thrown error", async () => {
     const handler = vi.fn().mockRejectedValue(new Error("fail!"));
     const req = createMockRequest({ headers: new Map([["x-request-id", "err-1"]]) });
-    await expect(origWithApiLogging(handler)(req)).rejects.toThrow("fail!");
+    const res = await origWithApiLogging(handler)(req);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toEqual({
+      code: "internal_server_error",
+      message: "An unexpected error occurred.",
+      details: {},
+    });
     expect(logger.withContext).toHaveBeenCalled();
     expect(origQueueAuditEvent).not.toHaveBeenCalled(); // audit is undefined on thrown error
     expect(Sentry.captureException).toHaveBeenCalledWith(

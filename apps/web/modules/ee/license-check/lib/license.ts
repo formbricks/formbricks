@@ -395,34 +395,34 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
   }
 };
 
-export const getOrganizationPlan = reactCache(
-  async (organizationId: string): Promise<TOrganizationBillingPlan | undefined> => {
-    try {
-      const cache = getCache();
-      const cacheKey = `organization-plan-${organizationId}`;
-      let plan = await cache.get<string>(cacheKey);
-      let isValid = !!plan;
+export const getOrganizationPlan = async (
+  organizationId: string
+): Promise<TOrganizationBillingPlan | undefined> => {
+  try {
+    const cache = getCache();
+    const cacheKey = `organization-plan-${organizationId}`;
+    let plan = await cache.get<string>(cacheKey);
+    let isValid = !!plan;
 
-      if (!plan) {
-        const org = await prisma.organization.findUnique({
-          where: { id: organizationId },
-          select: { billing: true },
-        });
+    if (!plan) {
+      const org = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { billing: true },
+      });
 
-        plan = org?.billing?.plan ?? null;
-        isValid = !!plan && ZOrganizationBillingPlan.safeParse(plan).success;
+      plan = org?.billing?.plan ?? null;
+      isValid = !!plan && ZOrganizationBillingPlan.safeParse(plan).success;
 
-        if (isValid) {
-          await cache.set(cacheKey, plan, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
-        }
+      if (isValid) {
+        await cache.set(cacheKey, plan, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
       }
-
-      return isValid ? (plan as TOrganizationBillingPlan) : undefined;
-    } catch (e) {
-      logger.error(e, "Error getting organization plan");
-      return undefined;
     }
+
+    return isValid ? (plan as TOrganizationBillingPlan) : undefined;
+  } catch (e) {
+    logger.error(e, "Error getting organization plan");
+    return undefined;
   }
-);
+};
 
 // All permission checking functions and their helpers have been moved to utils.ts

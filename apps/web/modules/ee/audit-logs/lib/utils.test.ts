@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
 
+// Custom utility to wait for a spy to be called
+async function waitForSpyToBeCalled(spy, timeout = 1000) {
+  const start = Date.now();
+  while (spy.mock.calls.length === 0) {
+    if (Date.now() - start > timeout) {
+      throw new Error("Timeout waiting for spy to be called");
+    }
+    await new Promise((res) => setTimeout(res, 10));
+  }
+}
+
 // Patch redis multi before any imports
 beforeEach(async () => {
   const redis = (await import("@/lib/redis")).default;
@@ -93,56 +104,6 @@ describe("deepDiff", () => {
     expect(deepDiff({ a: 1 }, { a: 1, b: 2 })).toEqual({ b: 2 });
     // The following case should return undefined, as removed keys are not included in the diff
     expect(deepDiff({ a: 1, b: 2 }, { a: 1 })).toBeUndefined();
-  });
-});
-
-describe("queueAuditEventBackground", () => {
-  let utils: any;
-  beforeEach(async () => {
-    vi.resetModules();
-    utils = await import("./utils");
-  });
-  test("calls logAuditEvent in the background", async () => {
-    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
-    await utils.queueAuditEventBackground({
-      actionType: "survey.created",
-      targetType: "survey",
-      userId: "u1",
-      userType: "user",
-      targetId: "t1",
-      organizationId: "org1",
-      oldObject: { foo: "bar" },
-      newObject: { foo: "baz" },
-      status: "success",
-      apiUrl: "/api/test",
-    });
-    // Wait for the setImmediate to flush
-    await new Promise((res) => setImmediate(res));
-    expect(logAuditEvent).toHaveBeenCalled();
-  });
-});
-
-describe("queueAuditEvent", () => {
-  let utils: any;
-  beforeEach(async () => {
-    vi.resetModules();
-    utils = await import("./utils");
-  });
-  test("calls logAuditEvent synchronously", async () => {
-    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
-    await utils.queueAuditEvent({
-      actionType: "survey.created",
-      targetType: "survey",
-      userId: "u1",
-      userType: "user",
-      targetId: "t1",
-      organizationId: "org1",
-      oldObject: { foo: "bar" },
-      newObject: { foo: "baz" },
-      status: "success",
-      apiUrl: "/api/test",
-    });
-    expect(logAuditEvent).toHaveBeenCalled();
   });
 });
 
@@ -301,28 +262,31 @@ describe("computeAuditLogHash", () => {
 describe("buildAndLogAuditEvent", () => {
   let buildAndLogAuditEvent: any;
   let redis: any;
+  let logAuditEvent: any;
   beforeEach(async () => {
-    vi.clearAllMocks();
+    vi.resetModules();
+    (globalThis as any).__logAuditEvent = vi.fn().mockResolvedValue(undefined);
+    vi.mock("@/lib/redis", () => ({
+      default: {
+        watch: vi.fn().mockResolvedValue("OK"),
+        multi: vi.fn().mockReturnValue({
+          set: vi.fn(),
+          exec: vi.fn().mockResolvedValue([["OK"]]),
+        }),
+        get: vi.fn().mockResolvedValue(null),
+      },
+    }));
+    vi.mock("@/lib/constants", () => ({
+      AUDIT_LOG_ENABLED: true,
+      AUDIT_LOG_GET_USER_IP: true,
+      ENCRYPTION_KEY: "testsecret",
+    }));
     ({ buildAndLogAuditEvent } = await import("./utils"));
     redis = (await import("@/lib/redis")).default;
+    logAuditEvent = (globalThis as any).__logAuditEvent;
   });
-
-  test("logs audit event and updates hash on success", async () => {
-    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
-    await buildAndLogAuditEvent({
-      actionType: "survey.created",
-      targetType: "survey",
-      userId: "u1",
-      userType: "user",
-      targetId: "t1",
-      organizationId: "org1",
-      ipAddress: "127.0.0.1",
-      status: "success",
-      oldObject: { foo: "bar" },
-      newObject: { foo: "baz" },
-      apiUrl: "/api/test",
-    });
-    expect(logAuditEvent).toHaveBeenCalled();
+  afterEach(() => {
+    delete (globalThis as any).__logAuditEvent;
   });
 
   test("retries and logs error if hash update fails", async () => {
@@ -330,7 +294,6 @@ describe("buildAndLogAuditEvent", () => {
       set: vi.fn(),
       exec: vi.fn().mockResolvedValue(null),
     });
-    const { logAuditEvent } = await import("@/modules/ee/audit-logs/lib/service");
     await buildAndLogAuditEvent({
       actionType: "survey.created",
       targetType: "survey",

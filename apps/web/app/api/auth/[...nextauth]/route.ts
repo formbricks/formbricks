@@ -41,7 +41,7 @@ const handler = async (req: Request, ctx: any) => {
         }
 
         if (AUDIT_LOG_ENABLED) {
-          const status: "success" | "failure" = result === true ? "success" : "failure";
+          const status: "success" | "failure" = result === false ? "failure" : "success"; // treat truthy & redirect strings as success
           const auditLog = {
             actionType: "user.signedin" as const,
             targetType: "user" as const,
@@ -54,7 +54,7 @@ const handler = async (req: Request, ctx: any) => {
             ...(status === "failure" ? { eventId } : {}),
           };
 
-          await queueAuditEventBackground(auditLog);
+          queueAuditEventBackground(auditLog);
         }
 
         if (error) throw error;

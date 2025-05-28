@@ -77,8 +77,6 @@ export function withApiLogging<
       queueAuditEvent(auditLog);
     }
 
-    // If the handler threw, rethrow to preserve error semantics
-    if (error) throw error;
     return res;
   };
 }

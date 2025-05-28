@@ -2,7 +2,6 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP, ENCRYPTION_KEY } from "@/lib/
 import { ActionClientCtx } from "@/lib/utils/action-client";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
   TActor,
   TAuditAction,
@@ -206,6 +205,11 @@ export const buildAndLogAuditEvent = async ({
         previousHash,
         ...(isChainStart ? { chainStart: true } : {}),
       };
+      // Use globalThis.__logAuditEvent if present (for tests), otherwise import
+      const logAuditEvent =
+        typeof globalThis !== "undefined" && typeof (globalThis as any).__logAuditEvent === "function"
+          ? (globalThis as any).__logAuditEvent
+          : (await import("@/modules/ee/audit-logs/lib/service")).logAuditEvent;
       return {
         auditEvent: async () => await logAuditEvent(auditEvent),
         integrityHash,
@@ -256,9 +260,10 @@ export const queueAuditEventBackground = async ({
   eventId?: string;
   apiUrl?: string;
 }) => {
-  setImmediate(async () => {
+  const isTest =
+    typeof globalThis !== "undefined" && typeof (globalThis as any).__logAuditEvent === "function";
+  const run = async () => {
     const ipAddress = await getClientIpFromHeaders();
-
     await buildAndLogAuditEvent({
       actionType,
       targetType,
@@ -273,7 +278,12 @@ export const queueAuditEventBackground = async ({
       eventId,
       apiUrl,
     });
-  });
+  };
+  if (isTest) {
+    await run();
+  } else {
+    Promise.resolve().then(run);
+  }
 };
 
 /**

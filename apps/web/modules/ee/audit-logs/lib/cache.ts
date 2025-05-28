@@ -36,14 +36,22 @@ export async function runAuditLogHashTransaction(
       throw new Error("Redis is not initialized");
     }
 
-    await redis.watch(AUDIT_LOG_HASH_KEY);
-    const previousHash = await getPreviousAuditLogHash();
-    const { auditEvent, integrityHash } = await buildAndLogEvent(previousHash);
+    let result;
+    let auditEvent;
+    try {
+      await redis.watch(AUDIT_LOG_HASH_KEY);
+      const previousHash = await getPreviousAuditLogHash();
+      const buildResult = await buildAndLogEvent(previousHash);
+      auditEvent = buildResult.auditEvent;
+      const integrityHash = buildResult.integrityHash;
 
-    const tx = redis.multi();
-    tx.set(AUDIT_LOG_HASH_KEY, integrityHash);
+      const tx = redis.multi();
+      tx.set(AUDIT_LOG_HASH_KEY, integrityHash);
 
-    const result = await tx.exec();
+      result = await tx.exec();
+    } finally {
+      await redis.unwatch();
+    }
     if (result) {
       // Success: now log the audit event
       await auditEvent();

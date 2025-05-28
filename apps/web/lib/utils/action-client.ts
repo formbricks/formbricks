@@ -65,8 +65,13 @@ export const actionClient = createSafeActionClient({
   const ctx: ActionClientCtx = { auditLoggingCtx: { eventId, ipAddress: UNKNOWN_DATA } };
 
   if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
-    const ipAddress = await getClientIpFromHeaders();
-    ctx.auditLoggingCtx.ipAddress = ipAddress;
+    try {
+      const ipAddress = await getClientIpFromHeaders();
+      ctx.auditLoggingCtx.ipAddress = ipAddress;
+    } catch (err) {
+      // Non-fatal – we keep UNKNOWN_DATA
+      logger.warn({ err }, "Failed to resolve client IP for audit logging");
+    }
   }
 
   return next({ ctx });
