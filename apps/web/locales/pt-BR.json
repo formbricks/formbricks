@@ -95,7 +95,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clica no link do e-mail pra ativar sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
-      "verification_email_successfully_sent": "E-mail de verificação enviado para {email}. Verifique para concluir a atualização.",
+      "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
       "verification_email_successfully_sent_info": "Se este e-mail não estiver associado a uma conta, você receberá um e-mail de verificação",
       "we_sent_an_email_to": "Enviamos um email para {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"

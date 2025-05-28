@@ -12,8 +12,9 @@ import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { UnknownError } from "@formbricks/types/errors";
+import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreateUserAction = z.object({
@@ -48,72 +49,88 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
 
   const { inviteToken, emailVerificationDisabled } = parsedInput;
   const hashedPassword = await hashPassword(parsedInput.password);
-  const user = await createUser({
-    email: parsedInput.email.toLowerCase(),
-    name: parsedInput.name,
-    password: hashedPassword,
-    locale: parsedInput.userLocale,
-  });
+  let user;
+  let userAlreadyExisted = false;
 
-  // Handle invite flow
-  if (inviteToken) {
-    const inviteTokenData = verifyInviteToken(inviteToken);
-    const invite = await getInvite(inviteTokenData.inviteId);
-    if (!invite) {
-      throw new Error("Invalid invite ID");
-    }
-
-    await createMembership(invite.organizationId, user.id, {
-      accepted: true,
-      role: invite.role,
+  try {
+    user = await createUser({
+      email: parsedInput.email.toLowerCase(),
+      name: parsedInput.name,
+      password: hashedPassword,
+      locale: parsedInput.userLocale,
     });
-
-    if (invite.teamIds) {
-      await createTeamMembership(
-        {
-          organizationId: invite.organizationId,
-          role: invite.role,
-          teamIds: invite.teamIds,
-        },
-        user.id
-      );
+  } catch (error) {
+    if (error instanceof InvalidInputError && error.message === "User with this email already exists") {
+      userAlreadyExisted = true;
+    } else {
+      throw error;
     }
+  }
 
-    await updateUser(user.id, {
-      notificationSettings: {
-        alert: {},
-        weeklySummary: {},
-        unsubscribedOrganizationIds: [invite.organizationId],
-      },
-    });
+  if (!userAlreadyExisted && user) {
+    if (inviteToken) {
+      const inviteTokenData = verifyInviteToken(inviteToken);
+      const invite = await getInvite(inviteTokenData.inviteId);
+      if (!invite) {
+        throw new Error("Invalid invite ID");
+      }
 
-    await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
-    await deleteInvite(invite.id);
-  } else {
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-    if (isMultiOrgEnabled) {
-      const organization = await createOrganization({ name: `${user.name}'s Organization` });
-      await createMembership(organization.id, user.id, {
-        role: "owner",
+      await createMembership(invite.organizationId, user.id, {
         accepted: true,
+        role: invite.role,
       });
+
+      if (invite.teamIds) {
+        await createTeamMembership(
+          {
+            organizationId: invite.organizationId,
+            role: invite.role,
+            teamIds: invite.teamIds,
+          },
+          user.id
+        );
+      }
+
       await updateUser(user.id, {
         notificationSettings: {
-          ...user.notificationSettings,
-          alert: { ...user.notificationSettings?.alert },
-          weeklySummary: { ...user.notificationSettings?.weeklySummary },
-          unsubscribedOrganizationIds: Array.from(
-            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
-          ),
+          alert: {},
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [invite.organizationId],
         },
       });
+
+      await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
+      await deleteInvite(invite.id);
+    } else {
+      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+      if (isMultiOrgEnabled) {
+        const organization = await createOrganization({ name: `${user.name}'s Organization` });
+        await createMembership(organization.id, user.id, {
+          role: "owner",
+          accepted: true,
+        });
+        await updateUser(user.id, {
+          notificationSettings: {
+            ...user.notificationSettings,
+            alert: { ...user.notificationSettings?.alert },
+            weeklySummary: { ...user.notificationSettings?.weeklySummary },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+            ),
+          },
+        });
+      }
+    }
+
+    if (!emailVerificationDisabled) {
+      await sendVerificationEmail(user);
     }
   }
 
-  // Send verification email if enabled
-  if (!emailVerificationDisabled) {
-    await sendVerificationEmail(user);
-  }
+  revalidatePath("/auth/signup");
 
-  return user;
+  return {
+    success: true,
+    message: "If this email is already registered, we'll send you a confirmation.",
+  };
 });
