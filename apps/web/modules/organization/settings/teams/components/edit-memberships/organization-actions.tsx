@@ -8,7 +8,14 @@ import { inviteUserAction, leaveOrganizationAction } from "@/modules/organizatio
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -152,21 +159,33 @@ export const OrganizationActions = ({
         teams={teams}
       />
 
-      <CustomDialog
-        open={isLeaveOrganizationModalOpen}
-        setOpen={setLeaveOrganizationModalOpen}
-        title={t("environments.settings.general.leave_organization_title")}
-        text={t("environments.settings.general.leave_organization_description")}
-        onOk={handleLeaveOrganization}
-        okBtnText={t("environments.settings.general.leave_organization_ok_btn_text")}
-        disabled={isLeaveOrganizationDisabled}
-        isLoading={loading}>
-        {isLeaveOrganizationDisabled && (
-          <p className="mt-2 text-sm text-red-700">
-            {t("environments.settings.general.cannot_leave_only_organization")}
-          </p>
-        )}
-      </CustomDialog>
+      <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setLeaveOrganizationModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("environments.settings.general.leave_organization_title")}</DialogTitle>
+            <DialogDescription>
+              {t("environments.settings.general.leave_organization_description")}
+            </DialogDescription>
+          </DialogHeader>
+          {isLeaveOrganizationDisabled && (
+            <p className="mt-2 text-sm text-red-700">
+              {t("environments.settings.general.cannot_leave_only_organization")}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setLeaveOrganizationModalOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLeaveOrganization}
+              loading={loading}
+              disabled={isLeaveOrganizationDisabled}>
+              {t("environments.settings.general.leave_organization_ok_btn_text")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
