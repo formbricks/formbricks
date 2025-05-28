@@ -23,17 +23,16 @@ export const PageHeader = ({
   children,
 }: PageHeaderProps) => {
   return (
-    <div
-      className={`relative h-[272px] overflow-visible ${!hideBottomBorder ? "border-b border-slate-200" : ""}`}>
+    <div className={`relative overflow-visible ${!hideBottomBorder ? "border-b border-slate-200" : ""}`}>
       {pageBannerImage && (
         <div
-          className="pointer-events-none absolute right-0 top-0 h-[280px] w-1/3 select-none"
+          className="pointer-events-none absolute right-0 top-0 hidden h-full w-[380px] select-none lg:block"
           style={{ zIndex: 0 }}>
           <Image
             src={pageBannerImage}
             alt="Page Banner Image"
             fill
-            className="object-contain"
+            className="object-cover"
             priority
             sizes="(max-width: 600px) 100vw, 280px"
           />
@@ -51,7 +50,7 @@ export const PageHeader = ({
       <div className="relative z-10 flex items-center justify-between space-x-4 pb-4">
         <div className="flex flex-col space-y-1">
           {typeof pageTitle === "string" ? (
-            <h1 className={cn("text-5xl font-bold capitalize text-slate-800")}>{pageTitle}</h1>
+            <h1 className={cn("text-3xl font-bold capitalize text-slate-800")}>{pageTitle}</h1>
           ) : (
             pageTitle
           )}

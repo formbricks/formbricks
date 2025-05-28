@@ -95,9 +95,6 @@ p.editor-paragraph {
   --close-btn-color-hover: var(--slate-700);
   --calendar-tile-color: var(--slate-50);
   --border-radius: 8px;
-
-  --accent-light-blue: #38B5DB33;
-  --accent-blue: #38B5DB80;
 }
 
 @keyframes shrink-width-to-zero {

@@ -1,23 +1,21 @@
 "use client";
 
 import { getAvailableUserCommunitiesAction } from "@/modules/communities/actions";
-import { AvailableCommunityCard } from "@/modules/communities/components/common/available-community-card";
+import { JoinCommunityCard } from "@/modules/communities/components/common/join-community-card";
 import LoadingEngagementCard from "@/modules/discover/components/common/loading-card";
+import { useTranslate } from "@tolgee/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 
-interface AvailableCommunitiesProps {
+interface PopularCommunitiesProps {
   searchQuery?: string;
   environmentId: string;
 }
 
-export function AvailableCommunities({
-  searchQuery,
-  environmentId,
-}: AvailableCommunitiesProps): React.JSX.Element {
+export function PopularCommunities({ searchQuery }: PopularCommunitiesProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
-
+  const { t } = useTranslate();
   // Fetching available communities
   const fetchCommunities = useCallback(async () => {
     setIsLoading(true);
@@ -47,16 +45,19 @@ export function AvailableCommunities({
   }
 
   return (
-    <>
-      {communities &&
-        communities.length > 0 &&
-        communities.map((community) => {
-          return (
-            <AvailableCommunityCard environmentId={environmentId} key={community.id} creator={community} />
-          );
-        })}
-    </>
+    <div className="flex flex-col gap-4">
+      <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
+        {t("common.popular_communities")}
+      </h3>
+      <div className="grid md:grid-cols-2 md:gap-4">
+        {communities &&
+          communities.length > 0 &&
+          communities.map((community) => {
+            return <JoinCommunityCard key={community.id} creator={community} />;
+          })}
+      </div>
+    </div>
   );
 }
 
-export default AvailableCommunities;
+export default PopularCommunities;

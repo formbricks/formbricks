@@ -1,6 +1,7 @@
 "use client";
 
 import { Communities } from "@/modules/communities/components/Communities";
+import PopularCommunities from "@/modules/communities/components/Communities/components/popular-communities";
 import SearchSection from "@/modules/discover/components/common/search-section";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -25,6 +26,7 @@ export function CommunitiesClient({ environmentId, translatedTitle }: Communitie
         }
       />
       <Communities environmentId={environmentId} searchQuery={searchQuery} />
+      <PopularCommunities environmentId={environmentId} searchQuery={searchQuery} />
     </PageContentWrapper>
   );
 }
