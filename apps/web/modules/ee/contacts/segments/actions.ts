@@ -60,7 +60,7 @@ export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCrea
     ctx.auditLoggingCtx.organizationId = organizationId;
 
     await checkAuthorizationUpdated({
-      userId: ctx.user?.id!,
+      userId: ctx.user?.id ?? "",
       organizationId,
       access: [
         {
@@ -224,7 +224,7 @@ export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegme
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
 
     await checkAuthorizationUpdated({
-      userId: ctx.user?.id!,
+      userId: ctx.user?.id ?? "",
       organizationId,
       access: [
         {

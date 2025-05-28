@@ -36,7 +36,7 @@ export type ActionClientCtx = {
 
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
-    const eventId = (utils.ctx as Record<string, any>)?.eventId;
+    const eventId = (utils.ctx as Record<string, any>)?.auditLoggingCtx?.eventId ?? undefined; // keep explicit fallback
     Sentry.captureException(e, {
       extra: {
         eventId,

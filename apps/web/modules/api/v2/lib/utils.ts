@@ -95,6 +95,6 @@ export const logApiError = (
       status: "failure",
       eventId: correlationId,
       apiUrl: request.url,
-    });
+    }).catch((err) => logger.error({ err, correlationId }, "Failed to queue audit event from logApiError"));
   }
 };

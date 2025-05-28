@@ -7,7 +7,6 @@ export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
-
 export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // URLs

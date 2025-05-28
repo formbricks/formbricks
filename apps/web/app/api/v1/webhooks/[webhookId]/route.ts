@@ -43,7 +43,7 @@ export const DELETE = withApiLogging(
     };
 
     const params = await props.params;
-    const headersList = await headers();
+    const headersList = headers();
     const apiKey = headersList.get("x-api-key");
     if (!apiKey) {
       return {

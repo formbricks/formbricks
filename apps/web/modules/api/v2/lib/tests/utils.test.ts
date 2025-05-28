@@ -21,6 +21,7 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_PATH: "",
   AUDIT_LOG_ENABLED: true,
   ENCRYPTION_KEY: "mocked-encryption-key",
+  REDIS_URL: "mock-url",
 }));
 
 describe("utils", () => {

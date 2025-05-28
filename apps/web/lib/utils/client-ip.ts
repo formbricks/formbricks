@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
 
 export async function getClientIpFromHeaders(): Promise<string> {
-  let headersList: any;
+  let headersList: Headers;
   try {
     headersList = await headers();
   } catch (e) {

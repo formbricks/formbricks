@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII } from "./utils";
 
 // Patch redis multi before any imports
 beforeEach(async () => {
   const redis = (await import("@/lib/redis")).default;
-  if ((redis.multi as any)?.mockReturnValue) {
-    (redis.multi as any).mockReturnValue({
+  if ((redis?.multi as any)?.mockReturnValue) {
+    (redis?.multi as any).mockReturnValue({
       set: vi.fn(),
       exec: vi.fn().mockResolvedValue([["OK"]]),
     });
@@ -116,8 +116,8 @@ describe("queueAuditEventBackground", () => {
       status: "success",
       apiUrl: "/api/test",
     });
-    // Wait for setImmediate
-    await new Promise((r) => setTimeout(r, 10));
+    // Wait for the setImmediate to flush
+    await new Promise((res) => setImmediate(res));
     expect(logAuditEvent).toHaveBeenCalled();
   });
 });
@@ -149,6 +149,10 @@ describe("queueAuditEvent", () => {
 describe("withAuditLogging", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
   });
   test("logs audit event for successful handler", async () => {
     const handler = vi.fn().mockResolvedValue("ok");
@@ -187,8 +191,7 @@ describe("withAuditLogging", () => {
     };
     const parsedInput = {};
     await wrapped({ ctx, parsedInput });
-    // Wait for setImmediate
-    await new Promise((r) => setTimeout(r, 10));
+    vi.runAllTimers();
     expect(handler).toHaveBeenCalled();
   });
   test("logs audit event for failed handler and throws", async () => {
@@ -228,8 +231,7 @@ describe("withAuditLogging", () => {
     };
     const parsedInput = {};
     await expect(wrapped({ ctx, parsedInput })).rejects.toThrow("fail");
-    // Wait for setImmediate
-    await new Promise((r) => setTimeout(r, 10));
+    vi.runAllTimers();
     expect(handler).toHaveBeenCalled();
   });
 });

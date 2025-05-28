@@ -79,9 +79,13 @@ export const computeAuditLogHash = (
  * @param obj - The object to redact.
  * @returns The object with the sensitive data redacted.
  */
-export const redactPII = (obj: any): any => {
+export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => {
+  if (obj && typeof obj === "object") {
+    if (seen.has(obj)) return "[Circular]";
+    seen.add(obj);
+  }
   if (Array.isArray(obj)) {
-    return obj.map(redactPII);
+    return obj.map((v) => redactPII(v, seen));
   }
   if (obj && typeof obj === "object") {
     return Object.fromEntries(
@@ -89,7 +93,7 @@ export const redactPII = (obj: any): any => {
         if (SENSITIVE_KEYS.some((sensitiveKey) => key.toLowerCase().includes(sensitiveKey))) {
           return [key, "********"];
         }
-        return [key, redactPII(value)];
+        return [key, redactPII(value, seen)];
       })
     );
   }

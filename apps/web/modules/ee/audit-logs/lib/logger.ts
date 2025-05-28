@@ -34,6 +34,15 @@ const auditLogger: Logger = AUDIT_LOG_ENABLED ? Pino(auditLoggerConfig) : Pino({
 // This approach is robust, works even if the file is rotated or recreated, and has NEGLIGIBLE performance impact—even for high-frequency logging—because chmod is only called if the file exists and only changes metadata.
 // ---
 if (AUDIT_LOG_ENABLED) {
+  // Fix permissions immediately (before the first interval tick)
+  try {
+    if (fs.existsSync(AUDIT_LOG_PATH)) {
+      fs.chmodSync(AUDIT_LOG_PATH, 0o600);
+    }
+  } catch (e) {
+    logger.error("Error setting audit log file permissions on startup", e);
+  }
+
   setInterval(() => {
     try {
       if (fs.existsSync(AUDIT_LOG_PATH)) {
