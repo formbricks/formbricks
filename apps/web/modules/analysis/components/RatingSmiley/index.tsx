@@ -1,16 +1,4 @@
 import type { JSX } from "react";
-import {
-  ConfusedFace,
-  FrowningFace,
-  GrinningFaceWithSmilingEyes,
-  GrinningSquintingFace,
-  NeutralFace,
-  PerseveringFace,
-  SlightlySmilingFace,
-  SmilingFaceWithSmilingEyes,
-  TiredFace,
-  WearyFace,
-} from "../SingleResponseCard/components/Smileys";
 
 interface RatingSmileyProps {
   active: boolean;
@@ -35,56 +23,41 @@ const getSmileyColor = (range: number, idx: number) => {
   }
 };
 
-const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {
+// Helper function to get smiley image URL based on index and range
+const getSmiley = (
+  iconIdx: number,
+  idx: number,
+  range: number,
+  active: boolean,
+  addColors: boolean
+): JSX.Element => {
   const activeColor = "fill-rating-fill";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
 
-  const icons = [
-    <TiredFace className={active ? activeColor : inactiveColor} data-testid="TiredFace" key="tired-face" />,
-    <WearyFace className={active ? activeColor : inactiveColor} data-testid="WearyFace" key="weary-face" />,
-    <PerseveringFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="PerseveringFace"
-      key="perserving-face"
-    />,
-    <FrowningFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="FrowningFace"
-      key="frowning-face"
-    />,
-    <ConfusedFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="ConfusedFace"
-      key="confused-face"
-    />,
-    <NeutralFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="NeutralFace"
-      key="neutral-face"
-    />,
-    <SlightlySmilingFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="SlightlySmilingFace"
-      key="slightly-smiling-face"
-    />,
-    <SmilingFaceWithSmilingEyes
-      className={active ? activeColor : inactiveColor}
-      data-testid="SmilingFaceWithSmilingEyes"
-      key="smiling-face-with-smiling-eyes"
-    />,
-    <GrinningFaceWithSmilingEyes
-      className={active ? activeColor : inactiveColor}
-      data-testid="GrinningFaceWithSmilingEyes"
-      key="grinning-face-with-smiling-eyes"
-    />,
-    <GrinningSquintingFace
-      className={active ? activeColor : inactiveColor}
-      data-testid="GrinningSquintingFace"
-      key="grinning-squinting-face"
-    />,
+  const totalOptions = [
+    "tired",
+    "weary",
+    "persevering",
+    "frowning",
+    "confused",
+    "neutral",
+    "slightly-smiling",
+    "smiling-face-with-smiling-eyes",
+    "grinning-face-with-smiling-eyes",
+    "grinning-squinting-face",
   ];
 
-  return icons[iconIdx];
+  const icon = (
+    <img
+      className={active ? activeColor : inactiveColor}
+      src={`/smiley-icons/${totalOptions[iconIdx]}-face.png`}
+      alt={totalOptions[iconIdx]}
+      width={36}
+      height={36}
+    />
+  );
+
+  return <div className="flex">{icon}</div>;
 };
 
 export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {

@@ -1769,7 +1769,7 @@
         "link_to_public_results_copied": "Link pros resultados públicos copiado",
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de pesquisa esteja definido como",
         "mobile_app": "app de celular",
-        "no_response_matches_filter": "Nenhuma resposta corresponde ao seu filtro",
+        "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Somente concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "No geral",

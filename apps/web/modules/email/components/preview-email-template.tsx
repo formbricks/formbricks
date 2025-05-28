@@ -1,9 +1,9 @@
 import { cn } from "@/lib/cn";
-import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -44,46 +44,6 @@ export const getPreviewEmailTemplateHtml = async (
       pretty: true,
     }
   );
-};
-
-// Helper function to get smiley image URL based on index and range
-const getSmileyImageUrl = (idx: number, range: number): string => {
-  let iconType = "";
-
-  const totalOptions = [
-    "tired",
-    "weary",
-    "persevering",
-    "frowning",
-    "confused",
-    "neutral",
-    "slightly-smiling",
-    "smiling-face-with-smiling-eyes",
-    "grinning-face-with-smiling-eyes",
-    "grinning-squinting-face",
-  ];
-
-  if (range === 10) {
-    const indexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    iconType = totalOptions[indexes[idx]];
-  } else if (range === 7) {
-    const indexes = [1, 3, 4, 5, 6, 8, 9];
-    iconType = totalOptions[indexes[idx]];
-  } else if (range === 6) {
-    const indexes = [0, 2, 4, 5, 7, 9];
-    iconType = totalOptions[indexes[idx]];
-  } else if (range === 5) {
-    const indexes = [3, 4, 5, 6, 7];
-    iconType = totalOptions[indexes[idx]];
-  } else if (range === 4) {
-    const indexes = [4, 5, 6, 7];
-    iconType = totalOptions[indexes[idx]];
-  } else if (range === 3) {
-    const indexes = [4, 5, 7];
-    iconType = totalOptions[indexes[idx]];
-  }
-
-  return `${WEBAPP_URL}/smiley-icons/${iconType}-face.png`;
 };
 
 export async function PreviewEmailTemplate({
@@ -254,11 +214,11 @@ export async function PreviewEmailTemplate({
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                         key={i}>
                         {firstQuestion.scale === "smiley" ? (
-                          <img
-                            src={getSmileyImageUrl(i, firstQuestion.range)}
-                            alt={`Smiley ${i + 1}`}
-                            width={36}
-                            height={36}
+                          <RatingSmiley
+                            active={false}
+                            idx={i}
+                            range={firstQuestion.range}
+                            addColors={firstQuestion.isColorCodingEnabled}
                           />
                         ) : firstQuestion.scale === "number" ? (
                           <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
