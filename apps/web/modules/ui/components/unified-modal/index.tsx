@@ -80,7 +80,7 @@ type MyDialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerous
 const MyDialogHeader = ({ className, ...props }: MyDialogHeaderProps) => (
   <div
     className={cn(
-      "sticky top-0 z-10 flex flex-shrink-0 flex-col gap-y-1.5 bg-white text-center md:text-left [&>svg]:absolute [&>svg]:top-1.5 [&>svg]:size-6 md:[&>svg~*]:pl-8",
+      "sticky top-0 z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left [&>svg]:absolute [&>svg]:top-1.5 [&>svg]:size-6 md:[&>svg~*]:pl-8",
       className
     )}
     {...props}
@@ -97,7 +97,7 @@ type MyDialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerous
 const MyDialogFooter = ({ className, ...props }: MyDialogFooterProps) => (
   <div
     className={cn(
-      "sticky bottom-0 z-10 flex flex-shrink-0 flex-col-reverse bg-white md:flex-row md:justify-end md:space-x-1.5",
+      "sticky bottom-0 z-10 flex flex-shrink-0 flex-col-reverse bg-white md:flex-row md:justify-end md:space-x-2",
       className
     )}
     {...props}

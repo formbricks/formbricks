@@ -242,15 +242,21 @@ const renderModal = (args: StoryProps) => {
           </MyDialogHeader>
         )}
         <MyDialogBody>{bodyContent}</MyDialogBody>
-        {showFooter && (
+        {showFooter && footerButtonConfiguration === "3" && (
           <MyDialogFooter className="md:justify-between">
-            {footerButtonConfiguration === "3" && (
-              <Button className="justify-self-start" variant="ghost">
-                {tertiaryButtonText}
-              </Button>
-            )}
-            <div className="flex md:space-x-1.5">
-              {(footerButtonConfiguration === "2" || footerButtonConfiguration === "3") && (
+            <Button className="justify-self-start" variant="ghost">
+              {tertiaryButtonText}
+            </Button>
+            <div className="flex md:space-x-2">
+              <Button variant="secondary">{secondaryButtonText}</Button>
+              <Button>{primaryButtonText}</Button>
+            </div>
+          </MyDialogFooter>
+        )}
+        {showFooter && footerButtonConfiguration !== "3" && (
+          <MyDialogFooter>
+            <div className="flex md:space-x-2">
+              {footerButtonConfiguration !== "1" && (
                 <Button variant="secondary">{secondaryButtonText}</Button>
               )}
               <Button>{primaryButtonText}</Button>
