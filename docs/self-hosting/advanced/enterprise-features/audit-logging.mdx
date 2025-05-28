@@ -1,0 +1,81 @@
+---
+title: Audit Logging
+sidebarTitle: Audit Logging
+description: Enable and use tamper‑evident audit logs for your Formbricks instance.
+icon: file-shield
+---
+
+import Hint from "@theme/Hint";
+
+Audit logs record **who** did **what**, **when**, **from where**, and **with what outcome** across your Formbricks instance.
+
+---
+
+## Benefits of audit logging
+
+- **Compliance readiness** — Many regulatory frameworks such as GDPR and SOC 2 require immutable records of user activity.
+- **Security investigation support** — Audit logs provide clear visibility into user and system actions, helping teams respond quickly and confidently during security incidents.
+- **Operational accountability** — Track changes across the system to answer common questions like “_who modified this?_” or “_when was this deleted?_”.
+
+---
+
+## Prerequisites
+
+| Requirement | Notes |
+|-------------|-------|
+| **Redis** | Used internally to guarantee integrity under concurrency. |
+| **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
+
+---
+
+## Enabling audit logging
+
+1. Set the following environment variables in your deployment (Docker Compose, Kubernetes, etc.):
+
+```bash title=".env"
+# --- Audit logging ---
+AUDIT_LOG_ENABLED=true
+AUDIT_LOG_PATH=/var/log/formbricks/audit.log   # change if needed
+REDIS_URL=redis://redis:6379                   # existing Redis instance
+```
+
+2. Redeploy your containers.
+3. Confirm you can see a new file at the path specified by `AUDIT_LOG_PATH` after performing any action in the UI/API.
+
+<Hint type="info">Audit logs rotate **daily** or when the file reaches **100 MB**, and up to **90 days** of compressed history is kept by default. Adjust the `logrotate` policy if your compliance rules differ.</Hint>
+
+---
+
+## Understanding the log format
+
+Audit logs are **JSON Lines** (one JSON object per line). A typical entry looks like this:
+
+```json
+{"timestamp":"2025-05-28T12:34:56Z","action":"webhook.created","actor":{"id":"apiKey_123","type":"api"},"target":{"type":"webhook","id":"wh_456"},"organizationId":"org_789","status":"success","ipAddress":"203.0.113.42","changes":{"url":"https://example.com"},"integrityHash":"…","previousHash":"…"}
+```
+
+Key fields:
+
+| Field | Description |
+|-------|-------------|
+| `timestamp` | ISO‑8601 time of the action |
+| `actor` | User or API key responsible |
+| `action` | Constant verb‑noun string (`survey.updated`, `login.failed`, …) |
+| `target` | The resource affected |
+| `status` | `success` or `failure` |
+| `changes` | Only the fields that actually changed (sensitive values redacted) |
+| `integrityHash` | SHA‑256 hash chaining the entry to the previous one |
+
+---
+
+## Additional details
+
+- **Read‑only:** Audit logs are write‑once; avoid granting write access to the log directory.
+- **Redacted secrets:** Sensitive fields (e‑mails, access tokens, passwords…) are replaced with `"********"` before being written.
+- **Failure events count:** Both successful *and* failed operations are logged.
+- **Single source of truth:** The same logs power the Formbricks UI and API endpoints.
+- **Scope limitation:** For now, **only events triggered inside the Formbricks application** are audited. This means:
+  - **Embed and Link Surveys** are **not** included in the audit logs.
+  - **Survey responses** created via API or client-side SDKs are **not** audited.
+
+---
