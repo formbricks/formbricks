@@ -3550,8 +3550,8 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
       {
         id: "cltyqp5ng000108l9dmxw6nde",
         type: "endScreen",
-        headline: { default: t("templates.preview_survey_ending_card_headline") },
-        subheader: { default: t("templates.preview_survey_ending_card_description") },
+        headline: createI18nString(t("templates.preview_survey_ending_card_headline"), []),
+        subheader: createI18nString(t("templates.preview_survey_ending_card_description"), []),
       },
     ],
     hiddenFields: {
