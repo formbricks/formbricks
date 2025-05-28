@@ -138,7 +138,7 @@ test.describe("JS Package Test", async () => {
     const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
     expect(impressionsCount).toEqual("Impressions\n\n1");
 
-    await expect(page.getByRole("link", { name: "Responses (1)" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Responses" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
     await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("CTR100%")).toBeVisible();

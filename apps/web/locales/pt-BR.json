@@ -95,6 +95,7 @@
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
       "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
+      "verification_email_successfully_sent": "E-mail de verificação enviado para {email}. Verifique para concluir a atualização.",
       "we_sent_an_email_to": "Enviamos um email para {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"
     },
@@ -1769,7 +1770,7 @@
         "link_to_public_results_copied": "Link pros resultados públicos copiado",
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de pesquisa esteja definido como",
         "mobile_app": "app de celular",
-        "no_response_matches_filter": "Nenhuma resposta corresponde ao seu filtro",
+        "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Somente concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "No geral",

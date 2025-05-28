@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { JSX } from "preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { Survey } from "./survey";
 
@@ -243,7 +243,7 @@ describe("Survey", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the survey with welcome card initially", () => {
+  test("renders the survey with welcome card initially", () => {
     render(
       <Survey
         survey={mockSurvey}
@@ -272,7 +272,7 @@ describe("Survey", () => {
     expect(onDisplayMock).toHaveBeenCalled();
   });
 
-  it("handles question submission and navigation", async () => {
+  test("handles question submission and navigation", async () => {
     // For this test, we'll use startAtQuestionId to force rendering the question card
     render(
       <Survey
@@ -317,7 +317,7 @@ describe("Survey", () => {
     });
   });
 
-  it("renders branding when enabled", () => {
+  test("renders branding when enabled", () => {
     render(
       <Survey
         survey={mockSurvey}
@@ -345,7 +345,7 @@ describe("Survey", () => {
     expect(screen.getByTestId("formbricks-branding")).toBeInTheDocument();
   });
 
-  it("renders progress bar by default", () => {
+  test("renders progress bar by default", () => {
     render(
       <Survey
         survey={mockSurvey}
@@ -373,7 +373,7 @@ describe("Survey", () => {
     expect(screen.getByTestId("progress-bar")).toBeInTheDocument();
   });
 
-  it("hides progress bar when hideProgressBar is true", () => {
+  test("hides progress bar when hideProgressBar is true", () => {
     render(
       <Survey
         survey={mockSurvey}
@@ -402,7 +402,7 @@ describe("Survey", () => {
     expect(screen.queryByTestId("progress-bar")).not.toBeInTheDocument();
   });
 
-  it("handles file uploads in preview mode", async () => {
+  test("handles file uploads in preview mode", async () => {
     // The createDisplay function in the Survey component calls onDisplayCreated
     // We need to make sure it resolves before checking if onDisplayCreated was called
 
@@ -444,7 +444,7 @@ describe("Survey", () => {
     expect(onFileUploadMock).toBeDefined();
   });
 
-  it("calls onResponseCreated in preview mode", async () => {
+  test("calls onResponseCreated in preview mode", async () => {
     // This test verifies that onResponseCreated is called in preview mode
     // when a question is submitted in preview mode
 
@@ -489,7 +489,7 @@ describe("Survey", () => {
     expect(onResponseCreatedMock).toHaveBeenCalled();
   });
 
-  it("adds response to queue with correct user and contact IDs", async () => {
+  test("adds response to queue with correct user and contact IDs", async () => {
     // This test is focused on the functionality in lines 445-472 of survey.tsx
     // We will verify that the 'add' method of the ResponseQueue (mockRQAdd) is called.
     // No need to import ResponseQueue or get mock instances dynamically here.
@@ -541,7 +541,7 @@ describe("Survey", () => {
     );
   });
 
-  it("makes questions required based on logic actions", async () => {
+  test("makes questions required based on logic actions", async () => {
     // This test is focused on the functionality in lines 409-411 of survey.tsx
     // We'll customize the performActions mock to return requiredQuestionIds
 
@@ -609,7 +609,7 @@ describe("Survey", () => {
     expect(performActions).toHaveBeenCalled();
   });
 
-  it("starts at a specific question when startAtQuestionId is provided", () => {
+  test("starts at a specific question when startAtQuestionId is provided", () => {
     render(
       <Survey
         survey={mockSurvey}

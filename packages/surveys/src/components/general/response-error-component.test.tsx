@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ResponseErrorComponent } from "./response-error-component";
 
@@ -37,7 +37,7 @@ describe("ResponseErrorComponent", () => {
     q2: "Answer 2",
   };
 
-  it("renders error message and retry button", () => {
+  test("renders error message and retry button", () => {
     render(
       <ResponseErrorComponent questions={mockQuestions} responseData={mockResponseData} onRetry={() => {}} />
     );
@@ -47,7 +47,7 @@ describe("ResponseErrorComponent", () => {
     expect(screen.getByText("Retry")).toBeDefined();
   });
 
-  it("displays questions and responses correctly", () => {
+  test("displays questions and responses correctly", () => {
     render(
       <ResponseErrorComponent questions={mockQuestions} responseData={mockResponseData} onRetry={() => {}} />
     );
@@ -63,7 +63,7 @@ describe("ResponseErrorComponent", () => {
     expect(answers[1].textContent).toBe("Answer 2");
   });
 
-  it("calls onRetry when retry button is clicked", () => {
+  test("calls onRetry when retry button is clicked", () => {
     const mockOnRetry = vi.fn();
     render(
       <ResponseErrorComponent
@@ -79,7 +79,7 @@ describe("ResponseErrorComponent", () => {
     expect(mockOnRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("handles missing responses gracefully", () => {
+  test("handles missing responses gracefully", () => {
     const partialResponseData = {
       q1: "Answer 1",
     };
