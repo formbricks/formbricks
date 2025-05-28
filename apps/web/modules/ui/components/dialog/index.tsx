@@ -72,7 +72,6 @@ DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerouslySetInnerHTML"> & {
   dangerouslySetInnerHTML?: {
-    icon?: React.ReactNode;
     __html: string;
   };
 };

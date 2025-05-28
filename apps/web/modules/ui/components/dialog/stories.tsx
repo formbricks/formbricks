@@ -43,7 +43,7 @@ const DefaultBodyContent = (elementCount: number): React.ReactNode => {
 };
 
 const meta: Meta<StoryProps> = {
-  title: "UI/Unified Modal",
+  title: "UI/Modal",
   component: DialogContent,
   tags: ["autodocs"],
   parameters: {
