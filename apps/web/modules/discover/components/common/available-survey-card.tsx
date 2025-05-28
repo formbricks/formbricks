@@ -1,3 +1,4 @@
+import defaultEngageCardImg from "@/images//illustrations/default-engage-card.png";
 import { ChainContext } from "@/modules/discover/context/chain-context";
 import { TExtendedSurvey } from "@/modules/discover/types/survey";
 import { Badge } from "@/modules/ui/components/badge";
@@ -9,7 +10,6 @@ import { Clock } from "lucide-react";
 import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 
-const defaultEngageCardImg = "/illustrations/default-engage-card.png";
 interface AvailableSurveyCardProps {
   survey: TExtendedSurvey;
   type: String;

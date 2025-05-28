@@ -1,3 +1,5 @@
+import defaultCommunityCardImg from "@/images/illustrations/default-community-card.png";
+import verifiedImg from "@/images/illustrations/verified-rounded.svg";
 import RemoveUserCommunityButton from "@/modules/communities/components/common/remove-user-community-button";
 import ViewCommunityButton from "@/modules/communities/components/common/view-community-button";
 import { useTranslate } from "@tolgee/react";
@@ -5,9 +7,6 @@ import { UsersIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@formbricks/lib/cn";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
-
-const defaultCommunityCardImg = "/illustrations/default-community-card.png";
-const verifiedImg = "/illustrations/verified-rounded.svg";
 
 interface MyCommunityCardProps {
   creator: TUserWhitelistInfo;
