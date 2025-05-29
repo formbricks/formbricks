@@ -26,8 +26,6 @@ const responseSelection = {
   objective: true,
   notificationSettings: true,
   whitelist: true,
-  communities: true,
-  communitiesCreated: true,
   communityName: true,
   communityDescription: true,
   locale: true,
