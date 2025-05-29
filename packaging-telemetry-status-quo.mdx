@@ -1,0 +1,58 @@
+
+## Telemetry Implementation
+
+### Community Edition Telemetry
+The Community Edition currently implements basic telemetry through a simple system:
+
+1. **Basic Usage Metrics**
+   - Anonymous instance identification using hashed CRON_SECRET
+   - Basic usage statistics:
+     - Survey count
+     - Response count
+     - User count
+   - Version tracking
+   - Can be disabled via `TELEMETRY_DISABLED=1` environment variable
+
+2. **Implementation Details**
+   - Uses a dedicated telemetry endpoint (`telemetry.formbricks.com`)
+   - Data is collected anonymously
+   - No personal or customer data is transmitted
+   - Simple event-based system with minimal properties
+
+3. **Current Limitations**
+   - Very basic metrics only
+   - No feature usage tracking
+   - No error tracking
+   - No performance metrics
+   - No user behavior insights
+
+### Enterprise Edition Telemetry
+The Enterprise Edition currently has no dedicated telemetry system:
+
+1. **Current State**
+   - No specific telemetry for enterprise features
+   - No usage tracking for enterprise features
+   - No monitoring of license usage patterns
+   - No insights into feature adoption
+
+2. **Missing Capabilities**
+   - No tracking of enterprise feature usage
+   - No monitoring of license validation patterns
+   - No insights into limit usage and patterns
+   - No tracking of enterprise-specific errors
+   - No monitoring of enterprise feature performance
+
+3. **Impact**
+   - Limited ability to understand enterprise customer needs
+   - No data to drive enterprise feature development
+   - No insights into enterprise feature adoption
+   - Limited ability to proactively address issues
+   - No data to inform enterprise pricing decisions
+
+This lack of telemetry in the Enterprise Edition represents a significant gap in our ability to understand and improve the product for enterprise customers. It makes it difficult to:
+- Track feature adoption and usage patterns
+- Identify common issues and pain points
+- Make data-driven decisions about feature development
+- Provide proactive support
+- Understand enterprise customer needs and behaviors
+
