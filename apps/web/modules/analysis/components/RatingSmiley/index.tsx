@@ -57,18 +57,13 @@ const getSmiley = (
           : `/smiley-icons/${faceIcons[iconIdx]}-face.png`
       }
       alt={faceIcons[iconIdx]}
-      width={36}
-      height={36}
+      width={24}
+      height={24}
+      className={`${active ? activeColor : inactiveColor} rounded-full`}
     />
   );
 
-  return (
-    <div className="relative z-10 flex items-center justify-center">
-      <div
-        className={`absolute inset-0 m-auto h-6 w-6 rounded-full ${active ? activeColor : inactiveColor} z-0`}></div>
-      <div className="relative z-10">{icon}</div>
-    </div>
-  );
+  return <div className="m-auto flex h-10 w-10 items-center justify-center">{icon}</div>;
 };
 
 export const RatingSmiley = ({
