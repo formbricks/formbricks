@@ -36,7 +36,7 @@ export const createI18nString = (
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: any = {
-      [targetLanguageCode ?? "default"]: removeTolgeeInvisibleMarks(text as string), // Type assertion to assure TypeScript `text` is a string
+      [targetLanguageCode ?? "default"]: removeTolgeeInvisibleMarks(text),
     };
 
     // Initialize all provided languages with empty strings
