@@ -6,28 +6,30 @@ import { ApiAuditLog } from "./with-api-logging";
 
 // Mocks
 // This top-level mock is crucial for the SUT (withApiLogging.ts)
-vi.mock("@/modules/ee/audit-logs/lib/utils", () => ({
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   __esModule: true,
   queueAuditEvent: vi.fn(),
-}));
-
-vi.mock("@/lib/constants", () => ({
-  AUDIT_LOG_ENABLED: true,
-  IS_PRODUCTION: true,
-  SENTRY_DSN: "dsn",
-  AUDIT_LOG_PATH: "/tmp/audit.log",
-  ENCRYPTION_KEY: "test-key",
 }));
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
 }));
 
+// Define these outside the mock factory so they can be referenced in tests and reset by clearAllMocks.
+const mockContextualLoggerError = vi.fn();
+const mockContextualLoggerWarn = vi.fn();
+const mockContextualLoggerInfo = vi.fn();
+
 vi.mock("@formbricks/logger", () => {
-  const mockWithContext = vi.fn(() => ({ error: vi.fn() }));
+  const mockWithContextInstance = vi.fn(() => ({
+    error: mockContextualLoggerError,
+    warn: mockContextualLoggerWarn,
+    info: mockContextualLoggerInfo,
+  }));
   return {
     logger: {
-      withContext: mockWithContext,
+      withContext: mockWithContextInstance,
+      // These are for direct calls like logger.error(), logger.warn()
       error: vi.fn(),
       warn: vi.fn(),
       info: vi.fn(),
@@ -69,6 +71,7 @@ describe("withApiLogging", () => {
       SENTRY_DSN: "dsn",
       AUDIT_LOG_PATH: "/tmp/audit.log",
       ENCRYPTION_KEY: "test-key",
+      REDIS_URL: "redis://localhost:6379",
     }));
 
     vi.clearAllMocks(); // Clear call counts etc. for all vi.fn()
@@ -76,7 +79,7 @@ describe("withApiLogging", () => {
 
   test("logs and audits on error response", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
-      "@/modules/ee/audit-logs/lib/utils"
+      "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
     const handler = vi.fn().mockResolvedValue({
       response: responses.internalServerErrorResponse("fail"),
@@ -86,6 +89,9 @@ describe("withApiLogging", () => {
     const { withApiLogging } = await import("./with-api-logging"); // SUT dynamically imported
     await withApiLogging(handler)(req);
     expect(logger.withContext).toHaveBeenCalled();
+    expect(mockContextualLoggerError).toHaveBeenCalled();
+    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
+    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event: "fail", eventId: "abc-123", userType: "api", apiUrl: req.url })
     );
@@ -97,7 +103,7 @@ describe("withApiLogging", () => {
 
   test("does not log Sentry if not 500", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
-      "@/modules/ee/audit-logs/lib/utils"
+      "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
     const handler = vi.fn().mockResolvedValue({
       response: responses.badRequestResponse("bad req"),
@@ -107,6 +113,10 @@ describe("withApiLogging", () => {
     const { withApiLogging } = await import("./with-api-logging");
     await withApiLogging(handler)(req);
     expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(logger.withContext).toHaveBeenCalled();
+    expect(mockContextualLoggerError).toHaveBeenCalled();
+    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
+    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event: "bad", userType: "api", apiUrl: req.url })
     );
@@ -114,7 +124,7 @@ describe("withApiLogging", () => {
 
   test("logs and audits on thrown error", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
-      "@/modules/ee/audit-logs/lib/utils"
+      "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
     const handler = vi.fn().mockRejectedValue(new Error("fail!"));
     const req = createMockRequest({ headers: new Map([["x-request-id", "err-1"]]) });
@@ -128,6 +138,9 @@ describe("withApiLogging", () => {
       details: {},
     });
     expect(logger.withContext).toHaveBeenCalled();
+    expect(mockContextualLoggerError).toHaveBeenCalled();
+    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
+    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
     expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.any(Error),
@@ -137,7 +150,7 @@ describe("withApiLogging", () => {
 
   test("does not log/audit on success response", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
-      "@/modules/ee/audit-logs/lib/utils"
+      "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ ok: true }),
@@ -147,6 +160,9 @@ describe("withApiLogging", () => {
     const { withApiLogging } = await import("./with-api-logging");
     await withApiLogging(handler)(req);
     expect(logger.withContext).not.toHaveBeenCalled();
+    expect(mockContextualLoggerError).not.toHaveBeenCalled();
+    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
+    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event: "success", userType: "api", apiUrl: req.url })
     );
@@ -161,10 +177,11 @@ describe("withApiLogging", () => {
       SENTRY_DSN: "dsn",
       AUDIT_LOG_PATH: "/tmp/audit.log",
       ENCRYPTION_KEY: "test-key",
+      REDIS_URL: "redis://localhost:6379",
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
-      "@/modules/ee/audit-logs/lib/utils"
+      "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
     const { withApiLogging } = await import("./with-api-logging");
 
