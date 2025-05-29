@@ -59,8 +59,6 @@ export const ZUser = z.object({
   notificationSettings: ZUserNotificationSettings,
   whitelist: z.boolean(),
   locale: ZUserLocale,
-  communityName: z.string().optional(),
-  communityDescription: z.string().optional(),
 });
 
 export type TUser = z.infer<typeof ZUser>;
