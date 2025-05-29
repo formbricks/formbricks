@@ -4,7 +4,7 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";

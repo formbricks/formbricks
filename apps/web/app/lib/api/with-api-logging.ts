@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 

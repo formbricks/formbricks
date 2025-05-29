@@ -3,7 +3,7 @@
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 import { logApiErrorEdge } from "./utils-edge";

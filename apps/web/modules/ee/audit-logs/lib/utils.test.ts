@@ -104,7 +104,7 @@ describe("withAuditLogging", () => {
   });
   test("logs audit event for successful handler", async () => {
     const handler = vi.fn().mockResolvedValue("ok");
-    const { withAuditLogging } = await import("./utils");
+    const { withAuditLogging } = await import("./handler");
     const wrapped = withAuditLogging("created", "survey", handler);
     const ctx = {
       user: {
@@ -144,7 +144,7 @@ describe("withAuditLogging", () => {
   });
   test("logs audit event for failed handler and throws", async () => {
     const handler = vi.fn().mockRejectedValue(new Error("fail"));
-    const { withAuditLogging } = await import("./utils");
+    const { withAuditLogging } = await import("./handler");
     const wrapped = withAuditLogging("created", "survey", handler);
     const ctx = {
       user: {
@@ -268,7 +268,7 @@ describe("buildAndLogAuditEvent", () => {
       AUDIT_LOG_GET_USER_IP: true,
       ENCRYPTION_KEY: "testsecret",
     }));
-    ({ buildAndLogAuditEvent } = await import("./utils"));
+    ({ buildAndLogAuditEvent } = await import("./handler"));
     redis = (await import("@/lib/redis")).default;
     logAuditEvent = (globalThis as any).__logAuditEvent;
   });

@@ -11,7 +11,7 @@ import {
   ZWebhookIdSchema,
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/utils";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";

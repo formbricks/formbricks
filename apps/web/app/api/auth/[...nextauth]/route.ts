@@ -1,6 +1,6 @@
-import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions as baseAuthOptions } from "@/modules/auth/lib/authOptions";
-import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/utils";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import NextAuth from "next-auth";
@@ -40,22 +40,20 @@ const handler = async (req: Request, ctx: any) => {
           }
         }
 
-        if (AUDIT_LOG_ENABLED) {
-          const status: "success" | "failure" = result === false ? "failure" : "success"; // treat truthy & redirect strings as success
-          const auditLog = {
-            actionType: "user.signedin" as const,
-            targetType: "user" as const,
-            userId: user?.id ?? UNKNOWN_DATA,
-            targetId: user?.id ?? UNKNOWN_DATA,
-            organizationId: UNKNOWN_DATA,
-            status,
-            userType: "user" as const,
-            newObject: user,
-            ...(status === "failure" ? { eventId } : {}),
-          };
+        const status: "success" | "failure" = result === false ? "failure" : "success"; // treat truthy & redirect strings as success
+        const auditLog = {
+          actionType: "user.signedin" as const,
+          targetType: "user" as const,
+          userId: user?.id ?? UNKNOWN_DATA,
+          targetId: user?.id ?? UNKNOWN_DATA,
+          organizationId: UNKNOWN_DATA,
+          status,
+          userType: "user" as const,
+          newObject: user,
+          ...(status === "failure" ? { eventId } : {}),
+        };
 
-          queueAuditEventBackground(auditLog);
-        }
+        queueAuditEventBackground(auditLog);
 
         if (error) throw error;
         return result;

@@ -14,7 +14,7 @@ import {
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/utils";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
