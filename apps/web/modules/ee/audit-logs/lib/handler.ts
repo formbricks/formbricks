@@ -216,8 +216,6 @@ export const withAuditLogging = (
       error = err;
     }
 
-    console.log("================ AUDIT_LOG_ENABLED", AUDIT_LOG_ENABLED);
-
     if (!AUDIT_LOG_ENABLED) {
       return result;
     }
@@ -226,7 +224,7 @@ export const withAuditLogging = (
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId: string =
-          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA;
+          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
           const environmentId: string | undefined = parsedInput?.environmentId;
@@ -256,7 +254,7 @@ export const withAuditLogging = (
         }
 
         await buildAndLogAuditEvent({
-          actionType: `${targetType}.${action}` as TAuditActionType,
+          actionType: `${targetType}.${action}`,
           targetType,
           userId,
           userType: "user",
