@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/common";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surveys/types";

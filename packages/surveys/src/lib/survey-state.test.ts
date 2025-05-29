@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { SurveyState } from "./survey-state";
 

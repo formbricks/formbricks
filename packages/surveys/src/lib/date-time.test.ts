@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString } from "./date-time";
 
 // Manually define getOrdinalSuffix for testing as it's not exported
@@ -67,15 +67,15 @@ describe("isValidDateString", () => {
   });
 
   test("should return true for valid DD-MM-YYYY format", () => {
-    expect(isValidDateString("15-01-2023")).toBe(false);
-    expect(isValidDateString("29-02-2024")).toBe(false);
+    expect(isValidDateString("15-01-2023")).toBe(true);
+    expect(isValidDateString("29-02-2024")).toBe(true);
   });
 
   test("should return false for invalid dates in valid format", () => {
     expect(isValidDateString("2023-02-30")).toBe(true);
     expect(isValidDateString("2023-13-01")).toBe(false);
     expect(isValidDateString("32-01-2023")).toBe(false);
-    expect(isValidDateString("01-13-2023")).toBe(true);
+    expect(isValidDateString("01-13-2023")).toBe(false);
   });
 
   test("should return false for invalid formats", () => {

@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { processResponseData } from "./response";
 
 describe("processResponseData", () => {
