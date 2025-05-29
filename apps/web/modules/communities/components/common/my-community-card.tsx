@@ -1,5 +1,5 @@
-import defaultCommunityCardImg from "@/images/illustrations/default-community-card.png";
-import verifiedImg from "@/images/illustrations/verified-rounded.svg";
+import DefaultCommunityCardImage from "@/images/illustrations/default-community-card.png";
+import VerifiedImage from "@/images/illustrations/verified-rounded.svg";
 import RemoveUserCommunityButton from "@/modules/communities/components/common/remove-user-community-button";
 import ViewCommunityButton from "@/modules/communities/components/common/view-community-button";
 import { useTranslate } from "@tolgee/react";
@@ -22,7 +22,7 @@ export const MyCommunityCard = ({ creator, environmentId, className = "" }: MyCo
     <div className={cn("relative my-4 flex w-full flex-col rounded-xl shadow-sm", className)}>
       <div className="relative h-[120px] w-full overflow-hidden rounded-t-xl">
         <Image
-          src={defaultCommunityCardImg}
+          src={DefaultCommunityCardImage}
           alt={t("default-community-card-png")}
           fill
           className="object-cover"
@@ -35,7 +35,7 @@ export const MyCommunityCard = ({ creator, environmentId, className = "" }: MyCo
             <p className="line-clamp-1 text-lg font-medium">{creator.name || creator.email}</p>
             {/* TODO: Add verified check here and display if verified */}
             <Image
-              src={verifiedImg as string}
+              src={VerifiedImage as string}
               alt={t("verified check icon")}
               className="h-5 w-5"
               width={20}

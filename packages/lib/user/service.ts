@@ -27,7 +27,7 @@ const responseSelection = {
   notificationSettings: true,
   whitelist: true,
   communities: true,
-  communitiesCreated: true,
+  communityMembers: true,
   locale: true,
 };
 

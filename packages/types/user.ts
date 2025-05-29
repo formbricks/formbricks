@@ -97,6 +97,13 @@ export const ZUserWhitelistInfo = z.object({
   email: ZUserEmail,
   name: ZUserName,
   whitelist: z.boolean(),
+  communityName: z.string().optional(),
+  communityDescription: z.string().optional(),
+  _count: z
+    .object({
+      communityMembers: z.number().optional(),
+    })
+    .optional(),
 });
 
 export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;

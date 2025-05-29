@@ -4,13 +4,14 @@ import Engagements from "@/modules/discover/components/Engagements";
 import SearchSection from "@/modules/discover/components/common/search-section";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { StaticImageData } from "next/image";
 import { useState } from "react";
 
 interface DiscoverClientProps {
   communityId: string;
   translatedTitle: string | React.ReactNode;
   translatedSubTitle?: string;
-  bannerImage?: string;
+  bannerImage?: string | StaticImageData;
 }
 
 export function DiscoverClient({

@@ -105,7 +105,16 @@ export const getCurrentUserCommunities = async ({
         },
       },
       select: {
-        creator: { select: whitelistSelection },
+        creator: {
+          select: {
+            ...whitelistSelection,
+            _count: {
+              select: {
+                communityMembers: true,
+              },
+            },
+          },
+        },
       },
     });
     return currentUserCommunities.map((community) => community.creator) || [];
@@ -170,7 +179,14 @@ export const getAvailableUserCommunities = async ({
             }
           : {}),
       },
-      select: whitelistSelection,
+      select: {
+        ...whitelistSelection,
+        _count: {
+          select: {
+            communityMembers: true,
+          },
+        },
+      },
     });
 
     return availableUserCommunities;
@@ -179,5 +195,33 @@ export const getAvailableUserCommunities = async ({
       throw new DatabaseError(error.message);
     }
     return [];
+  }
+};
+
+export const updateUserCommunityFields = async ({
+  userId,
+  communityName,
+  communityDescription,
+}: {
+  userId: string;
+  communityName: string | undefined;
+  communityDescription: string | undefined;
+}): Promise<string> => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(communityName ? { communityName: communityName } : {}),
+        ...(communityDescription ? { communityDescription: communityDescription } : {}),
+      },
+    });
+
+    return user.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
 };
