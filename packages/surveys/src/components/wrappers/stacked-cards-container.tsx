@@ -99,6 +99,17 @@ export function StackedCardsContainer({
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
+
+    const handleDebouncedResize = (entries: ResizeObserverEntry[]) => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        for (const entry of entries) {
+          setCardHeight(`${entry.contentRect.height.toString()}px`);
+          setCardWidth(entry.contentRect.width);
+        }
+      }, 50); // 50ms debounce
+    };
+
     const timer = setTimeout(() => {
       const currentElement = cardRefs.current[questionIdxTemp];
       if (currentElement) {
@@ -107,16 +118,7 @@ export function StackedCardsContainer({
         }
 
         resizeObserver.current = new ResizeObserver((entries) => {
-          // Clear any pending resize updates
-          clearTimeout(resizeTimeout);
-
-          // Debounce the resize updates
-          resizeTimeout = setTimeout(() => {
-            for (const entry of entries) {
-              setCardHeight(`${entry.contentRect.height.toString()}px`);
-              setCardWidth(entry.contentRect.width);
-            }
-          }, 50); // 50ms debounce
+          handleDebouncedResize(entries);
         });
         resizeObserver.current.observe(currentElement);
       }
