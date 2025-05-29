@@ -11,7 +11,6 @@ const validateEvent = (event: TAuditLogEvent): void => {
 };
 
 const hasAuditLogAccess = async (): Promise<boolean> => {
-  return true;
   return getIsAuditLogsEnabled();
 };
 
