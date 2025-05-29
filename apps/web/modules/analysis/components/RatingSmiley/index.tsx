@@ -9,17 +9,17 @@ interface RatingSmileyProps {
 
 const getSmileyColor = (range: number, idx: number) => {
   if (range > 5) {
-    if (range - idx < 3) return "fill-emerald-100";
-    if (range - idx < 5) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 3) return "bg-emerald-100";
+    if (range - idx < 5) return "bg-orange-100";
+    return "bg-rose-100";
   } else if (range < 5) {
-    if (range - idx < 2) return "fill-emerald-100";
-    if (range - idx < 3) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 2) return "bg-emerald-100";
+    if (range - idx < 3) return "bg-orange-100";
+    return "bg-rose-100";
   } else {
-    if (range - idx < 3) return "fill-emerald-100";
-    if (range - idx < 4) return "fill-orange-100";
-    return "fill-rose-100";
+    if (range - idx < 3) return "bg-emerald-100";
+    if (range - idx < 4) return "bg-orange-100";
+    return "bg-rose-100";
   }
 };
 
@@ -31,8 +31,8 @@ const getSmiley = (
   active: boolean,
   addColors: boolean
 ): JSX.Element => {
-  const activeColor = "fill-rating-fill";
-  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
+  const activeColor = "bg-rating-fill";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "";
 
   const faceIcons = [
     "tired",
@@ -49,7 +49,6 @@ const getSmiley = (
 
   const icon = (
     <img
-      className={active ? activeColor : inactiveColor}
       src={`/smiley-icons/${faceIcons[iconIdx]}-face.png`}
       alt={faceIcons[iconIdx]}
       width={36}
@@ -57,7 +56,13 @@ const getSmiley = (
     />
   );
 
-  return <div className="flex">{icon}</div>;
+  return (
+    <div className="relative z-10 flex items-center justify-center">
+      <div
+        className={`absolute inset-0 m-auto h-6 w-6 rounded-full ${active ? activeColor : inactiveColor} z-0`}></div>
+      <div className="relative z-10">{icon}</div>
+    </div>
+  );
 };
 
 export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {

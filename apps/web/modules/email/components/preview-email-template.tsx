@@ -208,8 +208,7 @@ export async function PreviewEmailTemplate({
                           firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
                             ? `h-[46px] border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1).replace("bg-", "")}`
                             : "h-10",
-                          (firstQuestion.scale === "smiley" || firstQuestion.scale === "star") &&
-                            "border-transparent"
+                          firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                         key={i}>
