@@ -48,7 +48,7 @@ export const replaceRecallInfo = (
     }
 
     // Fetching value from responseData or attributes based on recallItemId
-    if (responseData[recallItemId]) {
+    if (responseData[recallItemId] !== undefined) {
       value = (responseData[recallItemId] as string) ?? fallback;
     }
 
@@ -62,7 +62,7 @@ export const replaceRecallInfo = (
     }
 
     // Replace the recallInfo in the text with the obtained or fallback value
-    modifiedText = modifiedText.replace(recallInfo, value || fallback);
+    modifiedText = modifiedText.replace(recallInfo, value?.toString() || fallback);
   }
 
   return modifiedText;
