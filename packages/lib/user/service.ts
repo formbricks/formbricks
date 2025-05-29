@@ -28,6 +28,8 @@ const responseSelection = {
   whitelist: true,
   communities: true,
   communitiesCreated: true,
+  communityName: true,
+  communityDescription: true,
   locale: true,
 };
 
