@@ -101,7 +101,7 @@ export const ZUserWhitelistInfo = z.object({
   communityDescription: z.string().optional(),
   _count: z
     .object({
-      communitiesCreated: z.number().optional(),
+      communityMembers: z.number().optional(),
     })
     .optional(),
 });

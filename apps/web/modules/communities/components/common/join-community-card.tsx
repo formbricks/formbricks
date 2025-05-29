@@ -32,10 +32,10 @@ export const JoinCommunityCard = ({ creator, className = "" }: JoinCommunityCard
               </h3>
               <p className="text-base font-normal">Community description</p>
             </div>
-            {creator._count?.communitiesCreated !== undefined && (
+            {creator._count?.communityMembers !== undefined && (
               <div className="flex flex-row flex-nowrap gap-1 text-xs">
                 <UsersRoundIcon className="h-4 w-4" />
-                <span>Members: {creator._count.communitiesCreated}</span>
+                <span>Members: {creator._count.communityMembers}</span>
               </div>
             )}
           </div>
