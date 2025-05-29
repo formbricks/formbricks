@@ -43,7 +43,6 @@ export function MyComunities({ searchQuery, environmentId }: MyCommunitiesProps)
     );
   }
 
-  console.log(communities);
   return (
     <>
       {communities &&
