@@ -399,6 +399,7 @@ describe("StackedCardsContainer", () => {
     const resizeCallback = (global.ResizeObserver as any).mock.calls[0][0];
     act(() => {
       resizeCallback([{ contentRect: { height: 500, width: 300 } }]);
+      vi.runAllTimers(); // Advance timers after resize callback to handle potential internal delays
     });
 
     // Check that cardHeight and cardWidth are passed to StackedCard instances (e.g., next card)
