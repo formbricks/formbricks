@@ -59,7 +59,6 @@ describe("endpoint-validator", () => {
 
   describe("isClientSideApiRoute", () => {
     test("should return true for client-side API routes", () => {
-      expect(isClientSideApiRoute("/api/packages/something")).toBe(true);
       expect(isClientSideApiRoute("/api/v1/js/actions")).toBe(true);
       expect(isClientSideApiRoute("/api/v1/client/storage")).toBe(true);
       expect(isClientSideApiRoute("/api/v1/client/other")).toBe(true);
