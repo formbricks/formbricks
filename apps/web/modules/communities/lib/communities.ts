@@ -110,7 +110,7 @@ export const getCurrentUserCommunities = async ({
             ...whitelistSelection,
             _count: {
               select: {
-                communitiesCreated: true,
+                communityMembers: true,
               },
             },
           },
@@ -183,7 +183,7 @@ export const getAvailableUserCommunities = async ({
         ...whitelistSelection,
         _count: {
           select: {
-            communitiesCreated: true,
+            communityMembers: true,
           },
         },
       },
