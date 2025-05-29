@@ -147,7 +147,7 @@ export const createOrganization = async (
   try {
     validateInputs([organizationInput, ZOrganizationCreateInput]);
 
-    const organization = await prisma.organization.create({
+    const organization = (await prisma.organization.create({
       data: {
         ...organizationInput,
         billing: {
@@ -165,7 +165,7 @@ export const createOrganization = async (
         },
       },
       select,
-    });
+    })) as any;
 
     organizationCache.revalidate({
       id: organization.id,
