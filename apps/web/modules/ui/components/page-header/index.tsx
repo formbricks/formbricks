@@ -1,10 +1,10 @@
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import { cn } from "@formbricks/lib/cn";
 
 export interface PageHeaderProps {
   pageTitle: string | React.ReactNode;
   pageSubTitle?: string;
-  pageBannerImage?: string;
+  pageBannerImage?: string | StaticImageData;
   hideBottomBorder?: boolean;
   // Horizontal
   cta?: React.ReactNode;

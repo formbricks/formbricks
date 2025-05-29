@@ -19,7 +19,7 @@ export function CommunitiesClient({ environmentId, translatedTitle }: Communitie
       <PageHeader
         pageTitle={translatedTitle}
         cta={
-          <div className="w-72">
+          <div>
             <SearchSection setSearchQuery={setSearchQuery} />
           </div>
         }

@@ -20,7 +20,8 @@ const uiConfig: AlchemyAccountsUIConfig = {
       // ],
     ],
     addPasskeyOnSignup: true,
-    hideSignInText: false,
+    hideSignInText: true,
+    header: <h3 className="text-lg font-semibold">Sign up / Sign in</h3>,
   },
 };
 

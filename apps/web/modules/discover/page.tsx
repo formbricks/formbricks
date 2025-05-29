@@ -1,8 +1,7 @@
+import coinsImg from "@/images/illustrations/coins.png";
 import { DiscoverClient } from "@/modules/discover/components/discover-client";
 import { getTranslate } from "@/tolgee/server";
 import { cn } from "@formbricks/lib/cn";
-
-const coinsImg = "/illustrations/coins.png";
 
 interface DiscoverPageProps {
   searchParams: Promise<{
