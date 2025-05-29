@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageSwitch } from "./language-switch";
 
@@ -59,7 +59,7 @@ describe("LanguageSwitch", () => {
     cleanup();
   });
 
-  it("toggles dropdown and lists only enabled languages", () => {
+  test("toggles dropdown and lists only enabled languages", () => {
     render(
       <LanguageSwitch
         surveyLanguages={surveyLanguages}
@@ -83,7 +83,7 @@ describe("LanguageSwitch", () => {
     expect(screen.queryByText("fr")).toBeNull();
   });
 
-  it("calls setSelectedLanguageCode and setFirstRender correctly", () => {
+  test("calls setSelectedLanguageCode and setFirstRender correctly", () => {
     render(
       <LanguageSwitch
         surveyLanguages={surveyLanguages}

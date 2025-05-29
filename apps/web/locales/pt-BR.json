@@ -9,10 +9,11 @@
     "continue_with_saml": "Continuar com SAML SSO",
     "email-change": {
       "confirm_password_description": "Por favor, confirme sua senha antes de mudar seu endereço de e-mail",
-      "email_already_exists": "Este e-mail já está em uso",
       "email_change_success": "E-mail alterado com sucesso",
       "email_change_success_description": "Você alterou seu endereço de e-mail com sucesso. Por favor, faça login com seu novo endereço de e-mail.",
       "email_verification_failed": "Falha na verificação do e-mail",
+      "email_verification_loading": "Verificação de e-mail em andamento...",
+      "email_verification_loading_description": "Estamos atualizando seu endereço de e-mail em nosso sistema. Isso pode levar alguns segundos.",
       "invalid_or_expired_token": "Falha na alteração do e-mail. Seu token é inválido ou expirou.",
       "new_email": "Novo Email",
       "old_email": "Email Antigo"
@@ -88,11 +89,12 @@
     "verification-requested": {
       "invalid_email_address": "Endereço de email inválido",
       "invalid_token": "Token inválido ☹️",
+      "new_email_verification_success": "Se o endereço for válido, um email de verificação foi enviado.",
       "no_email_provided": "Nenhum e-mail fornecido",
       "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clica no link do e-mail pra ativar sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
-      "verification_email_successfully_sent": "E-mail de verificação enviado para {email}. Verifique para concluir a atualização.",
+      "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
       "we_sent_an_email_to": "Enviamos um email para {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"
     },
@@ -1161,6 +1163,7 @@
         "disable_two_factor_authentication": "Desativar a autenticação de dois fatores",
         "disable_two_factor_authentication_description": "Se você precisar desativar a 2FA, recomendamos reativá-la o mais rápido possível.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Cada código de backup pode ser usado exatamente uma vez para conceder acesso sem o seu autenticador.",
+        "email_change_initiated": "Sua solicitação de alteração de e-mail foi iniciada.",
         "enable_two_factor_authentication": "Ativar autenticação de dois fatores",
         "enter_the_code_from_your_authenticator_app_below": "Digite o código do seu app autenticador abaixo.",
         "file_size_must_be_less_than_10mb": "O tamanho do arquivo deve ser menor que 10MB.",
@@ -1778,7 +1781,7 @@
         "link_to_public_results_copied": "Link pros resultados públicos copiado",
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de pesquisa esteja definido como",
         "mobile_app": "app de celular",
-        "no_response_matches_filter": "Nenhuma resposta corresponde ao seu filtro",
+        "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Somente concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "No geral",
