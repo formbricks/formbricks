@@ -8,6 +8,16 @@ vi.mock("@/lib/jwt", () => ({
   getEmailFromEmailToken: vi.fn(),
 }));
 
+vi.mock("@/tolgee/server", () => ({
+  getTranslate: async () => (key: string) => key,
+  T: ({ keyName, params }) => {
+    if (params && params.email) {
+      return `${keyName} ${params.email}`;
+    }
+    return keyName;
+  },
+}));
+
 vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
@@ -33,6 +43,7 @@ vi.mock("@/lib/constants", () => ({
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
   SESSION_MAX_AGE: 1000,
+  AVAILABLE_LOCALES: ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"],
 }));
 
 vi.mock("@/modules/auth/components/form-wrapper", () => ({
@@ -46,19 +57,6 @@ vi.mock("@/modules/auth/verification-requested/components/request-verification-e
 vi.mock("@/modules/ui/components/alert", () => ({
   Alert: ({ children }) => <div>{children}</div>,
 }));
-
-vi.doMock("@/tolgee/server", async () => {
-  const actual = await vi.importActual("@/tolgee/server");
-  return {
-    ...actual,
-    getTranslate: vi.fn().mockResolvedValue(vi.fn((key) => key)),
-    T: ({ keyName, params }) => (
-      <>
-        {keyName} {params && params.email && <span>{params.email}</span>}
-      </>
-    ),
-  };
-});
 
 describe("VerificationRequestedPage", () => {
   afterEach(() => {
@@ -80,11 +78,11 @@ describe("VerificationRequestedPage", () => {
     expect(
       screen.getByText("auth.verification-requested.please_confirm_your_email_address")
     ).toBeInTheDocument();
-    expect(screen.getByText(/auth.verification-requested.we_sent_an_email_to/)).toBeInTheDocument();
-    expect(screen.getByText(mockEmail)).toBeInTheDocument();
+    expect(screen.getByText(/auth\.verification-requested\.we_sent_an_email_to/)).toBeInTheDocument();
+    expect(screen.getAllByText(/test@example\.com/)).toHaveLength(2);
     expect(
       screen.getByText(
-        "auth.verification-requested.please_click_the_link_in_the_email_to_activate_your_account"
+        /auth\.verification-requested\.please_click_the_link_in_the_email_to_activate_your_account/
       )
     ).toBeInTheDocument();
     expect(

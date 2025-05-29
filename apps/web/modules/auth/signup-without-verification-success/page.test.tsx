@@ -3,6 +3,10 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+vi.mock("@/tolgee/server", () => ({
+  getTranslate: async () => (key: string) => key,
+}));
+
 vi.mock("@/lib/constants", () => ({
   INTERCOM_SECRET_KEY: "test-secret-key",
   IS_INTERCOM_CONFIGURED: true,
@@ -28,6 +32,7 @@ vi.mock("@/lib/constants", () => ({
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
   SESSION_MAX_AGE: 1000,
+  AVAILABLE_LOCALES: ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"],
 }));
 
 vi.mock("@/modules/auth/components/back-to-login-button", () => ({
@@ -41,14 +46,6 @@ vi.mock("@/modules/auth/components/form-wrapper", () => ({
 vi.mock("@/modules/ui/components/alert", () => ({
   Alert: ({ children }) => <div>{children}</div>,
 }));
-
-vi.doMock("@/tolgee/server", async () => {
-  const actual = await vi.importActual("@/tolgee/server");
-  return {
-    ...actual,
-    getTranslate: vi.fn().mockResolvedValue(vi.fn((key) => key)),
-  };
-});
 
 describe("SignupWithoutVerificationSuccessPage", () => {
   afterEach(() => {
