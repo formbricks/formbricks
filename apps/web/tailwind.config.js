@@ -56,6 +56,7 @@ const config = {
           DEFAULT: "#38B5DB",
           foreground: "#fefefe",
           20: "#38B5DB33",
+          50: "#38B5DB80",
         },
         destructive: {
           DEFAULT: "#FF6B6B", // A softer, coral-like red
@@ -130,8 +131,6 @@ const config = {
         "close-button": "var(--close-btn-color)",
         "close-button-focus": "var(--close-btn-hover-color)",
         "calendar-tile": "var(--calendar-tile-color)",
-        "accent-light-blue": "var(--accent-light-blue)",
-        "accent-blue": "var(--accent-blue)",
       },
       keyframes: {
         fadeIn: {

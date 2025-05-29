@@ -1,4 +1,4 @@
-import CommmunityPlaceholderOne from "@/images/community-placeholder-1.png";
+import CommmunityPlaceholderOne from "@/images/illustrations/community-placeholder-1.png";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
@@ -17,7 +17,7 @@ export const JoinCommunityCard = ({ creator, className = "" }: JoinCommunityCard
   return (
     <div
       className={cn(
-        "bg-accent-blue relative my-4 flex w-full flex-col rounded-xl border border-slate-200 shadow-sm",
+        "bg-primary-20 relative my-4 flex w-full flex-col rounded-xl border border-slate-200 shadow-sm",
         className
       )}>
       <div className="flex min-h-[200px] flex-row gap-4 p-4">
@@ -44,7 +44,7 @@ export const JoinCommunityCard = ({ creator, className = "" }: JoinCommunityCard
               aria-label={t("common.join")}
               disabled
               className={cn(
-                "ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-0 gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
+                "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-0 gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
               )}>
               {t("common.join")}
               <ArrowRightIcon

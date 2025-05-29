@@ -1,4 +1,4 @@
-import coinsImg from "@/images/illustrations/coins.png";
+import CoinsImage from "@/images/illustrations/coins.png";
 import { DiscoverClient } from "@/modules/discover/components/discover-client";
 import { getTranslate } from "@/tolgee/server";
 import { cn } from "@formbricks/lib/cn";
@@ -27,7 +27,7 @@ export const DiscoverPage = async (props: DiscoverPageProps) => {
         </h1>
       }
       translatedSubTitle={t("common.discover_banner_description")}
-      bannerImage={coinsImg}
+      bannerImage={CoinsImage}
     />
   );
 };
