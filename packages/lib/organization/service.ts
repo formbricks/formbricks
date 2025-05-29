@@ -146,8 +146,8 @@ export const createOrganization = async (
 ): Promise<TOrganization> => {
   try {
     validateInputs([organizationInput, ZOrganizationCreateInput]);
-
-    const organization = (await prisma.organization.create({
+    // @ts-ignore
+    const organization = await prisma.organization.create({
       data: {
         ...organizationInput,
         billing: {
@@ -165,7 +165,7 @@ export const createOrganization = async (
         },
       },
       select,
-    })) as any;
+    });
 
     organizationCache.revalidate({
       id: organization.id,
