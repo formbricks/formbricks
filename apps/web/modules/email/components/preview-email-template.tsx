@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
@@ -218,6 +219,7 @@ export async function PreviewEmailTemplate({
                             idx={i}
                             range={firstQuestion.range}
                             addColors={firstQuestion.isColorCodingEnabled}
+                            baseUrl={WEBAPP_URL}
                           />
                         ) : firstQuestion.scale === "number" ? (
                           <Text className="m-0 flex h-10 items-center">{i + 1}</Text>

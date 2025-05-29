@@ -5,6 +5,7 @@ interface RatingSmileyProps {
   idx: number;
   range: number;
   addColors?: boolean;
+  baseUrl?: string;
 }
 
 const getSmileyColor = (range: number, idx: number) => {
@@ -29,7 +30,8 @@ const getSmiley = (
   idx: number,
   range: number,
   active: boolean,
-  addColors: boolean
+  addColors: boolean,
+  baseUrl?: string
 ): JSX.Element => {
   const activeColor = "bg-rating-fill";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "";
@@ -49,7 +51,11 @@ const getSmiley = (
 
   const icon = (
     <img
-      src={`/smiley-icons/${faceIcons[iconIdx]}-face.png`}
+      src={
+        baseUrl
+          ? `${baseUrl}/smiley-icons/${faceIcons[iconIdx]}-face.png`
+          : `/smiley-icons/${faceIcons[iconIdx]}-face.png`
+      }
       alt={faceIcons[iconIdx]}
       width={36}
       height={36}
@@ -65,7 +71,13 @@ const getSmiley = (
   );
 };
 
-export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSmileyProps): JSX.Element => {
+export const RatingSmiley = ({
+  active,
+  idx,
+  range,
+  addColors = false,
+  baseUrl,
+}: RatingSmileyProps): JSX.Element => {
   let iconsIdx: number[] = [];
   if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
@@ -74,5 +86,5 @@ export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSm
   else if (range === 4) iconsIdx = [4, 5, 6, 7];
   else if (range === 3) iconsIdx = [4, 5, 7];
 
-  return getSmiley(iconsIdx[idx], idx, range, active, addColors);
+  return getSmiley(iconsIdx[idx], idx, range, active, addColors, baseUrl);
 };
