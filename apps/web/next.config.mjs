@@ -356,6 +356,22 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: "/api/packages/website",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/app",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/js",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/surveys",
+        destination: "/js/surveys.umd.cjs",
+      },
+      {
         source: "/api/v1/client/:environmentId/website/environment",
         destination: "/api/v1/client/:environmentId/environment",
       },
