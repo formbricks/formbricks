@@ -1,7 +1,7 @@
 "use server";
 
 import {
-  checkUserExistsByEmail,
+  getIsEmailUnique,
   verifyUserPassword,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/lib/user";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
@@ -10,13 +10,13 @@ import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
   AuthenticationError,
   AuthorizationError,
-  InvalidInputError,
   OperationNotAllowedError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
@@ -37,10 +37,11 @@ export const updateUserAction = authenticatedActionClient
     const inputEmail = parsedInput.email?.trim().toLowerCase();
 
     let payload: TUserUpdateInput = {
-      name: parsedInput.name,
-      locale: parsedInput.locale,
+      ...(parsedInput.name && { name: parsedInput.name }),
+      ...(parsedInput.locale && { locale: parsedInput.locale }),
     };
 
+    // Only process email update if a new email is provided and it's different from current email
     if (inputEmail && ctx.user.email !== inputEmail) {
       // Check rate limit
       try {
@@ -61,20 +62,26 @@ export const updateUserAction = authenticatedActionClient
         throw new AuthorizationError("Incorrect credentials");
       }
 
-      const doesUserExist = await checkUserExistsByEmail(inputEmail);
+      // Check if the new email is unique, no user exists with the new email
+      const isEmailUnique = await getIsEmailUnique(inputEmail);
 
-      if (doesUserExist) {
-        throw new InvalidInputError("This email is already in use");
-      }
-
-      if (EMAIL_VERIFICATION_DISABLED) {
-        payload.email = inputEmail;
-      } else {
-        await sendVerificationNewEmail(ctx.user.id, inputEmail);
+      // If the new email is unique, proceed with the email update
+      if (isEmailUnique) {
+        if (EMAIL_VERIFICATION_DISABLED) {
+          payload.email = inputEmail;
+          await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
+        } else {
+          await sendVerificationNewEmail(ctx.user.id, inputEmail);
+        }
       }
     }
 
-    return await updateUser(ctx.user.id, payload);
+    // Only proceed with updateUser if we have actual changes to make
+    if (Object.keys(payload).length > 0) {
+      await updateUser(ctx.user.id, payload);
+    }
+
+    return true;
   });
 
 const ZUpdateAvatarAction = z.object({

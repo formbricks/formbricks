@@ -23,7 +23,6 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
-    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
   },
   experimental: {},
@@ -189,7 +188,8 @@ const nextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+            value:
+              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
           },
           {
             key: "Content-Type",
@@ -199,20 +199,151 @@ const nextConfig = {
             key: "Access-Control-Allow-Origin",
             value: "*",
           },
+          {
+            key: "Vary",
+            value: "Accept-Encoding",
+          },
         ],
       },
-
-      // headers for /api/packages/(.*) -- the api route does not exist, but we still need the headers for the rewrites to work correctly!
+      // Favicon files - long cache since they rarely change
       {
-        source: "/api/packages/(.*)",
+        source: "/favicon/(.*)",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+            value: "public, max-age=2592000, s-maxage=31536000, immutable",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+      // Root favicon.ico - long cache
+      {
+        source: "/favicon.ico",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=2592000, s-maxage=31536000, immutable",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+      // SVG files (icons, logos) - long cache since they're usually static
+      {
+        source: "/(.*)\\.svg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=2592000, s-maxage=31536000, immutable",
           },
           {
             key: "Content-Type",
-            value: "application/javascript; charset=UTF-8",
+            value: "image/svg+xml",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+      // Image backgrounds - medium cache (might update more frequently)
+      {
+        source: "/image-backgrounds/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+          {
+            key: "Vary",
+            value: "Accept-Encoding",
+          },
+        ],
+      },
+      // Video files - long cache since they're large and expensive to transfer
+      {
+        source: "/video/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=604800",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+          {
+            key: "Accept-Ranges",
+            value: "bytes",
+          },
+        ],
+      },
+      // Animated backgrounds (4K videos) - very long cache since they're large and immutable
+      {
+        source: "/animated-bgs/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, s-maxage=31536000, immutable",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+          {
+            key: "Accept-Ranges",
+            value: "bytes",
+          },
+        ],
+      },
+      // CSV templates - shorter cache since they might update with feature changes
+      {
+        source: "/sample-csv/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "text/csv",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+      // Web manifest and browser config files - medium cache
+      {
+        source: "/(site\\.webmanifest|browserconfig\\.xml)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+      // Optimize caching for other static assets in public folder (fallback)
+      {
+        source: "/(images|fonts|icons)/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, s-maxage=31536000, immutable",
           },
           {
             key: "Access-Control-Allow-Origin",

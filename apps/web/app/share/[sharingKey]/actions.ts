@@ -43,7 +43,7 @@ export const getSummaryBySurveySharingKeyAction = actionClient
     const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
     if (!surveyId) throw new AuthorizationError("Not authorized");
 
-    return await getSurveySummary(surveyId, parsedInput.filterCriteria);
+    return getSurveySummary(surveyId, parsedInput.filterCriteria);
   });
 
 const ZGetResponseCountBySurveySharingKeyAction = z.object({
@@ -57,7 +57,7 @@ export const getResponseCountBySurveySharingKeyAction = actionClient
     const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
     if (!surveyId) throw new AuthorizationError("Not authorized");
 
-    return await getResponseCountBySurveyId(surveyId, parsedInput.filterCriteria);
+    return getResponseCountBySurveyId(surveyId, parsedInput.filterCriteria);
   });
 
 const ZGetSurveyFilterDataBySurveySharingKeyAction = z.object({

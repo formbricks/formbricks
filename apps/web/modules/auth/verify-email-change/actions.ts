@@ -2,6 +2,7 @@
 
 import { verifyEmailChangeToken } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
+import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { updateUser } from "@/modules/auth/lib/user";
 import { z } from "zod";
 
@@ -17,5 +18,6 @@ export const verifyEmailChangeAction = actionClient
     if (!user) {
       throw new Error("User not found or email update failed");
     }
+    await updateBrevoCustomer({ id: user.id, email: user.email });
     return user;
   });
