@@ -63,7 +63,15 @@ const getSmiley = (
     />
   );
 
-  return <div className="m-auto flex h-10 w-10 items-center justify-center">{icon}</div>;
+  return (
+    <table style={{ width: "40px", height: "40px" }}>
+      <tr>
+        <td align="center" valign="middle">
+          {icon}
+        </td>
+      </tr>
+    </table>
+  );
 };
 
 export const RatingSmiley = ({
