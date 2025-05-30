@@ -34,9 +34,7 @@ export const AddActionModal = ({ environmentId, actionClasses, isReadOnly }: Add
                 <MousePointerClickIcon className="h-5 w-5" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-medium text-slate-700">
-                  {t("environments.actions.track_new_user_action")}
-                </DialogTitle>
+                <DialogTitle>{t("environments.actions.track_new_user_action")}</DialogTitle>
                 <div className="text-sm text-slate-500">
                   {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
                 </div>
