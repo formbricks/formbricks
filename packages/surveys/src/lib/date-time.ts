@@ -29,6 +29,10 @@ export const isValidDateString = (value: string) => {
     return false;
   }
 
+  if (RegExp(/^\d{2}-\d{2}-\d{4}$/).exec(value) !== null) {
+    value = value.replace(/(\d{2})-(\d{2})-(\d{4})/, "$3-$2-$1");
+  }
+
   const date = new Date(value);
   return !isNaN(date.getTime());
 };
