@@ -1,7 +1,15 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 
 interface AlertDialogProps {
@@ -29,27 +37,33 @@ export const AlertDialog = ({
 }: AlertDialogProps) => {
   const { t } = useTranslate();
   return (
-    <Modal open={open} setOpen={setOpen} title={headerText}>
-      <p className="mb-6 text-slate-900">
-        {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
-      </p>
-      <div className="space-x-2 text-right">
-        {declineBtnLabel && onDecline && (
-          <Button variant={declineBtnVariant} onClick={onDecline}>
-            {declineBtnLabel}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-lg" hideCloseButton={true}>
+        <DialogHeader>
+          <DialogTitle className="text-primary text-lg font-medium">{headerText}</DialogTitle>
+          <DialogDescription>
+            {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          {declineBtnLabel && onDecline && (
+            <Button variant={declineBtnVariant} onClick={onDecline}>
+              {declineBtnLabel}
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              if (onConfirm) {
+                onConfirm();
+              } else {
+                setOpen(false);
+              }
+            }}>
+            {confirmBtnLabel}
           </Button>
-        )}
-        <Button
-          onClick={() => {
-            if (onConfirm) {
-              onConfirm();
-            } else {
-              setOpen(false);
-            }
-          }}>
-          {confirmBtnLabel}
-        </Button>
-      </div>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
