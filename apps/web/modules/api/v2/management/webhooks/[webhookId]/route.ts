@@ -132,7 +132,6 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         status: "success",
         newObject: updatedWebhook.data,
         oldObject: webhook.data,
-        eventId: request.headers.get("x-request-id") ?? undefined,
       });
 
       return responses.successResponse(updatedWebhook);
@@ -197,7 +196,6 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         ...auditLogBase,
         status: "success",
         oldObject: webhook.data,
-        eventId: request.headers.get("x-request-id") ?? undefined,
       });
 
       return responses.successResponse(deletedWebhook);

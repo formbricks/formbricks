@@ -9,6 +9,8 @@ import {
   ZContactAttributeKeyInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 
@@ -53,20 +55,42 @@ export const POST = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { body } = parsedInput;
 
+      const auditLogBase = {
+        actionType: "contactAttributeKey.created" as const,
+        targetType: "contactAttributeKey" as const,
+        userId: authentication.apiKeyId,
+        userType: "api" as const,
+        targetId: UNKNOWN_DATA,
+        organizationId: authentication.organizationId,
+        status: "failure" as const,
+        apiUrl: request.url,
+      };
+
       if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "environmentId", issue: "does not have permission to create contact attribute key" },
-          ],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [
+              { field: "environmentId", issue: "does not have permission to create contact attribute key" },
+            ],
+          },
+          auditLogBase
+        );
       }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);
 
       if (!createContactAttributeKeyResult.ok) {
-        return handleApiError(request, createContactAttributeKeyResult.error);
+        return handleApiError(request, createContactAttributeKeyResult.error, auditLogBase);
       }
+
+      queueAuditEvent({
+        ...auditLogBase,
+        targetId: createContactAttributeKeyResult.data.id,
+        status: "success",
+        newObject: createContactAttributeKeyResult.data,
+      });
 
       return responses.createdResponse(createContactAttributeKeyResult);
     },

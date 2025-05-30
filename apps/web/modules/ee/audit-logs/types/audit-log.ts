@@ -1,7 +1,15 @@
 import { z } from "zod";
 
 // Define as const arrays
-const AuditTargets = ["segment", "survey", "webhook", "user"] as const;
+const AuditTargets = [
+  "segment",
+  "survey",
+  "webhook",
+  "user",
+  "contactAttributeKey",
+  "projectTeam",
+  "team",
+] as const;
 const AuditActions = ["created", "updated", "deleted", "signedin"] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;

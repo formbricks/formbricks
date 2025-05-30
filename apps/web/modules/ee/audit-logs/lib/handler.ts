@@ -216,8 +216,6 @@ export const withAuditLogging = (
       error = err;
     }
 
-    console.log("================ AUDIT_LOG_ENABLED", AUDIT_LOG_ENABLED);
-
     if (!AUDIT_LOG_ENABLED) {
       return result;
     }

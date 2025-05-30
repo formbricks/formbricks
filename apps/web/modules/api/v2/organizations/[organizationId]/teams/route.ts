@@ -8,6 +8,8 @@ import {
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
@@ -47,17 +49,39 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { body, params } }) => {
+      const auditLogBase = {
+        actionType: "team.created" as const,
+        targetType: "team" as const,
+        userId: authentication.apiKeyId,
+        userType: "api" as const,
+        targetId: UNKNOWN_DATA, // Will be updated after creation
+        organizationId: authentication.organizationId,
+        status: "failure" as const,
+        apiUrl: request.url,
+      };
+
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "organizationId", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "organizationId", issue: "unauthorized" }],
+          },
+          auditLogBase
+        );
       }
 
       const createTeamResult = await createTeam(body!, authentication.organizationId);
       if (!createTeamResult.ok) {
-        return handleApiError(request, createTeamResult.error);
+        return handleApiError(request, createTeamResult.error, auditLogBase);
       }
+
+      queueAuditEvent({
+        ...auditLogBase,
+        targetId: createTeamResult.data.id,
+        status: "success",
+        newObject: createTeamResult.data,
+      });
 
       return responses.createdResponse({ data: createTeamResult.data });
     },

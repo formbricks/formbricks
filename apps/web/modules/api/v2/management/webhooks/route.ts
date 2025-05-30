@@ -98,7 +98,6 @@ export const POST = async (request: NextRequest) =>
         targetId: createWebhookResult.data.id,
         status: "success",
         newObject: createWebhookResult.data,
-        eventId: request.headers.get("x-request-id") ?? undefined,
       });
 
       return responses.createdResponse(createWebhookResult);
