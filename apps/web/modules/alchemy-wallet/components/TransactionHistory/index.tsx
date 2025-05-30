@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { useBlockscoutApi } from "@formbricks/web3";
 
-export function TransactionHistory({ className = "" }: { className?: string }) {
+export function TransactionHistory() {
   const user = useUser();
   const address = user?.address || "";
   const blockscoutApi = useBlockscoutApi();
@@ -31,54 +31,32 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
 
   if (transfers == null) {
     return (
-      <div
-        className={cn(
-          "relative my-4 flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white py-4 shadow-sm",
-          className
-        )}
-        id={"transaction-history"}>
-        <h3 className="px-4 text-lg font-medium capitalize leading-6 text-slate-900">
-          {t("common.transaction_history")}
-        </h3>
+      <TransactionCardContainer title={t("common.transaction_history")}>
         <div className="flex max-h-96 flex-col gap-4 overflow-y-scroll px-4">
           <TransactionItemSkeleton />
           <TransactionItemSkeleton />
           <TransactionItemSkeleton />
         </div>
-      </div>
+      </TransactionCardContainer>
     );
   }
 
-  if (transfers.length == 0) {
+  if (transfers.length === 0) {
     return (
-      <div
-        className={cn(
-          "relative my-4 flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white py-4 shadow-sm",
-          className
-        )}
-        id={"transaction-history"}>
-        <h3 className="px-4 text-lg font-medium capitalize leading-6 text-slate-900">
-          {t("common.transaction_history")}
-        </h3>
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <h3 className="mt-4 text-lg font-medium text-slate-900">
-            {t("environments.wallet.transaction.common.your_transaction_history_is_empty")}
-          </h3>
+      <TransactionCardContainer
+        title={t("common.transaction_history")}
+        className={"min-h-[200px] justify-center"}>
+        <div className="col-span-3 flex w-full flex-col gap-1">
+          <p className="text-center text-sm">
+            {t("environments.wallet.transaction.common.no_transactions_yet")}
+          </p>
         </div>
-      </div>
+      </TransactionCardContainer>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "relative my-4 flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white py-4 shadow-sm",
-        className
-      )}
-      id={"transaction-history"}>
-      <h3 className="px-4 text-lg font-medium capitalize leading-6 text-slate-900">
-        {t("common.transaction_history")}
-      </h3>
+    <TransactionCardContainer title={t("common.transaction_history")}>
       <div className="flex max-h-96 flex-col gap-4 overflow-y-scroll px-4">
         {transfers.map((t) => (
           <TransactionItem
@@ -89,8 +67,30 @@ export function TransactionHistory({ className = "" }: { className?: string }) {
           />
         ))}
       </div>
-    </div>
+    </TransactionCardContainer>
   );
 }
 
 export default TransactionHistory;
+
+interface TransactionCardContainerProps {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function TransactionCardContainer({ title, className = "", children }: TransactionCardContainerProps) {
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+      <div
+        className={cn(
+          "shadow-card-20 relative my-5 flex w-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left",
+          className
+        )}
+        id="transaction-history">
+        {children}
+      </div>
+    </div>
+  );
+}

@@ -39,6 +39,7 @@ const config = {
         "card-md": "0px 1px 25px -10px rgba(30,41,59,0.30)",
         "card-lg": "0px 2px 51px -19px rgba(30,41,59,0.40)",
         "card-xl": "0px 20px 25px -5px rgba(0, 0, 0, 0.10), 0px 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        "card-20": "0px 8px 24px 0px var(--primary-20)",
       },
       borderRadius: {
         custom: "var(--border-radius)",
@@ -53,10 +54,13 @@ const config = {
         // error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #38B5DB)",
         primary: {
+          // NOTE: Using raw colour values here to utilize Tailwind's opacity modifier i.e. text-primary/50
+          // Cannot use CSS variables here as they do not support opacity modifiers
           DEFAULT: "#38B5DB",
+          // DEFAULT: "var(--primary-100, #38B5DB)",
           foreground: "#fefefe",
-          20: "#38B5DB33",
-          50: "#38B5DB80",
+          50: "var(--primary-50, #38B5DB80)",
+          20: "var(--primary-20, #38B5DB33)",
         },
         destructive: {
           DEFAULT: "#FF6B6B", // A softer, coral-like red
@@ -67,7 +71,8 @@ const config = {
           foreground: "#38B5DB",
         },
         tertiary: {
-          DEFAULT: "#EFDCFF",
+          DEFAULT: "#157BA3",
+          foreground: "#EFDCFF",
         },
         accent: {
           DEFAULT: "#f4f6f8", // light gray background
