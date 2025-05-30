@@ -34,7 +34,7 @@ const getSmiley = (
   baseUrl?: string
 ): JSX.Element => {
   const activeColor = "bg-rating-fill";
-  const inactiveColor = addColors ? getSmileyColor(range, idx) : "";
+  const inactiveColor = addColors ? getSmileyColor(range, idx) : "bg-fill-none";
 
   const faceIcons = [
     "tired",
@@ -51,6 +51,7 @@ const getSmiley = (
 
   const icon = (
     <img
+      data-testid={faceIcons[iconIdx]}
       src={
         baseUrl
           ? `${baseUrl}/smiley-icons/${faceIcons[iconIdx]}-face.png`
