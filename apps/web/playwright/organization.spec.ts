@@ -62,8 +62,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       const inviteLinkText = await page.waitForSelector("#inviteLinkText");
       expect(inviteLinkText).toBeTruthy();
 
-      // invite link text is a paragraph, and we need the text inside it
-      const inviteLinkTextContent = await inviteLinkText.textContent();
+      // invite link text is an input element, so we need to get its value instead of textContent
+      const inviteLinkTextContent = await inviteLinkText.inputValue();
       expect(inviteLinkTextContent).toBeTruthy();
       // if (inviteLinkTextContent) {
       //   inviteLink = inviteLinkTextContent;

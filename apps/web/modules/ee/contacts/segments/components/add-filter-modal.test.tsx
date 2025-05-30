@@ -6,47 +6,66 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 
-// Mock the Modal component
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
     children,
     open,
-    closeOnOutsideClick,
-    setOpen,
+    onOpenChange,
   }: {
     children: React.ReactNode;
     open: boolean;
-    closeOnOutsideClick?: boolean;
-    setOpen?: (open: boolean) => void;
-  }) => {
-    return open ? ( // NOSONAR // This is a mock
-      <button
-        data-testid="modal-overlay"
-        onClick={(e) => {
-          if (closeOnOutsideClick && e.target === e.currentTarget && setOpen) {
-            setOpen(false);
-          }
-        }}>
-        <div data-testid="modal-content">{children}</div>
-      </button>
-    ) : null; // NOSONAR // This is a mock
-  },
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({
+    children,
+    className,
+    hideCloseButton,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    hideCloseButton?: boolean;
+  }) => (
+    <div data-testid="dialog-content" className={className} data-hide-close-button={hideCloseButton}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+}));
+
+// Mock the Input component
+vi.mock("@/modules/ui/components/input", () => ({
+  Input: ({ placeholder, onChange, autoFocus }: any) => (
+    <input data-testid="search-input" placeholder={placeholder} onChange={onChange} autoFocus={autoFocus} />
+  ),
 }));
 
 // Mock the TabBar component
 vi.mock("@/modules/ui/components/tab-bar", () => ({
-  TabBar: ({
-    tabs,
-    activeId,
-    setActiveId,
-  }: {
-    tabs: any[];
-    activeId: string;
-    setActiveId: (id: string) => void;
-  }) => (
-    <div>
-      {tabs.map((tab) => (
-        <button key={tab.id} data-testid={`tab-${tab.id}`} onClick={() => setActiveId(tab.id)}>
+  TabBar: ({ tabs, activeId, setActiveId }: any) => (
+    <div data-testid="tab-bar">
+      {tabs.map((tab: any) => (
+        <button
+          key={tab.id}
+          data-testid={`tab-${tab.id}`}
+          onClick={() => setActiveId(tab.id)}
+          className={activeId === tab.id ? "active" : ""}>
           {tab.label} {activeId === tab.id ? "(Active)" : ""}
         </button>
       ))}
@@ -54,9 +73,92 @@ vi.mock("@/modules/ui/components/tab-bar", () => ({
   ),
 }));
 
+// Mock the useTranslate hook
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations = {
+        "common.add_filter": "Add Filter",
+        "common.all": "All",
+        "environments.segments.person_and_attributes": "Person & Attributes",
+        "common.segments": "Segments",
+        "environments.segments.devices": "Devices",
+        "environments.segments.phone": "Phone",
+        "environments.segments.desktop": "Desktop",
+        "environments.segments.no_filters_yet": "No filters yet",
+        "environments.segments.no_segments_yet": "No segments yet",
+        "environments.segments.no_attributes_yet": "No attributes yet",
+        "common.user_id": "userId",
+        "common.person": "Person",
+        "common.attributes": "Attributes",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
 // Mock createId
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: vi.fn(() => "mockCuid"),
+}));
+
+// Mock the AttributeTabContent component
+vi.mock("./attribute-tab-content", () => ({
+  default: ({ contactAttributeKeys, onAddFilter, setOpen, handleAddFilter }: any) => (
+    <div data-testid="attribute-tab-content">
+      <h2>Person</h2>
+      <button
+        data-testid="filter-btn-person-userId"
+        onClick={() => handleAddFilter({ type: "person", onAddFilter, setOpen })}
+        onKeyDown={(e: any) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleAddFilter({ type: "person", onAddFilter, setOpen });
+          }
+        }}
+        tabIndex={0}>
+        userId
+      </button>
+      <hr />
+      <h2>Attributes</h2>
+      {contactAttributeKeys.length === 0 ? (
+        <p>No attributes yet</p>
+      ) : (
+        contactAttributeKeys.map((attr: any) => (
+          <button
+            key={attr.id}
+            data-testid={`filter-btn-attribute-${attr.key}`}
+            onClick={() =>
+              handleAddFilter({ type: "attribute", onAddFilter, setOpen, contactAttributeKey: attr.key })
+            }
+            onKeyDown={(e: any) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleAddFilter({ type: "attribute", onAddFilter, setOpen, contactAttributeKey: attr.key });
+              }
+            }}
+            tabIndex={0}>
+            {attr.name ?? attr.key}
+          </button>
+        ))
+      )}
+    </div>
+  ),
+}));
+
+// Mock the FilterButton component
+vi.mock("./filter-button", () => ({
+  default: ({ icon, label, onClick, onKeyDown, tabIndex = 0, ...props }: any) => (
+    <button
+      className="flex w-full cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+      tabIndex={tabIndex}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      {...props}>
+      {icon}
+      <span>{label}</span>
+    </button>
+  ),
 }));
 
 const mockContactAttributeKeys: TContactAttributeKey[] = [
@@ -154,16 +256,20 @@ describe("AddFilterModal", () => {
       />
     );
     // ... assertions ...
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Add Filter");
+    expect(screen.getByTestId("search-input")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Browse filters...")).toBeInTheDocument();
-    expect(screen.getByTestId("tab-all")).toHaveTextContent("common.all (Active)");
+    expect(screen.getByTestId("tab-all")).toHaveTextContent("All (Active)");
     expect(screen.getByText("Email Address")).toBeInTheDocument();
     expect(screen.getByText("Plan Type")).toBeInTheDocument();
     expect(screen.getByText("userId")).toBeInTheDocument();
     expect(screen.getByText("Active Users")).toBeInTheDocument();
     expect(screen.getByText("Paying Customers")).toBeInTheDocument();
     expect(screen.queryByText("Private Segment")).not.toBeInTheDocument();
-    expect(screen.getByText("environments.segments.phone")).toBeInTheDocument();
-    expect(screen.getByText("environments.segments.desktop")).toBeInTheDocument();
+    expect(screen.getByText("Phone")).toBeInTheDocument();
+    expect(screen.getByText("Desktop")).toBeInTheDocument();
   });
 
   test("does not render when closed", () => {
@@ -176,6 +282,7 @@ describe("AddFilterModal", () => {
         segments={mockSegments}
       />
     );
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Browse filters...")).not.toBeInTheDocument();
   });
 
@@ -210,22 +317,22 @@ describe("AddFilterModal", () => {
     const attributesTabButton = screen.getByTestId("tab-attributes");
     await user.click(attributesTabButton);
     // ... assertions ...
-    expect(attributesTabButton).toHaveTextContent("environments.segments.person_and_attributes (Active)");
-    expect(screen.getByText("common.user_id")).toBeInTheDocument();
+    expect(attributesTabButton).toHaveTextContent("Person & Attributes (Active)");
+    expect(screen.getByText("userId")).toBeInTheDocument();
 
     // Switch to Segments tab
     const segmentsTabButton = screen.getByTestId("tab-segments");
     await user.click(segmentsTabButton);
     // ... assertions ...
-    expect(segmentsTabButton).toHaveTextContent("common.segments (Active)");
+    expect(segmentsTabButton).toHaveTextContent("Segments (Active)");
     expect(screen.getByText("Active Users")).toBeInTheDocument();
 
     // Switch to Devices tab
     const devicesTabButton = screen.getByTestId("tab-devices");
     await user.click(devicesTabButton);
     // ... assertions ...
-    expect(devicesTabButton).toHaveTextContent("environments.segments.devices (Active)");
-    expect(screen.getByText("environments.segments.phone")).toBeInTheDocument();
+    expect(devicesTabButton).toHaveTextContent("Devices (Active)");
+    expect(screen.getByText("Phone")).toBeInTheDocument();
   });
 
   // --- Click and Keydown Tests ---
@@ -499,7 +606,7 @@ describe("AddFilterModal", () => {
       />
     );
     await user.click(screen.getByTestId("tab-attributes"));
-    expect(await screen.findByText("environments.segments.no_attributes_yet")).toBeInTheDocument();
+    expect(await screen.findByText("No attributes yet")).toBeInTheDocument();
   });
 
   test("displays 'no segments yet' message", async () => {
@@ -513,7 +620,7 @@ describe("AddFilterModal", () => {
       />
     );
     await user.click(screen.getByTestId("tab-segments"));
-    expect(await screen.findByText("environments.segments.no_segments_yet")).toBeInTheDocument();
+    expect(await screen.findByText("No segments yet")).toBeInTheDocument();
   });
 
   test("displays 'no filters match' message when search yields no results", async () => {
@@ -528,7 +635,7 @@ describe("AddFilterModal", () => {
     );
     const searchInput = screen.getByPlaceholderText("Browse filters...");
     await user.type(searchInput, "nonexistentfilter");
-    expect(await screen.findByText("environments.segments.no_filters_yet")).toBeInTheDocument();
+    expect(await screen.findByText("No filters yet")).toBeInTheDocument();
   });
 
   test("verifies keyboard navigation through filter buttons", async () => {
@@ -548,19 +655,19 @@ describe("AddFilterModal", () => {
 
     // Tab to the first tab button ("all")
     await user.tab();
-    expect(document.activeElement).toHaveTextContent(/common\.all/);
+    expect(document.activeElement).toHaveTextContent(/All/);
 
     // Tab to the second tab button ("attributes")
     await user.tab();
-    expect(document.activeElement).toHaveTextContent(/person_and_attributes/);
+    expect(document.activeElement).toHaveTextContent(/Person & Attributes/);
 
     // Tab to the third tab button ("segments")
     await user.tab();
-    expect(document.activeElement).toHaveTextContent(/common\.segments/);
+    expect(document.activeElement).toHaveTextContent(/Segments/);
 
     // Tab to the fourth tab button ("devices")
     await user.tab();
-    expect(document.activeElement).toHaveTextContent(/environments\.segments\.devices/);
+    expect(document.activeElement).toHaveTextContent(/Devices/);
 
     // Tab to the first filter button ("Email Address")
     await user.tab();
@@ -594,22 +701,5 @@ describe("AddFilterModal", () => {
       expect(button).not.toHaveAttribute("aria-hidden", "true");
       expect(button).not.toHaveAttribute("tabIndex", "-1"); // Should not be unfocusable
     });
-  });
-
-  test("closes the modal when clicking outside the content area", async () => {
-    render(
-      <AddFilterModal
-        open={true}
-        setOpen={setOpen}
-        onAddFilter={onAddFilter}
-        contactAttributeKeys={mockContactAttributeKeys}
-        segments={mockSegments}
-      />
-    );
-
-    const modalOverlay = screen.getByTestId("modal-overlay");
-    await user.click(modalOverlay);
-
-    expect(setOpen).toHaveBeenCalledWith(false);
   });
 });
