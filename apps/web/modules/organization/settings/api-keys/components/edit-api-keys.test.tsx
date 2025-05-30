@@ -31,6 +31,30 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) =>
+    open ? (
+      <div data-testid="dialog" role="dialog">
+        {children}
+        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
+      </div>
+    ) : null,
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children, className }: any) => (
+    <h2 data-testid="dialog-title" className={className}>
+      {children}
+    </h2>
+  ),
+  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
+  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
+}));
+
 // Base project setup
 const baseProject = {};
 
@@ -156,11 +180,10 @@ describe("EditAPIKeys", () => {
     const addButton = screen.getByRole("button", { name: "environments.settings.api_keys.add_api_key" });
     await userEvent.click(addButton);
 
-    // Look for the modal title specifically
-    const modalTitle = screen.getByText("environments.project.api_keys.add_api_key", {
-      selector: "div.text-xl",
-    });
+    // Look for the modal title using the correct test id
+    const modalTitle = screen.getByTestId("dialog-title");
     expect(modalTitle).toBeInTheDocument();
+    expect(modalTitle).toHaveTextContent("environments.project.api_keys.add_api_key");
   });
 
   test("handles API key deletion", async () => {
