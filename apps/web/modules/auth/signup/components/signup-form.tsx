@@ -12,8 +12,7 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -123,8 +122,8 @@ export const SignupForm = ({
 
       if (createUserResponse?.data) {
         router.push(url);
-        if (emailTokenActionResponse?.data) {
-        } else {
+
+        if (!emailTokenActionResponse?.data) {
           if (isTurnstileConfigured) {
             setTurnstileToken(undefined);
             turnstile.reset();
