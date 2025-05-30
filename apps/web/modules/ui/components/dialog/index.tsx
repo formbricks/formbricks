@@ -79,7 +79,8 @@ type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
-      "sticky top-0 z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left [&>svg]:absolute [&>svg]:top-1.5 [&>svg]:size-6 md:[&>svg~*]:pl-8",
+      "sticky top-[-32px] z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left",
+      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 md:[&>svg~*]:flex md:[&>svg~*]:items-center md:[&>svg~*]:pl-6",
       className
     )}
     {...props}
@@ -106,7 +107,7 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 DialogFooter.displayName = "DialogFooter";
 
 const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex-1 overflow-y-auto", className)} {...props} />
+  <div className={cn("mt-4 flex-1 overflow-y-auto", className)} {...props} />
 );
 DialogBody.displayName = "DialogBody";
 
@@ -116,7 +117,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-foreground text-sm font-medium leading-none tracking-tight", className)}
+    className={cn("text-primary text-sm font-medium leading-none tracking-tight", className)}
     {...props}
   />
 ));

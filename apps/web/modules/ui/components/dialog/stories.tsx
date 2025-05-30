@@ -18,6 +18,7 @@ interface StoryOptions {
   showHeader: boolean;
   showIcon: boolean;
   title: string;
+  showDescription: boolean;
   description: string;
   bodyContent?: React.ReactNode;
   showFooter: boolean;
@@ -106,6 +107,15 @@ const meta: Meta<StoryProps> = {
       },
       order: 3,
     },
+    showDescription: {
+      control: "boolean",
+      description: "Whether to show a description in the header",
+      table: {
+        category: "Appearance",
+        type: { summary: "boolean" },
+      },
+      order: 4,
+    },
     showFooter: {
       control: "boolean",
       description: "Whether to show the footer section",
@@ -113,7 +123,7 @@ const meta: Meta<StoryProps> = {
         category: "Appearance",
         type: { summary: "boolean" },
       },
-      order: 4,
+      order: 5,
     },
     footerButtonConfiguration: {
       control: "select",
@@ -123,7 +133,7 @@ const meta: Meta<StoryProps> = {
         category: "Appearance",
         type: { summary: "string" },
       },
-      order: 5,
+      order: 6,
     },
 
     // Story Options - Content Category
@@ -213,6 +223,7 @@ const renderModal = (args: StoryProps) => {
     showHeader = true,
     showIcon = false,
     title = "Modal Title",
+    showDescription = true,
     description = "Modal description",
     showFooter = true,
     footerButtonConfiguration = "3",
@@ -238,7 +249,7 @@ const renderModal = (args: StoryProps) => {
           <DialogHeader>
             {showIcon && <AlertCircle />}
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
+            {showDescription && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
         )}
         <DialogBody>{bodyContent}</DialogBody>
@@ -275,6 +286,7 @@ export const Default: Story = {
     showHeader: true,
     showIcon: true,
     title: "Modal Title",
+    showDescription: true,
     description: "This is a description of what this modal is for.",
     showFooter: true,
     footerButtonConfiguration: "3",
@@ -295,6 +307,7 @@ export const OnlyBody: Story = {
     showHeader: false,
     showIcon: false,
     title: "",
+    showDescription: false,
     description: "",
     showFooter: false,
     footerButtonConfiguration: "1",
@@ -322,6 +335,7 @@ export const NoFooter: Story = {
     showHeader: true,
     showIcon: true,
     title: "Modal Without Footer",
+    showDescription: false,
     description: "This modal has a header and body but no footer buttons.",
     showFooter: false,
     footerButtonConfiguration: "1",
@@ -349,6 +363,7 @@ export const NoHeader: Story = {
     showHeader: false,
     showIcon: false,
     title: "",
+    showDescription: false,
     description: "",
     showFooter: true,
     footerButtonConfiguration: "2",
@@ -376,6 +391,7 @@ export const RestrictClose: Story = {
     showHeader: true,
     showIcon: true,
     title: "Modal with Restricted Close",
+    showDescription: false,
     description: "This modal hides the close button and prevents closing on outside click.",
     showFooter: true,
     footerButtonConfiguration: "2",
@@ -397,91 +413,19 @@ export const RestrictClose: Story = {
 };
 
 export const WideModal: Story = {
-  render: (args: StoryProps) => {
-    const {
-      hideCloseButton = false,
-      disableCloseOnOutsideClick = false,
-      width = "wide",
-      className = "",
-    } = args;
-
-    const {
-      triggerText = "Open Wide Modal",
-      showHeader = true,
-      showIcon = true,
-      title = "Wide Modal",
-      description = "This modal is wider than the default size for displaying more content.",
-      showFooter = true,
-      footerButtonConfiguration = "3",
-      primaryButtonText = "Save",
-      secondaryButtonText = "Cancel",
-      tertiaryButtonText = "Reset",
-    } = args as StoryOptions;
-
-    const wideBodyContent = (
-      <div>
-        <p>This is a wide modal that can accommodate more content horizontally.</p>
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="rounded bg-gray-100 p-4">
-            <h3 className="font-semibold">Left Column</h3>
-            <p>Content in the left column</p>
-          </div>
-          <div className="rounded bg-gray-100 p-4">
-            <h3 className="font-semibold">Right Column</h3>
-            <p>Content in the right column</p>
-          </div>
-        </div>
-      </div>
-    );
-
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">{triggerText}</Button>
-        </DialogTrigger>
-        <DialogContent
-          hideCloseButton={hideCloseButton}
-          disableCloseOnOutsideClick={disableCloseOnOutsideClick}
-          width={width}
-          className={className}>
-          {showHeader && (
-            <DialogHeader>
-              {showIcon && <AlertCircle />}
-              <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
-          )}
-          <DialogBody>{wideBodyContent}</DialogBody>
-          {showFooter && (
-            <DialogFooter className="md:justify-between">
-              {footerButtonConfiguration === "3" && (
-                <Button className="justify-self-start" variant="ghost">
-                  {tertiaryButtonText}
-                </Button>
-              )}
-              <div className="flex md:space-x-1.5">
-                {(footerButtonConfiguration === "2" || footerButtonConfiguration === "3") && (
-                  <Button variant="secondary">{secondaryButtonText}</Button>
-                )}
-                <Button>{primaryButtonText}</Button>
-              </div>
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
-    );
-  },
+  render: renderModal,
   args: {
-    triggerText: "Open Wide Modal",
+    triggerText: "Open Modal - Wide Modal",
     showHeader: true,
     showIcon: true,
-    title: "Wide Modal",
-    description: "This modal is wider than the default size for displaying more content.",
+    title: "Modal with more width",
+    showDescription: false,
+    description: "This modal has more width than the default modal.",
     showFooter: true,
-    footerButtonConfiguration: "3",
+    footerButtonConfiguration: "2",
     primaryButtonText: "Save",
     secondaryButtonText: "Cancel",
-    tertiaryButtonText: "Reset",
+    tertiaryButtonText: "",
     bodyElementCount: 5,
     hideCloseButton: false,
     disableCloseOnOutsideClick: false,
@@ -490,7 +434,7 @@ export const WideModal: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Use the wide variant when you need more horizontal space for complex layouts.",
+        story: "Use when you need to force user interaction with the modal content before closing.",
       },
     },
   },
