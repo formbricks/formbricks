@@ -1,8 +1,16 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
@@ -117,82 +125,70 @@ export const SaveAsNewSegmentModal = ({
   };
 
   return (
-    <Modal
+    <Dialog
       open={open}
-      setOpen={() => {
+      onOpenChange={() => {
         handleReset();
-      }}
-      noPadding>
-      <div className="rounded-t-lg bg-slate-100">
-        <div className="flex w-full items-center gap-4 p-6">
-          <div className="flex items-center space-x-2">
-            <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <UsersIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-medium">{t("environments.segments.save_as_new_segment")}</h3>
-              <p className="text-sm text-slate-600">
-                {t("environments.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="rounded-lg bg-white">
+      }}>
+      <DialogContent>
+        <DialogHeader>
+          <UsersIcon className="h-5 w-5" />
+          <DialogTitle>{t("environments.segments.save_as_new_segment")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}
+          </DialogDescription>
+        </DialogHeader>
+
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleSaveSegment)}>
-          <div className="p-6">
-            <div className="flex flex-col gap-4">
-              <div>
-                <label htmlFor="title" className="text-sm font-medium text-slate-700">
-                  {t("common.name")}
-                </label>
+          <DialogBody className="space-y-4">
+            <div>
+              <label htmlFor="title" className="text-sm font-medium text-slate-700">
+                {t("common.name")}
+              </label>
 
-                <Input
-                  {...register("title", {
-                    required: {
-                      value: true,
-                      message: t("environments.segments.title_is_required"),
-                    },
-                  })}
-                  type="text"
-                  placeholder={t("environments.segments.ex_power_users")}
-                  className="w-full p-2"
-                />
-                {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="description" className="text-sm font-medium text-slate-700">
-                  {t("common.description")}
-                </label>
-                <Input
-                  {...register("description")}
-                  type="text"
-                  placeholder={t("environments.segments.most_active_users_in_the_last_30_days")}
-                  className="w-full p-2"
-                />
-                {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
-              </div>
+              <Input
+                {...register("title", {
+                  required: {
+                    value: true,
+                    message: t("environments.segments.title_is_required"),
+                  },
+                })}
+                type="text"
+                placeholder={t("environments.segments.ex_power_users")}
+                className="w-full p-2"
+              />
+              {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
             </div>
-          </div>
 
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  handleReset();
-                }}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="submit" loading={isLoading}>
-                {t("common.save")}
-              </Button>
+            <div>
+              <label htmlFor="description" className="text-sm font-medium text-slate-700">
+                {t("common.description")}
+              </label>
+              <Input
+                {...register("description")}
+                type="text"
+                placeholder={t("environments.segments.most_active_users_in_the_last_30_days")}
+                className="w-full p-2"
+              />
+              {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
             </div>
-          </div>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                handleReset();
+              }}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" loading={isLoading}>
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
