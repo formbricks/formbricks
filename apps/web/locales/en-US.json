@@ -94,7 +94,7 @@
       "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
-      "verification_email_successfully_sent": "Verification email sent to {email}. Please verify to complete the update.",
+      "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",
       "we_sent_an_email_to": "We sent an email to {email}. ",
       "you_didnt_receive_an_email_or_your_link_expired": "You didn't receive an email or your link expired?"
     },
@@ -1769,7 +1769,7 @@
         "link_to_public_results_copied": "Link to public results copied",
         "make_sure_the_survey_type_is_set_to": "Make sure the survey type is set to",
         "mobile_app": "Mobile app",
-        "no_response_matches_filter": "No response matches your filter",
+        "no_responses_found": "No responses found",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",

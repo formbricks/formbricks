@@ -3,7 +3,6 @@ import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment } from "@/lib/environment/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -46,19 +45,13 @@ const Page = async (props: ResponsesPageProps) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const totalResponseCount = await getResponseCountBySurveyId(surveyId);
   const locale = await findMatchingLocale();
 
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
         <PageHeader pageTitle={survey.name}>
-          <SurveyAnalysisNavigation
-            survey={survey}
-            environmentId={environment.id}
-            activeId="responses"
-            initialTotalResponseCount={totalResponseCount}
-          />
+          <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="responses" />
         </PageHeader>
         <ResponsePage
           environment={environment}
