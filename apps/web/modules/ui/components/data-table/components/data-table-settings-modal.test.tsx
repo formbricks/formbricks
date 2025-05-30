@@ -3,6 +3,62 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DataTableSettingsModal } from "./data-table-settings-modal";
 
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
+}));
+
+// Mock lucide-react
+vi.mock("lucide-react", () => ({
+  SettingsIcon: () => <div data-testid="settings-icon" />,
+}));
+
+// Mock the useTranslate hook
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations = {
+        "common.table_settings": "Table Settings",
+        "common.reorder_and_hide_columns": "Reorder and hide columns",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
 // Mock the dnd-kit hooks and components
 vi.mock("@dnd-kit/core", async () => {
   const actual = await vi.importActual("@dnd-kit/core");
@@ -37,7 +93,7 @@ describe("DataTableSettingsModal", () => {
     cleanup();
   });
 
-  test("renders modal with correct title and subtitle", () => {
+  test("renders dialog with correct title and subtitle", () => {
     const mockTable = {
       getAllColumns: vi.fn().mockReturnValue([
         { id: "firstName", columnDef: {} },
@@ -55,8 +111,32 @@ describe("DataTableSettingsModal", () => {
       />
     );
 
-    expect(screen.getByText("common.table_settings")).toBeInTheDocument();
-    expect(screen.getByText("common.reorder_and_hide_columns")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-icon")).toBeInTheDocument();
+    expect(screen.getByText("Table Settings")).toBeInTheDocument();
+    expect(screen.getByText("Reorder and hide columns")).toBeInTheDocument();
+  });
+
+  test("does not render when closed", () => {
+    const mockTable = {
+      getAllColumns: vi.fn().mockReturnValue([
+        { id: "firstName", columnDef: {} },
+        { id: "lastName", columnDef: {} },
+      ]),
+    };
+
+    render(
+      <DataTableSettingsModal
+        open={false}
+        setOpen={vi.fn()}
+        table={mockTable as any}
+        columnOrder={["firstName", "lastName"]}
+        handleDragEnd={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   test("doesn't render columns with id 'select' or 'createdAt'", () => {
