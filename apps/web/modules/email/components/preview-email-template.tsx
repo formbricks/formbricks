@@ -47,6 +47,27 @@ export const getPreviewEmailTemplateHtml = async (
   );
 };
 
+const getRatingContent = (scale: string, i: number, range: number, isColorCodingEnabled: boolean) => {
+  if (scale === "smiley") {
+    return (
+      <RatingSmiley
+        active={false}
+        idx={i}
+        range={range}
+        addColors={isColorCodingEnabled}
+        baseUrl={WEBAPP_URL}
+      />
+    );
+  }
+  if (scale === "number") {
+    return <Text className="m-0 flex h-10 items-center">{i + 1}</Text>;
+  }
+  if (scale === "star") {
+    return <Text className="m-auto text-3xl">⭐</Text>;
+  }
+  return null;
+};
+
 export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
@@ -213,19 +234,12 @@ export async function PreviewEmailTemplate({
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                         key={i}>
-                        {firstQuestion.scale === "smiley" ? (
-                          <RatingSmiley
-                            active={false}
-                            idx={i}
-                            range={firstQuestion.range}
-                            addColors={firstQuestion.isColorCodingEnabled}
-                            baseUrl={WEBAPP_URL}
-                          />
-                        ) : firstQuestion.scale === "number" ? (
-                          <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
-                        ) : firstQuestion.scale === "star" ? (
-                          <Text className="m-auto text-3xl">⭐</Text>
-                        ) : null}
+                        {getRatingContent(
+                          firstQuestion.scale,
+                          i,
+                          firstQuestion.range,
+                          firstQuestion.isColorCodingEnabled
+                        )}
                       </EmailButton>
                     ))}
                   </Column>
