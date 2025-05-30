@@ -17,9 +17,17 @@ import {
 } from "@/modules/ee/teams/team-list/types/team";
 import { getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
 import {
   Select,
   SelectContent,
@@ -196,44 +204,19 @@ export const TeamSettingsModal = ({
   const hasEmptyProject = watchProjects.some((p) => !p.projectId);
 
   return (
-    <Modal
-      open={open}
-      setOpen={setOpen}
-      noPadding
-      className="flex max-h-[90dvh] flex-col overflow-visible"
-      size="md"
-      hideCloseButton
-      closeOnOutsideClick={true}>
-      <div className="sticky top-0 z-10 rounded-t-lg bg-slate-100">
-        <button
-          className={cn(
-            "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
-          )}
-          onClick={closeSettingsModal}>
-          <XIcon className="h-6 w-6 rounded-md bg-white" />
-          <span className="sr-only">Close</span>
-        </button>
-        <div className="flex w-full items-center justify-between p-6">
-          <div className="flex items-center space-x-2">
-            <div>
-              <H4>
-                {t("environments.settings.teams.team_name_settings_title", {
-                  teamName: team.name,
-                })}
-              </H4>
-              <Muted className="text-slate-500">
-                {t("environments.settings.teams.team_settings_description")}
-              </Muted>
-            </div>
-          </div>
-        </div>
-      </div>
-      <FormProvider {...form}>
-        <form
-          className="flex w-full flex-grow flex-col overflow-hidden"
-          onSubmit={handleSubmit(handleUpdateTeam)}>
-          <div className="flex-grow space-y-6 overflow-y-auto p-6">
-            <div className="space-y-6">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="flex flex-col overflow-visible">
+        <DialogHeader className="relative">
+          <DialogTitle>
+            {t("environments.settings.teams.team_name_settings_title", {
+              teamName: team.name,
+            })}
+          </DialogTitle>
+          <DialogDescription>{t("environments.settings.teams.team_settings_description")}</DialogDescription>
+        </DialogHeader>
+        <FormProvider {...form}>
+          <form className="contents space-y-4" onSubmit={handleSubmit(handleUpdateTeam)}>
+            <DialogBody className="flex-grow space-y-6 overflow-y-auto pb-4">
               <FormField
                 control={control}
                 name="name"
@@ -255,13 +238,18 @@ export const TeamSettingsModal = ({
 
               {/* Members Section */}
               <div className="space-y-2">
-                <FormLabel>{t("common.members")}</FormLabel>
+                <div className="flex flex-col space-y-1">
+                  <FormLabel>{t("common.members")}</FormLabel>
+                  <Muted className="block text-slate-500">
+                    {t("environments.settings.teams.add_members_description")}
+                  </Muted>
+                </div>
                 <FormField
                   control={control}
                   name={`members`}
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
-                      <div className="max-h-40 space-y-2 overflow-y-auto p-1">
+                      <div className="max-h-40 space-y-2 overflow-y-auto">
                         {watchMembers.map((member, index) => {
                           const memberOpts = getMemberOptionsForIndex(index);
                           return (
@@ -382,20 +370,22 @@ export const TeamSettingsModal = ({
                     <span>Add member</span>
                   </Button>
                 </TooltipRenderer>
-                <Muted className="block text-slate-500">
-                  {t("environments.settings.teams.add_members_description")}
-                </Muted>
               </div>
 
               {/* Projects Section */}
               <div className="space-y-2">
-                <FormLabel>Projects</FormLabel>
+                <div className="flex flex-col space-y-1">
+                  <FormLabel>{t("common.projects")}</FormLabel>
+                  <Muted className="block text-slate-500">
+                    {t("environments.settings.teams.add_projects_description")}
+                  </Muted>
+                </div>
                 <FormField
                   control={control}
                   name={`projects`}
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
-                      <div className="max-h-40 space-y-2 overflow-y-auto p-1">
+                      <div className="space-y-2">
                         {watchProjects.map((project, index) => {
                           const projectOpts = getProjectOptionsForIndex(index);
                           return (
@@ -498,23 +488,16 @@ export const TeamSettingsModal = ({
                     <span>Add project</span>
                   </Button>
                 </TooltipRenderer>
-
-                <Muted className="block text-slate-500">
-                  {t("environments.settings.teams.add_projects_description")}
-                </Muted>
               </div>
-
-              <div className="w-max">
+            </DialogBody>
+            <DialogFooter>
+              <div className="w-full">
                 <DeleteTeam
                   teamId={team.id}
                   onDelete={closeSettingsModal}
                   isOwnerOrManager={isOwnerOrManager}
                 />
               </div>
-            </div>
-          </div>
-          <div className="sticky bottom-0 z-10 border-slate-200 p-6">
-            <div className="flex justify-between">
               <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
                 {t("common.cancel")}
               </Button>
@@ -525,10 +508,10 @@ export const TeamSettingsModal = ({
                 disabled={!isOwnerOrManager && !isTeamAdminMember}>
                 {t("common.save")}
               </Button>
-            </div>
-          </div>
-        </form>
-      </FormProvider>
-    </Modal>
+            </DialogFooter>
+          </form>
+        </FormProvider>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -7,8 +7,49 @@ import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TeamSettingsModal } from "./team-settings-modal";
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, ...props }: any) => <div data-testid="Modal">{children}</div>,
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-header" className={className}>
+      {children}
+    </div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 vi.mock("@/modules/ee/teams/team-list/components/team-settings/delete-team", () => ({
@@ -60,14 +101,14 @@ describe("TeamSettingsModal", () => {
         currentUserId="1"
       />
     );
-    expect(screen.getByTestId("Modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.team_name_settings_title")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.team_settings_description")).toBeInTheDocument();
     expect(screen.getByText("common.team_name")).toBeInTheDocument();
     expect(screen.getByText("common.members")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.add_members_description")).toBeInTheDocument();
     expect(screen.getByText("Add member")).toBeInTheDocument();
-    expect(screen.getByText("Projects")).toBeInTheDocument();
+    expect(screen.getByText("common.projects")).toBeInTheDocument();
     expect(screen.getByText("Add project")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.add_projects_description")).toBeInTheDocument();
     expect(screen.getByText("common.cancel")).toBeInTheDocument();
