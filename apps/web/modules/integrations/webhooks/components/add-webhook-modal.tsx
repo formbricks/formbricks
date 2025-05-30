@@ -5,9 +5,17 @@ import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { PipelineTriggers } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
@@ -159,114 +167,102 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   };
 
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Webhook />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.webhooks.add_webhook")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.integrations.webhooks.add_webhook_description")}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <Dialog open={open} onOpenChange={setOpenWithStates}>
+      <DialogContent>
+        <DialogHeader>
+          <Webhook />
+          <DialogTitle>{t("environments.integrations.webhooks.add_webhook")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.integrations.webhooks.add_webhook_description")}
+          </DialogDescription>
+        </DialogHeader>
+
         <form onSubmit={handleSubmit(submitWebhook)}>
-          <div className="flex justify-between rounded-lg p-6">
-            <div className="w-full space-y-4">
-              <div className="col-span-1">
-                <Label htmlFor="name">{t("common.name")}</Label>
-                <div className="mt-1 flex">
-                  <Input
-                    type="text"
-                    id="name"
-                    {...register("name")}
-                    placeholder={t("environments.integrations.webhooks.webhook_name_placeholder")}
-                  />
-                </div>
-              </div>
-
-              <div className="col-span-1">
-                <Label htmlFor="URL">{t("common.url")}</Label>
-                <div className="mt-1 flex">
-                  <Input
-                    type="url"
-                    id="URL"
-                    value={testEndpointInput}
-                    onChange={(e) => {
-                      setTestEndpointInput(e.target.value);
-                    }}
-                    className={clsx(
-                      endpointAccessible === true
-                        ? "border-green-500 bg-green-50"
-                        : endpointAccessible === false
-                          ? "border-red-200 bg-red-50"
-                          : endpointAccessible === undefined
-                            ? "border-slate-200 bg-white"
-                            : null
-                    )}
-                    placeholder={t("environments.integrations.webhooks.webhook_url_placeholder")}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    loading={hittingEndpoint}
-                    className="ml-2 whitespace-nowrap"
-                    disabled={testEndpointInput.trim() === ""}
-                    onClick={() => {
-                      handleTestEndpoint(true);
-                    }}>
-                    {t("environments.integrations.webhooks.test_endpoint")}
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
-                <TriggerCheckboxGroup
-                  selectedTriggers={selectedTriggers}
-                  onCheckboxChange={handleCheckboxChange}
-                  allowChanges={true}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="Surveys">{t("common.surveys")}</Label>
-                <SurveyCheckboxGroup
-                  surveys={surveys}
-                  selectedSurveys={selectedSurveys}
-                  selectedAllSurveys={selectedAllSurveys}
-                  onSelectAllSurveys={handleSelectAllSurveys}
-                  onSelectedSurveyChange={handleSelectedSurveyChange}
-                  allowChanges={true}
+          <DialogBody className="space-4 pb-4">
+            <div className="col-span-1">
+              <Label htmlFor="name">{t("common.name")}</Label>
+              <div className="mt-1 flex">
+                <Input
+                  type="text"
+                  id="name"
+                  {...register("name")}
+                  placeholder={t("environments.integrations.webhooks.webhook_name_placeholder")}
                 />
               </div>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setOpenWithStates(false);
-                }}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="submit" loading={creatingWebhook}>
-                {t("environments.integrations.webhooks.add_webhook")}
-              </Button>
+
+            <div className="col-span-1">
+              <Label htmlFor="URL">{t("common.url")}</Label>
+              <div className="mt-1 flex">
+                <Input
+                  type="url"
+                  id="URL"
+                  value={testEndpointInput}
+                  onChange={(e) => {
+                    setTestEndpointInput(e.target.value);
+                  }}
+                  className={clsx(
+                    endpointAccessible === true
+                      ? "border-green-500 bg-green-50"
+                      : endpointAccessible === false
+                        ? "border-red-200 bg-red-50"
+                        : endpointAccessible === undefined
+                          ? "border-slate-200 bg-white"
+                          : null
+                  )}
+                  placeholder={t("environments.integrations.webhooks.webhook_url_placeholder")}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={hittingEndpoint}
+                  className="ml-2 whitespace-nowrap"
+                  disabled={testEndpointInput.trim() === ""}
+                  onClick={() => {
+                    handleTestEndpoint(true);
+                  }}>
+                  {t("environments.integrations.webhooks.test_endpoint")}
+                </Button>
+              </div>
             </div>
-          </div>
+
+            <div>
+              <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
+              <TriggerCheckboxGroup
+                selectedTriggers={selectedTriggers}
+                onCheckboxChange={handleCheckboxChange}
+                allowChanges={true}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="Surveys">{t("common.surveys")}</Label>
+              <SurveyCheckboxGroup
+                surveys={surveys}
+                selectedSurveys={selectedSurveys}
+                selectedAllSurveys={selectedAllSurveys}
+                onSelectAllSurveys={handleSelectAllSurveys}
+                onSelectedSurveyChange={handleSelectedSurveyChange}
+                allowChanges={true}
+              />
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setOpenWithStates(false);
+              }}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" loading={creatingWebhook}>
+              {t("environments.integrations.webhooks.add_webhook")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
