@@ -39,20 +39,16 @@ export const getSurveyUrl = async (
   const queryParams: string[] = [];
 
   if (survey.singleUse?.enabled) {
-    try {
-      const singleUseIdResponse = await generateSingleUseIdAction({
-        surveyId: survey.id,
-        isEncrypted: survey.singleUse.isEncrypted,
-      });
+    const singleUseIdResponse = await generateSingleUseIdAction({
+      surveyId: survey.id,
+      isEncrypted: survey.singleUse.isEncrypted,
+    });
 
-      if (singleUseIdResponse?.data) {
-        queryParams.push(`suId=${singleUseIdResponse.data}`);
-      } else {
-        const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
-        throw new Error(errorMessage);
-      }
-    } catch (error) {
-      throw error;
+    if (singleUseIdResponse?.data) {
+      queryParams.push(`suId=${singleUseIdResponse.data}`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
+      throw new Error(errorMessage);
     }
   }
 
