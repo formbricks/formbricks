@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { formatDate, timeSinceDate } from "@/lib/time";
-import { Modal } from "@/modules/ui/components/modal";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import { Loader2, UsersIcon } from "lucide-react";
 import { useState } from "react";
@@ -144,45 +144,49 @@ export const LoadSegmentModal = ({
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
-    <Modal
+    <Dialog
       open={open}
-      setOpen={() => {
+      onOpenChange={() => {
         handleResetState();
-      }}
-      title={t("environments.surveys.edit.load_segment")}
-      size="lg">
-      <>
-        {!segmentsArray?.length ? (
-          <div className="group">
-            <div className="flex h-16 w-full flex-col items-center justify-center rounded-lg text-slate-700">
-              {t("environments.surveys.edit.you_have_not_created_a_segment_yet")}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            <div>
-              <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                <div className="col-span-3 pl-6">{t("common.segment")}</div>
-                <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
-                <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
-              </div>
+      }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("environments.surveys.edit.load_segment")}</DialogTitle>
+        </DialogHeader>
 
-              {segmentsArray.map((segment) => (
-                <SegmentDetail
-                  key={segment.id}
-                  segment={segment}
-                  setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-                  setOpen={setOpen}
-                  setSegment={setSegment}
-                  onSegmentLoad={onSegmentLoad}
-                  surveyId={surveyId}
-                  currentSegment={currentSegment}
-                />
-              ))}
+        <DialogBody>
+          {!segmentsArray?.length ? (
+            <div className="group">
+              <div className="flex h-16 w-full flex-col items-center justify-center rounded-md text-slate-700">
+                {t("environments.surveys.edit.you_have_not_created_a_segment_yet")}
+              </div>
             </div>
-          </div>
-        )}
-      </>
-    </Modal>
+          ) : (
+            <div className="flex flex-col">
+              <div>
+                <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+                  <div className="col-span-3 pl-6">{t("common.segment")}</div>
+                  <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
+                  <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
+                </div>
+
+                {segmentsArray.map((segment) => (
+                  <SegmentDetail
+                    key={segment.id}
+                    segment={segment}
+                    setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                    setOpen={setOpen}
+                    setSegment={setSegment}
+                    onSegmentLoad={onSegmentLoad}
+                    surveyId={surveyId}
+                    currentSegment={currentSegment}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 };
