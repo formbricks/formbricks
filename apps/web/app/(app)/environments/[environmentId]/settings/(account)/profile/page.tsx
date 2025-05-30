@@ -12,12 +12,15 @@ import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
+import { ManageSocialNetworks } from "./components/ManageSocialNetworks";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const isMultiOrgEnabled = false;
   const params = await props.params;
   const t = await getTranslate();
   const { environmentId } = params;
+  const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
+  const SUPABASE_URL = process.env.SUPABASE_URL || "";
 
   const { session } = await getEnvironmentAuth(params.environmentId);
 
@@ -38,6 +41,13 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       </PageHeader>
       {user && (
         <div>
+          {SUPABASE_KEY && SUPABASE_URL ? (
+            <SettingsCard
+              title={t("environments.settings.profile.socail_accounts")}
+              description={t("environments.settings.profile.manage_social_networks")}>
+              <ManageSocialNetworks user={user} SUPABASE_URL={SUPABASE_URL} SUPABASE_KEY={SUPABASE_KEY} />
+            </SettingsCard>
+          ) : null}
           <SettingsCard
             title={t("environments.settings.profile.personal_information")}
             description={t("environments.settings.profile.update_personal_info")}>

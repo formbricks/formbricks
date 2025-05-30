@@ -848,7 +848,24 @@ model User {
   communityName             String?
   communityDescription      String?
 
+  socials UserSocial[] @relation("userSocial")
+
   @@index([email])
+}
+
+model UserSocial {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  userId String
+  user   User   @relation("userSocial", fields: [userId], references: [id])
+
+  socialAvatar String?
+  socialId     String
+  socialName   String
+  socialEmail  String
+  provider     String
 }
 
 /// Maps a short URL to its full destination.

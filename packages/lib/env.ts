@@ -104,6 +104,8 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     ALCHEMY_API_KEY: z.string().optional(),
     WHITELIST_DISABLED: z.enum(["1", "0"]).optional(),
+    SUPABASE_URL: z.string().optional(),
+    SUPABASE_KEY: z.string().optional(),
   },
 
   /*

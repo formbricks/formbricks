@@ -266,4 +266,8 @@ export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const ALCHEMY_API_KEY = env.ALCHEMY_API_KEY || "";
 
+export const SUPABASE_KEY = env.SUPABASE_KEY || "";
+
+export const SUPABASE_URL = env.SUPABASE_URL || "";
+
 export const WHITELIST_DISABLED = env.WHITELIST_DISABLED === "1";

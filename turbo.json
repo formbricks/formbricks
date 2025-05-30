@@ -212,7 +212,9 @@
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
         "ALCHEMY_API_KEY",
-        "WHITELIST_DISABLED"
+        "WHITELIST_DISABLED",
+        "SUPABASE_KEY",
+        "SUPABASE_URL"
       ],
       "outputs": ["dist/**", ".next/**"]
     },
