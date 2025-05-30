@@ -97,8 +97,8 @@ export const ZUserWhitelistInfo = z.object({
   email: ZUserEmail,
   name: ZUserName,
   whitelist: z.boolean(),
-  communityName: z.string().optional(),
-  communityDescription: z.string().optional(),
+  communityName: z.string().nullable(),
+  communityDescription: z.string().nullable(),
   _count: z
     .object({
       communityMembers: z.number().optional(),

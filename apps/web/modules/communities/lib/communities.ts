@@ -225,3 +225,25 @@ export const updateUserCommunityFields = async ({
     throw error;
   }
 };
+
+export const getCommunity = async ({ communityId }: { communityId: string }): Promise<TUserWhitelistInfo> => {
+  try {
+    const community = await prisma.user.findUnique({
+      where: { id: communityId },
+      select: whitelistSelection,
+    });
+
+    // Check if user exists
+    if (!community) {
+      throw new InvalidInputError("Community does not exist!");
+    }
+
+    return community;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

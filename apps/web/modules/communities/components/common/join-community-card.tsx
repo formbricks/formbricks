@@ -4,15 +4,17 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { UsersRoundIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 
 interface JoinCommunityCardProps {
-  creator: TUserWhitelistInfo;
+  community: TUserWhitelistInfo;
+  environmentId: string;
   className?: string;
 }
 
-export const JoinCommunityCard = ({ creator, className = "" }: JoinCommunityCardProps) => {
+export const JoinCommunityCard = ({ community, environmentId, className = "" }: JoinCommunityCardProps) => {
   const { t } = useTranslate();
   return (
     <div
@@ -28,21 +30,23 @@ export const JoinCommunityCard = ({ creator, className = "" }: JoinCommunityCard
           <div className="flex h-full flex-col justify-between">
             <div className="flex flex-col gap-2">
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
-                {creator.name || creator.email}
+                {community.name || community.email}
               </h3>
               <p className="text-base font-normal">Community description</p>
             </div>
-            {creator._count?.communityMembers !== undefined && (
+            {community._count?.communityMembers !== undefined && (
               <div className="flex flex-row flex-nowrap gap-1 text-xs">
                 <UsersRoundIcon className="h-4 w-4" />
-                <span>Members: {creator._count.communityMembers}</span>
+                <span>Members: {community._count.communityMembers}</span>
               </div>
             )}
           </div>
           <div className="w-full">
             <Button
               aria-label={t("common.join")}
-              disabled
+              onClick={() => {
+                window.location.href = `/environments/${environmentId}/communities/${community.id}/summary`;
+              }}
               className={cn(
                 "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-0 gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
               )}>

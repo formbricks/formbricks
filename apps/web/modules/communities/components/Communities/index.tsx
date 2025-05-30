@@ -37,7 +37,7 @@ export const Communities = ({ environmentId, searchQuery, className = "" }: Comm
         tabStyle="button"
         className="bg-slate-100"
       />
-      <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-5">
+      <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {(() => {
           switch (activeTab) {
             case "my-communities":

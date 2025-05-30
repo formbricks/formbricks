@@ -12,7 +12,10 @@ interface PopularCommunitiesProps {
   environmentId: string;
 }
 
-export function PopularCommunities({ searchQuery }: PopularCommunitiesProps): React.JSX.Element {
+export function PopularCommunities({
+  environmentId,
+  searchQuery = "",
+}: PopularCommunitiesProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [communities, setCommunities] = useState<TUserWhitelistInfo[]>([]);
   const { t } = useTranslate();
@@ -36,11 +39,15 @@ export function PopularCommunities({ searchQuery }: PopularCommunitiesProps): Re
 
   if (isLoading) {
     return (
-      <>
-        <LoadingEngagementCard />
-        <LoadingEngagementCard />
-        <LoadingEngagementCard />
-      </>
+      <div className="flex flex-col gap-4">
+        <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
+          {t("common.popular_communities")}
+        </h3>
+        <div className="grid md:grid-cols-2 md:gap-4">
+          <LoadingEngagementCard />
+          <LoadingEngagementCard />
+        </div>
+      </div>
     );
   }
 
@@ -53,7 +60,9 @@ export function PopularCommunities({ searchQuery }: PopularCommunitiesProps): Re
         {communities &&
           communities.length > 0 &&
           communities.map((community) => {
-            return <JoinCommunityCard key={community.id} creator={community} />;
+            return (
+              <JoinCommunityCard environmentId={environmentId} key={community.id} community={community} />
+            );
           })}
       </div>
     </div>
