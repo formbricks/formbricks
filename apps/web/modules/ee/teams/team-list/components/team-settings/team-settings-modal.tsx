@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
@@ -36,10 +35,10 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { H4, Muted } from "@/modules/ui/components/typography";
+import { Muted } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";

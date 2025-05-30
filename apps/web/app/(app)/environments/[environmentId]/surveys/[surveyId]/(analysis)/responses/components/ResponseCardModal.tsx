@@ -64,10 +64,6 @@ export const ResponseCardModal = ({
     }
   };
 
-  const handleClose = () => {
-    setSelectedResponseId(null);
-  };
-
   // If no response is selected or currentIndex is null, do not render the modal
   if (selectedResponseId === null || currentIndex === null) return null;
 

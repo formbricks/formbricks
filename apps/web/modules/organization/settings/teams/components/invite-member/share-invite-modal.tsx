@@ -6,7 +6,6 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
@@ -25,18 +24,6 @@ interface ShareInviteModalProps {
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
   const linkTextRef = useRef(null);
   const { t } = useTranslate();
-  const handleTextSelection = () => {
-    if (linkTextRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(linkTextRef.current);
-
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

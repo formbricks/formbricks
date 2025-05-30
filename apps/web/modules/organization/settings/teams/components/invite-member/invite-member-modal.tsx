@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import {
   Dialog,
