@@ -74,7 +74,6 @@ These variables are present inside your machine's docker-compose file. Restart t
 | REDIS_URL                    | Redis URL for caching and audit logging. Required for audit logging and optional for Next.js caching.                | optional (required if audit logging is enabled)         |                                                                           |
 | REDIS_HTTP_URL               | Redis URL for rate limiting. If not set, rate limiting uses in-memory LRU cache.                                     | optional                                                |                                                                           |
 | AUDIT_LOG_ENABLED            | Set this to 1 to enable audit logging. Requires Redis to be configured with the REDIS_URL env variable.              | optional                                                | 0                                                                         |
-| AUDIT_LOG_PATH               | Path where audit logs will be stored.                                                                                | optional                                                | /apps/web/logs/audit.log                                                  |
 | AUDIT_LOG_GET_USER_IP        | Set to 1 to include user IP addresses in audit logs from request headers                                             | optional                                                | 0                                                                         |
 
 

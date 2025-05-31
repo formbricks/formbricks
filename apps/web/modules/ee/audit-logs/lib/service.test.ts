@@ -9,10 +9,7 @@ vi.mock("../../../ee/license-check/lib/utils", () => ({
   getIsAuditLogsEnabled: vi.fn(),
 }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn() },
-}));
-vi.mock("./logger", () => ({
-  auditLogger: { info: vi.fn() },
+  logger: { audit: vi.fn(), error: vi.fn() },
 }));
 
 const validEvent = {
@@ -29,27 +26,25 @@ const validEvent = {
 
 describe("logAuditEvent", () => {
   let getIsAuditLogsEnabled: any;
-  let auditLogger: any;
   let logger: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     getIsAuditLogsEnabled = (await import("@/modules/ee/license-check/lib/utils")).getIsAuditLogsEnabled;
-    auditLogger = (await import("./logger")).auditLogger;
     logger = (await import("@formbricks/logger")).logger;
   });
 
   test("logs event if access is granted and event is valid", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     await logAuditEvent(validEvent);
-    expect(auditLogger.info).toHaveBeenCalledWith(validEvent);
+    expect(logger.audit).toHaveBeenCalledWith(validEvent);
     expect(logger.error).not.toHaveBeenCalled();
   });
 
   test("does not log event if access is denied", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(false);
     await logAuditEvent(validEvent);
-    expect(auditLogger.info).not.toHaveBeenCalled();
+    expect(logger.audit).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
   });
 
@@ -57,7 +52,7 @@ describe("logAuditEvent", () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const invalidEvent = { ...validEvent, action: "invalid.action" };
     await logAuditEvent(invalidEvent as any);
-    expect(auditLogger.info).not.toHaveBeenCalled();
+    expect(logger.audit).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
   });
 
@@ -65,12 +60,12 @@ describe("logAuditEvent", () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const event = { ...validEvent, organizationId: UNKNOWN_DATA };
     await logAuditEvent(event);
-    expect(auditLogger.info).toHaveBeenCalledWith(event);
+    expect(logger.audit).toHaveBeenCalledWith(event);
   });
 
-  test("does not throw if auditLogger.info throws", async () => {
+  test("does not throw if logger.audit throws", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
-    auditLogger.info.mockImplementation(() => {
+    logger.audit.mockImplementation(() => {
       throw new Error("fail");
     });
     await logAuditEvent(validEvent);

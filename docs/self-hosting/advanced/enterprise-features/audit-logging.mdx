@@ -15,7 +15,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 - **Compliance readiness** — Many regulatory frameworks such as GDPR and SOC 2 require immutable records of user activity.
 - **Security investigation support** — Audit logs provide clear visibility into user and system actions, helping teams respond quickly and confidently during security incidents.
-- **Operational accountability** — Track changes across the system to answer common questions like “_who modified this?_” or “_when was this deleted?_”.
+- **Operational accountability** — Track changes across the system to answer common questions like "_who modified this?_” or "_when was this deleted?_".
 
 ---
 
@@ -24,7 +24,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 | Requirement | Notes |
 |-------------|-------|
 | **Redis** | Used internally to guarantee integrity under concurrency. |
-| **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
+| **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
 
 ---
 
@@ -35,14 +35,11 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 ```bash title=".env"
 # --- Audit logging ---
 AUDIT_LOG_ENABLED=1
-AUDIT_LOG_PATH=/var/log/formbricks/audit.log   # change if needed
 REDIS_URL=redis://redis:6379                   # existing Redis instance
 ```
 
 2. Redeploy your containers.
-3. Confirm you can see a new file at the path specified by `AUDIT_LOG_PATH` after performing any action in the UI/API.
-
-<Hint type="info">Audit logs rotate **daily** or when the file reaches **100 MB**, and up to **90 days** of compressed history is kept by default. Adjust the `logrotate` policy if your compliance rules differ.</Hint>
+3. Confirm you can see audit logs in the output of your containers.
 
 ---
 

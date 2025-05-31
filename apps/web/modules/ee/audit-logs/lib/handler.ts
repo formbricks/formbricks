@@ -217,14 +217,20 @@ export const withAuditLogging = (
     }
 
     if (!AUDIT_LOG_ENABLED) {
+      if (status === "failure") throw error;
       return result;
+    }
+
+    if (!auditLoggingCtx) {
+      // This is to signal that the audit logging context is not available when it is expected to be available. But we don't want to throw an error here.
+      logger.error("No audit logging context found");
     }
 
     setImmediate(async () => {
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId: string =
-          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA;
+          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
           const environmentId: string | undefined = parsedInput?.environmentId;
@@ -254,7 +260,7 @@ export const withAuditLogging = (
         }
 
         await buildAndLogAuditEvent({
-          actionType: `${targetType}.${action}` as TAuditActionType,
+          actionType: `${targetType}.${action}`,
           targetType,
           userId,
           userType: "user",
@@ -262,9 +268,9 @@ export const withAuditLogging = (
           organizationId,
           ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx?.ipAddress : UNKNOWN_DATA,
           status,
-          oldObject: auditLoggingCtx.oldObject,
-          newObject: auditLoggingCtx.newObject,
-          eventId: auditLoggingCtx.eventId,
+          oldObject: auditLoggingCtx?.oldObject,
+          newObject: auditLoggingCtx?.newObject,
+          eventId: auditLoggingCtx?.eventId,
         });
       } catch (logError) {
         logger.error(logError, "Failed to create audit log event");

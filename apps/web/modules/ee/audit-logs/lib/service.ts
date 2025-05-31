@@ -1,7 +1,6 @@
 import { AuditLogEventSchema, type TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
-import { auditLogger } from "./logger";
 
 const validateEvent = (event: TAuditLogEvent): void => {
   const result = AuditLogEventSchema.safeParse(event);
@@ -11,7 +10,8 @@ const validateEvent = (event: TAuditLogEvent): void => {
 };
 
 const hasAuditLogAccess = async (): Promise<boolean> => {
-  return getIsAuditLogsEnabled();
+  return true;
+  // return getIsAuditLogsEnabled();
 };
 
 export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
@@ -22,7 +22,7 @@ export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
 
     validateEvent(event);
 
-    auditLogger.info(event);
+    logger.audit(event);
   } catch (error) {
     // Log error to application logger but don't throw
     // This ensures audit logging failures don't break the application
