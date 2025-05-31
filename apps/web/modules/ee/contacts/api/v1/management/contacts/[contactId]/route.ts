@@ -1,5 +1,7 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -48,26 +50,59 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (
-  request: Request,
-  { params: paramsPromise }: { params: Promise<{ contactId: string }> }
-) => {
-  try {
+export const DELETE = withApiLogging(
+  async (request: Request, { params: paramsPromise }: { params: Promise<{ contactId: string }> }) => {
     const params = await paramsPromise;
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+    const auditLog: ApiAuditLog = {
+      actionType: "contact.deleted",
+      targetType: "contact",
+      userId: UNKNOWN_DATA,
+      targetId: params.contactId,
+      organizationId: UNKNOWN_DATA,
+      status: "failure",
+      oldObject: undefined,
+    };
+    try {
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
+        return {
+          response: responses.notAuthenticatedResponse(),
+          audit: auditLog,
+        };
+      }
+      auditLog.userId = authentication.apiKeyId;
+      auditLog.organizationId = authentication.organizationId;
 
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return {
+          response: responses.forbiddenResponse(
+            "Contacts are only enabled for Enterprise Edition, please upgrade."
+          ),
+          audit: auditLog,
+        };
+      }
+
+      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
+      if (result.error) {
+        return {
+          response: result.error,
+          audit: auditLog,
+        };
+      }
+      auditLog.oldObject = result.contact;
+
+      await deleteContact(params.contactId);
+      auditLog.status = "success";
+      return {
+        response: responses.successResponse({ success: "Contact deleted successfully" }),
+        audit: auditLog,
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+        audit: auditLog,
+      };
     }
-
-    const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
-    if (result.error) return result.error;
-
-    await deleteContact(params.contactId);
-    return responses.successResponse({ success: "Contact deleted successfully" });
-  } catch (error) {
-    return handleErrorResponse(error);
   }
-};
+);

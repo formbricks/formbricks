@@ -9,6 +9,9 @@ const AuditTargets = [
   "contactAttributeKey",
   "projectTeam",
   "team",
+  "actionClass",
+  "response",
+  "contact",
 ] as const;
 const AuditActions = ["created", "updated", "deleted", "signedin"] as const;
 const Actors = ["user", "api"] as const;

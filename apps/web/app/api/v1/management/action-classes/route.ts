@@ -1,7 +1,9 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
@@ -28,41 +30,73 @@ export const GET = async (request: Request) => {
   }
 };
 
-export const POST = async (request: Request): Promise<Response> => {
+export const POST = withApiLogging(async (request: Request) => {
+  const auditLog: ApiAuditLog = {
+    actionType: "actionClass.created",
+    targetType: "actionClass",
+    userId: UNKNOWN_DATA,
+    targetId: UNKNOWN_DATA,
+    organizationId: UNKNOWN_DATA,
+    status: "failure",
+    newObject: undefined,
+  };
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+        audit: auditLog,
+      };
+    }
+    auditLog.userId = authentication.apiKeyId;
 
     let actionClassInput;
     try {
       actionClassInput = await request.json();
     } catch (error) {
       logger.error({ error, url: request.url }, "Error parsing JSON input");
-      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+      return {
+        response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+        audit: auditLog,
+      };
     }
 
     const inputValidation = ZActionClassInput.safeParse(actionClassInput);
-
     const environmentId = actionClassInput.environmentId;
 
     if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
+      return {
+        response: responses.unauthorizedResponse(),
+        audit: auditLog,
+      };
     }
 
     if (!inputValidation.success) {
-      return responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      );
+      return {
+        response: responses.badRequestResponse(
+          "Fields are missing or incorrectly formatted",
+          transformErrorToDetails(inputValidation.error),
+          true
+        ),
+        audit: auditLog,
+      };
     }
 
     const actionClass: TActionClass = await createActionClass(environmentId, inputValidation.data);
-    return responses.successResponse(actionClass);
+    auditLog.status = "success";
+    auditLog.targetId = actionClass.id;
+    auditLog.newObject = actionClass;
+    return {
+      response: responses.successResponse(actionClass),
+      audit: auditLog,
+    };
   } catch (error) {
     if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
+      return {
+        response: responses.badRequestResponse(error.message),
+        audit: auditLog,
+      };
     }
     throw error;
   }
-};
+});

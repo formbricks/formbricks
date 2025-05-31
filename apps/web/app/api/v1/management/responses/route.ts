@@ -1,9 +1,11 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
@@ -91,26 +93,58 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = async (request: Request): Promise<Response> => {
+export const POST = withApiLogging(async (request: Request) => {
+  const auditLog: ApiAuditLog = {
+    actionType: "response.created",
+    targetType: "response",
+    userId: UNKNOWN_DATA,
+    targetId: UNKNOWN_DATA,
+    organizationId: UNKNOWN_DATA,
+    status: "failure",
+    newObject: undefined,
+  };
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+        audit: auditLog,
+      };
+    }
+    auditLog.userId = authentication.apiKeyId;
+    auditLog.organizationId = authentication.organizationId;
 
     const inputResult = await validateInput(request);
-    if (inputResult.error) return inputResult.error;
+    if (inputResult.error) {
+      return {
+        response: inputResult.error,
+        audit: auditLog,
+      };
+    }
 
     const responseInput = inputResult.data;
     const environmentId = responseInput.environmentId;
 
     if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
+      return {
+        response: responses.unauthorizedResponse(),
+        audit: auditLog,
+      };
     }
 
     const surveyResult = await validateSurvey(responseInput, environmentId);
-    if (surveyResult.error) return surveyResult.error;
+    if (surveyResult.error) {
+      return {
+        response: surveyResult.error,
+        audit: auditLog,
+      };
+    }
 
     if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
-      return responses.badRequestResponse("Invalid file upload response");
+      return {
+        response: responses.badRequestResponse("Invalid file upload response"),
+        audit: auditLog,
+      };
     }
 
     if (responseInput.createdAt && !responseInput.updatedAt) {
@@ -119,18 +153,33 @@ export const POST = async (request: Request): Promise<Response> => {
 
     try {
       const response = await createResponse(responseInput);
-      return responses.successResponse(response, true);
+      auditLog.status = "success";
+      auditLog.targetId = response.id;
+      auditLog.newObject = response;
+      return {
+        response: responses.successResponse(response, true),
+        audit: auditLog,
+      };
     } catch (error) {
       if (error instanceof InvalidInputError) {
-        return responses.badRequestResponse(error.message);
+        return {
+          response: responses.badRequestResponse(error.message),
+          audit: auditLog,
+        };
       }
       logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
-      return responses.internalServerErrorResponse(error.message);
+      return {
+        response: responses.internalServerErrorResponse(error.message),
+        audit: auditLog,
+      };
     }
   } catch (error) {
     if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
+      return {
+        response: responses.badRequestResponse(error.message),
+        audit: auditLog,
+      };
     }
     throw error;
   }
-};
+});

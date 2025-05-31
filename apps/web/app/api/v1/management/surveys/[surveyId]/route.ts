@@ -44,22 +44,52 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (
-  request: Request,
-  props: { params: Promise<{ surveyId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
-    if (result.error) return result.error;
-    const deletedSurvey = await deleteSurvey(params.surveyId);
-    return responses.successResponse(deletedSurvey);
-  } catch (error) {
-    return handleErrorResponse(error);
+export const DELETE = withApiLogging(
+  async (request: Request, props: { params: Promise<{ surveyId: string }> }) => {
+    const params = await props.params;
+    const auditLog: ApiAuditLog = {
+      actionType: "survey.deleted",
+      targetType: "survey",
+      userId: UNKNOWN_DATA,
+      targetId: params.surveyId,
+      organizationId: UNKNOWN_DATA,
+      status: "failure",
+      oldObject: undefined,
+    };
+    try {
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
+        return {
+          response: responses.notAuthenticatedResponse(),
+          audit: auditLog,
+        };
+      }
+      auditLog.userId = authentication.apiKeyId;
+      auditLog.organizationId = authentication.organizationId;
+
+      const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
+      if (result.error) {
+        return {
+          response: result.error,
+          audit: auditLog,
+        };
+      }
+      auditLog.oldObject = result.survey;
+
+      const deletedSurvey = await deleteSurvey(params.surveyId);
+      auditLog.status = "success";
+      return {
+        response: responses.successResponse(deletedSurvey),
+        audit: auditLog,
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+        audit: auditLog,
+      };
+    }
   }
-};
+);
 
 export const PUT = withApiLogging(
   async (request: Request, props: { params: Promise<{ surveyId: string }> }) => {
