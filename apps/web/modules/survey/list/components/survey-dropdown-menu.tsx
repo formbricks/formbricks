@@ -242,6 +242,8 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+          isDeleting={loading}
+          disabled={loading}
         />
       )}
 
