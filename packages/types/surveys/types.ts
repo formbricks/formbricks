@@ -26,12 +26,32 @@ const ZSurveyEndingBase = z.object({
   id: z.string().cuid2(),
 });
 
+const ZSafeUrl = getZSafeUrl("Invalid Button Url in Ending card");
+
+// Validates recall-style URLs like "#recall:<id>/fallback:<text>#"
+const isRecallUrl = (val: string): boolean => /^#recall:[^/]+\/fallback:.*#\s*$/.test(val);
+
+const ZButtonLink = z.string().refine(
+  (val) => {
+    if (isRecallUrl(val)) return true;
+    try {
+      ZSafeUrl.parse(val);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  {
+    message: "Invalid Button Url in Ending card",
+  }
+);
+
 export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   type: z.literal("endScreen"),
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: getZSafeUrl("Invalid Button Url in Ending card").optional(),
+  buttonLink: ZButtonLink.optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
