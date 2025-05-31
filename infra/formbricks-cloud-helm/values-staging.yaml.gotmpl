@@ -21,7 +21,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 9 * * *
       successfulJobsHistoryLimit: 0
@@ -44,7 +44,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 0 * * *
       successfulJobsHistoryLimit: 0
@@ -67,7 +67,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 8 * * 1
       successfulJobsHistoryLimit: 0
