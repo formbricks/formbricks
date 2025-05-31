@@ -45,6 +45,16 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      valkey:
+        image: valkey/valkey:8.1.1
+        ports:
+          - 6379:6379
+        options: >-
+          --entrypoint "valkey-server"
+          --health-cmd="valkey-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0

@@ -301,7 +301,8 @@
             "self-hosting/advanced/enterprise-features/contact-management-segments",
             "self-hosting/advanced/enterprise-features/multi-language-surveys",
             "self-hosting/advanced/enterprise-features/oidc-sso",
-            "self-hosting/advanced/enterprise-features/saml-sso"
+            "self-hosting/advanced/enterprise-features/saml-sso",
+            "self-hosting/advanced/enterprise-features/audit-logging"
           ]
         },
         "self-hosting/advanced/rate-limiting"

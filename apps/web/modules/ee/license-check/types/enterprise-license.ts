@@ -15,6 +15,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   saml: z.boolean(),
   spamProtection: z.boolean(),
   ai: z.boolean(),
+  auditLogs: z.boolean(),
 });
 
 export type TEnterpriseLicenseFeatures = z.infer<typeof ZEnterpriseLicenseFeatures>;
