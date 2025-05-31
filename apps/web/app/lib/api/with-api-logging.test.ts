@@ -69,7 +69,6 @@ describe("withApiLogging", () => {
       AUDIT_LOG_ENABLED: true,
       IS_PRODUCTION: true,
       SENTRY_DSN: "dsn",
-      AUDIT_LOG_PATH: "/tmp/audit.log",
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
     }));
@@ -175,7 +174,6 @@ describe("withApiLogging", () => {
       AUDIT_LOG_ENABLED: false,
       IS_PRODUCTION: true,
       SENTRY_DSN: "dsn",
-      AUDIT_LOG_PATH: "/tmp/audit.log",
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
     }));
