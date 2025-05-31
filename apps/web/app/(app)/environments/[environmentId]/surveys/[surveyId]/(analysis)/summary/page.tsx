@@ -68,7 +68,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         initialSurveySummary={initialSurveySummary}
       />
 
-      <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
+      <SettingsId title={t("common.survey_id")} id={surveyId} />
     </PageContentWrapper>
   );
 };

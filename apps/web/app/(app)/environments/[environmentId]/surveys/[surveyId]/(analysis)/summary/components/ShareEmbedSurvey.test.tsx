@@ -174,20 +174,32 @@ describe("ShareEmbedSurvey", () => {
     expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
   });
 
-  test("calls setOpen(false) when handleInitialPageButton is triggered from EmbedView", async () => {
+  test("returns to 'start' view when handleInitialPageButton is triggered from EmbedView", async () => {
     render(<ShareEmbedSurvey {...defaultProps} modalView="embed" />);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
+    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument();
+
     const embedViewButton = screen.getByText("EmbedViewMockContent");
     await userEvent.click(embedViewButton);
-    expect(mockSetOpen).toHaveBeenCalledWith(false);
+
+    // Should go back to start view, not close the modal
+    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
+    expect(screen.queryByText("EmbedViewMockContent")).not.toBeInTheDocument();
+    expect(mockSetOpen).not.toHaveBeenCalled();
   });
 
-  test("calls setOpen(false) when handleInitialPageButton is triggered from PanelInfoView", async () => {
+  test("returns to 'start' view when handleInitialPageButton is triggered from PanelInfoView", async () => {
     render(<ShareEmbedSurvey {...defaultProps} modalView="panel" />);
     expect(mockPanelInfoViewComponent).toHaveBeenCalled();
+    expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
+
     const panelInfoViewButton = screen.getByText("PanelInfoViewMockContent");
     await userEvent.click(panelInfoViewButton);
-    expect(mockSetOpen).toHaveBeenCalledWith(false);
+
+    // Should go back to start view, not close the modal
+    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
+    expect(screen.queryByText("PanelInfoViewMockContent")).not.toBeInTheDocument();
+    expect(mockSetOpen).not.toHaveBeenCalled();
   });
 
   test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
