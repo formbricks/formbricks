@@ -1,6 +1,7 @@
 "use client";
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
@@ -61,6 +62,20 @@ export const ShareEmbedSurvey = ({
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
+
+  useEffect(() => {
+    const fetchSurveyUrl = async () => {
+      try {
+        const url = await getSurveyUrl(survey, surveyDomain, "default");
+        setSurveyUrl(url);
+      } catch (error) {
+        console.error("Failed to fetch survey URL:", error);
+        // Fallback to a default URL if fetching fails
+        setSurveyUrl(`${surveyDomain}/s/${survey.id}`);
+      }
+    };
+    fetchSurveyUrl();
+  }, [survey, surveyDomain]);
 
   useEffect(() => {
     if (survey.type !== "link") {
