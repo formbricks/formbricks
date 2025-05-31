@@ -184,9 +184,6 @@ x-environment: &environment
     # Set the below to 1 to enable audit logging. The audit log requires Redis to be configured with the REDIS_URL env variable.
     # AUDIT_LOG_ENABLED: 1
 
-    # Set the below to the path of the audit log file, the default is /apps/web/logs/audit.log
-    # AUDIT_LOG_PATH: /apps/web/logs/audit.log
-
     # Set the below to get the ip address of the user from the request headers
     # AUDIT_LOG_GET_USER_IP: 1
 

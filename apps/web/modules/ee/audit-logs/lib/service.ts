@@ -10,8 +10,7 @@ const validateEvent = (event: TAuditLogEvent): void => {
 };
 
 const hasAuditLogAccess = async (): Promise<boolean> => {
-  return true;
-  // return getIsAuditLogsEnabled();
+  return getIsAuditLogsEnabled();
 };
 
 export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
