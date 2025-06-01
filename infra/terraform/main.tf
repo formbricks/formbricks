@@ -385,6 +385,38 @@ resource "kubernetes_manifest" "node_pool" {
               values   = ["nitro"]
             }
           ]
+          # Add node startup and shutdown taints to prevent traffic during lifecycle events
+          startupTaints = [
+            {
+              key    = "karpenter.sh/startup"
+              value  = "true"
+              effect = "NoSchedule"
+            }
+          ]
+          # Add kubelet configuration for better pod lifecycle management
+          kubelet = {
+            maxPods = 110
+            clusterDNS = ["169.254.20.10"]
+            # Graceful node shutdown configuration
+            shutdownGracePeriod = "30s"
+            shutdownGracePeriodCriticalPods = "10s"
+            # Pod eviction settings
+            evictionHard = {
+              "memory.available"  = "100Mi"
+              "nodefs.available"  = "10%"
+              "imagefs.available" = "10%"
+            }
+            evictionSoft = {
+              "memory.available"  = "500Mi"
+              "nodefs.available"  = "15%"
+              "imagefs.available" = "15%"
+            }
+            evictionSoftGracePeriod = {
+              "memory.available"  = "2m"
+              "nodefs.available"  = "2m"
+              "imagefs.available" = "2m"
+            }
+          }
         }
       }
       limits = {
@@ -392,8 +424,12 @@ resource "kubernetes_manifest" "node_pool" {
       }
       disruption = {
         consolidationPolicy = "WhenEmptyOrUnderutilized"
-        consolidateAfter    = "30s"
+        consolidateAfter    = "60s"  # Increased from 30s to reduce frequent disruptions
+        # Expiration settings for better predictability
+        expireAfter = "168h"  # 7 days
       }
+      # Weight for prioritizing this NodePool
+      weight = 100
     }
   }
 }

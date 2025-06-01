@@ -57,6 +57,62 @@ locals {
         LoadBalancer = local.alb_id
       }
     }
+    ALB_HTTPCode_ELB_502_Count = {
+      alarm_description   = "ALB 502 errors indicating backend connection issues"
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 3
+      threshold           = 20
+      period              = 300
+      unit                = "Count"
+      namespace           = "AWS/ApplicationELB"
+      metric_name         = "HTTPCode_ELB_502_Count"
+      statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
+    }
+    ALB_HTTPCode_ELB_504_Count = {
+      alarm_description   = "ALB 504 errors indicating timeout issues"
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 3
+      threshold           = 15
+      period              = 300
+      unit                = "Count"
+      namespace           = "AWS/ApplicationELB"
+      metric_name         = "HTTPCode_ELB_504_Count"
+      statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
+    }
+    ALB_HTTPCode_Target_4XX_Count = {
+      alarm_description   = "High 4XX error rate indicating client issues or misconfigurations"
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 5
+      threshold           = 100
+      period              = 600
+      unit                = "Count"
+      namespace           = "AWS/ApplicationELB"
+      metric_name         = "HTTPCode_Target_4XX_Count"
+      statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
+    }
+    ALB_TargetConnectionErrorCount = {
+      alarm_description   = "High target connection errors indicating backend connectivity issues"
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 3
+      threshold           = 50
+      period              = 300
+      unit                = "Count"
+      namespace           = "AWS/ApplicationELB"
+      metric_name         = "TargetConnectionErrorCount"
+      statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
+    }
     ALB_TargetResponseTime = {
       alarm_description   = format("Average API response time is greater than %s", 5)
       comparison_operator = "GreaterThanThreshold"
