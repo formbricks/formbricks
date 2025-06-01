@@ -17,9 +17,8 @@ export const deleteUserAction = authenticatedActionClient.action(
       );
     }
     ctx.auditLoggingCtx.userId = ctx.user.id;
-    // Optionally fetch oldObject if needed for compliance
-    const oldObject = undefined; // Replace with actual fetch if needed
-    ctx.auditLoggingCtx.oldObject = oldObject;
-    return await deleteUser(ctx.user.id);
+    const result = await deleteUser(ctx.user.id);
+    ctx.auditLoggingCtx.oldObject = result;
+    return result;
   })
 );

@@ -27,9 +27,11 @@ const ZCreateTagAction = z.object({
 
 export const createTagAction = authenticatedActionClient.schema(ZCreateTagAction).action(
   withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -42,7 +44,7 @@ export const createTagAction = authenticatedActionClient.schema(ZCreateTagAction
         },
       ],
     });
-    ctx.auditLoggingCtx.environmentId = parsedInput.environmentId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
     ctx.auditLoggingCtx.tagId = result.id;
     ctx.auditLoggingCtx.newObject = result;
@@ -56,7 +58,7 @@ const ZCreateTagToResponseAction = z.object({
 });
 
 export const createTagToResponseAction = authenticatedActionClient.schema(ZCreateTagToResponseAction).action(
-  withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
+  withAuditLogging("addedToResponse", "tag", async ({ parsedInput, ctx }) => {
     const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
     const tagEnvironment = await getTag(parsedInput.tagId);
 
@@ -68,9 +70,11 @@ export const createTagToResponseAction = authenticatedActionClient.schema(ZCreat
       throw new Error("Response and tag are not in the same environment");
     }
 
+    const organizationId = await getOrganizationIdFromEnvironmentId(responseEnvironmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -83,7 +87,7 @@ export const createTagToResponseAction = authenticatedActionClient.schema(ZCreat
         },
       ],
     });
-    ctx.auditLoggingCtx.responseId = parsedInput.responseId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.tagId = parsedInput.tagId;
     const result = await addTagToRespone(parsedInput.responseId, parsedInput.tagId);
     ctx.auditLoggingCtx.newObject = result;
@@ -97,10 +101,10 @@ const ZDeleteTagOnResponseAction = z.object({
 });
 
 export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDeleteTagOnResponseAction).action(
-  withAuditLogging("deleted", "tag", async ({ parsedInput, ctx }) => {
+  withAuditLogging("removedFromResponse", "tag", async ({ parsedInput, ctx }) => {
     const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
     const tagEnvironment = await getTag(parsedInput.tagId);
-
+    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
     if (!responseEnvironmentId || !tagEnvironment) {
       throw new Error("Environment not found");
     }
@@ -111,7 +115,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDelet
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -124,7 +128,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDelet
         },
       ],
     });
-    ctx.auditLoggingCtx.responseId = parsedInput.responseId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.tagId = parsedInput.tagId;
     const result = await deleteTagOnResponse(parsedInput.responseId, parsedInput.tagId);
     ctx.auditLoggingCtx.oldObject = result;
@@ -138,9 +142,10 @@ const ZDeleteResponseAction = z.object({
 
 export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResponseAction).action(
   withAuditLogging("deleted", "response", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -153,6 +158,7 @@ export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResp
         },
       ],
     });
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.responseId = parsedInput.responseId;
     const result = await deleteResponse(parsedInput.responseId);
     ctx.auditLoggingCtx.oldObject = result;
@@ -166,10 +172,11 @@ const ZUpdateResponseNoteAction = z.object({
 });
 
 export const updateResponseNoteAction = authenticatedActionClient.schema(ZUpdateResponseNoteAction).action(
-  withAuditLogging("updated", "response", async ({ parsedInput, ctx }) => {
+  withAuditLogging("updated", "responseNote", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -182,6 +189,7 @@ export const updateResponseNoteAction = authenticatedActionClient.schema(ZUpdate
         },
       ],
     });
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.responseNoteId = parsedInput.responseNoteId;
     const result = await updateResponseNote(parsedInput.responseNoteId, parsedInput.text);
     ctx.auditLoggingCtx.newObject = result;
@@ -194,10 +202,11 @@ const ZResolveResponseNoteAction = z.object({
 });
 
 export const resolveResponseNoteAction = authenticatedActionClient.schema(ZResolveResponseNoteAction).action(
-  withAuditLogging("updated", "response", async ({ parsedInput, ctx }) => {
+  withAuditLogging("updated", "responseNote", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -210,6 +219,7 @@ export const resolveResponseNoteAction = authenticatedActionClient.schema(ZResol
         },
       ],
     });
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.responseNoteId = parsedInput.responseNoteId;
     const result = await resolveResponseNote(parsedInput.responseNoteId);
     ctx.auditLoggingCtx.newObject = result;
@@ -223,10 +233,11 @@ const ZCreateResponseNoteAction = z.object({
 });
 
 export const createResponseNoteAction = authenticatedActionClient.schema(ZCreateResponseNoteAction).action(
-  withAuditLogging("created", "response", async ({ parsedInput, ctx }) => {
+  withAuditLogging("created", "responseNote", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -239,9 +250,10 @@ export const createResponseNoteAction = authenticatedActionClient.schema(ZCreate
         },
       ],
     });
-    ctx.auditLoggingCtx.responseId = parsedInput.responseId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     const result = await createResponseNote(parsedInput.responseId, ctx.user.id, parsedInput.text);
     ctx.auditLoggingCtx.newObject = result;
+    ctx.auditLoggingCtx.responseNoteId = result.id;
     return result;
   })
 );

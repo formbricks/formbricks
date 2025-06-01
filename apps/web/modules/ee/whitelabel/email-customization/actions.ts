@@ -50,9 +50,8 @@ export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      const result = await updateOrganizationEmailLogoUrl(parsedInput.organizationId, parsedInput.logoUrl);
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
+      ctx.auditLoggingCtx.newObject = parsedInput.logoUrl;
+      return await updateOrganizationEmailLogoUrl(parsedInput.organizationId, parsedInput.logoUrl);
     })
   );
 
@@ -63,7 +62,7 @@ const ZRemoveOrganizationEmailLogoUrlAction = z.object({
 export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
   .schema(ZRemoveOrganizationEmailLogoUrlAction)
   .action(
-    withAuditLogging("deleted", "organization", async ({ ctx, parsedInput }) => {
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId: parsedInput.organizationId,
@@ -72,9 +71,8 @@ export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      const result = await removeOrganizationEmailLogoUrl(parsedInput.organizationId);
-      ctx.auditLoggingCtx.oldObject = result;
-      return result;
+      ctx.auditLoggingCtx.oldObject = { logoUrl: "" };
+      return await removeOrganizationEmailLogoUrl(parsedInput.organizationId);
     })
   );
 

@@ -1,5 +1,5 @@
 import { deleteResponse, getResponse } from "@/lib/response/service";
-import { createResponseNote, resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
+import { resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -12,7 +12,6 @@ import {
 import { getTag } from "@/lib/utils/services";
 import { describe, expect, test, vi } from "vitest";
 import {
-  createResponseNoteAction,
   createTagToResponseAction,
   deleteResponseAction,
   deleteTagOnResponseAction,
@@ -33,7 +32,6 @@ const dummyCtx = { user: { id: "user1" }, auditLoggingCtx: {} } as any;
 const dummyTagToResponseInput = { responseId: "resp1", tagId: "tag1" };
 const dummyResponseIdInput = { responseId: "resp1" };
 const dummyResponseNoteInput = { responseNoteId: "note1", text: "Updated note" };
-const dummyCreateNoteInput = { responseId: "resp1", text: "New note" };
 const dummyGetResponseInput = { responseId: "resp1" };
 
 // Mocks for external dependencies
@@ -163,21 +161,6 @@ describe("SingleResponseCard actions", () => {
       expect(getOrganizationIdFromResponseNoteId).toHaveBeenCalledWith("note1");
       expect(getProjectIdFromResponseNoteId).toHaveBeenCalledWith("note1");
       expect(resolveResponseNote).toHaveBeenCalledWith("note1");
-    });
-  });
-
-  describe("createResponseNoteAction", () => {
-    test("creates a response note successfully", async () => {
-      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-      await createResponseNoteAction({ ...dummyCreateNoteInput, ...dummyCtx });
-      expect(checkAuthorizationUpdated).toHaveBeenCalled();
-      expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
-      expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
-      expect(createResponseNote).toHaveBeenCalledWith(
-        dummyCreateNoteInput.responseId,
-        dummyCtx.user.id,
-        dummyCreateNoteInput.text
-      );
     });
   });
 

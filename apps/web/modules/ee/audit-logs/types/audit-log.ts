@@ -20,6 +20,7 @@ const AuditTargets = [
   "membership",
   "twoFactorAuth",
   "apiKey",
+  "responseNote",
 ] as const;
 const AuditActions = [
   "created",
@@ -30,6 +31,8 @@ const AuditActions = [
   "verificationEmailSent",
   "createdFromCSV",
   "copiedToOtherEnvironment",
+  "addedToResponse",
+  "removedFromResponse",
 ] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;

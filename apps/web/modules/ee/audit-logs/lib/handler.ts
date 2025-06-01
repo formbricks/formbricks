@@ -287,6 +287,12 @@ export const withAuditLogging = (
           case "apiKey":
             targetId = auditLoggingCtx?.apiKeyId ?? UNKNOWN_DATA;
             break;
+          case "response":
+            targetId = auditLoggingCtx?.responseId ?? UNKNOWN_DATA;
+            break;
+          case "responseNote":
+            targetId = auditLoggingCtx?.responseNoteId ?? UNKNOWN_DATA;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;
