@@ -19,6 +19,7 @@ const AuditTargets = [
   "invite",
   "membership",
   "twoFactorAuth",
+  "apiKey",
 ] as const;
 const AuditActions = [
   "created",
@@ -27,6 +28,8 @@ const AuditActions = [
   "signedin",
   "merged",
   "verificationEmailSent",
+  "createdFromCSV",
+  "copiedToOtherEnvironment",
 ] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;

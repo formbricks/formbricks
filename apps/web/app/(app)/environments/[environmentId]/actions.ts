@@ -5,6 +5,7 @@ import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getOrganizationProjectsLimit,
   getRoleManagementPermission,
@@ -20,9 +21,8 @@ const ZCreateProjectAction = z.object({
   data: ZProjectUpdateInput,
 });
 
-export const createProjectAction = authenticatedActionClient
-  .schema(ZCreateProjectAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const createProjectAction = authenticatedActionClient.schema(ZCreateProjectAction).action(
+  withAuditLogging("created", "project", async ({ ctx, parsedInput }) => {
     const { user } = ctx;
 
     const organizationId = parsedInput.organizationId;
@@ -77,5 +77,9 @@ export const createProjectAction = authenticatedActionClient
       notificationSettings: updatedNotificationSettings,
     });
 
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.projectId = project.id;
+    ctx.auditLoggingCtx.newObject = project;
     return project;
-  });
+  })
+);

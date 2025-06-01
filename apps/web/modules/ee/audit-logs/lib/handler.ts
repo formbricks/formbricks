@@ -281,6 +281,12 @@ export const withAuditLogging = (
           case "actionClass":
             targetId = auditLoggingCtx?.actionClassId ?? UNKNOWN_DATA;
             break;
+          case "contact":
+            targetId = auditLoggingCtx?.contactId ?? UNKNOWN_DATA;
+            break;
+          case "apiKey":
+            targetId = auditLoggingCtx?.apiKeyId ?? UNKNOWN_DATA;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;

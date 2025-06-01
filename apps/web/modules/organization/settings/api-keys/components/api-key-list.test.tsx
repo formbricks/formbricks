@@ -31,6 +31,8 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   SESSION_MAX_AGE: 1000,
+  AUDIT_LOG_ENABLED: 1,
+  REDIS_URL: "redis://localhost:6379",
 }));
 
 // Mock @/lib/env

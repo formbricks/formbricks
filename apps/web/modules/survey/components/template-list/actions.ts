@@ -3,6 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -37,9 +38,8 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const createSurveyAction = authenticatedActionClient
-  .schema(ZCreateSurveyAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const createSurveyAction = authenticatedActionClient.schema(ZCreateSurveyAction).action(
+  withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -69,5 +69,10 @@ export const createSurveyAction = authenticatedActionClient
       await checkMultiLanguagePermission(organizationId);
     }
 
-    return await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
-  });
+    const result = await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = result.id;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
