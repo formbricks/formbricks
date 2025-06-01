@@ -6,6 +6,7 @@ import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
@@ -15,12 +16,12 @@ const ZDeleteActionClassAction = z.object({
   actionClassId: ZId,
 });
 
-export const deleteActionClassAction = authenticatedActionClient
-  .schema(ZDeleteActionClassAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const deleteActionClassAction = authenticatedActionClient.schema(ZDeleteActionClassAction).action(
+  withAuditLogging("deleted", "actionClass", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -33,23 +34,24 @@ export const deleteActionClassAction = authenticatedActionClient
         },
       ],
     });
-
-    await deleteActionClass(parsedInput.actionClassId);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
+    ctx.auditLoggingCtx.oldObject = await getActionClass(parsedInput.actionClassId);
+    return await deleteActionClass(parsedInput.actionClassId);
+  })
+);
 
 const ZUpdateActionClassAction = z.object({
   actionClassId: ZId,
   updatedAction: ZActionClassInput,
 });
 
-export const updateActionClassAction = authenticatedActionClient
-  .schema(ZUpdateActionClassAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateActionClassAction = authenticatedActionClient.schema(ZUpdateActionClassAction).action(
+  withAuditLogging("updated", "actionClass", async ({ ctx, parsedInput }) => {
     const actionClass = await getActionClass(parsedInput.actionClassId);
     if (actionClass === null) {
       throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
     }
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
@@ -65,13 +67,18 @@ export const updateActionClassAction = authenticatedActionClient
         },
       ],
     });
-
-    return await updateActionClass(
+    ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
+    ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
+    ctx.auditLoggingCtx.oldObject = actionClass;
+    const result = await updateActionClass(
       actionClass.environmentId,
       parsedInput.actionClassId,
       parsedInput.updatedAction
     );
-  });
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZGetActiveInactiveSurveysAction = z.object({
   actionClassId: ZId,

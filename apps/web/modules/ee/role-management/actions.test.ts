@@ -61,6 +61,14 @@ vi.mock("@/lib/utils/action-client", () => ({
   },
 }));
 
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    invite: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
 describe("Role Management Actions", () => {
   afterEach(() => {
     vi.resetAllMocks();

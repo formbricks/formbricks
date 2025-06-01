@@ -1,14 +1,11 @@
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { createResponseNote, resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
-import { createTag } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getEnvironmentIdFromResponseId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
-  getProjectIdFromEnvironmentId,
   getProjectIdFromResponseId,
   getProjectIdFromResponseNoteId,
 } from "@/lib/utils/helper";
@@ -16,7 +13,6 @@ import { getTag } from "@/lib/utils/services";
 import { describe, expect, test, vi } from "vitest";
 import {
   createResponseNoteAction,
-  createTagAction,
   createTagToResponseAction,
   deleteResponseAction,
   deleteTagOnResponseAction,
@@ -25,9 +21,15 @@ import {
   updateResponseNoteAction,
 } from "./actions";
 
+vi.mock("@/lib/constants", () => ({
+  AUDIT_LOG_ENABLED: false,
+  AUDIT_LOG_GET_USER_IP: false,
+  ENCRYPTION_KEY: "testsecret",
+  REDIS_URL: "",
+}));
+
 // Dummy inputs and context
-const dummyCtx = { user: { id: "user1" } };
-const dummyTagInput = { environmentId: "env1", tagName: "tag1" };
+const dummyCtx = { user: { id: "user1" }, auditLoggingCtx: {} } as any;
 const dummyTagToResponseInput = { responseId: "resp1", tagId: "tag1" };
 const dummyResponseIdInput = { responseId: "resp1" };
 const dummyResponseNoteInput = { responseNoteId: "note1", text: "Updated note" };
@@ -60,7 +62,7 @@ vi.mock("@/lib/responseNote/service", () => ({
   resolveResponseNote: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/tag/service", () => ({
-  createTag: vi.fn().mockResolvedValue("createdTag"),
+  createTag: vi.fn().mockResolvedValue({ id: "tag1", name: "tag1", environmentId: "env1" }),
 }));
 vi.mock("@/lib/tagOnResponse/service", () => ({
   addTagToRespone: vi.fn().mockResolvedValue("tagAdded"),
@@ -74,129 +76,119 @@ vi.mock("@/lib/utils/action-client", () => ({
         const { user, ...rest } = input;
         return fn({
           parsedInput: rest,
-          ctx: { user },
+          ctx: { user, auditLoggingCtx: {} },
         });
       },
     }),
   },
 }));
 
-describe("createTagAction", () => {
-  test("successfully creates a tag", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValueOnce("org1");
-    await createTagAction({ ...dummyTagInput, ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromEnvironmentId).toHaveBeenCalledWith(dummyTagInput.environmentId);
-    expect(getProjectIdFromEnvironmentId).toHaveBeenCalledWith(dummyTagInput.environmentId);
-    expect(createTag).toHaveBeenCalledWith(dummyTagInput.environmentId, dummyTagInput.tagName);
-  });
-});
+describe("SingleResponseCard actions", () => {
+  describe("createTagToResponseAction", () => {
+    test("adds tag to response when environments match", async () => {
+      vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
+      vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
+      await createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
+      expect(getEnvironmentIdFromResponseId).toHaveBeenCalledWith(dummyTagToResponseInput.responseId);
+      expect(getTag).toHaveBeenCalledWith(dummyTagToResponseInput.tagId);
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(addTagToRespone).toHaveBeenCalledWith(
+        dummyTagToResponseInput.responseId,
+        dummyTagToResponseInput.tagId
+      );
+    });
 
-describe("createTagToResponseAction", () => {
-  test("adds tag to response when environments match", async () => {
-    vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
-    vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
-    await createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
-    expect(getEnvironmentIdFromResponseId).toHaveBeenCalledWith(dummyTagToResponseInput.responseId);
-    expect(getTag).toHaveBeenCalledWith(dummyTagToResponseInput.tagId);
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(addTagToRespone).toHaveBeenCalledWith(
-      dummyTagToResponseInput.responseId,
-      dummyTagToResponseInput.tagId
-    );
+    test("throws error when environments do not match", async () => {
+      vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
+      vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
+      await expect(createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
+        "Response and tag are not in the same environment"
+      );
+    });
   });
 
-  test("throws error when environments do not match", async () => {
-    vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
-    vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
-    await expect(createTagToResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
-      "Response and tag are not in the same environment"
-    );
-  });
-});
+  describe("deleteTagOnResponseAction", () => {
+    test("deletes tag on response when environments match", async () => {
+      vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
+      vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
+      await deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
+      expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyTagToResponseInput.responseId);
+      expect(getTag).toHaveBeenCalledWith(dummyTagToResponseInput.tagId);
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(deleteTagOnResponse).toHaveBeenCalledWith(
+        dummyTagToResponseInput.responseId,
+        dummyTagToResponseInput.tagId
+      );
+    });
 
-describe("deleteTagOnResponseAction", () => {
-  test("deletes tag on response when environments match", async () => {
-    vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
-    vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "env1" });
-    await deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx });
-    expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyTagToResponseInput.responseId);
-    expect(getTag).toHaveBeenCalledWith(dummyTagToResponseInput.tagId);
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(deleteTagOnResponse).toHaveBeenCalledWith(
-      dummyTagToResponseInput.responseId,
-      dummyTagToResponseInput.tagId
-    );
+    test("throws error when environments do not match", async () => {
+      vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
+      vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
+      await expect(deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
+        "Response and tag are not in the same environment"
+      );
+    });
   });
 
-  test("throws error when environments do not match", async () => {
-    vi.mocked(getEnvironmentIdFromResponseId).mockResolvedValueOnce("env1");
-    vi.mocked(getTag).mockResolvedValueOnce({ environmentId: "differentEnv" });
-    await expect(deleteTagOnResponseAction({ ...dummyTagToResponseInput, ...dummyCtx })).rejects.toThrow(
-      "Response and tag are not in the same environment"
-    );
+  describe("deleteResponseAction", () => {
+    test("deletes response successfully", async () => {
+      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
+      await deleteResponseAction({ ...dummyResponseIdInput, ...dummyCtx });
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
+      expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
+      expect(deleteResponse).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
+    });
   });
-});
 
-describe("deleteResponseAction", () => {
-  test("deletes response successfully", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    await deleteResponseAction({ ...dummyResponseIdInput, ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
-    expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
-    expect(deleteResponse).toHaveBeenCalledWith(dummyResponseIdInput.responseId);
+  describe("updateResponseNoteAction", () => {
+    test("updates response note successfully", async () => {
+      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
+      await updateResponseNoteAction({ ...dummyResponseNoteInput, ...dummyCtx });
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(getOrganizationIdFromResponseNoteId).toHaveBeenCalledWith(dummyResponseNoteInput.responseNoteId);
+      expect(getProjectIdFromResponseNoteId).toHaveBeenCalledWith(dummyResponseNoteInput.responseNoteId);
+      expect(updateResponseNote).toHaveBeenCalledWith(
+        dummyResponseNoteInput.responseNoteId,
+        dummyResponseNoteInput.text
+      );
+    });
   });
-});
 
-describe("updateResponseNoteAction", () => {
-  test("updates response note successfully", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    await updateResponseNoteAction({ ...dummyResponseNoteInput, ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromResponseNoteId).toHaveBeenCalledWith(dummyResponseNoteInput.responseNoteId);
-    expect(getProjectIdFromResponseNoteId).toHaveBeenCalledWith(dummyResponseNoteInput.responseNoteId);
-    expect(updateResponseNote).toHaveBeenCalledWith(
-      dummyResponseNoteInput.responseNoteId,
-      dummyResponseNoteInput.text
-    );
+  describe("resolveResponseNoteAction", () => {
+    test("resolves response note successfully", async () => {
+      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
+      await resolveResponseNoteAction({ responseNoteId: "note1", ...dummyCtx });
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(getOrganizationIdFromResponseNoteId).toHaveBeenCalledWith("note1");
+      expect(getProjectIdFromResponseNoteId).toHaveBeenCalledWith("note1");
+      expect(resolveResponseNote).toHaveBeenCalledWith("note1");
+    });
   });
-});
 
-describe("resolveResponseNoteAction", () => {
-  test("resolves response note successfully", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    await resolveResponseNoteAction({ responseNoteId: "note1", ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromResponseNoteId).toHaveBeenCalledWith("note1");
-    expect(getProjectIdFromResponseNoteId).toHaveBeenCalledWith("note1");
-    expect(resolveResponseNote).toHaveBeenCalledWith("note1");
+  describe("createResponseNoteAction", () => {
+    test("creates a response note successfully", async () => {
+      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
+      await createResponseNoteAction({ ...dummyCreateNoteInput, ...dummyCtx });
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
+      expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
+      expect(createResponseNote).toHaveBeenCalledWith(
+        dummyCreateNoteInput.responseId,
+        dummyCtx.user.id,
+        dummyCreateNoteInput.text
+      );
+    });
   });
-});
 
-describe("createResponseNoteAction", () => {
-  test("creates a response note successfully", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    await createResponseNoteAction({ ...dummyCreateNoteInput, ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
-    expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyCreateNoteInput.responseId);
-    expect(createResponseNote).toHaveBeenCalledWith(
-      dummyCreateNoteInput.responseId,
-      dummyCtx.user.id,
-      dummyCreateNoteInput.text
-    );
-  });
-});
-
-describe("getResponseAction", () => {
-  test("retrieves response successfully", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
-    await getResponseAction({ ...dummyGetResponseInput, ...dummyCtx });
-    expect(checkAuthorizationUpdated).toHaveBeenCalled();
-    expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
-    expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
-    expect(getResponse).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
+  describe("getResponseAction", () => {
+    test("retrieves response successfully", async () => {
+      vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
+      await getResponseAction({ ...dummyGetResponseInput, ...dummyCtx });
+      expect(checkAuthorizationUpdated).toHaveBeenCalled();
+      expect(getOrganizationIdFromResponseId).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
+      expect(getProjectIdFromResponseId).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
+      expect(getResponse).toHaveBeenCalledWith(dummyGetResponseInput.responseId);
+    });
   });
 });

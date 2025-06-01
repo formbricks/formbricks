@@ -31,7 +31,7 @@ vi.mock("@/lib/utils/action-client", () => ({
 
 describe("deleteUserAction", () => {
   test("deletes user successfully when multi-org is enabled", async () => {
-    const ctx = { user: { id: "test-user" } };
+    const ctx = { user: { id: "test-user" }, auditLoggingCtx: {} } as any;
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "test-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([]);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValueOnce(true);
@@ -45,7 +45,7 @@ describe("deleteUserAction", () => {
   });
 
   test("deletes user successfully when multi-org is disabled but user is not sole owner of any org", async () => {
-    const ctx = { user: { id: "another-user" } };
+    const ctx = { user: { id: "another-user" }, auditLoggingCtx: {} } as any;
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "another-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([]);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValueOnce(false);
@@ -59,7 +59,7 @@ describe("deleteUserAction", () => {
   });
 
   test("throws OperationNotAllowedError when user is sole owner in at least one org and multi-org is disabled", async () => {
-    const ctx = { user: { id: "sole-owner-user" } };
+    const ctx = { user: { id: "sole-owner-user" }, auditLoggingCtx: {} } as any;
     vi.mocked(deleteUser).mockResolvedValueOnce({ id: "test-user" } as TUser);
     vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValueOnce([
       { id: "org-1" } as TOrganization,

@@ -3,7 +3,6 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
-import { getApiKey } from "@/lib/utils/services";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   createApiKey,
@@ -62,7 +61,7 @@ export const createApiKeyAction = authenticatedActionClient.schema(ZCreateApiKey
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
     const result = await createApiKey(parsedInput.organizationId, ctx.user.id, parsedInput.apiKeyData);
-    ctx.auditLoggingCtx.newObject = await getApiKey(result.id);
+    ctx.auditLoggingCtx.newObject = parsedInput.apiKeyData;
     ctx.auditLoggingCtx.apiKeyId = result.id;
     return result;
   })
