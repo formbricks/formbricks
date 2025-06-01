@@ -121,7 +121,7 @@ export const PUT = (
         targetType: "team" as const,
         userId: authentication.apiKeyId,
         userType: "api" as const,
-        targetId: params!.teamId,
+        targetId: params.teamId,
         organizationId: authentication.organizationId,
         status: "failure" as const,
         apiUrl: request.url,
@@ -140,7 +140,7 @@ export const PUT = (
 
       let oldTeamData: any = UNKNOWN_DATA;
       try {
-        const oldTeamResult = await getTeam(params!.organizationId, params!.teamId);
+        const oldTeamResult = await getTeam(params.organizationId, params.teamId);
         if (oldTeamResult.ok) {
           oldTeamData = oldTeamResult.data;
         }
