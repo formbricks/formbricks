@@ -39,6 +39,7 @@ vi.mock("@/modules/ee/teams/team-list/lib/team", () => ({
 describe("action.ts", () => {
   const ctx = {
     user: { id: "user-1" },
+    auditLoggingCtx: {},
   } as any;
   afterEach(() => {
     cleanup();

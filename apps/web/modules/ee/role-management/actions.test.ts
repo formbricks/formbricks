@@ -25,6 +25,8 @@ vi.mock("@/lib/constants", () => ({
     return mockUserManagementMinimumRole;
   },
   REDIS_URL: "redis://localhost:6379",
+  AUDIT_LOG_ENABLED: 1,
+  ENCRYPTION_KEY: "test-encryption-key",
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -100,7 +102,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateInviteAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             inviteId: "invite-123",
             organizationId: "org-123",
@@ -116,7 +118,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateInviteAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             inviteId: "invite-123",
             organizationId: "org-123",
@@ -135,7 +137,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateInvite).mockResolvedValue({ id: "invite-123", role: "billing" } as any);
 
       const result = await updateInviteAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           inviteId: "invite-123",
           organizationId: "org-123",
@@ -152,7 +154,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateInviteAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             inviteId: "invite-123",
             organizationId: "org-123",
@@ -170,7 +172,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateInvite).mockResolvedValue({ id: "invite-123", role: "member" } as any);
 
       const result = await updateInviteAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           inviteId: "invite-123",
           organizationId: "org-123",
@@ -190,7 +192,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateInvite).mockResolvedValue({ id: "invite-123", role: "member" } as any);
 
       const result = await updateInviteAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           inviteId: "invite-123",
           organizationId: "org-123",
@@ -209,7 +211,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateMembershipAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             userId: "user-456",
             organizationId: "org-123",
@@ -225,7 +227,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateMembershipAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             userId: "user-456",
             organizationId: "org-123",
@@ -242,7 +244,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateMembershipAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             userId: "user-456",
             organizationId: "org-123",
@@ -262,7 +264,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateMembership).mockResolvedValue({ id: "membership-123", role: "billing" } as any);
 
       const result = await updateMembershipAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           userId: "user-456",
           organizationId: "org-123",
@@ -280,7 +282,7 @@ describe("Role Management Actions", () => {
 
       await expect(
         updateMembershipAction({
-          ctx: { user: { id: "user-123" } },
+          ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
           parsedInput: {
             userId: "user-456",
             organizationId: "org-123",
@@ -299,7 +301,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateMembership).mockResolvedValue({ id: "membership-123", role: "member" } as any);
 
       const result = await updateMembershipAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           userId: "user-456",
           organizationId: "org-123",
@@ -320,7 +322,7 @@ describe("Role Management Actions", () => {
       vi.mocked(updateMembership).mockResolvedValue({ id: "membership-123", role: "member" } as any);
 
       const result = await updateMembershipAction({
-        ctx: { user: { id: "user-123" } },
+        ctx: { user: { id: "user-123" }, auditLoggingCtx: {} },
         parsedInput: {
           userId: "user-456",
           organizationId: "org-123",

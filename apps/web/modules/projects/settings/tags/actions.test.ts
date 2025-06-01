@@ -3,6 +3,7 @@ import { getEnvironmentIdFromTagId } from "@/lib/utils/helper";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/projects/settings/lib/tag";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { deleteTagAction, mergeTagsAction, updateTagNameAction } from "./actions";
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -29,10 +30,17 @@ vi.mock("@/modules/projects/settings/lib/tag", () => ({
     merged: [originalTagId, newTagId],
   })),
 }));
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    tag: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
 
-const ctx = { user: { id: "user1" } };
-const validTagId = "tag_123";
-const validTagId2 = "tag_456";
+const ctx = { user: { id: "user1" }, auditLoggingCtx: {} } as any;
+const validTagId = "clg8v7z5g0000qv6t7z5g0000";
+const validTagId2 = "clg8v7z5g0001qv6t7z5g0001";
 
 describe("/modules/projects/settings/tags/actions.ts", () => {
   afterEach(() => {
