@@ -254,6 +254,33 @@ export const withAuditLogging = (
           case "survey":
             targetId = auditLoggingCtx?.surveyId ?? UNKNOWN_DATA;
             break;
+          case "organization":
+            targetId = auditLoggingCtx?.organizationId ?? UNKNOWN_DATA;
+            break;
+          case "tag":
+            targetId = auditLoggingCtx?.tagId ?? UNKNOWN_DATA;
+            break;
+          case "webhook":
+            targetId = auditLoggingCtx?.webhookId ?? UNKNOWN_DATA;
+            break;
+          case "user":
+            targetId = auditLoggingCtx?.userId ?? UNKNOWN_DATA;
+            break;
+          case "project":
+            targetId = auditLoggingCtx?.projectId ?? UNKNOWN_DATA;
+            break;
+          case "language":
+            targetId = auditLoggingCtx?.languageId ?? UNKNOWN_DATA;
+            break;
+          case "invite":
+            targetId = auditLoggingCtx?.inviteId ?? UNKNOWN_DATA;
+            break;
+          case "membership":
+            targetId = auditLoggingCtx?.membershipId ?? UNKNOWN_DATA;
+            break;
+          case "actionClass":
+            targetId = auditLoggingCtx?.actionClassId ?? UNKNOWN_DATA;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;

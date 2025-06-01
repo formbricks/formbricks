@@ -1,7 +1,6 @@
 "use server";
 
-import { STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
-import { WEBAPP_URL } from "@/lib/constants";
+import { STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";

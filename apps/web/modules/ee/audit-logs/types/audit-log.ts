@@ -12,8 +12,22 @@ const AuditTargets = [
   "actionClass",
   "response",
   "contact",
+  "organization",
+  "tag",
+  "project",
+  "language",
+  "invite",
+  "membership",
+  "twoFactorAuth",
 ] as const;
-const AuditActions = ["created", "updated", "deleted", "signedin"] as const;
+const AuditActions = [
+  "created",
+  "updated",
+  "deleted",
+  "signedin",
+  "merged",
+  "verificationEmailSent",
+] as const;
 const Actors = ["user", "api"] as const;
 const AuditStatuses = ["success", "failure"] as const;
 export const UNKNOWN_DATA = "unknown";

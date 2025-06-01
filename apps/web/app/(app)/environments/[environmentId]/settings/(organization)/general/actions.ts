@@ -1,8 +1,9 @@
 "use server";
 
-import { deleteOrganization, updateOrganization } from "@/lib/organization/service";
+import { deleteOrganization, getOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
@@ -16,30 +17,35 @@ const ZUpdateOrganizationNameAction = z.object({
 
 export const updateOrganizationNameAction = authenticatedActionClient
   .schema(ZUpdateOrganizationNameAction)
-  .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZOrganizationUpdateInput.pick({ name: true }),
-          data: parsedInput.data,
-          roles: ["owner"],
-        },
-      ],
-    });
-
-    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
-  });
+  .action(
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            schema: ZOrganizationUpdateInput.pick({ name: true }),
+            data: parsedInput.data,
+            roles: ["owner"],
+          },
+        ],
+      });
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      const oldObject = await getOrganization(parsedInput.organizationId);
+      const result = await updateOrganization(parsedInput.organizationId, parsedInput.data);
+      ctx.auditLoggingCtx.oldObject = oldObject;
+      ctx.auditLoggingCtx.newObject = result;
+      return result;
+    })
+  );
 
 const ZDeleteOrganizationAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteOrganizationAction = authenticatedActionClient
-  .schema(ZDeleteOrganizationAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const deleteOrganizationAction = authenticatedActionClient.schema(ZDeleteOrganizationAction).action(
+  withAuditLogging("deleted", "organization", async ({ ctx, parsedInput }) => {
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
     if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
 
@@ -53,6 +59,9 @@ export const deleteOrganizationAction = authenticatedActionClient
         },
       ],
     });
-
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    const oldObject = await getOrganization(parsedInput.organizationId);
+    ctx.auditLoggingCtx.oldObject = oldObject;
     return await deleteOrganization(parsedInput.organizationId);
-  });
+  })
+);

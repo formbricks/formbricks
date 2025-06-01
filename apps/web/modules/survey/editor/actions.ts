@@ -10,12 +10,13 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
-import { getOrganizationBilling } from "@/modules/survey/lib/survey";
+import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -42,9 +43,8 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const updateSurveyAction = authenticatedActionClient
-  .schema(ZSurvey)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -74,8 +74,15 @@ export const updateSurveyAction = authenticatedActionClient
       await checkMultiLanguagePermission(organizationId);
     }
 
-    return await updateSurvey(parsedInput);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.id;
+    const oldObject = await getSurvey(parsedInput.id);
+    const result = await updateSurvey(parsedInput);
+    ctx.auditLoggingCtx.oldObject = oldObject;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZRefetchProjectAction = z.object({
   projectId: z.string().cuid2(),
@@ -186,12 +193,12 @@ const ZCreateActionClassAction = z.object({
   action: ZActionClassInput,
 });
 
-export const createActionClassAction = authenticatedActionClient
-  .schema(ZCreateActionClassAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const createActionClassAction = authenticatedActionClient.schema(ZCreateActionClassAction).action(
+  withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId),
+      organizationId: organizationId,
       access: [
         {
           type: "organization",
@@ -205,5 +212,10 @@ export const createActionClassAction = authenticatedActionClient
       ],
     });
 
-    return await createActionClass(parsedInput.action.environmentId, parsedInput.action);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.actionClassId = parsedInput.action.id;
+    const result = await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);

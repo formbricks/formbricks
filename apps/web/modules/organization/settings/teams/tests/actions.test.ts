@@ -125,6 +125,7 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
   AUDIT_LOG_GET_USER_IP: false,
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "redis://localhost:6379",
 }));
 
 describe("Organization Settings Teams Actions", () => {

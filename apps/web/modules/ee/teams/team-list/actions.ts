@@ -3,6 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import {
@@ -20,9 +21,8 @@ const ZCreateTeamAction = z.object({
   name: z.string().trim().min(1, "Team name is required"),
 });
 
-export const createTeamAction = authenticatedActionClient
-  .schema(ZCreateTeamAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const createTeamAction = authenticatedActionClient.schema(ZCreateTeamAction).action(
+  withAuditLogging("created", "team", async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -35,8 +35,13 @@ export const createTeamAction = authenticatedActionClient
     });
     await checkRoleManagementPermission(parsedInput.organizationId);
 
-    return await createTeam(parsedInput.organizationId, parsedInput.name);
-  });
+    const result = await createTeam(parsedInput.organizationId, parsedInput.name);
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.teamId = result;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZGetTeamDetailsAction = z.object({
   teamId: ZId,
@@ -72,9 +77,8 @@ const ZDeleteTeamAction = z.object({
   teamId: ZId,
 });
 
-export const deleteTeamAction = authenticatedActionClient
-  .schema(ZDeleteTeamAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const deleteTeamAction = authenticatedActionClient.schema(ZDeleteTeamAction).action(
+  withAuditLogging("deleted", "team", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
 
     await checkAuthorizationUpdated({
@@ -89,17 +93,21 @@ export const deleteTeamAction = authenticatedActionClient
     });
 
     await checkRoleManagementPermission(organizationId);
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.teamId = parsedInput.teamId;
+    const oldObject = await getTeamDetails(parsedInput.teamId);
+    ctx.auditLoggingCtx.oldObject = oldObject;
     return await deleteTeam(parsedInput.teamId);
-  });
+  })
+);
 
 const ZUpdateTeamAction = z.object({
   teamId: ZId,
   data: ZTeamSettingsFormSchema,
 });
 
-export const updateTeamDetailsAction = authenticatedActionClient
-  .schema(ZUpdateTeamAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateTeamDetailsAction = authenticatedActionClient.schema(ZUpdateTeamAction).action(
+  withAuditLogging("updated", "team", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
 
     await checkAuthorizationUpdated({
@@ -119,9 +127,15 @@ export const updateTeamDetailsAction = authenticatedActionClient
     });
 
     await checkRoleManagementPermission(organizationId);
-
-    return await updateTeamDetails(parsedInput.teamId, parsedInput.data);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.teamId = parsedInput.teamId;
+    const oldObject = await getTeamDetails(parsedInput.teamId);
+    const result = await updateTeamDetails(parsedInput.teamId, parsedInput.data);
+    ctx.auditLoggingCtx.oldObject = oldObject;
+    ctx.auditLoggingCtx.newObject = await getTeamDetails(parsedInput.teamId);
+    return result;
+  })
+);
 
 const ZGetTeamRoleAction = z.object({
   teamId: ZId,

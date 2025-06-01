@@ -8,6 +8,8 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromWebhookId,
 } from "@/lib/utils/helper";
+import { getWebhook } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   createWebhook,
   deleteWebhook,
@@ -23,12 +25,12 @@ const ZCreateWebhookAction = z.object({
   webhookInput: ZWebhookInput,
 });
 
-export const createWebhookAction = authenticatedActionClient
-  .schema(ZCreateWebhookAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebhookAction).action(
+  withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -41,20 +43,23 @@ export const createWebhookAction = authenticatedActionClient
         },
       ],
     });
-
-    return await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
-  });
+    const webhook = await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.newObject = webhook;
+    return webhook;
+  })
+);
 
 const ZDeleteWebhookAction = z.object({
   id: ZId,
 });
 
-export const deleteWebhookAction = authenticatedActionClient
-  .schema(ZDeleteWebhookAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const deleteWebhookAction = authenticatedActionClient.schema(ZDeleteWebhookAction).action(
+  withAuditLogging("deleted", "webhook", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromWebhookId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWebhookId(parsedInput.id),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -68,20 +73,26 @@ export const deleteWebhookAction = authenticatedActionClient
       ],
     });
 
-    return await deleteWebhook(parsedInput.id);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.webhookId = parsedInput.id;
+
+    const result = await deleteWebhook(parsedInput.id);
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZUpdateWebhookAction = z.object({
   webhookId: ZId,
   webhookInput: ZWebhookInput,
 });
 
-export const updateWebhookAction = authenticatedActionClient
-  .schema(ZUpdateWebhookAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateWebhookAction = authenticatedActionClient.schema(ZUpdateWebhookAction).action(
+  withAuditLogging("updated", "webhook", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromWebhookId(parsedInput.webhookId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWebhookId(parsedInput.webhookId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -95,8 +106,15 @@ export const updateWebhookAction = authenticatedActionClient
       ],
     });
 
-    return await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.webhookId = parsedInput.webhookId;
+    ctx.auditLoggingCtx.oldObject = await getWebhook(parsedInput.webhookId);
+
+    const result = await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZTestEndpointAction = z.object({
   url: z.string(),

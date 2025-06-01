@@ -6,6 +6,7 @@ import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
@@ -35,9 +36,8 @@ const ZUpdateInviteAction = z.object({
 
 export type TUpdateInviteAction = z.infer<typeof ZUpdateInviteAction>;
 
-export const updateInviteAction = authenticatedActionClient
-  .schema(ZUpdateInviteAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateInviteAction = authenticatedActionClient.schema(ZUpdateInviteAction).action(
+  withAuditLogging("updated", "invite", async ({ ctx, parsedInput }) => {
     const currentUserMembership = await getMembershipByUserIdOrganizationId(
       ctx.user.id,
       parsedInput.organizationId
@@ -69,8 +69,15 @@ export const updateInviteAction = authenticatedActionClient
 
     await checkRoleManagementPermission(parsedInput.organizationId);
 
-    return await updateInvite(parsedInput.inviteId, parsedInput.data);
-  });
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+
+    const result = await updateInvite(parsedInput.inviteId, parsedInput.data);
+
+    ctx.auditLoggingCtx.newObject = parsedInput.data;
+    return result;
+  })
+);
 
 const ZUpdateMembershipAction = z.object({
   userId: ZId,
@@ -78,9 +85,8 @@ const ZUpdateMembershipAction = z.object({
   data: ZMembershipUpdateInput,
 });
 
-export const updateMembershipAction = authenticatedActionClient
-  .schema(ZUpdateMembershipAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateMembershipAction = authenticatedActionClient.schema(ZUpdateMembershipAction).action(
+  withAuditLogging("updated", "membership", async ({ ctx, parsedInput }) => {
     const currentUserMembership = await getMembershipByUserIdOrganizationId(
       ctx.user.id,
       parsedInput.organizationId
@@ -120,5 +126,14 @@ export const updateMembershipAction = authenticatedActionClient
 
     await checkRoleManagementPermission(parsedInput.organizationId);
 
-    return await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
-  });
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
+    const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+    ctx.auditLoggingCtx.oldObject = await getMembershipByUserIdOrganizationId(
+      parsedInput.userId,
+      parsedInput.organizationId
+    );
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);

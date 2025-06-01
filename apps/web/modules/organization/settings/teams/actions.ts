@@ -7,6 +7,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { sendInviteMemberEmail } from "@/modules/email";
@@ -27,9 +28,8 @@ const ZDeleteInviteAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteInviteAction = authenticatedActionClient
-  .schema(ZDeleteInviteAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const deleteInviteAction = authenticatedActionClient.schema(ZDeleteInviteAction).action(
+  withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -40,8 +40,12 @@ export const deleteInviteAction = authenticatedActionClient
         },
       ],
     });
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+    ctx.auditLoggingCtx.oldObject = await getInvite(parsedInput.inviteId);
     return await deleteInvite(parsedInput.inviteId);
-  });
+  })
+);
 
 const ZCreateInviteTokenAction = z.object({
   inviteId: ZUuid,
@@ -77,9 +81,8 @@ const ZDeleteMembershipAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteMembershipAction = authenticatedActionClient
-  .schema(ZDeleteMembershipAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const deleteMembershipAction = authenticatedActionClient.schema(ZDeleteMembershipAction).action(
+  withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -127,17 +130,20 @@ export const deleteMembershipAction = authenticatedActionClient
       }
     }
 
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
+    ctx.auditLoggingCtx.oldObject = membership;
     return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
-  });
+  })
+);
 
 const ZResendInviteAction = z.object({
   inviteId: ZUuid,
   organizationId: ZId,
 });
 
-export const resendInviteAction = authenticatedActionClient
-  .schema(ZResendInviteAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const resendInviteAction = authenticatedActionClient.schema(ZResendInviteAction).action(
+  withAuditLogging("updated", "invite", async ({ ctx, parsedInput }) => {
     if (INVITE_DISABLED) {
       throw new OperationNotAllowedError("Invite are disabled");
     }
@@ -159,17 +165,22 @@ export const resendInviteAction = authenticatedActionClient
       ],
     });
 
-    const invite = await getInvite(parsedInput.inviteId);
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+    ctx.auditLoggingCtx.oldObject = await getInvite(parsedInput.inviteId);
     const updatedInvite = await resendInvite(parsedInput.inviteId);
+    ctx.auditLoggingCtx.newObject = updatedInvite;
     await sendInviteMemberEmail(
       parsedInput.inviteId,
       updatedInvite.email,
-      invite?.creator.name ?? "",
+      ctx.auditLoggingCtx.oldObject.creator?.name ?? "",
       updatedInvite.name ?? "",
       undefined,
       ctx.user.locale
     );
-  });
+    return updatedInvite;
+  })
+);
 
 const ZInviteUserAction = z.object({
   organizationId: ZId,
@@ -179,9 +190,8 @@ const ZInviteUserAction = z.object({
   teamIds: z.array(z.string()),
 });
 
-export const inviteUserAction = authenticatedActionClient
-  .schema(ZInviteUserAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserAction).action(
+  withAuditLogging("created", "invite", async ({ ctx, parsedInput }) => {
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
     }
@@ -228,6 +238,15 @@ export const inviteUserAction = authenticatedActionClient
       currentUserId: ctx.user.id,
     });
 
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.inviteId = inviteId;
+    ctx.auditLoggingCtx.newObject = {
+      email: parsedInput.email,
+      name: parsedInput.name,
+      role: parsedInput.role,
+      teamIds: parsedInput.teamIds,
+    };
+
     if (inviteId) {
       await sendInviteMemberEmail(
         inviteId,
@@ -240,15 +259,15 @@ export const inviteUserAction = authenticatedActionClient
     }
 
     return inviteId;
-  });
+  })
+);
 
 const ZLeaveOrganizationAction = z.object({
   organizationId: ZId,
 });
 
-export const leaveOrganizationAction = authenticatedActionClient
-  .schema(ZLeaveOrganizationAction)
-  .action(async ({ parsedInput, ctx }) => {
+export const leaveOrganizationAction = authenticatedActionClient.schema(ZLeaveOrganizationAction).action(
+  withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -285,5 +304,10 @@ export const leaveOrganizationAction = authenticatedActionClient
       throw new ValidationError("You cannot leave the only organization you are a member of");
     }
 
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.membershipId = `${ctx.user.id}-${parsedInput.organizationId}`;
+    ctx.auditLoggingCtx.oldObject = membership;
+
     return await deleteMembership(ctx.user.id, parsedInput.organizationId);
-  });
+  })
+);

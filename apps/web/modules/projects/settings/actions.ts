@@ -1,9 +1,11 @@
 "use server";
 
 import { getOrganization } from "@/lib/organization/service";
+import { getProject } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
@@ -16,9 +18,8 @@ const ZUpdateProjectAction = z.object({
   data: ZProjectUpdateInput,
 });
 
-export const updateProjectAction = authenticatedActionClient
-  .schema(ZUpdateProjectAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const updateProjectAction = authenticatedActionClient.schema(ZUpdateProjectAction).action(
+  withAuditLogging("updated", "project", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
     await checkAuthorizationUpdated({
@@ -64,5 +65,12 @@ export const updateProjectAction = authenticatedActionClient
       }
     }
 
-    return await updateProject(parsedInput.projectId, parsedInput.data);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.projectId = parsedInput.projectId;
+    const oldObject = await getProject(parsedInput.projectId);
+    const result = await updateProject(parsedInput.projectId, parsedInput.data);
+    ctx.auditLoggingCtx.oldObject = oldObject;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);

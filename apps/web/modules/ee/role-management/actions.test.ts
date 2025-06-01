@@ -24,6 +24,7 @@ vi.mock("@/lib/constants", () => ({
   get USER_MANAGEMENT_MINIMUM_ROLE() {
     return mockUserManagementMinimumRole;
   },
+  REDIS_URL: "redis://localhost:6379",
 }));
 
 vi.mock("@/lib/organization/service", () => ({
