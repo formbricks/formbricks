@@ -61,13 +61,13 @@ export const DELETE = async (
         targetType: "team" as const,
         userId: authentication.apiKeyId,
         userType: "api" as const,
-        targetId: params!.teamId,
-        organizationId: authentication.organizationId,
+        targetId: params.teamId,
+        organizationId: params.organizationId,
         status: "failure" as const,
         apiUrl: request.url,
       };
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (!hasOrganizationIdAndAccess(params.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
           request,
           {
@@ -80,7 +80,7 @@ export const DELETE = async (
 
       let oldTeamData: any = UNKNOWN_DATA;
       try {
-        const oldTeamResult = await getTeam(params!.organizationId, params!.teamId);
+        const oldTeamResult = await getTeam(params.organizationId, params.teamId);
         if (oldTeamResult.ok) {
           oldTeamData = oldTeamResult.data;
         }
@@ -88,7 +88,7 @@ export const DELETE = async (
         logger.error(`Failed to fetch old team data for audit log: ${JSON.stringify(error)}`);
       }
 
-      const team = await deleteTeam(params!.organizationId, params!.teamId);
+      const team = await deleteTeam(params.organizationId, params.teamId);
 
       if (!team.ok) {
         return handleApiError(request, team.error, auditLogBase);

@@ -115,7 +115,7 @@ export const PUT = withApiLogging(
         };
       }
       return {
-        response: responses.internalServerErrorResponse("Some error ocured while updating action"),
+        response: responses.internalServerErrorResponse("Some error occurred while updating action"),
         audit: auditLog,
       };
     } catch (error) {

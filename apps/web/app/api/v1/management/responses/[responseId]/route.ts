@@ -158,6 +158,7 @@ export const PUT = withApiLogging(
           audit: auditLog,
         };
       }
+
       const updated = await updateResponse(params.responseId, inputValidation.data);
       auditLog.status = "success";
       auditLog.newObject = updated;

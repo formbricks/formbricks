@@ -128,7 +128,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         targetType: "user" as const,
         userId: authentication.apiKeyId,
         userType: "api" as const,
-        targetId: body?.email || UNKNOWN_DATA, // Assuming email is the identifier for update, or use UNKNOWN_DATA
+        targetId: UNKNOWN_DATA,
         organizationId: authentication.organizationId,
         status: "failure" as const,
         apiUrl: request.url,
@@ -184,6 +184,8 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
       } catch (error) {
         logger.error(`Failed to fetch old user data for audit log: ${JSON.stringify(error)}`);
       }
+
+      auditLogBase.targetId = oldUserData !== UNKNOWN_DATA ? oldUserData?.id : UNKNOWN_DATA;
 
       const updateUserResult = await updateUser(body, authentication.organizationId);
       if (!updateUserResult.ok) {
