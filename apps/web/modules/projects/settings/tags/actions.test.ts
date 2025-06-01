@@ -3,7 +3,6 @@ import { getEnvironmentIdFromTagId } from "@/lib/utils/helper";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/projects/settings/lib/tag";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { deleteTagAction, mergeTagsAction, updateTagNameAction } from "./actions";
 
 vi.mock("@/lib/utils/action-client", () => ({

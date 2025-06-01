@@ -46,7 +46,7 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
         [project.id]: true,
       },
       unsubscribedOrganizationIds: Array.from(
-        new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+        new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id]) // NOSONAR // We want to check for empty strings too
       ),
     };
 

@@ -11,6 +11,7 @@ import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/util
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
+import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
@@ -71,10 +72,11 @@ export const updateInviteAction = authenticatedActionClient.schema(ZUpdateInvite
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+    ctx.auditLoggingCtx.oldObject = await getInvite(parsedInput.inviteId);
 
     const result = await updateInvite(parsedInput.inviteId, parsedInput.data);
 
-    ctx.auditLoggingCtx.newObject = parsedInput.data;
+    ctx.auditLoggingCtx.newObject = await getInvite(parsedInput.inviteId);
     return result;
   })
 );
@@ -128,11 +130,11 @@ export const updateMembershipAction = authenticatedActionClient.schema(ZUpdateMe
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
-    const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
     ctx.auditLoggingCtx.oldObject = await getMembershipByUserIdOrganizationId(
       parsedInput.userId,
       parsedInput.organizationId
     );
+    const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
     ctx.auditLoggingCtx.newObject = result;
     return result;
   })

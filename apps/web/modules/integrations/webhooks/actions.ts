@@ -77,7 +77,7 @@ export const deleteWebhookAction = authenticatedActionClient.schema(ZDeleteWebho
     ctx.auditLoggingCtx.webhookId = parsedInput.id;
 
     const result = await deleteWebhook(parsedInput.id);
-    ctx.auditLoggingCtx.newObject = result;
+    ctx.auditLoggingCtx.oldObject = result;
     return result;
   })
 );

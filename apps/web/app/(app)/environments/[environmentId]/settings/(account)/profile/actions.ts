@@ -28,6 +28,52 @@ const limiter = rateLimit({
   allowedPerInterval: 3, // max 3 calls for email verification per hour
 });
 
+function buildUserUpdatePayload(parsedInput: any): TUserUpdateInput {
+  return {
+    ...(parsedInput.name && { name: parsedInput.name }),
+    ...(parsedInput.locale && { locale: parsedInput.locale }),
+  };
+}
+
+async function handleEmailUpdate({
+  ctx,
+  parsedInput,
+  payload,
+}: {
+  ctx: any;
+  parsedInput: any;
+  payload: TUserUpdateInput;
+}) {
+  const inputEmail = parsedInput.email?.trim().toLowerCase();
+  if (!inputEmail || ctx.user.email === inputEmail) return payload;
+
+  try {
+    await limiter(ctx.user.id);
+  } catch {
+    throw new TooManyRequestsError("Too many requests");
+  }
+  if (ctx.user.identityProvider !== "email") {
+    throw new OperationNotAllowedError("Email update is not allowed for non-credential users.");
+  }
+  if (!parsedInput.password) {
+    throw new AuthenticationError("Password is required to update email.");
+  }
+  const isCorrectPassword = await verifyUserPassword(ctx.user.id, parsedInput.password);
+  if (!isCorrectPassword) {
+    throw new AuthorizationError("Incorrect credentials");
+  }
+  const isEmailUnique = await getIsEmailUnique(inputEmail);
+  if (!isEmailUnique) return payload;
+
+  if (EMAIL_VERIFICATION_DISABLED) {
+    payload.email = inputEmail;
+    await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
+  } else {
+    await sendVerificationNewEmail(ctx.user.id, inputEmail);
+  }
+  return payload;
+}
+
 export const updateUserAction = authenticatedActionClient
   .schema(
     ZUserUpdateInput.pick({ name: true, email: true, locale: true }).extend({
@@ -36,49 +82,9 @@ export const updateUserAction = authenticatedActionClient
   )
   .action(
     withAuditLogging("updated", "user", async ({ ctx, parsedInput }) => {
-      const inputEmail = parsedInput.email?.trim().toLowerCase();
-
-      let payload: TUserUpdateInput = {
-        ...(parsedInput.name && { name: parsedInput.name }),
-        ...(parsedInput.locale && { locale: parsedInput.locale }),
-      };
-
       const oldObject = await getUser(ctx.user.id);
-
-      // Only process email update if a new email is provided and it's different from current email
-      if (inputEmail && ctx.user.email !== inputEmail) {
-        // Check rate limit
-        try {
-          await limiter(ctx.user.id);
-        } catch {
-          throw new TooManyRequestsError("Too many requests");
-        }
-        if (ctx.user.identityProvider !== "email") {
-          throw new OperationNotAllowedError("Email update is not allowed for non-credential users.");
-        }
-
-        if (!parsedInput.password) {
-          throw new AuthenticationError("Password is required to update email.");
-        }
-
-        const isCorrectPassword = await verifyUserPassword(ctx.user.id, parsedInput.password);
-        if (!isCorrectPassword) {
-          throw new AuthorizationError("Incorrect credentials");
-        }
-
-        // Check if the new email is unique, no user exists with the new email
-        const isEmailUnique = await getIsEmailUnique(inputEmail);
-
-        // If the new email is unique, proceed with the email update
-        if (isEmailUnique) {
-          if (EMAIL_VERIFICATION_DISABLED) {
-            payload.email = inputEmail;
-            await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
-          } else {
-            await sendVerificationNewEmail(ctx.user.id, inputEmail);
-          }
-        }
-      }
+      let payload = buildUserUpdatePayload(parsedInput);
+      payload = await handleEmailUpdate({ ctx, parsedInput, payload });
 
       // Only proceed with updateUser if we have actual changes to make
       let newObject = oldObject;

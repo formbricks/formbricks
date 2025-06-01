@@ -56,7 +56,7 @@ export const AuditLogEventSchema = z.object({
     id: z.string().or(z.undefined()),
     type: z.enum(AuditTargets),
   }),
-  status: z.enum(["success", "failure"]),
+  status: z.enum(AuditStatuses),
   timestamp: z.string().datetime(),
   organizationId: z.string(),
   ipAddress: z.string().ip().optional(),
