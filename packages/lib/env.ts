@@ -219,5 +219,7 @@ export const env = createEnv({
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     ALCHEMY_API_KEY: process.env.ALCHEMY_API_KEY,
     WHITELIST_DISABLED: process.env.WHITELIST_DISABLED,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_KEY: process.env.SUPABASE_KEY,
   },
 });
