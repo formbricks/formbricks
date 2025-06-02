@@ -1,4 +1,8 @@
+import { invalidateCache } from "@/modules/cache/lib/withCache";
+import { revalidatePath } from "next/cache";
 import { revalidateTag } from "next/cache";
+
+// BYPASSED - see below
 
 interface RevalidateProps {
   id?: string;
@@ -10,26 +14,19 @@ interface RevalidateProps {
 }
 
 export const surveyCache = {
+  // Legacy tag system - kept for existing cache() functions that still use it
   tag: {
-    byId(id: string) {
-      return `surveys-${id}`;
-    },
-    byEnvironmentId(environmentId: string): string {
-      return `environments-${environmentId}-surveys`;
-    },
-    byAttributeClassId(attributeClassId: string) {
-      return `attributeFilters-${attributeClassId}-surveys`;
-    },
-    byActionClassId(actionClassId: string) {
-      return `actionClasses-${actionClassId}-surveys`;
-    },
-    bySegmentId(segmentId: string) {
-      return `segments-${segmentId}-surveys`;
-    },
-    byResultShareKey(resultShareKey: string) {
-      return `surveys-resultShare-${resultShareKey}`;
-    },
+    byId: (id: string) => `surveys-${id}`,
+    byEnvironmentId: (environmentId: string) => `environments-${environmentId}-surveys`,
+    byActionClassId: (actionClassId: string) => `actionClasses-${actionClassId}-surveys`,
+    byAttributeClassId: (attributeClassId: string) => `attributeFilters-${attributeClassId}-surveys`,
+    bySegmentId: (segmentId: string) => `segments-${segmentId}-surveys`,
+    byResultShareKey: (resultShareKey: string) => `surveys-resultShare-${resultShareKey}`,
   },
+
+  /**
+   * Main revalidation function - handles both legacy and new cache systems
+   */
   revalidate({
     id,
     attributeClassId,
@@ -38,28 +35,23 @@ export const surveyCache = {
     segmentId,
     resultShareKey,
   }: RevalidateProps): void {
+    // 1. Legacy NextJS tag-based revalidation (BYPASSED - see revalidateTag mock above)
+    if (id) revalidateTag(this.tag.byId(id));
+    if (attributeClassId) revalidateTag(this.tag.byAttributeClassId(attributeClassId));
+    if (actionClassId) revalidateTag(this.tag.byActionClassId(actionClassId));
+    if (environmentId) revalidateTag(this.tag.byEnvironmentId(environmentId));
+    if (segmentId) revalidateTag(this.tag.bySegmentId(segmentId));
+    if (resultShareKey) revalidateTag(this.tag.byResultShareKey(resultShareKey));
+
+    // 2. New Redis cache invalidation + NextJS path revalidation
     if (id) {
-      revalidateTag(this.tag.byId(id));
-    }
+      // Invalidate optimized survey data cache
+      invalidateCache(`fb:survey:${id}:full`).catch((error) => {
+        console.warn(`Failed to invalidate survey cache for ${id}:`, error);
+      });
 
-    if (attributeClassId) {
-      revalidateTag(this.tag.byAttributeClassId(attributeClassId));
-    }
-
-    if (actionClassId) {
-      revalidateTag(this.tag.byActionClassId(actionClassId));
-    }
-
-    if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
-    }
-
-    if (segmentId) {
-      revalidateTag(this.tag.bySegmentId(segmentId));
-    }
-
-    if (resultShareKey) {
-      revalidateTag(this.tag.byResultShareKey(resultShareKey));
+      // Revalidate survey(link p)ge
+      revalidatePath(`/s/${id}`);
     }
   },
 };
