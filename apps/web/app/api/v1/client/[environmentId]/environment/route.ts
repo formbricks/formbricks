@@ -8,7 +8,15 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsSyncInput } from "@formbricks/types/js";
 
 export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse({}, true);
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    // max-age=3600: 1hr browser cache
+    // s-maxage=3600: 1hr Cloudflare cache
+    "public, s-maxage=3600, max-age=3600"
+  );
 };
 
 export const GET = async (

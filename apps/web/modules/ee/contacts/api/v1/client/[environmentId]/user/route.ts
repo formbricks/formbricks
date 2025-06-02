@@ -10,7 +10,13 @@ import { ZUserEmail } from "@formbricks/types/user";
 import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse({}, true);
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
+  );
 };
 
 export const POST = async (
