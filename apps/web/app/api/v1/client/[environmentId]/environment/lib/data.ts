@@ -7,7 +7,6 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  TJsEnvironmentState,
   TJsEnvironmentStateActionClass,
   TJsEnvironmentStateProject,
   TJsEnvironmentStateSurvey,

@@ -1,5 +1,5 @@
 ---
-description: 
+description: Caching rules for performance improvements
 globs: 
 alwaysApply: false
 ---
@@ -22,12 +22,7 @@ Formbricks uses a **hybrid caching approach** optimized for enterprise scale:
 
 ### Environment State Caching (Critical Endpoint)
 - [apps/web/app/api/v1/client/[environmentId]/environment/route.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/route.ts) - Main endpoint serving hundreds of thousands of SDK clients
-- [apps/web/app/api/v1/client/[environmentId]/environment/lib/environmentStateCache.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/environmentStateCache.ts) - Specialized cache for environment state
 - [apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts) - Optimized data layer with caching
-- [apps/web/app/api/v1/client/[environmentId]/environment/lib/invalidation.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/invalidation.ts) - Cache invalidation strategies
-
-### Documentation
-- [CACHE_BEST_PRACTICES.md](mdc:CACHE_BEST_PRACTICES.md) - Comprehensive caching guidelines
 
 ## Enterprise-Grade Cache Key Patterns
 
@@ -79,8 +74,25 @@ export const getEnvironmentState = async (environmentId: string) => {
 };
 ```
 
-## Cache TTL Guidelines
+## TTL Coordination Strategy
 
+### Multi-Layer Cache Coordination
+For endpoints serving client SDKs, coordinate TTLs across layers:
+
+```typescript
+// Client SDK cache (expiresAt) - longest TTL for fewer requests
+const CLIENT_TTL = 60 * 60;           // 1 hour
+
+// Server Redis cache - shorter TTL ensures fresh data for clients  
+const SERVER_TTL = 60 * 30;          // 30 minutes
+
+// HTTP cache headers
+const BROWSER_TTL = 60 * 60;         // 1 hour (max-age)
+const CDN_TTL = 60 * 30;             // 30 minutes (s-maxage)
+const CORS_TTL = 60 * 60;            // 1 hour (balanced approach)
+```
+
+### Standard TTL Guidelines
 ```typescript
 // Configuration data - rarely changes
 const CONFIG_TTL = 60 * 60 * 24;        // 24 hours
@@ -96,6 +108,129 @@ const BILLING_TTL = 60 * 30;            // 30 minutes
 
 // Action classes - infrequent changes
 const ACTION_CLASS_TTL = 60 * 30;       // 30 minutes
+```
+
+## High-Frequency Endpoint Optimization
+
+### Performance Patterns for High-Volume Endpoints
+
+```typescript
+// ✅ Optimized high-frequency endpoint pattern
+export const GET = async (request: NextRequest, props: { params: Promise<{ id: string }> }) => {
+  const params = await props.params;
+
+  try {
+    // Simple validation (avoid Zod for high-frequency)
+    if (!params.id || typeof params.id !== 'string') {
+      return responses.badRequestResponse("ID is required", undefined, true);
+    }
+
+    // Single optimized query with caching
+    const data = await getOptimizedData(params.id);
+
+    return responses.successResponse(
+      {
+        data,
+        expiresAt: new Date(Date.now() + CLIENT_TTL * 1000), // SDK cache duration
+      },
+      true,
+      "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
+    );
+  } catch (err) {
+    // Simplified error handling for performance
+    if (err instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse(err.resourceType, err.resourceId);
+    }
+    logger.error({ error: err, url: request.url }, "Error in high-frequency endpoint");
+    return responses.internalServerErrorResponse(err.message, true);
+  }
+};
+```
+
+### Avoid These Performance Anti-Patterns
+
+```typescript
+// ❌ Avoid for high-frequency endpoints
+const inputValidation = ZodSchema.safeParse(input);     // Too slow
+const startTime = Date.now(); logger.debug(...);       // Logging overhead
+const { data, revalidateEnvironment } = await get();   // Complex return types
+```
+
+### CORS Optimization
+```typescript
+// ✅ Balanced CORS caching (not too aggressive)
+export const OPTIONS = async (): Promise<Response> => {
+  return responses.successResponse(
+    {},
+    true,
+    "public, s-maxage=3600, max-age=3600" // 1 hour balanced approach
+  );
+};
+```
+
+## Redis Cache Migration from Next.js
+
+### Avoid Legacy Next.js Patterns
+```typescript
+// ❌ Old Next.js unstable_cache pattern (avoid)
+const getCachedData = unstable_cache(
+  async (id) => fetchData(id),
+  ['cache-key'],
+  { tags: ['environment'], revalidate: 900 }
+);
+
+// ❌ Don't use revalidateEnvironment flags with Redis
+return { data, revalidateEnvironment: true }; // This gets cached incorrectly!
+
+// ✅ New Redis pattern with withCache
+export const getCachedData = (id: string) => 
+  withCache(
+    () => fetchData(id),
+    {
+      key: createCacheKey.environment.data(id),
+      ttl: 60 * 15, // 15 minutes
+    }
+  )();
+```
+
+### Remove Revalidation Logic
+When migrating from Next.js `unstable_cache`:
+- Remove `revalidateEnvironment` or similar flags
+- Remove tag-based invalidation logic  
+- Use TTL-based expiration instead
+- Handle one-time updates (like `appSetupCompleted`) directly in cache
+
+## Data Layer Optimization
+
+### Single Query Pattern
+```typescript
+// ✅ Optimize with single database query
+export const getOptimizedEnvironmentData = async (environmentId: string) => {
+  return prisma.environment.findUniqueOrThrow({
+    where: { id: environmentId },
+    include: {
+      project: { 
+        select: { id: true, recontactDays: true, /* ... */ }
+      },
+      organization: {
+        select: { id: true, billing: true }
+      },
+      surveys: {
+        where: { status: "inProgress" },
+        select: { id: true, name: true, /* ... */ }
+      },
+      actionClasses: {
+        select: { id: true, name: true, /* ... */ }
+      }
+    }
+  });
+};
+
+// ❌ Avoid multiple separate queries
+const environment = await getEnvironment(id);
+const organization = await getOrganization(environment.organizationId);  
+const surveys = await getSurveys(id);
+const actionClasses = await getActionClasses(id);
 ```
 
 ## Invalidation Best Practices
@@ -116,11 +251,19 @@ await invalidateByTags(["environment", "survey"]); // Don't do this
 
 ## Critical Performance Targets
 
-For the `/api/v1/client/[environmentId]/environment` endpoint:
+### High-Frequency Endpoint Goals
 - **Cache hit ratio**: >85%
 - **Response time P95**: <200ms  
 - **Database load reduction**: >60%
 - **HTTP cache duration**: 1hr browser, 30min Cloudflare
+- **SDK refresh interval**: 1 hour with 30min server cache
+
+### Performance Monitoring
+- Use **existing elastic cache analytics** for metrics
+- Log cache errors and warnings (not debug info)
+- Track database query reduction
+- Monitor response times for cached endpoints
+- **Avoid performance logging** in high-frequency endpoints
 
 ## Error Handling Pattern
 
@@ -144,10 +287,13 @@ try {
 ## Common Pitfalls to Avoid
 
 1. **Never use Next.js `unstable_cache()`** - unreliable in production
-2. **Don't forget invalidation hooks** when data changes
-3. **Avoid over-engineering** with complex tag systems  
-4. **Don't cache rapidly changing data** (real-time metrics)
-5. **Always validate cache keys** to prevent collisions
+2. **Don't use revalidation flags with Redis** - they get cached incorrectly
+3. **Avoid Zod validation** for simple parameters in high-frequency endpoints
+4. **Don't add performance logging** to high-frequency endpoints
+5. **Coordinate TTLs** between client and server caches
+6. **Don't over-engineer** with complex tag systems  
+7. **Avoid caching rapidly changing data** (real-time metrics)
+8. **Always validate cache keys** to prevent collisions
 
 ## Monitoring Strategy
 
