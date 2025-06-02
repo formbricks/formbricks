@@ -1,8 +1,8 @@
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
+import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
-import { getExistingContactResponse } from "@/modules/survey/link/lib/response";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -43,7 +43,9 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/modules/ee/contacts/lib/contact-survey-link");
 vi.mock("@/modules/survey/link/lib/metadata-utils");
-vi.mock("@/modules/survey/link/lib/response");
+vi.mock("@/modules/survey/link/lib/data", () => ({
+  getExistingContactResponse: vi.fn(() => vi.fn()),
+}));
 vi.mock("@/modules/survey/lib/survey");
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
@@ -124,7 +126,7 @@ describe("contact-survey page", () => {
       ok: true,
       data: { surveyId: "s", contactId: "c" },
     });
-    vi.mocked(getExistingContactResponse).mockResolvedValue(null);
+    vi.mocked(getExistingContactResponse).mockReturnValue(() => Promise.resolve(null));
     vi.mocked(getSurvey).mockResolvedValue(null as any);
     await expect(
       ContactSurveyPage({
@@ -139,7 +141,7 @@ describe("contact-survey page", () => {
       ok: true,
       data: { surveyId: "s", contactId: "c" },
     });
-    vi.mocked(getExistingContactResponse).mockResolvedValue(null);
+    vi.mocked(getExistingContactResponse).mockReturnValue(() => Promise.resolve(null));
     vi.mocked(getSurvey).mockResolvedValue({ id: "s" } as any);
     const node = await ContactSurveyPage({
       params: Promise.resolve({ jwt: "tk" }),

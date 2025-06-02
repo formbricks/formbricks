@@ -1,7 +1,8 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId } from "@/modules/survey/link/lib/response";
+import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
+import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
@@ -32,8 +33,8 @@ vi.mock("@/modules/survey/link/components/survey-renderer", () => ({
   renderSurvey: vi.fn(() => <div data-testid="survey-renderer" />),
 }));
 
-vi.mock("@/modules/survey/link/lib/response", () => ({
-  getResponseBySingleUseId: vi.fn(),
+vi.mock("@/modules/survey/link/lib/data", () => ({
+  getResponseBySingleUseId: vi.fn(() => vi.fn()),
 }));
 
 vi.mock("@/modules/survey/link/metadata", () => ({
@@ -120,7 +121,7 @@ describe("LinkSurveyPage", () => {
       },
     } as unknown as TSurvey);
     vi.mocked(validateSurveySingleUseId).mockReturnValue("validatedId123");
-    vi.mocked(getResponseBySingleUseId).mockResolvedValue(null);
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(() => Promise.resolve(null));
 
     const props = {
       params: Promise.resolve({ surveyId: "survey123" }),
@@ -142,7 +143,7 @@ describe("LinkSurveyPage", () => {
         isEncrypted: false,
       },
     } as unknown as TSurvey);
-    vi.mocked(getResponseBySingleUseId).mockResolvedValue(null);
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(() => Promise.resolve(null));
 
     const props = {
       params: Promise.resolve({ surveyId: "survey123" }),
