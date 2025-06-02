@@ -26,7 +26,7 @@ const mockCache = {
 };
 
 vi.mock("@/modules/cache/lib/service", () => ({
-  getCache: () => mockCache,
+  getCache: () => Promise.resolve(mockCache),
 }));
 
 vi.mock("node-fetch", () => ({
