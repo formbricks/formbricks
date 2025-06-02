@@ -29,9 +29,15 @@ describe("Cache Service", () => {
 
     // Setup default mock implementations
     vi.mocked(createCache).mockReturnValue(mockCacheInstance as any);
-    vi.mocked(Keyv).mockClear(); // Clear any previous calls
-    vi.mocked(KeyvRedis).mockClear(); // Clear any previous calls
-    vi.mocked(logger.warn).mockClear(); // Clear logger warnings
+    vi.mocked(Keyv).mockClear();
+    vi.mocked(KeyvRedis).mockClear();
+    vi.mocked(logger.warn).mockClear();
+    vi.mocked(logger.error).mockClear();
+    vi.mocked(logger.info).mockClear();
+
+    // Mock successful cache operations for Redis connection test
+    mockCacheInstance.set.mockResolvedValue(undefined);
+    mockCacheInstance.del.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -41,7 +47,10 @@ describe("Cache Service", () => {
   describe("Initialization and getCache", () => {
     test("should use Redis store and return it via getCache if REDIS_URL is set", async () => {
       process.env.REDIS_URL = "redis://localhost:6379";
-      const { getCache } = await import("./service"); // Dynamically import
+      const { getCache } = await import("./service");
+
+      // Call getCache to trigger async initialization
+      const cache = await getCache();
 
       expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
       expect(Keyv).toHaveBeenCalledWith({
@@ -52,38 +61,40 @@ describe("Cache Service", () => {
         stores: [expect.any(Keyv)],
         ttl: CACHE_TTL_MS,
       });
-      expect(logger.warn).not.toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith("Successfully connected to Redis cache");
-      expect(getCache()).toBe(mockCacheInstance);
+      expect(logger.info).toHaveBeenCalledWith("Attempting to connect to Redis cache...");
+      expect(logger.info).toHaveBeenCalledWith("Redis cache connected successfully");
+      expect(cache).toBe(mockCacheInstance);
     });
 
     test("should fall back to memory store if Redis connection fails", async () => {
       process.env.REDIS_URL = "redis://localhost:6379";
       const mockError = new Error("Connection refused");
-      vi.mocked(KeyvRedis).mockImplementation(() => {
-        throw mockError;
-      });
 
-      const { getCache } = await import("./service"); // Dynamically import
+      // Mock cache operations to fail for Redis connection test
+      mockCacheInstance.set.mockRejectedValueOnce(mockError);
+
+      const { getCache } = await import("./service");
+
+      // Call getCache to trigger async initialization
+      const cache = await getCache();
 
       expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
-      expect(logger.error).toHaveBeenCalledWith("Failed to connect to Redis cache:", mockError);
       expect(logger.warn).toHaveBeenCalledWith(
-        "Falling back to in-memory cache due to Redis connection failure"
+        "Failed to initialize Redis cache, falling back to memory cache",
+        expect.objectContaining({
+          error: "Connection refused",
+        })
       );
-      expect(Keyv).toHaveBeenCalledWith({
-        ttl: CACHE_TTL_MS,
-      });
-      expect(createCache).toHaveBeenCalledWith({
-        stores: [expect.any(Keyv)],
-        ttl: CACHE_TTL_MS,
-      });
-      expect(getCache()).toBe(mockCacheInstance);
+      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      expect(cache).toBe(mockCacheInstance);
     });
 
-    test("should use memory store, log warning, and return it via getCache if REDIS_URL is not set", async () => {
+    test("should use memory store and return it via getCache if REDIS_URL is not set", async () => {
       delete process.env.REDIS_URL;
-      const { getCache } = await import("./service"); // Dynamically import
+      const { getCache } = await import("./service");
+
+      // Call getCache to trigger async initialization
+      const cache = await getCache();
 
       expect(KeyvRedis).not.toHaveBeenCalled();
       expect(Keyv).toHaveBeenCalledWith({
@@ -93,25 +104,59 @@ describe("Cache Service", () => {
         stores: [expect.any(Keyv)],
         ttl: CACHE_TTL_MS,
       });
-      expect(logger.warn).toHaveBeenCalledWith("REDIS_URL not found, falling back to in-memory cache.");
-      expect(getCache()).toBe(mockCacheInstance);
+      expect(logger.info).toHaveBeenCalledWith("REDIS_URL not provided, using memory cache");
+      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      expect(cache).toBe(mockCacheInstance);
     });
 
-    test("should use memory store, log warning, and return it via getCache if REDIS_URL is an empty string", async () => {
-      process.env.REDIS_URL = ""; // Test with empty string
-      const { getCache } = await import("./service"); // Dynamically import
+    test("should use memory store and return it via getCache if REDIS_URL is an empty string", async () => {
+      process.env.REDIS_URL = "";
+      const { getCache } = await import("./service");
 
-      // If REDIS_URL is "", it's falsy, so it should fall back to memory store
+      // Call getCache to trigger async initialization
+      const cache = await getCache();
+
       expect(KeyvRedis).not.toHaveBeenCalled();
       expect(Keyv).toHaveBeenCalledWith({
-        ttl: CACHE_TTL_MS, // Expect memory store configuration
+        ttl: CACHE_TTL_MS,
       });
       expect(createCache).toHaveBeenCalledWith({
         stores: [expect.any(Keyv)],
         ttl: CACHE_TTL_MS,
       });
-      expect(logger.warn).toHaveBeenCalledWith("REDIS_URL not found, falling back to in-memory cache.");
-      expect(getCache()).toBe(mockCacheInstance);
+      expect(logger.info).toHaveBeenCalledWith("REDIS_URL not provided, using memory cache");
+      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      expect(cache).toBe(mockCacheInstance);
+    });
+
+    test("should return same instance on multiple calls to getCache", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const { getCache } = await import("./service");
+
+      const cache1 = await getCache();
+      const cache2 = await getCache();
+
+      expect(cache1).toBe(cache2);
+      expect(cache1).toBe(mockCacheInstance);
+      // Should only initialize once
+      expect(createCache).toHaveBeenCalledTimes(1);
+    });
+
+    test("should provide cache health information", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const { getCache, getCacheHealth } = await import("./service");
+
+      // Before initialization
+      let health = getCacheHealth();
+      expect(health.isInitialized).toBe(false);
+      expect(health.hasInstance).toBe(false);
+
+      // After initialization
+      await getCache();
+      health = getCacheHealth();
+      expect(health.isInitialized).toBe(true);
+      expect(health.hasInstance).toBe(true);
+      expect(health.isRedisConnected).toBe(true);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hashString";
+import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { getCache } from "@/modules/cache/lib/service";
 import {
   TEnterpriseLicenseDetails,
@@ -77,8 +78,8 @@ class LicenseApiError extends LicenseError {
   }
 }
 
-// Cache keys
-const getHashedKey = () => {
+// Cache keys using enterprise-grade hierarchical patterns
+const getCacheIdentifier = () => {
   if (typeof window !== "undefined") {
     return "browser"; // Browser environment
   }
@@ -89,10 +90,10 @@ const getHashedKey = () => {
 };
 
 export const getCacheKeys = () => {
-  const hashedKey = getHashedKey();
+  const identifier = getCacheIdentifier();
   return {
-    FETCH_LICENSE_CACHE_KEY: `formbricksEnterpriseLicense-details-${hashedKey}`,
-    PREVIOUS_RESULT_CACHE_KEY: `formbricksEnterpriseLicense-previousResult-${hashedKey}`,
+    FETCH_LICENSE_CACHE_KEY: createCacheKey.license.status(identifier),
+    PREVIOUS_RESULT_CACHE_KEY: createCacheKey.custom("license", identifier, "previous_result"),
   };
 };
 

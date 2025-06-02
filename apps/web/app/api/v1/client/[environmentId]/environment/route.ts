@@ -49,10 +49,15 @@ export const GET = async (
       return responses.successResponse(
         {
           data,
-          expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 60 minutes
         },
         true,
-        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+        // Optimized cache headers for Cloudflare CDN and browser caching
+        // max-age=3600: 1hr browser cache (per guidelines)
+        // s-maxage=1800: 30min Cloudflare cache (per guidelines)
+        // stale-while-revalidate=1800: 30min stale serving during revalidation
+        // stale-if-error=3600: 1hr stale serving on origin errors
+        "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
       );
     } catch (err) {
       if (err instanceof ResourceNotFoundError) {

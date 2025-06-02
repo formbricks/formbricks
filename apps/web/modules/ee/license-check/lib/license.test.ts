@@ -29,6 +29,19 @@ vi.mock("@/modules/cache/lib/service", () => ({
   getCache: () => Promise.resolve(mockCache),
 }));
 
+// Mock the createCacheKey functions
+vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+  createCacheKey: {
+    license: {
+      status: (identifier: string) => `fb:license:${identifier}:status`,
+    },
+    custom: (namespace: string, identifier: string, subResource?: string) => {
+      const base = `fb:${namespace}:${identifier}`;
+      return subResource ? `${base}:${subResource}` : base;
+    },
+  },
+}));
+
 vi.mock("node-fetch", () => ({
   default: vi.fn(),
 }));
@@ -103,7 +116,7 @@ describe("License Core Logic", () => {
       const fetch = (await import("node-fetch")).default as Mock;
 
       mockCache.get.mockImplementation(async (key) => {
-        if (key.startsWith("formbricksEnterpriseLicense-details")) {
+        if (key.startsWith("fb:license:") && key.endsWith(":status")) {
           return mockFetchedLicenseDetails;
         }
         return null;
@@ -111,9 +124,7 @@ describe("License Core Logic", () => {
 
       const license = await getEnterpriseLicense();
       expect(license).toEqual(expectedActiveLicenseState);
-      expect(mockCache.get).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-details")
-      );
+      expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:"));
       expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -131,12 +142,12 @@ describe("License Core Logic", () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(mockCache.set).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-details"),
+        expect.stringContaining("fb:license:"),
         mockFetchedLicenseDetails,
         expect.any(Number)
       );
       expect(mockCache.set).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-previousResult"),
+        expect.stringContaining("fb:license:"),
         {
           active: true,
           features: mockFetchedLicenseDetails.features,
@@ -160,8 +171,8 @@ describe("License Core Logic", () => {
         version: 1,
       };
       mockCache.get.mockImplementation(async (key) => {
-        if (key.startsWith("formbricksEnterpriseLicense-details")) return null;
-        if (key.startsWith("formbricksEnterpriseLicense-previousResult")) return mockPreviousResult;
+        if (key.startsWith("fb:license:") && key.endsWith(":status")) return null;
+        if (key.startsWith("fb:license:") && key.includes(":previous_result")) return mockPreviousResult;
         return null;
       });
       (fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 } as any);
@@ -190,8 +201,8 @@ describe("License Core Logic", () => {
         version: 1,
       };
       mockCache.get.mockImplementation(async (key) => {
-        if (key.startsWith("formbricksEnterpriseLicense-details")) return null;
-        if (key.startsWith("formbricksEnterpriseLicense-previousResult")) return mockPreviousResult;
+        if (key.startsWith("fb:license:") && key.endsWith(":status")) return null;
+        if (key.startsWith("fb:license:") && key.includes(":previous_result")) return mockPreviousResult;
         return null;
       });
       (fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 } as any);
@@ -200,7 +211,7 @@ describe("License Core Logic", () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(mockCache.set).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-previousResult"),
+        expect.stringContaining("fb:license:"),
         {
           active: false,
           features: {
@@ -261,7 +272,7 @@ describe("License Core Logic", () => {
         spamProtection: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-previousResult"),
+        expect.stringContaining("fb:license:"),
         {
           active: false,
           features: expectedFeatures,
@@ -347,7 +358,7 @@ describe("License Core Logic", () => {
       // Import hashString to compute the expected cache key
       const { hashString } = await import("@/lib/hashString");
       const hashedKey = hashString("test-license-key");
-      const detailsKey = `formbricksEnterpriseLicense-details-${hashedKey}`;
+      const detailsKey = `fb:license:${hashedKey}:status`;
       // Patch the cache mock to match the actual key logic
       mockCache.get.mockImplementation(async (key) => {
         if (key === detailsKey) {
@@ -389,7 +400,7 @@ describe("License Core Logic", () => {
     test("should return null if license is inactive", async () => {
       const { getLicenseFeatures } = await import("./license");
       mockCache.get.mockImplementation(async (key) => {
-        if (key.startsWith("formbricksEnterpriseLicense-details")) {
+        if (key.startsWith("fb:license:") && key.endsWith(":status")) {
           return { status: "expired", features: null };
         }
         return null;
@@ -421,9 +432,7 @@ describe("License Core Logic", () => {
       vi.stubGlobal("window", {});
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();
-      expect(mockCache.get).toHaveBeenCalledWith(
-        expect.stringContaining("formbricksEnterpriseLicense-details-browser")
-      );
+      expect(mockCache.get).toHaveBeenCalledWith(expect.stringContaining("fb:license:browser:status"));
     });
 
     test("should use 'no-license' as cache key when ENTERPRISE_LICENSE_KEY is not set", async () => {
@@ -462,7 +471,7 @@ describe("License Core Logic", () => {
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();
       expect(mockCache.get).toHaveBeenCalledWith(
-        expect.stringContaining(`formbricksEnterpriseLicense-details-${expectedHash}`)
+        expect.stringContaining(`fb:license:${expectedHash}:status`)
       );
     });
   });

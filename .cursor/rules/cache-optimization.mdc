@@ -1,5 +1,158 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Cache Optimization Patterns for Formbricks
+
+## Cache Strategy Overview
+
+Formbricks uses a **hybrid caching approach** optimized for enterprise scale:
+
+- **Redis** for persistent cross-request caching  
+- **React `cache()`** for request-level deduplication
+- **NO Next.js `unstable_cache()`** - avoid for reliability
+
+## Key Files
+
+### Core Cache Infrastructure
+- [apps/web/modules/cache/lib/service.ts](mdc:apps/web/modules/cache/lib/service.ts) - Redis cache service
+- [apps/web/modules/cache/lib/withCache.ts](mdc:apps/web/modules/cache/lib/withCache.ts) - Cache wrapper utilities
+- [apps/web/modules/cache/lib/cacheKeys.ts](mdc:apps/web/modules/cache/lib/cacheKeys.ts) - Enterprise cache key patterns and utilities
+
+### Environment State Caching (Critical Endpoint)
+- [apps/web/app/api/v1/client/[environmentId]/environment/route.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/route.ts) - Main endpoint serving hundreds of thousands of SDK clients
+- [apps/web/app/api/v1/client/[environmentId]/environment/lib/environmentStateCache.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/environmentStateCache.ts) - Specialized cache for environment state
+- [apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/data.ts) - Optimized data layer with caching
+- [apps/web/app/api/v1/client/[environmentId]/environment/lib/invalidation.ts](mdc:apps/web/app/api/v1/client/[environmentId]/environment/lib/invalidation.ts) - Cache invalidation strategies
+
+### Documentation
+- [CACHE_BEST_PRACTICES.md](mdc:CACHE_BEST_PRACTICES.md) - Comprehensive caching guidelines
+
+## Enterprise-Grade Cache Key Patterns
+
+**Always use** the `createCacheKey` utilities from [cacheKeys.ts](mdc:apps/web/modules/cache/lib/cacheKeys.ts):
+
+```typescript
+// ✅ Correct patterns
+createCacheKey.environment.state(environmentId)     // "fb:env:abc123:state"
+createCacheKey.organization.billing(organizationId) // "fb:org:xyz789:billing"
+createCacheKey.license.status(organizationId)       // "fb:license:org123:status"
+createCacheKey.user.permissions(userId, orgId)      // "fb:user:456:org:123:permissions"
+
+// ❌ Never use flat keys - collision-prone
+"environment_abc123"
+"user_data_456"
+```
+
+## When to Use Each Cache Type
+
+### Use React `cache()` for Request Deduplication
+```typescript
+// ✅ Prevents multiple calls within same request
+export const getEnterpriseLicense = reactCache(async () => {
+  // Complex license validation logic
+});
+```
+
+### Use `withCache()` for Simple Database Queries
+```typescript
+// ✅ Simple caching with automatic fallback
+export const getActionClasses = (environmentId: string) => {
+  return withCache(() => fetchActionClassesFromDB(environmentId), {
+    key: createCacheKey.environment.actionClasses(environmentId),
+    ttl: 60 * 30, // 30 minutes
+  })();
+};
+```
+
+### Use Explicit Redis Cache for Complex Business Logic
+```typescript
+// ✅ Full control for high-stakes endpoints
+export const getEnvironmentState = async (environmentId: string) => {
+  const cached = await environmentStateCache.getEnvironmentState(environmentId);
+  if (cached) return cached;
+  
+  const fresh = await buildComplexState(environmentId);
+  await environmentStateCache.setEnvironmentState(environmentId, fresh);
+  return fresh;
+};
+```
+
+## Cache TTL Guidelines
+
+```typescript
+// Configuration data - rarely changes
+const CONFIG_TTL = 60 * 60 * 24;        // 24 hours
+
+// User data - moderate frequency  
+const USER_TTL = 60 * 60 * 2;           // 2 hours
+
+// Survey data - changes moderately
+const SURVEY_TTL = 60 * 15;             // 15 minutes
+
+// Billing data - expensive to compute
+const BILLING_TTL = 60 * 30;            // 30 minutes
+
+// Action classes - infrequent changes
+const ACTION_CLASS_TTL = 60 * 30;       // 30 minutes
+```
+
+## Invalidation Best Practices
+
+**Always use explicit key-based invalidation:**
+
+```typescript
+// ✅ Clear and debuggable
+await invalidateCache(createCacheKey.environment.state(environmentId));
+await invalidateCache([
+  createCacheKey.environment.surveys(environmentId),
+  createCacheKey.environment.actionClasses(environmentId)
+]);
+
+// ❌ Avoid complex tag systems
+await invalidateByTags(["environment", "survey"]); // Don't do this
+```
+
+## Critical Performance Targets
+
+For the `/api/v1/client/[environmentId]/environment` endpoint:
+- **Cache hit ratio**: >85%
+- **Response time P95**: <200ms  
+- **Database load reduction**: >60%
+- **HTTP cache duration**: 1hr browser, 30min Cloudflare
+
+## Error Handling Pattern
+
+Always provide fallback to fresh data on cache errors:
+
+```typescript
+try {
+  const cached = await cache.get(key);
+  if (cached) return cached;
+  
+  const fresh = await fetchFresh();
+  await cache.set(key, fresh, ttl);
+  return fresh;
+} catch (error) {
+  // ✅ Always fallback to fresh data
+  logger.warn("Cache error, fetching fresh", { key, error });
+  return fetchFresh();
+}
+```
+
+## Common Pitfalls to Avoid
+
+1. **Never use Next.js `unstable_cache()`** - unreliable in production
+2. **Don't forget invalidation hooks** when data changes
+3. **Avoid over-engineering** with complex tag systems  
+4. **Don't cache rapidly changing data** (real-time metrics)
+5. **Always validate cache keys** to prevent collisions
+
+## Monitoring Strategy
+
+- Use **existing elastic cache analytics** for metrics
+- Log cache errors and warnings  
+- Track database query reduction
+- Monitor response times for cached endpoints
+- **Don't add custom metrics** that duplicate existing monitoring
