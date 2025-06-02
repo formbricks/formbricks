@@ -49,12 +49,13 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 
 // Minimal valid ApiAuditLog
 const baseAudit: ApiAuditLog = {
-  actionType: "survey.created",
+  action: "created",
   targetType: "survey",
   userId: "user-1",
   targetId: "target-1",
   organizationId: "org-1",
   status: "failure",
+  userType: "api",
 };
 
 describe("withApiLogging", () => {
@@ -80,19 +81,39 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockResolvedValue({
-      response: responses.internalServerErrorResponse("fail"),
-      audit: { ...baseAudit, event: "fail" },
+    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+      if (auditLog) {
+        auditLog.action = "created";
+        auditLog.targetType = "survey";
+        auditLog.userId = "user-1";
+        auditLog.targetId = "target-1";
+        auditLog.organizationId = "org-1";
+        auditLog.userType = "api";
+      }
+      return {
+        response: responses.internalServerErrorResponse("fail"),
+      };
     });
     const req = createMockRequest({ headers: new Map([["x-request-id", "abc-123"]]) });
     const { withApiLogging } = await import("./with-api-logging"); // SUT dynamically imported
-    await withApiLogging(handler)(req);
+    const wrapped = withApiLogging(handler, "created", "survey");
+    await wrapped(req, undefined);
     expect(logger.withContext).toHaveBeenCalled();
     expect(mockContextualLoggerError).toHaveBeenCalled();
     expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
     expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "fail", eventId: "abc-123", userType: "api", apiUrl: req.url })
+      expect.objectContaining({
+        eventId: "abc-123",
+        userType: "api",
+        apiUrl: req.url,
+        action: "created",
+        status: "failure",
+        targetType: "survey",
+        userId: "user-1",
+        targetId: "target-1",
+        organizationId: "org-1",
+      })
     );
     expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.any(Error),
@@ -104,20 +125,39 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockResolvedValue({
-      response: responses.badRequestResponse("bad req"),
-      audit: { ...baseAudit, status: "failure", event: "bad" },
+    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+      if (auditLog) {
+        auditLog.action = "created";
+        auditLog.targetType = "survey";
+        auditLog.userId = "user-1";
+        auditLog.targetId = "target-1";
+        auditLog.organizationId = "org-1";
+        auditLog.userType = "api";
+      }
+      return {
+        response: responses.badRequestResponse("bad req"),
+      };
     });
     const req = createMockRequest();
     const { withApiLogging } = await import("./with-api-logging");
-    await withApiLogging(handler)(req);
+    const wrapped = withApiLogging(handler, "created", "survey");
+    await wrapped(req, undefined);
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(logger.withContext).toHaveBeenCalled();
     expect(mockContextualLoggerError).toHaveBeenCalled();
     expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
     expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "bad", userType: "api", apiUrl: req.url })
+      expect.objectContaining({
+        userType: "api",
+        apiUrl: req.url,
+        action: "created",
+        status: "failure",
+        targetType: "survey",
+        userId: "user-1",
+        targetId: "target-1",
+        organizationId: "org-1",
+      })
     );
   });
 
@@ -125,10 +165,21 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockRejectedValue(new Error("fail!"));
+    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+      if (auditLog) {
+        auditLog.action = "created";
+        auditLog.targetType = "survey";
+        auditLog.userId = "user-1";
+        auditLog.targetId = "target-1";
+        auditLog.organizationId = "org-1";
+        auditLog.userType = "api";
+      }
+      throw new Error("fail!");
+    });
     const req = createMockRequest({ headers: new Map([["x-request-id", "err-1"]]) });
     const { withApiLogging } = await import("./with-api-logging");
-    const res = await withApiLogging(handler)(req);
+    const wrapped = withApiLogging(handler, "created", "survey");
+    const res = await wrapped(req, undefined);
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body).toEqual({
@@ -140,7 +191,19 @@ describe("withApiLogging", () => {
     expect(mockContextualLoggerError).toHaveBeenCalled();
     expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
     expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
-    expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
+    expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: "err-1",
+        userType: "api",
+        apiUrl: req.url,
+        action: "created",
+        status: "failure",
+        targetType: "survey",
+        userId: "user-1",
+        targetId: "target-1",
+        organizationId: "org-1",
+      })
+    );
     expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({ extra: expect.objectContaining({ correlationId: "err-1" }) })
@@ -151,19 +214,38 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockResolvedValue({
-      response: responses.successResponse({ ok: true }),
-      audit: { ...baseAudit, status: "success", event: "success" },
+    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+      if (auditLog) {
+        auditLog.action = "created";
+        auditLog.targetType = "survey";
+        auditLog.userId = "user-1";
+        auditLog.targetId = "target-1";
+        auditLog.organizationId = "org-1";
+        auditLog.userType = "api";
+      }
+      return {
+        response: responses.successResponse({ ok: true }),
+      };
     });
     const req = createMockRequest();
     const { withApiLogging } = await import("./with-api-logging");
-    await withApiLogging(handler)(req);
+    const wrapped = withApiLogging(handler, "created", "survey");
+    await wrapped(req, undefined);
     expect(logger.withContext).not.toHaveBeenCalled();
     expect(mockContextualLoggerError).not.toHaveBeenCalled();
     expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
     expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "success", userType: "api", apiUrl: req.url })
+      expect.objectContaining({
+        userType: "api",
+        apiUrl: req.url,
+        action: "created",
+        status: "success",
+        targetType: "survey",
+        userId: "user-1",
+        targetId: "target-1",
+        organizationId: "org-1",
+      })
     );
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
@@ -185,10 +267,11 @@ describe("withApiLogging", () => {
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.internalServerErrorResponse("fail"),
-      audit: { ...baseAudit, event: "fail" },
+      audit: { ...baseAudit },
     });
     const req = createMockRequest();
-    await withApiLogging(handler)(req);
+    const wrapped = withApiLogging(handler, "created", "survey");
+    await wrapped(req, undefined);
     expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
   });
 });

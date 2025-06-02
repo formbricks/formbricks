@@ -1,16 +1,17 @@
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
+import { ActionClientCtx, AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
   TActor,
   TAuditAction,
-  TAuditActionType,
   TAuditLogEvent,
   TAuditStatus,
   TAuditTarget,
   UNKNOWN_DATA,
 } from "@/modules/ee/audit-logs/types/audit-log";
+import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 import { runAuditLogHashTransaction } from "./cache";
 import { computeAuditLogHash, deepDiff, redactPII } from "./utils";
@@ -20,7 +21,7 @@ import { computeAuditLogHash, deepDiff, redactPII } from "./utils";
  * Redacts sensitive data from the old and new objects and computes the hash of the event before logging it.
  */
 export const buildAndLogAuditEvent = async ({
-  actionType,
+  action,
   targetType,
   userId,
   userType,
@@ -33,7 +34,7 @@ export const buildAndLogAuditEvent = async ({
   eventId,
   apiUrl,
 }: {
-  actionType: TAuditActionType;
+  action: TAuditAction;
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
@@ -41,17 +42,18 @@ export const buildAndLogAuditEvent = async ({
   organizationId: string;
   ipAddress: string;
   status: TAuditStatus;
-  oldObject?: any;
-  newObject?: any;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
   eventId?: string;
   apiUrl?: string;
 }) => {
-  if (!AUDIT_LOG_ENABLED) {
+  if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
     return;
   }
 
   try {
     let changes;
+
     if (oldObject && newObject) {
       changes = deepDiff(oldObject, newObject);
       changes = redactPII(changes);
@@ -63,7 +65,7 @@ export const buildAndLogAuditEvent = async ({
 
     const eventBase: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart"> = {
       actor: { id: userId, type: userType },
-      action: actionType,
+      action,
       target: { id: targetId, type: targetType },
       timestamp: new Date().toISOString(),
       organizationId,
@@ -98,7 +100,7 @@ export const buildAndLogAuditEvent = async ({
  * The audit logging runs in the background to avoid blocking the main request.
  */
 export const queueAuditEventBackground = async ({
-  actionType,
+  action,
   targetType,
   userId,
   userType,
@@ -110,14 +112,14 @@ export const queueAuditEventBackground = async ({
   eventId,
   apiUrl,
 }: {
-  actionType: TAuditActionType;
+  action: TAuditAction;
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
   targetId: string;
   organizationId: string;
-  oldObject?: any;
-  newObject?: any;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
   status: TAuditStatus;
   eventId?: string;
   apiUrl?: string;
@@ -125,7 +127,7 @@ export const queueAuditEventBackground = async ({
   setImmediate(async () => {
     const ipAddress = await getClientIpFromHeaders();
     await buildAndLogAuditEvent({
-      actionType,
+      action,
       targetType,
       userId,
       userType,
@@ -146,7 +148,7 @@ export const queueAuditEventBackground = async ({
  * This function will block the main request. Use it only in edge runtime functions, like api routes.
  */
 export const queueAuditEvent = async ({
-  actionType,
+  action,
   targetType,
   userId,
   userType,
@@ -158,14 +160,14 @@ export const queueAuditEvent = async ({
   eventId,
   apiUrl,
 }: {
-  actionType: TAuditActionType;
+  action: TAuditAction;
   targetType: TAuditTarget;
   userId: string;
   userType: TActor;
   targetId: string;
   organizationId: string;
-  oldObject?: any;
-  newObject?: any;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
   status: TAuditStatus;
   eventId?: string;
   apiUrl?: string;
@@ -173,7 +175,7 @@ export const queueAuditEvent = async ({
   const ipAddress = await getClientIpFromHeaders();
 
   await buildAndLogAuditEvent({
-    actionType,
+    action,
     targetType,
     userId,
     userType,
@@ -195,18 +197,24 @@ export const queueAuditEvent = async ({
  *
  * @param action - The type of action to audit.
  * @param targetType - The type of target (e.g., "segment", "survey").
- * @param handler - The handler function to wrap.
+ * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = (
+export const withAuditLogging = <TParsedInput = Record<string, any>>(
   action: TAuditAction,
   targetType: TAuditTarget,
-  handler: (args: { ctx: any; parsedInput: any }) => Promise<any>
+  handler: (args: {
+    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
+    parsedInput: TParsedInput;
+  }) => Promise<unknown>
 ) => {
-  return async function wrappedAction(args: { ctx: any; parsedInput: any }) {
+  return async function wrappedAction(args: {
+    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
+    parsedInput: TParsedInput;
+  }) {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
     let result: any;
-    let status: "success" | "failure" = "success";
+    let status: TAuditStatus = "success";
     let error: any = undefined;
 
     try {
@@ -222,19 +230,21 @@ export const withAuditLogging = (
     }
 
     if (!auditLoggingCtx) {
-      // This is to signal that the audit logging context is not available when it is expected to be available. But we don't want to throw an error here.
       logger.error("No audit logging context found");
+      return result;
     }
 
     setImmediate(async () => {
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
-        let organizationId: string =
-          parsedInput?.organizationId || auditLoggingCtx?.organizationId || UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
+        let organizationId =
+          auditLoggingCtx?.organizationId ||
+          (parsedInput as Record<string, any>)?.organizationId ||
+          UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
-          const environmentId: string | undefined = parsedInput?.environmentId;
-          if (environmentId) {
+          const environmentId = (parsedInput as Record<string, any>)?.environmentId;
+          if (environmentId && typeof environmentId === "string") {
             try {
               organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
             } catch (err) {
@@ -246,70 +256,72 @@ export const withAuditLogging = (
           }
         }
 
-        let targetId: string;
+        let targetId: string | undefined;
         switch (targetType) {
           case "segment":
-            targetId = auditLoggingCtx?.segmentId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.segmentId;
             break;
           case "survey":
-            targetId = auditLoggingCtx?.surveyId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.surveyId;
             break;
           case "organization":
-            targetId = auditLoggingCtx?.organizationId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.organizationId;
             break;
           case "tag":
-            targetId = auditLoggingCtx?.tagId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.tagId;
             break;
           case "webhook":
-            targetId = auditLoggingCtx?.webhookId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.webhookId;
             break;
           case "user":
-            targetId = auditLoggingCtx?.userId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.userId;
             break;
           case "project":
-            targetId = auditLoggingCtx?.projectId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.projectId;
             break;
           case "language":
-            targetId = auditLoggingCtx?.languageId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.languageId;
             break;
           case "invite":
-            targetId = auditLoggingCtx?.inviteId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.inviteId;
             break;
           case "membership":
-            targetId = auditLoggingCtx?.membershipId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.membershipId;
             break;
           case "actionClass":
-            targetId = auditLoggingCtx?.actionClassId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.actionClassId;
             break;
           case "contact":
-            targetId = auditLoggingCtx?.contactId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.contactId;
             break;
           case "apiKey":
-            targetId = auditLoggingCtx?.apiKeyId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.apiKeyId;
             break;
           case "response":
-            targetId = auditLoggingCtx?.responseId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.responseId;
             break;
           case "responseNote":
-            targetId = auditLoggingCtx?.responseNoteId ?? UNKNOWN_DATA;
+            targetId = auditLoggingCtx.responseNoteId;
             break;
           default:
             targetId = UNKNOWN_DATA;
             break;
         }
 
+        targetId ??= UNKNOWN_DATA;
+
         await buildAndLogAuditEvent({
-          actionType: `${targetType}.${action}`,
+          action,
           targetType,
           userId,
           userType: "user",
           targetId,
           organizationId,
-          ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx?.ipAddress : UNKNOWN_DATA,
+          ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx.ipAddress : UNKNOWN_DATA,
           status,
-          oldObject: auditLoggingCtx?.oldObject,
-          newObject: auditLoggingCtx?.newObject,
-          eventId: auditLoggingCtx?.eventId,
+          oldObject: auditLoggingCtx.oldObject,
+          newObject: auditLoggingCtx.newObject,
+          eventId: auditLoggingCtx.eventId,
         });
       } catch (logError) {
         logger.error(logError, "Failed to create audit log event");

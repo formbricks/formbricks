@@ -1,31 +1,34 @@
 import { responses } from "@/app/lib/api/response";
 import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { TAuditAction, TAuditTarget, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 
-export type ApiAuditLog = Omit<Parameters<typeof queueAuditEvent>[0], "userType" | "apiUrl">;
+export type ApiAuditLog = Parameters<typeof queueAuditEvent>[0];
 
 /**
- * withApiLogging wraps an API handler to provide unified error/audit/system logging.
- * - Handler must return { response, audit }.
+ * withApiLogging wraps an V1 API handler to provide unified error/audit/system logging.
+ * - Handler must return { response }.
  * - If not a successResponse, calls audit log, system log, and Sentry as needed.
  * - System and Sentry logs are always called for non-success responses.
  */
-export function withApiLogging<
-  TArgs extends any[],
-  TResult extends { response: Response; audit?: ApiAuditLog },
->(handler: (req: Request, ...args: TArgs) => Promise<TResult>) {
-  return async function (req: Request, ...args: TArgs): Promise<Response> {
-    let result: { response: Response; audit?: ApiAuditLog };
+export const withApiLogging = <TResult extends { response: Response }>(
+  handler: (req: Request, props?: any, auditLog?: ApiAuditLog) => Promise<TResult>,
+  action: TAuditAction,
+  targetType: TAuditTarget
+) => {
+  return async function (req: Request, props: any): Promise<Response> {
+    const auditLog = buildAuditLogBaseObject(action, targetType, req.url);
+
+    let result: { response: Response };
     let error: any = undefined;
     try {
-      result = await handler(req, ...args);
+      result = await handler(req, props, auditLog);
     } catch (err) {
       error = err;
       result = {
         response: responses.internalServerErrorResponse("An unexpected error occurred."),
-        audit: undefined,
       };
     }
 
@@ -41,9 +44,6 @@ export function withApiLogging<
     }
 
     const correlationId = req.headers.get("x-request-id") ?? "";
-    const auditLog = result.audit
-      ? { ...result.audit, userType: "api" as const, apiUrl: req.url }
-      : undefined;
 
     if (!isSuccess) {
       if (auditLog) {
@@ -71,6 +71,8 @@ export function withApiLogging<
           },
         });
       }
+    } else {
+      auditLog.status = "success";
     }
 
     if (AUDIT_LOG_ENABLED && auditLog) {
@@ -79,4 +81,23 @@ export function withApiLogging<
 
     return res;
   };
-}
+};
+
+export const buildAuditLogBaseObject = (
+  action: TAuditAction,
+  targetType: TAuditTarget,
+  apiUrl: string
+): ApiAuditLog => {
+  return {
+    action,
+    targetType,
+    userId: UNKNOWN_DATA,
+    targetId: UNKNOWN_DATA,
+    organizationId: UNKNOWN_DATA,
+    status: "failure",
+    oldObject: undefined,
+    newObject: undefined,
+    userType: "api",
+    apiUrl,
+  };
+};

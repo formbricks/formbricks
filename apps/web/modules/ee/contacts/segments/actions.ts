@@ -2,8 +2,9 @@
 
 import { getOrganization } from "@/lib/organization/service";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getEnvironmentIdFromSegmentId,
   getEnvironmentIdFromSurveyId,
@@ -102,49 +103,53 @@ const ZUpdateSegmentAction = z.object({
 });
 
 export const updateSegmentAction = authenticatedActionClient.schema(ZUpdateSegmentAction).action(
-  withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
-        },
-      ],
-    });
+  withAuditLogging(
+    "updated",
+    "segment",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
+          },
+        ],
+      });
 
-    await checkAdvancedTargetingPermission(organizationId);
+      await checkAdvancedTargetingPermission(organizationId);
 
-    const { filters } = parsedInput.data;
-    if (filters) {
-      const parsedFilters = ZSegmentFilters.safeParse(filters);
+      const { filters } = parsedInput.data;
+      if (filters) {
+        const parsedFilters = ZSegmentFilters.safeParse(filters);
 
-      if (!parsedFilters.success) {
-        const errMsg =
-          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-        throw new Error(errMsg);
+        if (!parsedFilters.success) {
+          const errMsg =
+            parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+          throw new Error(errMsg);
+        }
+
+        await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
       }
 
-      await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
+      const oldObject = await getSegment(parsedInput.segmentId);
+      const updated = await updateSegment(parsedInput.segmentId, parsedInput.data);
+
+      ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.oldObject = oldObject;
+      ctx.auditLoggingCtx.newObject = updated;
+
+      return updated;
     }
-
-    const oldObject = await getSegment(parsedInput.segmentId);
-    const updated = await updateSegment(parsedInput.segmentId, parsedInput.data);
-
-    ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.oldObject = oldObject;
-    ctx.auditLoggingCtx.newObject = updated;
-
-    return updated;
-  })
+  )
 );
 
 const ZLoadNewSegmentAction = z.object({
@@ -190,41 +195,45 @@ const ZCloneSegmentAction = z.object({
 });
 
 export const cloneSegmentAction = authenticatedActionClient.schema(ZCloneSegmentAction).action(
-  withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+  withAuditLogging(
+    "created",
+    "segment",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+      const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
 
-    if (surveyEnvironmentId !== segmentEnvironmentId) {
-      throw new Error("Segment and survey are not in the same environment");
+      if (surveyEnvironmentId !== segmentEnvironmentId) {
+        throw new Error("Segment and survey are not in the same environment");
+      }
+
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
+          },
+        ],
+      });
+
+      await checkAdvancedTargetingPermission(organizationId);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
+
+      const result = await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
+      ctx.auditLoggingCtx.newObject = result;
+      return result;
     }
-
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
-        },
-      ],
-    });
-
-    await checkAdvancedTargetingPermission(organizationId);
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
-
-    const result = await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
-    ctx.auditLoggingCtx.newObject = result;
-    return result;
-  })
+  )
 );
 
 const ZDeleteSegmentAction = z.object({
@@ -266,34 +275,38 @@ const ZResetSegmentFiltersAction = z.object({
 });
 
 export const resetSegmentFiltersAction = authenticatedActionClient.schema(ZResetSegmentFiltersAction).action(
-  withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+  withAuditLogging(
+    "updated",
+    "segment",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          },
+        ],
+      });
 
-    await checkAdvancedTargetingPermission(organizationId);
+      await checkAdvancedTargetingPermission(organizationId);
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
 
-    const result = await resetSegmentInSurvey(parsedInput.surveyId);
+      const result = await resetSegmentInSurvey(parsedInput.surveyId);
 
-    ctx.auditLoggingCtx.newObject = result;
-    ctx.auditLoggingCtx.segmentId = result.id;
+      ctx.auditLoggingCtx.newObject = result;
+      ctx.auditLoggingCtx.segmentId = result.id;
 
-    return result;
-  })
+      return result;
+    }
+  )
 );

@@ -8,8 +8,6 @@ import {
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
@@ -48,18 +46,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput: { body, params } }) => {
-      const auditLogBase = {
-        actionType: "team.created" as const,
-        targetType: "team" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: UNKNOWN_DATA, // Will be updated after creation
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
-
+    handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
           request,
@@ -67,22 +54,22 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const createTeamResult = await createTeam(body!, authentication.organizationId);
       if (!createTeamResult.ok) {
-        return handleApiError(request, createTeamResult.error, auditLogBase);
+        return handleApiError(request, createTeamResult.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        targetId: createTeamResult.data.id,
-        status: "success",
-        newObject: createTeamResult.data,
-      });
+      if (auditLog) {
+        auditLog.targetId = createTeamResult.data.id;
+        auditLog.newObject = createTeamResult.data;
+      }
 
       return responses.createdResponse({ data: createTeamResult.data });
     },
+    action: "created",
+    targetType: "team",
   });

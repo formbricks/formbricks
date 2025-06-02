@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+export const UNKNOWN_DATA = "unknown";
+
 // Define as const arrays
-const AuditTargets = [
+export const ZAuditTargets = z.enum([
   "segment",
   "survey",
   "webhook",
@@ -21,45 +23,39 @@ const AuditTargets = [
   "twoFactorAuth",
   "apiKey",
   "responseNote",
-] as const;
-const AuditActions = [
+]);
+export const ZAuditActions = z.enum([
   "created",
   "updated",
   "deleted",
-  "signedin",
+  "signedIn",
   "merged",
   "verificationEmailSent",
   "createdFromCSV",
   "copiedToOtherEnvironment",
   "addedToResponse",
   "removedFromResponse",
-] as const;
-const Actors = ["user", "api"] as const;
-const AuditStatuses = ["success", "failure"] as const;
-export const UNKNOWN_DATA = "unknown";
+]);
+export const ZActors = z.enum(["user", "api"]);
+export const ZAuditStatuses = z.enum(["success", "failure"]);
 
 // Use template literal for the type
-export type TAuditTarget = (typeof AuditTargets)[number];
-export type TAuditAction = (typeof AuditActions)[number];
-export type TAuditActionType = `${TAuditTarget}.${TAuditAction}`;
-export type TActor = (typeof Actors)[number];
-export type TAuditStatus = (typeof AuditStatuses)[number];
-// For Zod, create all combinations for AuditActionType
-const AuditActionTypes = AuditTargets.flatMap((target) =>
-  AuditActions.map((action) => `${target}.${action}` as const)
-) as [string, ...string[]];
+export type TAuditTarget = z.infer<typeof ZAuditTargets>;
+export type TAuditAction = z.infer<typeof ZAuditActions>;
+export type TActor = z.infer<typeof ZActors>;
+export type TAuditStatus = z.infer<typeof ZAuditStatuses>;
 
 export const AuditLogEventSchema = z.object({
   actor: z.object({
     id: z.string(),
-    type: z.enum(Actors),
+    type: ZActors,
   }),
-  action: z.enum(AuditActionTypes),
+  action: ZAuditActions,
   target: z.object({
     id: z.string().or(z.undefined()),
-    type: z.enum(AuditTargets),
+    type: ZAuditTargets,
   }),
-  status: z.enum(AuditStatuses),
+  status: ZAuditStatuses,
   timestamp: z.string().datetime(),
   organizationId: z.string(),
   ipAddress: z.string().ip().optional(),

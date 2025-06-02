@@ -42,7 +42,7 @@ const handler = async (req: Request, ctx: any) => {
 
         const status: "success" | "failure" = result === false ? "failure" : "success"; // treat truthy & redirect strings as success
         const auditLog = {
-          actionType: "user.signedin" as const,
+          action: "signedIn" as const,
           targetType: "user" as const,
           userId: user?.id ?? UNKNOWN_DATA,
           targetId: user?.id ?? UNKNOWN_DATA,

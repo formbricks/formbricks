@@ -5,7 +5,6 @@ import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { deleteResponse, getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
@@ -51,23 +50,14 @@ export const GET = async (
 };
 
 export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ responseId: string }> }) => {
+  async (request: Request, props: { params: Promise<{ responseId: string }> }, auditLog: ApiAuditLog) => {
     const params = await props.params;
-    const auditLog: ApiAuditLog = {
-      actionType: "response.deleted",
-      targetType: "response",
-      userId: UNKNOWN_DATA,
-      targetId: params.responseId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-    };
+    auditLog.targetId = params.responseId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -77,45 +67,33 @@ export const DELETE = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.response;
 
       const deletedResponse = await deleteResponse(params.responseId);
-      auditLog.status = "success";
       return {
         response: responses.successResponse(deletedResponse),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "deleted",
+  "response"
 );
 
 export const PUT = withApiLogging(
-  async (request: Request, props: { params: Promise<{ responseId: string }> }) => {
+  async (request: Request, props: { params: Promise<{ responseId: string }> }, auditLog: ApiAuditLog) => {
     const params = await props.params;
-    const auditLog: ApiAuditLog = {
-      actionType: "response.updated",
-      targetType: "response",
-      userId: UNKNOWN_DATA,
-      targetId: params.responseId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-      newObject: undefined,
-    };
+    auditLog.targetId = params.responseId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -125,7 +103,6 @@ export const PUT = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.response;
@@ -137,14 +114,12 @@ export const PUT = withApiLogging(
         logger.error({ error, url: request.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-          audit: auditLog,
         };
       }
 
       if (!validateFileUploads(responseUpdate.data, result.survey.questions)) {
         return {
           response: responses.badRequestResponse("Invalid file upload response"),
-          audit: auditLog,
         };
       }
 
@@ -155,22 +130,20 @@ export const PUT = withApiLogging(
             "Fields are missing or incorrectly formatted",
             transformErrorToDetails(inputValidation.error)
           ),
-          audit: auditLog,
         };
       }
 
       const updated = await updateResponse(params.responseId, inputValidation.data);
-      auditLog.status = "success";
       auditLog.newObject = updated;
       return {
         response: responses.successResponse(updated),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "updated",
+  "response"
 );

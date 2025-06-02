@@ -12,7 +12,6 @@ import {
   ZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
@@ -55,17 +54,10 @@ export const DELETE = async (
       params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput: { params } }) => {
-      const auditLogBase = {
-        actionType: "team.deleted" as const,
-        targetType: "team" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: params.teamId,
-        organizationId: params.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+    handler: async ({ authentication, parsedInput: { params }, auditLog }) => {
+      if (auditLog) {
+        auditLog.targetId = params.teamId;
+      }
 
       if (!hasOrganizationIdAndAccess(params.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
@@ -74,7 +66,7 @@ export const DELETE = async (
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -91,17 +83,17 @@ export const DELETE = async (
       const team = await deleteTeam(params.organizationId, params.teamId);
 
       if (!team.ok) {
-        return handleApiError(request, team.error, auditLogBase);
+        return handleApiError(request, team.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: oldTeamData,
-      });
+      if (auditLog) {
+        auditLog.oldObject = oldTeamData;
+      }
 
       return responses.successResponse(team);
     },
+    action: "deleted",
+    targetType: "team",
   });
 
 export const PUT = (
@@ -115,17 +107,10 @@ export const PUT = (
       params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
       body: ZTeamUpdateSchema,
     },
-    handler: async ({ authentication, parsedInput: { body, params } }) => {
-      const auditLogBase = {
-        actionType: "team.updated" as const,
-        targetType: "team" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: params.teamId,
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+    handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
+      if (auditLog) {
+        auditLog.targetId = params.teamId;
+      }
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
@@ -134,7 +119,7 @@ export const PUT = (
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -151,16 +136,16 @@ export const PUT = (
       const team = await updateTeam(params!.organizationId, params!.teamId, body!);
 
       if (!team.ok) {
-        return handleApiError(request, team.error, auditLogBase);
+        return handleApiError(request, team.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: oldTeamData,
-        newObject: team.data,
-      });
+      if (auditLog) {
+        auditLog.oldObject = oldTeamData;
+        auditLog.newObject = team.data;
+      }
 
       return responses.successResponse(team);
     },
+    action: "updated",
+    targetType: "team",
   });

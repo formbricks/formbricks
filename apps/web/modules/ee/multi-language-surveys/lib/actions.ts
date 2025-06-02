@@ -8,8 +8,9 @@ import {
   updateLanguage,
 } from "@/lib/language/service";
 import { getOrganization } from "@/lib/organization/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromProjectId,
@@ -42,34 +43,38 @@ export const checkMultiLanguagePermission = async (organizationId: string) => {
 };
 
 export const createLanguageAction = authenticatedActionClient.schema(ZCreateLanguageAction).action(
-  withAuditLogging("created", "language", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
+  withAuditLogging(
+    "created",
+    "language",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZLanguageInput,
-          data: parsedInput.languageInput,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: parsedInput.projectId,
-          minPermission: "manage",
-        },
-      ],
-    });
-    await checkMultiLanguagePermission(organizationId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            schema: ZLanguageInput,
+            data: parsedInput.languageInput,
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: parsedInput.projectId,
+            minPermission: "manage",
+          },
+        ],
+      });
+      await checkMultiLanguagePermission(organizationId);
 
-    const result = await createLanguage(parsedInput.projectId, parsedInput.languageInput);
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.languageId = result.id;
-    ctx.auditLoggingCtx.newObject = result;
-    return result;
-  })
+      const result = await createLanguage(parsedInput.projectId, parsedInput.languageInput);
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.languageId = result.id;
+      ctx.auditLoggingCtx.newObject = result;
+      return result;
+    }
+  )
 );
 
 const ZDeleteLanguageAction = z.object({
@@ -78,38 +83,42 @@ const ZDeleteLanguageAction = z.object({
 });
 
 export const deleteLanguageAction = authenticatedActionClient.schema(ZDeleteLanguageAction).action(
-  withAuditLogging("deleted", "language", async ({ ctx, parsedInput }) => {
-    const languageProjectId = await getProjectIdFromLanguageId(parsedInput.languageId);
+  withAuditLogging(
+    "deleted",
+    "language",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const languageProjectId = await getProjectIdFromLanguageId(parsedInput.languageId);
 
-    if (languageProjectId !== parsedInput.projectId) {
-      throw new Error("Invalid language id");
+      if (languageProjectId !== parsedInput.projectId) {
+        throw new Error("Invalid language id");
+      }
+
+      const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: parsedInput.projectId,
+            minPermission: "manage",
+          },
+        ],
+      });
+      await checkMultiLanguagePermission(organizationId);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.languageId = parsedInput.languageId;
+      const result = await deleteLanguage(parsedInput.languageId, parsedInput.projectId);
+      ctx.auditLoggingCtx.oldObject = result;
+      return result;
     }
-
-    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: parsedInput.projectId,
-          minPermission: "manage",
-        },
-      ],
-    });
-    await checkMultiLanguagePermission(organizationId);
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.languageId = parsedInput.languageId;
-    const result = await deleteLanguage(parsedInput.languageId, parsedInput.projectId);
-    ctx.auditLoggingCtx.oldObject = result;
-    return result;
-  })
+  )
 );
 
 const ZGetSurveysUsingGivenLanguageAction = z.object({
@@ -148,43 +157,47 @@ const ZUpdateLanguageAction = z.object({
 });
 
 export const updateLanguageAction = authenticatedActionClient.schema(ZUpdateLanguageAction).action(
-  withAuditLogging("updated", "language", async ({ ctx, parsedInput }) => {
-    const languageProductId = await getProjectIdFromLanguageId(parsedInput.languageId);
+  withAuditLogging(
+    "updated",
+    "language",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const languageProductId = await getProjectIdFromLanguageId(parsedInput.languageId);
 
-    if (languageProductId !== parsedInput.projectId) {
-      throw new Error("Invalid language id");
+      if (languageProductId !== parsedInput.projectId) {
+        throw new Error("Invalid language id");
+      }
+
+      const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            schema: ZLanguageInput,
+            data: parsedInput.languageInput,
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: parsedInput.projectId,
+            minPermission: "manage",
+          },
+        ],
+      });
+      await checkMultiLanguagePermission(organizationId);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.languageId = parsedInput.languageId;
+      ctx.auditLoggingCtx.oldObject = await getLanguage(parsedInput.languageId);
+      const result = await updateLanguage(
+        parsedInput.projectId,
+        parsedInput.languageId,
+        parsedInput.languageInput
+      );
+      ctx.auditLoggingCtx.newObject = result;
+      return result;
     }
-
-    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZLanguageInput,
-          data: parsedInput.languageInput,
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: parsedInput.projectId,
-          minPermission: "manage",
-        },
-      ],
-    });
-    await checkMultiLanguagePermission(organizationId);
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.languageId = parsedInput.languageId;
-    ctx.auditLoggingCtx.oldObject = await getLanguage(parsedInput.languageId);
-    const result = await updateLanguage(
-      parsedInput.projectId,
-      parsedInput.languageId,
-      parsedInput.languageInput
-    );
-    ctx.auditLoggingCtx.newObject = result;
-    return result;
-  })
+  )
 );

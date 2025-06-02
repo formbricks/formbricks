@@ -14,7 +14,7 @@ vi.mock("@formbricks/logger", () => ({
 
 const validEvent = {
   actor: { id: "user-1", type: "user" as const },
-  action: "user.created" as const,
+  action: "created" as const,
   target: { id: "target-1", type: "user" as const },
   status: "success" as const,
   timestamp: new Date().toISOString(),

@@ -77,7 +77,7 @@ export const getMultiLanguagePermission = async (
 const getSpecificFeatureFlag = async (
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso"
+    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso" | "auditLogs"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -99,6 +99,11 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
 
 export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
+};
+
+export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
+  if (!AUDIT_LOG_ENABLED) return false;
+  return getSpecificFeatureFlag("auditLogs");
 };
 
 export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
@@ -141,10 +146,4 @@ export const getOrganizationProjectsLimit = async (
     limit = license.active && license.features?.projects != null ? license.features.projects : 3;
   }
   return limit;
-};
-
-export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-
-  return license.active && !!license.features?.auditLogs && AUDIT_LOG_ENABLED;
 };

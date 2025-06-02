@@ -1,6 +1,6 @@
 "use server";
 
-import { actionClient } from "@/lib/utils/action-client";
+import { actionClient } from "@/lib/utils/action-client/action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendForgotPasswordEmail } from "@/modules/email";
 import { z } from "zod";

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TActor, TAuditActionType, TAuditStatus, TAuditTarget } from "../types/audit-log";
+import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
 
@@ -86,7 +86,7 @@ vi.mock("@formbricks/logger", () => {
 });
 
 const baseEventParams = {
-  actionType: "survey.created" as TAuditActionType,
+  action: "created" as TAuditAction,
   targetType: "survey" as TAuditTarget,
   userId: "u1",
   userType: "user" as TActor,
@@ -97,6 +97,43 @@ const baseEventParams = {
   oldObject: { foo: "bar" },
   newObject: { foo: "baz" },
   apiUrl: "/api/test",
+};
+
+const fullUser = {
+  id: "u1",
+  name: "Test User",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  email: "test@example.com",
+  emailVerified: null,
+  imageUrl: null,
+  twoFactorEnabled: false,
+  identityProvider: "email",
+  organizationId: "org1",
+  isActive: true,
+  lastLoginAt: new Date(),
+  locale: "en",
+  notificationSettings: {},
+  onboardingDisplayed: true,
+  productId: "p1",
+  role: "user",
+  source: null,
+  teams: [],
+  type: "user",
+  objective: null,
+  intention: null,
+};
+
+const mockCtxBase = {
+  user: fullUser,
+  auditLoggingCtx: {
+    ipAddress: "127.0.0.1",
+    organizationId: "org1",
+    surveyId: "t1",
+    oldObject: { foo: "bar" },
+    newObject: { foo: "baz" },
+    eventId: "event-1",
+  },
 };
 
 // Helper to clear all mock handles
@@ -132,7 +169,7 @@ describe("queueAuditEvent", () => {
     // Add more specific assertions on what serviceLogAuditEventMockHandle was called with if necessary
     // This would be similar to the direct tests for buildAndLogAuditEvent
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(logCall.action).toBe(baseEventParams.actionType);
+    expect(logCall.action).toBe(baseEventParams.action);
     expect(logCall.integrityHash).toBe("testhash");
   });
 
@@ -163,7 +200,7 @@ describe("queueAuditEventBackground", () => {
     expect(cacheRunAuditLogHashTransactionMockHandle).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(logCall.action).toBe(baseEventParams.actionType);
+    expect(logCall.action).toBe(baseEventParams.action);
     expect(logCall.integrityHash).toBe("testhash");
   });
 });
@@ -176,28 +213,17 @@ describe("withAuditLogging", () => {
     vi.resetModules();
   });
 
-  const mockCtxBase = {
-    user: { id: "u1" },
-    auditLoggingCtx: {
-      ipAddress: "127.0.0.1",
-      organizationId: "org1",
-      surveyId: "t1", // This will be targetId
-      oldObject: { foo: "bar" },
-      newObject: { foo: "baz" },
-      eventId: "event-1",
-    },
-  };
   const mockParsedInput = {};
 
   test("logs audit event for successful handler", async () => {
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await wrapped({ ctx: mockCtxBase, parsedInput: mockParsedInput });
+    await wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput });
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(callArgs.action).toBe("survey.created");
+    expect(callArgs.action).toBe("created");
     expect(callArgs.status).toBe("success");
     expect(callArgs.target.id).toBe("t1");
     expect(callArgs.integrityHash).toBe("testhash");
@@ -206,12 +232,12 @@ describe("withAuditLogging", () => {
   test("logs audit event for failed handler and throws", async () => {
     const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await expect(wrapped({ ctx: mockCtxBase, parsedInput: mockParsedInput })).rejects.toThrow("fail");
+    await expect(wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput })).rejects.toThrow("fail");
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(callArgs.action).toBe("survey.created");
+    expect(callArgs.action).toBe("created");
     expect(callArgs.status).toBe("failure");
     expect(callArgs.target.id).toBe("t1");
   });
@@ -220,7 +246,7 @@ describe("withAuditLogging", () => {
     if (mutableConstants) mutableConstants.AUDIT_LOG_ENABLED = false;
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await wrapped({ ctx: mockCtxBase, parsedInput: mockParsedInput });
+    await wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput });
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();

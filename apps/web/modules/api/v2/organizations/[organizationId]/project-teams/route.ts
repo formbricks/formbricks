@@ -4,7 +4,6 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[organizationId]/lib/utils";
 import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
@@ -56,19 +55,12 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ parsedInput: { body, params }, authentication }) => {
+    handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
       const { teamId, projectId } = body!;
 
-      const auditLogBase = {
-        actionType: "projectTeam.created" as const,
-        targetType: "projectTeam" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: `${projectId}-${teamId}`,
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+      if (auditLog) {
+        auditLog.targetId = `${projectId}-${teamId}`;
+      }
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
@@ -77,14 +69,14 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
       if (!hasAccess.ok) {
-        return handleApiError(request, hasAccess.error, auditLogBase);
+        return handleApiError(request, hasAccess.error, auditLog);
       }
 
       // check if project team already exists
@@ -98,7 +90,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
       });
 
       if (!existingProjectTeam.ok) {
-        return handleApiError(request, existingProjectTeam.error, auditLogBase);
+        return handleApiError(request, existingProjectTeam.error, auditLog);
       }
 
       if (existingProjectTeam.data.data.length > 0) {
@@ -108,22 +100,22 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
             type: "conflict",
             details: [{ field: "projectTeam", issue: "Project team already exists" }],
           },
-          auditLogBase
+          auditLog
         );
       }
       const result = await createProjectTeam(body!);
       if (!result.ok) {
-        return handleApiError(request, result.error, auditLogBase);
+        return handleApiError(request, result.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        newObject: result.data,
-      });
+      if (auditLog) {
+        auditLog.newObject = result.data;
+      }
 
       return responses.successResponse({ data: result.data });
     },
+    action: "created",
+    targetType: "projectTeam",
   });
 }
 
@@ -135,19 +127,12 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ parsedInput: { body, params }, authentication }) => {
+    handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
       const { teamId, projectId } = body!;
 
-      const auditLogBase = {
-        actionType: "projectTeam.updated" as const,
-        targetType: "projectTeam" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: `${projectId}-${teamId}`, // Composite ID for projectTeam
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+      if (auditLog) {
+        auditLog.targetId = `${projectId}-${teamId}`;
+      }
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
@@ -156,14 +141,14 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
       if (!hasAccess.ok) {
-        return handleApiError(request, hasAccess.error, auditLogBase);
+        return handleApiError(request, hasAccess.error, auditLog);
       }
 
       // Fetch old object for audit log
@@ -189,18 +174,18 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
 
       const result = await updateProjectTeam(teamId, projectId, body!);
       if (!result.ok) {
-        return handleApiError(request, result.error, auditLogBase);
+        return handleApiError(request, result.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: oldProjectTeamData,
-        newObject: result.data,
-      });
+      if (auditLog) {
+        auditLog.oldObject = oldProjectTeamData;
+        auditLog.newObject = result.data;
+      }
 
       return responses.successResponse({ data: result.data });
     },
+    action: "updated",
+    targetType: "projectTeam",
   });
 }
 
@@ -212,19 +197,12 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ parsedInput: { query, params }, authentication }) => {
+    handler: async ({ parsedInput: { query, params }, authentication, auditLog }) => {
       const { teamId, projectId } = query!;
 
-      const auditLogBase = {
-        actionType: "projectTeam.deleted" as const,
-        targetType: "projectTeam" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: `${projectId}-${teamId}`, // Composite ID for projectTeam
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+      if (auditLog) {
+        auditLog.targetId = `${projectId}-${teamId}`;
+      }
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(
@@ -233,14 +211,14 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
       if (!hasAccess.ok) {
-        return handleApiError(request, hasAccess.error, auditLogBase);
+        return handleApiError(request, hasAccess.error, auditLog);
       }
 
       // Fetch old object for audit log
@@ -266,16 +244,16 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
 
       const result = await deleteProjectTeam(teamId, projectId);
       if (!result.ok) {
-        return handleApiError(request, result.error, auditLogBase);
+        return handleApiError(request, result.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: oldProjectTeamData,
-      });
+      if (auditLog) {
+        auditLog.oldObject = oldProjectTeamData;
+      }
 
       return responses.successResponse({ data: result.data });
     },
+    action: "deleted",
+    targetType: "projectTeam",
   });
 }

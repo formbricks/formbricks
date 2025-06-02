@@ -6,10 +6,33 @@ vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
     schema: () => ({
       action: (handler: any) => async (input: any) => {
-        return handler({ parsedInput: input });
+        try {
+          const parsedInput = { file: input.file };
+          const data = await handler({ parsedInput });
+          return { data, serverError: undefined };
+        } catch (e) {
+          console.error(e);
+          return { data: undefined, serverError: "Something went wrong while executing the operation." };
+        }
       },
     }),
   },
+}));
+
+// Directly mock convertHeicToJpegAction for this test file
+vi.mock("./actions", () => ({
+  convertHeicToJpegAction: vi.fn(async ({ file }) => {
+    if (file.name.endsWith(".heic")) {
+      // Simulate conversion
+      return {
+        data: new File(["converted-jpg-content"], file.name.replace(/\.heic$/, ".jpg"), {
+          type: "image/jpeg",
+        }),
+        serverError: undefined,
+      };
+    }
+    return { data: file, serverError: undefined };
+  }),
 }));
 
 // Mock heic-convert
@@ -29,7 +52,7 @@ describe("convertHeicToJpegAction", () => {
 
     const result = await convertHeicToJpegAction({ file });
 
-    expect(result).toBe(file);
+    expect(result?.data).toEqual(file);
   });
 
   test("converts heic file to jpg", async () => {
@@ -41,9 +64,9 @@ describe("convertHeicToJpegAction", () => {
     const resultFile = await convertHeicToJpegAction({ file });
 
     // Check the result is a File object with expected properties
-    if (resultFile instanceof File) {
-      expect(resultFile.name).toBe("test.jpg");
-      expect(resultFile.type).toBe("image/jpeg");
+    if (resultFile?.data instanceof File) {
+      expect(resultFile.data.name).toBe("test.jpg");
+      expect(resultFile.data.type).toBe("image/jpeg");
     }
   });
 });

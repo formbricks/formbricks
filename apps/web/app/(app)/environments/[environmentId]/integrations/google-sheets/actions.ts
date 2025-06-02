@@ -1,8 +1,8 @@
 "use server";
 
 import { getSpreadsheetNameById } from "@/lib/googleSheet/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { ZIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";

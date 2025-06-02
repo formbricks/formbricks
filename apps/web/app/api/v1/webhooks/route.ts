@@ -4,7 +4,6 @@ import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
@@ -27,78 +26,65 @@ export const GET = async (request: Request) => {
   }
 };
 
-export const POST = withApiLogging(async (request: Request) => {
-  const auditLog: ApiAuditLog = {
-    actionType: "webhook.created",
-    targetType: "webhook",
-    userId: UNKNOWN_DATA,
-    targetId: UNKNOWN_DATA,
-    organizationId: UNKNOWN_DATA,
-    status: "failure",
-    newObject: undefined,
-  };
-
-  const authentication = await authenticateRequest(request);
-  if (!authentication) {
-    return {
-      response: responses.notAuthenticatedResponse(),
-      audit: auditLog,
-    };
-  }
-
-  auditLog.organizationId = authentication.organizationId;
-  auditLog.userId = authentication.apiKeyId;
-  const webhookInput = await request.json();
-  const inputValidation = ZWebhookInput.safeParse(webhookInput);
-
-  if (!inputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-      audit: auditLog,
-    };
-  }
-
-  const environmentId = inputValidation.data.environmentId;
-  if (!environmentId) {
-    return {
-      response: responses.badRequestResponse("Environment ID is required"),
-      audit: auditLog,
-    };
-  }
-
-  if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-    return {
-      response: responses.unauthorizedResponse(),
-      audit: auditLog,
-    };
-  }
-
-  try {
-    const webhook = await createWebhook(inputValidation.data);
-    auditLog.targetId = webhook.id;
-    auditLog.status = "success";
-    auditLog.newObject = webhook;
-    return {
-      response: responses.successResponse(webhook),
-      audit: auditLog,
-    };
-  } catch (error) {
-    if (error instanceof InvalidInputError) {
+export const POST = withApiLogging(
+  async (request: Request, _, auditLog: ApiAuditLog) => {
+    const authentication = await authenticateRequest(request);
+    if (!authentication) {
       return {
-        response: responses.badRequestResponse(error.message),
-        audit: auditLog,
+        response: responses.notAuthenticatedResponse(),
       };
     }
-    if (error instanceof DatabaseError) {
+
+    auditLog.organizationId = authentication.organizationId;
+    auditLog.userId = authentication.apiKeyId;
+    const webhookInput = await request.json();
+    const inputValidation = ZWebhookInput.safeParse(webhookInput);
+
+    if (!inputValidation.success) {
       return {
-        response: responses.internalServerErrorResponse(error.message),
-        audit: auditLog,
+        response: responses.badRequestResponse(
+          "Fields are missing or incorrectly formatted",
+          transformErrorToDetails(inputValidation.error),
+          true
+        ),
       };
     }
-    throw error;
-  }
-});
+
+    const environmentId = inputValidation.data.environmentId;
+    if (!environmentId) {
+      return {
+        response: responses.badRequestResponse("Environment ID is required"),
+      };
+    }
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return {
+        response: responses.unauthorizedResponse(),
+      };
+    }
+
+    try {
+      const webhook = await createWebhook(inputValidation.data);
+      auditLog.targetId = webhook.id;
+      auditLog.newObject = webhook;
+
+      return {
+        response: responses.successResponse(webhook),
+      };
+    } catch (error) {
+      if (error instanceof InvalidInputError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.internalServerErrorResponse(error.message),
+        };
+      }
+      throw error;
+    }
+  },
+  "created",
+  "webhook"
+);

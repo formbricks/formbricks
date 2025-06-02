@@ -58,35 +58,53 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
       params: z.object({ responseId: ZResponseIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params } = parsedInput;
 
+      if (auditLog) {
+        auditLog.targetId = params.responseId;
+      }
+
       if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "params", issue: "missing" }],
+          },
+          auditLog
+        );
       }
 
       const environmentIdResult = await getEnvironmentId(params.responseId, true);
       if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "DELETE")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+          },
+          auditLog
+        );
       }
 
       const response = await deleteResponse(params.responseId);
 
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = response.data;
       }
 
       return responses.successResponse(response);
     },
+    action: "deleted",
+    targetType: "response",
   });
 
 export const PUT = (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -97,44 +115,56 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       params: z.object({ responseId: ZResponseIdSchema }),
       body: ZResponseUpdateSchema,
     },
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body, params } = parsedInput;
 
       if (!body || !params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: !body ? "body" : "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: !body ? "body" : "params", issue: "missing" }],
+          },
+          auditLog
+        );
       }
 
       const environmentIdResult = await getEnvironmentId(params.responseId, true);
       if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "PUT")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+          },
+          auditLog
+        );
       }
 
       const existingResponse = await getResponse(params.responseId);
 
       if (!existingResponse.ok) {
-        return handleApiError(request, existingResponse.error);
+        return handleApiError(request, existingResponse.error, auditLog);
       }
 
       const questionsResponse = await getSurveyQuestions(existingResponse.data.surveyId);
 
       if (!questionsResponse.ok) {
-        return handleApiError(request, questionsResponse.error);
+        return handleApiError(request, questionsResponse.error, auditLog);
       }
 
       if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "response", issue: "Invalid file upload response" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "response", issue: "Invalid file upload response" }],
+          },
+          auditLog
+        );
       }
 
       // Validate response data for "other" options exceeding character limit
@@ -162,9 +192,16 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const response = await updateResponse(params.responseId, body);
 
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = existingResponse.data;
+        auditLog.newObject = response.data;
       }
 
       return responses.successResponse(response);
     },
+    action: "updated",
+    targetType: "response",
   });

@@ -5,7 +5,6 @@ import {
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Mock } from "vitest";
 import { prisma } from "@formbricks/database";
-import { getOrganizationPlan } from "./license";
 
 // Mock declarations must be at the top level
 vi.mock("@/lib/env", () => ({
@@ -475,63 +474,5 @@ describe("License Core Logic", () => {
         expect.stringContaining(`formbricksEnterpriseLicense-details-${expectedHash}`)
       );
     });
-  });
-});
-
-describe("getOrganizationPlan", () => {
-  const orgId = "org_123";
-  const cacheKey = `organization-plan-${orgId}`;
-
-  beforeEach(() => {
-    mockCache.get.mockReset();
-    mockCache.set.mockReset();
-    mockCache.del.mockReset();
-    vi.resetModules();
-  });
-
-  test("should return plan from cache if present and valid", async () => {
-    mockCache.get.mockResolvedValue("scale");
-    const plan = await getOrganizationPlan(orgId);
-    expect(plan).toBe("scale");
-    expect(mockCache.get).toHaveBeenCalledWith(cacheKey);
-    expect(mockCache.set).not.toHaveBeenCalled();
-  });
-
-  test("should fetch plan from DB if not in cache and cache it", async () => {
-    mockCache.get.mockResolvedValue(undefined);
-    const mockOrg = { billing: { plan: "enterprise" } };
-    vi.mocked(prisma.organization.findUnique).mockResolvedValueOnce(mockOrg as any);
-    const plan = await getOrganizationPlan(orgId);
-    expect(prisma.organization.findUnique).toHaveBeenCalledWith({
-      where: { id: orgId },
-      select: { billing: true },
-    });
-    expect(plan).toBe("enterprise");
-    expect(mockCache.set).toHaveBeenCalledWith(cacheKey, "enterprise", expect.any(Number));
-  });
-
-  test("should return undefined if org not found in DB", async () => {
-    mockCache.get.mockResolvedValue(undefined);
-    vi.mocked(prisma.organization.findUnique).mockResolvedValueOnce(null);
-    const plan = await getOrganizationPlan(orgId);
-    expect(plan).toBeUndefined();
-    expect(mockCache.set).not.toHaveBeenCalled();
-  });
-
-  test("should return undefined if plan is invalid", async () => {
-    mockCache.get.mockResolvedValue(undefined);
-    const mockOrg = { billing: { plan: "invalid_plan" } };
-    vi.mocked(prisma.organization.findUnique).mockResolvedValueOnce(mockOrg as any);
-    const plan = await getOrganizationPlan(orgId);
-    expect(plan).toBeUndefined();
-    expect(mockCache.set).not.toHaveBeenCalled();
-  });
-
-  test("should return undefined and log error if exception is thrown", async () => {
-    mockCache.get.mockImplementation(() => {
-      throw new Error("cache error");
-    });
-    const plan = await getOrganizationPlan(orgId);
-    expect(plan).toBeUndefined();
   });
 });

@@ -11,7 +11,7 @@ import { logApiErrorEdge } from "./utils-edge";
 export const handleApiError = (
   request: Request,
   err: ApiErrorResponseV2,
-  auditLog?: Parameters<typeof queueAuditEvent>[0]
+  auditLog?: ApiAuditLog
 ): Response => {
   logApiError(request, err, auditLog);
 
@@ -55,7 +55,7 @@ export const formatZodError = (error: { issues: (ZodIssue | ZodCustomIssue)[] })
   });
 };
 
-export const logApiRequest = (request: Request, responseStatus: number): void => {
+export const logApiRequest = (request: Request, responseStatus: number, auditLog?: ApiAuditLog): void => {
   const method = request.method;
   const url = new URL(request.url);
   const path = url.pathname;
@@ -78,23 +78,22 @@ export const logApiRequest = (request: Request, responseStatus: number): void =>
       queryParams: safeQueryParams,
     })
     .info("API Request Details");
+
+  logAuditLog(request, auditLog);
 };
 
-export const logApiError = (
-  request: Request,
-  error: ApiErrorResponseV2,
-  auditLog?: Parameters<typeof queueAuditEvent>[0]
-): void => {
+export const logApiError = (request: Request, error: ApiErrorResponseV2, auditLog?: ApiAuditLog): void => {
   logApiErrorEdge(request, error);
 
-  // Only call queueAuditEvent if not in Edge runtime and auditLog is provided
+  logAuditLog(request, auditLog);
+};
+
+const logAuditLog = (request: Request, auditLog?: ApiAuditLog): void => {
   if (AUDIT_LOG_ENABLED && auditLog) {
     const correlationId = request.headers.get("x-request-id") ?? "";
     queueAuditEvent({
       ...auditLog,
-      status: "failure",
       eventId: correlationId,
-      apiUrl: request.url,
     }).catch((err) => logger.error({ err, correlationId }, "Failed to queue audit event from logApiError"));
   }
 };

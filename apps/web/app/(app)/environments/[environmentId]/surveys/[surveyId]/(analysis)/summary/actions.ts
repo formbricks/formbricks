@@ -2,8 +2,9 @@
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
@@ -65,43 +66,53 @@ const ZGenerateResultShareUrlAction = z.object({
 export const generateResultShareUrlAction = authenticatedActionClient
   .schema(ZGenerateResultShareUrlAction)
   .action(
-    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          },
-        ],
-      });
+    withAuditLogging(
+      "updated",
+      "survey",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+            {
+              type: "projectTeam",
+              minPermission: "readWrite",
+              projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            },
+          ],
+        });
 
-      const survey = await getSurvey(parsedInput.surveyId);
-      if (!survey) {
-        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+        const survey = await getSurvey(parsedInput.surveyId);
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+        }
+
+        const resultShareKey = customAlphabet(
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          20
+        )();
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+        ctx.auditLoggingCtx.oldObject = survey;
+
+        const newSurvey = await updateSurvey({ ...survey, resultShareKey });
+        ctx.auditLoggingCtx.newObject = newSurvey;
+
+        return resultShareKey;
       }
-
-      const resultShareKey = customAlphabet(
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        20
-      )();
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = survey;
-
-      const newSurvey = await updateSurvey({ ...survey, resultShareKey });
-      ctx.auditLoggingCtx.newObject = newSurvey;
-
-      return resultShareKey;
-    })
+    )
   );
 
 const ZGetResultShareUrlAction = z.object({
@@ -142,38 +153,48 @@ const ZDeleteResultShareUrlAction = z.object({
 export const deleteResultShareUrlAction = authenticatedActionClient
   .schema(ZDeleteResultShareUrlAction)
   .action(
-    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          },
-        ],
-      });
+    withAuditLogging(
+      "updated",
+      "survey",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+            {
+              type: "projectTeam",
+              minPermission: "readWrite",
+              projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            },
+          ],
+        });
 
-      const survey = await getSurvey(parsedInput.surveyId);
-      if (!survey) {
-        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+        const survey = await getSurvey(parsedInput.surveyId);
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+        }
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+        ctx.auditLoggingCtx.oldObject = survey;
+
+        const newSurvey = await updateSurvey({ ...survey, resultShareKey: null });
+        ctx.auditLoggingCtx.newObject = newSurvey;
+
+        return newSurvey;
       }
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = survey;
-
-      const newSurvey = await updateSurvey({ ...survey, resultShareKey: null });
-      ctx.auditLoggingCtx.newObject = newSurvey;
-
-      return newSurvey;
-    })
+    )
   );
 
 const ZGetEmailHtmlAction = z.object({

@@ -2,7 +2,6 @@ import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -60,24 +59,16 @@ export const GET = async (
 export const DELETE = withApiLogging(
   async (
     request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> }
+    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> },
+    auditLog: ApiAuditLog
   ) => {
     const params = await paramsPromise;
-    const auditLog: ApiAuditLog = {
-      actionType: "contactAttributeKey.deleted",
-      targetType: "contactAttributeKey",
-      userId: UNKNOWN_DATA,
-      targetId: params.contactAttributeKeyId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-    };
+    auditLog.targetId = params.contactAttributeKeyId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -91,7 +82,6 @@ export const DELETE = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.attributeKey;
@@ -99,46 +89,35 @@ export const DELETE = withApiLogging(
       if (result.attributeKey.type === "default") {
         return {
           response: responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted"),
-          audit: auditLog,
         };
       }
       const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
-      auditLog.status = "success";
       return {
         response: responses.successResponse(deletedContactAttributeKey),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "deleted",
+  "contactAttributeKey"
 );
 
 export const PUT = withApiLogging(
   async (
     request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> }
+    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> },
+    auditLog: ApiAuditLog
   ) => {
     const params = await paramsPromise;
-    const auditLog: ApiAuditLog = {
-      actionType: "contactAttributeKey.updated",
-      targetType: "contactAttributeKey",
-      userId: UNKNOWN_DATA,
-      targetId: params.contactAttributeKeyId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-      newObject: undefined,
-    };
+    auditLog.targetId = params.contactAttributeKeyId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -151,7 +130,6 @@ export const PUT = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.attributeKey;
@@ -164,7 +142,6 @@ export const PUT = withApiLogging(
         logger.error({ error, url: request.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-          audit: auditLog,
         };
       }
 
@@ -175,7 +152,6 @@ export const PUT = withApiLogging(
             "Fields are missing or incorrectly formatted",
             transformErrorToDetails(inputValidation.error)
           ),
-          audit: auditLog,
         };
       }
       const updatedAttributeClass = await updateContactAttributeKey(
@@ -183,24 +159,22 @@ export const PUT = withApiLogging(
         inputValidation.data
       );
       if (updatedAttributeClass) {
-        auditLog.status = "success";
         auditLog.newObject = updatedAttributeClass;
         return {
           response: responses.successResponse(updatedAttributeClass),
-          audit: auditLog,
         };
       }
       return {
         response: responses.internalServerErrorResponse(
           "Some error occurred while updating contact attribute key"
         ),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "updated",
+  "contactAttributeKey"
 );

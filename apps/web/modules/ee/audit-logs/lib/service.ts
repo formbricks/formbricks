@@ -9,18 +9,13 @@ const validateEvent = (event: TAuditLogEvent): void => {
   }
 };
 
-const hasAuditLogAccess = async (): Promise<boolean> => {
-  return getIsAuditLogsEnabled();
-};
-
 export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
   try {
-    if (!(await hasAuditLogAccess())) {
+    // Check if audit logs are enabled before proceeding
+    if (!(await getIsAuditLogsEnabled())) {
       return;
     }
-
     validateEvent(event);
-
     logger.audit(event);
   } catch (error) {
     // Log error to application logger but don't throw

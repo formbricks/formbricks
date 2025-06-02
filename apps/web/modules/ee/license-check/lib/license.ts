@@ -11,7 +11,6 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { TOrganizationBillingPlan, ZOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 // Configuration
 const CONFIG = {
@@ -392,36 +391,6 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
   } catch (e) {
     logger.error(e, "Error getting license features");
     return null;
-  }
-};
-
-export const getOrganizationPlan = async (
-  organizationId: string
-): Promise<TOrganizationBillingPlan | undefined> => {
-  try {
-    const cache = getCache();
-    const cacheKey = `organization-plan-${organizationId}`;
-    let plan = await cache.get<string>(cacheKey);
-    let isValid = !!plan;
-
-    if (!plan) {
-      const org = await prisma.organization.findUnique({
-        where: { id: organizationId },
-        select: { billing: true },
-      });
-
-      plan = org?.billing?.plan ?? null;
-      isValid = !!plan && ZOrganizationBillingPlan.safeParse(plan).success;
-
-      if (isValid) {
-        await cache.set(cacheKey, plan, CONFIG.CACHE.FETCH_LICENSE_TTL_MS);
-      }
-    }
-
-    return isValid ? (plan as TOrganizationBillingPlan) : undefined;
-  } catch (e) {
-    logger.error(e, "Error getting organization plan");
-    return undefined;
   }
 };
 

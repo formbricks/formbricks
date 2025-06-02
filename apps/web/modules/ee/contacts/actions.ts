@@ -1,7 +1,8 @@
 "use server";
 
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromContactId,
   getOrganizationIdFromEnvironmentId,
@@ -51,34 +52,38 @@ const ZContactDeleteAction = z.object({
 });
 
 export const deleteContactAction = authenticatedActionClient.schema(ZContactDeleteAction).action(
-  withAuditLogging("deleted", "contact", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-    const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+  withAuditLogging(
+    "deleted",
+    "contact",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
+      const projectId = await getProjectIdFromContactId(parsedInput.contactId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId,
-        },
-      ],
-    });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId,
+          },
+        ],
+      });
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.contactId = parsedInput.contactId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.contactId = parsedInput.contactId;
 
-    const result = await deleteContact(parsedInput.contactId);
+      const result = await deleteContact(parsedInput.contactId);
 
-    ctx.auditLoggingCtx.oldObject = result;
-    return result;
-  })
+      ctx.auditLoggingCtx.oldObject = result;
+      return result;
+    }
+  )
 );
 
 const ZCreateContactsFromCSV = z.object({
@@ -89,32 +94,38 @@ const ZCreateContactsFromCSV = z.object({
 });
 
 export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCreateContactsFromCSV).action(
-  withAuditLogging("createdFromCSV", "contact", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-          minPermission: "readWrite",
-        },
-      ],
-    });
+  withAuditLogging(
+    "createdFromCSV",
+    "contact",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+            minPermission: "readWrite",
+          },
+        ],
+      });
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createContactsFromCSV(
-      parsedInput.csvData,
-      parsedInput.environmentId,
-      parsedInput.duplicateContactsAction,
-      parsedInput.attributeMap
-    );
-    ctx.auditLoggingCtx.newObject = result;
-    return result;
-  })
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      const result = await createContactsFromCSV(
+        parsedInput.csvData,
+        parsedInput.environmentId,
+        parsedInput.duplicateContactsAction,
+        parsedInput.attributeMap
+      );
+      ctx.auditLoggingCtx.newObject = {
+        contacts: result,
+      };
+      return result;
+    }
+  )
 );

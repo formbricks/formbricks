@@ -14,7 +14,6 @@ import {
   ZUserInput,
   ZUserInputPatch,
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -62,18 +61,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput: { body, params } }) => {
-      const auditLogBase = {
-        actionType: "user.created" as const,
-        targetType: "user" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: UNKNOWN_DATA, // Will be updated after creation
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
-
+    handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
       if (IS_FORMBRICKS_CLOUD) {
         return handleApiError(
           request,
@@ -83,7 +71,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
               { field: "organizationId", issue: "This endpoint is not supported on Formbricks Cloud" },
             ],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -94,24 +82,24 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const createUserResult = await createUser(body!, authentication.organizationId);
       if (!createUserResult.ok) {
-        return handleApiError(request, createUserResult.error, auditLogBase);
+        return handleApiError(request, createUserResult.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        targetId: createUserResult.data.id,
-        status: "success",
-        newObject: createUserResult.data,
-      });
+      if (auditLog) {
+        auditLog.targetId = createUserResult.data.id;
+        auditLog.newObject = createUserResult.data;
+      }
 
       return responses.createdResponse({ data: createUserResult.data });
     },
+    action: "created",
+    targetType: "user",
   });
 
 export const PATCH = async (request: Request, props: { params: Promise<{ organizationId: string }> }) =>
@@ -122,18 +110,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput: { body, params } }) => {
-      const auditLogBase = {
-        actionType: "user.updated" as const,
-        targetType: "user" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: UNKNOWN_DATA,
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
-
+    handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
       if (IS_FORMBRICKS_CLOUD) {
         return handleApiError(
           request,
@@ -143,7 +120,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
               { field: "organizationId", issue: "This endpoint is not supported on Formbricks Cloud" },
             ],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -154,7 +131,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -165,7 +142,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
             type: "bad_request",
             details: [{ field: "email", issue: "Email is required" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -185,21 +162,23 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         logger.error(`Failed to fetch old user data for audit log: ${JSON.stringify(error)}`);
       }
 
-      auditLogBase.targetId = oldUserData !== UNKNOWN_DATA ? oldUserData?.id : UNKNOWN_DATA;
+      if (auditLog) {
+        auditLog.targetId = oldUserData !== UNKNOWN_DATA ? oldUserData?.id : UNKNOWN_DATA;
+      }
 
       const updateUserResult = await updateUser(body, authentication.organizationId);
       if (!updateUserResult.ok) {
-        return handleApiError(request, updateUserResult.error, auditLogBase);
+        return handleApiError(request, updateUserResult.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        targetId: updateUserResult.data.id,
-        status: "success",
-        oldObject: oldUserData,
-        newObject: updateUserResult.data,
-      });
+      if (auditLog) {
+        auditLog.targetId = auditLog.targetId === UNKNOWN_DATA ? updateUserResult.data.id : auditLog.targetId;
+        auditLog.oldObject = oldUserData;
+        auditLog.newObject = updateUserResult.data;
+      }
 
       return responses.successResponse({ data: updateUserResult.data });
     },
+    action: "updated",
+    targetType: "user",
   });

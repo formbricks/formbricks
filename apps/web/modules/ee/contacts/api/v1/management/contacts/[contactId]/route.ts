@@ -1,7 +1,6 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -51,23 +50,19 @@ export const GET = async (
 };
 
 export const DELETE = withApiLogging(
-  async (request: Request, { params: paramsPromise }: { params: Promise<{ contactId: string }> }) => {
+  async (
+    request: Request,
+    { params: paramsPromise }: { params: Promise<{ contactId: string }> },
+    auditLog: ApiAuditLog
+  ) => {
     const params = await paramsPromise;
-    const auditLog: ApiAuditLog = {
-      actionType: "contact.deleted",
-      targetType: "contact",
-      userId: UNKNOWN_DATA,
-      targetId: params.contactId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-    };
+    auditLog.targetId = params.contactId;
+
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -79,7 +74,6 @@ export const DELETE = withApiLogging(
           response: responses.forbiddenResponse(
             "Contacts are only enabled for Enterprise Edition, please upgrade."
           ),
-          audit: auditLog,
         };
       }
 
@@ -87,22 +81,20 @@ export const DELETE = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.contact;
 
       await deleteContact(params.contactId);
-      auditLog.status = "success";
       return {
         response: responses.successResponse({ success: "Contact deleted successfully" }),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "deleted",
+  "contact"
 );

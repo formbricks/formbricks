@@ -6,7 +6,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -45,23 +44,14 @@ export const GET = async (
 };
 
 export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ surveyId: string }> }) => {
+  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
     const params = await props.params;
-    const auditLog: ApiAuditLog = {
-      actionType: "survey.deleted",
-      targetType: "survey",
-      userId: UNKNOWN_DATA,
-      targetId: params.surveyId,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-    };
+    auditLog.targetId = params.surveyId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
@@ -71,56 +61,41 @@ export const DELETE = withApiLogging(
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.survey;
 
       const deletedSurvey = await deleteSurvey(params.surveyId);
-      auditLog.status = "success";
       return {
         response: responses.successResponse(deletedSurvey),
-        audit: auditLog,
       };
     } catch (error) {
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "deleted",
+  "survey"
 );
 
 export const PUT = withApiLogging(
-  async (request: Request, props: { params: Promise<{ surveyId: string }> }) => {
-    const auditLog: ApiAuditLog = {
-      actionType: "survey.updated",
-      targetType: "survey",
-      userId: UNKNOWN_DATA,
-      targetId: UNKNOWN_DATA,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      oldObject: undefined,
-      newObject: undefined,
-    };
-
+  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
     const params = await props.params;
+    auditLog.targetId = params.surveyId;
     try {
       const authentication = await authenticateRequest(request);
       if (!authentication) {
         return {
           response: responses.notAuthenticatedResponse(),
-          audit: auditLog,
         };
       }
       auditLog.userId = authentication.apiKeyId;
-      auditLog.targetId = params.surveyId;
 
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
       if (result.error) {
         return {
           response: result.error,
-          audit: auditLog,
         };
       }
       auditLog.oldObject = result.survey;
@@ -129,7 +104,6 @@ export const PUT = withApiLogging(
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),
-          audit: auditLog,
         };
       }
       auditLog.organizationId = organization.id;
@@ -141,7 +115,6 @@ export const PUT = withApiLogging(
         logger.error({ error, url: request.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-          audit: auditLog,
         };
       }
 
@@ -156,7 +129,6 @@ export const PUT = withApiLogging(
             "Fields are missing or incorrectly formatted",
             transformErrorToDetails(inputValidation.error)
           ),
-          audit: auditLog,
         };
       }
 
@@ -164,31 +136,28 @@ export const PUT = withApiLogging(
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
-          audit: auditLog,
         };
       }
 
       try {
         const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
-        auditLog.status = "success";
         auditLog.newObject = updatedSurvey;
         return {
           response: responses.successResponse(updatedSurvey),
-          audit: auditLog,
         };
       } catch (error) {
         auditLog.status = "failure";
         return {
           response: handleErrorResponse(error),
-          audit: auditLog,
         };
       }
     } catch (error) {
       auditLog.status = "failure";
       return {
         response: handleErrorResponse(error),
-        audit: auditLog,
       };
     }
-  }
+  },
+  "updated",
+  "survey"
 );

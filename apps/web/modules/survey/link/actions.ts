@@ -1,6 +1,6 @@
 "use server";
 
-import { actionClient } from "@/lib/utils/action-client";
+import { actionClient } from "@/lib/utils/action-client/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";

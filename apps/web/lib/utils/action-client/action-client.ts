@@ -17,22 +17,7 @@ import {
   TooManyRequestsError,
   UnknownError,
 } from "@formbricks/types/errors";
-import { TUser } from "@formbricks/types/user";
-
-export type AuditLoggingCtx = {
-  organizationId?: string;
-  ipAddress: string;
-  segmentId?: string;
-  surveyId?: string;
-  oldObject?: any;
-  newObject?: any;
-  eventId?: string;
-};
-
-export type ActionClientCtx = {
-  auditLoggingCtx: AuditLoggingCtx;
-  user?: TUser;
-};
+import { ActionClientCtx } from "./types/context";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {

@@ -5,7 +5,6 @@ import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
@@ -93,93 +92,78 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = withApiLogging(async (request: Request) => {
-  const auditLog: ApiAuditLog = {
-    actionType: "response.created",
-    targetType: "response",
-    userId: UNKNOWN_DATA,
-    targetId: UNKNOWN_DATA,
-    organizationId: UNKNOWN_DATA,
-    status: "failure",
-    newObject: undefined,
-  };
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-        audit: auditLog,
-      };
-    }
-    auditLog.userId = authentication.apiKeyId;
-    auditLog.organizationId = authentication.organizationId;
-
-    const inputResult = await validateInput(request);
-    if (inputResult.error) {
-      return {
-        response: inputResult.error,
-        audit: auditLog,
-      };
-    }
-
-    const responseInput = inputResult.data;
-    const environmentId = responseInput.environmentId;
-
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return {
-        response: responses.unauthorizedResponse(),
-        audit: auditLog,
-      };
-    }
-
-    const surveyResult = await validateSurvey(responseInput, environmentId);
-    if (surveyResult.error) {
-      return {
-        response: surveyResult.error,
-        audit: auditLog,
-      };
-    }
-
-    if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
-      return {
-        response: responses.badRequestResponse("Invalid file upload response"),
-        audit: auditLog,
-      };
-    }
-
-    if (responseInput.createdAt && !responseInput.updatedAt) {
-      responseInput.updatedAt = responseInput.createdAt;
-    }
-
+export const POST = withApiLogging(
+  async (request: Request, _, auditLog: ApiAuditLog) => {
     try {
-      const response = await createResponse(responseInput);
-      auditLog.status = "success";
-      auditLog.targetId = response.id;
-      auditLog.newObject = response;
-      return {
-        response: responses.successResponse(response, true),
-        audit: auditLog,
-      };
-    } catch (error) {
-      if (error instanceof InvalidInputError) {
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
         return {
-          response: responses.badRequestResponse(error.message),
-          audit: auditLog,
+          response: responses.notAuthenticatedResponse(),
         };
       }
-      logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
-      return {
-        response: responses.internalServerErrorResponse(error.message),
-        audit: auditLog,
-      };
+      auditLog.userId = authentication.apiKeyId;
+      auditLog.organizationId = authentication.organizationId;
+
+      const inputResult = await validateInput(request);
+      if (inputResult.error) {
+        return {
+          response: inputResult.error,
+        };
+      }
+
+      const responseInput = inputResult.data;
+      const environmentId = responseInput.environmentId;
+
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+        return {
+          response: responses.unauthorizedResponse(),
+        };
+      }
+
+      const surveyResult = await validateSurvey(responseInput, environmentId);
+      if (surveyResult.error) {
+        return {
+          response: surveyResult.error,
+        };
+      }
+
+      if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
+        return {
+          response: responses.badRequestResponse("Invalid file upload response"),
+        };
+      }
+
+      if (responseInput.createdAt && !responseInput.updatedAt) {
+        responseInput.updatedAt = responseInput.createdAt;
+      }
+
+      try {
+        const response = await createResponse(responseInput);
+        auditLog.targetId = response.id;
+        auditLog.newObject = response;
+        return {
+          response: responses.successResponse(response, true),
+        };
+      } catch (error) {
+        if (error instanceof InvalidInputError) {
+          return {
+            response: responses.badRequestResponse(error.message),
+          };
+        }
+        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
+        return {
+          response: responses.internalServerErrorResponse(error.message),
+        };
+      }
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      throw error;
     }
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return {
-        response: responses.badRequestResponse(error.message),
-        audit: auditLog,
-      };
-    }
-    throw error;
-  }
-});
+  },
+  "created",
+  "response"
+);

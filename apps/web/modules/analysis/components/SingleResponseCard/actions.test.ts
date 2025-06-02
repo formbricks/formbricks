@@ -1,7 +1,7 @@
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getEnvironmentIdFromResponseId,
   getOrganizationIdFromResponseId,
@@ -25,6 +25,22 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_GET_USER_IP: false,
   ENCRYPTION_KEY: "testsecret",
   REDIS_URL: "",
+  ENTERPRISE_LICENSE_KEY: "test-enterprise-license-key",
+  GITHUB_ID: "mock-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_PRODUCTION: false,
+  SENTRY_DSN: "mock-sentry-dsn",
 }));
 
 // Dummy inputs and context

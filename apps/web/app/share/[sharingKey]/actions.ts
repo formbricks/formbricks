@@ -3,7 +3,7 @@
 import { getResponseCountBySurveyId, getResponseFilteringValues, getResponses } from "@/lib/response/service";
 import { getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
-import { actionClient } from "@/lib/utils/action-client";
+import { actionClient } from "@/lib/utils/action-client/action-client";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";

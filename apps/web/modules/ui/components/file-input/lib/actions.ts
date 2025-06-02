@@ -1,6 +1,6 @@
 "use server";
 
-import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
 import { z } from "zod";
 
 const ZConvertHeicToJpegInput = z.object({

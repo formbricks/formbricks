@@ -4,8 +4,9 @@ import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -29,22 +30,26 @@ const ZDeleteInviteAction = z.object({
 });
 
 export const deleteInviteAction = authenticatedActionClient.schema(ZDeleteInviteAction).action(
-  withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = await getInvite(parsedInput.inviteId);
-    return await deleteInvite(parsedInput.inviteId);
-  })
+  withAuditLogging(
+    "deleted",
+    "invite",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+      ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
+      return await deleteInvite(parsedInput.inviteId);
+    }
+  )
 );
 
 const ZCreateInviteTokenAction = z.object({
@@ -82,59 +87,63 @@ const ZDeleteMembershipAction = z.object({
 });
 
 export const deleteMembershipAction = authenticatedActionClient.schema(ZDeleteMembershipAction).action(
-  withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
+  withAuditLogging(
+    "deleted",
+    "membership",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
 
-    if (parsedInput.userId === ctx.user.id) {
-      throw new OperationNotAllowedError("You cannot delete yourself from the organization");
-    }
-
-    const currentMembership = await getMembershipByUserIdOrganizationId(
-      ctx.user.id,
-      parsedInput.organizationId
-    );
-
-    if (!currentMembership) {
-      throw new AuthenticationError("Not a member of this organization");
-    }
-
-    const membership = await getMembershipByUserIdOrganizationId(
-      parsedInput.userId,
-      parsedInput.organizationId
-    );
-
-    if (!membership) {
-      throw new AuthenticationError("Not a member of this organization");
-    }
-
-    const isOwner = membership.role === "owner";
-
-    if (currentMembership.role === "manager" && isOwner) {
-      throw new OperationNotAllowedError("You cannot delete the owner of the organization");
-    }
-
-    if (isOwner) {
-      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
-
-      if (ownerCount <= 1) {
-        throw new ValidationError("You cannot delete the last owner of the organization");
+      if (parsedInput.userId === ctx.user.id) {
+        throw new OperationNotAllowedError("You cannot delete yourself from the organization");
       }
-    }
 
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
-    ctx.auditLoggingCtx.oldObject = membership;
-    return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
-  })
+      const currentMembership = await getMembershipByUserIdOrganizationId(
+        ctx.user.id,
+        parsedInput.organizationId
+      );
+
+      if (!currentMembership) {
+        throw new AuthenticationError("Not a member of this organization");
+      }
+
+      const membership = await getMembershipByUserIdOrganizationId(
+        parsedInput.userId,
+        parsedInput.organizationId
+      );
+
+      if (!membership) {
+        throw new AuthenticationError("Not a member of this organization");
+      }
+
+      const isOwner = membership.role === "owner";
+
+      if (currentMembership.role === "manager" && isOwner) {
+        throw new OperationNotAllowedError("You cannot delete the owner of the organization");
+      }
+
+      if (isOwner) {
+        const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
+
+        if (ownerCount <= 1) {
+          throw new ValidationError("You cannot delete the last owner of the organization");
+        }
+      }
+
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
+      ctx.auditLoggingCtx.oldObject = membership;
+      return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
+    }
+  )
 );
 
 const ZResendInviteAction = z.object({
@@ -143,43 +152,49 @@ const ZResendInviteAction = z.object({
 });
 
 export const resendInviteAction = authenticatedActionClient.schema(ZResendInviteAction).action(
-  withAuditLogging("updated", "invite", async ({ ctx, parsedInput }) => {
-    if (INVITE_DISABLED) {
-      throw new OperationNotAllowedError("Invite are disabled");
+  withAuditLogging(
+    "updated",
+    "invite",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      if (INVITE_DISABLED) {
+        throw new OperationNotAllowedError("Invite are disabled");
+      }
+
+      const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
+      if (inviteOrganizationId !== parsedInput.organizationId) {
+        throw new ValidationError("Invite does not belong to the organization");
+      }
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+
+      const invite = await getInvite(parsedInput.inviteId);
+
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
+      ctx.auditLoggingCtx.oldObject = { ...invite };
+      const updatedInvite = await resendInvite(parsedInput.inviteId);
+      ctx.auditLoggingCtx.newObject = updatedInvite;
+      await sendInviteMemberEmail(
+        parsedInput.inviteId,
+        updatedInvite.email,
+        invite?.creator?.name ?? "",
+        updatedInvite.name ?? "",
+        undefined,
+        ctx.user.locale
+      );
+      return updatedInvite;
     }
-
-    const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
-
-    if (inviteOrganizationId !== parsedInput.organizationId) {
-      throw new ValidationError("Invite does not belong to the organization");
-    }
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = await getInvite(parsedInput.inviteId);
-    const updatedInvite = await resendInvite(parsedInput.inviteId);
-    ctx.auditLoggingCtx.newObject = updatedInvite;
-    await sendInviteMemberEmail(
-      parsedInput.inviteId,
-      updatedInvite.email,
-      ctx.auditLoggingCtx.oldObject.creator?.name ?? "",
-      updatedInvite.name ?? "",
-      undefined,
-      ctx.user.locale
-    );
-    return updatedInvite;
-  })
+  )
 );
 
 const ZInviteUserAction = z.object({
@@ -191,75 +206,79 @@ const ZInviteUserAction = z.object({
 });
 
 export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserAction).action(
-  withAuditLogging("created", "invite", async ({ ctx, parsedInput }) => {
-    if (INVITE_DISABLED) {
-      throw new AuthenticationError("Invite disabled");
-    }
+  withAuditLogging(
+    "created",
+    "invite",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      if (INVITE_DISABLED) {
+        throw new AuthenticationError("Invite disabled");
+      }
 
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.role === OrganizationRole.billing) {
-      throw new ValidationError("Billing role is not allowed");
-    }
+      if (!IS_FORMBRICKS_CLOUD && parsedInput.role === OrganizationRole.billing) {
+        throw new ValidationError("Billing role is not allowed");
+      }
 
-    const currentUserMembership = await getMembershipByUserIdOrganizationId(
-      ctx.user.id,
-      parsedInput.organizationId
-    );
-    if (!currentUserMembership) {
-      throw new AuthenticationError("User not a member of this organization");
-    }
+      const currentUserMembership = await getMembershipByUserIdOrganizationId(
+        ctx.user.id,
+        parsedInput.organizationId
+      );
+      if (!currentUserMembership) {
+        throw new AuthenticationError("User not a member of this organization");
+      }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+
+      if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
+        throw new OperationNotAllowedError("Managers can only invite users as members");
+      }
+
+      if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
+        await checkRoleManagementPermission(parsedInput.organizationId);
+      }
+
+      const inviteId = await inviteUser({
+        organizationId: parsedInput.organizationId,
+        invitee: {
+          email: parsedInput.email,
+          name: parsedInput.name,
+          role: parsedInput.role,
+          teamIds: parsedInput.teamIds,
         },
-      ],
-    });
+        currentUserId: ctx.user.id,
+      });
 
-    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
-    }
-
-    if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
-      await checkRoleManagementPermission(parsedInput.organizationId);
-    }
-
-    const inviteId = await inviteUser({
-      organizationId: parsedInput.organizationId,
-      invitee: {
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.inviteId = inviteId;
+      ctx.auditLoggingCtx.newObject = {
         email: parsedInput.email,
         name: parsedInput.name,
         role: parsedInput.role,
         teamIds: parsedInput.teamIds,
-      },
-      currentUserId: ctx.user.id,
-    });
+      };
 
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.inviteId = inviteId;
-    ctx.auditLoggingCtx.newObject = {
-      email: parsedInput.email,
-      name: parsedInput.name,
-      role: parsedInput.role,
-      teamIds: parsedInput.teamIds,
-    };
+      if (inviteId) {
+        await sendInviteMemberEmail(
+          inviteId,
+          parsedInput.email,
+          ctx.user.name ?? "",
+          parsedInput.name ?? "",
+          false,
+          undefined
+        );
+      }
 
-    if (inviteId) {
-      await sendInviteMemberEmail(
-        inviteId,
-        parsedInput.email,
-        ctx.user.name ?? "",
-        parsedInput.name ?? "",
-        false,
-        undefined
-      );
+      return inviteId;
     }
-
-    return inviteId;
-  })
+  )
 );
 
 const ZLeaveOrganizationAction = z.object({
@@ -267,47 +286,51 @@ const ZLeaveOrganizationAction = z.object({
 });
 
 export const leaveOrganizationAction = authenticatedActionClient.schema(ZLeaveOrganizationAction).action(
-  withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing", "member"],
-        },
-      ],
-    });
+  withAuditLogging(
+    "deleted",
+    "membership",
+    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing", "member"],
+          },
+        ],
+      });
 
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+      const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
-    if (!membership) {
-      throw new AuthenticationError("Not a member of this organization");
+      if (!membership) {
+        throw new AuthenticationError("Not a member of this organization");
+      }
+
+      const { isOwner } = getAccessFlags(membership.role);
+
+      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+      if (isOwner) {
+        throw new OperationNotAllowedError("You cannot leave an organization you own");
+      }
+
+      if (!isMultiOrgEnabled) {
+        throw new OperationNotAllowedError(
+          "You cannot leave the organization because you are the only owner and organization deletion is disabled"
+        );
+      }
+
+      const memberships = await getMembershipsByUserId(ctx.user.id);
+      if (!memberships || memberships?.length <= 1) {
+        throw new ValidationError("You cannot leave the only organization you are a member of");
+      }
+
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.membershipId = `${ctx.user.id}-${parsedInput.organizationId}`;
+      ctx.auditLoggingCtx.oldObject = membership;
+
+      return await deleteMembership(ctx.user.id, parsedInput.organizationId);
     }
-
-    const { isOwner } = getAccessFlags(membership.role);
-
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-
-    if (isOwner) {
-      throw new OperationNotAllowedError("You cannot leave an organization you own");
-    }
-
-    if (!isMultiOrgEnabled) {
-      throw new OperationNotAllowedError(
-        "You cannot leave the organization because you are the only owner and organization deletion is disabled"
-      );
-    }
-
-    const memberships = await getMembershipsByUserId(ctx.user.id);
-    if (!memberships || memberships?.length <= 1) {
-      throw new ValidationError("You cannot leave the only organization you are a member of");
-    }
-
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.membershipId = `${ctx.user.id}-${parsedInput.organizationId}`;
-    ctx.auditLoggingCtx.oldObject = membership;
-
-    return await deleteMembership(ctx.user.id, parsedInput.organizationId);
-  })
+  )
 );

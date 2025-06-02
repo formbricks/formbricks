@@ -10,7 +10,6 @@ import {
   ZContactAttributeKeyIdSchema,
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -56,24 +55,17 @@ export const PUT = async (
       body: ZContactAttributeKeyUpdateSchema,
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params, body } = parsedInput;
 
-      const auditLogBase = {
-        actionType: "contactAttributeKey.updated" as const,
-        targetType: "contactAttributeKey" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: params.contactAttributeKeyId,
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+      if (auditLog) {
+        auditLog.targetId = params.contactAttributeKeyId;
+      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error, auditLogBase);
+        return handleApiError(request, res.error, auditLog);
       }
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "PUT")) {
         return handleApiError(
@@ -82,7 +74,7 @@ export const PUT = async (
             type: "unauthorized",
             details: [{ field: "environment", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -93,25 +85,25 @@ export const PUT = async (
             type: "bad_request",
             details: [{ field: "contactAttributeKey", issue: "cannot update unique contact attribute key" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const updatedContactAttributeKey = await updateContactAttributeKey(params.contactAttributeKeyId, body);
 
       if (!updatedContactAttributeKey.ok) {
-        return handleApiError(request, updatedContactAttributeKey.error, auditLogBase);
+        return handleApiError(request, updatedContactAttributeKey.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: res.data,
-        newObject: updatedContactAttributeKey.data,
-      });
+      if (auditLog) {
+        auditLog.oldObject = res.data;
+        auditLog.newObject = updatedContactAttributeKey.data;
+      }
 
       return responses.successResponse(updatedContactAttributeKey);
     },
+    action: "updated",
+    targetType: "contactAttributeKey",
   });
 
 export const DELETE = async (
@@ -124,24 +116,17 @@ export const DELETE = async (
       params: z.object({ contactAttributeKeyId: ZContactAttributeKeyIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params } = parsedInput;
 
-      const auditLogBase = {
-        actionType: "contactAttributeKey.deleted" as const,
-        targetType: "contactAttributeKey" as const,
-        userId: authentication.apiKeyId,
-        userType: "api" as const,
-        targetId: params.contactAttributeKeyId,
-        organizationId: authentication.organizationId,
-        status: "failure" as const,
-        apiUrl: request.url,
-      };
+      if (auditLog) {
+        auditLog.targetId = params.contactAttributeKeyId;
+      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error, auditLogBase);
+        return handleApiError(request, res.error, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "DELETE")) {
@@ -151,7 +136,7 @@ export const DELETE = async (
             type: "unauthorized",
             details: [{ field: "environment", issue: "unauthorized" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
@@ -162,22 +147,22 @@ export const DELETE = async (
             type: "bad_request",
             details: [{ field: "contactAttributeKey", issue: "cannot delete unique contactAttributeKey" }],
           },
-          auditLogBase
+          auditLog
         );
       }
 
       const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
 
       if (!deletedContactAttributeKey.ok) {
-        return handleApiError(request, deletedContactAttributeKey.error, auditLogBase);
+        return handleApiError(request, deletedContactAttributeKey.error, auditLog);
       }
 
-      queueAuditEvent({
-        ...auditLogBase,
-        status: "success",
-        oldObject: res.data,
-      });
+      if (auditLog) {
+        auditLog.oldObject = res.data;
+      }
 
       return responses.successResponse(deletedContactAttributeKey);
     },
+    action: "deleted",
+    targetType: "contactAttributeKey",
   });

@@ -23,7 +23,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 | Requirement | Notes |
 |-------------|-------|
-| **Redis** | Used internally to guarantee integrity under concurrency. |
+| **`redis`** | Used internally to guarantee integrity under concurrency. |
 | **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
 
 ---
@@ -35,7 +35,8 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 ```bash title=".env"
 # --- Audit logging ---
 AUDIT_LOG_ENABLED=1
-REDIS_URL=redis://redis:6379                   # existing Redis instance
+REDIS_URL=redis://`redis`:6379                   # existing `redis` instance
+AUDIT_LOG_GET_USER_IP=1                        # set to 1 to include user IP address in audit logs, 0 to omit (default: 0)
 ```
 
 2. Redeploy your containers.
@@ -62,6 +63,7 @@ Key fields:
 | `status` | `success` or `failure` |
 | `changes` | Only the fields that actually changed (sensitive values redacted) |
 | `integrityHash` | SHA‑256 hash chaining the entry to the previous one |
+| `ipAddress` | (Optional) User IP address, present only if <code>AUDIT_LOG_GET_USER_IP=1</code> |
 
 ---
 
@@ -70,9 +72,9 @@ Key fields:
 - **Read‑only:** Audit logs are write‑once; avoid granting write access to the log directory.
 - **Redacted secrets:** Sensitive fields (e‑mails, access tokens, passwords…) are replaced with `"********"` before being written.
 - **Failure events count:** Both successful *and* failed operations are logged.
-- **Single source of truth:** The same logs power the Formbricks UI and API endpoints.
-- **Scope limitation:** For now, **only events triggered inside the Formbricks application** are audited. This means:
+- **Single source of truth:** The same logs power the `Formbricks` UI and API endpoints.
+- **Scope limitation:** For now, **only events triggered inside the `Formbricks` application** are audited. This means:
   - **Embed and Link Surveys** are **not** included in the audit logs.
-  - **Survey responses** created via API or client-side SDKs are **not** audited.
+  - **Survey responses** created via the client API or client-side SDKs are **not** audited.
 
 ---
