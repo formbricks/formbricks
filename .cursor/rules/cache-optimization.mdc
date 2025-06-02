@@ -74,6 +74,103 @@ export const getEnvironmentState = async (environmentId: string) => {
 };
 ```
 
+## Caching Decision Framework
+
+### When TO Add Caching
+
+```typescript
+// ✅ Expensive operations that benefit from caching
+- Database queries (>10ms typical)
+- External API calls (>50ms typical)  
+- Complex computations (>5ms)
+- File system operations
+- Heavy data transformations
+
+// Example: Database query with complex joins
+export const getEnvironmentWithDetails = withCache(
+  async (environmentId: string) => {
+    return prisma.environment.findUnique({
+      where: { id: environmentId },
+      include: { /* complex joins */ }
+    });
+  },
+  { key: createCacheKey.environment.details(environmentId), ttl: 60 * 30 }
+)();
+```
+
+### When NOT to Add Caching
+
+```typescript
+// ❌ Don't cache these operations - minimal overhead
+- Simple property access (<0.1ms)
+- Basic transformations (<1ms)
+- Functions that just call already-cached functions
+- Pure computation without I/O
+
+// ❌ Bad example: Redundant caching
+const getCachedLicenseFeatures = withCache(
+  async () => {
+    const license = await getEnterpriseLicense(); // Already cached!
+    return license.active ? license.features : null; // Just property access
+  },
+  { key: "license-features", ttl: 1800 }
+);
+
+// ✅ Good example: Simple and efficient
+const getLicenseFeatures = async () => {
+  const license = await getEnterpriseLicense(); // Already cached
+  return license.active ? license.features : null; // 0.1ms overhead
+};
+```
+
+### Computational Overhead Analysis
+
+Before adding caching, analyze the overhead:
+
+```typescript
+// ✅ High overhead - CACHE IT
+- Database queries: ~10-100ms
+- External APIs: ~50-500ms  
+- File I/O: ~5-50ms
+- Complex algorithms: >5ms
+
+// ❌ Low overhead - DON'T CACHE
+- Property access: ~0.001ms
+- Simple lookups: ~0.1ms
+- Basic validation: ~1ms
+- Type checks: ~0.01ms
+
+// Example decision tree:
+const expensiveOperation = async () => {
+  return prisma.query(); // 50ms - CACHE IT
+};
+
+const cheapOperation = (data: any) => {
+  return data.property; // 0.001ms - DON'T CACHE
+};
+```
+
+### Avoid Cache Wrapper Anti-Pattern
+
+```typescript
+// ❌ Don't create wrapper functions just for caching
+const getCachedUserPermissions = withCache(
+  async (userId: string) => getUserPermissions(userId),
+  { key: createCacheKey.user.permissions(userId), ttl: 3600 }
+);
+
+// ✅ Add caching directly to the original function
+export const getUserPermissions = withCache(
+  async (userId: string) => {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      include: { permissions: true }
+    });
+  },
+  { key: createCacheKey.user.permissions(userId), ttl: 3600 }
+);
+```
+
 ## TTL Coordination Strategy
 
 ### Multi-Layer Cache Coordination
@@ -294,6 +391,10 @@ try {
 6. **Don't over-engineer** with complex tag systems  
 7. **Avoid caching rapidly changing data** (real-time metrics)
 8. **Always validate cache keys** to prevent collisions
+9. **Don't add redundant caching layers** - analyze computational overhead first
+10. **Avoid cache wrapper functions** - add caching directly to expensive operations
+11. **Don't cache property access or simple transformations** - overhead is negligible
+12. **Analyze the full call chain** before adding caching to avoid double-caching
 
 ## Monitoring Strategy
 

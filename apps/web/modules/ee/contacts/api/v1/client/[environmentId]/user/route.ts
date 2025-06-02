@@ -1,12 +1,10 @@
 import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsPersonState, ZJsUserIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
-import { ZUserEmail } from "@formbricks/types/user";
+import { TJsPersonState } from "@formbricks/types/js";
 import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -27,42 +25,33 @@ export const POST = async (
 
   try {
     const { environmentId } = params;
+
+    // Simple validation (faster than Zod for high-frequency endpoint)
+    if (!environmentId || typeof environmentId !== "string") {
+      return responses.badRequestResponse("Environment ID is required", undefined, true);
+    }
+
     const jsonInput = await request.json();
 
-    // Validate input
-    const syncInputValidation = ZJsUserIdentifyInput.pick({ environmentId: true }).safeParse({
-      environmentId,
-    });
-
-    if (!syncInputValidation.success) {
-      return responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(syncInputValidation.error),
-        true
-      );
+    // Basic input validation without Zod overhead
+    if (
+      !jsonInput ||
+      typeof jsonInput !== "object" ||
+      !jsonInput.userId ||
+      typeof jsonInput.userId !== "string"
+    ) {
+      return responses.badRequestResponse("userId is required and must be a string", undefined, true);
     }
 
-    const parsedInput = ZJsUserUpdateInput.safeParse(jsonInput);
-    if (!parsedInput.success) {
-      return responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(parsedInput.error),
-        true
-      );
-    }
-
-    // validate email if present in attributes
-    if (parsedInput.data.attributes?.email) {
-      const emailValidation = ZUserEmail.safeParse(parsedInput.data.attributes.email);
-      if (!emailValidation.success) {
-        return responses.badRequestResponse(
-          "Invalid email",
-          transformErrorToDetails(emailValidation.error),
-          true
-        );
+    // Simple email validation if present (avoid Zod)
+    if (jsonInput.attributes?.email) {
+      const email = jsonInput.attributes.email;
+      if (typeof email !== "string" || !email.includes("@") || email.length < 3) {
+        return responses.badRequestResponse("Invalid email format", undefined, true);
       }
     }
-    const { userId, attributes } = parsedInput.data;
+
+    const { userId, attributes } = jsonInput;
 
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
@@ -79,33 +68,26 @@ export const POST = async (
     const { device } = userAgent(request);
     const deviceType = device ? "phone" : "desktop";
 
-    try {
-      const { state: userState, messages } = await updateUser(
-        environmentId,
-        userId,
-        deviceType,
-        attributeUpdatesToSend ?? undefined
-      );
+    const { state: userState, messages } = await updateUser(
+      environmentId,
+      userId,
+      deviceType,
+      attributeUpdatesToSend ?? undefined
+    );
 
-      let responseJson: { state: TJsPersonState; messages?: string[] } = {
-        state: userState,
-      };
+    // Build response (simplified structure)
+    const responseJson: { state: TJsPersonState; messages?: string[] } = {
+      state: userState,
+      ...(messages && messages.length > 0 && { messages }),
+    };
 
-      if (messages && messages.length > 0) {
-        responseJson.messages = messages;
-      }
-
-      return responses.successResponse(responseJson, true);
-    } catch (err) {
-      if (err instanceof ResourceNotFoundError) {
-        return responses.notFoundResponse(err.resourceType, err.resourceId);
-      }
-
-      logger.error({ err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
-      return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
+    return responses.successResponse(responseJson, true);
+  } catch (err) {
+    if (err instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse(err.resourceType, err.resourceId);
     }
-  } catch (error) {
-    logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
-    return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
+
+    logger.error({ error: err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
+    return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
   }
 };
