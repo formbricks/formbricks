@@ -27,7 +27,6 @@ export const GET = async (
   }
 ): Promise<Response> => {
   const params = await props.params;
-  const startTime = Date.now();
 
   try {
     // Validate input using zod
@@ -48,16 +47,6 @@ export const GET = async (
       const environmentState = await getEnvironmentState(params.environmentId);
       const { data } = environmentState;
 
-      // Log performance metrics for monitoring
-      const duration = Date.now() - startTime;
-      logger.debug("Environment state fetch completed", {
-        environmentId: params.environmentId,
-        duration,
-        surveys: data.surveys.length,
-        actionClasses: data.actionClasses.length,
-        cached: duration < 50, // Likely cached if very fast
-      });
-
       return responses.successResponse(
         {
           data,
@@ -72,14 +61,11 @@ export const GET = async (
         "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
       );
     } catch (err) {
-      const duration = Date.now() - startTime;
-
       if (err instanceof ResourceNotFoundError) {
         logger.warn("Resource not found in environment endpoint", {
           environmentId: params.environmentId,
           resourceType: err.resourceType,
           resourceId: err.resourceId,
-          duration,
         });
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
@@ -89,20 +75,17 @@ export const GET = async (
           error: err,
           url: request.url,
           environmentId: params.environmentId,
-          duration,
         },
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return responses.internalServerErrorResponse(err.message, true);
     }
   } catch (error) {
-    const duration = Date.now() - startTime;
     logger.error(
       {
         error,
         url: request.url,
         environmentId: params.environmentId,
-        duration,
       },
       "Critical error in GET /api/v1/client/[environmentId]/environment"
     );
