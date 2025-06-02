@@ -1,7 +1,6 @@
 import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { environmentCache } from "@/lib/environment/cache";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -28,9 +27,10 @@ export const GET = async (
   }
 ): Promise<Response> => {
   const params = await props.params;
+  const startTime = Date.now();
 
   try {
-    // validate using zod
+    // Validate input using zod
     const inputValidation = ZJsSyncInput.safeParse({
       environmentId: params.environmentId,
     });
@@ -44,15 +44,19 @@ export const GET = async (
     }
 
     try {
+      // Use optimized environment state fetcher with new caching approach
       const environmentState = await getEnvironmentState(params.environmentId);
-      const { data, revalidateEnvironment } = environmentState;
+      const { data } = environmentState;
 
-      if (revalidateEnvironment) {
-        environmentCache.revalidate({
-          id: inputValidation.data.environmentId,
-          projectId: data.project.id,
-        });
-      }
+      // Log performance metrics for monitoring
+      const duration = Date.now() - startTime;
+      logger.debug("Environment state fetch completed", {
+        environmentId: params.environmentId,
+        duration,
+        surveys: data.surveys.length,
+        actionClasses: data.actionClasses.length,
+        cached: duration < 50, // Likely cached if very fast
+      });
 
       return responses.successResponse(
         {
@@ -68,18 +72,40 @@ export const GET = async (
         "public, s-maxage=1800, max-age=3600, stale-while-revalidate=1800, stale-if-error=3600"
       );
     } catch (err) {
+      const duration = Date.now() - startTime;
+
       if (err instanceof ResourceNotFoundError) {
+        logger.warn("Resource not found in environment endpoint", {
+          environmentId: params.environmentId,
+          resourceType: err.resourceType,
+          resourceId: err.resourceId,
+          duration,
+        });
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
       logger.error(
-        { error: err, url: request.url },
+        {
+          error: err,
+          url: request.url,
+          environmentId: params.environmentId,
+          duration,
+        },
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return responses.internalServerErrorResponse(err.message, true);
     }
   } catch (error) {
-    logger.error({ error, url: request.url }, "Error in GET /api/v1/client/[environmentId]/environment");
+    const duration = Date.now() - startTime;
+    logger.error(
+      {
+        error,
+        url: request.url,
+        environmentId: params.environmentId,
+        duration,
+      },
+      "Critical error in GET /api/v1/client/[environmentId]/environment"
+    );
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

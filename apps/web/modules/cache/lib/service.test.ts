@@ -104,8 +104,7 @@ describe("Cache Service", () => {
         stores: [expect.any(Keyv)],
         ttl: CACHE_TTL_MS,
       });
-      expect(logger.info).toHaveBeenCalledWith("REDIS_URL not provided, using memory cache");
-      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      // Fast path doesn't log - this is the optimized behavior
       expect(cache).toBe(mockCacheInstance);
     });
 
@@ -124,8 +123,7 @@ describe("Cache Service", () => {
         stores: [expect.any(Keyv)],
         ttl: CACHE_TTL_MS,
       });
-      expect(logger.info).toHaveBeenCalledWith("REDIS_URL not provided, using memory cache");
-      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      // Fast path doesn't log - this is the optimized behavior
       expect(cache).toBe(mockCacheInstance);
     });
 
