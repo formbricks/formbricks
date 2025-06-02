@@ -1,11 +1,10 @@
 "use client";
 
-import { Communities } from "@/modules/communities/components/Communities";
+import MyCommunities from "@/modules/communities/components/Communities/components/my-communities";
 import PopularCommunities from "@/modules/communities/components/Communities/components/popular-communities";
-import SearchSection from "@/modules/discover/components/common/search-section";
+import RisingCommunities from "@/modules/communities/components/Communities/components/rising-communities";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useState } from "react";
 
 interface CommunitiesClientProps {
   translatedTitle: string;
@@ -13,20 +12,12 @@ interface CommunitiesClientProps {
 }
 
 export function CommunitiesClient({ environmentId, translatedTitle }: CommunitiesClientProps) {
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
   return (
     <PageContentWrapper>
-      <PageHeader
-        pageTitle={translatedTitle}
-        cta={
-          <div>
-            <SearchSection setSearchQuery={setSearchQuery} />
-          </div>
-        }
-      />
-      <Communities environmentId={environmentId} searchQuery={searchQuery} />
-      <PopularCommunities environmentId={environmentId} searchQuery={searchQuery} />
+      <PageHeader pageTitle={translatedTitle} />
+      <PopularCommunities environmentId={environmentId} />
+      <MyCommunities environmentId={environmentId} />
+      <RisingCommunities environmentId={environmentId} />
     </PageContentWrapper>
   );
 }

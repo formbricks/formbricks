@@ -10,6 +10,8 @@ export const whitelistSelection = {
   email: true,
   name: true,
   whitelist: true,
+  communityName: true,
+  communityDescription: true,
 };
 
 export const addUserToWhitelist = async ({
