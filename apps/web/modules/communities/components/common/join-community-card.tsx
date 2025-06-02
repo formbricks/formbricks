@@ -4,7 +4,6 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { UsersRoundIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 
@@ -48,7 +47,7 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
                 window.location.href = `/environments/${environmentId}/communities/${community.id}/summary`;
               }}
               className={cn(
-                "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-0 gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
+                "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
               )}>
               {t("common.join")}
               <ArrowRightIcon
