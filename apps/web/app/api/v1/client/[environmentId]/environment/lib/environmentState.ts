@@ -83,9 +83,9 @@ export const getEnvironmentState = async (
     {
       // Use enterprise-grade cache key pattern
       key: createCacheKey.environment.state(environmentId),
-      // 15 minutes TTL for high-frequency endpoint
-      // Balances freshness with performance
-      ttl: 60 * 15,
+      // 30 minutes TTL ensures fresh data for hourly SDK checks
+      // Balances performance with freshness requirements
+      ttl: 60 * 30,
     }
   );
 
