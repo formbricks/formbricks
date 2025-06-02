@@ -31,7 +31,7 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
   return (
     <div className="relative my-4 flex w-full flex-col rounded-xl bg-white shadow-sm">
       <div
-        className={`bg-tertiary flex h-[124px] w-full items-start rounded-t-xl px-[18px] ${
+        className={`bg-tertiary-foreground flex h-[124px] w-full items-start rounded-t-xl px-[18px] ${
           chainName ? "justify-between" : "justify-end" // Pushes the image to the right if no chain name
         }`}>
         {chainName && (

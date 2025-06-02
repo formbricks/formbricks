@@ -32,7 +32,7 @@ export function WalletEthBalance({}: Props): React.JSX.Element {
 
   return (
     <div className="flex items-center">
-      <p className="text-2xl font-bold">
+      <p className="text-primary text-4xl font-bold">
         {showBalance
           ? balance != undefined
             ? `${balance} ETH`
@@ -40,7 +40,7 @@ export function WalletEthBalance({}: Props): React.JSX.Element {
           : "••••••"}
       </p>
       <IconButton
-        className="text-black hover:text-black"
+        className="text-primary hover:text-primary-50"
         icon={!showBalance ? EyeIcon : EyeOffIcon}
         onClick={() => setShowBalance((prev) => !prev)}
         label={t("environments.wallet.balance_card.external_link")}

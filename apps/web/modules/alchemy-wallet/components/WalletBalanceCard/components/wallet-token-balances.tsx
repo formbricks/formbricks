@@ -12,6 +12,8 @@ import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
 import { PlusIcon, SendIcon } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { isMobile } from "react-device-detect";
 import { cn } from "@formbricks/lib/cn";
@@ -22,6 +24,10 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   const user = useUser();
   const address = user?.address || "";
   const blockscoutApi = useBlockscoutApi();
+
+  const params = useParams();
+  const environmentId = params.environmentId as string;
+
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -85,7 +91,7 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
           className
         )}>
         <div className="col-span-3 flex w-full flex-col gap-2">
-          <h3 className="text-lg font-medium text-slate-900">{t("common.token_balances")}</h3>
+          <h3 className="text-lg font-medium text-slate-900">{t("common.token_holdings")}</h3>
           <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
             <TableHeader className="pointer-events-auto">
               <TableRow>
@@ -106,45 +112,26 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
     );
   }
 
-  if (balances.length < 1) {
+  if (balances.length === 0) {
     return (
-      <div
-        className={cn(
-          "relative my-4 flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm md:flex-row",
-          className
-        )}>
-        <div className="col-span-3 flex w-full flex-col gap-2">
-          <div className="flex w-full items-center gap-2">
-            <h3 className="text-lg font-medium text-slate-900">{t("common.token_balances")}</h3>
-            <WalletModal address={address} open={showWalletModal} setOpen={setShowWalletModal} />
-            <Button className="h-6 w-6 rounded-md p-0" onClick={() => setShowWalletModal(true)}>
-              <PlusIcon className="h-4 w-4" strokeWidth={2} />
-            </Button>
+      <TokenCardContainer
+        title={t("common.token_holdings")}
+        className={"min-h-[200px] items-center md:flex-row"}>
+        <div className="col-span-3 flex w-full flex-col items-center gap-1">
+          <div>
+            <p className="text-center text-sm">{t("environments.wallet.token_holding.no_tokens_yet")}</p>
           </div>
-          <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
-            <TableHeader className="pointer-events-auto">
-              <TableRow>
-                <TableHead>{t("common.token")}</TableHead>
-                <TableHead>{t("common.address")}</TableHead>
-                <TableHead align="right">{t("common.value")}</TableHead>
-                <TableHead align="right">{t("common.actions")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <div className="flex flex-col items-center justify-center py-2 text-center">
-                    <p className="mt-2 text-sm text-slate-500">
-                      {t("environments.wallet.balance_card.you_dont_have_any_tokens_in_your_wallet_yet")}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <Link
+            href={{ pathname: `/environments/${environmentId}/engagements` }}
+            className={cn(
+              "text-tertiary hover:text-tertiary/50 inline-flex justify-center whitespace-nowrap p-4 text-base font-bold disabled:pointer-events-none disabled:opacity-50",
+              className
+            )}>
+            {t("common.discover_engagements")}
+          </Link>
         </div>
         {!isMobile && <NoTokensCTACard />}
-      </div>
+      </TokenCardContainer>
     );
   }
 
@@ -156,7 +143,7 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
       )}>
       <div className="col-span-3 flex flex-col gap-2">
         <div className="flex w-full items-center gap-2">
-          <h3 className="text-lg font-medium text-slate-900">{t("common.token_balances")}</h3>
+          <h3 className="text-lg font-medium text-slate-900">{t("common.token_holdings")}</h3>
           <WalletModal address={address} open={showWalletModal} setOpen={setShowWalletModal} />
           <Button className="h-6 w-6 rounded-md p-0" onClick={() => setShowWalletModal(true)}>
             <PlusIcon className="h-4 w-4" strokeWidth={2} />
@@ -217,3 +204,25 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
 }
 
 export default WalletTokenBalances;
+
+interface TokenCardContainerProps {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function TokenCardContainer({ title, className = "", children }: TokenCardContainerProps) {
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+      <div
+        className={cn(
+          "shadow-card-20 relative my-5 flex w-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4",
+          className
+        )}
+        id="token-holdings">
+        {children}
+      </div>
+    </div>
+  );
+}

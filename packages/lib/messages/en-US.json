@@ -178,6 +178,7 @@
     "discard": "Discard",
     "discover": "Discover",
     "discover_banner_description": "Discover and engage with surveys to earn rewards",
+    "discover_engagements": "Discover engagements",
     "dismissed": "Dismissed",
     "docs": "Documentation",
     "documentation": "Documentation",
@@ -411,7 +412,7 @@
     "time_to_finish": "Time to finish",
     "title": "Title",
     "token": "Token",
-    "token_balances": "Token Balances",
+    "token_holdings": "Token Holdings",
     "top_left": "Top Left",
     "top_right": "Top Right",
     "transaction_history": "Transaction History",
@@ -1983,6 +1984,9 @@
       "modal": {
         "send_funds": "Send Funds"
       },
+      "token_holding": {
+        "no_tokens_yet": "No tokens yet, answer engagement surveys to start receiving reward tokens"
+      },
       "transaction": {
         "action_text": {
           "received_from": "Received from",
@@ -1991,7 +1995,7 @@
           "token_minted": "Token Minted"
         },
         "common": {
-          "your_transaction_history_is_empty": "Your transaction history is empty"
+          "no_transactions_yet": "No transactions yet"
         },
         "tag": {
           "survey_reward": "Survey Reward",

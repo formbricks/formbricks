@@ -152,6 +152,10 @@ input[type="range"]::-webkit-slider-thumb {
   --yellow-100: rgb(254 249 195);
   --yellow-300: rgb(253 224 71);
   --yellow-500: rgb(234 179 8);
+  --primary-100: #38B5DB;
+  --primary-50: #38B5DB80;
+  --primary-20: #38B5DB33;
+  --tertiary-100: #157BA3;
 
   /* Default Light Theme, you can override everything by changing these values */
   --brand-color: var(--brand-default);
