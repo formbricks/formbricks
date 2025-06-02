@@ -1,11 +1,12 @@
 import { cleanup } from "@testing-library/react";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { surveyCache } from "./cache";
 
-// Mock the revalidateTag function from next/cache
+// Mock the functions from next/cache
 vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
 }));
 
 describe("surveyCache", () => {

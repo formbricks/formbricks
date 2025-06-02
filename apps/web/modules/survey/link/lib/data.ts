@@ -123,7 +123,7 @@ export const getSurveyWithMetadata = reactCache((surveyId: string) =>
       }
     },
     {
-      key: createCacheKey.survey.byId(surveyId),
+      key: createCacheKey.survey.metadata(surveyId),
       ttl: 60 * 60, // 1 hour - surveys change infrequently
     }
   )()

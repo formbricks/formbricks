@@ -71,8 +71,10 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   if (isSingleUseSurvey && singleUseId) {
     try {
       // Use optimized response fetcher with proper caching
-      singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
+      const fetchResponseFn = getResponseBySingleUseId(survey.id, singleUseId);
+      singleUseResponse = await fetchResponseFn();
     } catch (error) {
+      console.error(error); // It's good practice to log the error
       singleUseResponse = undefined;
     }
   }

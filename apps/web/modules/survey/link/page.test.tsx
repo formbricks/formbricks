@@ -35,6 +35,7 @@ vi.mock("@/modules/survey/link/components/survey-renderer", () => ({
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
   getResponseBySingleUseId: vi.fn(() => vi.fn()),
+  getSurveyWithMetadata: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/link/metadata", () => ({
@@ -93,7 +94,7 @@ describe("LinkSurveyPage", () => {
   });
 
   test("LinkSurveyPage renders survey for valid ID", async () => {
-    vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
     const props = {
       params: Promise.resolve({ surveyId: "survey123" }),
@@ -102,7 +103,7 @@ describe("LinkSurveyPage", () => {
 
     await LinkSurveyPage(props);
 
-    expect(getSurvey).toHaveBeenCalledWith("survey123");
+    expect(getSurveyWithMetadata).toHaveBeenCalledWith("survey123");
     expect(renderSurvey).toHaveBeenCalledWith({
       survey: mockSurvey,
       searchParams: {},
@@ -113,7 +114,7 @@ describe("LinkSurveyPage", () => {
   });
 
   test("LinkSurveyPage handles encrypted single use with valid ID", async () => {
-    vi.mocked(getSurvey).mockResolvedValue({
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue({
       ...mockSurvey,
       singleUse: {
         enabled: true,
@@ -136,7 +137,7 @@ describe("LinkSurveyPage", () => {
   });
 
   test("LinkSurveyPage handles non-encrypted single use ID", async () => {
-    vi.mocked(getSurvey).mockResolvedValue({
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue({
       ...mockSurvey,
       singleUse: {
         enabled: true,
@@ -157,16 +158,22 @@ describe("LinkSurveyPage", () => {
   });
 
   test("LinkSurveyPage passes existing single use response when available", async () => {
-    const mockResponse = { id: "response123" } as unknown as TResponseData;
+    const mockResponse = {
+      id: "response123",
+      createdAt: new Date(),
+      data: {} as Record<string, string | number | Record<string, string> | string[]>,
+      finished: true,
+    };
 
-    vi.mocked(getSurvey).mockResolvedValue({
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue({
       ...mockSurvey,
       singleUse: {
         enabled: true,
         isEncrypted: false,
       },
     } as unknown as TSurvey);
-    vi.mocked(getResponseBySingleUseId).mockResolvedValue(mockResponse as any);
+
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => mockResponse);
 
     const props = {
       params: Promise.resolve({ surveyId: "survey123" }),
@@ -175,11 +182,14 @@ describe("LinkSurveyPage", () => {
 
     await LinkSurveyPage(props);
 
-    expect(renderSurvey).toHaveBeenCalledWith(
-      expect.objectContaining({
-        singleUseResponse: mockResponse,
-      })
-    );
+    expect(getResponseBySingleUseId).toHaveBeenCalledWith("survey123", "plainId123");
+    expect(renderSurvey).toHaveBeenCalledWith({
+      survey: expect.any(Object),
+      searchParams: { suId: "plainId123" },
+      singleUseId: "plainId123",
+      singleUseResponse: mockResponse,
+      isPreview: false,
+    });
   });
 
   test("LinkSurveyPage handles preview mode", async () => {

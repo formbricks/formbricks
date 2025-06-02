@@ -111,7 +111,7 @@ describe("contact-survey page", () => {
       ok: true,
       data: { surveyId: "s", contactId: "c" },
     });
-    vi.mocked(getExistingContactResponse).mockResolvedValue({ any: "x" } as any);
+    vi.mocked(getExistingContactResponse).mockReturnValue(() => Promise.resolve({ any: "x" } as any));
     render(
       await ContactSurveyPage({
         params: Promise.resolve({ jwt: "tk" }),
