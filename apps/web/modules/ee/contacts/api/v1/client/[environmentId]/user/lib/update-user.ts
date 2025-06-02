@@ -1,11 +1,142 @@
-import { contactCache } from "@/lib/cache/contact";
-import { getEnvironment } from "@/lib/environment/service";
+import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
+import { withCache } from "@/modules/cache/lib/withCache";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
-import { getContactByUserIdWithAttributes } from "./contact";
-import { getUserState } from "./user-state";
+import { getPersonSegmentIds } from "./segments";
+
+/**
+ * Cached environment lookup - environments rarely change
+ */
+const getEnvironment = (environmentId: string) =>
+  withCache(
+    async () => {
+      return prisma.environment.findUnique({
+        where: { id: environmentId },
+        select: { id: true, type: true },
+      });
+    },
+    {
+      key: createCacheKey.environment.config(environmentId),
+      ttl: 60 * 60, // 1 hour TTL - environments rarely change
+    }
+  )();
+
+/**
+ * Comprehensive contact data fetcher - gets everything needed in one query
+ * Eliminates redundant queries by fetching contact + user state data together
+ */
+const getContactWithFullData = async (environmentId: string, userId: string) => {
+  return prisma.contact.findFirst({
+    where: {
+      environmentId,
+      attributes: {
+        some: {
+          attributeKey: { key: "userId", environmentId },
+          value: userId,
+        },
+      },
+    },
+    select: {
+      id: true,
+      attributes: {
+        select: {
+          attributeKey: { select: { key: true } },
+          value: true,
+        },
+      },
+      // Include user state data in the same query
+      responses: {
+        select: { surveyId: true },
+      },
+      displays: {
+        select: {
+          surveyId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+};
+
+/**
+ * Creates contact with comprehensive data structure
+ */
+const createContact = async (environmentId: string, userId: string) => {
+  return prisma.contact.create({
+    data: {
+      environment: {
+        connect: { id: environmentId },
+      },
+      attributes: {
+        create: [
+          {
+            attributeKey: {
+              connect: { key_environmentId: { key: "userId", environmentId } },
+            },
+            value: userId,
+          },
+        ],
+      },
+    },
+    select: {
+      id: true,
+      attributes: {
+        select: {
+          attributeKey: { select: { key: true } },
+          value: true,
+        },
+      },
+      // Include empty arrays for new contacts
+      responses: {
+        select: { surveyId: true },
+      },
+      displays: {
+        select: {
+          surveyId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+};
+
+/**
+ * Build user state from already-fetched contact data
+ * Eliminates the need for separate getUserState query
+ */
+const buildUserStateFromContact = async (
+  contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
+  environmentId: string,
+  userId: string,
+  device: "phone" | "desktop",
+  attributes: Record<string, string>
+) => {
+  // Get segments (only remaining external call)
+  const segments = await getPersonSegmentIds(environmentId, contactData.id, userId, attributes, device);
+
+  // Process data efficiently from already-fetched contact
+  const displays = contactData.displays.map((display) => ({
+    surveyId: display.surveyId,
+    createdAt: display.createdAt,
+  }));
+
+  const responses = contactData.responses.map((response) => response.surveyId);
+
+  const lastDisplayAt = contactData.displays.length > 0 ? contactData.displays[0].createdAt : null;
+
+  return {
+    contactId: contactData.id,
+    userId,
+    segments,
+    displays,
+    responses,
+    lastDisplayAt,
+  };
+};
 
 export const updateUser = async (
   environmentId: string,
@@ -13,49 +144,22 @@ export const updateUser = async (
   device: "phone" | "desktop",
   attributes?: Record<string, string>
 ): Promise<{ state: TJsPersonState; messages?: string[] }> => {
+  // Cached environment validation (rarely changes)
   const environment = await getEnvironment(environmentId);
-
   if (!environment) {
     throw new ResourceNotFoundError(`environment`, environmentId);
   }
 
-  let contact = await getContactByUserIdWithAttributes(environmentId, userId);
+  // Single comprehensive query - gets contact + user state data
+  let contactData = await getContactWithFullData(environmentId, userId);
 
-  if (!contact) {
-    contact = await prisma.contact.create({
-      data: {
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
-        attributes: {
-          create: [
-            {
-              attributeKey: {
-                connect: { key_environmentId: { key: "userId", environmentId } },
-              },
-              value: userId,
-            },
-          ],
-        },
-      },
-      select: {
-        id: true,
-        attributes: {
-          select: { attributeKey: { select: { key: true } }, value: true },
-        },
-      },
-    });
-
-    contactCache.revalidate({
-      environmentId,
-      userId,
-      id: contact.id,
-    });
+  // Create contact if doesn't exist
+  if (!contactData) {
+    contactData = await createContact(environmentId, userId);
   }
 
-  let contactAttributes = contact.attributes.reduce(
+  // Process contact attributes efficiently (single pass)
+  let contactAttributes = contactData.attributes.reduce(
     (acc, ctx) => {
       acc[ctx.attributeKey.key] = ctx.value;
       return acc;
@@ -63,37 +167,24 @@ export const updateUser = async (
     {} as Record<string, string>
   );
 
-  // update the contact attributes if needed:
   let messages: string[] = [];
   let language = contactAttributes.language;
 
+  // Handle attribute updates efficiently
   if (attributes && Object.keys(attributes).length > 0) {
-    let shouldUpdate = false;
-    const oldAttributes = contact.attributes.reduce(
-      (acc, ctx) => {
-        acc[ctx.attributeKey.key] = ctx.value;
-        return acc;
-      },
-      {} as Record<string, string>
-    );
+    // Single pass comparison - check if any attribute has changed
+    const hasChanges = Object.entries(attributes).some(([key, value]) => value !== contactAttributes[key]);
 
-    for (const [key, value] of Object.entries(attributes)) {
-      if (value !== oldAttributes[key]) {
-        shouldUpdate = true;
-        break;
-      }
-    }
-
-    if (shouldUpdate) {
+    if (hasChanges) {
       const {
         success,
         messages: updateAttrMessages,
         ignoreEmailAttribute,
-      } = await updateAttributes(contact.id, userId, environmentId, attributes);
+      } = await updateAttributes(contactData.id, userId, environmentId, attributes);
 
       messages = updateAttrMessages ?? [];
 
-      // If the attributes update was successful and the language attribute was provided, set the language
+      // Update local attributes if successful
       if (success) {
         let attributesToUpdate = { ...attributes };
 
@@ -114,18 +205,19 @@ export const updateUser = async (
     }
   }
 
-  const userState = await getUserState({
+  // Build user state from already-fetched data (no additional query needed)
+  const userStateData = await buildUserStateFromContact(
+    contactData,
     environmentId,
     userId,
-    contactId: contact.id,
-    attributes: contactAttributes,
     device,
-  });
+    contactAttributes
+  );
 
   return {
     state: {
       data: {
-        ...userState,
+        ...userStateData,
         language,
       },
       expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
