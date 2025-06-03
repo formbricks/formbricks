@@ -1,7 +1,7 @@
 "use server";
 
 import { getUser, updateUser } from "@/lib/user/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { z } from "zod";

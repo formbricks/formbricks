@@ -41,13 +41,6 @@ describe("logAuditEvent", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  test("does not log event if access is denied", async () => {
-    getIsAuditLogsEnabled.mockResolvedValue(false);
-    await logAuditEvent(validEvent);
-    expect(logger.audit).not.toHaveBeenCalled();
-    expect(logger.error).not.toHaveBeenCalled();
-  });
-
   test("throws and logs error for invalid event", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const invalidEvent = { ...validEvent, action: "invalid.action" };

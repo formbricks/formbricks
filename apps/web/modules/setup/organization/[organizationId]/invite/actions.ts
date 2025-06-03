@@ -1,7 +1,7 @@
 "use server";
 
 import { INVITE_DISABLED } from "@/lib/constants";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";

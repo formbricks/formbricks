@@ -1,7 +1,7 @@
 "use server";
 
 import { getProject, getUserProjects } from "@/lib/project/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";

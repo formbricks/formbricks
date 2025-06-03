@@ -1,7 +1,7 @@
 "use server";
 
 import { verifyEmailChangeToken } from "@/lib/jwt";
-import { actionClient } from "@/lib/utils/action-client/action-client";
+import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUser, updateUser } from "@/modules/auth/lib/user";

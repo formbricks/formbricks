@@ -2,7 +2,7 @@
 
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteUser, getUser } from "@/lib/user/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";

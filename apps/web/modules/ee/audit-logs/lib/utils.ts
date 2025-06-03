@@ -34,6 +34,7 @@ const SENSITIVE_KEYS = [
   "lastname",
   "userid",
   "attributes",
+  "pin",
 ];
 
 /**

@@ -4,7 +4,7 @@ import { deleteResponse, getResponse } from "@/lib/response/service";
 import { createResponseNote, resolveResponseNote, updateResponseNote } from "@/lib/responseNote/service";
 import { createTag } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {

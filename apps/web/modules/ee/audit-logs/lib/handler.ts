@@ -238,9 +238,9 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId =
-          auditLoggingCtx?.organizationId ||
-          (parsedInput as Record<string, any>)?.organizationId ||
-          UNKNOWN_DATA; // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
+          auditLoggingCtx?.organizationId || // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty
+          (parsedInput as Record<string, any>)?.organizationId || // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
+          UNKNOWN_DATA;
 
         if (!organizationId) {
           const environmentId = (parsedInput as Record<string, any>)?.environmentId;

@@ -1,7 +1,7 @@
 "use server";
 
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";

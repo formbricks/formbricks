@@ -8,7 +8,7 @@ import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { deleteFile } from "@/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { getUser, updateUser } from "@/lib/user/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";

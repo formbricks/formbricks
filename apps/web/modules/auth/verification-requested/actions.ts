@@ -1,6 +1,6 @@
 "use server";
 
-import { actionClient } from "@/lib/utils/action-client/action-client";
+import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";

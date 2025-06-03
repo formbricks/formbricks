@@ -1,7 +1,7 @@
 "use server";
 
 import { createOrUpdateIntegration, deleteIntegration } from "@/lib/integration/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,

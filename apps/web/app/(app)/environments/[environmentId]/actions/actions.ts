@@ -3,7 +3,7 @@
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { cache } from "@/lib/cache";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
-import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";

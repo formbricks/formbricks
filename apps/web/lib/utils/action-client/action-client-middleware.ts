@@ -47,6 +47,48 @@ const teamRoleWeight = {
   admin: 2,
 };
 
+const checkOrganizationAccess = <T extends z.ZodRawShape>(
+  accessItem: TAccess<T>,
+  role: TOrganizationRole
+) => {
+  if (accessItem.type !== "organization") return false;
+  if (accessItem.schema) {
+    const resultSchema = accessItem.schema.strict();
+    const parsedResult = resultSchema.safeParse(accessItem.data);
+    if (!parsedResult.success) {
+      // @ts-expect-error -- match dynamic next-safe-action types
+      return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
+    }
+  }
+  return accessItem.roles.includes(role);
+};
+
+const checkProjectTeamAccess = async (accessItem: any, userId: string) => {
+  if (accessItem.type !== "projectTeam") return false;
+  const projectPermission = await getProjectPermissionByUserId(userId, accessItem.projectId);
+  if (!projectPermission) return false;
+  if (
+    accessItem.minPermission !== undefined &&
+    teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission]
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const checkTeamAccess = async (accessItem: any, userId: string) => {
+  if (accessItem.type !== "team") return false;
+  const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
+  if (!teamRole) return false;
+  if (
+    accessItem.minPermission !== undefined &&
+    teamRoleWeight[teamRole] < teamRoleWeight[accessItem.minPermission]
+  ) {
+    return false;
+  }
+  return true;
+};
+
 export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   userId,
   organizationId,
@@ -60,39 +102,13 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
 
   for (const accessItem of access) {
     if (accessItem.type === "organization") {
-      if (accessItem.schema) {
-        const resultSchema = accessItem.schema.strict();
-        const parsedResult = resultSchema.safeParse(accessItem.data);
-        if (!parsedResult.success) {
-          // @ts-expect-error -- TODO: match dynamic next-safe-action types
-          return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
-        }
-      }
-
-      if (accessItem.roles.includes(role)) {
-        return true;
-      }
-    } else {
-      if (accessItem.type === "projectTeam") {
-        const projectPermission = await getProjectPermissionByUserId(userId, accessItem.projectId);
-        if (
-          !projectPermission ||
-          (accessItem.minPermission !== undefined &&
-            teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission])
-        ) {
-          continue;
-        }
-      } else {
-        const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
-        if (
-          !teamRole ||
-          (accessItem.minPermission !== undefined &&
-            teamRoleWeight[teamRole] < teamRoleWeight[accessItem.minPermission])
-        ) {
-          continue;
-        }
-      }
-      return true;
+      const orgResult = checkOrganizationAccess(accessItem, role);
+      if (orgResult === true) return true;
+      if (orgResult) return orgResult; // validation error
+    } else if (accessItem.type === "projectTeam") {
+      if (await checkProjectTeamAccess(accessItem, userId)) return true;
+    } else if (accessItem.type === "team") {
+      if (await checkTeamAccess(accessItem, userId)) return true;
     }
   }
 

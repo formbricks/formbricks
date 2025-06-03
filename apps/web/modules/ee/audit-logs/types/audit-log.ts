@@ -36,19 +36,19 @@ export const ZAuditActions = z.enum([
   "addedToResponse",
   "removedFromResponse",
 ]);
-export const ZActors = z.enum(["user", "api"]);
+export const ZActor = z.enum(["user", "api"]);
 export const ZAuditStatuses = z.enum(["success", "failure"]);
 
 // Use template literal for the type
 export type TAuditTarget = z.infer<typeof ZAuditTargets>;
 export type TAuditAction = z.infer<typeof ZAuditActions>;
-export type TActor = z.infer<typeof ZActors>;
+export type TActor = z.infer<typeof ZActor>;
 export type TAuditStatus = z.infer<typeof ZAuditStatuses>;
 
 export const AuditLogEventSchema = z.object({
   actor: z.object({
     id: z.string(),
-    type: ZActors,
+    type: ZActor,
   }),
   action: ZAuditActions,
   target: z.object({

@@ -4,7 +4,7 @@ import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constan
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
-import { authenticatedActionClient } from "@/lib/utils/action-client/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
