@@ -34,6 +34,7 @@ vi.mock("@/modules/cache/lib/cacheKeys", () => ({
   createCacheKey: {
     license: {
       status: (identifier: string) => `fb:license:${identifier}:status`,
+      previous_result: (identifier: string) => `fb:license:${identifier}:previous_result`,
     },
     custom: (namespace: string, identifier: string, subResource?: string) => {
       const base = `fb:${namespace}:${identifier}`;

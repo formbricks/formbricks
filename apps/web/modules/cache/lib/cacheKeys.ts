@@ -34,6 +34,7 @@ export const createCacheKey = {
     features: (organizationId: string) => `fb:license:${organizationId}:features`,
     usage: (organizationId: string) => `fb:license:${organizationId}:usage`,
     check: (organizationId: string, feature: string) => `fb:license:${organizationId}:check:${feature}`,
+    previous_result: (organizationId: string) => `fb:license:${organizationId}:previous_result`,
   },
 
   // User-related keys
@@ -74,7 +75,7 @@ export const createCacheKey = {
   // Custom keys with validation
   custom: (namespace: string, identifier: string, subResource?: string) => {
     // Validate namespace to prevent collisions
-    const validNamespaces = ["temp", "analytics", "webhook", "integration", "backup", "license"];
+    const validNamespaces = ["temp", "analytics", "webhook", "integration", "backup"];
     if (!validNamespaces.includes(namespace)) {
       throw new Error(`Invalid cache namespace: ${namespace}. Use: ${validNamespaces.join(", ")}`);
     }

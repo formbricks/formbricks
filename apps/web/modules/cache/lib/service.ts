@@ -37,6 +37,18 @@ const createMemoryCache = (): Cache => {
 };
 
 /**
+ * Initialize and set memory cache as the singleton instance
+ */
+const initializeMemoryCache = (): Cache => {
+  if (!state.instance) {
+    state.instance = createMemoryCache();
+    state.isInitialized = true;
+    state.isRedisConnected = false;
+  }
+  return state.instance;
+};
+
+/**
  * Creates Redis cache with proper async connection handling
  */
 const createRedisCache = async (redisUrl: string): Promise<Cache> => {
@@ -145,22 +157,12 @@ const isBuildTime = () => {
 export const getCache = async (): Promise<Cache> => {
   // Fast path for build time - return memory cache immediately, no async operations
   if (isBuildTime()) {
-    if (!state.instance) {
-      state.instance = createMemoryCache();
-      state.isInitialized = true;
-      state.isRedisConnected = false;
-    }
-    return state.instance;
+    return initializeMemoryCache();
   }
 
   // Fast path for no Redis URL - return memory cache immediately
   if (!process.env.REDIS_URL?.trim()) {
-    if (!state.instance) {
-      state.instance = createMemoryCache();
-      state.isInitialized = true;
-      state.isRedisConnected = false;
-    }
-    return state.instance;
+    return initializeMemoryCache();
   }
 
   if (state.instance && state.isInitialized) {

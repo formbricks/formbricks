@@ -5,6 +5,7 @@ import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/surve
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 
 interface LinkSurveyPageProps {
@@ -74,7 +75,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
       const fetchResponseFn = getResponseBySingleUseId(survey.id, singleUseId);
       singleUseResponse = await fetchResponseFn();
     } catch (error) {
-      console.error(error); // It's good practice to log the error
+      logger.error("Error fetching single use response:", error);
       singleUseResponse = undefined;
     }
   }

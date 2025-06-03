@@ -93,7 +93,7 @@ export const getCacheKeys = () => {
   const identifier = getCacheIdentifier();
   return {
     FETCH_LICENSE_CACHE_KEY: createCacheKey.license.status(identifier),
-    PREVIOUS_RESULT_CACHE_KEY: createCacheKey.custom("license", identifier, "previous_result"),
+    PREVIOUS_RESULT_CACHE_KEY: createCacheKey.license.previous_result(identifier),
   };
 };
 
