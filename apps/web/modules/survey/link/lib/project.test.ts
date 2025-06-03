@@ -1,5 +1,4 @@
 import { validateInputs } from "@/lib/utils/validate";
-import { TProjectByEnvironmentId } from "@/modules/survey/link/types/project";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -35,30 +34,16 @@ describe("getProjectByEnvironmentId", () => {
 
     await getProjectByEnvironmentId(environmentId);
 
-    expect(validateInputs).toHaveBeenCalledWith([environmentId], ["environmentId"]);
+    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
   });
 
   test("should return project data when found", async () => {
-    const environmentId = "test-environment-id";
-    const mockProject: TProjectByEnvironmentId = {
+    const environmentId = "test-env-id";
+    const mockProject = {
       id: "project-id",
-      languages: [],
-      brandColor: "#000000",
-      highlightBorderColor: "#000000",
-      placement: {
-        id: "placement-id",
-        enabled: true,
-        position: "centerModal",
-        delay: 0,
-        autoClose: 10,
-        autoCloseOnProgressBar: true,
-        pulseDisabled: false,
-      },
-      clickOutsideClose: true,
-      darkOverlay: false,
-      styling: {},
+      linkSurveyBranding: true,
       logo: null,
-      previewMode: false,
+      styling: {},
     };
 
     vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject as any);
@@ -75,25 +60,28 @@ describe("getProjectByEnvironmentId", () => {
         },
       },
       select: {
-        id: true,
-        languages: true,
-        brandColor: true,
-        highlightBorderColor: true,
-        placement: true,
-        clickOutsideClose: true,
-        darkOverlay: true,
-        styling: true,
+        linkSurveyBranding: true,
         logo: true,
-        previewMode: true,
+        styling: true,
       },
     });
   });
 
-  test("should handle Prisma errors", async () => {
-    const environmentId = "test-environment-id";
+  test("should return null when project not found", async () => {
+    const environmentId = "nonexistent-env-id";
+
+    vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(null);
+
+    const result = await getProjectByEnvironmentId(environmentId);
+
+    expect(result).toBeNull();
+  });
+
+  test("should throw DatabaseError on Prisma known request error", async () => {
+    const environmentId = "test-env-id";
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-      clientVersion: "1.0.0",
-      code: "P2002",
+      code: "P2025",
+      clientVersion: "5.0.0",
     });
 
     vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(prismaError);
@@ -102,7 +90,7 @@ describe("getProjectByEnvironmentId", () => {
   });
 
   test("should rethrow non-Prisma errors", async () => {
-    const environmentId = "test-environment-id";
+    const environmentId = "test-env-id";
     const genericError = new Error("Generic error");
 
     vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(genericError);

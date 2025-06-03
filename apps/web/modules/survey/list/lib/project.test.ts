@@ -27,13 +27,10 @@ describe("Project module", () => {
     test("should return project with languages when successful", async () => {
       const mockProject: TProjectWithLanguages = {
         id: "project-id",
-        languages: [
-          { alias: "en", code: "English" },
-          { alias: "es", code: "Spanish" },
-        ],
-      };
+        languages: [{ language: { id: "lang-1", code: "en" } }],
+      } as any;
 
-      vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject);
+      vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject as any);
 
       const result = await getProjectWithLanguagesByEnvironmentId("env-id");
 
@@ -90,18 +87,12 @@ describe("Project module", () => {
       };
 
       const mockProjects: TUserProject[] = [
-        {
-          id: "project-1",
-          name: "Project 1",
-          environments: [
-            { id: "env-1", type: "production" },
-            { id: "env-2", type: "development" },
-          ],
-        },
-      ];
+        { id: "project-1", name: "Project 1" },
+        { id: "project-2", name: "Project 2" },
+      ] as any;
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
-      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
 
       const result = await getUserProjects("user-id", "org-id");
 
@@ -137,15 +128,12 @@ describe("Project module", () => {
       };
 
       const mockProjects: TUserProject[] = [
-        {
-          id: "project-1",
-          name: "Project 1",
-          environments: [{ id: "env-1", type: "production" }],
-        },
-      ];
+        { id: "project-1", name: "Project 1" },
+        { id: "project-2", name: "Project 2" },
+      ] as any;
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
-      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
 
       const result = await getUserProjects("user-id", "org-id");
 
@@ -196,7 +184,7 @@ describe("Project module", () => {
         code: "P2002",
       });
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(prismaError);
 
       await expect(getUserProjects("user-id", "org-id")).rejects.toThrow(DatabaseError);
@@ -211,7 +199,7 @@ describe("Project module", () => {
 
       const error = new Error("Unknown error");
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(error);
 
       await expect(getUserProjects("user-id", "org-id")).rejects.toThrow("Unknown error");

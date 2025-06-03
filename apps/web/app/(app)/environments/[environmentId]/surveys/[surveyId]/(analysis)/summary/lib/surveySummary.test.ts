@@ -342,9 +342,7 @@ describe("getQuestionSummary", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("summarizes OpenText questions", async () => {
@@ -721,9 +719,7 @@ describe("getSurveySummary", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("returns survey summary successfully", async () => {
@@ -770,9 +766,7 @@ describe("getResponsesForSummary", () => {
     vi.mocked(prisma.response.findMany).mockResolvedValue(
       mockResponses.map((r) => ({ ...r, contactId: null, personAttributes: {} })) as any
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("fetches and transforms responses", async () => {
@@ -815,6 +809,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: null,
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
@@ -848,6 +852,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: "contact-1",
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
@@ -876,6 +890,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: "contact-1",
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
