@@ -21,6 +21,7 @@ export type AuditLoggingCtx = {
   responseId?: string;
   responseNoteId?: string;
   teamId?: string;
+  integrationId?: string;
 };
 
 export type ActionClientCtx = {

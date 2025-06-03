@@ -303,6 +303,9 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
           case "responseNote":
             targetId = auditLoggingCtx.responseNoteId;
             break;
+          case "integration":
+            targetId = auditLoggingCtx.integrationId;
+            break;
           default:
             targetId = UNKNOWN_DATA;
             break;

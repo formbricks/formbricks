@@ -23,6 +23,7 @@ export const ZAuditTargets = z.enum([
   "twoFactorAuth",
   "apiKey",
   "responseNote",
+  "integration",
 ]);
 export const ZAuditActions = z.enum([
   "created",
@@ -35,6 +36,9 @@ export const ZAuditActions = z.enum([
   "copiedToOtherEnvironment",
   "addedToResponse",
   "removedFromResponse",
+  "createdUpdated",
+  "subscriptionAccessed",
+  "subscriptionUpdated",
 ]);
 export const ZActor = z.enum(["user", "api"]);
 export const ZAuditStatuses = z.enum(["success", "failure"]);
