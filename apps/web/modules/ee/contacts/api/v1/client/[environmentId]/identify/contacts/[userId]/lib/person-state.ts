@@ -9,11 +9,12 @@ import { getEnvironment } from "@/lib/environment/service";
 import { organizationCache } from "@/lib/organization/cache";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { responseCache } from "@/lib/response/cache";
+import { getContactAttributes } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/attributes";
 import { getContactByUserId } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/contact";
+import { getPersonSegmentIds } from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
-import { getPersonSegmentIds } from "./segments";
 
 /**
  *
@@ -96,7 +97,16 @@ export const getPersonState = async ({
         },
       });
 
-      const segments = await getPersonSegmentIds(environmentId, contact.id, userId, device);
+      // Get contact attributes for optimized segment evaluation
+      const contactAttributes = await getContactAttributes(contact.id);
+
+      const segments = await getPersonSegmentIds(
+        environmentId,
+        contact.id,
+        userId,
+        contactAttributes,
+        device
+      );
 
       const sortedContactDisplaysDate = contactDisplays?.toSorted(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
