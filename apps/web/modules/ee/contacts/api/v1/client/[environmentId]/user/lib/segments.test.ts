@@ -33,7 +33,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: (fn: Function) => fn, // Just return the function for tests
+    cache: <T extends (...args: any[]) => any>(fn: T): T => fn, // Return the function with the same type signature
   };
 });
 
