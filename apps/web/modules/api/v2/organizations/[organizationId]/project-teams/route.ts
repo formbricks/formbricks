@@ -169,7 +169,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
           logger.error(`Failed to fetch old project team data for audit log`);
         }
       } catch (error) {
-        logger.error(`Failed to fetch old project team data for audit log: ${JSON.stringify(error)}`);
+        logger.error(error, `Failed to fetch old project team data for audit log`);
       }
 
       const result = await updateProjectTeam(teamId, projectId, body!);
@@ -239,7 +239,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
           logger.error(`Failed to fetch old project team data for audit log`);
         }
       } catch (error) {
-        logger.error(`Failed to fetch old project team data for audit log: ${JSON.stringify(error)}`);
+        logger.error(error, `Failed to fetch old project team data for audit log`);
       }
 
       const result = await deleteProjectTeam(teamId, projectId);

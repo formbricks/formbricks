@@ -7,7 +7,7 @@ const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
 const getLogLevel = (): TLogLevel => {
   let logLevel: TLogLevel = "info";
 
-  if (IS_PRODUCTION) logLevel = "audit";
+  if (IS_PRODUCTION) logLevel = "warn";
   if (IS_BUILD) logLevel = "error"; // Only show errors during build
 
   const envLogLevel = process.env.LOG_LEVEL;
@@ -28,10 +28,10 @@ const baseLoggerConfig: LoggerOptions = {
   customLevels: {
     debug: 20,
     info: 30,
-    audit: 35,
     warn: 40,
     error: 50,
     fatal: 60,
+    audit: 90,
   },
   useOnlyCustomLevels: true,
   timestamp: true,

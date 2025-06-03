@@ -1,5 +1,4 @@
 import { AuditLogEventSchema, type TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
-import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 
 const validateEvent = (event: TAuditLogEvent): void => {
@@ -11,10 +10,6 @@ const validateEvent = (event: TAuditLogEvent): void => {
 
 export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
   try {
-    // Check if audit logs are enabled before proceeding
-    if (!(await getIsAuditLogsEnabled())) {
-      return;
-    }
     validateEvent(event);
     logger.audit(event);
   } catch (error) {
