@@ -1,10 +1,5 @@
 import "server-only";
-import {
-  AUDIT_LOG_ENABLED,
-  IS_FORMBRICKS_CLOUD,
-  IS_RECAPTCHA_CONFIGURED,
-  PROJECT_FEATURE_KEYS,
-} from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
@@ -102,7 +97,6 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
-  if (!AUDIT_LOG_ENABLED) return false;
   return getSpecificFeatureFlag("auditLogs");
 };
 
