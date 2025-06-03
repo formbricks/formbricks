@@ -1,7 +1,6 @@
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { TEnvironment } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";

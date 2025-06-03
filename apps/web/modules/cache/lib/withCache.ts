@@ -9,8 +9,6 @@ import { getCache } from "./service";
 type CacheOptions = {
   key: string;
   ttl: number;
-  serialize?: (data: any) => string;
-  deserialize?: (data: string) => any;
 };
 
 /**
@@ -29,23 +27,23 @@ type CacheOptions = {
  */
 export const withCache = <T>(fn: () => Promise<T>, options: CacheOptions): (() => Promise<T>) => {
   return async (): Promise<T> => {
-    const { key, ttl, serialize = JSON.stringify, deserialize = JSON.parse } = options;
+    const { key, ttl } = options;
 
     try {
       const cache = await getCache();
 
-      // Try to get from cache
-      const cached = await cache.get<string>(key);
+      // Try to get from cache - cache-manager with Keyv handles serialization automatically
+      const cached = await cache.get<T>(key);
 
       if (cached !== null && cached !== undefined) {
-        return deserialize(cached);
+        return cached;
       }
 
       // Cache miss - fetch fresh data
       const fresh = await fn();
 
-      // Cache the result
-      await cache.set(key, serialize(fresh), ttl);
+      // Cache the result - cache-manager handles serialization automatically
+      await cache.set(key, fresh, ttl);
 
       return fresh;
     } catch (error) {

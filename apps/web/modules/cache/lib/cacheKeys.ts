@@ -18,6 +18,7 @@ export const createCacheKey = {
     surveys: (environmentId: string) => `fb:env:${environmentId}:surveys`,
     actionClasses: (environmentId: string) => `fb:env:${environmentId}:action_classes`,
     config: (environmentId: string) => `fb:env:${environmentId}:config`,
+    segments: (environmentId: string) => `fb:env:${environmentId}:segments`,
   },
 
   // Organization-related keys

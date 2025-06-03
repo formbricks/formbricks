@@ -124,7 +124,7 @@ export const getSurveyWithMetadata = reactCache((surveyId: string) =>
     },
     {
       key: createCacheKey.survey.metadata(surveyId),
-      ttl: 60 * 60, // 1 hour - surveys change infrequently
+      ttl: 60 * 60 * 1000, // 1 hour in milliseconds - surveys change infrequently
     }
   )()
 );
@@ -255,7 +255,7 @@ export const getOrganizationBilling = reactCache((organizationId: string) =>
     },
     {
       key: createCacheKey.organization.billing(organizationId),
-      ttl: 60 * 60 * 24, // 24 hours - billing info changes rarely
+      ttl: 60 * 60 * 24 * 1000, // 24 hours in milliseconds - billing info changes rarely
     }
   )()
 );

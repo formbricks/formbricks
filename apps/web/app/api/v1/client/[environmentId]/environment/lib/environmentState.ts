@@ -85,7 +85,7 @@ export const getEnvironmentState = async (
       key: createCacheKey.environment.state(environmentId),
       // 30 minutes TTL ensures fresh data for hourly SDK checks
       // Balances performance with freshness requirements
-      ttl: 60 * 30,
+      ttl: 60 * 30 * 1000, // 30 minutes in milliseconds
     }
   );
 

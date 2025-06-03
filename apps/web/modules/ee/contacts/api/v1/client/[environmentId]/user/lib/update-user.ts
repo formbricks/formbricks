@@ -19,7 +19,7 @@ const getEnvironment = (environmentId: string) =>
     },
     {
       key: createCacheKey.environment.config(environmentId),
-      ttl: 60 * 60, // 1 hour TTL - environments rarely change
+      ttl: 60 * 60 * 1000, // 1 hour TTL in milliseconds - environments rarely change
     }
   )();
 
@@ -116,7 +116,18 @@ const buildUserStateFromContact = async (
   attributes: Record<string, string>
 ) => {
   // Get segments (only remaining external call)
-  const segments = await getPersonSegmentIds(environmentId, contactData.id, userId, attributes, device);
+  // Ensure segments is always an array to prevent "segments is not iterable" error
+  let segments: string[] = [];
+  try {
+    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, attributes, device);
+    // Double-check that segments is actually an array
+    if (!Array.isArray(segments)) {
+      segments = [];
+    }
+  } catch (error) {
+    // If segments fetching fails, use empty array as fallback
+    segments = [];
+  }
 
   // Process data efficiently from already-fetched contact
   const displays = contactData.displays.map((display) => ({
