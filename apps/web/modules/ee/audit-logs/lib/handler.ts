@@ -199,7 +199,7 @@ export const queueAuditEvent = async ({
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = <TParsedInput = Record<string, any>>(
+export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
   action: TAuditAction,
   targetType: TAuditTarget,
   handler: (args: {

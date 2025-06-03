@@ -58,7 +58,7 @@ export const AuditLogEventSchema = z.object({
   status: ZAuditStatuses,
   timestamp: z.string().datetime(),
   organizationId: z.string(),
-  ipAddress: z.string().ip().optional(),
+  ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
   changes: z.record(z.any()).optional(),
   eventId: z.string().optional(),
   apiUrl: z.string().url().optional(),
