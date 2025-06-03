@@ -19,7 +19,6 @@ interface PricingCardProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    CUSTOM: string;
     ENTERPRISE: string;
   };
 }
