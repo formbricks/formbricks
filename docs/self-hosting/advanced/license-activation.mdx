@@ -1,0 +1,32 @@
+---
+title: "License Activation"
+description: "How to activate your Formbricks Enterprise License"
+icon: "key"
+---
+
+To unlock Formbricks Enterprise Edition features, you need to activate your Enterprise License Key. Follow these steps to activate your license:
+
+## 1. Set the License Key
+
+Add your Enterprise License Key as an environment variable in your deployment:
+
+```bash
+ENTERPRISE_LICENSE_KEY=
+```
+
+- Add your Enterprise License Key after `ENTERPRISE_LICENSE_KEY=` with the key you received from Formbricks.
+- How you set environment variables depends on your deployment (Docker, Kubernetes, .env file, etc.).
+
+## 2. Restart Your Instance
+
+After setting the environment variable, **restart your Formbricks instance** to apply the changes.
+
+## 3. Ensure Network Access to License Server
+
+Formbricks needs to verify your license key with the Enterprise License server. Make sure your server can reach the following URL: 
+
+
+[https://ee.formbricks.com/api/licenses/check](https://ee.formbricks.com/api/licenses/check)
+
+## 4. Verify License Activation
+
