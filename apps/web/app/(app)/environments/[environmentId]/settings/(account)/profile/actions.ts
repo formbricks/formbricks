@@ -2,6 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { updateUser } from "@formbricks/lib/user/service";
@@ -47,3 +48,62 @@ export const removeAvatarAction = authenticatedActionClient
     }
     return await updateUser(ctx.user.id, { imageUrl: null });
   });
+
+const ZConnectSocialAccountAction = z.object({
+  userId: z.string(),
+  provider: z.string(),
+  socialId: z.string(),
+  socialName: z.string(),
+  socialEmail: z.string(),
+  socialAvatar: z.string().nullable(),
+});
+
+export const connectSocialAccountAction = authenticatedActionClient
+  .schema(ZConnectSocialAccountAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const { userId, provider, socialId, socialName, socialEmail, socialAvatar } = parsedInput;
+
+    if (userId != ctx.user.id) {
+      throw new Error("Unauthorized");
+    }
+
+    try {
+      const existingAccount = await prisma.userSocial.findFirst({
+        where: {
+          userId,
+          provider,
+        },
+      });
+
+      if (existingAccount) {
+        return;
+      } else {
+        return await prisma.userSocial.create({
+          data: {
+            userId,
+            provider,
+            socialId,
+            socialName,
+            socialEmail,
+            socialAvatar,
+          },
+        });
+      }
+    } catch (error) {
+      throw new Error(`Failed to connect ${provider} account: ${error.message}`);
+    }
+  });
+
+export const getUserSocialAccountsAction = authenticatedActionClient.action(async ({ ctx }) => {
+  const userId = ctx.user.id;
+
+  try {
+    return await prisma.userSocial.findMany({
+      where: {
+        userId,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Failed to fetch social accounts: ${error.message}`);
+  }
+});
