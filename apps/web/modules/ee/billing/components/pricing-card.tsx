@@ -72,7 +72,7 @@ export const PricingCard = ({
             window.open(plan.href, "_blank", "noopener,noreferrer");
           }}
           className="flex justify-center bg-white">
-          {t(plan.CTA || "common.request_pricing")}
+          {t(plan.CTA ?? "common.request_pricing")}
         </Button>
       );
     }
@@ -89,7 +89,7 @@ export const PricingCard = ({
               setLoading(false);
             }}
             className="flex justify-center">
-            {t(plan.CTA || "common.start_free_trial")}
+            {t(plan.CTA ?? "common.start_free_trial")}
           </Button>
         );
       }
