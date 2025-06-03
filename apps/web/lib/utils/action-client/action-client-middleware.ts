@@ -105,10 +105,14 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
       const orgResult = checkOrganizationAccess(accessItem, role);
       if (orgResult === true) return true;
       if (orgResult) return orgResult; // validation error
-    } else if (accessItem.type === "projectTeam") {
-      if (await checkProjectTeamAccess(accessItem, userId)) return true;
-    } else if (accessItem.type === "team") {
-      if (await checkTeamAccess(accessItem, userId)) return true;
+    }
+
+    if (accessItem.type === "projectTeam" && (await checkProjectTeamAccess(accessItem, userId))) {
+      return true;
+    }
+
+    if (accessItem.type === "team" && (await checkTeamAccess(accessItem, userId))) {
+      return true;
     }
   }
 
