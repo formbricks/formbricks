@@ -1,23 +1,12 @@
-import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
+import { cache } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getProjectByEnvironmentId } from "./project";
-
-// Mock dependencies
-vi.mock("@/lib/cache");
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    tag: {
-      byEnvironmentId: (id: string) => `project-environment-${id}`,
-    },
-  },
-}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
@@ -37,10 +26,6 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("react", () => ({
-  cache: (fn: any) => fn,
-}));
-
 describe("getProjectByEnvironmentId", () => {
   const environmentId = "env-123";
   const mockProject = {
@@ -48,25 +33,6 @@ describe("getProjectByEnvironmentId", () => {
     logo: "logo.png",
     linkSurveyBranding: true,
   };
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
-  test("should call cache with correct parameters", async () => {
-    await getProjectByEnvironmentId(environmentId);
-
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function),
-      [`survey-link-surveys-getProjectByEnvironmentId-${environmentId}`],
-      {
-        tags: [`project-environment-${environmentId}`],
-      }
-    );
-  });
 
   test("should validate inputs", async () => {
     // Call the function to ensure cache is called

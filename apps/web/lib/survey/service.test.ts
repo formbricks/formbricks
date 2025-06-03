@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { segmentCache } from "@/lib/cache/segment";
 import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { surveyCache } from "@/lib/survey/cache";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -38,29 +36,6 @@ import {
   loadNewSegmentInSurvey,
   updateSurvey,
 } from "./service";
-
-vi.mock("./cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn().mockImplementation((id) => `survey-${id}`),
-      byEnvironmentId: vi.fn().mockImplementation((id) => `survey-env-${id}`),
-      byActionClassId: vi.fn().mockImplementation((id) => `survey-action-${id}`),
-      bySegmentId: vi.fn().mockImplementation((id) => `survey-segment-${id}`),
-      byResultShareKey: vi.fn().mockImplementation((key) => `survey-share-${key}`),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn().mockImplementation((id) => `segment-${id}`),
-      byEnvironmentId: vi.fn().mockImplementation((id) => `segment-env-${id}`),
-    },
-  },
-}));
 
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({

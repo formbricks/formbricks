@@ -1,4 +1,3 @@
-import { webhookCache } from "@/lib/cache/webhook";
 import { Prisma, Webhook } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -15,15 +14,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    tag: {
-      byId: () => "mockTag",
-    },
-    revalidate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
   ValidationError: class ValidationError extends Error {
@@ -32,11 +22,6 @@ vi.mock("@/lib/utils/validate", () => ({
       this.name = "ValidationError";
     }
   },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  // Accept any function and return the exact same generic Fn – keeps typings intact
-  cache: <T extends (...args: any[]) => any>(fn: T): T => fn,
 }));
 
 describe("deleteWebhook", () => {
@@ -68,7 +53,6 @@ describe("deleteWebhook", () => {
         id: "test-webhook-id",
       },
     });
-    expect(webhookCache.revalidate).toHaveBeenCalled();
   });
 
   test("should delete the webhook and call webhookCache.revalidate with correct parameters", async () => {
@@ -94,11 +78,6 @@ describe("deleteWebhook", () => {
         id: "test-webhook-id",
       },
     });
-    expect(webhookCache.revalidate).toHaveBeenCalledWith({
-      id: mockedWebhook.id,
-      environmentId: mockedWebhook.environmentId,
-      source: mockedWebhook.source,
-    });
   });
 
   test("should throw an error when called with an invalid webhook ID format", async () => {
@@ -110,7 +89,6 @@ describe("deleteWebhook", () => {
     await expect(deleteWebhook("invalid-id")).rejects.toThrow(ValidationError);
 
     expect(prisma.webhook.delete).not.toHaveBeenCalled();
-    expect(webhookCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw ResourceNotFoundError when webhook does not exist", async () => {
@@ -122,7 +100,6 @@ describe("deleteWebhook", () => {
     vi.mocked(prisma.webhook.delete).mockRejectedValueOnce(prismaError);
 
     await expect(deleteWebhook("non-existent-id")).rejects.toThrow(ResourceNotFoundError);
-    expect(webhookCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError when database operation fails", async () => {
@@ -134,14 +111,12 @@ describe("deleteWebhook", () => {
     vi.mocked(prisma.webhook.delete).mockRejectedValueOnce(prismaError);
 
     await expect(deleteWebhook("test-webhook-id")).rejects.toThrow(DatabaseError);
-    expect(webhookCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError when an unknown error occurs", async () => {
     vi.mocked(prisma.webhook.delete).mockRejectedValueOnce(new Error("Unknown error"));
 
     await expect(deleteWebhook("test-webhook-id")).rejects.toThrow(DatabaseError);
-    expect(webhookCache.revalidate).not.toHaveBeenCalled();
   });
 });
 

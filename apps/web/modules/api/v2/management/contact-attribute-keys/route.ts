@@ -9,6 +9,7 @@ import {
   ZContactAttributeKeyInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 
@@ -37,7 +38,7 @@ export const GET = async (request: NextRequest) =>
       const res = await getContactAttributeKeys(environmentIds, query);
 
       if (!res.ok) {
-        return handleApiError(request, res.error);
+        return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(res.data);
@@ -65,7 +66,7 @@ export const POST = async (request: NextRequest) =>
       const createContactAttributeKeyResult = await createContactAttributeKey(body);
 
       if (!createContactAttributeKeyResult.ok) {
-        return handleApiError(request, createContactAttributeKeyResult.error);
+        return handleApiError(request, createContactAttributeKeyResult.error as ApiErrorResponseV2);
       }
 
       return responses.createdResponse(createContactAttributeKeyResult);

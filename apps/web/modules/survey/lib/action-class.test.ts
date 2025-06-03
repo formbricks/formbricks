@@ -1,24 +1,9 @@
-import { actionClassCache } from "@/lib/actionClass/cache";
-import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { type ActionClass } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getActionClasses } from "./action-class";
-
-// Mock dependencies
-vi.mock("@/lib/actionClass/cache", () => ({
-  actionClassCache: {
-    tag: {
-      byEnvironmentId: vi.fn((environmentId: string) => `actionClass-environment-${environmentId}`),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn), // Mock cache to just return the function
-}));
 
 vi.mock("@/lib/utils/validate");
 
@@ -30,15 +15,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-// Mock react's cache
-vi.mock("react", async () => {
-  const actual = await vi.importActual("react");
-  return {
-    ...actual,
-    cache: vi.fn((fn) => fn), // Mock react's cache to just return the function
-  };
-});
 
 const environmentId = "test-environment-id";
 const mockActionClasses: ActionClass[] = [
@@ -73,8 +49,6 @@ const mockActionClasses: ActionClass[] = [
 describe("getActionClasses", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Redefine the mock for cache before each test to ensure it's clean
-    vi.mocked(cache).mockImplementation((fn) => fn);
   });
 
   afterEach(() => {
@@ -96,8 +70,6 @@ describe("getActionClasses", () => {
         createdAt: "asc",
       },
     });
-    expect(cache).toHaveBeenCalledTimes(1);
-    expect(actionClassCache.tag.byEnvironmentId).toHaveBeenCalledWith(environmentId);
   });
 
   test("should throw DatabaseError when prisma.actionClass.findMany fails", async () => {
@@ -111,7 +83,6 @@ describe("getActionClasses", () => {
 
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledTimes(2); // Called twice due to rejection
-    expect(cache).toHaveBeenCalledTimes(2);
   });
 
   test("should throw ValidationError when validateInputs fails", async () => {
@@ -125,7 +96,6 @@ describe("getActionClasses", () => {
 
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).not.toHaveBeenCalled();
-    expect(cache).toHaveBeenCalledTimes(2); // cache wrapper is still called
   });
 
   test("should use reactCache and our custom cache", async () => {
@@ -134,9 +104,5 @@ describe("getActionClasses", () => {
     // However, since we are mocking it to be a pass-through, we just check if our main cache is called.
 
     await getActionClasses(environmentId);
-
-    expect(cache).toHaveBeenCalledTimes(1);
-    // Check if the function passed to react.cache (which is our main cache function due to mocking) was called
-    // This is implicitly tested by cache being called.
   });
 });

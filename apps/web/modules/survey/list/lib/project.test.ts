@@ -1,15 +1,11 @@
-import { cache } from "@/lib/cache";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TProjectWithLanguages } from "@/modules/survey/list/types/surveys";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getProjectWithLanguagesByEnvironmentId, getUserProjects } from "./project";
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn(),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -21,20 +17,6 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    tag: {
-      byEnvironmentId: vi.fn((id) => `environment-${id}`),
-      byUserId: vi.fn((id) => `user-${id}`),
-      byOrganizationId: vi.fn((id) => `organization-${id}`),
-    },
-  },
-}));
-
-vi.mock("react", () => ({
-  cache: (fn: any) => fn,
 }));
 
 describe("Project module", () => {

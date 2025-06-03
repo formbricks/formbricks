@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
@@ -25,15 +24,6 @@ import {
 } from "./surveySummary";
 // Ensure this path is correct
 import { convertFloatTo2Decimal } from "./utils";
-
-// Mock dependencies
-vi.mock("@/lib/cache", async () => {
-  const actual = await vi.importActual("@/lib/cache");
-  return {
-    ...(actual as any),
-    cache: vi.fn((fn) => fn()), // Mock cache function to just execute the passed function
-  };
-});
 
 vi.mock("react", async () => {
   const actual = await vi.importActual("react");

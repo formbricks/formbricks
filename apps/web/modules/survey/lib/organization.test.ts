@@ -15,16 +15,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-// Mock organizationCache tags
-vi.mock("@/lib/organization/cache", () => ({
-  organizationCache: {
-    tag: {
-      byEnvironmentId: vi.fn((id) => `org-env-${id}`),
-      byId: vi.fn((id) => `org-${id}`),
-    },
-  },
-}));
-
 // Mock reactCache
 vi.mock("react", () => ({
   cache: vi.fn((fn) => fn), // reactCache(fn) returns fn, which is then invoked

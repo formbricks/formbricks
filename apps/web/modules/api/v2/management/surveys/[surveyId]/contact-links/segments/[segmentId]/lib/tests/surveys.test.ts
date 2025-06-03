@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { surveyCache } from "@/lib/survey/cache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getSurvey } from "../surveys";
@@ -9,18 +7,6 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
       findUnique: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    tag: {
-      byId: vi.fn((id) => `survey-${id}`),
     },
   },
 }));
@@ -60,11 +46,6 @@ describe("getSurvey", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockSurvey);
     }
-
-    expect(surveyCache.tag.byId).toHaveBeenCalledWith(mockSurveyId);
-    expect(cache).toHaveBeenCalledWith(expect.any(Function), [`contact-link-getSurvey-${mockSurveyId}`], {
-      tags: [`survey-${mockSurveyId}`],
-    });
   });
 
   test("should return not_found error when survey doesn't exist", async () => {
@@ -105,16 +86,5 @@ describe("getSurvey", () => {
         details: [{ field: "survey", issue: "Database connection failed" }],
       });
     }
-  });
-
-  test("should use correct cache key and tags", async () => {
-    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey);
-
-    await getSurvey(mockSurveyId);
-
-    expect(cache).toHaveBeenCalledWith(expect.any(Function), [`contact-link-getSurvey-${mockSurveyId}`], {
-      tags: [`survey-${mockSurveyId}`],
-    });
-    expect(surveyCache.tag.byId).toHaveBeenCalledWith(mockSurveyId);
   });
 });

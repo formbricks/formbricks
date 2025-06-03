@@ -40,18 +40,8 @@ const setupMocks = () => {
     },
   }));
 
-  vi.mock("@/lib/project/cache", () => ({
-    projectCache: {
-      revalidate: vi.fn(),
-    },
-  }));
-
   vi.mock("@/lib/membership/service", () => ({
     getMembershipByUserIdOrganizationId: vi.fn(),
-  }));
-
-  vi.mock("@formbricks/lib/cache", () => ({
-    cache: vi.fn((fn) => fn),
   }));
 
   vi.mock("@formbricks/logger", () => ({

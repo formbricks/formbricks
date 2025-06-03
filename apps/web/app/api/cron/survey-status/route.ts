@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { CRON_SECRET } from "@/lib/constants";
-import { surveyCache } from "@/lib/survey/cache";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 
@@ -63,15 +62,6 @@ export const POST = async () => {
       data: {
         status: "inProgress",
       },
-    });
-  }
-
-  const updatedSurveys = [...surveysToClose, ...scheduledSurveys];
-
-  for (const survey of updatedSurveys) {
-    surveyCache.revalidate({
-      id: survey.id,
-      environmentId: survey.environmentId,
     });
   }
 

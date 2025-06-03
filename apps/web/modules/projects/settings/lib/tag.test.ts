@@ -1,4 +1,3 @@
-import { tagCache } from "@/lib/tag/cache";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TTag } from "@formbricks/types/tags";
@@ -45,11 +44,6 @@ vi.mock("@formbricks/logger", () => ({
     debug: vi.fn(),
   },
 }));
-vi.mock("@/lib/tag/cache", () => ({
-  tagCache: {
-    revalidate: vi.fn(),
-  },
-}));
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
@@ -62,14 +56,9 @@ describe("tag lib", () => {
   describe("deleteTag", () => {
     test("deletes tag and revalidates cache", async () => {
       vi.mocked(prisma.tag.delete).mockResolvedValueOnce(baseTag);
-      vi.mocked(tagCache.revalidate).mockImplementation(() => {});
       const result = await deleteTag(baseTag.id);
       expect(result).toEqual(baseTag);
       expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: baseTag.id } });
-      expect(tagCache.revalidate).toHaveBeenCalledWith({
-        id: baseTag.id,
-        environmentId: baseTag.environmentId,
-      });
     });
     test("throws error on prisma error", async () => {
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(new Error("fail"));
@@ -80,14 +69,9 @@ describe("tag lib", () => {
   describe("updateTagName", () => {
     test("updates tag name and revalidates cache", async () => {
       vi.mocked(prisma.tag.update).mockResolvedValueOnce(baseTag);
-      vi.mocked(tagCache.revalidate).mockImplementation(() => {});
       const result = await updateTagName(baseTag.id, "Tag1");
       expect(result).toEqual(baseTag);
       expect(prisma.tag.update).toHaveBeenCalledWith({ where: { id: baseTag.id }, data: { name: "Tag1" } });
-      expect(tagCache.revalidate).toHaveBeenCalledWith({
-        id: baseTag.id,
-        environmentId: baseTag.environmentId,
-      });
     });
     test("throws error on prisma error", async () => {
       vi.mocked(prisma.tag.update).mockRejectedValueOnce(new Error("fail"));

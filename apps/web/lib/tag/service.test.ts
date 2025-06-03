@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TTag } from "@formbricks/types/tags";
-import { tagCache } from "./cache";
 import { createTag, getTag, getTagsByEnvironmentId } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -11,16 +10,6 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
-  },
-}));
-
-vi.mock("./cache", () => ({
-  tagCache: {
-    tag: {
-      byId: vi.fn((id) => `tag-${id}`),
-      byEnvironmentId: vi.fn((envId) => `env-${envId}-tags`),
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -127,10 +116,6 @@ describe("Tag Service", () => {
           name: "New Tag",
           environmentId: "env1",
         },
-      });
-      expect(tagCache.revalidate).toHaveBeenCalledWith({
-        id: "tag1",
-        environmentId: "env1",
       });
     });
   });

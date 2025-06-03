@@ -6,6 +6,7 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
@@ -81,7 +82,7 @@ export const POST = async (request: Request) =>
 
       const surveyQuestions = await getSurveyQuestions(body.surveyId);
       if (!surveyQuestions.ok) {
-        return handleApiError(request, surveyQuestions.error);
+        return handleApiError(request, surveyQuestions.error as ApiErrorResponseV2);
       }
 
       if (!validateFileUploads(body.data, surveyQuestions.data.questions)) {

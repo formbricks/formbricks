@@ -1,10 +1,8 @@
-import { cache } from "@/lib/cache";
-import { surveyCache } from "@/lib/survey/cache";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -12,14 +10,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurveys } from "./surveys";
 
 // Mock dependencies
-vi.mock("@/lib/cache");
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    tag: {
-      byEnvironmentId: vi.fn((environmentId) => `survey_environment_${environmentId}`),
-    },
-  },
-}));
 vi.mock("@/lib/survey/service", () => ({
   selectSurvey: { id: true, name: true, status: true, updatedAt: true }, // Expanded mock based on usage
 }));
@@ -99,12 +89,6 @@ const mockTransformedSurveys: TSurvey[] = [
 ];
 
 describe("getSurveys", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   test("should fetch and transform surveys successfully", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys);
     vi.mocked(transformPrismaSurvey).mockImplementation((survey) => {
@@ -134,14 +118,6 @@ describe("getSurveys", () => {
     expect(transformPrismaSurvey).toHaveBeenCalledTimes(mockPrismaSurveys.length);
     expect(transformPrismaSurvey).toHaveBeenCalledWith(mockPrismaSurveys[0]);
     expect(transformPrismaSurvey).toHaveBeenCalledWith(mockPrismaSurveys[1]);
-    // Check if the inner cache function was called with the correct arguments
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function), // The async function passed to cache
-      [`getSurveys-${environmentId}`], // The cache key
-      {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)], // Cache tags
-      }
-    );
     // Remove the assertion for reactCache being called within the test execution
     // expect(reactCache).toHaveBeenCalled(); // Removed this line
   });

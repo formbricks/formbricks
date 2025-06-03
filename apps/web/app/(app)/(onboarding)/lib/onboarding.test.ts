@@ -12,10 +12,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache", () => ({
-  cache: (fn: any) => fn,
-}));
-
 vi.mock("@/lib/cache/team", () => ({
   teamCache: {
     tag: { byOrganizationId: vi.fn((id: string) => `organization-${id}-teams`) },

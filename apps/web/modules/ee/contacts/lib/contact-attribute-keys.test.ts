@@ -7,7 +7,6 @@ vi.mock("@formbricks/database", () => ({
     contactAttributeKey: { findMany: vi.fn() },
   },
 }));
-vi.mock("@/lib/cache", () => ({ cache: (fn) => fn }));
 vi.mock("@/lib/cache/contact-attribute-key", () => ({
   contactAttributeKeyCache: { tag: { byEnvironmentId: (envId) => `env-${envId}` } },
 }));
