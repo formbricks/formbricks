@@ -420,7 +420,6 @@ describe("Tests for handleTriggerUpdates", () => {
 
     expect(result).toHaveProperty("create");
     expect(result.create).toEqual([{ actionClassId: mockActionClassId1 }]);
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: mockActionClassId1 });
   });
 
   test("removes deleted triggers correctly", () => {
@@ -441,7 +440,6 @@ describe("Tests for handleTriggerUpdates", () => {
 
     expect(result).toHaveProperty("deleteMany");
     expect(result.deleteMany).toEqual({ actionClassId: { in: [mockActionClassId1] } });
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: mockActionClassId1 });
   });
 
   test("handles both adding and removing triggers", () => {
@@ -475,7 +473,6 @@ describe("Tests for handleTriggerUpdates", () => {
     expect(result).toHaveProperty("deleteMany");
     expect(result.create).toEqual([{ actionClassId: mockActionClassId2 }]);
     expect(result.deleteMany).toEqual({ actionClassId: { in: [mockActionClassId1] } });
-    expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
   });
 
   test("returns empty object when no triggers provided", () => {
@@ -677,7 +674,6 @@ describe("Tests for createSurvey", () => {
 
       expect(prisma.segment.create).toHaveBeenCalled();
       expect(prisma.survey.update).toHaveBeenCalled();
-      expect(segmentCache.revalidate).toHaveBeenCalled();
     });
 
     test("creates survey with follow-ups", async () => {
@@ -843,8 +839,6 @@ describe("Tests for loadNewSegmentInSurvey", () => {
           segmentId: mockNewSegmentId,
         })
       );
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: mockSurveyId });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockNewSegmentId });
     });
 
     test("deletes private segment when changing to a new segment", async () => {
@@ -900,8 +894,6 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         where: { id: mockCurrentSegmentId },
         select: expect.anything(),
       });
-      // Verify the cache was invalidated
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: mockCurrentSegmentId });
     });
   });
 

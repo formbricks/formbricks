@@ -680,7 +680,6 @@ describe("Survey Editor Library Tests", () => {
       expect(result).toEqual({
         create: [{ actionClassId: "action2" }],
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
     });
 
     test("should identify deleted triggers correctly", () => {
@@ -699,7 +698,6 @@ describe("Survey Editor Library Tests", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
     });
 
     test("should handle both added and deleted triggers", () => {
@@ -722,9 +720,6 @@ describe("Survey Editor Library Tests", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action3" });
     });
 
     test("should validate triggers before processing", () => {

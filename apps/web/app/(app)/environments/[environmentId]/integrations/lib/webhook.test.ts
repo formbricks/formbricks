@@ -5,14 +5,6 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getWebhookCountBySource } from "./webhook";
 
-// Mock dependencies
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    tag: {
-      byEnvironmentIdAndSource: vi.fn((envId, source) => `webhook_${envId}_${source ?? "all"}`),
-    },
-  },
-}));
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
   prisma: {

@@ -1,10 +1,9 @@
 import { validateInputs } from "@/lib/utils/validate";
+import { TProjectByEnvironmentId } from "@/modules/survey/link/types/project";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
-import { cache } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getProjectByEnvironmentId } from "./project";
 
@@ -27,34 +26,46 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 describe("getProjectByEnvironmentId", () => {
-  const environmentId = "env-123";
-  const mockProject = {
-    styling: { primaryColor: "#123456" },
-    logo: "logo.png",
-    linkSurveyBranding: true,
-  };
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
   test("should validate inputs", async () => {
-    // Call the function to ensure cache is called
+    const environmentId = "test-environment-id";
+
     await getProjectByEnvironmentId(environmentId);
 
-    // Now we can safely access the first call
-    const cacheCallback = vi.mocked(cache).mock.calls[0][0];
-
-    // Execute the callback directly to verify it calls validateInputs
-    await cacheCallback();
-
-    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
+    expect(validateInputs).toHaveBeenCalledWith([environmentId], ["environmentId"]);
   });
 
   test("should return project data when found", async () => {
-    vi.mocked(prisma.project.findFirst).mockResolvedValue(mockProject);
+    const environmentId = "test-environment-id";
+    const mockProject: TProjectByEnvironmentId = {
+      id: "project-id",
+      languages: [],
+      brandColor: "#000000",
+      highlightBorderColor: "#000000",
+      placement: {
+        id: "placement-id",
+        enabled: true,
+        position: "centerModal",
+        delay: 0,
+        autoClose: 10,
+        autoCloseOnProgressBar: true,
+        pulseDisabled: false,
+      },
+      clickOutsideClose: true,
+      darkOverlay: false,
+      styling: {},
+      logo: null,
+      previewMode: false,
+    };
 
-    // Set up cache mock to execute the callback
-    vi.mocked(cache).mockImplementation((cb) => async () => cb());
+    vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject as any);
 
     const result = await getProjectByEnvironmentId(environmentId);
 
+    expect(result).toEqual(mockProject);
     expect(prisma.project.findFirst).toHaveBeenCalledWith({
       where: {
         environments: {
@@ -64,39 +75,37 @@ describe("getProjectByEnvironmentId", () => {
         },
       },
       select: {
+        id: true,
+        languages: true,
+        brandColor: true,
+        highlightBorderColor: true,
+        placement: true,
+        clickOutsideClose: true,
+        darkOverlay: true,
         styling: true,
         logo: true,
-        linkSurveyBranding: true,
+        previewMode: true,
       },
     });
-
-    expect(result).toEqual(mockProject);
   });
 
   test("should handle Prisma errors", async () => {
-    // Create a proper mock of PrismaClientKnownRequestError
-    const prismaError = Object.create(Prisma.PrismaClientKnownRequestError.prototype);
-    Object.defineProperty(prismaError, "message", { value: "Database error" });
-    Object.defineProperty(prismaError, "code", { value: "P2002" });
-    Object.defineProperty(prismaError, "clientVersion", { value: "4.0.0" });
-    Object.defineProperty(prismaError, "meta", { value: {} });
+    const environmentId = "test-environment-id";
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+      clientVersion: "1.0.0",
+      code: "P2002",
+    });
 
-    vi.mocked(prisma.project.findFirst).mockRejectedValue(prismaError);
-
-    // Set up cache mock to execute the callback
-    vi.mocked(cache).mockImplementation((cb) => async () => cb());
+    vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(prismaError);
 
     await expect(getProjectByEnvironmentId(environmentId)).rejects.toThrow(DatabaseError);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error fetching project by environment id");
   });
 
   test("should rethrow non-Prisma errors", async () => {
+    const environmentId = "test-environment-id";
     const genericError = new Error("Generic error");
 
-    vi.mocked(prisma.project.findFirst).mockRejectedValue(genericError);
-
-    // Set up cache mock to execute the callback
-    vi.mocked(cache).mockImplementation((cb) => async () => cb());
+    vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(genericError);
 
     await expect(getProjectByEnvironmentId(environmentId)).rejects.toThrow(genericError);
   });

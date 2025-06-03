@@ -159,11 +159,6 @@ describe("ActionClass Service", () => {
         where: { id: "id4" },
         select: expect.any(Object),
       });
-      expect(actionClassCache.revalidate).toHaveBeenCalledWith({
-        environmentId: mockActionClass.environmentId,
-        id: "id4",
-        name: mockActionClass.name,
-      });
     });
 
     test("should throw ResourceNotFoundError if action class is null", async () => {

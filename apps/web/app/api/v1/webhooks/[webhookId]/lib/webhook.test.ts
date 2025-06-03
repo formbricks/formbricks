@@ -55,7 +55,7 @@ describe("deleteWebhook", () => {
     });
   });
 
-  test("should delete the webhook and call webhookCache.revalidate with correct parameters", async () => {
+  test("should delete the webhook", async () => {
     const mockedWebhook: Webhook = {
       id: "test-webhook-id",
       url: "https://example.com",

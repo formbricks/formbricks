@@ -526,10 +526,6 @@ describe("copySurveyToOtherEnvironment", () => {
       })
     );
     expect(checkForInvalidImagesInQuestions).toHaveBeenCalledWith(mockExistingSurveyDetails.questions);
-    expect(actionClassCache.revalidate).toHaveBeenCalledTimes(2);
-    expect(surveyCache.revalidate).toHaveBeenCalledWith(expect.objectContaining({ id: "new_cuid2_id" }));
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "ac1" });
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "ac2" });
   });
 
   test("should copy survey to the same environment successfully", async () => {
@@ -580,10 +576,6 @@ describe("copySurveyToOtherEnvironment", () => {
         }),
       })
     );
-    expect(segmentCache.revalidate).toHaveBeenCalledWith({
-      id: "new_seg_private",
-      environmentId: targetEnvironmentId,
-    });
   });
 
   test("should handle public segment: connect if same env, create new if different env (no existing in target)", async () => {
@@ -726,7 +718,6 @@ describe("copySurveyToOtherEnvironment", () => {
         }),
       })
     );
-    expect(projectCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should handle survey with no triggers", async () => {

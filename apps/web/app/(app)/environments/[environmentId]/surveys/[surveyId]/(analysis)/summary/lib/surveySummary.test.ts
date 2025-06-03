@@ -25,14 +25,6 @@ import {
 // Ensure this path is correct
 import { convertFloatTo2Decimal } from "./utils";
 
-vi.mock("react", async () => {
-  const actual = await vi.importActual("react");
-  return {
-    ...actual,
-    cache: vi.fn().mockImplementation((fn) => fn),
-  };
-});
-
 vi.mock("@/lib/display/service", () => ({
   getDisplayCountBySurveyId: vi.fn(),
 }));
@@ -152,10 +144,6 @@ describe("getSurveySummaryMeta", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
   });
 
   test("calculates meta correctly", () => {
@@ -215,9 +203,6 @@ describe("getSurveySummaryDropOff", () => {
       jumpTarget: undefined,
       requiredQuestionIds: [],
       calculations: {},
-    });
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
     });
   });
 

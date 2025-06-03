@@ -86,7 +86,6 @@ describe("tag lib", () => {
         .mockResolvedValueOnce(newTag as any);
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
-      vi.mocked(tagCache.revalidate).mockImplementation(() => {});
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(newTag);
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: baseTag.id } });
@@ -100,14 +99,8 @@ describe("tag lib", () => {
         .mockResolvedValueOnce(newTag as any);
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
-      vi.mocked(tagCache.revalidate).mockImplementation(() => {});
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(newTag);
-      expect(tagCache.revalidate).toHaveBeenCalledWith({
-        id: baseTag.id,
-        environmentId: baseTag.environmentId,
-      });
-      expect(tagCache.revalidate).toHaveBeenCalledWith({ id: newTag.id });
     });
     test("throws if original tag not found", async () => {
       vi.mocked(prisma.tag.findUnique).mockResolvedValueOnce(null);

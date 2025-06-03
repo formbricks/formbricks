@@ -3,7 +3,6 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { withCache } from "@/modules/cache/lib/withCache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -20,13 +19,7 @@ import { getEnvironmentState } from "./environmentState";
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/posthogServer");
 vi.mock("@/modules/cache/lib/withCache");
-vi.mock("@/modules/cache/lib/cacheKeys", () => ({
-  createCacheKey: {
-    environment: {
-      state: vi.fn((environmentId: string) => `fb:env:${environmentId}:state`),
-    },
-  },
-}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     environment: {

@@ -12,16 +12,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/team", () => ({
-  teamCache: {
-    tag: { byOrganizationId: vi.fn((id: string) => `organization-${id}-teams`) },
-  },
-}));
-
-vi.mock("@/lib/utils/validate", () => ({
-  validateInputs: vi.fn(),
-}));
-
 describe("getTeamsByOrganizationId", () => {
   beforeEach(() => {
     vi.clearAllMocks();
