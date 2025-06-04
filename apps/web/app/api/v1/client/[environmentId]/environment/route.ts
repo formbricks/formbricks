@@ -51,11 +51,14 @@ export const GET = async (
     );
   } catch (err) {
     if (err instanceof ResourceNotFoundError) {
-      logger.warn("Resource not found in environment endpoint", {
-        environmentId: params.environmentId,
-        resourceType: err.resourceType,
-        resourceId: err.resourceId,
-      });
+      logger.warn(
+        {
+          environmentId: params.environmentId,
+          resourceType: err.resourceType,
+          resourceId: err.resourceId,
+        },
+        "Resource not found in environment endpoint"
+      );
       return responses.notFoundResponse(err.resourceType, err.resourceId);
     }
 

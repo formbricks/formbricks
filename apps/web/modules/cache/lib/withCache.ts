@@ -50,7 +50,7 @@ export const withCache = <T>(fn: () => Promise<T>, options: CacheOptions): (() =
       const err = error instanceof Error ? error : new Error(String(error));
 
       // On cache error, still try to fetch fresh data
-      logger.warn("Cache operation failed, fetching fresh data", { key, error: err });
+      logger.warn({ key, error: err }, "Cache operation failed, fetching fresh data");
 
       try {
         return await fn();

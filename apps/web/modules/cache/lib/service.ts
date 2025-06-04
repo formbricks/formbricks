@@ -115,9 +115,12 @@ const initializeCache = async (): Promise<Cache> => {
         logger.info("Cache service initialized with Redis");
         return redisCache;
       } catch (error) {
-        logger.warn("Failed to initialize Redis cache, falling back to memory cache", {
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+        logger.warn(
+          {
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+          "Failed to initialize Redis cache, falling back to memory cache"
+        );
 
         // Fallback to memory cache
         const memoryCache = createMemoryCache();

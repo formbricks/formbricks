@@ -84,7 +84,7 @@ export const getIntegration = reactCache(async (integrationId: string): Promise<
         id: integrationId,
       },
     });
-    return integration ? transformIntegration(integration!) : null;
+    return integration ? transformIntegration(integration) : null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

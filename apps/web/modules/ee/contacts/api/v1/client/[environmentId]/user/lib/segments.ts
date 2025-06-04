@@ -79,11 +79,14 @@ export const getPersonSegmentIds = async (
     return personSegments.map((segment) => segment.id);
   } catch (error) {
     // Log error for debugging but don't throw to prevent "segments is not iterable" error
-    logger.warn("Failed to get person segment IDs, returning empty array", {
-      environmentId,
-      contactId,
-      error,
-    });
+    logger.warn(
+      {
+        environmentId,
+        contactId,
+        error,
+      },
+      "Failed to get person segment IDs, returning empty array"
+    );
     return [];
   }
 };
