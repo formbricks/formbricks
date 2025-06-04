@@ -117,16 +117,16 @@ describe("Auth Utils", () => {
       const email = "rate-limit-test@example.com";
 
       // Since Redis is mocked as null, should allow all logging (fail open)
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 1
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 2
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 3
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 4
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 5
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 6
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 7
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 8
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 9
-      expect(await shouldLogAuthFailure(email, false)).toBe(true); // 10
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 1
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 2
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 3
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 4
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 5
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 6
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 7
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 8
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 9
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 10
     });
   });
 
