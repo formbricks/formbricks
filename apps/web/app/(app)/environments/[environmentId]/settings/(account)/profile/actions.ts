@@ -50,7 +50,6 @@ export const removeAvatarAction = authenticatedActionClient
   });
 
 const ZConnectSocialAccountAction = z.object({
-  userId: z.string(),
   provider: z.string(),
   socialId: z.string(),
   socialName: z.string(),
@@ -61,11 +60,8 @@ const ZConnectSocialAccountAction = z.object({
 export const connectSocialAccountAction = authenticatedActionClient
   .schema(ZConnectSocialAccountAction)
   .action(async ({ parsedInput, ctx }) => {
-    const { userId, provider, socialId, socialName, socialEmail, socialAvatar } = parsedInput;
-
-    if (userId != ctx.user.id) {
-      throw new Error("Unauthorized");
-    }
+    const userId = ctx.user.id;
+    const { provider, socialId, socialName, socialEmail, socialAvatar } = parsedInput;
 
     try {
       const existingAccount = await prisma.userSocial.findFirst({
@@ -76,7 +72,17 @@ export const connectSocialAccountAction = authenticatedActionClient
       });
 
       if (existingAccount) {
-        return;
+        return await prisma.userSocial.update({
+          where: {
+            id: existingAccount.id,
+          },
+          data: {
+            socialId,
+            socialName,
+            socialEmail,
+            socialAvatar,
+          },
+        });
       } else {
         return await prisma.userSocial.create({
           data: {
@@ -90,6 +96,7 @@ export const connectSocialAccountAction = authenticatedActionClient
         });
       }
     } catch (error) {
+      console.error(`Failed to connect ${provider} account:`, error);
       throw new Error(`Failed to connect ${provider} account: ${error.message}`);
     }
   });

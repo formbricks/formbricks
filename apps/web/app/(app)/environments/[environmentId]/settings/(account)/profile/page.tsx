@@ -10,11 +10,11 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organiza
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
+import { EditCommunityForm } from "./components/EditCommunityForm";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 // import { ManageSocialNetworks } from "./components/ManageSocialNetworks";
-// import { EditCommunityForm } from "./components/EditCommunityForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const isMultiOrgEnabled = false;
@@ -55,11 +55,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             description={t("environments.settings.profile.update_personal_info")}>
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
-          {/* <SettingsCard
+          <SettingsCard
             title={"Community Profile"}
-            description={"Update your community profile information"}>
-            <EditCommunityForm />
-          </SettingsCard> */}
+            description={t("environments.settings.profile.update_community_info")}>
+            <EditCommunityForm user={user} />
+          </SettingsCard>
           <SettingsCard
             title={t("common.avatar")}
             description={t("environments.settings.profile.organization_identification")}>

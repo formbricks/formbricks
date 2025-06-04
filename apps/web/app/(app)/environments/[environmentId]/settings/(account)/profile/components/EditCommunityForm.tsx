@@ -10,7 +10,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
+import { Textarea } from "@/modules/ui/components/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -19,29 +19,44 @@ import { z } from "zod";
 import { TUser, ZUser } from "@formbricks/types/user";
 import { updateUserAction } from "../actions";
 
-const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true });
-type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
+const ZEditCommunityFormSchema = z.object({
+  name: ZUser.shape.name,
+  locale: ZUser.shape.locale,
+  communityName: z.string().optional(),
+  communityDescription: z.string().optional(),
+});
 
-//TODO: action to get communityName, communityDescription,
-//TODO: Form UI to edit communityName, communityDescription,
+type TEditCommunityForm = z.infer<typeof ZEditCommunityFormSchema>;
+
+//TODO: Add Community Avatar
+//TODO: Update ZUser to include communityName, communityDescription
 export const EditCommunityForm = ({ user }: { user: TUser }) => {
-  const form = useForm<TEditProfileNameForm>({
-    defaultValues: { name: user.name, locale: user.locale || "en" },
+  const form = useForm<TEditCommunityForm>({
+    defaultValues: {
+      name: user.name,
+      locale: user.locale || "en",
+      communityName: user.communityName || "",
+      communityDescription: user.communityDescription || "",
+    },
     mode: "onChange",
-    resolver: zodResolver(ZEditProfileNameFormSchema),
+    resolver: zodResolver(ZEditCommunityFormSchema),
   });
 
   const { isSubmitting, isDirty } = form.formState;
   const { t } = useTranslate();
 
-  const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
+  const onSubmit: SubmitHandler<TEditCommunityForm> = async (data) => {
     try {
       const name = data.name.trim();
       const locale = data.locale;
-      await updateUserAction({ name, locale });
+      const communityName = data.communityName?.trim();
+      const communityDescription = data.communityDescription?.trim();
+
+      // console.log("updating user action")
+      await updateUserAction({ name, locale, communityName, communityDescription });
       toast.success(t("environments.settings.profile.profile_updated_successfully"));
       window.location.reload();
-      form.reset({ name, locale });
+      form.reset({ name, locale, communityName, communityDescription });
     } catch (error) {
       toast.error(`${t("common.error")}: ${error.message}`);
     }
@@ -49,32 +64,44 @@ export const EditCommunityForm = ({ user }: { user: TUser }) => {
 
   return (
     <FormProvider {...form}>
-      <form className="w-full max-w-sm items-center" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="w-full max-w-sm items-center space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
-          name="name"
+          name="communityName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("common.full_name")}</FormLabel>
+              <FormLabel>{t("common.community_name")}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="text"
-                  placeholder={t("common.full_name")}
+                  placeholder={t("common.community_name")}
                   required
-                  isInvalid={!!form.formState.errors.name}
+                  isInvalid={!!form.formState.errors.communityName}
                 />
               </FormControl>
               <FormError />
             </FormItem>
           )}
         />
-
-        {/* disabled email field */}
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="email">{t("common.email")}</Label>
-          <Input type="email" id="email" defaultValue={user.email} disabled />
-        </div>
+        <FormField
+          control={form.control}
+          name="communityDescription"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("common.community_description")}</FormLabel>
+              <FormControl>
+                <Textarea
+                  className={`min-h-24 ${form.formState.errors.communityDescription ? "border-red-500" : ""}`}
+                  {...field}
+                  placeholder={t("common.community_description")}
+                  required
+                />
+              </FormControl>
+              <FormError />
+            </FormItem>
+          )}
+        />
 
         <Button
           type="submit"

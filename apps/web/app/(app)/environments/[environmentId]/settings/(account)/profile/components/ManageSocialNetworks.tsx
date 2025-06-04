@@ -6,7 +6,7 @@ import { Provider } from "@supabase/supabase-js";
 import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TUser } from "@formbricks/types/user";
 import { connectSocialAccountAction, getUserSocialAccountsAction } from "../actions";
@@ -29,10 +29,12 @@ export const ManageSocialNetworks = ({
   const searchParams = useSearchParams();
   const provider = searchParams.get("provider");
   const router = useRouter();
-  const [connectedProviders, setConnectedProviders] = useState<Record<string, boolean>>({});
+  const [userSocials, setUserSocials] = useState<Record<string, boolean>>({});
   const [isAuthenticating, setIsAuthenticating] = useState<Record<string, boolean>>({});
+  //prevents duplicate handler calls after redirect
+  const [processedProviders, setProcessedProviders] = useState<Record<string, boolean>>({});
 
-  const loadConnectedAccounts = async () => {
+  const loadUserSocials = useCallback(async () => {
     try {
       const result = await getUserSocialAccountsAction();
 
@@ -45,12 +47,12 @@ export const ManageSocialNetworks = ({
         {} as Record<string, boolean>
       );
 
-      setConnectedProviders(connected);
+      setUserSocials(connected);
     } catch (error) {
-      console.error(error);
-      setConnectedProviders({});
+      console.error("Error loading user social accounts:", error);
+      setUserSocials({});
     }
-  };
+  }, []);
 
   const login = async (provider: Provider) => {
     setIsAuthenticating({ ...isAuthenticating, [provider]: true });
@@ -79,76 +81,100 @@ export const ManageSocialNetworks = ({
     }
   };
 
-  const handleSocialAuthCallback = async (providerName: string) => {
-    try {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("Error checking auth status:", error);
+  const handleSocialAuthCallback = useCallback(
+    async (providerName: string) => {
+      if (processedProviders[providerName]) {
         return;
       }
 
-      if (data?.session) {
-        const identities = data.session.user?.identities || [];
-        const identity = identities.find((identity) => identity.provider === providerName);
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-        //authenticated with provider
-        if (identity) {
-          setConnectedProviders({ ...connectedProviders, [providerName]: true });
-          // toast.success(`${providerName} account successfully connected`);
+        if (error) {
+          console.error("Error checking auth status:", error);
+          return;
+        }
 
-          const socialData = {
-            userId: user.id,
-            provider: providerName,
-            socialId: identity.id,
-            socialName: identity.identity_data?.user_name,
-            socialEmail: identity.identity_data?.email,
-            socialAvatar: identity.identity_data?.avatar_url || identity.identity_data?.picture,
-          };
+        if (data?.session) {
+          const identities = data.session.user?.identities || [];
+          const identity = identities.find((identity) => identity.provider === providerName);
 
-          const result = await connectSocialAccountAction(socialData);
+          if (identity) {
+            setProcessedProviders((prev) => ({ ...prev, [providerName]: true }));
 
-          if (result) {
-            setConnectedProviders({ ...connectedProviders, [providerName]: true });
-            toast.success(
-              t("environments.settings.profile.social_account_successfully_connected", {
-                provider: providerName,
-              })
-            );
+            const socialData = {
+              userId: user.id,
+              provider: providerName,
+              socialId: identity.id,
+              socialName: identity.identity_data?.user_name,
+              socialEmail: identity.identity_data?.email,
+              socialAvatar: identity.identity_data?.avatar_url || identity.identity_data?.picture || null,
+            };
 
-            await loadConnectedAccounts();
+            try {
+              const result = await connectSocialAccountAction(socialData);
+
+              if (result) {
+                setUserSocials((prev) => ({ ...prev, [providerName]: true }));
+
+                toast.success(
+                  t("environments.settings.profile.social_account_successfully_connected", {
+                    provider: providerName,
+                  })
+                );
+
+                await loadUserSocials();
+              } else {
+                toast.error(
+                  t("environments.settings.profile.failed_to_connect_social_account", {
+                    provider: providerName,
+                  })
+                );
+              }
+            } catch (error) {
+              console.error("Error connecting social account:", error);
+              toast.error(
+                t("environments.settings.profile.failed_to_connect_social_account", {
+                  provider: providerName,
+                })
+              );
+            }
           } else {
-            toast.error(
-              t("environments.settings.profile.failed_to_connect_social_account", { provider: providerName })
-            );
+            console.error("No identity found for ", providerName);
           }
         } else {
-          console.error("No active session found");
+          console.error("No Supabase session found.");
         }
+      } catch (err) {
+        console.error("Error processing social auth callback:", err);
+      } finally {
+        setIsAuthenticating((prev) => ({ ...prev, [providerName]: false }));
       }
-      setIsAuthenticating({ ...isAuthenticating, [providerName]: false });
-    } catch (err) {
-      console.error("Error processing OAuth callback:", err);
-      setIsAuthenticating({ ...isAuthenticating, [providerName]: false });
-    }
-  };
+    },
+    [processedProviders, supabase.auth, user.id, t, loadUserSocials]
+  );
 
   useEffect(() => {
     if (user) {
-      loadConnectedAccounts();
+      loadUserSocials();
     }
-  }, [user]);
+  }, [user, loadUserSocials]);
 
-  //process OAuth callback after social login
+  //process social auth callback after social login
   useEffect(() => {
     if (provider) {
-      handleSocialAuthCallback(provider);
+      (async () => {
+        try {
+          await handleSocialAuthCallback(provider);
 
-      //remove provider query param to avoid retrigger handleSocialAuthCallback
-      const currentPath = window.location.pathname;
-      router.replace(currentPath);
+          const currentPath = window.location.pathname;
+          router.replace(currentPath);
+        } catch (error) {
+          console.error("Error in OAuth effect:", error);
+        }
+      })();
     }
-  }, [provider, supabase.auth]);
+  }, [provider, handleSocialAuthCallback, router]);
 
   if (!supabase) {
     return null;
@@ -159,22 +185,22 @@ export const ManageSocialNetworks = ({
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           onClick={() => login("discord")}
-          disabled={isAuthenticating["discord"] || connectedProviders["discord"]}
-          variant={connectedProviders["discord"] ? "outline" : "default"}>
+          disabled={isAuthenticating["discord"] || userSocials["discord"]}
+          variant={userSocials["discord"] ? "outline" : "default"}>
           {isAuthenticating["discord"]
             ? t("environments.settings.profile.connecting")
-            : connectedProviders["discord"]
+            : userSocials["discord"]
               ? t("environments.settings.profile.discord_connected")
               : t("environments.settings.profile.connect_discord")}
         </Button>
 
         <Button
           onClick={() => login("twitter")}
-          disabled={isAuthenticating["twitter"] || connectedProviders["twitter"]}
-          variant={connectedProviders["twitter"] ? "outline" : "default"}>
+          disabled={isAuthenticating["twitter"] || userSocials["twitter"]}
+          variant={userSocials["twitter"] ? "outline" : "default"}>
           {isAuthenticating["twitter"]
             ? t("environments.settings.profile.connecting")
-            : connectedProviders["twitter"]
+            : userSocials["twitter"]
               ? t("environments.settings.profile.twitter_connected")
               : t("environments.settings.profile.connect_twitter")}
         </Button>

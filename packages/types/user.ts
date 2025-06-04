@@ -59,6 +59,8 @@ export const ZUser = z.object({
   notificationSettings: ZUserNotificationSettings,
   whitelist: z.boolean(),
   locale: ZUserLocale,
+  communityName: z.string().nullable(),
+  communityDescription: z.string().nullable(),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -73,6 +75,8 @@ export const ZUserUpdateInput = z.object({
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
+  communityName: z.string().nullish(),
+  communityDescription: z.string().nullish(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
