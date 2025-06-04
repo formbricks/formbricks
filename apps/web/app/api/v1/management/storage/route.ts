@@ -1,3 +1,4 @@
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { validateFile } from "@/lib/fileValidation";
@@ -13,13 +14,13 @@ import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 // use this to upload files for a specific resource, e.g. a user profile picture or a survey
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export const POST = async (req: NextRequest): Promise<Response> => {
+export const POST = async (request: NextRequest): Promise<Response> => {
   let storageInput;
 
   try {
-    storageInput = await req.json();
+    storageInput = await request.json();
   } catch (error) {
-    logger.error({ error, url: req.url }, "Error parsing JSON input");
+    logger.error({ error, url: request.url }, "Error parsing JSON input");
     return responses.badRequestResponse("Malformed JSON input, please check your request body");
   }
 
@@ -37,6 +38,27 @@ export const POST = async (req: NextRequest): Promise<Response> => {
     return responses.badRequestResponse("environmentId is required");
   }
 
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    //check whether its using API key
+    const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
+    const isAuthorized = authentication.environmentPermissions.some(
+      (permission) =>
+        permission.environmentId === environmentId &&
+        (permission.permission === "write" || permission.permission === "manage")
+    );
+    if (!isAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+  } else {
+    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+    if (!isUserAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+  }
+
   // Perform server-side file validation first to block dangerous file types
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
@@ -51,19 +73,6 @@ export const POST = async (req: NextRequest): Promise<Response> => {
         `File extension is not allowed, allowed extensions are: ${allowedFileExtensions.join(", ")}`
       );
     }
-  }
-
-  // auth and upload private file
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user) {
-    return responses.notAuthenticatedResponse();
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
   }
 
   return await getSignedUrlForPublicFile(fileName, environmentId, fileType);
