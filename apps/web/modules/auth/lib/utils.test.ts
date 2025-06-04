@@ -113,10 +113,10 @@ describe("Auth Utils", () => {
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
     });
 
-    test("should allow all failures when Redis is not available", async () => {
+    test("should reject all failures when Redis is not available", async () => {
       const email = "rate-limit-test@example.com";
 
-      // Since Redis is mocked as null, should allow all logging (fail open)
+      // Since Redis is mocked as null, should not allow logging (fail closed)
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 1
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 2
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 3
