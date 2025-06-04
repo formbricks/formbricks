@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
         const identifier = credentials?.email || "unknown_user"; // NOSONAR // We want to check for empty strings
 
         if (!credentials) {
-          if (shouldLogAuthFailure("no_credentials")) {
+          if (await shouldLogAuthFailure("no_credentials")) {
             logAuthAttempt("no_credentials_provided", "credentials", "credentials_validation");
           }
           throw new Error("Invalid credentials");
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user) {
-          if (shouldLogAuthFailure(identifier)) {
+          if (await shouldLogAuthFailure(identifier)) {
             logAuthAttempt("user_not_found", "credentials", "user_lookup", UNKNOWN_DATA, credentials?.email);
           }
           throw new Error("Invalid credentials");
@@ -95,7 +95,7 @@ export const authOptions: NextAuthOptions = {
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          if (shouldLogAuthFailure(user.email)) {
+          if (await shouldLogAuthFailure(user.email)) {
             logAuthAttempt("invalid_password", "credentials", "password_validation", user.id, user.email);
           }
           throw new Error("Invalid credentials");
@@ -130,7 +130,7 @@ export const authOptions: NextAuthOptions = {
           // check if user-supplied code matches one
           const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));
           if (index === -1) {
-            if (shouldLogAuthFailure(user.email)) {
+            if (await shouldLogAuthFailure(user.email)) {
               logTwoFactorAttempt(false, "backup_code", user.id, user.email, "invalid_backup_code");
             }
             throw new Error("Invalid backup code");
@@ -178,7 +178,7 @@ export const authOptions: NextAuthOptions = {
 
           const isValidToken = (await import("./totp")).totpAuthenticatorCheck(credentials.totpCode, secret);
           if (!isValidToken) {
-            if (shouldLogAuthFailure(user.email)) {
+            if (await shouldLogAuthFailure(user.email)) {
               logTwoFactorAttempt(false, "totp", user.id, user.email, "invalid_totp_code");
             }
             throw new Error("Invalid two factor code");
@@ -228,7 +228,7 @@ export const authOptions: NextAuthOptions = {
         let user;
         try {
           if (!credentials?.token) {
-            if (shouldLogAuthFailure(identifier)) {
+            if (await shouldLogAuthFailure(identifier)) {
               logEmailVerificationAttempt(false, "token_not_provided");
             }
             throw new Error("Token not found");
@@ -241,7 +241,9 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          if (shouldLogAuthFailure(identifier)) {
+          logger.error(e, "Error in CredentialsProvider authorize");
+
+          if (await shouldLogAuthFailure(identifier)) {
             logEmailVerificationAttempt(false, "invalid_token", UNKNOWN_DATA, undefined, {
               tokenProvided: !!credentials?.token,
             });
@@ -250,7 +252,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user) {
-          if (shouldLogAuthFailure(identifier)) {
+          if (await shouldLogAuthFailure(identifier)) {
             logEmailVerificationAttempt(false, "user_not_found_for_token");
           }
           throw new Error("Either a user does not match the provided token or the token is invalid");

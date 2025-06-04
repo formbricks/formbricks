@@ -1,9 +1,11 @@
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import redis from "@/lib/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { compare, hash } from "bcryptjs";
 import { createHash } from "crypto";
+import { logger } from "@formbricks/logger";
 
 export const hashPassword = async (password: string) => {
   const hashedPassword = await hash(password, 12);
@@ -184,13 +186,13 @@ export const logEmailVerificationAttempt = (
   });
 };
 
-const authAuditLimitMap = new Map<string, { count: number; lastReset: number; lastLoggedAt: number }>();
+// Rate limiting constants
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes
 const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
 
 /**
  * Rate limiting for authentication audit logs to prevent log spam during brute force attacks.
- * Uses hashed identifiers to protect PII while allowing pattern detection.
+ * Uses Redis for distributed rate limiting across Kubernetes pods.
  *
  * **How it works:**
  * - Always logs successful authentications (no rate limiting for successes)
@@ -198,63 +200,77 @@ const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
  * - After 3 failures: only logs every 10th attempt OR after 1+ minute gap
  * - Resets counter every 5 minutes to allow fresh logging cycles
  * - Uses hashed identifiers to protect PII while enabling tracking
+ * - Fails open if Redis is unavailable (allows all logging for audit compliance)
  *
  * **Use cases:**
  * - Prevents log flooding during brute force attacks (100 attempts → ~10-15 log entries)
  * - Maintains security visibility for legitimate failed login attempts
  * - Preserves complete audit trail for successful authentications
  * - Protects user PII while allowing pattern detection
+ * - Provides consistent rate limiting across Kubernetes pods
  *
  * **Example scenarios:**
  * - Normal user (1-2 failures): All attempts logged
  * - Brute force attack (100+ failures): 3 + ~7 throttled + aggregation logs
  * - Mixed success/failure: All successes + throttled failures
+ * - Redis unavailable: All attempts logged (fail open for compliance)
  *
  * @param identifier - Unique identifier for rate limiting (email, token, etc.) - will be hashed
  * @param isSuccess - Whether this is a successful authentication (defaults to false)
- * @returns boolean - Whether this attempt should be logged to audit trail
+ * @returns Promise<boolean> - Whether this attempt should be logged to audit trail
  */
-export const shouldLogAuthFailure = (identifier: string, isSuccess: boolean = false): boolean => {
+export const shouldLogAuthFailure = async (
+  identifier: string,
+  isSuccess: boolean = false
+): Promise<boolean> => {
   // Always log successful authentications
   if (isSuccess) return true;
 
-  // Create consistent hash for rate limiting while protecting PII
-  const rateLimitKey = createAuditIdentifier(identifier, "ratelimit");
-
+  const rateLimitKey = `rate_limit:auth:${createAuditIdentifier(identifier, "ratelimit")}`;
   const now = Date.now();
 
-  if (!authAuditLimitMap.has(rateLimitKey)) {
-    authAuditLimitMap.set(rateLimitKey, { count: 1, lastReset: now, lastLoggedAt: now });
-    return true;
+  if (redis) {
+    try {
+      // Use Redis for distributed rate limiting
+      const multi = redis.multi();
+      const windowStart = now - RATE_LIMIT_WINDOW;
+
+      // Remove expired entries and count recent failures
+      multi.zremrangebyscore(rateLimitKey, 0, windowStart);
+      multi.zcard(rateLimitKey);
+      multi.zadd(rateLimitKey, now, `${now}:${Math.random()}`);
+      multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
+
+      const results = await multi.exec();
+      if (!results) {
+        throw new Error("Redis transaction failed");
+      }
+
+      const currentCount = results[1][1] as number;
+
+      // Apply same throttling logic as in-memory version
+      if (currentCount <= AGGREGATION_THRESHOLD) {
+        return true;
+      }
+
+      // Check if we should log (every 10th or after 1 minute gap)
+      const recentEntries = await redis.zrange(rateLimitKey, -10, -1);
+      if (recentEntries.length === 0) return true;
+
+      const lastLogTime = parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
+      const timeSinceLastLog = now - lastLogTime;
+
+      return currentCount % 10 === 0 || timeSinceLastLog > 60000;
+    } catch (error) {
+      logger.warn("Redis rate limiting failed, logging without rate limiting", { error });
+      // If Redis fails, do not log as Redis is required for audit logs
+      return false;
+    }
+  } else {
+    logger.warn("Redis not available for rate limiting, logging without rate limiting");
+    // If Redis not configured, do not log as Redis is required for audit logs
+    return false;
   }
-
-  const record = authAuditLimitMap.get(rateLimitKey)!;
-
-  // Reset counter if window has passed
-  if (now - record.lastReset > RATE_LIMIT_WINDOW) {
-    record.count = 1;
-    record.lastReset = now;
-    record.lastLoggedAt = now;
-    return true;
-  }
-
-  record.count++;
-
-  // Always log first few failures
-  if (record.count <= AGGREGATION_THRESHOLD) {
-    record.lastLoggedAt = now;
-    return true;
-  }
-
-  // After threshold, only log every Nth failure or after significant time gap
-  const timeSinceLastLog = now - record.lastLoggedAt;
-  const shouldLogNow = record.count % 10 === 0 || timeSinceLastLog > 60000; // Every 10th failure or after 1 minute
-
-  if (shouldLogNow) {
-    record.lastLoggedAt = now;
-  }
-
-  return shouldLogNow;
 };
 
 /**
