@@ -40,7 +40,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
 
 export const deleteTagOnResponse = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
-    prisma.tagsOnResponses.delete({
+    await prisma.tagsOnResponses.delete({
       where: {
         responseId_tagId: {
           responseId,

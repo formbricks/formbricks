@@ -760,6 +760,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
