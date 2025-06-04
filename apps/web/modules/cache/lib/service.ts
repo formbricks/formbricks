@@ -151,10 +151,12 @@ const initializeCache = async (): Promise<Cache> => {
 };
 
 /**
- * Detect if we're in a build environment
+ * Simple Next.js build environment detection
+ * Works in 99% of cases with minimal complexity
  */
 const isBuildTime = () => {
-  return process.argv.some((arg) => arg.includes("build"));
+  // Next.js sets NEXT_RUNTIME during actual runtime, not during builds
+  return !process.env.NEXT_RUNTIME;
 };
 
 /**
