@@ -52,11 +52,11 @@ export const getEnterpriseLicense = reactCache(async () => {
 
 ### Use `withCache()` for Simple Database Queries
 ```typescript
-// ✅ Simple caching with automatic fallback
+// ✅ Simple caching with automatic fallback (TTL in milliseconds)
 export const getActionClasses = (environmentId: string) => {
   return withCache(() => fetchActionClassesFromDB(environmentId), {
     key: createCacheKey.environment.actionClasses(environmentId),
-    ttl: 60 * 30, // 30 minutes
+    ttl: 60 * 30 * 1000, // 30 minutes in milliseconds
   })();
 };
 ```
@@ -86,7 +86,7 @@ export const getEnvironmentState = async (environmentId: string) => {
 - File system operations
 - Heavy data transformations
 
-// Example: Database query with complex joins
+// Example: Database query with complex joins (TTL in milliseconds)
 export const getEnvironmentWithDetails = withCache(
   async (environmentId: string) => {
     return prisma.environment.findUnique({
@@ -94,7 +94,7 @@ export const getEnvironmentWithDetails = withCache(
       include: { /* complex joins */ }
     });
   },
-  { key: createCacheKey.environment.details(environmentId), ttl: 60 * 30 }
+  { key: createCacheKey.environment.details(environmentId), ttl: 60 * 30 * 1000 } // 30 minutes
 )();
 ```
 
@@ -113,7 +113,7 @@ const getCachedLicenseFeatures = withCache(
     const license = await getEnterpriseLicense(); // Already cached!
     return license.active ? license.features : null; // Just property access
   },
-  { key: "license-features", ttl: 1800 }
+  { key: "license-features", ttl: 1800 * 1000 } // 30 minutes in milliseconds
 );
 
 // ✅ Good example: Simple and efficient
@@ -156,7 +156,7 @@ const cheapOperation = (data: any) => {
 // ❌ Don't create wrapper functions just for caching
 const getCachedUserPermissions = withCache(
   async (userId: string) => getUserPermissions(userId),
-  { key: createCacheKey.user.permissions(userId), ttl: 3600 }
+  { key: createCacheKey.user.permissions(userId), ttl: 3600 * 1000 } // 1 hour in milliseconds
 );
 
 // ✅ Add caching directly to the original function
@@ -167,7 +167,7 @@ export const getUserPermissions = withCache(
       include: { permissions: true }
     });
   },
-  { key: createCacheKey.user.permissions(userId), ttl: 3600 }
+  { key: createCacheKey.user.permissions(userId), ttl: 3600 * 1000 } // 1 hour in milliseconds
 );
 ```
 
@@ -178,33 +178,33 @@ For endpoints serving client SDKs, coordinate TTLs across layers:
 
 ```typescript
 // Client SDK cache (expiresAt) - longest TTL for fewer requests
-const CLIENT_TTL = 60 * 60;           // 1 hour
+const CLIENT_TTL = 60 * 60;           // 1 hour (seconds for client)
 
 // Server Redis cache - shorter TTL ensures fresh data for clients  
-const SERVER_TTL = 60 * 30;          // 30 minutes
+const SERVER_TTL = 60 * 30 * 1000;   // 30 minutes in milliseconds
 
-// HTTP cache headers
+// HTTP cache headers (seconds)
 const BROWSER_TTL = 60 * 60;         // 1 hour (max-age)
 const CDN_TTL = 60 * 30;             // 30 minutes (s-maxage)
 const CORS_TTL = 60 * 60;            // 1 hour (balanced approach)
 ```
 
-### Standard TTL Guidelines
+### Standard TTL Guidelines (in milliseconds for cache-manager + Keyv)
 ```typescript
 // Configuration data - rarely changes
-const CONFIG_TTL = 60 * 60 * 24;        // 24 hours
+const CONFIG_TTL = 60 * 60 * 24 * 1000;     // 24 hours
 
 // User data - moderate frequency  
-const USER_TTL = 60 * 60 * 2;           // 2 hours
+const USER_TTL = 60 * 60 * 2 * 1000;        // 2 hours
 
 // Survey data - changes moderately
-const SURVEY_TTL = 60 * 15;             // 15 minutes
+const SURVEY_TTL = 60 * 15 * 1000;          // 15 minutes
 
 // Billing data - expensive to compute
-const BILLING_TTL = 60 * 30;            // 30 minutes
+const BILLING_TTL = 60 * 30 * 1000;         // 30 minutes
 
 // Action classes - infrequent changes
-const ACTION_CLASS_TTL = 60 * 30;       // 30 minutes
+const ACTION_CLASS_TTL = 60 * 30 * 1000;    // 30 minutes
 ```
 
 ## High-Frequency Endpoint Optimization
@@ -279,13 +279,13 @@ const getCachedData = unstable_cache(
 // ❌ Don't use revalidateEnvironment flags with Redis
 return { data, revalidateEnvironment: true }; // This gets cached incorrectly!
 
-// ✅ New Redis pattern with withCache
+// ✅ New Redis pattern with withCache (TTL in milliseconds)
 export const getCachedData = (id: string) => 
   withCache(
     () => fetchData(id),
     {
       key: createCacheKey.environment.data(id),
-      ttl: 60 * 15, // 15 minutes
+      ttl: 60 * 15 * 1000, // 15 minutes in milliseconds
     }
   )();
 ```
@@ -372,7 +372,7 @@ try {
   if (cached) return cached;
   
   const fresh = await fetchFresh();
-  await cache.set(key, fresh, ttl);
+  await cache.set(key, fresh, ttl); // ttl in milliseconds
   return fresh;
 } catch (error) {
   // ✅ Always fallback to fresh data
@@ -395,6 +395,7 @@ try {
 10. **Avoid cache wrapper functions** - add caching directly to expensive operations
 11. **Don't cache property access or simple transformations** - overhead is negligible
 12. **Analyze the full call chain** before adding caching to avoid double-caching
+13. **Remember TTL is in milliseconds** for cache-manager + Keyv stack (not seconds)
 
 ## Monitoring Strategy
 
@@ -403,3 +404,11 @@ try {
 - Track database query reduction
 - Monitor response times for cached endpoints
 - **Don't add custom metrics** that duplicate existing monitoring
+
+## Important Notes
+
+### TTL Units
+- **cache-manager + Keyv**: TTL in **milliseconds**
+- **Direct Redis commands**: TTL in **seconds** (EXPIRE, SETEX) or **milliseconds** (PEXPIRE, PSETEX)
+- **HTTP cache headers**: TTL in **seconds** (max-age, s-maxage)
+- **Client SDK**: TTL in **seconds** (expiresAt calculation)

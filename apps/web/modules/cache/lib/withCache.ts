@@ -8,7 +8,7 @@ import { getCache } from "./service";
 
 type CacheOptions = {
   key: string;
-  ttl: number;
+  ttl: number; // TTL in milliseconds
 };
 
 /**
@@ -20,7 +20,7 @@ type CacheOptions = {
  *   () => fetchEnvironmentFromDB(environmentId),
  *   {
  *     key: `env:${environmentId}`,
- *     ttl: 3600 // 1 hour
+ *     ttl: 3600000 // 1 hour in milliseconds
  *   }
  * );
  * ```
@@ -42,7 +42,8 @@ export const withCache = <T>(fn: () => Promise<T>, options: CacheOptions): (() =
       // Cache miss - fetch fresh data
       const fresh = await fn();
 
-      // Cache the result - cache-manager handles serialization automatically
+      // Cache the result with proper TTL conversion
+      // cache-manager with Keyv expects TTL in milliseconds
       await cache.set(key, fresh, ttl);
 
       return fresh;

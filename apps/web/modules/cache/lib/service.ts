@@ -4,9 +4,6 @@ import { type Cache, createCache } from "cache-manager";
 import { Keyv } from "keyv";
 import { logger } from "@formbricks/logger";
 
-const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
-const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
-
 // Singleton state management
 interface CacheState {
   instance: Cache | null;
@@ -26,13 +23,10 @@ const state: CacheState = {
  * Creates a memory cache fallback
  */
 const createMemoryCache = (): Cache => {
-  const memoryKeyvStore = new Keyv({
-    ttl: CACHE_TTL_MS,
-  });
+  const memoryKeyvStore = new Keyv();
 
   return createCache({
     stores: [memoryKeyvStore],
-    ttl: CACHE_TTL_MS,
   });
 };
 
@@ -53,30 +47,42 @@ const initializeMemoryCache = (): Cache => {
  */
 const createRedisCache = async (redisUrl: string): Promise<Cache> => {
   try {
+    logger.info("Creating Redis store with URL", { redisUrl: redisUrl.replace(/:[^:@]*@/, ":***@") });
     const redisStore = new KeyvRedis(redisUrl);
 
     // Create cache with Redis store
     const redisKeyvStore = new Keyv({
       store: redisStore,
-      ttl: CACHE_TTL_MS,
     });
 
     const cache = createCache({
       stores: [redisKeyvStore],
-      ttl: CACHE_TTL_MS,
     });
 
-    // Test the connection by doing a simple operation
-    await cache.set("__health_check__", "test", 1000);
-    await cache.del("__health_check__");
+    // Test the connection with TTL to ensure Redis is working properly
+    const testKey = "__health_check_with_ttl__";
+    const testValue = { test: true, timestamp: Date.now() };
+    const testTTL = 5000; // 5 seconds
+
+    logger.info("Testing Redis connection with TTL test...");
+    await cache.set(testKey, testValue, testTTL);
+
+    const retrieved = await cache.get<typeof testValue>(testKey);
+    if (!retrieved || retrieved.test !== true) {
+      throw new Error("Redis cache test failed - value not retrieved correctly");
+    }
+
+    await cache.del(testKey);
+    logger.info("Redis TTL test passed successfully");
 
     state.isRedisConnected = true;
-    logger.info("Redis cache connected successfully");
+    logger.info("Redis cache connected and verified successfully");
     return cache;
   } catch (error) {
     state.isRedisConnected = false;
     logger.error("Redis connection failed", {
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
     });
     throw error;
   }
