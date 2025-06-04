@@ -1,8 +1,5 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { teamCache } from "@/lib/cache/team";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { projectCache } from "@/lib/project/cache";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -15,9 +12,6 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
 
   const userMembershipRole = invite.role;
   const { isOwner, isManager } = getAccessFlags(userMembershipRole);
-
-  const validTeamIds: string[] = [];
-  const validProjectIds: string[] = [];
 
   const isOwnerOrManager = isOwner || isManager;
   try {
@@ -32,22 +26,8 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
             role: isOwnerOrManager ? "admin" : "contributor",
           },
         });
-
-        validTeamIds.push(teamId);
-        validProjectIds.push(...team.projectTeams.map((pt) => pt.projectId));
       }
     }
-
-    for (const projectId of validProjectIds) {
-      projectCache.revalidate({ id: projectId });
-    }
-
-    for (const teamId of validTeamIds) {
-      teamCache.revalidate({ id: teamId });
-    }
-
-    teamCache.revalidate({ userId, organizationId: invite.organizationId });
-    projectCache.revalidate({ userId, organizationId: invite.organizationId });
   } catch (error) {
     logger.error(error, `Error creating team membership ${invite.organizationId} ${userId}`);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -59,32 +39,25 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
 };
 
 export const getTeamProjectIds = reactCache(
-  async (teamId: string, organizationId: string): Promise<{ projectTeams: { projectId: string }[] }> =>
-    cache(
-      async () => {
-        const team = await prisma.team.findUnique({
-          where: {
-            id: teamId,
-            organizationId,
-          },
-          select: {
-            projectTeams: {
-              select: {
-                projectId: true,
-              },
-            },
-          },
-        });
-
-        if (!team) {
-          throw new Error("Team not found");
-        }
-
-        return team;
+  async (teamId: string, organizationId: string): Promise<{ projectTeams: { projectId: string }[] }> => {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+        organizationId,
       },
-      [`getTeamProjectIds-${teamId}-${organizationId}`],
-      {
-        tags: [teamCache.tag.byId(teamId), teamCache.tag.byOrganizationId(organizationId)],
-      }
-    )()
+      select: {
+        projectTeams: {
+          select: {
+            projectId: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
+    return team;
+  }
 );

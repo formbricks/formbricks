@@ -48,16 +48,6 @@ vi.mock("react-hot-toast", () => ({
   error: vi.fn(),
 }));
 
-// mock next cache
-
-vi.mock("next/cache", () => ({
-  __esModule: true,
-  unstable_cache: (fn: (params: unknown[]) => {}) => {
-    return async (params: unknown[]) => fn(params);
-  },
-  revalidateTag: vi.fn(),
-}));
-
 // mock react cache
 const testCache = <T extends Function>(func: T) => func;
 

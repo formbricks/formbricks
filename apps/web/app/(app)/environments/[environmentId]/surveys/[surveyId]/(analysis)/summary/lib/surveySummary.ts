@@ -1,12 +1,8 @@
 import "server-only";
-import { cache } from "@/lib/cache";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
-import { displayCache } from "@/lib/display/cache";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { responseCache } from "@/lib/response/cache";
 import { buildWhereClause } from "@/lib/response/utils";
-import { surveyCache } from "@/lib/survey/cache";
 import { getSurvey } from "@/lib/survey/service";
 import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -905,68 +901,57 @@ export const getQuestionSummary = async (
 };
 
 export const getSurveySummary = reactCache(
-  async (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
+  async (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> => {
+    validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
-        try {
-          const survey = await getSurvey(surveyId);
-          if (!survey) {
-            throw new ResourceNotFoundError("Survey", surveyId);
-          }
-
-          const batchSize = 5000;
-          const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
-
-          // Use cursor-based pagination instead of count + offset to avoid expensive queries
-          const responses: TSurveySummaryResponse[] = [];
-          let cursor: string | undefined = undefined;
-          let hasMore = true;
-
-          while (hasMore) {
-            const batch = await getResponsesForSummary(surveyId, batchSize, 0, filterCriteria, cursor);
-            responses.push(...batch);
-
-            if (batch.length < batchSize) {
-              hasMore = false;
-            } else {
-              // Use the last response's ID as cursor for next batch
-              cursor = batch[batch.length - 1].id;
-            }
-          }
-
-          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
-
-          const displayCount = await getDisplayCountBySurveyId(surveyId, {
-            createdAt: filterCriteria?.createdAt,
-            ...(hasFilter && { responseIds }),
-          });
-
-          const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-          const [meta, questionWiseSummary] = await Promise.all([
-            getSurveySummaryMeta(responses, displayCount),
-            getQuestionSummary(survey, responses, dropOff),
-          ]);
-
-          return { meta, dropOff, summary: questionWiseSummary };
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
-      {
-        tags: [
-          surveyCache.tag.byId(surveyId),
-          responseCache.tag.bySurveyId(surveyId),
-          displayCache.tag.bySurveyId(surveyId),
-        ],
+    try {
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", surveyId);
       }
-    )()
+
+      const batchSize = 5000;
+      const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
+
+      // Use cursor-based pagination instead of count + offset to avoid expensive queries
+      const responses: TSurveySummaryResponse[] = [];
+      let cursor: string | undefined = undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        const batch = await getResponsesForSummary(surveyId, batchSize, 0, filterCriteria, cursor);
+        responses.push(...batch);
+
+        if (batch.length < batchSize) {
+          hasMore = false;
+        } else {
+          // Use the last response's ID as cursor for next batch
+          cursor = batch[batch.length - 1].id;
+        }
+      }
+
+      const responseIds = hasFilter ? responses.map((response) => response.id) : [];
+
+      const displayCount = await getDisplayCountBySurveyId(surveyId, {
+        createdAt: filterCriteria?.createdAt,
+        ...(hasFilter && { responseIds }),
+      });
+
+      const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
+      const [meta, questionWiseSummary] = await Promise.all([
+        getSurveySummaryMeta(responses, displayCount),
+        getQuestionSummary(survey, responses, dropOff),
+      ]);
+
+      return { meta, dropOff, summary: questionWiseSummary };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
 );
 
 export const getResponsesForSummary = reactCache(
@@ -976,94 +961,85 @@ export const getResponsesForSummary = reactCache(
     offset: number,
     filterCriteria?: TResponseFilterCriteria,
     cursor?: string
-  ): Promise<TSurveySummaryResponse[]> =>
-    cache(
-      async () => {
-        validateInputs(
-          [surveyId, ZId],
-          [limit, ZOptionalNumber],
-          [offset, ZOptionalNumber],
-          [filterCriteria, ZResponseFilterCriteria.optional()],
-          [cursor, z.string().cuid2().optional()]
-        );
+  ): Promise<TSurveySummaryResponse[]> => {
+    validateInputs(
+      [surveyId, ZId],
+      [limit, ZOptionalNumber],
+      [offset, ZOptionalNumber],
+      [filterCriteria, ZResponseFilterCriteria.optional()],
+      [cursor, z.string().cuid2().optional()]
+    );
 
-        const queryLimit = limit ?? RESPONSES_PER_PAGE;
-        const survey = await getSurvey(surveyId);
-        if (!survey) return [];
-        try {
-          const whereClause: Prisma.ResponseWhereInput = {
-            surveyId,
-            ...buildWhereClause(survey, filterCriteria),
-          };
+    const queryLimit = limit ?? RESPONSES_PER_PAGE;
+    const survey = await getSurvey(surveyId);
+    if (!survey) return [];
+    try {
+      const whereClause: Prisma.ResponseWhereInput = {
+        surveyId,
+        ...buildWhereClause(survey, filterCriteria),
+      };
 
-          // Add cursor condition for cursor-based pagination
-          if (cursor) {
-            whereClause.id = {
-              lt: cursor, // Get responses with ID less than cursor (for desc order)
-            };
-          }
+      // Add cursor condition for cursor-based pagination
+      if (cursor) {
+        whereClause.id = {
+          lt: cursor, // Get responses with ID less than cursor (for desc order)
+        };
+      }
 
-          const responses = await prisma.response.findMany({
-            where: whereClause,
+      const responses = await prisma.response.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          data: true,
+          updatedAt: true,
+          contact: {
             select: {
               id: true,
-              data: true,
-              updatedAt: true,
-              contact: {
-                select: {
-                  id: true,
-                  attributes: {
-                    select: { attributeKey: true, value: true },
-                  },
-                },
+              attributes: {
+                select: { attributeKey: true, value: true },
               },
-              contactAttributes: true,
-              language: true,
-              ttc: true,
-              finished: true,
             },
-            orderBy: [
-              {
-                createdAt: "desc",
-              },
-              {
-                id: "desc", // Secondary sort by ID for consistent pagination
-              },
-            ],
-            take: queryLimit,
-            skip: offset,
-          });
+          },
+          contactAttributes: true,
+          language: true,
+          ttc: true,
+          finished: true,
+        },
+        orderBy: [
+          {
+            createdAt: "desc",
+          },
+          {
+            id: "desc", // Secondary sort by ID for consistent pagination
+          },
+        ],
+        take: queryLimit,
+        skip: offset,
+      });
 
-          const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
-            responses.map((responsePrisma) => {
-              return {
-                ...responsePrisma,
-                contact: responsePrisma.contact
-                  ? {
-                      id: responsePrisma.contact.id as string,
-                      userId: responsePrisma.contact.attributes.find(
-                        (attribute) => attribute.attributeKey.key === "userId"
-                      )?.value as string,
-                    }
-                  : null,
-              };
-            })
-          );
+      const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
+        responses.map((responsePrisma) => {
+          return {
+            ...responsePrisma,
+            contact: responsePrisma.contact
+              ? {
+                  id: responsePrisma.contact.id as string,
+                  userId: responsePrisma.contact.attributes.find(
+                    (attribute) => attribute.attributeKey.key === "userId"
+                  )?.value as string,
+                }
+              : null,
+          };
+        })
+      );
 
-          return transformedResponses;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [
-        `getResponsesForSummary-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}-${cursor || ""}`,
-      ],
-      {
-        tags: [responseCache.tag.bySurveyId(surveyId)],
+      return transformedResponses;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+
+      throw error;
+    }
+  }
 );

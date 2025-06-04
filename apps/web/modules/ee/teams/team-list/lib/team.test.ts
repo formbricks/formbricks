@@ -1,6 +1,3 @@
-import { organizationCache } from "@/lib/cache/organization";
-import { teamCache } from "@/lib/cache/team";
-import { projectCache } from "@/lib/project/cache";
 import { TTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -32,16 +29,6 @@ vi.mock("@formbricks/database", () => ({
     environment: { findMany: vi.fn() },
   },
 }));
-vi.mock("@/lib/cache/team", () => ({
-  teamCache: {
-    tag: { byOrganizationId: vi.fn(), byUserId: vi.fn(), byId: vi.fn(), projectId: vi.fn() },
-    revalidate: vi.fn(),
-  },
-}));
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: { tag: { byId: vi.fn(), byOrganizationId: vi.fn() }, revalidate: vi.fn() },
-}));
-vi.mock("@/lib/cache/organization", () => ({ organizationCache: { revalidate: vi.fn() } }));
 
 const mockTeams = [
   { id: "t1", name: "Team 1" },
@@ -164,7 +151,6 @@ describe("createTeam", () => {
     });
     const result = await createTeam("org1", "Team 1");
     expect(result).toBe("t1");
-    expect(teamCache.revalidate).toHaveBeenCalledWith({ organizationId: "org1" });
   });
   test("throws InvalidInputError if team exists", async () => {
     vi.mocked(prisma.team.findFirst).mockResolvedValueOnce({ id: "t1" });
@@ -229,8 +215,6 @@ describe("deleteTeam", () => {
     vi.mocked(prisma.team.delete).mockResolvedValueOnce(mockTeam);
     const result = await deleteTeam("t1");
     expect(result).toBe(true);
-    expect(teamCache.revalidate).toHaveBeenCalledWith({ id: "t1", organizationId: "org1" });
-    expect(teamCache.revalidate).toHaveBeenCalledWith({ projectId: "p1" });
   });
   test("throws DatabaseError on Prisma error", async () => {
     vi.mocked(prisma.team.delete).mockRejectedValueOnce(
@@ -272,9 +256,6 @@ describe("updateTeamDetails", () => {
     vi.mocked(prisma.environment.findMany).mockResolvedValueOnce([{ id: "env1" }]);
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
-    expect(teamCache.revalidate).toHaveBeenCalled();
-    expect(projectCache.revalidate).toHaveBeenCalled();
-    expect(organizationCache.revalidate).toHaveBeenCalledWith({ environmentId: "env1" });
   });
   test("throws ResourceNotFoundError if team not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);

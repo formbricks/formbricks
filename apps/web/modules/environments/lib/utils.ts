@@ -10,7 +10,7 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { cache } from "react";
+import { cache as reactCache } from "react";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TEnvironmentAuth } from "../types/environment-auth";
 
@@ -20,7 +20,7 @@ import { TEnvironmentAuth } from "../types/environment-auth";
  * Usage:
  *   const { environment, project, isReadOnly } = await getEnvironmentAuth(params.environmentId);
  */
-export const getEnvironmentAuth = cache(async (environmentId: string): Promise<TEnvironmentAuth> => {
+export const getEnvironmentAuth = reactCache(async (environmentId: string): Promise<TEnvironmentAuth> => {
   const t = await getTranslate();
 
   // Perform all fetches in parallel

@@ -11,6 +11,7 @@ import {
   ZWebhookIdSchema,
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -35,7 +36,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "GET")) {

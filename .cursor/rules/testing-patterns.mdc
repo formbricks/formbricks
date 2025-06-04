@@ -5,6 +5,51 @@ alwaysApply: false
 ---
 # Testing Patterns & Best Practices
 
+## Running Tests
+
+### Test Commands
+From the **root directory** (formbricks/):
+- `npm test` - Run all tests across all packages (recommended for CI/full testing)
+- `npm run test:coverage` - Run all tests with coverage reports
+- `npm run test:e2e` - Run end-to-end tests with Playwright
+
+From the **apps/web directory** (apps/web/):
+- `npm run test` - Run only web app tests (fastest for development)
+- `npm run test:coverage` - Run web app tests with coverage
+- `npm run test -- <file-pattern>` - Run specific test files
+
+### Examples
+```bash
+# Run all tests from root (takes ~3 minutes, runs 790 test files with 5334+ tests)
+npm test
+
+# Run specific test file from apps/web (fastest for development)
+npm run test -- modules/cache/lib/service.test.ts
+
+# Run tests matching pattern from apps/web  
+npm run test -- modules/ee/license-check/lib/license.test.ts
+
+# Run with coverage from root
+npm run test:coverage
+
+# Run specific test with watch mode from apps/web (for development)
+npm run test -- --watch modules/cache/lib/service.test.ts
+
+# Run tests for a specific directory from apps/web
+npm run test -- modules/cache/
+```
+
+### Performance Tips
+- **For development**: Use `apps/web` directory commands to run only web app tests
+- **For CI/validation**: Use root directory commands to run all packages
+- **For specific features**: Use file patterns to target specific test files
+- **For debugging**: Use `--watch` mode for continuous testing during development
+
+### Test File Organization
+- Place test files in the **same directory** as the source file
+- Use `.test.ts` for utility/service tests (Node environment)
+- Use `.test.tsx` for React component tests (jsdom environment)
+
 ## Test File Naming & Environment
 
 ### File Extensions

@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { segmentCache } from "@/lib/cache/segment";
 import { Segment } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -10,18 +8,6 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     segment: {
       findUnique: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    tag: {
-      byId: vi.fn((id) => `segment-${id}`),
     },
   },
 }));
@@ -74,8 +60,6 @@ describe("getSegment", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockSegment);
     }
-
-    expect(segmentCache.tag.byId).toHaveBeenCalledWith(mockSegmentId);
   });
 
   test("should return not_found error when segment doesn't exist", async () => {
@@ -115,15 +99,5 @@ describe("getSegment", () => {
         details: [{ field: "segment", issue: "Database connection failed" }],
       });
     }
-  });
-
-  test("should use correct cache key", async () => {
-    vi.mocked(prisma.segment.findUnique).mockResolvedValueOnce(mockSegment);
-
-    await getSegment(mockSegmentId);
-
-    expect(cache).toHaveBeenCalledWith(expect.any(Function), [`contact-link-getSegment-${mockSegmentId}`], {
-      tags: [`segment-${mockSegmentId}`],
-    });
   });
 });

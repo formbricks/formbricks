@@ -51,7 +51,6 @@ const mockTable = {
 const mockDeleteRowsAction = vi.fn();
 const mockDeleteAction = vi.fn();
 const mockDownloadRowsAction = vi.fn();
-const mockRefreshContacts = vi.fn();
 const mockSetIsExpanded = vi.fn();
 const mockSetIsTableSettingsModalOpen = vi.fn();
 
@@ -63,8 +62,7 @@ const defaultProps = {
   deleteRowsAction: mockDeleteRowsAction,
   type: "response" as "response" | "contact",
   deleteAction: mockDeleteAction,
-  downloadRowAction: mockDownloadRowsAction,
-  refreshContacts: mockRefreshContacts,
+  downloadRowsAction: mockDownloadRowsAction,
 };
 
 describe("DataTableToolbar", () => {
@@ -90,25 +88,14 @@ describe("DataTableToolbar", () => {
     expect(screen.getByTestId("selected-row-settings")).toBeInTheDocument();
   });
 
-  test("renders refresh icon for contact type and calls refreshContacts on click", async () => {
-    mockRefreshContacts.mockResolvedValueOnce(undefined);
+  test("renders refresh icon for contact type and shows success toast on click", async () => {
     render(<DataTableToolbar {...defaultProps} type="contact" />);
     const refreshIconContainer = screen.getByTestId("refresh-ccw-icon").parentElement;
     expect(refreshIconContainer).toBeInTheDocument();
     await userEvent.click(refreshIconContainer!);
-    expect(mockRefreshContacts).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
       "environments.contacts.contacts_table_refresh_success"
     );
-  });
-
-  test("handles refreshContacts failure", async () => {
-    mockRefreshContacts.mockRejectedValueOnce(new Error("Refresh failed"));
-    render(<DataTableToolbar {...defaultProps} type="contact" />);
-    const refreshIconContainer = screen.getByTestId("refresh-ccw-icon").parentElement;
-    await userEvent.click(refreshIconContainer!);
-    expect(mockRefreshContacts).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(toast.error)).toHaveBeenCalledWith("environments.contacts.contacts_table_refresh_error");
   });
 
   test("does not render refresh icon for response type", () => {

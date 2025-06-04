@@ -10,6 +10,7 @@ import {
   updateResponse,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
@@ -44,7 +45,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
 
       const response = await getResponse(params.responseId);
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(response);

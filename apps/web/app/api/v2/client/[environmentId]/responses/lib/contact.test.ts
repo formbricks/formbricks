@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -12,8 +11,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-vi.mock("@/lib/cache");
 
 const contactId = "test-contact-id";
 const mockContact = {
@@ -30,12 +27,6 @@ const expectedContactAttributes: TContactAttributes = {
 };
 
 describe("getContact", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   test("should return contact with formatted attributes when found", async () => {
     vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
 
@@ -57,8 +48,6 @@ describe("getContact", () => {
       id: contactId,
       attributes: expectedContactAttributes,
     });
-    // Check if cache wrapper was called (though mocked to pass through)
-    expect(cache).toHaveBeenCalled();
   });
 
   test("should return null when contact is not found", async () => {
@@ -79,7 +68,5 @@ describe("getContact", () => {
       },
     });
     expect(result).toBeNull();
-    // Check if cache wrapper was called (though mocked to pass through)
-    expect(cache).toHaveBeenCalled();
   });
 });

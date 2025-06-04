@@ -10,6 +10,7 @@ import {
   ZContactAttributeKeyIdSchema,
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -30,7 +31,7 @@ export const GET = async (
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error);
+        return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "GET")) {

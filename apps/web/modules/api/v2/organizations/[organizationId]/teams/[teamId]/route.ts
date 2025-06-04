@@ -37,7 +37,7 @@ export const GET = async (
 
       const team = await getTeam(params!.organizationId, params!.teamId);
       if (!team.ok) {
-        return handleApiError(request, team.error);
+        return handleApiError(request, team.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(team);

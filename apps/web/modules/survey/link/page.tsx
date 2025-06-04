@@ -1,11 +1,11 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId } from "@/modules/survey/link/lib/response";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 
 interface LinkSurveyPageProps {
@@ -40,7 +40,9 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   }
 
   const isPreview = searchParams.preview === "true";
-  const survey = await getSurvey(params.surveyId);
+
+  // Use optimized survey data fetcher (includes all necessary data)
+  const survey = await getSurveyWithMetadata(params.surveyId);
   const suId = searchParams.suId;
 
   const isSingleUseSurvey = survey?.singleUse?.enabled;
@@ -67,12 +69,13 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   }
 
   let singleUseResponse;
-  if (isSingleUseSurvey) {
+  if (isSingleUseSurvey && singleUseId) {
     try {
-      singleUseResponse = singleUseId
-        ? ((await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined)
-        : undefined;
+      // Use optimized response fetcher with proper caching
+      const fetchResponseFn = getResponseBySingleUseId(survey.id, singleUseId);
+      singleUseResponse = await fetchResponseFn();
     } catch (error) {
+      logger.error("Error fetching single use response:", error);
       singleUseResponse = undefined;
     }
   }

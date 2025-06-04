@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -18,29 +16,22 @@ import {
 } from "../types/contact-attribute-keys";
 
 export const getContactAttributeKey = reactCache(
-  (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> =>
-    cache(
-      async () => {
-        try {
-          const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
-            where: {
-              id: contactAttributeKeyId,
-            },
-          });
+  async (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> => {
+    try {
+      const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
+        where: {
+          id: contactAttributeKeyId,
+        },
+      });
 
-          return contactAttributeKey;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getContactAttributeKey-attribute-keys-management-api-${contactAttributeKeyId}`],
-      {
-        tags: [contactAttributeKeyCache.tag.byId(contactAttributeKeyId)],
+      return contactAttributeKey;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+      throw error;
+    }
+  }
 );
 
 export const createContactAttributeKey = async (
@@ -76,12 +67,6 @@ export const createContactAttributeKey = async (
       },
     });
 
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
-    });
-
     return contactAttributeKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -101,12 +86,6 @@ export const deleteContactAttributeKey = async (
       where: {
         id: contactAttributeKeyId,
       },
-    });
-
-    contactAttributeKeyCache.revalidate({
-      id: deletedContactAttributeKey.id,
-      environmentId: deletedContactAttributeKey.environmentId,
-      key: deletedContactAttributeKey.key,
     });
 
     return deletedContactAttributeKey;
@@ -132,12 +111,6 @@ export const updateContactAttributeKey = async (
       data: {
         description: data.description,
       },
-    });
-
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
     });
 
     return contactAttributeKey;
