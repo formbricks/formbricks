@@ -154,10 +154,7 @@ const initializeCache = async (): Promise<Cache> => {
  * Detect if we're in a build environment
  */
 const isBuildTime = () => {
-  return (
-    process.argv.some((arg) => arg.includes("build")) ||
-    (process.argv.some((arg) => arg.includes("next")) && process.env.NODE_ENV === "production")
-  );
+  return process.argv.some((arg) => arg.includes("build"));
 };
 
 /**
