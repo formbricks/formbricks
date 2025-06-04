@@ -16,16 +16,19 @@ const mockCacheInstance = {
   del: vi.fn(),
 };
 
-const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
-const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
-
 describe("Cache Service", () => {
   let originalRedisUrl: string | undefined;
+  let originalNextRuntime: string | undefined;
 
   beforeEach(() => {
     originalRedisUrl = process.env.REDIS_URL;
+    originalNextRuntime = process.env.NEXT_RUNTIME;
+
+    // Ensure we're in runtime mode (not build time)
+    process.env.NEXT_RUNTIME = "nodejs";
+
     vi.resetAllMocks();
-    vi.resetModules(); // Crucial for re-running module initialization logic
+    vi.resetModules();
 
     // Setup default mock implementations
     vi.mocked(createCache).mockReturnValue(mockCacheInstance as any);
@@ -37,11 +40,13 @@ describe("Cache Service", () => {
 
     // Mock successful cache operations for Redis connection test
     mockCacheInstance.set.mockResolvedValue(undefined);
+    mockCacheInstance.get.mockResolvedValue({ test: true });
     mockCacheInstance.del.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     process.env.REDIS_URL = originalRedisUrl;
+    process.env.NEXT_RUNTIME = originalNextRuntime;
   });
 
   describe("Initialization and getCache", () => {
@@ -49,20 +54,16 @@ describe("Cache Service", () => {
       process.env.REDIS_URL = "redis://localhost:6379";
       const { getCache } = await import("./service");
 
-      // Call getCache to trigger async initialization
       const cache = await getCache();
 
       expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
       expect(Keyv).toHaveBeenCalledWith({
         store: expect.any(KeyvRedis),
-        ttl: CACHE_TTL_MS,
       });
       expect(createCache).toHaveBeenCalledWith({
         stores: [expect.any(Keyv)],
-        ttl: CACHE_TTL_MS,
       });
-      expect(logger.info).toHaveBeenCalledWith("Attempting to connect to Redis cache...");
-      expect(logger.info).toHaveBeenCalledWith("Redis cache connected successfully");
+      expect(logger.info).toHaveBeenCalledWith("Cache initialized with Redis");
       expect(cache).toBe(mockCacheInstance);
     });
 
@@ -71,21 +72,16 @@ describe("Cache Service", () => {
       const mockError = new Error("Connection refused");
 
       // Mock cache operations to fail for Redis connection test
-      mockCacheInstance.set.mockRejectedValueOnce(mockError);
+      mockCacheInstance.get.mockRejectedValueOnce(mockError);
 
       const { getCache } = await import("./service");
 
-      // Call getCache to trigger async initialization
       const cache = await getCache();
 
       expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
-      expect(logger.warn).toHaveBeenCalledWith(
-        {
-          error: "Connection refused",
-        },
-        "Failed to initialize Redis cache, falling back to memory cache"
-      );
-      expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
+      expect(logger.warn).toHaveBeenCalledWith("Redis connection failed, using memory cache", {
+        error: mockError,
+      });
       expect(cache).toBe(mockCacheInstance);
     });
 
@@ -93,18 +89,13 @@ describe("Cache Service", () => {
       delete process.env.REDIS_URL;
       const { getCache } = await import("./service");
 
-      // Call getCache to trigger async initialization
       const cache = await getCache();
 
       expect(KeyvRedis).not.toHaveBeenCalled();
-      expect(Keyv).toHaveBeenCalledWith({
-        ttl: CACHE_TTL_MS,
-      });
+      expect(Keyv).toHaveBeenCalledWith();
       expect(createCache).toHaveBeenCalledWith({
         stores: [expect.any(Keyv)],
-        ttl: CACHE_TTL_MS,
       });
-      // Fast path doesn't log - this is the optimized behavior
       expect(cache).toBe(mockCacheInstance);
     });
 
@@ -112,18 +103,13 @@ describe("Cache Service", () => {
       process.env.REDIS_URL = "";
       const { getCache } = await import("./service");
 
-      // Call getCache to trigger async initialization
       const cache = await getCache();
 
       expect(KeyvRedis).not.toHaveBeenCalled();
-      expect(Keyv).toHaveBeenCalledWith({
-        ttl: CACHE_TTL_MS,
-      });
+      expect(Keyv).toHaveBeenCalledWith();
       expect(createCache).toHaveBeenCalledWith({
         stores: [expect.any(Keyv)],
-        ttl: CACHE_TTL_MS,
       });
-      // Fast path doesn't log - this is the optimized behavior
       expect(cache).toBe(mockCacheInstance);
     });
 
@@ -138,6 +124,19 @@ describe("Cache Service", () => {
       expect(cache1).toBe(mockCacheInstance);
       // Should only initialize once
       expect(createCache).toHaveBeenCalledTimes(1);
+    });
+
+    test("should use memory cache during build time", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      delete process.env.NEXT_RUNTIME; // Simulate build time
+
+      const { getCache } = await import("./service");
+
+      const cache = await getCache();
+
+      expect(KeyvRedis).not.toHaveBeenCalled();
+      expect(Keyv).toHaveBeenCalledWith();
+      expect(cache).toBe(mockCacheInstance);
     });
 
     test("should provide cache health information", async () => {
