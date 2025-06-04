@@ -255,7 +255,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
         }),
         buildMultipleChoiceQuestion({
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: "templates.product_market_fit_superhuman_question_3_headline",
+          headline: t("templates.product_market_fit_superhuman_question_3_headline"),
           subheader: t("templates.product_market_fit_superhuman_question_3_subheader"),
           required: true,
           shuffleOption: "none",
