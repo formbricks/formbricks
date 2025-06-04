@@ -12,122 +12,114 @@ import { TSurvey } from "@formbricks/types/surveys/types";
  * Comprehensive survey data fetcher for link surveys
  * Combines all necessary data in a single optimized query
  */
-export const getSurveyWithMetadata = reactCache((surveyId: string) =>
-  withCache(
-    async () => {
-      try {
-        const survey = await prisma.survey.findUnique({
-          where: { id: surveyId },
+export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
+  try {
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      select: {
+        // Core survey fields
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        name: true,
+        type: true,
+        environmentId: true,
+        createdBy: true,
+        status: true,
+
+        // Survey configuration
+        welcomeCard: true,
+        questions: true,
+        endings: true,
+        hiddenFields: true,
+        variables: true,
+        displayOption: true,
+        recontactDays: true,
+        displayLimit: true,
+        autoClose: true,
+        runOnDate: true,
+        closeOnDate: true,
+        delay: true,
+        displayPercentage: true,
+        autoComplete: true,
+
+        // Authentication & access
+        isVerifyEmailEnabled: true,
+        isSingleResponsePerEmailEnabled: true,
+        redirectUrl: true,
+        pin: true,
+        resultShareKey: true,
+        isBackButtonHidden: true,
+
+        // Single use configuration
+        singleUse: true,
+
+        // Styling & branding
+        projectOverwrites: true,
+        styling: true,
+        surveyClosedMessage: true,
+        showLanguageSwitch: true,
+        recaptcha: true,
+
+        // Related data
+        languages: {
           select: {
-            // Core survey fields
-            id: true,
-            createdAt: true,
-            updatedAt: true,
-            name: true,
-            type: true,
-            environmentId: true,
-            createdBy: true,
-            status: true,
-
-            // Survey configuration
-            welcomeCard: true,
-            questions: true,
-            endings: true,
-            hiddenFields: true,
-            variables: true,
-            displayOption: true,
-            recontactDays: true,
-            displayLimit: true,
-            autoClose: true,
-            runOnDate: true,
-            closeOnDate: true,
-            delay: true,
-            displayPercentage: true,
-            autoComplete: true,
-
-            // Authentication & access
-            isVerifyEmailEnabled: true,
-            isSingleResponsePerEmailEnabled: true,
-            redirectUrl: true,
-            pin: true,
-            resultShareKey: true,
-            isBackButtonHidden: true,
-
-            // Single use configuration
-            singleUse: true,
-
-            // Styling & branding
-            projectOverwrites: true,
-            styling: true,
-            surveyClosedMessage: true,
-            showLanguageSwitch: true,
-            recaptcha: true,
-
-            // Related data
-            languages: {
+            default: true,
+            enabled: true,
+            language: {
               select: {
-                default: true,
-                enabled: true,
-                language: {
-                  select: {
-                    id: true,
-                    code: true,
-                    alias: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    projectId: true,
-                  },
-                },
+                id: true,
+                code: true,
+                alias: true,
+                createdAt: true,
+                updatedAt: true,
+                projectId: true,
               },
             },
-            triggers: {
-              select: {
-                actionClass: {
-                  select: {
-                    id: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    environmentId: true,
-                    name: true,
-                    description: true,
-                    type: true,
-                    key: true,
-                    noCodeConfig: true,
-                  },
-                },
-              },
-            },
-            segment: {
-              include: {
-                surveys: {
-                  select: {
-                    id: true,
-                  },
-                },
-              },
-            },
-            followUps: true,
           },
-        });
+        },
+        triggers: {
+          select: {
+            actionClass: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                environmentId: true,
+                name: true,
+                description: true,
+                type: true,
+                key: true,
+                noCodeConfig: true,
+              },
+            },
+          },
+        },
+        segment: {
+          include: {
+            surveys: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+        followUps: true,
+      },
+    });
 
-        if (!survey) {
-          throw new ResourceNotFoundError("Survey", surveyId);
-        }
-
-        return transformPrismaSurvey<TSurvey>(survey);
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    {
-      key: createCacheKey.survey.metadata(surveyId),
-      ttl: 60 * 60 * 1000, // 1 hour in milliseconds - surveys change infrequently
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
     }
-  )()
-);
+
+    return transformPrismaSurvey<TSurvey>(survey);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+});
 
 /**
  * Lightweight survey metadata for use in generateMetadata()
