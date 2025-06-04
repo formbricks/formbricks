@@ -78,6 +78,12 @@ describe("DeleteAccountModal", () => {
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
 
+    // Mock window.location.replace
+    Object.defineProperty(window, "location", {
+      writable: true,
+      value: { replace: vi.fn() },
+    });
+
     render(
       <DeleteAccountModal
         open={true}
@@ -98,9 +104,9 @@ describe("DeleteAccountModal", () => {
       expect(deleteUserAction).toHaveBeenCalled();
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
-        redirect: true,
-        callbackUrl: "/auth/login",
+        redirect: false, // Updated to match new implementation
       });
+      expect(window.location.replace).toHaveBeenCalledWith("/auth/login");
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
   });
@@ -133,8 +139,13 @@ describe("DeleteAccountModal", () => {
 
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
-      expect(mockSignOut).toHaveBeenCalledWith({ reason: "account_deletion", redirect: true });
-      expect(window.location.replace).toHaveBeenCalled();
+      expect(mockSignOut).toHaveBeenCalledWith({
+        reason: "account_deletion",
+        redirect: false, // Updated to match new implementation
+      });
+      expect(window.location.replace).toHaveBeenCalledWith(
+        "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2"
+      );
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
   });

@@ -38,19 +38,17 @@ export const DeleteAccountModal = ({
       setDeleting(true);
       await deleteUserAction();
 
-      // Sign out with account deletion reason
+      // Sign out with account deletion reason (no automatic redirect)
+      await signOutWithAudit({
+        reason: "account_deletion",
+        redirect: false, // Prevent NextAuth automatic redirect
+      });
+
+      // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        await signOutWithAudit({
-          reason: "account_deletion",
-          redirect: true,
-        });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        await signOutWithAudit({
-          reason: "account_deletion",
-          redirect: true,
-          callbackUrl: "/auth/login",
-        });
+        window.location.replace("/auth/login");
       }
     } catch (error) {
       toast.error("Something went wrong");
