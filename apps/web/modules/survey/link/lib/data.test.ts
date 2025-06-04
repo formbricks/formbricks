@@ -50,6 +50,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+// Mock React cache
+vi.mock("react", () => ({
+  cache: vi.fn((fn) => fn),
+}));
+
 describe("data", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -121,33 +126,28 @@ describe("data", () => {
 
     test("should fetch and transform survey data successfully", async () => {
       const surveyId = "survey-1";
-      const mockCacheFunction = vi.fn().mockResolvedValue(mockTransformedSurvey);
 
-      vi.mocked(createCacheKey.survey.metadata).mockReturnValue("cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
       const result = await getSurveyWithMetadata(surveyId);
 
       expect(result).toEqual(mockTransformedSurvey);
-      expect(createCacheKey.survey.metadata).toHaveBeenCalledWith(surveyId);
-      expect(withCache).toHaveBeenCalledWith(expect.any(Function), {
-        key: "cache-key",
-        ttl: 60 * 60 * 1000,
+      expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+        where: { id: surveyId },
+        select: expect.objectContaining({
+          id: true,
+          name: true,
+          type: true,
+        }),
       });
+      expect(transformPrismaSurvey).toHaveBeenCalledWith(mockSurveyData);
     });
 
     test("should throw ResourceNotFoundError when survey not found", async () => {
       const surveyId = "nonexistent-survey";
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
-        vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
-      });
 
-      vi.mocked(createCacheKey.survey.metadata).mockReturnValue("cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
       await expect(getSurveyWithMetadata(surveyId)).rejects.toThrow(ResourceNotFoundError);
       await expect(getSurveyWithMetadata(surveyId)).rejects.toThrow("Survey");
@@ -160,14 +160,7 @@ describe("data", () => {
         clientVersion: "5.0.0",
       });
 
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
-        vi.mocked(prisma.survey.findUnique).mockRejectedValue(prismaError);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
-      });
-
-      vi.mocked(createCacheKey.survey.metadata).mockReturnValue("cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
+      vi.mocked(prisma.survey.findUnique).mockRejectedValue(prismaError);
 
       await expect(getSurveyWithMetadata(surveyId)).rejects.toThrow(DatabaseError);
     });
@@ -176,14 +169,7 @@ describe("data", () => {
       const surveyId = "survey-1";
       const genericError = new Error("Generic error");
 
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
-        vi.mocked(prisma.survey.findUnique).mockRejectedValue(genericError);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
-      });
-
-      vi.mocked(createCacheKey.survey.metadata).mockReturnValue("cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
+      vi.mocked(prisma.survey.findUnique).mockRejectedValue(genericError);
 
       await expect(getSurveyWithMetadata(surveyId)).rejects.toThrow(genericError);
     });
@@ -205,10 +191,58 @@ describe("data", () => {
 
     test("should extract metadata from full survey", async () => {
       const surveyId = "survey-1";
-      const mockCacheFunction = vi.fn().mockResolvedValue(mockFullSurvey);
 
-      vi.mocked(createCacheKey.survey.metadata).mockReturnValue("cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
+      // Mock the survey data that getSurveyWithMetadata would return
+      const mockSurveyData = {
+        id: "survey-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Test Survey",
+        type: "link",
+        environmentId: "env-1",
+        createdBy: "user-1",
+        status: "inProgress",
+        styling: { primaryColor: "#000" },
+        // Add other required fields
+        welcomeCard: { enabled: true },
+        questions: [],
+        endings: [],
+        hiddenFields: {},
+        variables: [],
+        displayOption: "displayOnce",
+        recontactDays: null,
+        displayLimit: null,
+        autoClose: null,
+        runOnDate: null,
+        closeOnDate: null,
+        delay: 0,
+        displayPercentage: null,
+        autoComplete: null,
+        isVerifyEmailEnabled: false,
+        isSingleResponsePerEmailEnabled: false,
+        redirectUrl: null,
+        pin: null,
+        resultShareKey: null,
+        isBackButtonHidden: false,
+        singleUse: null,
+        projectOverwrites: null,
+        surveyClosedMessage: null,
+        showLanguageSwitch: null,
+        recaptcha: null,
+        languages: [],
+        triggers: [],
+        segment: null,
+        followUps: [],
+        thankYouCard: {
+          enabled: false,
+          headline: { default: "Thank you!" },
+          subheader: { default: "" },
+          buttonLabel: { default: "Close" },
+        },
+      };
+
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(transformPrismaSurvey).mockReturnValue(mockFullSurvey);
 
       const result = await getSurveyMetadata(surveyId);
 
@@ -416,7 +450,7 @@ describe("data", () => {
 
   describe("getOrganizationBilling", () => {
     const mockBilling = {
-      plan: "scale" as const,
+      plan: "pro" as const,
       stripeCustomerId: "cus_123",
       period: "monthly" as const,
       limits: {
