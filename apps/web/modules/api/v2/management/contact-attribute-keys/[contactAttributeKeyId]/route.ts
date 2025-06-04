@@ -66,7 +66,7 @@ export const PUT = async (
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error, auditLog);
+        return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "PUT")) {
         return handleApiError(
@@ -127,7 +127,7 @@ export const DELETE = async (
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error, auditLog);
+        return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "DELETE")) {
@@ -155,7 +155,7 @@ export const DELETE = async (
       const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
 
       if (!deletedContactAttributeKey.ok) {
-        return handleApiError(request, deletedContactAttributeKey.error, auditLog);
+        return handleApiError(request, deletedContactAttributeKey.error as ApiErrorResponseV2, auditLog);
       }
 
       if (auditLog) {

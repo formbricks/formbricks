@@ -12,6 +12,7 @@ import {
   ZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";

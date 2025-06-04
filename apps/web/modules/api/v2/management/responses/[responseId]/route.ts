@@ -148,13 +148,13 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const existingResponse = await getResponse(params.responseId);
 
       if (!existingResponse.ok) {
-        return handleApiError(request, existingResponse.error, auditLog);
+        return handleApiError(request, existingResponse.error as ApiErrorResponseV2, auditLog);
       }
 
       const questionsResponse = await getSurveyQuestions(existingResponse.data.surveyId);
 
       if (!questionsResponse.ok) {
-        return handleApiError(request, questionsResponse.error, auditLog);
+        return handleApiError(request, questionsResponse.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
@@ -193,7 +193,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const response = await updateResponse(params.responseId, body);
 
       if (!response.ok) {
-        return handleApiError(request, response.error, auditLog);
+        return handleApiError(request, response.error as ApiErrorResponseV2, auditLog);
       }
 
       if (auditLog) {

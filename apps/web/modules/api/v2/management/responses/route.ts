@@ -90,7 +90,7 @@ export const POST = async (request: Request) =>
 
       const surveyQuestions = await getSurveyQuestions(body.surveyId);
       if (!surveyQuestions.ok) {
-        return handleApiError(request, surveyQuestions.error, auditLog);
+        return handleApiError(request, surveyQuestions.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to check or we get a type error
       }
 
       if (!validateFileUploads(body.data, surveyQuestions.data.questions)) {

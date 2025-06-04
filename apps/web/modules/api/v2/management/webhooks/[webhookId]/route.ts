@@ -86,7 +86,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error, auditLog);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "PUT")) {
@@ -117,7 +117,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       const updatedWebhook = await updateWebhook(params.webhookId, body);
 
       if (!updatedWebhook.ok) {
-        return handleApiError(request, updatedWebhook.error, auditLog);
+        return handleApiError(request, updatedWebhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (auditLog) {
@@ -158,7 +158,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error, auditLog);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "DELETE")) {
@@ -175,7 +175,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       const deletedWebhook = await deleteWebhook(params.webhookId);
 
       if (!deletedWebhook.ok) {
-        return handleApiError(request, deletedWebhook.error, auditLog);
+        return handleApiError(request, deletedWebhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (auditLog) {
