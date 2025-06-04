@@ -80,10 +80,10 @@ describe("Cache Service", () => {
 
       expect(KeyvRedis).toHaveBeenCalledWith("redis://localhost:6379");
       expect(logger.warn).toHaveBeenCalledWith(
-        "Failed to initialize Redis cache, falling back to memory cache",
-        expect.objectContaining({
+        {
           error: "Connection refused",
-        })
+        },
+        "Failed to initialize Redis cache, falling back to memory cache"
       );
       expect(logger.info).toHaveBeenCalledWith("Cache service initialized with in-memory storage");
       expect(cache).toBe(mockCacheInstance);
