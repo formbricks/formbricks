@@ -9,7 +9,7 @@
     "go": "next dev -p 3000 --turbopack",
     "build": "next build",
     "build:dev": "next build",
-    "start": "next start",
+    "start": "dotenv -e ../../.env -- node .next/standalone/apps/web/server.js",
     "lint": "next lint",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
