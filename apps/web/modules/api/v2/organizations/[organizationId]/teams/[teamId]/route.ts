@@ -12,6 +12,7 @@ import {
   ZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { z } from "zod";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 
@@ -35,7 +36,7 @@ export const GET = async (
 
       const team = await getTeam(params!.organizationId, params!.teamId);
       if (!team.ok) {
-        return handleApiError(request, team.error);
+        return handleApiError(request, team.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(team);
@@ -63,7 +64,7 @@ export const DELETE = async (
       const team = await deleteTeam(params!.organizationId, params!.teamId);
 
       if (!team.ok) {
-        return handleApiError(request, team.error);
+        return handleApiError(request, team.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(team);
@@ -92,7 +93,7 @@ export const PUT = (
       const team = await updateTeam(params!.organizationId, params!.teamId, body!);
 
       if (!team.ok) {
-        return handleApiError(request, team.error);
+        return handleApiError(request, team.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(team);

@@ -1,8 +1,6 @@
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { cache } from "@/lib/cache";
-import { webhookCache } from "@/lib/cache/webhook";
 import { CRON_SECRET } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -51,22 +49,17 @@ export const POST = async (request: Request) => {
   }
 
   // Fetch webhooks
-  const getWebhooksForPipeline = cache(
-    async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
-      const webhooks = await prisma.webhook.findMany({
-        where: {
-          environmentId,
-          triggers: { has: event },
-          OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
-        },
-      });
-      return webhooks;
-    },
-    [`getWebhooksForPipeline-${environmentId}-${event}-${surveyId}`],
-    {
-      tags: [webhookCache.tag.byEnvironmentId(environmentId)],
-    }
-  );
+  const getWebhooksForPipeline = async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
+    const webhooks = await prisma.webhook.findMany({
+      where: {
+        environmentId,
+        triggers: { has: event },
+        OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
+      },
+    });
+    return webhooks;
+  };
+
   const webhooks: Webhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
   // Prepare webhook and email promises
 

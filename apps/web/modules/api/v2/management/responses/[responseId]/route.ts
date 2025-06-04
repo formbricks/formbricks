@@ -10,6 +10,7 @@ import {
   updateResponse,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
@@ -44,7 +45,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
 
       const response = await getResponse(params.responseId);
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(response);
@@ -82,7 +83,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
       const response = await deleteResponse(params.responseId);
 
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(response);
@@ -121,13 +122,13 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const existingResponse = await getResponse(params.responseId);
 
       if (!existingResponse.ok) {
-        return handleApiError(request, existingResponse.error);
+        return handleApiError(request, existingResponse.error as ApiErrorResponseV2);
       }
 
       const questionsResponse = await getSurveyQuestions(existingResponse.data.surveyId);
 
       if (!questionsResponse.ok) {
-        return handleApiError(request, questionsResponse.error);
+        return handleApiError(request, questionsResponse.error as ApiErrorResponseV2);
       }
 
       if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
@@ -162,7 +163,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const response = await updateResponse(params.responseId, body);
 
       if (!response.ok) {
-        return handleApiError(request, response.error);
+        return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
       return responses.successResponse(response);

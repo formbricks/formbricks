@@ -1,7 +1,6 @@
 "use server";
 
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
-import { cache } from "@/lib/cache";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -104,31 +103,24 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
     return response;
   });
 
-const getLatestStableFbRelease = async (): Promise<string | null> =>
-  cache(
-    async () => {
-      try {
-        const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
-        const releases = await res.json();
+const getLatestStableFbRelease = async (): Promise<string | null> => {
+  try {
+    const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
+    const releases = await res.json();
 
-        if (Array.isArray(releases)) {
-          const latestStableReleaseTag = releases.filter((release) => !release.prerelease)?.[0]
-            ?.tag_name as string;
-          if (latestStableReleaseTag) {
-            return latestStableReleaseTag;
-          }
-        }
-
-        return null;
-      } catch (err) {
-        return null;
+    if (Array.isArray(releases)) {
+      const latestStableReleaseTag = releases.filter((release) => !release.prerelease)?.[0]
+        ?.tag_name as string;
+      if (latestStableReleaseTag) {
+        return latestStableReleaseTag;
       }
-    },
-    ["latest-fb-release"],
-    {
-      revalidate: 60 * 60 * 24, // 24 hours
     }
-  )();
+
+    return null;
+  } catch (err) {
+    return null;
+  }
+};
 
 export const getLatestStableFbReleaseAction = actionClient.action(async () => {
   return await getLatestStableFbRelease();

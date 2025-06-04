@@ -4,16 +4,6 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getIsEmailUnique, verifyUserPassword } from "./user";
 
-// Mock dependencies
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    tag: {
-      byId: vi.fn((id) => `user-${id}-tag`),
-      byEmail: vi.fn((email) => `user-email-${email}-tag`),
-    },
-  },
-}));
-
 vi.mock("@/modules/auth/lib/utils", () => ({
   verifyPassword: vi.fn(),
 }));
@@ -25,9 +15,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-// reactCache (from "react") and unstable_cache (from "next/cache") are mocked in vitestSetup.ts
-// to be pass-through, so the inner logic of cached functions is tested.
 
 const mockPrismaUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockVerifyPasswordUtil = vi.mocked(mockVerifyPasswordImported);

@@ -12,14 +12,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: {
-    tag: {
-      byEnvironmentId: vi.fn((environmentId) => `contactAttributes-${environmentId}`),
-    },
-  },
-}));
-
 const mockEnvironmentId1 = "testEnvId1";
 const mockEnvironmentId2 = "testEnvId2";
 const mockEnvironmentIds = [mockEnvironmentId1, mockEnvironmentId2];

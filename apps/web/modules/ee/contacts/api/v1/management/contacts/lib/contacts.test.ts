@@ -1,17 +1,8 @@
-import { contactCache } from "@/lib/cache/contact";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./contacts";
-
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    tag: {
-      byEnvironmentId: vi.fn((id) => `contact-environment-${id}`),
-    },
-  },
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -64,8 +55,6 @@ describe("getContacts", () => {
       where: { environmentId: { in: mockEnvironmentIds } },
     });
     expect(result).toEqual(mockContacts);
-    expect(contactCache.tag.byEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId1);
-    expect(contactCache.tag.byEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId2);
   });
 
   test("should throw DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -91,7 +80,7 @@ describe("getContacts", () => {
     });
   });
 
-  test("should use cache with correct tags", async () => {
+  test("should get contacts", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
 
     await getContacts(mockEnvironmentIds);

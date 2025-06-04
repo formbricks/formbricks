@@ -1,12 +1,9 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { getContactAttributeKeysQuery } from "@/modules/api/v2/management/contact-attribute-keys/lib/utils";
 import {
   TContactAttributeKeyInput,
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
@@ -15,36 +12,27 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[], params: TGetContactAttributeKeysFilter) =>
-    cache(
-      async (): Promise<Result<ApiResponseWithMeta<ContactAttributeKey[]>, ApiErrorResponseV2>> => {
-        try {
-          const query = getContactAttributeKeysQuery(environmentIds, params);
+  async (environmentIds: string[], params: TGetContactAttributeKeysFilter) => {
+    try {
+      const query = getContactAttributeKeysQuery(environmentIds, params);
 
-          const [keys, count] = await prisma.$transaction([
-            prisma.contactAttributeKey.findMany({
-              ...query,
-            }),
-            prisma.contactAttributeKey.count({
-              where: query.where,
-            }),
-          ]);
+      const [keys, count] = await prisma.$transaction([
+        prisma.contactAttributeKey.findMany({
+          ...query,
+        }),
+        prisma.contactAttributeKey.count({
+          where: query.where,
+        }),
+      ]);
 
-          return ok({ data: keys, meta: { total: count, limit: params.limit, offset: params.skip } });
-        } catch (error) {
-          return err({
-            type: "internal_server_error",
-            details: [{ field: "contactAttributeKeys", issue: error.message }],
-          });
-        }
-      },
-      [`management-getContactAttributeKeys-${environmentIds.join(",")}-${JSON.stringify(params)}`],
-      {
-        tags: environmentIds.map((environmentId) =>
-          contactAttributeKeyCache.tag.byEnvironmentId(environmentId)
-        ),
-      }
-    )()
+      return ok({ data: keys, meta: { total: count, limit: params.limit, offset: params.skip } });
+    } catch (error) {
+      return err({
+        type: "internal_server_error",
+        details: [{ field: "contactAttributeKeys", issue: error.message }],
+      });
+    }
+  }
 );
 
 export const createContactAttributeKey = async (
@@ -66,11 +54,6 @@ export const createContactAttributeKey = async (
 
     const createdContactAttributeKey = await prisma.contactAttributeKey.create({
       data: prismaData,
-    });
-
-    contactAttributeKeyCache.revalidate({
-      environmentId: createdContactAttributeKey.environmentId,
-      key: createdContactAttributeKey.key,
     });
 
     return ok(createdContactAttributeKey);

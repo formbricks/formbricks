@@ -1,4 +1,3 @@
-import { inviteCache } from "@/lib/cache/invite";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { TInvitee } from "@/modules/setup/organization/[organizationId]/invite/types/invites";
 import { Invite, Prisma } from "@prisma/client";
@@ -16,12 +15,6 @@ vi.mock("@formbricks/database", () => ({
     user: {
       findUnique: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/invite", () => ({
-  inviteCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -75,10 +68,6 @@ describe("inviteUser", () => {
         }),
       })
     );
-    expect(inviteCache.revalidate).toHaveBeenCalledWith({
-      id: mockInvite.id,
-      organizationId: mockInvite.organizationId,
-    });
     expect(result).toBe(mockInvite.id);
   });
 
@@ -93,7 +82,6 @@ describe("inviteUser", () => {
     });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
     expect(prisma.invite.create).not.toHaveBeenCalled();
-    expect(inviteCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw InvalidInputError if user is already a member", async () => {
@@ -111,7 +99,6 @@ describe("inviteUser", () => {
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: invitee.email } });
     expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith(mockUser.id, organizationId);
     expect(prisma.invite.create).not.toHaveBeenCalled();
-    expect(inviteCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should create an invite successfully if user exists but is not a member of the organization", async () => {
@@ -147,10 +134,6 @@ describe("inviteUser", () => {
         }),
       })
     );
-    expect(inviteCache.revalidate).toHaveBeenCalledWith({
-      id: mockInvite.id,
-      organizationId: mockInvite.organizationId,
-    });
     expect(result).toBe(mockInvite.id);
   });
 
@@ -170,7 +153,6 @@ describe("inviteUser", () => {
     });
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: invitee.email } });
     expect(prisma.invite.create).toHaveBeenCalled();
-    expect(inviteCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw generic error if an unknown error occurs", async () => {
@@ -187,6 +169,5 @@ describe("inviteUser", () => {
     });
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: invitee.email } });
     expect(prisma.invite.create).toHaveBeenCalled();
-    expect(inviteCache.revalidate).not.toHaveBeenCalled();
   });
 });

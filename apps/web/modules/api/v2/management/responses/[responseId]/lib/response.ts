@@ -1,6 +1,3 @@
-import { cache } from "@/lib/cache";
-import { responseCache } from "@/lib/response/cache";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
@@ -14,34 +11,26 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getResponse = reactCache(async (responseId: string) =>
-  cache(
-    async (): Promise<Result<Response, ApiErrorResponseV2>> => {
-      try {
-        const responsePrisma = await prisma.response.findUnique({
-          where: {
-            id: responseId,
-          },
-        });
+export const getResponse = reactCache(async (responseId: string) => {
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+    });
 
-        if (!responsePrisma) {
-          return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
-        }
-
-        return ok(responsePrisma);
-      } catch (error) {
-        return err({
-          type: "internal_server_error",
-          details: [{ field: "response", issue: error.message }],
-        });
-      }
-    },
-    [`management-getResponse-${responseId}`],
-    {
-      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+    if (!responsePrisma) {
+      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
     }
-  )()
-);
+
+    return ok(responsePrisma);
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "response", issue: error.message }],
+    });
+  }
+});
 
 export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
@@ -60,20 +49,10 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     const surveyQuestionsResult = await getSurveyQuestions(deletedResponse.surveyId);
 
     if (!surveyQuestionsResult.ok) {
-      return surveyQuestionsResult;
+      return { ok: false, error: surveyQuestionsResult.error as ApiErrorResponseV2 };
     }
 
     await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
-
-    responseCache.revalidate({
-      environmentId: surveyQuestionsResult.data.environmentId,
-      id: deletedResponse.id,
-      surveyId: deletedResponse.surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: deletedResponse.id,
-    });
 
     return ok(deletedResponse);
   } catch (error) {
@@ -106,16 +85,6 @@ export const updateResponse = async (
         id: responseId,
       },
       data: responseInput,
-    });
-
-    responseCache.revalidate({
-      id: updatedResponse.id,
-      surveyId: updatedResponse.surveyId,
-      ...(updatedResponse.singleUseId ? { singleUseId: updatedResponse.singleUseId } : {}),
-    });
-
-    responseNoteCache.revalidate({
-      responseId: updatedResponse.id,
     });
 
     return ok(updatedResponse);

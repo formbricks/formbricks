@@ -1,13 +1,7 @@
-import { cache } from "@/lib/cache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
-
-// Mock dependencies
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
 
 vi.mock("../segments", () => ({
   getSegment: vi.fn(),
@@ -366,16 +360,35 @@ describe("segmentFilterToPrismaQuery", () => {
 
   test("handle errors and rethrow them", async () => {
     const error = new Error("Test error");
+    // Test with a segment filter that will call getSegment and throw
+    const filters: TBaseFilters = [
+      {
+        id: "filter_1",
+        connector: null,
+        resource: {
+          id: "segment_1",
+          root: {
+            type: "segment" as const,
+            segmentId: "failing-segment-id",
+          },
+          value: "",
+          qualifier: {
+            operator: "userIsIn",
+          },
+        },
+      },
+    ];
 
-    vi.mocked(cache).mockImplementationOnce(() => {
-      throw error;
-    });
+    // Mock getSegment to throw an error
+    vi.mocked(getSegment).mockRejectedValueOnce(error);
 
-    const filters: TBaseFilters = [];
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
 
-    await expect(segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId)).rejects.toThrow(
-      "Test error"
-    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect((result.error as any).type).toBe("bad_request");
+      expect((result.error as any).message).toBe("Failed to convert segment filters to Prisma query");
+    }
   });
 
   test("generate a where clause for a segment filter", async () => {
