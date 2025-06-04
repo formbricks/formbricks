@@ -4,7 +4,7 @@ import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { compare, hash } from "bcryptjs";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 
 export const hashPassword = async (password: string) => {
@@ -191,29 +191,28 @@ const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes
 const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
 
 /**
- * Rate limiting for authentication audit logs to prevent log spam during brute force attacks.
+ * Rate limiting decision function for authentication audit logs.
  * Uses Redis for distributed rate limiting across Kubernetes pods.
  *
- * **How it works:**
- * - Always logs successful authentications (no rate limiting for successes)
- * - For failures: logs first 3 attempts per identifier within a 5-minute window
- * - After 3 failures: only logs every 10th attempt OR after 1+ minute gap
- * - Resets counter every 5 minutes to allow fresh logging cycles
+ * **What this function does:**
+ * - Returns true/false to indicate whether an auth attempt should be logged
+ * - Always returns true for successful authentications (no rate limiting)
+ * - For failures: allows first 3 attempts per identifier within 5-minute window
+ * - After 3 failures: allows every 10th attempt OR after 1+ minute gap
  * - Uses hashed identifiers to protect PII while enabling tracking
- * - Fails closed if Redis is unavailable (does not log)
+ * - Returns false if Redis is unavailable (fail closed)
  *
  * **Use cases:**
- * - Prevents log flooding during brute force attacks
- * - Maintains security visibility for legitimate failed login attempts
- * - Preserves complete audit trail for successful authentications
- * - Protects user PII while allowing pattern detection
- * - Provides consistent rate limiting across Kubernetes pods
+ * - Gate authentication failure logging to prevent spam
+ * - Provide consistent rate limiting decisions across Kubernetes pods
+ * - Protect user PII through identifier hashing
  *
- * **Example scenarios:**
- * - Normal user (1-2 failures): All attempts logged
- * - Brute force attack (100+ failures): First 3 logged, then every 10th
- * - Mixed success/failure: All successes + throttled failures
- * - Redis unavailable: All attempts logged (fail closed)
+ * **Example usage:**
+ * ```typescript
+ * if (await shouldLogAuthFailure(user.email)) {
+ *   logAuthAttempt("invalid_password", "credentials", "password", user.id, user.email);
+ * }
+ * ```
  *
  * @param identifier - Unique identifier for rate limiting (email, token, etc.) - will be hashed
  * @param isSuccess - Whether this is a successful authentication (defaults to false)
@@ -238,7 +237,7 @@ export const shouldLogAuthFailure = async (
       // Remove expired entries and count recent failures
       multi.zremrangebyscore(rateLimitKey, 0, windowStart);
       multi.zcard(rateLimitKey);
-      multi.zadd(rateLimitKey, now, `${now}:${Math.random()}`);
+      multi.zadd(rateLimitKey, now, `${now}:${randomUUID()}`);
       multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
 
       const results = await multi.exec();

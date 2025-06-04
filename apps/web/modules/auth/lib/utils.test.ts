@@ -43,7 +43,7 @@ vi.mock("@/lib/constants", () => ({
 
 // Mock Redis client
 vi.mock("@/lib/redis", () => ({
-  default: null, // Simulate Redis not available for tests (uses in-memory fallback)
+  default: null, // Intentionally simulate Redis unavailability to test fail-closed security behavior
 }));
 
 describe("Auth Utils", () => {
@@ -113,20 +113,23 @@ describe("Auth Utils", () => {
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
     });
 
-    test("should reject all failures when Redis is not available", async () => {
+    test("should implement fail-closed behavior when Redis is unavailable", async () => {
       const email = "rate-limit-test@example.com";
 
-      // Since Redis is mocked as null, should not allow logging (fail closed)
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 1
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 2
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 3
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 4
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 5
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 6
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 7
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 8
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 9
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 10
+      // When Redis is unavailable (mocked as null), the system fails closed for security.
+      // This prevents authentication failure logging when we cannot enforce rate limiting,
+      // ensuring consistent security posture across distributed systems.
+      // All authentication failure attempts should return false (do not log).
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 1st failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 2nd failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 3rd failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 4th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 5th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 6th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 7th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 8th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 9th failure - blocked
+      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 10th failure - blocked
     });
   });
 
