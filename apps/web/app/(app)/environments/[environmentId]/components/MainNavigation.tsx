@@ -397,7 +397,7 @@ export const MainNavigation = ({
                         redirect: false,
                         callbackUrl: "/auth/login",
                       });
-                      router.push(route?.url || "/auth/login");
+                      router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}

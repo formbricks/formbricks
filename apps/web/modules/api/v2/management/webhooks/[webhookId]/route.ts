@@ -117,7 +117,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       const updatedWebhook = await updateWebhook(params.webhookId, body);
 
       if (!updatedWebhook.ok) {
-        return handleApiError(request, updatedWebhook.error as ApiErrorResponseV2, auditLog);
+        return handleApiError(request, updatedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {
@@ -175,7 +175,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       const deletedWebhook = await deleteWebhook(params.webhookId);
 
       if (!deletedWebhook.ok) {
-        return handleApiError(request, deletedWebhook.error as ApiErrorResponseV2, auditLog);
+        return handleApiError(request, deletedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {

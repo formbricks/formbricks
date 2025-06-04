@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, _req) {
         // Use email for rate limiting when available, fall back to "unknown_user" for credential validation
-        const identifier = credentials?.email || "unknown_user";
+        const identifier = credentials?.email || "unknown_user"; // NOSONAR // We want to check for empty strings
 
         if (!credentials) {
           if (shouldLogAuthFailure("no_credentials")) {
@@ -187,11 +187,14 @@ export const authOptions: NextAuthOptions = {
           logTwoFactorAttempt(true, "totp", user.id, user.email);
         }
 
-        const authMethod = user.twoFactorEnabled
-          ? credentials.backupCode
-            ? "password_and_backup_code"
-            : "password_and_totp"
-          : "password_only";
+        let authMethod;
+        if (!user.twoFactorEnabled) {
+          authMethod = "password_only";
+        } else if (credentials.backupCode) {
+          authMethod = "password_and_backup_code";
+        } else {
+          authMethod = "password_and_totp";
+        }
 
         logAuthSuccess("authenticationSucceeded", "credentials", authMethod, user.id, user.email);
 

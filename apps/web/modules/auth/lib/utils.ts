@@ -51,7 +51,7 @@ export const logAuthEvent = (
         component: "authentication",
         action,
         status,
-        ...(additionalData.tags || {}),
+        ...(additionalData.tags ?? {}),
       },
       extra: {
         userId: auditActorId,
