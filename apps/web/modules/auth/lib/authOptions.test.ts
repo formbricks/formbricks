@@ -8,8 +8,31 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+// Mock constants that this test needs
+vi.mock("@/lib/constants", () => ({
+  EMAIL_VERIFICATION_DISABLED: false,
+  SESSION_MAX_AGE: 86400,
+  NEXTAUTH_SECRET: "test-secret",
+  WEBAPP_URL: "http://localhost:3000",
+  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
+  REDIS_URL: undefined,
+  AUDIT_LOG_ENABLED: false,
+  AUDIT_LOG_GET_USER_IP: false,
+  ENTERPRISE_LICENSE_KEY: undefined,
+  SENTRY_DSN: undefined,
+  BREVO_API_KEY: undefined,
+}));
+
 // Mock next/headers
 vi.mock("next/headers", () => ({
+  headers: () => ({
+    get: () => null,
+    has: () => false,
+    keys: () => [],
+    values: () => [],
+    entries: () => [],
+    forEach: () => {},
+  }),
   cookies: () => ({
     get: (name: string) => {
       if (name === "next-auth.callback-url") {

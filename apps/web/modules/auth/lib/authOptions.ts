@@ -117,7 +117,15 @@ export const authOptions: NextAuthOptions = {
             throw new Error("No backup codes found");
           }
 
-          const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
+          let backupCodes;
+
+          try {
+            backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
+          } catch (e) {
+            logger.error(e, "Error in CredentialsProvider authorize");
+            logTwoFactorAttempt(false, "backup_code", user.id, user.email, "invalid_backup_codes");
+            throw new Error("Invalid backup codes");
+          }
 
           // check if user-supplied code matches one
           const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));

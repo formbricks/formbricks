@@ -41,7 +41,6 @@ export const ZAuditActions = z.enum([
   "subscriptionUpdated",
   "twoFactorVerified",
   "emailVerified",
-  "sessionChecked",
   "jwtTokenCreated",
   "authenticationAttempted",
   "authenticationSucceeded",
@@ -49,6 +48,7 @@ export const ZAuditActions = z.enum([
   "twoFactorAttempted",
   "twoFactorRequired",
   "emailVerificationAttempted",
+  "userSignedOut",
 ]);
 export const ZActor = z.enum(["user", "api"]);
 export const ZAuditStatuses = z.enum(["success", "failure"]);

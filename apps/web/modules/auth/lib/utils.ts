@@ -258,53 +258,26 @@ export const shouldLogAuthFailure = (identifier: string, isSuccess: boolean = fa
 };
 
 /**
- * Creates an aggregated audit log entry for high-volume authentication failures.
- * Used to provide summary visibility when many failed attempts have been throttled.
+ * Logs a user sign out event for audit compliance.
  *
- * @param identifier - The identifier (email/token) that had multiple failures
- * @param failureCount - Total number of failures in the time window
- * @param windowStart - Timestamp when the failure window started
+ * @param userId - The ID of the user signing out
+ * @param userEmail - The email of the user signing out
+ * @param context - Additional context about the sign out (reason, redirect URL, etc.)
  */
-export const logAggregatedFailures = (identifier: string, failureCount: number, windowStart: number) => {
-  if (failureCount > AGGREGATION_THRESHOLD) {
-    // Log aggregated failures to Sentry for security monitoring
-    if (SENTRY_DSN && IS_PRODUCTION) {
-      const error = new Error(`Aggregated authentication failures detected`);
-      Sentry.captureException(error, {
-        tags: {
-          component: "authentication",
-          action: "authenticationAttempted",
-          status: "failure",
-          security_event: "aggregated_failures",
-        },
-        extra: {
-          aggregatedCount: failureCount,
-          timeWindow: `${RATE_LIMIT_WINDOW / 1000}s`,
-          windowStart: new Date(windowStart).toISOString(),
-          failureReason: "aggregated_failures",
-          provider: "credentials",
-          authMethod: "password",
-        },
-      });
-    }
-
-    queueAuditEventBackground({
-      action: "authenticationAttempted",
-      targetType: "user",
-      userId: UNKNOWN_DATA,
-      targetId: UNKNOWN_DATA,
-      organizationId: UNKNOWN_DATA,
-      status: "failure",
-      userType: "user",
-      newObject: {
-        failureReason: "aggregated_failures",
-        provider: "credentials",
-        authMethod: "password",
-        email: identifier,
-        aggregatedCount: failureCount,
-        timeWindow: `${RATE_LIMIT_WINDOW / 1000}s`,
-        windowStart: new Date(windowStart).toISOString(),
-      },
-    });
+export const logSignOut = (
+  userId: string,
+  userEmail: string,
+  context?: {
+    reason?: "user_initiated" | "account_deletion" | "email_change" | "session_timeout" | "forced_logout";
+    redirectUrl?: string;
+    organizationId?: string;
   }
+) => {
+  logAuthEvent("userSignedOut", "success", userId, userEmail, {
+    provider: "session",
+    authMethod: "sign_out",
+    reason: context?.reason || "user_initiated", // NOSONAR // We want to check for empty strings
+    redirectUrl: context?.redirectUrl,
+    organizationId: context?.organizationId,
+  });
 };

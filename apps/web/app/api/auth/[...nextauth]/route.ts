@@ -70,23 +70,6 @@ const handler = async (req: Request, ctx: any) => {
           }
         }
 
-        // Audit session creation/access
-        if (params.session?.user?.id) {
-          const status: TAuditStatus = error ? "failure" : "success";
-          const auditLog = {
-            action: "sessionChecked" as const,
-            targetType: "user" as const,
-            userId: params.session.user.id,
-            targetId: params.session.user.id,
-            organizationId: UNKNOWN_DATA,
-            status,
-            userType: "user" as const,
-            ...(error ? { eventId } : {}),
-          };
-
-          queueAuditEventBackground(auditLog);
-        }
-
         if (error) throw error;
         return result;
       },

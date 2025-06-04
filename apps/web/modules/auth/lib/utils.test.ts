@@ -1,4 +1,5 @@
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -8,6 +9,7 @@ import {
   logAuthEvent,
   logAuthSuccess,
   logEmailVerificationAttempt,
+  logSignOut,
   logTwoFactorAttempt,
   shouldLogAuthFailure,
   verifyPassword,
@@ -22,7 +24,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 vi.mock("crypto", () => ({
   createHash: vi.fn(() => ({
     update: vi.fn(() => ({
-      digest: vi.fn(() => "a".repeat(64)), // Mock 64-char hex string
+      digest: vi.fn(() => "a".repeat(32)), // Mock 64-char hex string
     })),
   })),
 }));
@@ -259,21 +261,71 @@ describe("Auth Utils", () => {
     });
 
     test("should log failed email verification", () => {
-      logEmailVerificationAttempt(false, "invalid_token", "unknown", undefined, {
+      logEmailVerificationAttempt(false, "invalid_token", "user_123", "user@example.com", {
         tokenProvided: true,
       });
 
-      expect(queueAuditEventBackground).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: "emailVerificationAttempted",
-          status: "failure",
-          userId: "unknown",
-          newObject: expect.objectContaining({
-            failureReason: "invalid_token",
-            tokenProvided: true,
-          }),
-        })
-      );
+      expect(queueAuditEventBackground).toHaveBeenCalledWith({
+        action: "emailVerificationAttempted",
+        targetType: "user",
+        userId: "user_123",
+        userType: "user",
+        targetId: "user_123",
+        organizationId: UNKNOWN_DATA,
+        status: "failure",
+        newObject: {
+          failureReason: "invalid_token",
+          provider: "token",
+          authMethod: "email_verification",
+          tokenProvided: true,
+        },
+      });
+    });
+
+    test("should log user sign out event", () => {
+      logSignOut("user_123", "user@example.com", {
+        reason: "user_initiated",
+        redirectUrl: "/auth/login",
+        organizationId: "org_123",
+      });
+
+      expect(queueAuditEventBackground).toHaveBeenCalledWith({
+        action: "userSignedOut",
+        targetType: "user",
+        userId: "user_123",
+        userType: "user",
+        targetId: "user_123",
+        organizationId: UNKNOWN_DATA,
+        status: "success",
+        newObject: {
+          provider: "session",
+          authMethod: "sign_out",
+          reason: "user_initiated",
+          redirectUrl: "/auth/login",
+          organizationId: "org_123",
+        },
+      });
+    });
+
+    test("should log sign out with default reason", () => {
+      logSignOut("user_123", "user@example.com");
+
+      expect(queueAuditEventBackground).toHaveBeenCalledWith({
+        action: "userSignedOut",
+        targetType: "user",
+        userId: "user_123",
+        userType: "user",
+        targetId: "user_123",
+        organizationId: UNKNOWN_DATA,
+        status: "success",
+        newObject: {
+          provider: "session",
+          authMethod: "sign_out",
+          reason: "user_initiated",
+          organizationId: undefined,
+          redirectUrl: undefined,
+        },
+      });
     });
   });
 

@@ -597,7 +597,6 @@
       "contact_deleted_successfully": "Contact supprimé avec succès",
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Rafraîchir les contacts",
-      "contacts_table_refresh_error": "Une erreur s'est produite lors de la mise à jour des contacts. Veuillez réessayer.",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "first_name": "Prénom",
       "last_name": "Nom de famille",
