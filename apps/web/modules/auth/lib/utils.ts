@@ -200,10 +200,10 @@ const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
  * - After 3 failures: only logs every 10th attempt OR after 1+ minute gap
  * - Resets counter every 5 minutes to allow fresh logging cycles
  * - Uses hashed identifiers to protect PII while enabling tracking
- * - Fails open if Redis is unavailable (allows all logging for audit compliance)
+ * - Fails closed if Redis is unavailable (does not log)
  *
  * **Use cases:**
- * - Prevents log flooding during brute force attacks (100 attempts → ~10-15 log entries)
+ * - Prevents log flooding during brute force attacks
  * - Maintains security visibility for legitimate failed login attempts
  * - Preserves complete audit trail for successful authentications
  * - Protects user PII while allowing pattern detection
@@ -211,9 +211,9 @@ const AGGREGATION_THRESHOLD = 3; // After 3 failures, start aggregating
  *
  * **Example scenarios:**
  * - Normal user (1-2 failures): All attempts logged
- * - Brute force attack (100+ failures): 3 + ~7 throttled + aggregation logs
+ * - Brute force attack (100+ failures): First 3 logged, then every 10th
  * - Mixed success/failure: All successes + throttled failures
- * - Redis unavailable: All attempts logged (fail open for compliance)
+ * - Redis unavailable: All attempts logged (fail closed)
  *
  * @param identifier - Unique identifier for rate limiting (email, token, etc.) - will be hashed
  * @param isSuccess - Whether this is a successful authentication (defaults to false)
@@ -248,7 +248,7 @@ export const shouldLogAuthFailure = async (
 
       const currentCount = results[1][1] as number;
 
-      // Apply same throttling logic as in-memory version
+      // Apply throttling logic
       if (currentCount <= AGGREGATION_THRESHOLD) {
         return true;
       }
