@@ -20,10 +20,13 @@ export const GET = async (req: NextRequest) => {
   try {
     const { redirect_url } = await oauthController.authorize(searchParams as OAuthReq);
 
+    console.log("saml/authorize", redirect_url);
+
     if (!redirect_url) {
       return responses.internalServerErrorResponse("Failed to get redirect URL");
     }
 
+    console.log("saml/authorize: reached to return redirect url", redirect_url);
     return NextResponse.redirect(redirect_url);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";

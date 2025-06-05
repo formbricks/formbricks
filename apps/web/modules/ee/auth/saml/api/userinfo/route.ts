@@ -9,8 +9,8 @@ export const GET = async (req: Request) => {
   }
   const { oauthController } = jacksonInstance;
   const token = extractAuthToken(req);
-
+  console.log("saml/userinfo: token", token);
   const user = await oauthController.userInfo(token);
-
+  console.log("saml/userinfo: user", user);
   return Response.json(user);
 };

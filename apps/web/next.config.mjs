@@ -403,6 +403,14 @@ const nextConfig = {
         source: "/api/v1/management/attribute-classes/:id*",
         destination: "/api/v1/management/contact-attribute-keys/:id*",
       },
+      {
+        source: "/.well-known/saml.cer",
+        destination: "/api/auth/saml/well-known/cert",
+      },
+      {
+        source: "/.well-known/sp-metadata",
+        destination: "/api/auth/saml/well-known/sp-metadata",
+      },
     ];
   },
   env: {

@@ -10,9 +10,13 @@ export const POST = async (req: Request) => {
   const { oauthController } = jacksonInstance;
 
   const body = await req.formData();
+  console.log("saml/token: body", body);
   const formData = Object.fromEntries(body.entries());
+  console.log("saml/token: formData", formData);
 
   const response = await oauthController.token(formData as unknown as OAuthTokenReq);
+
+  console.log("saml/token: response", response);
 
   return Response.json(response);
 };

@@ -187,6 +187,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token }) {
+      console.log("jwt: token", token);
       const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
@@ -200,6 +201,8 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
+      console.log("session: session", session);
+      console.log("session: token", token);
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
@@ -223,6 +226,9 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY) {
+        console.log("signIn: user", user);
+        console.log("signIn: account", account);
+        console.log("signIn: callbackUrl", callbackUrl);
         const result = await handleSsoCallback({ user, account, callbackUrl });
 
         if (result) {
