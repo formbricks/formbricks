@@ -223,13 +223,13 @@ export async function PreviewEmailTemplate({
                     {Array.from({ length: firstQuestion.range }, (_, i) => (
                       <EmailButton
                         className={cn(
-                          "relative m-0 w-full overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
+                          "relative m-0 h-[48px] w-full overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
 
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
-                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                            ? `h-[46px] border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1).replace("bg-", "")}`
-                            : "h-10",
+                          firstQuestion.isColorCodingEnabled &&
+                            firstQuestion.scale === "number" &&
+                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}

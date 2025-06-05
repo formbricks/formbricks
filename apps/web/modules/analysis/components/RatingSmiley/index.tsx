@@ -65,7 +65,7 @@ const getSmiley = (
   );
 
   return (
-    <table style={{ width: "40px", height: "40px" }}>
+    <table style={{ width: "48px", height: "48px" }}>
       {" "}
       {/* NOSONAR S5256 - Need table layout for email compatibility (gmail) */}
       <tr>

@@ -6,17 +6,17 @@ export const getNPSOptionColor = (idx: number): string => {
 
 export const getRatingNumberOptionColor = (range: number, idx: number): string => {
   if (range > 5) {
-    if (range - idx < 2) return "bg-emerald-100";
-    if (range - idx < 4) return "bg-orange-100";
-    return "bg-rose-100";
+    if (range - idx < 2) return "emerald-100";
+    if (range - idx < 4) return "orange-100";
+    return "rose-100";
   } else if (range < 5) {
-    if (range - idx < 1) return "bg-emerald-100";
-    if (range - idx < 2) return "bg-orange-100";
-    return "bg-rose-100";
+    if (range - idx < 1) return "emerald-100";
+    if (range - idx < 2) return "orange-100";
+    return "rose-100";
   }
-  if (range - idx < 2) return "bg-emerald-100";
-  if (range - idx < 3) return "bg-orange-100";
-  return "bg-rose-100";
+  if (range - idx < 2) return "emerald-100";
+  if (range - idx < 3) return "orange-100";
+  return "rose-100";
 };
 
 const defaultLocale = "en-US";
