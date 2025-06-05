@@ -96,7 +96,7 @@ export const DELETE = async (
       await queueAuditEvent({
         action: "deleted",
         targetType: "file",
-        userId: userId || UNKNOWN_DATA,
+        userId: userId || UNKNOWN_DATA, // NOSONAR // We want to check for empty user IDs too
         userType: "user",
         targetId: `${environmentId}:${accessType}`, // Generic target identifier
         organizationId,
@@ -175,7 +175,7 @@ export const DELETE = async (
     if (!isSuccess) {
       try {
         const responseBody = await deleteResult.json();
-        failureReason = responseBody.message || failureReason;
+        failureReason = responseBody.message || failureReason; // NOSONAR // We want to check for empty messages too
       } catch (error) {
         logger.error("Failed to parse file delete error response body", { error });
       }
