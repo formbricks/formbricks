@@ -42,7 +42,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 // Mock Redis client
-vi.mock("@/lib/redis", () => ({
+vi.mock("@/modules/cache/redis", () => ({
   default: null, // Intentionally simulate Redis unavailability to test fail-closed security behavior
 }));
 

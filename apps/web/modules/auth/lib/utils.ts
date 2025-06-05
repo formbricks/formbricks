@@ -1,5 +1,5 @@
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import redis from "@/lib/redis";
+import redis from "@/modules/cache/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";

@@ -62,7 +62,7 @@ export const GET = async (
 
 export const DELETE = async (
   request: NextRequest,
-  props: { params: Promise<{ fileName: string }> }
+  props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
 ): Promise<Response> => {
   const params = await props.params;
 
@@ -76,14 +76,12 @@ export const DELETE = async (
   };
 
   const logFileDeletion = async ({
-    environmentId,
     accessType,
     userId,
     status = "failure",
     failureReason,
     oldObject,
   }: {
-    environmentId?: string;
     accessType?: string;
     userId?: string;
     status?: TAuditStatus;
@@ -91,7 +89,7 @@ export const DELETE = async (
     oldObject?: Record<string, unknown>;
   }) => {
     try {
-      const organizationId = environmentId ? await getOrgId(environmentId) : UNKNOWN_DATA;
+      const organizationId = await getOrgId(environmentId);
 
       await queueAuditEvent({
         action: "deleted",
@@ -124,12 +122,37 @@ export const DELETE = async (
     });
   }
 
-  const [environmentId, accessType, file] = params.fileName.split("/");
+  const { environmentId, accessType, fileName } = params;
+
+  // Security check: If fileName contains the same properties from the route, ensure they match
+  // This is to prevent a user from deleting a file from a different environment
+  const [fileEnvironmentId, fileAccessType, file] = fileName.split("/");
+  if (fileEnvironmentId !== environmentId) {
+    await logFileDeletion({
+      failureReason: "Environment ID mismatch between route and fileName",
+      accessType,
+    });
+    return responses.badRequestResponse("Environment ID mismatch", {
+      message: "The environment ID in the fileName does not match the route environment ID",
+    });
+  }
+
+  if (fileAccessType !== accessType) {
+    await logFileDeletion({
+      failureReason: "Access type mismatch between route and fileName",
+      accessType,
+    });
+    return responses.badRequestResponse("Access type mismatch", {
+      message: "The access type in the fileName does not match the route access type",
+    });
+  }
+
   const paramValidation = ZStorageRetrievalParams.safeParse({ fileName: file, environmentId, accessType });
 
   if (!paramValidation.success) {
     await logFileDeletion({
       failureReason: "Parameter validation failed",
+      accessType,
     });
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
@@ -149,7 +172,6 @@ export const DELETE = async (
   if (!session?.user) {
     await logFileDeletion({
       failureReason: "User not authenticated",
-      environmentId: validEnvId,
       accessType: validAccessType,
     });
     return responses.notAuthenticatedResponse();
@@ -160,7 +182,6 @@ export const DELETE = async (
   if (!isUserAuthorized) {
     await logFileDeletion({
       failureReason: "User not authorized to access environment",
-      environmentId: validEnvId,
       accessType: validAccessType,
       userId: session.user.id,
     });
@@ -184,7 +205,6 @@ export const DELETE = async (
     await logFileDeletion({
       status: isSuccess ? "success" : "failure",
       failureReason: isSuccess ? undefined : failureReason,
-      environmentId: validEnvId,
       accessType: validAccessType,
       userId: session.user.id,
     });
@@ -193,7 +213,6 @@ export const DELETE = async (
   } catch (error) {
     await logFileDeletion({
       failureReason: error instanceof Error ? error.message : "Unexpected error during file deletion",
-      environmentId: validEnvId,
       accessType: validAccessType,
       userId: session.user.id,
     });

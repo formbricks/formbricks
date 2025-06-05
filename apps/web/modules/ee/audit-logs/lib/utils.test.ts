@@ -3,7 +3,7 @@ import { deepDiff, redactPII } from "./utils";
 
 // Patch redis multi before any imports
 beforeEach(async () => {
-  const redis = (await import("@/lib/redis")).default;
+  const redis = (await import("@/modules/cache/redis")).default;
   if ((redis?.multi as any)?.mockReturnValue) {
     (redis?.multi as any).mockReturnValue({
       set: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock("@/modules/ee/audit-logs/lib/service", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/lib/redis", () => ({
+vi.mock("@/modules/cache/redis", () => ({
   default: {
     watch: vi.fn().mockResolvedValue("OK"),
     multi: vi.fn().mockReturnValue({
@@ -253,7 +253,7 @@ describe("buildAndLogAuditEvent", () => {
   beforeEach(async () => {
     vi.resetModules();
     (globalThis as any).__logAuditEvent = vi.fn().mockResolvedValue(undefined);
-    vi.mock("@/lib/redis", () => ({
+    vi.mock("@/modules/cache/redis", () => ({
       default: {
         watch: vi.fn().mockResolvedValue("OK"),
         multi: vi.fn().mockReturnValue({
@@ -269,7 +269,7 @@ describe("buildAndLogAuditEvent", () => {
       ENCRYPTION_KEY: "testsecret",
     }));
     ({ buildAndLogAuditEvent } = await import("./handler"));
-    redis = (await import("@/lib/redis")).default;
+    redis = (await import("@/modules/cache/redis")).default;
     logAuditEvent = (globalThis as any).__logAuditEvent;
   });
   afterEach(() => {

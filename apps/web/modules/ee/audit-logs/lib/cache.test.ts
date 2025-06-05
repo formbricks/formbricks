@@ -1,4 +1,4 @@
-import redis from "@/lib/redis";
+import redis from "@/modules/cache/redis";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AUDIT_LOG_HASH_KEY,
@@ -8,7 +8,7 @@ import {
 } from "./cache";
 
 // Mock redis module
-vi.mock("@/lib/redis", () => {
+vi.mock("@/modules/cache/redis", () => {
   let store: Record<string, string | null> = {};
   return {
     default: {

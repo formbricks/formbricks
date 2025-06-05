@@ -1,4 +1,4 @@
-import redis from "@/lib/redis";
+import redis from "@/modules/cache/redis";
 import { logger } from "@formbricks/logger";
 
 export const AUDIT_LOG_HASH_KEY = "audit:lastHash";
