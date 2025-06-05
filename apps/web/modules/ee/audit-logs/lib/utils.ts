@@ -35,6 +35,9 @@ const SENSITIVE_KEYS = [
   "userid",
   "attributes",
   "pin",
+  "image",
+  "stripeCustomerId",
+  "resultShareKey",
 ];
 
 /**

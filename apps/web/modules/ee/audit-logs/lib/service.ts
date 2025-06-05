@@ -1,8 +1,8 @@
-import { AuditLogEventSchema, type TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
+import { type TAuditLogEvent, ZAuditLogEventSchema } from "@/modules/ee/audit-logs/types/audit-log";
 import { logger } from "@formbricks/logger";
 
 const validateEvent = (event: TAuditLogEvent): void => {
-  const result = AuditLogEventSchema.safeParse(event);
+  const result = ZAuditLogEventSchema.safeParse(event);
   if (!result.success) {
     throw new Error(`Invalid audit log event: ${result.error.message}`);
   }

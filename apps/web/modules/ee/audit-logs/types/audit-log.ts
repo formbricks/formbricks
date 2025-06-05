@@ -3,7 +3,7 @@ import { z } from "zod";
 export const UNKNOWN_DATA = "unknown";
 
 // Define as const arrays
-export const ZAuditTargets = z.enum([
+export const ZAuditTarget = z.enum([
   "segment",
   "survey",
   "webhook",
@@ -25,7 +25,7 @@ export const ZAuditTargets = z.enum([
   "responseNote",
   "integration",
 ]);
-export const ZAuditActions = z.enum([
+export const ZAuditAction = z.enum([
   "created",
   "updated",
   "deleted",
@@ -51,25 +51,25 @@ export const ZAuditActions = z.enum([
   "userSignedOut",
 ]);
 export const ZActor = z.enum(["user", "api"]);
-export const ZAuditStatuses = z.enum(["success", "failure"]);
+export const ZAuditStatus = z.enum(["success", "failure"]);
 
 // Use template literal for the type
-export type TAuditTarget = z.infer<typeof ZAuditTargets>;
-export type TAuditAction = z.infer<typeof ZAuditActions>;
+export type TAuditTarget = z.infer<typeof ZAuditTarget>;
+export type TAuditAction = z.infer<typeof ZAuditAction>;
 export type TActor = z.infer<typeof ZActor>;
-export type TAuditStatus = z.infer<typeof ZAuditStatuses>;
+export type TAuditStatus = z.infer<typeof ZAuditStatus>;
 
-export const AuditLogEventSchema = z.object({
+export const ZAuditLogEventSchema = z.object({
   actor: z.object({
     id: z.string(),
     type: ZActor,
   }),
-  action: ZAuditActions,
+  action: ZAuditAction,
   target: z.object({
     id: z.string().or(z.undefined()),
-    type: ZAuditTargets,
+    type: ZAuditTarget,
   }),
-  status: ZAuditStatuses,
+  status: ZAuditStatus,
   timestamp: z.string().datetime(),
   organizationId: z.string(),
   ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
@@ -81,4 +81,4 @@ export const AuditLogEventSchema = z.object({
   chainStart: z.boolean().optional(),
 });
 
-export type TAuditLogEvent = z.infer<typeof AuditLogEventSchema>;
+export type TAuditLogEvent = z.infer<typeof ZAuditLogEventSchema>;
