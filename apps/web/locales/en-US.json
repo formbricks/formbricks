@@ -597,7 +597,6 @@
       "contact_deleted_successfully": "Contact deleted successfully",
       "contact_not_found": "No such contact found",
       "contacts_table_refresh": "Refresh contacts",
-      "contacts_table_refresh_error": "Something went wrong while refreshing contacts, please try again",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -760,6 +759,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
