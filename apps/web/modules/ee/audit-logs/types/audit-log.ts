@@ -24,6 +24,7 @@ export const ZAuditTarget = z.enum([
   "apiKey",
   "responseNote",
   "integration",
+  "file",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -50,7 +51,7 @@ export const ZAuditAction = z.enum([
   "emailVerificationAttempted",
   "userSignedOut",
 ]);
-export const ZActor = z.enum(["user", "api"]);
+export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);
 
 // Use template literal for the type

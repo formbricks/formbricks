@@ -23,6 +23,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 | Requirement | Notes |
 |-------------|-------|
+| **`ENCRYPTION_KEY`** | Required for integrity hashes and authentication logs. Without this key, audit logging will not be available. |
 | **`redis`** | Used internally to guarantee integrity under concurrency. |
 | **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
 
@@ -35,6 +36,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 ```bash title=".env"
 # --- Audit logging ---
 AUDIT_LOG_ENABLED=1
+ENCRYPTION_KEY=your_encryption_key_here        # required for integrity hashes and authentication logs
 REDIS_URL=redis://`redis`:6379                   # existing `redis` instance
 AUDIT_LOG_GET_USER_IP=1                        # set to 1 to include user IP address in audit logs, 0 to omit (default: 0)
 ```
