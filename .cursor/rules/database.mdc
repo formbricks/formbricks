@@ -1,0 +1,266 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Formbricks Database Schema Reference
+
+This rule provides comprehensive knowledge about the Formbricks database structure, relationships, and data patterns to help with data-related development tasks.
+
+## Database Overview
+
+Formbricks uses PostgreSQL with Prisma ORM. The schema is designed for multi-tenancy with strong data isolation between organizations.
+
+### Core Hierarchy
+```
+Organization
+└── Project
+    └── Environment (production/development)
+        ├── Survey
+        ├── Contact
+        ├── ActionClass
+        └── Integration
+```
+
+## Key Models & Relationships
+
+### Organization & User Management
+
+#### Organization
+- **Purpose**: Top-level tenant/company entity
+- **Key Fields**: `id`, `name`, `billing`, `whitelabel`, `isAIEnabled`
+- **Relations**: Has many projects, memberships, teams, API keys
+
+#### User
+- **Purpose**: Individual user accounts
+- **Key Fields**: `id`, `name`, `email`, `role`, `objective`, `twoFactorEnabled`
+- **Auth**: Supports email, OAuth (GitHub, Google, Azure AD), SAML
+- **Relations**: Has memberships in organizations, can belong to teams
+
+#### Membership
+- **Purpose**: Links users to organizations with roles
+- **Roles**: `owner`, `manager`, `member`, `billing`
+- **Key Fields**: `organizationId`, `userId`, `role`, `accepted`
+
+#### Team & TeamUser
+- **Purpose**: Group-based access control within organizations
+- **TeamUser Roles**: `admin`, `contributor`
+- **Relations**: Teams belong to organizations, users join teams
+
+### Project Structure
+
+#### Project
+- **Purpose**: Main grouping for related surveys and environments
+- **Key Fields**: `id`, `name`, `organizationId`, `recontactDays`, `linkSurveyBranding`
+- **Config**: Styling, widget placement, languages
+- **Relations**: Belongs to organization, has 2 environments (prod/dev)
+
+#### Environment
+- **Purpose**: Separate production/development contexts
+- **Types**: `production`, `development`
+- **Key Fields**: `id`, `type`, `projectId`, `widgetSetupCompleted`
+- **Relations**: Contains surveys, contacts, action classes, integrations
+
+### Survey System
+
+#### Survey
+- **Purpose**: Core survey configuration and questions
+- **Types**: `link`, `web`, `website`, `app`
+- **Status**: `draft`, `scheduled`, `inProgress`, `paused`, `completed`
+- **Key JSON Fields**:
+  - `questions`: Array of question configurations
+  - `welcomeCard`: Welcome screen settings
+  - `endings`: Multiple ending configurations
+  - `styling`: Visual customization
+  - `variables`: Dynamic content variables
+- **Relations**: Has responses, displays, triggers, attribute filters
+
+#### Response
+- **Purpose**: User's answers to a survey
+- **Key Fields**: `id`, `surveyId`, `contactId`, `finished`, `singleUseId`
+- **Key JSON Fields**:
+  - `data`: Actual response answers
+  - `variables`: Survey variables at response time
+  - `ttc`: Time-to-completion metrics
+  - `meta`: Browser/device metadata
+- **Relations**: Belongs to survey and contact, has notes and tags
+
+#### Display
+- **Purpose**: Tracks when surveys are shown to users
+- **Status**: `seen`, `responded`
+- **Key Fields**: `id`, `surveyId`, `contactId`, `status`
+- **Relations**: Links to survey, contact, and optional response
+
+### Contact Management
+
+#### Contact
+- **Purpose**: Represents users who can receive surveys
+- **Key Fields**: `id`, `userId`, `environmentId`
+- **Relations**: Has attributes, responses, displays
+
+#### ContactAttribute & ContactAttributeKey
+- **Purpose**: Custom properties for contacts (e.g., role, company)
+- **Types**: `default`, `custom`
+- **Key Fields**: `key`, `value`, `isUnique`
+- **Usage**: Used for survey targeting and segmentation
+
+### Triggering & Targeting
+
+#### ActionClass
+- **Purpose**: Defines events that can trigger surveys
+- **Types**: `code`, `noCode`
+- **Key Fields**: `id`, `name`, `key`, `type`, `noCodeConfig`
+- **Relations**: Can trigger surveys via SurveyTrigger
+
+#### SurveyTrigger
+- **Purpose**: Links surveys to triggering actions
+- **Key Fields**: `surveyId`, `actionClassId`
+
+#### SurveyAttributeFilter
+- **Purpose**: Target surveys based on contact attributes
+- **Conditions**: `equals`, `notEquals`
+- **Key Fields**: `surveyId`, `attributeKeyId`, `condition`, `value`
+
+### Analysis & Insights
+
+#### Tag & TagsOnResponses
+- **Purpose**: Label and categorize responses
+- **Relations**: Many-to-many between tags and responses
+
+#### ResponseNote
+- **Purpose**: Internal notes on responses
+- **Key Fields**: `responseId`, `userId`, `text`, `isResolved`
+
+#### Segment
+- **Purpose**: Define groups of contacts for targeting
+- **Key JSON Fields**: `filters`: Rules for segment membership
+- **Relations**: Can be used by surveys for targeting
+
+#### Document & Insight
+- **Purpose**: AI-powered analysis of response text
+- **Document**: Processed text with sentiment analysis
+- **Insight**: Extracted patterns and themes
+- **Features**: Vector embeddings for similarity search
+
+### Integrations & APIs
+
+#### Integration
+- **Types**: `googleSheets`, `notion`, `airtable`, `slack`
+- **Key JSON Fields**: `config`: Service-specific settings
+
+#### ApiKey & ApiKeyEnvironment
+- **Purpose**: API authentication with environment-specific permissions
+- **Permissions**: `read`, `write`, `manage`
+- **Relations**: Belongs to organization, has environment access
+
+#### Webhook
+- **Purpose**: Event notifications to external systems
+- **Sources**: `user`, `zapier`, `make`, `n8n`, `activepieces`
+- **Triggers**: `responseCreated`, `responseUpdated`, `responseFinished`
+
+## Common Data Patterns
+
+### JSON Field Structures
+
+#### Survey Questions
+```typescript
+type SurveyQuestion = {
+  id: string;
+  type: 'openText' | 'multipleChoiceSingle' | 'multipleChoiceMulti' | 'nps' | 'cta' | 'rating' | 'consent' | 'pictureSelection' | 'cal' | 'fileUpload' | 'matrix' | 'address';
+  headline: string;
+  subheader?: string;
+  required?: boolean;
+  // Type-specific properties...
+}[];
+```
+
+#### Response Data
+```typescript
+type ResponseData = {
+  [questionId: string]: string | string[] | number;
+};
+```
+
+#### Contact Attributes
+```typescript
+type ResponseContactAttributes = {
+  [attributeKey: string]: string;
+};
+```
+
+### Database Indexes
+Key indexes for performance:
+- `Survey`: `[environmentId, updatedAt]`, `[segmentId]`
+- `Response`: `[createdAt]`, `[surveyId, createdAt]`, `[contactId, createdAt]`
+- `Contact`: `[environmentId]`
+- `Display`: `[surveyId]`, `[contactId, createdAt]`
+
+### Unique Constraints
+Important unique constraints:
+- `Response`: `[surveyId, singleUseId]` - Prevents duplicate responses
+- `ContactAttribute`: `[contactId, attributeKeyId]` - One value per attribute per contact
+- `Project`: `[organizationId, name]` - Unique project names per org
+
+## Data Access Patterns
+
+### Multi-tenancy
+- All data is scoped by Organization
+- Environment-level isolation for surveys and contacts
+- Project-level grouping for related surveys
+
+### Soft Deletion
+Some models use soft deletion patterns:
+- Check `isActive` fields where present
+- Use proper filtering in queries
+
+### Cascading Deletes
+Configured cascade relationships:
+- Organization deletion cascades to all child entities
+- Survey deletion removes responses, displays, triggers
+- Contact deletion removes attributes and responses
+
+## Common Query Patterns
+
+### Survey with Responses
+```typescript
+// Include response count and latest responses
+const survey = await prisma.survey.findUnique({
+  where: { id: surveyId },
+  include: {
+    responses: {
+      take: 10,
+      orderBy: { createdAt: 'desc' }
+    },
+    _count: {
+      select: { responses: true }
+    }
+  }
+});
+```
+
+### Environment Scoping
+```typescript
+// Always scope by environment
+const surveys = await prisma.survey.findMany({
+  where: {
+    environmentId: environmentId,
+    // Additional filters...
+  }
+});
+```
+
+### Contact with Attributes
+```typescript
+const contact = await prisma.contact.findUnique({
+  where: { id: contactId },
+  include: {
+    attributes: {
+      include: {
+        attributeKey: true
+      }
+    }
+  }
+});
+```
+
+This schema supports Formbricks' core functionality: multi-tenant survey management, user targeting, response collection, and analysis, all while maintaining strict data isolation and security.
