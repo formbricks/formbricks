@@ -45,6 +45,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   ai: false,
+  auditLogs: false,
 };
 
 const defaultLicense = {
@@ -474,6 +475,80 @@ describe("License Utils", () => {
       });
       const result = await getOrganizationProjectsLimit(mockOrganization.billing.limits);
       expect(result).toBe(3);
+    });
+  });
+
+  describe("getIsAuditLogsEnabled", () => {
+    const auditLogsFeature = { ...defaultFeatures, auditLogs: true };
+    const noAuditLogsFeature = { ...defaultFeatures, auditLogs: false };
+
+    beforeEach(() => {
+      vi.resetModules();
+    });
+
+    test("returns true if all conditions met (self-hosted)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: true,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(auditLogsFeature);
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(true);
+    });
+
+    test("returns false if license inactive (self-hosted)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: true,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue({
+        ...auditLogsFeature,
+        auditLogs: false,
+      });
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns false if auditLogs feature is false (self-hosted)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: true,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(noAuditLogsFeature);
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns false if AUDIT_LOG_ENABLED is false (self-hosted)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: false,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(auditLogsFeature);
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(false);
+    });
+
+    test("returns true if all conditions met (cloud, ENTERPRISE plan)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: true,
+        IS_FORMBRICKS_CLOUD: true,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(auditLogsFeature);
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(true);
+    });
+
+    test("returns true if billingPlan is not provided (cloud)", async () => {
+      vi.doMock("@/lib/constants", () => ({
+        AUDIT_LOG_ENABLED: true,
+        IS_FORMBRICKS_CLOUD: true,
+      }));
+      const { getIsAuditLogsEnabled } = await import("./utils");
+      vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(auditLogsFeature);
+      const result = await getIsAuditLogsEnabled();
+      expect(result).toBe(true);
     });
   });
 });

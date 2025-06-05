@@ -3,6 +3,7 @@ import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/sur
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -42,64 +43,121 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (
-  request: Request,
-  props: { params: Promise<{ surveyId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
-    if (result.error) return result.error;
-    const deletedSurvey = await deleteSurvey(params.surveyId);
-    return responses.successResponse(deletedSurvey);
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-};
-
-export const PUT = async (
-  request: Request,
-  props: { params: Promise<{ surveyId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
-    if (result.error) return result.error;
-
-    const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
-    if (!organization) {
-      return responses.notFoundResponse("Organization", null);
-    }
-
-    let surveyUpdate;
+export const DELETE = withApiLogging(
+  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
+    const params = await props.params;
+    auditLog.targetId = params.surveyId;
     try {
-      surveyUpdate = await request.json();
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
+        return {
+          response: responses.notAuthenticatedResponse(),
+        };
+      }
+      auditLog.userId = authentication.apiKeyId;
+      auditLog.organizationId = authentication.organizationId;
+
+      const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
+      auditLog.oldObject = result.survey;
+
+      const deletedSurvey = await deleteSurvey(params.surveyId);
+      return {
+        response: responses.successResponse(deletedSurvey),
+      };
     } catch (error) {
-      logger.error({ error, url: request.url }, "Error parsing JSON input");
-      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+      return {
+        response: handleErrorResponse(error),
+      };
     }
+  },
+  "deleted",
+  "survey"
+);
 
-    const inputValidation = ZSurveyUpdateInput.safeParse({
-      ...result.survey,
-      ...surveyUpdate,
-    });
+export const PUT = withApiLogging(
+  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
+    const params = await props.params;
+    auditLog.targetId = params.surveyId;
+    try {
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
+        return {
+          response: responses.notAuthenticatedResponse(),
+        };
+      }
+      auditLog.userId = authentication.apiKeyId;
 
-    if (!inputValidation.success) {
-      return responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error)
-      );
+      const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
+      auditLog.oldObject = result.survey;
+
+      const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
+      if (!organization) {
+        return {
+          response: responses.notFoundResponse("Organization", null),
+        };
+      }
+      auditLog.organizationId = organization.id;
+
+      let surveyUpdate;
+      try {
+        surveyUpdate = await request.json();
+      } catch (error) {
+        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        return {
+          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+        };
+      }
+
+      const inputValidation = ZSurveyUpdateInput.safeParse({
+        ...result.survey,
+        ...surveyUpdate,
+      });
+
+      if (!inputValidation.success) {
+        return {
+          response: responses.badRequestResponse(
+            "Fields are missing or incorrectly formatted",
+            transformErrorToDetails(inputValidation.error)
+          ),
+        };
+      }
+
+      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization);
+      if (featureCheckResult) {
+        return {
+          response: featureCheckResult,
+        };
+      }
+
+      try {
+        const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
+        auditLog.newObject = updatedSurvey;
+        return {
+          response: responses.successResponse(updatedSurvey),
+        };
+      } catch (error) {
+        auditLog.status = "failure";
+        return {
+          response: handleErrorResponse(error),
+        };
+      }
+    } catch (error) {
+      auditLog.status = "failure";
+      return {
+        response: handleErrorResponse(error),
+      };
     }
-
-    const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization);
-    if (featureCheckResult) return featureCheckResult;
-
-    return responses.successResponse(await updateSurvey({ ...inputValidation.data, id: params.surveyId }));
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-};
+  },
+  "updated",
+  "survey"
+);

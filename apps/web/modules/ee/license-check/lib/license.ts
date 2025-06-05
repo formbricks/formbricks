@@ -50,6 +50,7 @@ const LicenseFeaturesSchema = z.object({
   ai: z.boolean(),
   saml: z.boolean(),
   spamProtection: z.boolean(),
+  auditLogs: z.boolean(),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -109,6 +110,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   ai: false,
   saml: false,
   spamProtection: false,
+  auditLogs: false,
 };
 
 // Helper functions

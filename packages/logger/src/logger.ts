@@ -31,6 +31,7 @@ const baseLoggerConfig: LoggerOptions = {
     warn: 40,
     error: 50,
     fatal: 60,
+    audit: 90,
   },
   useOnlyCustomLevels: true,
   timestamp: true,
@@ -51,6 +52,8 @@ const developmentConfig: LoggerOptions = {
       levelFirst: true,
       translateTime: "SYS:standard",
       ignore: "pid,hostname,ip,requestId",
+      customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
+      useOnlyCustomProps: true,
     },
   },
 };
@@ -59,26 +62,30 @@ const productionConfig: LoggerOptions = {
   ...baseLoggerConfig,
 };
 
-const logger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
+const pinoLogger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
 
 // Ensure all log levels are properly bound
 const boundLogger = {
-  debug: logger.debug.bind(logger),
-  info: logger.info.bind(logger),
-  warn: logger.warn.bind(logger),
-  error: logger.error.bind(logger),
-  fatal: logger.fatal.bind(logger),
+  debug: pinoLogger.debug.bind(pinoLogger),
+  info: pinoLogger.info.bind(pinoLogger),
+  audit: (pinoLogger as Logger & { audit: typeof pinoLogger.info }).audit.bind(pinoLogger),
+  warn: pinoLogger.warn.bind(pinoLogger),
+  error: pinoLogger.error.bind(pinoLogger),
+  fatal: pinoLogger.fatal.bind(pinoLogger),
 };
 
 const extendedLogger = {
   ...boundLogger,
-  withContext: (context: Record<string, unknown>) => logger.child(context),
+  withContext: (context: Record<string, unknown>) => pinoLogger.child(context),
   request: (req: Request) =>
-    logger.child({
+    pinoLogger.child({
       method: req.method,
       url: req.url,
     }),
 };
+
+export type ExtendedLogger = typeof extendedLogger;
+export const logger: ExtendedLogger = extendedLogger;
 
 const handleShutdown = (event: string, err?: Error): void => {
   if (err) {
@@ -86,7 +93,7 @@ const handleShutdown = (event: string, err?: Error): void => {
   }
   logger.info({ event }, "Process is exiting");
 
-  logger.flush();
+  pinoLogger.flush();
 };
 
 // Create a separate function for attaching Node.js process handlers
@@ -115,5 +122,3 @@ if (process.env.NEXT_RUNTIME === "nodejs") {
     logger.error(e, "Error attaching process event handlers");
   }
 }
-
-export { extendedLogger as logger };

@@ -3,6 +3,7 @@
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import {
@@ -20,7 +21,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
 import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, PlusIcon } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,6 +44,7 @@ export const LandingSidebar = ({
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState<boolean>(false);
 
   const { t } = useTranslate();
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const router = useRouter();
 
@@ -123,7 +124,13 @@ export const LandingSidebar = ({
 
             <DropdownMenuItem
               onClick={async () => {
-                await signOut({ callbackUrl: "/auth/login" });
+                await signOutWithAudit({
+                  reason: "user_initiated",
+                  redirectUrl: "/auth/login",
+                  organizationId: organization.id,
+                  redirect: true,
+                  callbackUrl: "/auth/login",
+                });
               }}
               icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
               {t("common.logout")}

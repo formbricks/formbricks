@@ -1,3 +1,4 @@
+import { ApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { ZodRawShape, z } from "zod";
@@ -8,10 +9,12 @@ export type HandlerFn<TInput = Record<string, unknown>> = ({
   authentication,
   parsedInput,
   request,
+  auditLog,
 }: {
   authentication: TAuthenticationApiKey;
   parsedInput: TInput;
   request: Request;
+  auditLog?: ApiAuditLog;
 }) => Promise<Response>;
 
 export type ExtendedSchemas = {
@@ -41,16 +44,23 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   externalParams,
   rateLimit = true,
   handler,
+  auditLog,
 }: {
   request: Request;
   schemas?: S;
   externalParams?: Promise<Record<string, any>>;
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
+  auditLog?: ApiAuditLog;
 }): Promise<Response> => {
   const authentication = await authenticateRequest(request);
   if (!authentication.ok) {
     return handleApiError(request, authentication.error);
+  }
+
+  if (auditLog) {
+    auditLog.userId = authentication.data.apiKeyId;
+    auditLog.organizationId = authentication.data.organizationId;
   }
 
   let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
@@ -106,5 +116,6 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     authentication: authentication.data,
     parsedInput,
     request,
+    auditLog,
   });
 };
