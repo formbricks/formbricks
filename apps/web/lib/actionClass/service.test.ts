@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { actionClassCache } from "./cache";
 import {
   deleteActionClass,
   getActionClass,
@@ -23,21 +22,6 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("../utils/validate", () => ({
   validateInputs: vi.fn(),
-}));
-
-vi.mock("../cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("./cache", () => ({
-  actionClassCache: {
-    tag: {
-      byEnvironmentId: vi.fn(),
-      byNameAndEnvironmentId: vi.fn(),
-      byId: vi.fn(),
-    },
-    revalidate: vi.fn(),
-  },
 }));
 
 describe("ActionClass Service", () => {
@@ -61,7 +45,6 @@ describe("ActionClass Service", () => {
         },
       ];
       vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
-      vi.mocked(actionClassCache.tag.byEnvironmentId).mockReturnValue("mock-tag");
 
       const result = await getActionClasses("env1");
       expect(result).toEqual(mockActionClasses);
@@ -76,7 +59,6 @@ describe("ActionClass Service", () => {
 
     test("should throw DatabaseError when prisma throws", async () => {
       vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error("fail"));
-      vi.mocked(actionClassCache.tag.byEnvironmentId).mockReturnValue("mock-tag");
       await expect(getActionClasses("env1")).rejects.toThrow(DatabaseError);
     });
   });
@@ -96,8 +78,6 @@ describe("ActionClass Service", () => {
       };
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(mockActionClass);
-      if (!actionClassCache.tag.byNameAndEnvironmentId) actionClassCache.tag.byNameAndEnvironmentId = vi.fn();
-      vi.mocked(actionClassCache.tag.byNameAndEnvironmentId).mockReturnValue("mock-tag");
 
       const result = await getActionClassByEnvironmentIdAndName("env2", "Action 2");
       expect(result).toEqual(mockActionClass);
@@ -110,8 +90,6 @@ describe("ActionClass Service", () => {
     test("should return null when not found", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(null);
-      if (!actionClassCache.tag.byNameAndEnvironmentId) actionClassCache.tag.byNameAndEnvironmentId = vi.fn();
-      vi.mocked(actionClassCache.tag.byNameAndEnvironmentId).mockReturnValue("mock-tag");
       const result = await getActionClassByEnvironmentIdAndName("env2", "Action 2");
       expect(result).toBeNull();
     });
@@ -119,8 +97,6 @@ describe("ActionClass Service", () => {
     test("should throw DatabaseError when prisma throws", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockRejectedValue(new Error("fail"));
-      if (!actionClassCache.tag.byNameAndEnvironmentId) actionClassCache.tag.byNameAndEnvironmentId = vi.fn();
-      vi.mocked(actionClassCache.tag.byNameAndEnvironmentId).mockReturnValue("mock-tag");
       await expect(getActionClassByEnvironmentIdAndName("env2", "Action 2")).rejects.toThrow(DatabaseError);
     });
   });
@@ -140,8 +116,6 @@ describe("ActionClass Service", () => {
       };
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);
-      if (!actionClassCache.tag.byId) actionClassCache.tag.byId = vi.fn();
-      vi.mocked(actionClassCache.tag.byId).mockReturnValue("mock-tag");
       const result = await getActionClass("id3");
       expect(result).toEqual(mockActionClass);
       expect(prisma.actionClass.findUnique).toHaveBeenCalledWith({
@@ -153,8 +127,6 @@ describe("ActionClass Service", () => {
     test("should return null when not found", async () => {
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(null);
-      if (!actionClassCache.tag.byId) actionClassCache.tag.byId = vi.fn();
-      vi.mocked(actionClassCache.tag.byId).mockReturnValue("mock-tag");
       const result = await getActionClass("id3");
       expect(result).toBeNull();
     });
@@ -162,8 +134,6 @@ describe("ActionClass Service", () => {
     test("should throw DatabaseError when prisma throws", async () => {
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockRejectedValue(new Error("fail"));
-      if (!actionClassCache.tag.byId) actionClassCache.tag.byId = vi.fn();
-      vi.mocked(actionClassCache.tag.byId).mockReturnValue("mock-tag");
       await expect(getActionClass("id3")).rejects.toThrow(DatabaseError);
     });
   });
@@ -183,17 +153,11 @@ describe("ActionClass Service", () => {
       };
       if (!prisma.actionClass.delete) prisma.actionClass.delete = vi.fn();
       vi.mocked(prisma.actionClass.delete).mockResolvedValue(mockActionClass);
-      vi.mocked(actionClassCache.revalidate).mockReturnValue(undefined);
       const result = await deleteActionClass("id4");
       expect(result).toEqual(mockActionClass);
       expect(prisma.actionClass.delete).toHaveBeenCalledWith({
         where: { id: "id4" },
         select: expect.any(Object),
-      });
-      expect(actionClassCache.revalidate).toHaveBeenCalledWith({
-        environmentId: mockActionClass.environmentId,
-        id: "id4",
-        name: mockActionClass.name,
       });
     });
 

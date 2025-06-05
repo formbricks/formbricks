@@ -9,6 +9,7 @@ import {
   TContactLinkParams,
   ZContactLinkParams,
 } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -46,7 +47,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
       const surveyResult = await getSurvey(params.surveyId);
 
       if (!surveyResult.ok) {
-        return handleApiError(request, surveyResult.error);
+        return handleApiError(request, surveyResult.error as ApiErrorResponseV2);
       }
 
       const survey = surveyResult.data;
@@ -69,7 +70,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
       const contactResult = await getContact(params.contactId, environmentId);
 
       if (!contactResult.ok) {
-        return handleApiError(request, contactResult.error);
+        return handleApiError(request, contactResult.error as ApiErrorResponseV2);
       }
 
       const contact = contactResult.data;

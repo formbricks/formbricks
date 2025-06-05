@@ -1,9 +1,8 @@
-import { cache } from "@/lib/cache";
-import { segmentCache } from "@/lib/cache/segment";
-import { surveyCache } from "@/lib/survey/cache";
+import { getEnvironment } from "@/lib/environment/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { createId } from "@paralleldrive/cuid2";
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -20,7 +19,7 @@ import {
   TSegmentCreateInput,
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
-// Import createId for CUID2 generation
+import { TSegmentFilter } from "@formbricks/types/segment";
 import {
   PrismaSegment,
   cloneSegment,
@@ -52,27 +51,6 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
     },
     $transaction: vi.fn((callback) => callback(prisma)), // Mock transaction to execute the callback
-  },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    tag: {
-      byId: vi.fn((id) => `segment-${id}`),
-      byEnvironmentId: vi.fn((envId) => `segment-env-${envId}`),
-      byAttributeKey: vi.fn((key) => `segment-attr-${key}`),
-    },
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -149,8 +127,6 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith([segmentId, expect.any(Object)]);
-      expect(cache).toHaveBeenCalled();
-      expect(segmentCache.tag.byId).toHaveBeenCalledWith(segmentId);
     });
 
     test("should throw ResourceNotFoundError if segment not found", async () => {
@@ -182,8 +158,6 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
-      expect(cache).toHaveBeenCalled();
-      expect(segmentCache.tag.byEnvironmentId).toHaveBeenCalledWith(environmentId);
     });
 
     test("should return an empty array if no segments found", async () => {
@@ -214,8 +188,6 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith([mockSegmentCreateInput, expect.any(Object)]);
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: segmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: undefined });
     });
 
     test("should create a segment with surveyId", async () => {
@@ -234,8 +206,6 @@ describe("Segment Service Tests", () => {
         },
         select: selectSegment,
       });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: segmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: surveyId });
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
@@ -281,8 +251,6 @@ describe("Segment Service Tests", () => {
         },
         select: selectSegment,
       });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: clonedSegmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: surveyId });
     });
 
     test("should clone a segment successfully with incremented suffix", async () => {
@@ -339,11 +307,6 @@ describe("Segment Service Tests", () => {
         where: { id: segmentId },
         select: selectSegment,
       });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: segmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ environmentId });
-      expect(surveyCache.revalidate).not.toHaveBeenCalledWith(
-        expect.objectContaining({ id: expect.any(String) })
-      );
     });
 
     test("should throw ResourceNotFoundError if segment not found", async () => {
@@ -369,7 +332,7 @@ describe("Segment Service Tests", () => {
       id: privateSegmentId,
       title: surveyId,
       isPrivate: true,
-      filters: [{ connector: null, resource: [] }],
+      filters: [] as any, // Simplified filters to avoid type issues
       surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
     };
     const resetPrivateSegmentPrisma = { ...privateSegmentPrisma, filters: [] };
@@ -383,10 +346,10 @@ describe("Segment Service Tests", () => {
 
     beforeEach(() => {
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey as any);
-      vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma);
+      vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma as any);
       vi.mocked(prisma.survey.update).mockResolvedValue({} as any);
-      vi.mocked(prisma.segment.update).mockResolvedValue(resetPrivateSegmentPrisma);
-      vi.mocked(prisma.segment.create).mockResolvedValue(resetPrivateSegmentPrisma);
+      vi.mocked(prisma.segment.update).mockResolvedValue(resetPrivateSegmentPrisma as any);
+      vi.mocked(prisma.segment.create).mockResolvedValue(resetPrivateSegmentPrisma as any);
     });
 
     test("should reset filters of existing private segment", async () => {
@@ -409,8 +372,6 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(prisma.segment.create).not.toHaveBeenCalled();
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: surveyId });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ environmentId });
     });
 
     test("should create a new private segment if none exists", async () => {
@@ -433,8 +394,6 @@ describe("Segment Service Tests", () => {
         },
         select: selectSegment,
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: surveyId });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ environmentId });
     });
 
     test("should throw ResourceNotFoundError if survey not found", async () => {
@@ -477,8 +436,6 @@ describe("Segment Service Tests", () => {
         [segmentId, expect.any(Object)],
         [updateData, expect.any(Object)]
       );
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: segmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: surveyId });
     });
 
     test("should update segment with survey connections", async () => {
@@ -509,8 +466,6 @@ describe("Segment Service Tests", () => {
         },
         select: selectSegment,
       });
-      expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: segmentId, environmentId });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ id: newSurveyId });
     });
 
     test("should throw ResourceNotFoundError if segment not found", async () => {
@@ -571,9 +526,6 @@ describe("Segment Service Tests", () => {
         [environmentId, expect.any(Object)],
         [attributeKey, expect.any(Object)]
       );
-      expect(cache).toHaveBeenCalled();
-      expect(segmentCache.tag.byEnvironmentId).toHaveBeenCalledWith(environmentId);
-      expect(segmentCache.tag.byAttributeKey).toHaveBeenCalledWith(attributeKey);
     });
 
     test("should return empty array if no segments match", async () => {

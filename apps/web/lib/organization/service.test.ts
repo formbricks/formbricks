@@ -2,8 +2,7 @@ import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { organizationCache } from "./cache";
+import { DatabaseError } from "@formbricks/types/errors";
 import { createOrganization, getOrganization, getOrganizationsByUserId, updateOrganization } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -14,16 +13,6 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
-
-vi.mock("./cache", () => ({
-  organizationCache: {
-    tag: {
-      byId: vi.fn(),
-      byUserId: vi.fn(),
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -188,10 +177,6 @@ describe("Organization Service", () => {
         },
         select: expect.any(Object),
       });
-      expect(organizationCache.revalidate).toHaveBeenCalledWith({
-        id: mockOrganization.id,
-        count: true,
-      });
     });
 
     test("should throw DatabaseError on prisma error", async () => {
@@ -264,9 +249,6 @@ describe("Organization Service", () => {
         where: { id: "org1" },
         data: { name: "Updated Org" },
         select: expect.any(Object),
-      });
-      expect(organizationCache.revalidate).toHaveBeenCalledWith({
-        id: "org1",
       });
     });
   });

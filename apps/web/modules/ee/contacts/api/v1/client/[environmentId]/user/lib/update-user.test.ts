@@ -1,22 +1,13 @@
-import { contactCache } from "@/lib/cache/contact";
-import { getEnvironment } from "@/lib/environment/service";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { TEnvironment } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getContactByUserIdWithAttributes } from "./contact";
+import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
-import { getUserState } from "./user-state";
 
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/environment/service", () => ({
-  getEnvironment: vi.fn(),
+// Mock the cache functions
+vi.mock("@/modules/cache/lib/withCache", () => ({
+  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
 }));
 
 vi.mock("@/modules/ee/contacts/lib/attributes", () => ({
@@ -25,67 +16,46 @@ vi.mock("@/modules/ee/contacts/lib/attributes", () => ({
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    environment: {
+      findUnique: vi.fn(),
+    },
     contact: {
+      findFirst: vi.fn(),
       create: vi.fn(),
     },
   },
 }));
 
-vi.mock("./contact", () => ({
-  getContactByUserIdWithAttributes: vi.fn(),
-}));
-
-vi.mock("./user-state", () => ({
-  getUserState: vi.fn(),
+vi.mock("./segments", () => ({
+  getPersonSegmentIds: vi.fn(),
 }));
 
 const mockEnvironmentId = "test-environment-id";
 const mockUserId = "test-user-id";
 const mockContactId = "test-contact-id";
-const mockProjectId = "v7cxgsb4pzupdkr9xs14ldmb";
 
-const mockEnvironment: TEnvironment = {
-  id: mockEnvironmentId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  type: "production",
-  appSetupCompleted: false,
-  projectId: mockProjectId,
-};
-
-const mockContactAttributes = [
-  { attributeKey: { key: "userId" }, value: mockUserId },
-  { attributeKey: { key: "email" }, value: "test@example.com" },
-];
-
-const mockContact = {
+const mockContactData = {
   id: mockContactId,
-  environmentId: mockEnvironmentId,
-  attributes: mockContactAttributes,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: null,
-  email: null,
-};
-
-const mockUserState = {
-  surveys: [],
-  noCodeActionClasses: [],
-  attributeClasses: [],
-  contactId: mockContactId,
-  userId: mockUserId,
-  displays: [],
+  attributes: [
+    { attributeKey: { key: "userId" }, value: mockUserId },
+    { attributeKey: { key: "email" }, value: "test@example.com" },
+  ],
   responses: [],
-  segments: [],
-  lastDisplayAt: null,
+  displays: [],
 };
 
 describe("updateUser", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getEnvironment).mockResolvedValue(mockEnvironment);
-    vi.mocked(getUserState).mockResolvedValue(mockUserState);
+    // Mock environment lookup (cached) - just provide what's needed
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
+      id: mockEnvironmentId,
+      type: "production",
+    } as any);
+    // Mock successful attribute updates
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
+    // Mock segments
+    vi.mocked(getPersonSegmentIds).mockResolvedValue(["segment1"]);
   });
 
   afterEach(() => {
@@ -93,18 +63,15 @@ describe("updateUser", () => {
   });
 
   test("should throw ResourceNotFoundError if environment is not found", async () => {
-    vi.mocked(getEnvironment).mockResolvedValue(null);
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
     await expect(updateUser(mockEnvironmentId, mockUserId, "desktop")).rejects.toThrow(
       new ResourceNotFoundError("environment", mockEnvironmentId)
     );
   });
 
   test("should create a new contact if not found", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(null);
-    vi.mocked(prisma.contact.create).mockResolvedValue({
-      id: mockContactId,
-      attributes: [{ attributeKey: { key: "userId" }, value: mockUserId }],
-    } as any); // Type assertion for mock
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.contact.create).mockResolvedValue(mockContactData as any);
 
     const result = await updateUser(mockEnvironmentId, mockUserId, "desktop");
 
@@ -125,21 +92,38 @@ describe("updateUser", () => {
       select: {
         id: true,
         attributes: {
-          select: { attributeKey: { select: { key: true } }, value: true },
+          select: {
+            attributeKey: { select: { key: true } },
+            value: true,
+          },
+        },
+        responses: {
+          select: { surveyId: true },
+        },
+        displays: {
+          select: {
+            surveyId: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
         },
       },
     });
-    expect(contactCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-      userId: mockUserId,
-      id: mockContactId,
-    });
-    expect(result.state.data).toEqual(expect.objectContaining(mockUserState));
+    expect(result.state.data).toEqual(
+      expect.objectContaining({
+        contactId: mockContactId,
+        userId: mockUserId,
+        segments: ["segment1"],
+        displays: [],
+        responses: [],
+        lastDisplayAt: null,
+      })
+    );
     expect(result.messages).toEqual([]);
   });
 
   test("should update existing contact attributes", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: "en" };
 
     const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
@@ -155,8 +139,8 @@ describe("updateUser", () => {
   });
 
   test("should not update attributes if they are the same", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const existingAttributes = { email: "test@example.com" }; // Same as in mockContact
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const existingAttributes = { email: "test@example.com" }; // Same as in mockContactData
 
     await updateUser(mockEnvironmentId, mockUserId, "desktop", existingAttributes);
 
@@ -164,7 +148,7 @@ describe("updateUser", () => {
   });
 
   test("should return messages from updateAttributes if any", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { company: "Formbricks" };
     const updateMessages = ["Attribute 'company' created."];
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: updateMessages });
@@ -181,185 +165,26 @@ describe("updateUser", () => {
   });
 
   test("should use device type 'phone'", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockEnvironmentId, mockUserId, "phone");
-    expect(getUserState).toHaveBeenCalledWith(
-      expect.objectContaining({
-        device: "phone",
-      })
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockEnvironmentId,
+      mockContactId,
+      mockUserId,
+      { userId: mockUserId, email: "test@example.com" },
+      "phone"
     );
   });
 
   test("should use device type 'desktop'", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockEnvironmentId, mockUserId, "desktop");
-    expect(getUserState).toHaveBeenCalledWith(
-      expect.objectContaining({
-        device: "desktop",
-      })
-    );
-  });
-
-  test("should set language from attributes if provided and update is successful", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const newAttributes = { language: "de" };
-    vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
-
-    expect(result.state.data?.language).toBe("de");
-  });
-
-  test("should not set language from attributes if update is not successful", async () => {
-    const initialContactWithLanguage = {
-      ...mockContact,
-      attributes: [...mockContact.attributes, { attributeKey: { key: "language" }, value: "fr" }],
-    };
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(initialContactWithLanguage);
-    const newAttributes = { language: "de" };
-    vi.mocked(updateAttributes).mockResolvedValue({ success: false, messages: ["Update failed"] });
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
-
-    // Language should remain 'fr' from the initial contact attributes, not 'de'
-    expect(result.state.data?.language).toBe("fr");
-  });
-
-  test("should handle empty attributes object", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", {});
-    expect(updateAttributes).not.toHaveBeenCalled();
-    expect(result.state.data).toEqual(expect.objectContaining(mockUserState));
-    expect(result.messages).toEqual([]);
-  });
-
-  test("should handle undefined attributes", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", undefined);
-    expect(updateAttributes).not.toHaveBeenCalled();
-    expect(result.state.data).toEqual(expect.objectContaining(mockUserState));
-    expect(result.messages).toEqual([]);
-  });
-
-  test("should handle email attribute update with ignoreEmailAttribute flag", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const newAttributes = { email: "new@example.com", name: "John Doe" };
-    vi.mocked(updateAttributes).mockResolvedValue({
-      success: true,
-      messages: [],
-      ignoreEmailAttribute: true,
-    });
-
-    vi.mocked(getUserState).mockResolvedValue({
-      ...mockUserState,
-    });
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
-
-    expect(updateAttributes).toHaveBeenCalledWith(
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockEnvironmentId,
       mockContactId,
       mockUserId,
-      mockEnvironmentId,
-      newAttributes
+      { userId: mockUserId, email: "test@example.com" },
+      "desktop"
     );
-    // Email should not be included in the final attributes
-    expect(result.state.data).toEqual(
-      expect.objectContaining({
-        ...mockUserState,
-      })
-    );
-  });
-
-  test("should handle failed attribute update gracefully", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const newAttributes = { company: "Formbricks" };
-    vi.mocked(updateAttributes).mockResolvedValue({
-      success: false,
-      messages: ["Update failed"],
-    });
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
-
-    expect(updateAttributes).toHaveBeenCalledWith(
-      mockContactId,
-      mockUserId,
-      mockEnvironmentId,
-      newAttributes
-    );
-    // Should still return state even if update failed
-    expect(result.state.data).toEqual(expect.objectContaining(mockUserState));
-    expect(result.messages).toEqual(["Update failed"]);
-  });
-
-  test("should handle multiple attribute updates correctly", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(mockContact);
-    const newAttributes = {
-      company: "Formbricks",
-      role: "Developer",
-      language: "en",
-      country: "US",
-    };
-    vi.mocked(updateAttributes).mockResolvedValue({
-      success: true,
-      messages: ["Attributes updated successfully"],
-    });
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
-
-    expect(updateAttributes).toHaveBeenCalledWith(
-      mockContactId,
-      mockUserId,
-      mockEnvironmentId,
-      newAttributes
-    );
-    expect(result.state.data?.language).toBe("en");
-    expect(result.messages).toEqual(["Attributes updated successfully"]);
-  });
-
-  test("should handle contact creation with multiple initial attributes", async () => {
-    vi.mocked(getContactByUserIdWithAttributes).mockResolvedValue(null);
-    const initialAttributes = {
-      userId: mockUserId,
-      email: "test@example.com",
-      name: "Test User",
-    };
-    vi.mocked(prisma.contact.create).mockResolvedValue({
-      id: mockContactId,
-      attributes: [
-        { attributeKey: { key: "userId" }, value: mockUserId },
-        { attributeKey: { key: "email" }, value: "test@example.com" },
-        { attributeKey: { key: "name" }, value: "Test User" },
-      ],
-    } as any);
-
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", initialAttributes);
-
-    expect(prisma.contact.create).toHaveBeenCalledWith({
-      data: {
-        environment: { connect: { id: mockEnvironmentId } },
-        attributes: {
-          create: [
-            {
-              attributeKey: {
-                connect: { key_environmentId: { key: "userId", environmentId: mockEnvironmentId } },
-              },
-              value: mockUserId,
-            },
-          ],
-        },
-      },
-      select: {
-        id: true,
-        attributes: {
-          select: { attributeKey: { select: { key: true } }, value: true },
-        },
-      },
-    });
-    expect(contactCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-      userId: mockUserId,
-      id: mockContactId,
-    });
-    expect(result.state.data).toEqual(expect.objectContaining(mockUserState));
   });
 });

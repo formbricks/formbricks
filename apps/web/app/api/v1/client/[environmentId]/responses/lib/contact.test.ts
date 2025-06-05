@@ -1,6 +1,5 @@
-import { cache } from "@/lib/cache";
 import { Prisma } from "@prisma/client";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContact, getContactByUserId } from "./contact";
@@ -14,9 +13,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-// Mock cache module
-vi.mock("@/lib/cache");
 
 // Mock react cache
 vi.mock("react", async () => {
@@ -32,12 +28,6 @@ const mockEnvironmentId = "test-env-id";
 const mockUserId = "test-user-id";
 
 describe("Contact API Lib", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   afterEach(() => {
     vi.resetAllMocks();
   });

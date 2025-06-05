@@ -1,8 +1,6 @@
 import "server-only";
 import { isS3Configured } from "@/lib/constants";
-import { environmentCache } from "@/lib/environment/cache";
 import { createEnvironment } from "@/lib/environment/service";
-import { projectCache } from "@/lib/project/cache";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/lib/storage/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -63,18 +61,6 @@ export const updateProject = async (
   try {
     const project = ZProject.parse(updatedProject);
 
-    projectCache.revalidate({
-      id: project.id,
-      organizationId: project.organizationId,
-    });
-
-    project.environments.forEach((environment) => {
-      // revalidate environment cache
-      projectCache.revalidate({
-        environmentId: environment.id,
-      });
-    });
-
     return project;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -118,11 +104,6 @@ export const createProject = async (
         })),
       });
     }
-
-    projectCache.revalidate({
-      id: project.id,
-      organizationId: project.organizationId,
-    });
 
     const devEnvironment = await createEnvironment(project.id, {
       type: "development",
@@ -190,25 +171,6 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
           logger.error(err, "Error deleting local files");
         }
       }
-
-      projectCache.revalidate({
-        id: project.id,
-        organizationId: project.organizationId,
-      });
-
-      environmentCache.revalidate({
-        projectId: project.id,
-      });
-
-      project.environments.forEach((environment) => {
-        // revalidate project cache
-        projectCache.revalidate({
-          environmentId: environment.id,
-        });
-        environmentCache.revalidate({
-          id: environment.id,
-        });
-      });
     }
 
     return project;

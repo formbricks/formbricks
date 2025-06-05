@@ -8,6 +8,7 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 import { Language } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
@@ -94,6 +95,8 @@ export function EditLanguage({
   useEffect(() => {
     setLanguages(project.languages);
   }, [project.languages]);
+
+  const router = useRouter();
 
   const handleAddLanguage = () => {
     const newLanguage = {
@@ -192,6 +195,7 @@ export function EditLanguage({
       })
     );
     toast.success(t("environments.project.languages.languages_updated_successfully"));
+    router.refresh();
     setIsEditing(false);
   };
 

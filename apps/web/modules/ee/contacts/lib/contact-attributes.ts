@@ -1,6 +1,3 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -20,73 +17,54 @@ const selectContactAttribute = {
   },
 } satisfies Prisma.ContactAttributeSelect;
 
-export const getContactAttributes = reactCache((contactId: string) =>
-  cache(
-    async () => {
-      validateInputs([contactId, ZId]);
+export const getContactAttributes = reactCache(async (contactId: string) => {
+  validateInputs([contactId, ZId]);
 
-      try {
-        const prismaAttributes = await prisma.contactAttribute.findMany({
-          where: {
-            contactId,
-          },
-          select: selectContactAttribute,
-        });
+  try {
+    const prismaAttributes = await prisma.contactAttribute.findMany({
+      where: {
+        contactId,
+      },
+      select: selectContactAttribute,
+    });
 
-        return prismaAttributes.reduce((acc, attr) => {
-          acc[attr.attributeKey.key] = attr.value;
-          return acc;
-        }, {}) as TContactAttributes;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getContactAttributes-${contactId}`],
-    {
-      tags: [contactAttributeCache.tag.byContactId(contactId)],
+    return prismaAttributes.reduce((acc, attr) => {
+      acc[attr.attributeKey.key] = attr.value;
+      return acc;
+    }, {}) as TContactAttributes;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
-  )()
-);
+
+    throw error;
+  }
+});
 
 export const hasEmailAttribute = reactCache(
-  async (email: string, environmentId: string, contactId: string): Promise<boolean> =>
-    cache(
-      async () => {
-        validateInputs([email, ZUserEmail], [environmentId, ZId], [contactId, ZId]);
+  async (email: string, environmentId: string, contactId: string): Promise<boolean> => {
+    validateInputs([email, ZUserEmail], [environmentId, ZId], [contactId, ZId]);
 
-        const contactAttribute = await prisma.contactAttribute.findFirst({
-          where: {
-            AND: [
-              {
-                attributeKey: {
-                  key: "email",
-                  environmentId,
-                },
-                value: email,
-              },
-              {
-                NOT: {
-                  contactId,
-                },
-              },
-            ],
+    const contactAttribute = await prisma.contactAttribute.findFirst({
+      where: {
+        AND: [
+          {
+            attributeKey: {
+              key: "email",
+              environmentId,
+            },
+            value: email,
           },
-          select: { id: true },
-        });
-
-        return !!contactAttribute;
-      },
-      [`hasEmailAttribute-${email}-${environmentId}-${contactId}`],
-      {
-        tags: [
-          contactAttributeKeyCache.tag.byEnvironmentIdAndKey(environmentId, "email"),
-          contactAttributeCache.tag.byEnvironmentId(environmentId),
-          contactAttributeCache.tag.byContactId(contactId),
+          {
+            NOT: {
+              contactId,
+            },
+          },
         ],
-      }
-    )()
+      },
+      select: { id: true },
+    });
+
+    return !!contactAttribute;
+  }
 );

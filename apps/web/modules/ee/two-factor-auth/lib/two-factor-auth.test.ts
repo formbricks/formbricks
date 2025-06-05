@@ -1,5 +1,4 @@
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { userCache } from "@/lib/user/cache";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -27,12 +26,6 @@ vi.mock("@/modules/auth/lib/utils", () => ({
 
 vi.mock("@/modules/auth/lib/totp", () => ({
   totpAuthenticatorCheck: vi.fn(),
-}));
-
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    revalidate: vi.fn(),
-  },
 }));
 
 describe("Two Factor Auth", () => {
@@ -219,7 +212,6 @@ describe("Two Factor Auth", () => {
       where: { id: "user123" },
       data: { twoFactorEnabled: true },
     });
-    expect(userCache.revalidate).toHaveBeenCalledWith({ id: "user123" });
   });
 
   test("disableTwoFactorAuth should throw ResourceNotFoundError when user not found", async () => {
@@ -345,7 +337,6 @@ describe("Two Factor Auth", () => {
         twoFactorSecret: null,
       },
     });
-    expect(userCache.revalidate).toHaveBeenCalledWith({ id: "user123" });
   });
 
   test("disableTwoFactorAuth should successfully disable 2FA with 2FA code", async () => {
@@ -373,6 +364,5 @@ describe("Two Factor Auth", () => {
         twoFactorSecret: null,
       },
     });
-    expect(userCache.revalidate).toHaveBeenCalledWith({ id: "user123" });
   });
 });

@@ -1,15 +1,12 @@
 import "server-only";
-import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -153,19 +150,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    responseCache.revalidate({
-      environmentId,
-      id: response.id,
-      contactId: contact?.id,
-      ...(singleUseId && { singleUseId }),
-      userId: userId ?? undefined,
-      surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
-
     if (IS_FORMBRICKS_CLOUD) {
       const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
       const responsesLimit = organization.billing.limits.monthly.responses;
@@ -200,51 +184,42 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 };
 
 export const getResponsesByEnvironmentIds = reactCache(
-  async (environmentIds: string[], limit?: number, offset?: number): Promise<TResponse[]> =>
-    cache(
-      async () => {
-        validateInputs([environmentIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
-        try {
-          const responses = await prisma.response.findMany({
-            where: {
-              survey: {
-                environmentId: { in: environmentIds },
-              },
-            },
-            select: responseSelection,
-            orderBy: [
-              {
-                createdAt: "desc",
-              },
-            ],
-            take: limit ? limit : undefined,
-            skip: offset ? offset : undefined,
-          });
+  async (environmentIds: string[], limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([environmentIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+    try {
+      const responses = await prisma.response.findMany({
+        where: {
+          survey: {
+            environmentId: { in: environmentIds },
+          },
+        },
+        select: responseSelection,
+        orderBy: [
+          {
+            createdAt: "desc",
+          },
+        ],
+        take: limit ? limit : undefined,
+        skip: offset ? offset : undefined,
+      });
 
-          const transformedResponses: TResponse[] = await Promise.all(
-            responses.map((responsePrisma) => {
-              return {
-                ...responsePrisma,
-                contact: getResponseContact(responsePrisma),
-                tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-              };
-            })
-          );
+      const transformedResponses: TResponse[] = await Promise.all(
+        responses.map((responsePrisma) => {
+          return {
+            ...responsePrisma,
+            contact: getResponseContact(responsePrisma),
+            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          };
+        })
+      );
 
-          return transformedResponses;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      environmentIds.map(
-        (environmentId) => `getResponses-management-api-${environmentId}-${limit}-${offset}`
-      ),
-      {
-        tags: environmentIds.map((environmentId) => responseCache.tag.byEnvironmentId(environmentId)),
+      return transformedResponses;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+
+      throw error;
+    }
+  }
 );

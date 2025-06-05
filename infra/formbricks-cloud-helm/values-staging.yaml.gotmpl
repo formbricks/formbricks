@@ -21,7 +21,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 9 * * *
       successfulJobsHistoryLimit: 0
@@ -44,7 +44,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 0 * * *
       successfulJobsHistoryLimit: 0
@@ -67,7 +67,7 @@ cronJob:
               name: formbricks-stage-app-env
       image:
         imagePullPolicy: IfNotPresent
-        repository: curlimages/curl
+        repository: quay.io/curl/curl
         tag: latest
       schedule: 0 8 * * 1
       successfulJobsHistoryLimit: 0
@@ -136,7 +136,7 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-path: /health
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-2021-06
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/target-type: ip
   enabled: true

@@ -14,15 +14,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    tag: {
-      byId: vi.fn((id) => `user-${id}`),
-    },
-    revalidate: vi.fn(), // This seems fine as userCache.revalidate is used elsewhere.
-  },
-}));
-
 describe("getUserEmail", () => {
   beforeEach(() => {
     vi.resetAllMocks();

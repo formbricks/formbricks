@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { inviteCache } from "@/lib/cache/invite";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -47,11 +45,6 @@ export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "emai
       },
     });
 
-    inviteCache.revalidate({
-      id: updatedInvite.id,
-      organizationId: updatedInvite.organizationId,
-    });
-
     return {
       email: updatedInvite.email,
       name: updatedInvite.name,
@@ -66,40 +59,33 @@ export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "emai
 };
 
 export const getInvitesByOrganizationId = reactCache(
-  async (organizationId: string, page?: number): Promise<TInvite[]> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, z.string()], [page, z.number().optional()]);
+  async (organizationId: string, page?: number): Promise<TInvite[]> => {
+    validateInputs([organizationId, z.string()], [page, z.number().optional()]);
 
-        try {
-          const invites = await prisma.invite.findMany({
-            where: { organizationId },
-            select: {
-              expiresAt: true,
-              role: true,
-              email: true,
-              name: true,
-              id: true,
-              createdAt: true,
-            },
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          });
+    try {
+      const invites = await prisma.invite.findMany({
+        where: { organizationId },
+        select: {
+          expiresAt: true,
+          role: true,
+          email: true,
+          name: true,
+          id: true,
+          createdAt: true,
+        },
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
 
-          return invites;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getInvitesByOrganizationId-${organizationId}-${page}`],
-      {
-        tags: [inviteCache.tag.byOrganizationId(organizationId)],
+      return invites;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+
+      throw error;
+    }
+  }
 );
 
 export const inviteUser = async ({
@@ -163,11 +149,6 @@ export const inviteUser = async ({
       },
     });
 
-    inviteCache.revalidate({
-      id: invite.id,
-      organizationId: invite.organizationId,
-    });
-
     return invite.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -194,11 +175,6 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
       throw new ResourceNotFoundError("Invite", inviteId);
     }
 
-    inviteCache.revalidate({
-      id: invite.id,
-      organizationId: invite.organizationId,
-    });
-
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -209,37 +185,28 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
   }
 };
 
-export const getInvite = reactCache(
-  async (inviteId: string): Promise<InviteWithCreator | null> =>
-    cache(
-      async () => {
-        try {
-          const invite = await prisma.invite.findUnique({
-            where: {
-              id: inviteId,
-            },
-            select: {
-              email: true,
-              creator: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          });
-
-          return invite;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+export const getInvite = reactCache(async (inviteId: string): Promise<InviteWithCreator | null> => {
+  try {
+    const invite = await prisma.invite.findUnique({
+      where: {
+        id: inviteId,
       },
-      [`teams-getInvite-${inviteId}`],
-      {
-        tags: [inviteCache.tag.byId(inviteId)],
-      }
-    )()
-);
+      select: {
+        email: true,
+        creator: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return invite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
