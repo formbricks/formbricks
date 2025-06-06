@@ -92,8 +92,8 @@ module "valkey" {
 
 module "elasticache_user_group" {
   for_each = local.envs
-  source  = "terraform-aws-modules/elasticache/aws//modules/user-group"
-  version = "1.4.1"
+  source   = "terraform-aws-modules/elasticache/aws//modules/user-group"
+  version  = "1.4.1"
 
   user_group_id       = "${each.value}-valkey"
   create_default_user = false
@@ -115,11 +115,11 @@ module "elasticache_user_group" {
 
 module "valkey_serverless" {
   for_each = local.envs
-  source  = "terraform-aws-modules/elasticache/aws//modules/serverless-cache"
-  version = "1.4.1"
+  source   = "terraform-aws-modules/elasticache/aws//modules/serverless-cache"
+  version  = "1.4.1"
 
-  engine     = "valkey"
-  cache_name = "${each.value}-valkey-serverless"
+  engine               = "valkey"
+  cache_name           = "${each.value}-valkey-serverless"
   major_engine_version = local.valkey_major_version
   cache_usage_limits = {
     data_storage = {
@@ -129,7 +129,7 @@ module "valkey_serverless" {
       maximum = 1000
     }
   }
-  subnet_ids           = module.vpc.database_subnets
+  subnet_ids = module.vpc.database_subnets
 
   security_group_ids = [
     module.valkey_sg.security_group_id
