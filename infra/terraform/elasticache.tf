@@ -134,5 +134,5 @@ module "valkey_serverless" {
   security_group_ids = [
     module.valkey_sg.security_group_id
   ]
-  user_group_id = module.elasticache_user_group.group_id
+  user_group_id = module.elasticache_user_group[each.key].group_id
 }
