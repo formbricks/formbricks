@@ -64,8 +64,8 @@ module "rds-aurora" {
   enable_http_endpoint = true
 
   serverlessv2_scaling_configuration = {
-    min_capacity             = 0.5
-    max_capacity             = 50
+    min_capacity = 0.5
+    max_capacity = 50
   }
 
   instance_class = "db.serverless"
