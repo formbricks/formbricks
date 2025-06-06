@@ -48,7 +48,6 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
             surveyId: survey.id,
             targetEnvironmentId: environment,
           });
-          console.log(result);
 
           if (result?.data) {
             toast.success(t("environments.surveys.copy_survey_success"));
