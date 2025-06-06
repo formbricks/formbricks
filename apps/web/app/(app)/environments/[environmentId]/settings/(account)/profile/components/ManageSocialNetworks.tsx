@@ -124,7 +124,7 @@ export const ManageSocialNetworks = ({
               socialId: identity.id,
               socialName: identity.identity_data?.user_name,
               socialEmail: identity.identity_data?.email,
-              socialAvatar: identity.identity_data?.avatar_url || identity.identity_data?.picture || null,
+              socialAvatar: identity.identity_data?.avatar_url || null,
             };
 
             try {

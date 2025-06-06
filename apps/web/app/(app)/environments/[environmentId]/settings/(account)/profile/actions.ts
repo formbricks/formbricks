@@ -98,37 +98,28 @@ export const connectSocialAccountAction = authenticatedActionClient
     const { provider, socialId, socialName, socialEmail, socialAvatar } = parsedInput;
 
     try {
-      const existingAccount = await prisma.userSocial.findFirst({
+      return await prisma.userSocial.upsert({
         where: {
-          userId,
-          provider,
-        },
-      });
-
-      if (existingAccount) {
-        return await prisma.userSocial.update({
-          where: {
-            id: existingAccount.id,
-          },
-          data: {
-            socialId,
-            socialName,
-            socialEmail,
-            socialAvatar,
-          },
-        });
-      } else {
-        return await prisma.userSocial.create({
-          data: {
+          userId_provider: {
             userId,
             provider,
-            socialId,
-            socialName,
-            socialEmail,
-            socialAvatar,
           },
-        });
-      }
+        },
+        update: {
+          socialId,
+          socialName,
+          socialEmail,
+          socialAvatar,
+        },
+        create: {
+          userId,
+          provider,
+          socialId,
+          socialName,
+          socialEmail,
+          socialAvatar,
+        },
+      });
     } catch (error) {
       throw new Error(`Failed to connect ${provider} account: ${error.message}`);
     }
