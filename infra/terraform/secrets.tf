@@ -18,7 +18,7 @@ resource "aws_secretsmanager_secret_version" "formbricks_app_secrets" {
   for_each  = local.envs
   secret_id = aws_secretsmanager_secret.formbricks_app_secrets[each.key].id
   secret_string = jsonencode({
-    REDIS_URL = "rediss://:${random_password.valkey[each.key].result}@${module.valkey[each.key].replication_group_primary_endpoint_address}:6379"
+    REDIS_URL = "rediss://${each.value}:${random_password.valkey[each.key].result}@${module.valkey_serverless[each.key].serverless_cache_endpoint[0].address}:6379"
   })
 }
 
