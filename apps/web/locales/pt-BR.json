@@ -2629,6 +2629,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Gerente de Produto",
     "product_market_fit_superhuman_question_3_choice_4": "Dono do Produto",
     "product_market_fit_superhuman_question_3_choice_5": "Engenheiro de Software",
+    "product_market_fit_superhuman_question_3_headline": "Qual é a sua função?",
     "product_market_fit_superhuman_question_3_subheader": "Por favor, escolha uma das opções a seguir:",
     "product_market_fit_superhuman_question_4_headline": "Que tipo de pessoas você acha que mais se beneficiariam do $[projectName]?",
     "product_market_fit_superhuman_question_5_headline": "Qual é o principal benefício que você recebe do $[projectName]?",

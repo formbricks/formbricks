@@ -2629,6 +2629,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Product Manager",
     "product_market_fit_superhuman_question_3_choice_4": "Product Owner",
     "product_market_fit_superhuman_question_3_choice_5": "Software Engineer",
+    "product_market_fit_superhuman_question_3_headline": "What is your role?",
     "product_market_fit_superhuman_question_3_subheader": "Please select one of the following options:",
     "product_market_fit_superhuman_question_4_headline": "What type of people do you think would most benefit from $[projectName]?",
     "product_market_fit_superhuman_question_5_headline": "What is the main benefit you receive from $[projectName]?",
