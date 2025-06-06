@@ -1,40 +1,62 @@
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import { SavedActionsTab } from "@/modules/survey/editor/components/saved-actions-tab";
-import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { ActionClass } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock child components
 vi.mock("@/modules/survey/editor/components/create-new-action-tab", () => ({
-  CreateNewActionTab: vi.fn(() => <div>CreateNewActionTab Mock</div>),
+  CreateNewActionTab: vi.fn(() => <div data-testid="create-new-action-tab">CreateNewActionTab Mock</div>),
 }));
 
 vi.mock("@/modules/survey/editor/components/saved-actions-tab", () => ({
-  SavedActionsTab: vi.fn(() => <div>SavedActionsTab Mock</div>),
+  SavedActionsTab: vi.fn(() => <div data-testid="saved-actions-tab">SavedActionsTab Mock</div>),
 }));
 
-vi.mock("@/modules/ui/components/modal-with-tabs", () => ({
-  ModalWithTabs: vi.fn(
-    ({ label, description, open, setOpen, tabs, size, closeOnOutsideClick, restrictOverflow }) => (
-      <div data-testid="modal-with-tabs">
-        <h1>{label}</h1>
-        <p>{description}</p>
-        <div>Open: {open.toString()}</div>
-        <button onClick={() => setOpen(false)}>Close</button>
-        <div>Size: {size}</div>
-        <div>Close on outside click: {closeOnOutsideClick.toString()}</div>
-        <div>Restrict overflow: {restrictOverflow.toString()}</div>
-        {tabs.map((tab) => (
-          <div key={tab.title}>
-            <h2>{tab.title}</h2>
-            <div>{tab.children}</div>
-          </div>
-        ))}
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
       </div>
-    )
+    ) : null,
+  DialogContent: ({
+    children,
+    disableCloseOnOutsideClick,
+  }: {
+    children: React.ReactNode;
+    disableCloseOnOutsideClick?: boolean;
+  }) => (
+    <div data-testid="dialog-content" data-disable-close-on-outside-click={disableCloseOnOutsideClick}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
   ),
 }));
 
@@ -103,7 +125,6 @@ const defaultProps = {
   setLocalSurvey: mockSetLocalSurvey,
 };
 
-const ModalWithTabsMock = vi.mocked(ModalWithTabs);
 const SavedActionsTabMock = vi.mocked(SavedActionsTab);
 const CreateNewActionTabMock = vi.mocked(CreateNewActionTab);
 
@@ -115,36 +136,64 @@ describe("AddActionModal", () => {
 
   test("renders correctly when open", () => {
     render(<AddActionModal {...defaultProps} />);
-    expect(screen.getByTestId("modal-with-tabs")).toBeInTheDocument();
-    // Check for translated text
-    expect(screen.getByText("Add Action")).toBeInTheDocument();
-    expect(screen.getByText("Capture a new action...")).toBeInTheDocument();
-    expect(screen.getByText("Select Saved Action")).toBeInTheDocument(); // Check translated tab title
-    expect(screen.getByText("Capture New Action")).toBeInTheDocument(); // Check translated tab title
-    expect(screen.getByText("SavedActionsTab Mock")).toBeInTheDocument();
-    expect(screen.getByText("CreateNewActionTab Mock")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Add Action");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("Capture a new action...");
+    expect(screen.getByText("Select Saved Action")).toBeInTheDocument();
+    expect(screen.getByText("Capture New Action")).toBeInTheDocument();
+    // Only the first tab (SavedActionsTab) should be active initially
+    expect(screen.getByTestId("saved-actions-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("create-new-action-tab")).not.toBeInTheDocument();
   });
 
-  test("passes correct props to ModalWithTabs", () => {
+  test("does not render when open is false", () => {
+    render(<AddActionModal {...defaultProps} open={false} />);
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+  });
+
+  test("switches tabs correctly", async () => {
+    const user = userEvent.setup();
     render(<AddActionModal {...defaultProps} />);
-    expect(ModalWithTabsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        // Check for translated props
-        label: "Add Action",
-        description: "Capture a new action...",
-        open: true,
-        setOpen: mockSetOpen,
-        tabs: expect.any(Array),
-        size: "md",
-        closeOnOutsideClick: false,
-        restrictOverflow: true,
-      }),
-      undefined
-    );
-    expect(ModalWithTabsMock.mock.calls[0][0].tabs).toHaveLength(2);
-    // Check for translated tab titles in the tabs array
-    expect(ModalWithTabsMock.mock.calls[0][0].tabs[0].title).toBe("Select Saved Action");
-    expect(ModalWithTabsMock.mock.calls[0][0].tabs[1].title).toBe("Capture New Action");
+
+    // Initially shows saved actions tab (first tab is active)
+    expect(screen.getByTestId("saved-actions-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("create-new-action-tab")).not.toBeInTheDocument();
+
+    // Click capture new action tab
+    const captureNewActionTab = screen.getByText("Capture New Action");
+    await user.click(captureNewActionTab);
+
+    // Now shows create new action tab content
+    expect(screen.queryByTestId("saved-actions-tab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("create-new-action-tab")).toBeInTheDocument();
+
+    // Click select saved action tab again
+    const selectSavedActionTab = screen.getByText("Select Saved Action");
+    await user.click(selectSavedActionTab);
+
+    // Back to saved actions tab content
+    expect(screen.getByTestId("saved-actions-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("create-new-action-tab")).not.toBeInTheDocument();
+  });
+
+  test("resets to first tab when modal is reopened", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<AddActionModal {...defaultProps} />);
+
+    // Switch to create new action tab
+    const captureNewActionTab = screen.getByText("Capture New Action");
+    await user.click(captureNewActionTab);
+    expect(screen.getByTestId("create-new-action-tab")).toBeInTheDocument();
+
+    // Close modal
+    rerender(<AddActionModal {...defaultProps} open={false} />);
+
+    // Reopen modal
+    rerender(<AddActionModal {...defaultProps} open={true} />);
+
+    // Should be back to saved actions tab (first tab)
+    expect(screen.getByTestId("saved-actions-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("create-new-action-tab")).not.toBeInTheDocument();
   });
 
   test("passes correct props to SavedActionsTab", () => {
@@ -160,8 +209,18 @@ describe("AddActionModal", () => {
     );
   });
 
-  test("passes correct props to CreateNewActionTab", () => {
+  test("passes correct props to CreateNewActionTab", async () => {
+    const user = userEvent.setup();
     render(<AddActionModal {...defaultProps} />);
+
+    // CreateNewActionTab should not be called initially since first tab is active
+    expect(CreateNewActionTabMock).not.toHaveBeenCalled();
+
+    // Click the second tab to activate CreateNewActionTab
+    const captureNewActionTab = screen.getByText("Capture New Action");
+    await user.click(captureNewActionTab);
+
+    // Now CreateNewActionTab should be called with correct props
     expect(CreateNewActionTabMock).toHaveBeenCalledWith(
       {
         actionClasses: mockActionClasses,
@@ -171,24 +230,6 @@ describe("AddActionModal", () => {
         setLocalSurvey: mockSetLocalSurvey,
         environmentId: "env1",
       },
-      undefined
-    );
-  });
-
-  test("does not render when open is false", () => {
-    render(<AddActionModal {...defaultProps} open={false} />);
-    // Check the full props object passed to the mock, ensuring 'open' is false
-    expect(ModalWithTabsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: "Add Action", // Expect translated label even when closed
-        description: "Capture a new action...", // Expect translated description
-        open: false, // Check that open is false
-        setOpen: mockSetOpen,
-        tabs: expect.any(Array),
-        size: "md",
-        closeOnOutsideClick: false,
-        restrictOverflow: true,
-      }),
       undefined
     );
   });

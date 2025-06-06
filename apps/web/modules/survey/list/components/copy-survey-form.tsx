@@ -61,7 +61,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white p-4">
+        className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white">
         <div className="space-y-8 pb-12">
           {formFields.fields.map((field, projectIndex) => {
             const project = defaultProjects.find((project) => project.id === field.project);
