@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@/modules/survey/list/types/surveys";
@@ -42,14 +43,20 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     try {
       filteredData.forEach(async (project) => {
         project.environments.forEach(async (environment) => {
-          await copySurveyToOtherEnvironmentAction({
+          const result = await copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,
             targetEnvironmentId: environment,
           });
+
+          if (result?.data) {
+            toast.success(t("environments.surveys.copy_survey_success"));
+          } else {
+            const errorMessage = getFormattedErrorMessage(result);
+            toast.error(errorMessage);
+          }
         });
       });
-      toast.success(t("environments.surveys.copy_survey_success"));
     } catch (error) {
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {

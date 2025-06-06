@@ -311,6 +311,16 @@ export const copySurveyToOtherEnvironment = async (
       if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
     }
 
+    // Fetch existing action classes in target environment for name conflict checks
+    const existingActionClasses = !isSameEnvironment
+      ? await prisma.actionClass.findMany({
+          where: { environmentId: targetEnvironmentId },
+          select: { name: true, type: true },
+        })
+      : [];
+
+    const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
+
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
 
@@ -348,8 +358,26 @@ export const copySurveyToOtherEnvironment = async (
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
+          // Check if an action class with the same name but different type already exists
+          const hasNameConflict =
+            !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
+
+          let modifiedName = trigger.actionClass.name;
+          if (hasNameConflict) {
+            // Find a unique name by appending (copy), (copy 2), (copy 3), etc.
+            let copyNumber = 1;
+            let candidateName = `${trigger.actionClass.name} (copy)`;
+
+            while (existingActionClassNames.has(candidateName)) {
+              copyNumber++;
+              candidateName = `${trigger.actionClass.name} (copy ${copyNumber})`;
+            }
+
+            modifiedName = candidateName;
+          }
+
           const baseActionClassData = {
-            name: trigger.actionClass.name,
+            name: modifiedName,
             environment: { connect: { id: targetEnvironmentId } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
@@ -364,7 +392,10 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    key_environmentId: { key: trigger.actionClass.key!, environmentId: targetEnvironmentId },
+                    key_environmentId: {
+                      key: trigger.actionClass.key!,
+                      environmentId: targetEnvironmentId,
+                    },
                   },
                   create: {
                     ...baseActionClassData,
