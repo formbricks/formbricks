@@ -1,6 +1,7 @@
 // headers -> "Content-Type" should be present and set to a valid MIME type
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
 import { validateLocalSignedUrl } from "@/lib/crypto";
@@ -53,14 +54,23 @@ export const POST = async (req: NextRequest): Promise<Response> => {
 
   const session = await getServerSession(authOptions);
 
-  if (!session || !session.user) {
-    return responses.notAuthenticatedResponse();
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
+  if (!session) {
+    //check whether its using API key
+    const authentication = await authenticateRequest(req);
+    if (!authentication) return responses.notAuthenticatedResponse();
+    const isAuthorized = authentication.environmentPermissions.some(
+      (permission) =>
+        permission.environmentId === environmentId &&
+        (permission.permission === "write" || permission.permission === "manage")
+    );
+    if (!isAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+  } else {
+    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+    if (!isUserAuthorized) {
+      return responses.unauthorizedResponse();
+    }
   }
 
   const fileName = decodeURIComponent(encodedFileName);
