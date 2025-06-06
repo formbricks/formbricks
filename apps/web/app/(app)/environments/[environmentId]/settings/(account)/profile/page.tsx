@@ -10,7 +10,8 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organiza
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
-import { EditCommunityForm } from "./components/EditCommunityForm";
+import { EditCommunityAvatarForm } from "./components/EditCommunityAvatarForm";
+import { EditCommunityForm } from "./components/EditCommunityDetailsForm";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
@@ -55,11 +56,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             description={t("environments.settings.profile.update_personal_info")}>
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
-          <SettingsCard
-            title={"Community Profile"}
-            description={t("environments.settings.profile.update_community_info")}>
-            <EditCommunityForm user={user} />
-          </SettingsCard>
+
           <SettingsCard
             title={t("common.avatar")}
             description={t("environments.settings.profile.organization_identification")}>
@@ -68,6 +65,20 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                 session={session}
                 environmentId={environmentId}
                 imageUrl={user.imageUrl}
+              />
+            )}
+          </SettingsCard>
+          <SettingsCard
+            title={"Community Profile"}
+            description={t("environments.settings.profile.update_community_info")}>
+            <EditCommunityForm user={user} />
+          </SettingsCard>
+          <SettingsCard title={"Community Avatar"} description={t("update your community avatar")}>
+            {user && (
+              <EditCommunityAvatarForm
+                session={session}
+                environmentId={environmentId}
+                communityAvatarUrl={user.communityAvatarUrl}
               />
             )}
           </SettingsCard>

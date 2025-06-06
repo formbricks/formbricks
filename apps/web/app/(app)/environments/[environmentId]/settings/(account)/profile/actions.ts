@@ -49,6 +49,40 @@ export const removeAvatarAction = authenticatedActionClient
     return await updateUser(ctx.user.id, { imageUrl: null });
   });
 
+const ZUpdateCommunityAvatarAction = z.object({
+  communityAvatarUrl: z.string(),
+});
+
+export const updateCommunityAvatarAction = authenticatedActionClient
+  .schema(ZUpdateCommunityAvatarAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await updateUser(ctx.user.id, { communityAvatarUrl: parsedInput.communityAvatarUrl });
+  });
+
+const ZRemoveCommunityAvatarAction = z.object({
+  environmentId: ZId,
+});
+
+export const removeCommunityAvatarAction = authenticatedActionClient
+  .schema(ZRemoveCommunityAvatarAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const communityAvatarUrl = ctx.user.communityAvatarUrl;
+    if (!communityAvatarUrl) {
+      throw new Error("Image not found");
+    }
+
+    const fileName = getFileNameWithIdFromUrl(communityAvatarUrl);
+    if (!fileName) {
+      throw new Error("Invalid filename");
+    }
+
+    const deletionResult = await deleteFile(parsedInput.environmentId, "public", fileName);
+    if (!deletionResult.success) {
+      throw new Error("Deletion failed");
+    }
+    return await updateUser(ctx.user.id, { communityAvatarUrl: null });
+  });
+
 const ZConnectSocialAccountAction = z.object({
   provider: z.string(),
   socialId: z.string(),
@@ -96,8 +130,33 @@ export const connectSocialAccountAction = authenticatedActionClient
         });
       }
     } catch (error) {
-      console.error(`Failed to connect ${provider} account:`, error);
       throw new Error(`Failed to connect ${provider} account: ${error.message}`);
+    }
+  });
+
+const ZDisconnectSocialAccountAction = z.object({
+  provider: z.string(),
+});
+
+export const disconnectSocialAccountAction = authenticatedActionClient
+  .schema(ZDisconnectSocialAccountAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const userId = ctx.user.id;
+    const { provider } = parsedInput;
+
+    try {
+      const result = await prisma.userSocial.delete({
+        where: {
+          userId_provider: {
+            userId,
+            provider,
+          },
+        },
+      });
+
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to disconnect ${provider} account: ${error.message}`);
     }
   });
 

@@ -120,12 +120,16 @@ export const getCompletedSurveysAction = authenticatedActionClient
             select: {
               name: true,
               imageUrl: true,
+              communityName: true,
+              communityAvatarUrl: true,
             },
           });
           if (user) {
             creator = {
               name: user.name || "",
               imageUrl: user.imageUrl || "",
+              communityName: user.communityName || "",
+              communityAvatarUrl: user.communityAvatarUrl || "",
             };
           }
         }
@@ -240,6 +244,8 @@ export const getAvailableSurveysAction = authenticatedActionClient
             creator = {
               name: user.name,
               imageUrl: user.imageUrl,
+              communityName: user.communityName || "",
+              communityAvatarUrl: user.communityAvatarUrl || "",
             };
           }
         }
