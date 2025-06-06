@@ -1,5 +1,7 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -9,14 +11,11 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
@@ -30,6 +29,7 @@ interface Role {
   inviteId?: string;
   doesOrgHaveMoreThanOneOwner?: boolean;
   isFormbricksCloud: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export function EditMembershipRole({
@@ -42,6 +42,7 @@ export function EditMembershipRole({
   inviteId,
   doesOrgHaveMoreThanOneOwner,
   isFormbricksCloud,
+  isUserManagementDisabledFromUi,
 }: Role) {
   const { t } = useTranslate();
   const router = useRouter();
@@ -51,6 +52,7 @@ export function EditMembershipRole({
   const isOwnerOrManager = isOwner || isManager;
 
   const disableRole =
+    isUserManagementDisabledFromUi ||
     memberId === userId ||
     (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
     (currentUserRole === "manager" && memberRole === "owner");
@@ -79,10 +81,15 @@ export function EditMembershipRole({
   };
 
   const getMembershipRoles = () => {
-    const roles = isFormbricksCloud
-      ? Object.values(OrganizationRole)
-      : Object.keys(OrganizationRole).filter((role) => role !== "billing");
+    let roles: string[] = ["member"];
 
+    if (isOwner) {
+      roles.push("manager", "owner");
+
+      if (isFormbricksCloud) {
+        roles.push("billing");
+      }
+    }
     return roles;
   };
 
@@ -95,7 +102,8 @@ export function EditMembershipRole({
             disabled={disableRole}
             loading={loading}
             size="sm"
-            variant="secondary">
+            variant="secondary"
+            role="button-role">
             <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
             <ChevronDownIcon className="h-4 w-4" />
           </Button>
@@ -106,7 +114,8 @@ export function EditMembershipRole({
               onValueChange={(value) => {
                 handleRoleChange(value.toLowerCase() as TOrganizationRole);
               }}
-              value={memberRole}>
+              value={memberRole}
+              className="flex flex-col-reverse">
               {getMembershipRoles().map((role) => (
                 <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
                   {role.toLowerCase()}
@@ -119,5 +128,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" text={capitalizeFirstLetter(memberRole)} />;
+  return <Badge size="tiny" type="gray" role="badge-role" text={capitalizeFirstLetter(memberRole)} />;
 }

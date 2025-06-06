@@ -23,19 +23,19 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
+  surveyDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  webAppUrl: string;
   user: TUser;
 }
 
 export const ShareEmbedSurvey = ({
   survey,
+  surveyDomain,
   open,
   modalView,
   setOpen,
-  webAppUrl,
   user,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
@@ -60,7 +60,7 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
+  const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
     if (survey.type !== "link") {
@@ -86,7 +86,7 @@ export const ShareEmbedSurvey = ({
   };
 
   const handleInitialPageButton = () => {
-    setOpen(false);
+    setShowView("start");
   };
 
   return (
@@ -104,8 +104,8 @@ export const ShareEmbedSurvey = ({
               <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
-                webAppUrl={webAppUrl}
                 surveyUrl={surveyUrl}
+                surveyDomain={surveyDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -159,8 +159,8 @@ export const ShareEmbedSurvey = ({
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
+            surveyDomain={surveyDomain}
             setSurveyUrl={setSurveyUrl}
-            webAppUrl={webAppUrl}
             locale={user.locale}
           />
         ) : showView === "panel" ? (

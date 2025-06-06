@@ -54,3 +54,22 @@ packages/lib/uploads
 apps/web/public/js
 packages/database/migrations
 branch.json
+.vercel
+
+# Terraform
+infra/terraform/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*.tfvars
+**/*.tfvars.json
+**/.terraformrc
+**/terraform.rc
+
+# IntelliJ IDEA
+/.idea/
+/*.iml
+packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdata

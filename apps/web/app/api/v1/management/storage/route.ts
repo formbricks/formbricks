@@ -1,8 +1,10 @@
 import { responses } from "@/app/lib/api/response";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { validateFile } from "@/lib/fileValidation";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 
 // api endpoint for uploading public files
@@ -17,7 +19,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   try {
     storageInput = await req.json();
   } catch (error) {
-    console.error(`Error parsing JSON input: ${error}`);
+    logger.error({ error, url: req.url }, "Error parsing JSON input");
     return responses.badRequestResponse("Malformed JSON input, please check your request body");
   }
 
@@ -35,8 +37,15 @@ export const POST = async (req: NextRequest): Promise<Response> => {
     return responses.badRequestResponse("environmentId is required");
   }
 
+  // Perform server-side file validation first to block dangerous file types
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file type");
+  }
+
+  // Also perform client-specified allowed file extensions validation if provided
   if (allowedFileExtensions?.length) {
-    const fileExtension = fileName.split(".").pop();
+    const fileExtension = fileName.split(".").pop()?.toLowerCase();
     if (!fileExtension || !allowedFileExtensions.includes(fileExtension)) {
       return responses.badRequestResponse(
         `File extension is not allowed, allowed extensions are: ${allowedFileExtensions.join(", ")}`

@@ -1,13 +1,9 @@
 import "server-only";
-import { contactCache } from "@/lib/cache/contact";
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -37,7 +33,7 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
+export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
   const whereClause: Prisma.ContactWhereInput = { environmentId };
 
   if (search) {
@@ -65,65 +61,49 @@ const buildContactWhereClause = (environmentId: string, search?: string): Prisma
 };
 
 export const getContacts = reactCache(
-  (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
+  async (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
+    validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
 
-        try {
-          const contacts = await prisma.contact.findMany({
-            where: buildContactWhereClause(environmentId, searchValue),
-            select: selectContact,
-            take: ITEMS_PER_PAGE,
-            skip: offset,
-            orderBy: {
-              createdAt: "desc",
-            },
-          });
+    try {
+      const contacts = await prisma.contact.findMany({
+        where: buildContactWhereClause(environmentId, searchValue),
+        select: selectContact,
+        take: ITEMS_PER_PAGE,
+        skip: offset,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-          return contacts.map((contact) => transformPrismaContact(contact));
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getContacts-${environmentId}-${offset}-${searchValue ?? ""}`],
-      {
-        tags: [contactCache.tag.byEnvironmentId(environmentId)],
+      return contacts.map((contact) => transformPrismaContact(contact));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+
+      throw error;
+    }
+  }
 );
 
-export const getContact = reactCache(
-  (contactId: string): Promise<TContact | null> =>
-    cache(
-      async () => {
-        validateInputs([contactId, ZId]);
+export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
+  validateInputs([contactId, ZId]);
 
-        try {
-          return await prisma.contact.findUnique({
-            where: {
-              id: contactId,
-            },
-            select: selectContact,
-          });
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+  try {
+    return await prisma.contact.findUnique({
+      where: {
+        id: contactId,
       },
-      [`getContact-${contactId}`],
-      {
-        tags: [contactCache.tag.byId(contactId)],
-      }
-    )()
-);
+      select: selectContact,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
 
 export const deleteContact = async (contactId: string): Promise<TContact | null> => {
   validateInputs([contactId, ZId]);
@@ -135,28 +115,6 @@ export const deleteContact = async (contactId: string): Promise<TContact | null>
       },
       select: selectContact,
     });
-
-    const contactUserId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
-    const contactAttributes = contact.attributes;
-
-    contactCache.revalidate({
-      id: contact.id,
-      environmentId: contact.environmentId,
-      userId: contactUserId,
-    });
-
-    for (const attr of contactAttributes) {
-      contactAttributeCache.revalidate({
-        contactId: contact.id,
-        key: attr.attributeKey.key,
-        environmentId: contact.environmentId,
-      });
-
-      contactAttributeKeyCache.revalidate({
-        environmentId: contact.environmentId,
-        key: attr.attributeKey.key,
-      });
-    }
 
     return contact;
   } catch (error) {
@@ -451,20 +409,6 @@ export const createContactsFromCSV = async (
     const results = await Promise.all(contactPromises);
     const createdContactsFiltered = results.filter((contact) => contact !== null) as TContact[];
     createdContacts.push(...createdContactsFiltered);
-
-    contactCache.revalidate({
-      environmentId,
-    });
-
-    for (const contact of createdContactsFiltered) {
-      contactCache.revalidate({
-        id: contact.id,
-      });
-    }
-
-    contactAttributeKeyCache.revalidate({
-      environmentId,
-    });
 
     return createdContacts;
   } catch (error) {

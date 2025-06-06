@@ -1,6 +1,7 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { cn } from "@/lib/cn";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -10,7 +11,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
-import { cn } from "@formbricks/lib/cn";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },
@@ -24,7 +24,7 @@ export const ProjectLookSettingsLoading = () => {
   const { t } = useTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard

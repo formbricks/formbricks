@@ -8,6 +8,9 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -20,8 +23,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -115,11 +116,18 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
-      const spreadsheetName = await getSpreadsheetNameByIdAction(
+      const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
         googleSheetIntegration,
         environmentId,
-        spreadsheetId
-      );
+        spreadsheetId,
+      });
+
+      if (!spreadsheetNameResponse?.data) {
+        const errorMessage = getFormattedErrorMessage(spreadsheetNameResponse);
+        throw new Error(errorMessage);
+      }
+
+      const spreadsheetName = spreadsheetNameResponse.data;
 
       setIsLinkingSheet(true);
       integrationData.spreadsheetId = spreadsheetId;

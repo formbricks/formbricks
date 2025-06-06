@@ -1,15 +1,17 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
+import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useRef } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -36,6 +38,8 @@ export const EndScreenForm = ({
 }: EndScreenFormProps) => {
   const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -54,19 +58,42 @@ export const EndScreenForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
       />
+      <div>
+        {endingCard.subheader !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
+                id="subheader"
+                value={endingCard.subheader}
+                label={t("common.description")}
+                localSurvey={localSurvey}
+                questionIdx={localSurvey.questions.length + endingCardIndex}
+                isInvalid={isInvalid}
+                updateSurvey={updateSurvey}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+              />
+            </div>
+          </div>
+        )}
 
-      <QuestionFormInput
-        id="subheader"
-        value={endingCard.subheader}
-        label={t("common.description")}
-        localSurvey={localSurvey}
-        questionIdx={localSurvey.questions.length + endingCardIndex}
-        isInvalid={isInvalid}
-        updateSurvey={updateSurvey}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-      />
+        {endingCard.subheader === undefined && (
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="secondary"
+            type="button"
+            onClick={() => {
+              updateSurvey({
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_description")}
+          </Button>
+        )}
+      </div>
       <div className="mt-4">
         <div className="flex items-center space-x-1">
           <Switch

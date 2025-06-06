@@ -1,8 +1,11 @@
 import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { validateFile } from "@/lib/fileValidation";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { ZUploadFileRequest } from "@formbricks/types/storage";
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
@@ -12,7 +15,13 @@ interface Context {
 }
 
 export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse({}, true);
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
+  );
 };
 
 // api endpoint for uploading private files
@@ -25,18 +34,26 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   const params = await context.params;
   const environmentId = params.environmentId;
 
-  const { fileName, fileType, surveyId } = await req.json();
+  const jsonInput = await req.json();
+  const inputValidation = ZUploadFileRequest.safeParse({
+    ...jsonInput,
+    environmentId,
+  });
 
-  if (!surveyId) {
-    return responses.badRequestResponse("surveyId ID is required");
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Invalid request",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
-  if (!fileName) {
-    return responses.badRequestResponse("fileName is required");
-  }
+  const { fileName, fileType, surveyId } = inputValidation.data;
 
-  if (!fileType) {
-    return responses.badRequestResponse("contentType is required");
+  // Perform server-side file validation
+  const fileValidation = validateFile(fileName, fileType);
+  if (!fileValidation.valid) {
+    return responses.badRequestResponse(fileValidation.error ?? "Invalid file", { fileName, fileType }, true);
   }
 
   const [survey, organization] = await Promise.all([

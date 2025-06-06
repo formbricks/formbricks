@@ -2,13 +2,14 @@ import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
+import { Label } from "@/components/general/label";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useMemo, useRef, useState } from "preact/hooks";
 import { useCallback } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -56,32 +57,32 @@ export function AddressQuestion({
     {
       id: "addressLine1",
       ...question.addressLine1,
-      placeholder: question.addressLine1.placeholder[languageCode],
+      label: question.addressLine1.placeholder[languageCode],
     },
     {
       id: "addressLine2",
       ...question.addressLine2,
-      placeholder: question.addressLine2.placeholder[languageCode],
+      label: question.addressLine2.placeholder[languageCode],
     },
     {
       id: "city",
       ...question.city,
-      placeholder: question.city.placeholder[languageCode],
+      label: question.city.placeholder[languageCode],
     },
     {
       id: "state",
       ...question.state,
-      placeholder: question.state.placeholder[languageCode],
+      label: question.state.placeholder[languageCode],
     },
     {
       id: "zip",
       ...question.zip,
-      placeholder: question.zip.placeholder[languageCode],
+      label: question.zip.placeholder[languageCode],
     },
     {
       id: "country",
       ...question.country,
-      placeholder: question.country.placeholder[languageCode],
+      label: question.country.placeholder[languageCode],
     },
   ];
 
@@ -155,19 +156,22 @@ export function AddressQuestion({
 
               return (
                 field.show && (
-                  <Input
-                    key={field.id}
-                    placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
-                    required={isFieldRequired()}
-                    value={safeValue[index] || ""}
-                    className="fb-py-3"
-                    type={field.id === "email" ? "email" : "text"}
-                    onChange={(e) => {
-                      handleChange(field.id, e.currentTarget.value);
-                    }}
-                    ref={index === 0 ? addressRef : null}
-                    tabIndex={isCurrent ? 0 : -1}
-                  />
+                  <div className="fb-space-y-1">
+                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                    <Input
+                      id={field.id}
+                      key={field.id}
+                      required={isFieldRequired()}
+                      value={safeValue[index] || ""}
+                      type={field.id === "email" ? "email" : "text"}
+                      onChange={(e) => {
+                        handleChange(field.id, e.currentTarget.value);
+                      }}
+                      ref={index === 0 ? addressRef : null}
+                      tabIndex={isCurrent ? 0 : -1}
+                      aria-label={field.label}
+                    />
+                  </div>
                 )
               );
             })}

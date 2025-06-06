@@ -1,15 +1,15 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
+import { getFirstEnvironmentIdByUserId } from "@/lib/environment/service";
+import { getIsFreshInstance } from "@/lib/instance/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { getFirstEnvironmentIdByUserId } from "@formbricks/lib/environment/service";
-import { getIsFreshInstance } from "@formbricks/lib/instance/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
@@ -17,9 +17,9 @@ const Page = async () => {
 
   if (!session) {
     if (isFreshInstance) {
-      redirect("/setup/intro");
+      return redirect("/setup/intro");
     } else {
-      redirect("/auth/login");
+      return redirect("/auth/login");
     }
   }
 

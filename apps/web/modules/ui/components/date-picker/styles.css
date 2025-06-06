@@ -17,7 +17,7 @@
 
 .react-calendar__month-view__weekdays {
   text-decoration-style: dotted !important;
-  text-decoration: underline;
+  text-decoration-line: underline !important;
 }
 
 .react-calendar__month-view__days__day--weekend {

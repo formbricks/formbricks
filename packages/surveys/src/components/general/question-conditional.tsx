@@ -13,7 +13,8 @@ import { OpenTextQuestion } from "@/components/questions/open-text-question";
 import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@/lib/i18n";
+import { useEffect } from "react";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -42,6 +43,7 @@ interface QuestionConditionalProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function QuestionConditional({
@@ -62,6 +64,7 @@ export function QuestionConditional({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  onOpenExternalURL,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
@@ -72,13 +75,16 @@ export function QuestionConditional({
       .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
   };
 
-  if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
-    if (skipPrefilled) {
-      onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
-    } else {
-      onChange({ [question.id]: prefilledQuestionValue });
+  useEffect(() => {
+    if (value === undefined && (prefilledQuestionValue || prefilledQuestionValue === "")) {
+      if (skipPrefilled) {
+        onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
+      } else {
+        onChange({ [question.id]: prefilledQuestionValue });
+      }
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the question renders for the first time
+  }, []);
 
   return question.type === TSurveyQuestionTypeEnum.OpenText ? (
     <OpenTextQuestion
@@ -164,6 +170,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      onOpenExternalURL={onOpenExternalURL}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion

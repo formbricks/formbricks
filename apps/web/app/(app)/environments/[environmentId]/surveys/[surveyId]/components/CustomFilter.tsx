@@ -7,6 +7,7 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
   DropdownMenu,
@@ -34,7 +35,6 @@ import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucid
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ResponseFilter } from "./ResponseFilter";
 
@@ -250,6 +250,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       if (responsesDownloadUrlResponse?.data) {
         const link = document.createElement("a");
         link.href = responsesDownloadUrlResponse.data;
+        link.download = "";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -416,14 +417,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "csv");
                   }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.current_selection_csv")}</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                   }}>
                   <p className="text-slate-700">
-                    {t("environments.surveys.summary.current_selection_excel")}
+                    {t("environments.surveys.summary.filtered_responses_excel")}
                   </p>
                 </DropdownMenuItem>
               </DropdownMenuContent>

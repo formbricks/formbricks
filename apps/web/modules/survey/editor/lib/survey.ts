@@ -1,17 +1,14 @@
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
-import { handleTriggerUpdates } from "@/modules/survey/editor/lib/utils";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
-import { getInsightsEnabled } from "@/modules/survey/lib/utils";
-import { doesSurveyHasOpenTextQuestion } from "@/modules/survey/lib/utils";
-import { Prisma, Survey } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { segmentCache } from "@formbricks/lib/cache/segment";
-import { surveyCache } from "@formbricks/lib/survey/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   try {
@@ -27,6 +24,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
+
+    checkForInvalidImagesInQuestions(questions);
 
     if (languages) {
       // Process languages update logic here
@@ -105,7 +104,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             };
           }
 
-          const updatedSegment = await prisma.segment.update({
+          await prisma.segment.update({
             where: { id: segment.id },
             data: updatedInput,
             select: {
@@ -114,11 +113,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
               id: true,
             },
           });
-
-          segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
-          updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
-          console.error(error);
+          logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
         }
       } else {
@@ -154,11 +150,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           });
         }
       }
-
-      segmentCache.revalidate({
-        id: segment.id,
-        environmentId: segment.environmentId,
-      });
     } else if (type === "app") {
       if (!currentSurvey.segment) {
         await prisma.survey.update({
@@ -187,10 +178,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
               },
             },
           },
-        });
-
-        segmentCache.revalidate({
-          environmentId,
         });
       }
     }
@@ -253,71 +240,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
-          (question) => question.type === "openText"
-        );
-
-        // find the questions that have been updated or added
-        const questionsToCheckForInsights: Survey["questions"] = [];
-
-        for (const question of openTextQuestions) {
-          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
-            | TSurveyOpenTextQuestion
-            | undefined;
-          const isExistingQuestion = !!existingQuestion;
-
-          if (
-            isExistingQuestion &&
-            question.headline.default === existingQuestion.headline.default &&
-            existingQuestion.insightsEnabled !== undefined
-          ) {
-            continue;
-          } else {
-            questionsToCheckForInsights.push(question);
-          }
-        }
-
-        if (questionsToCheckForInsights.length > 0) {
-          const insightsEnabledValues = await Promise.all(
-            questionsToCheckForInsights.map(async (question) => {
-              const insightsEnabled = await getInsightsEnabled(question);
-
-              return { id: question.id, insightsEnabled };
-            })
-          );
-
-          data.questions = data.questions?.map((question) => {
-            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-            if (index !== -1) {
-              return {
-                ...question,
-                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-              };
-            }
-
-            return question;
-          });
-        }
-      }
-    } else {
-      // check if an existing question got changed that had insights enabled
-      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText" && question.insightsEnabled !== undefined
-      );
-      // if question headline changed, remove insightsEnabled
-      for (const question of insightsEnabledOpenTextQuestions) {
-        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
-        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
-          updatedQuestion.insightsEnabled = undefined;
-        }
-      }
-    }
-
     surveyData.updatedAt = new Date();
 
     data = {
@@ -362,20 +284,73 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       segment: surveySegment,
     };
 
-    surveyCache.revalidate({
-      id: modifiedSurvey.id,
-      environmentId: modifiedSurvey.environmentId,
-      segmentId: modifiedSurvey.segment?.id,
-      resultShareKey: currentSurvey.resultShareKey ?? undefined,
-    });
-
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error updating survey");
       throw new DatabaseError(error.message);
     }
 
     throw error;
   }
+};
+
+export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
+  if (!triggers) return;
+
+  // check if all the triggers are valid
+  triggers.forEach((trigger) => {
+    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+  });
+
+  // check if all the triggers are unique
+  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
+
+  if (new Set(triggerIds).size !== triggerIds.length) {
+    throw new InvalidInputError("Duplicate trigger id");
+  }
+};
+
+export const handleTriggerUpdates = (
+  updatedTriggers: TSurvey["triggers"],
+  currentTriggers: TSurvey["triggers"],
+  actionClasses: ActionClass[]
+) => {
+  if (!updatedTriggers) return {};
+  checkTriggersValidity(updatedTriggers, actionClasses);
+
+  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
+  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
+
+  // added triggers are triggers that are not in the current triggers and are there in the new triggers
+  const addedTriggers = updatedTriggers.filter(
+    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
+  );
+
+  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
+  const deletedTriggers = currentTriggers.filter(
+    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
+  );
+
+  // Construct the triggers update object
+  const triggersUpdate: TriggerUpdate = {};
+
+  if (addedTriggers.length > 0) {
+    triggersUpdate.create = addedTriggers.map((trigger) => ({
+      actionClassId: trigger.actionClass.id,
+    }));
+  }
+
+  if (deletedTriggers.length > 0) {
+    // disconnect the public triggers from the survey
+    triggersUpdate.deleteMany = {
+      actionClassId: {
+        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
+      },
+    };
+  }
+
+  return triggersUpdate;
 };

@@ -48,7 +48,9 @@
             "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
             "xm-and-surveys/surveys/general-features/metadata",
             "xm-and-surveys/surveys/general-features/variables",
-            "xm-and-surveys/surveys/general-features/hide-back-button"
+            "xm-and-surveys/surveys/general-features/hide-back-button",
+            "xm-and-surveys/surveys/general-features/email-followups",
+            "xm-and-surveys/surveys/general-features/spam-protection"
           ]
         },
         {
@@ -90,33 +92,33 @@
               ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "group": "Core Features",
-      "pages": [
+        },
         {
           "group": "Question Types",
           "icon": "question",
           "pages": [
-            "xm-and-surveys/core-features/question-type/address",
-            "xm-and-surveys/core-features/question-type/consent",
-            "xm-and-surveys/core-features/question-type/contact-info",
-            "xm-and-surveys/core-features/question-type/date",
-            "xm-and-surveys/core-features/question-type/file-upload",
-            "xm-and-surveys/core-features/question-type/free-text",
-            "xm-and-surveys/core-features/question-type/matrix",
-            "xm-and-surveys/core-features/question-type/net-promoter-score",
-            "xm-and-surveys/core-features/question-type/ranking",
-            "xm-and-surveys/core-features/question-type/rating",
-            "xm-and-surveys/core-features/question-type/schedule-a-meeting",
-            "xm-and-surveys/core-features/question-type/select-multiple",
-            "xm-and-surveys/core-features/question-type/select-picture",
-            "xm-and-surveys/core-features/question-type/select-single",
-            "xm-and-surveys/core-features/question-type/statement-cta"
+            "xm-and-surveys/surveys/question-type/address",
+            "xm-and-surveys/surveys/question-type/consent",
+            "xm-and-surveys/surveys/question-type/contact-info",
+            "xm-and-surveys/surveys/question-type/date",
+            "xm-and-surveys/surveys/question-type/file-upload",
+            "xm-and-surveys/surveys/question-type/free-text",
+            "xm-and-surveys/surveys/question-type/matrix",
+            "xm-and-surveys/surveys/question-type/net-promoter-score",
+            "xm-and-surveys/surveys/question-type/ranking",
+            "xm-and-surveys/surveys/question-type/rating",
+            "xm-and-surveys/surveys/question-type/schedule-a-meeting",
+            "xm-and-surveys/surveys/question-type/select-multiple",
+            "xm-and-surveys/surveys/question-type/select-picture",
+            "xm-and-surveys/surveys/question-type/select-single",
+            "xm-and-surveys/surveys/question-type/statement-cta"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "group": "Platform Features",
+      "pages": [
         {
           "group": "Integrations",
           "icon": "bridge",
@@ -136,12 +138,9 @@
         },
         "xm-and-surveys/core-features/user-management",
         "xm-and-surveys/core-features/styling-theme",
-        "xm-and-surveys/core-features/email-customization"
+        "xm-and-surveys/core-features/email-customization",
+        "xm-and-surveys/core-features/test-environment"
       ]
-    },
-    {
-      "group": "Enterprise Features",
-      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
     },
     {
       "group": "XM",
@@ -180,7 +179,11 @@
     },
     {
       "group": "Technical Handbook",
-      "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
+      "pages": [
+        "development/technical-handbook/overview",
+        "development/technical-handbook/database-model",
+        "development/technical-handbook/tenant-separation"
+      ]
     },
     {
       "group": "Standards",
@@ -245,8 +248,8 @@
       "pages": [
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
-        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/monitoring",
+        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/kubernetes"
       ]
     },
@@ -256,11 +259,15 @@
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
         "self-hosting/configuration/smtp",
+        "self-hosting/configuration/domain-configuration",
         {
           "group": "Auth & SSO",
           "icon": "lock",
           "pages": [
-            "self-hosting/configuration/auth-sso/oauth",
+            "self-hosting/auth-behavior",
+            "self-hosting/configuration/auth-sso/open-id-connect",
+            "self-hosting/configuration/auth-sso/azure-ad-oauth",
+            "self-hosting/configuration/auth-sso/google-oauth",
             "self-hosting/configuration/auth-sso/saml-sso"
           ]
         },
@@ -273,7 +280,8 @@
             "self-hosting/configuration/integrations/n8n",
             "self-hosting/configuration/integrations/notion",
             "self-hosting/configuration/integrations/slack",
-            "self-hosting/configuration/integrations/zapier"
+            "self-hosting/configuration/integrations/zapier",
+            "self-hosting/configuration/integrations/activepieces"
           ]
         }
       ]
@@ -283,12 +291,30 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
+        {
+          "group": "Enterprise Features",
+          "icon": "building",
+          "pages": [
+            "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+            "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+            "self-hosting/advanced/enterprise-features/team-access",
+            "self-hosting/advanced/enterprise-features/contact-management-segments",
+            "self-hosting/advanced/enterprise-features/multi-language-surveys",
+            "self-hosting/advanced/enterprise-features/oidc-sso",
+            "self-hosting/advanced/enterprise-features/saml-sso",
+            "self-hosting/advanced/enterprise-features/audit-logging"
+          ]
+        },
         "self-hosting/advanced/rate-limiting"
       ]
     },
     {
-      "group": "API Documentation",
-      "pages": ["api-reference/introduction", "api-reference/rest-api"]
+      "group": "API v1 Documentation",
+      "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
+    },
+    {
+      "group": "API v2 Documentation (Draft)",
+      "pages": ["api-v2-reference/introduction"]
     }
   ],
   "redirects": [

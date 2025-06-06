@@ -7,40 +7,133 @@ export const GET = async (req: NextRequest) => {
 
   return new ImageResponse(
     (
-      <div tw={`flex flex-col w-full h-full items-center  bg-[${brandColor}]/75 rounded-xl `}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          alignItems: "center",
+          backgroundColor: brandColor ? brandColor + "BF" : "#0000BFBF", // /75 opacity is approximately BF in hex
+          borderRadius: "0.75rem",
+        }}>
         <div
-          tw="flex flex-col w-[80%] h-[60%] bg-white rounded-xl mt-13 absolute left-12 top-3 opacity-20"
           style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "80%",
+            height: "60%",
+            backgroundColor: "white",
+            borderRadius: "0.75rem",
+            marginTop: "3.25rem",
+            position: "absolute",
+            left: "3rem",
+            top: "0.75rem",
+            opacity: 0.2,
             transform: "rotate(356deg)",
           }}></div>
         <div
-          tw="flex flex-col w-[84%] h-[60%] bg-white rounded-xl mt-12 absolute top-5 left-13  border-2 opacity-60"
           style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "84%",
+            height: "60%",
+            backgroundColor: "white",
+            borderRadius: "0.75rem",
+            marginTop: "3rem",
+            position: "absolute",
+            top: "1.25rem",
+            left: "3.25rem",
+            borderWidth: "2px",
+            opacity: 0.6,
             transform: "rotate(357deg)",
           }}></div>
         <div
-          tw="flex flex-col w-[85%] h-[67%] items-center  bg-white rounded-xl  mt-8 absolute top-[2.3rem] left-14"
           style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "85%",
+            height: "67%",
+            alignItems: "center",
+            backgroundColor: "white",
+            borderRadius: "0.75rem",
+            marginTop: "2rem",
+            position: "absolute",
+            top: "2.3rem",
+            left: "3.5rem",
             transform: "rotate(360deg)",
           }}>
-          <div tw="flex flex-col w-full">
-            <div tw="flex flex-col md:flex-row w-full md:items-center justify-between ">
-              <div tw="flex flex-col  px-8">
-                <h2 tw="flex flex-col text-[8] sm:text-4xl font-bold tracking-tight text-slate-900 text-left mt-15">
+          <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                justifyContent: "space-between",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  paddingLeft: "2rem",
+                  paddingRight: "2rem",
+                }}>
+                <h2
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    fontSize: "2rem",
+                    fontWeight: "700",
+                    letterSpacing: "-0.025em",
+                    color: "#0f172a",
+                    textAlign: "left",
+                    marginTop: "3.75rem",
+                  }}>
                   {name}
                 </h2>
-                <span tw="text-slate-600 text-xl">Complete in ~ 4 minutes</span>
               </div>
             </div>
-            <div tw="flex justify-end mr-10 ">
-              <div tw="flex rounded-2xl absolute -right-2 mt-2">
-                <a tw={`rounded-xl border border-transparent bg-[${brandColor}] h-18 w-38 opacity-50`}></a>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginRight: "2.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  borderRadius: "1rem",
+                  position: "absolute",
+                  right: "-0.5rem",
+                  marginTop: "0.5rem",
+                }}>
+                <div
+                  content=""
+                  style={{
+                    borderRadius: "0.75rem",
+                    border: "1px solid transparent",
+                    backgroundColor: brandColor ?? "#000",
+                    height: "4.5rem",
+                    width: "9.5rem",
+                    opacity: 0.5,
+                  }}></div>
               </div>
-              <div tw="flex rounded-2xl shadow ">
-                <a
-                  tw={`flex items-center justify-center rounded-xl border border-transparent bg-[${brandColor}] text-2xl text-white h-18 w-38`}>
+              <div
+                style={{
+                  display: "flex",
+                  borderRadius: "1rem",
+                  boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "0.75rem",
+                    border: "1px solid transparent",
+                    backgroundColor: brandColor ?? "#000",
+                    fontSize: "1.5rem",
+                    color: "white",
+                    height: "4.5rem",
+                    width: "9.5rem",
+                  }}>
                   Begin!
-                </a>
+                </div>
               </div>
             </div>
           </div>

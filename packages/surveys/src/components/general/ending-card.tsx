@@ -4,9 +4,9 @@ import { LoadingSpinner } from "@/components/general/loading-spinner";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -21,6 +21,8 @@ interface EndingCardProps {
   languageCode: string;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
+  isPreviewMode: boolean;
 }
 
 export function EndingCard({
@@ -33,11 +35,14 @@ export function EndingCard({
   languageCode,
   responseData,
   variablesData,
+  onOpenExternalURL,
+  isPreviewMode,
 }: EndingCardProps) {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
     ) : null;
+
   const checkmark = (
     <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
       <svg
@@ -61,7 +66,11 @@ export function EndingCard({
     try {
       const url = replaceRecallInfo(urlString, responseData, variablesData);
       if (url && new URL(url)) {
-        window.top?.location.replace(url);
+        if (onOpenExternalURL) {
+          onOpenExternalURL(url);
+        } else {
+          window.top?.location.replace(url);
+        }
       }
     } catch (error) {
       console.error("Invalid URL after recall processing:", error);
@@ -105,48 +114,62 @@ export function EndingCard({
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
-            {endingCard.type === "endScreen" && (media ?? checkmark)}
-            <div>
-              <Headline
-                alignTextCenter
-                headline={
-                  endingCard.type === "endScreen"
-                    ? replaceRecallInfo(
-                        getLocalizedValue(endingCard.headline, languageCode),
-                        responseData,
-                        variablesData
-                      )
-                    : "Respondents will not see this card"
-                }
-                questionId="EndingCard"
-              />
-              <Subheader
-                subheader={
-                  endingCard.type === "endScreen"
-                    ? replaceRecallInfo(
-                        getLocalizedValue(endingCard.subheader, languageCode),
-                        responseData,
-                        variablesData
-                      )
-                    : "They will be forwarded immediately"
-                }
-                questionId="EndingCard"
-              />
-              {endingCard.type === "endScreen" && endingCard.buttonLabel ? (
-                <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
-                  <SubmitButton
-                    buttonLabel={replaceRecallInfo(
-                      getLocalizedValue(endingCard.buttonLabel, languageCode),
+            {endingCard.type === "endScreen" && (
+              <div>
+                {media ?? checkmark}
+                <div>
+                  <Headline
+                    alignTextCenter
+                    headline={replaceRecallInfo(
+                      getLocalizedValue(endingCard.headline, languageCode),
                       responseData,
                       variablesData
                     )}
-                    isLastQuestion={false}
-                    focus={isCurrent ? autoFocusEnabled : false}
-                    onClick={handleSubmit}
+                    questionId="EndingCard"
                   />
+                  <Subheader
+                    subheader={replaceRecallInfo(
+                      getLocalizedValue(endingCard.subheader, languageCode),
+                      responseData,
+                      variablesData
+                    )}
+                    questionId="EndingCard"
+                  />
+                  {endingCard.buttonLabel ? (
+                    <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                      <SubmitButton
+                        buttonLabel={replaceRecallInfo(
+                          getLocalizedValue(endingCard.buttonLabel, languageCode),
+                          responseData,
+                          variablesData
+                        )}
+                        isLastQuestion={false}
+                        focus={isCurrent ? autoFocusEnabled : false}
+                        onClick={handleSubmit}
+                      />
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
+              </div>
+            )}
+            {endingCard.type === "redirectToUrl" && (
+              <>
+                {isPreviewMode ? (
+                  <div>
+                    <Headline
+                      alignTextCenter
+                      headline={"Respondents will not see this card"}
+                      questionId="EndingCard"
+                    />
+                    <Subheader subheader={"They will be redirected immediately"} questionId="EndingCard" />
+                  </div>
+                ) : (
+                  <div className="fb-my-3">
+                    <LoadingSpinner />
+                  </div>
+                )}
+              </>
+            )}
           </>
         ) : (
           <>

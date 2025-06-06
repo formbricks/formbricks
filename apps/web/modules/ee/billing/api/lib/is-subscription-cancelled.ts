@@ -1,7 +1,8 @@
+import { STRIPE_API_VERSION } from "@/lib/constants";
+import { env } from "@/lib/env";
+import { getOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
-import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
-import { getOrganization } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -44,7 +45,7 @@ export const isSubscriptionCancelled = async (
       date: null,
     };
   } catch (err) {
-    console.error(err);
+    logger.error(err, "Error checking if subscription is cancelled");
     return {
       cancelled: false,
       date: null,

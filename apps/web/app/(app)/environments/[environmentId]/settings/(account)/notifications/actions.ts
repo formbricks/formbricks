@@ -1,8 +1,10 @@
 "use server";
 
+import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { z } from "zod";
-import { updateUser } from "@formbricks/lib/user/service";
 import { ZUserNotificationSettings } from "@formbricks/types/user";
 
 const ZUpdateNotificationSettingsAction = z.object({
@@ -11,8 +13,25 @@ const ZUpdateNotificationSettingsAction = z.object({
 
 export const updateNotificationSettingsAction = authenticatedActionClient
   .schema(ZUpdateNotificationSettingsAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await updateUser(ctx.user.id, {
-      notificationSettings: parsedInput.notificationSettings,
-    });
-  });
+  .action(
+    withAuditLogging(
+      "updated",
+      "user",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const oldObject = await getUser(ctx.user.id);
+        const result = await updateUser(ctx.user.id, {
+          notificationSettings: parsedInput.notificationSettings,
+        });
+        ctx.auditLoggingCtx.userId = ctx.user.id;
+        ctx.auditLoggingCtx.oldObject = oldObject;
+        ctx.auditLoggingCtx.newObject = result;
+        return result;
+      }
+    )
+  );

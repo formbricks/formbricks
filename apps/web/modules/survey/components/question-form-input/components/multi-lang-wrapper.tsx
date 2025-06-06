@@ -1,10 +1,10 @@
 "use client";
 
+import { getEnabledLanguages } from "@/lib/i18n/utils";
+import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
 import { useTranslate } from "@tolgee/react";
-import React, { ReactNode, useMemo } from "react";
-import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
-import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
+import { ReactNode, useMemo } from "react";
 import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

@@ -4,29 +4,33 @@
   "patterns": ["./apps/web/**/*.ts?(x)"],
   "projectId": 10304,
   "pull": {
-    "path": "./packages/lib/messages"
+    "path": "./apps/web/locales"
   },
   "push": {
     "files": [
       {
         "language": "en-US",
-        "path": "./packages/lib/messages/en-US.json"
+        "path": "./apps/web/locales/en-US.json"
       },
       {
         "language": "de-DE",
-        "path": "./packages/lib/messages/de-DE.json"
+        "path": "./apps/web/locales/de-DE.json"
       },
       {
         "language": "fr-FR",
-        "path": "./packages/lib/messages/fr-FR.json"
+        "path": "./apps/web/locales/fr-FR.json"
       },
       {
         "language": "pt-BR",
-        "path": "./packages/lib/messages/pt-BR.json"
+        "path": "./apps/web/locales/pt-BR.json"
       },
       {
         "language": "zh-Hant-TW",
-        "path": "./packages/lib/messages/zh-Hant-TW.json"
+        "path": "./apps/web/locales/zh-Hant-TW.json"
+      },
+      {
+        "language": "pt-PT",
+        "path": "./apps/web/locales/pt-PT.json"
       }
     ],
     "forceMode": "OVERRIDE"

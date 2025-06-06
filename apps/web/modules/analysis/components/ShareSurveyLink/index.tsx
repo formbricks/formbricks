@@ -1,10 +1,11 @@
 "use client";
 
+import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
+import { Copy, QrCode, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,7 +15,7 @@ import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
-  webAppUrl: string;
+  surveyDomain: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
@@ -22,8 +23,8 @@ interface ShareSurveyLinkProps {
 
 export const ShareSurveyLink = ({
   survey,
-  webAppUrl,
   surveyUrl,
+  surveyDomain,
   setSurveyUrl,
   locale,
 }: ShareSurveyLinkProps) => {
@@ -31,7 +32,7 @@ export const ShareSurveyLink = ({
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
-    let url = `${webAppUrl}/s/${survey.id}`;
+    let url = `${surveyDomain}/s/${survey.id}`;
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
@@ -57,7 +58,9 @@ export const ShareSurveyLink = ({
     }
 
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey, surveyDomain, language]);
 
   const generateNewSingleUseLink = () => {
     getUrl();
@@ -68,15 +71,18 @@ export const ShareSurveyLink = ({
     getUrl();
   }, [survey, getUrl, language]);
 
+  const { downloadQRCode } = useSurveyQRCode(surveyUrl);
+
   return (
     <div
       className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
-      <SurveyLinkDisplay surveyUrl={surveyUrl} />
+      <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
+          disabled={!surveyUrl}
           onClick={() => {
             let previewUrl = surveyUrl;
             if (previewUrl.includes("?")) {
@@ -90,6 +96,7 @@ export const ShareSurveyLink = ({
           <SquareArrowOutUpRight />
         </Button>
         <Button
+          disabled={!surveyUrl}
           variant="secondary"
           title={t("environments.surveys.copy_survey_link_to_clipboard")}
           aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
@@ -100,8 +107,18 @@ export const ShareSurveyLink = ({
           {t("common.copy")}
           <Copy />
         </Button>
+        <Button
+          variant="secondary"
+          title={t("environments.surveys.summary.download_qr_code")}
+          aria-label={t("environments.surveys.summary.download_qr_code")}
+          size={"icon"}
+          disabled={!surveyUrl}
+          onClick={downloadQRCode}>
+          <QrCode style={{ width: "24px", height: "24px" }} />
+        </Button>
         {survey.singleUse?.enabled && (
           <Button
+            disabled={!surveyUrl}
             title="Regenerate single use survey link"
             aria-label="Regenerate single use survey link"
             onClick={generateNewSingleUseLink}>

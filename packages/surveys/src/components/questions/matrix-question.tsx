@@ -4,11 +4,11 @@ import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -144,10 +144,12 @@ export function MatrixQuestion({
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
-                  <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "bg-input-bg" : ""}>
+                  <tr
+                    key={`row-${rowIndex.toString()}`}
+                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
                     <th
                       scope="row"
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </th>

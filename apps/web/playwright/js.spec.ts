@@ -8,14 +8,14 @@ const HTML_TEMPLATE = `<head>
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
       var e = document.getElementsByTagName("script")[0];
-      e.parentNode.insertBefore(t, e),
-        setTimeout(function () {
-          formbricks.init({
-            environmentId: "ENVIRONMENT_ID",
-            userId: "RANDOM_USER_ID",
-            apiHost: "http://localhost:3000",
-          });
-        }, 500);
+      t.onload = function(){
+        if (window.formbricks) {
+          window.formbricks.setup({environmentId: "ENVIRONMENT_ID", appUrl: "http://localhost:3000"});
+        } else {
+          console.error("Formbricks library failed to load properly. The formbricks object is not available.");
+        }
+      };
+      e.parentNode.insertBefore(t, e);
     })();
   </script>
 </head>
@@ -121,7 +121,7 @@ test.describe("JS Package Test", async () => {
     await page.locator("#questionCard-4").getByLabel("textarea").fill("Much higher response rates!");
     await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
     await page.locator("#questionCard-5").getByLabel("textarea").fill("Make this end to end test pass!");
-    await page.getByRole("button", { name: "Finish" }).click();
+    await page.locator("#questionCard-5").getByRole("button", { name: "Next" }).click();
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
@@ -132,13 +132,12 @@ test.describe("JS Package Test", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     await page.waitForSelector("text=Responses");
-    await page.waitForLoadState("networkidle");
     await page.waitForTimeout(5000);
 
     const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
     expect(impressionsCount).toEqual("Impressions\n\n1");
 
-    await expect(page.getByRole("link", { name: "Responses (1)" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Responses" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
     await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("CTR100%")).toBeVisible();

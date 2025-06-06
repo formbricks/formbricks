@@ -1,15 +1,14 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { timeSince } from "@/lib/time";
 import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
-import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
-import { Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { CheckIcon, Maximize2Icon, Minimize2Icon, PencilIcon, PlusIcon } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -99,49 +98,56 @@ export const ResponseNotes = ({
   const unresolvedNotes = useMemo(() => notes.filter((note) => !note.isResolved), [notes]);
 
   return (
-    <div
-      className={clsx(
-        "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
-        !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
-        !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
-        isOpen
-          ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
-          : unresolvedNotes.length
-            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
-      )}
-      onClick={() => {
-        if (!isOpen) setIsOpen(true);
-      }}>
+    <>
       {!isOpen ? (
-        <div className="flex h-full flex-col">
-          <div
-            className={clsx(
-              "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
-              unresolvedNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
-            )}>
-            {!unresolvedNotes.length ? (
-              <div className="flex items-center justify-end">
-                <div className="group flex items-center">
-                  <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">{t("common.note")}</h3>
+        <button
+          className={clsx(
+            "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
+            unresolvedNotes.length
+              ? "group/hint cursor-pointer bg-white hover:-right-3"
+              : "cursor-pointer bg-slate-50",
+            unresolvedNotes.length
+              ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+              : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+          )}
+          onClick={() => setIsOpen(true)}
+          aria-label="Open notes"
+          type="button"
+          tabIndex={0}
+          style={{ outline: "none" }}>
+          <div className="flex h-full flex-col">
+            <div
+              className={clsx(
+                "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
+                unresolvedNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
+              )}>
+              {!unresolvedNotes.length ? (
+                <div className="flex items-center justify-end">
+                  <div className="group flex items-center">
+                    <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">{t("common.note")}</h3>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="float-left mr-1.5">
-                <Maximize2Icon className="h-4 w-4 text-amber-500 hover:text-amber-600 group-hover/hint:scale-110" />
-              </div>
-            )}
-          </div>
-          {!unresolvedNotes.length ? (
-            <div className="flex flex-1 items-center justify-end pr-3">
-              <span>
-                <PlusIcon className="h-5 w-5 text-slate-400" />
-              </span>
+              ) : (
+                <div className="float-left mr-1.5">
+                  <Maximize2Icon className="h-4 w-4 text-amber-500 hover:text-amber-600 group-hover/hint:scale-110" />
+                </div>
+              )}
             </div>
-          ) : null}
-        </div>
+            {!unresolvedNotes.length ? (
+              <div className="flex flex-1 items-center justify-end pr-3">
+                <span>
+                  <PlusIcon className="h-5 w-5 text-slate-400" />
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </button>
       ) : (
-        <div className="relative flex h-full flex-col">
+        <div
+          className={clsx(
+            "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
+            "-right-2 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
+          )}>
           <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
@@ -228,9 +234,7 @@ export const ResponseNotes = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && noteText) {
                         e.preventDefault();
-                        {
-                          isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
-                        }
+                        isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
                       }
                     }}
                     required></textarea>
@@ -257,6 +261,6 @@ export const ResponseNotes = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

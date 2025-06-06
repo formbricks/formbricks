@@ -1,11 +1,8 @@
 import "server-only";
-import { membershipCache } from "@/lib/cache/membership";
-import { teamCache } from "@/lib/cache/team";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZString } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@formbricks/types/memberships";
@@ -28,7 +25,7 @@ export const updateMembership = async (
       data,
     });
 
-    const teamMemberships = await prisma.teamUser.findMany({
+    await prisma.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -54,7 +51,7 @@ export const updateMembership = async (
       });
     }
 
-    const organizationMembers = await prisma.membership.findMany({
+    await prisma.membership.findMany({
       where: {
         organizationId,
       },
@@ -63,35 +60,13 @@ export const updateMembership = async (
       },
     });
 
-    teamCache.revalidate({
-      userId,
-      organizationId,
-    });
-
-    teamMemberships.forEach((teamMembership) => {
-      teamCache.revalidate({
-        id: teamMembership.teamId,
-      });
-    });
-
-    organizationMembers.forEach((member) => {
-      organizationCache.revalidate({
-        userId: member.userId,
-      });
-    });
-
-    membershipCache.revalidate({
-      userId,
-      organizationId,
-    });
-
-    projectCache.revalidate({
-      userId,
-    });
-
     return membership;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist)
+    ) {
       throw new ResourceNotFoundError("Membership", `userId: ${userId}, organizationId: ${organizationId}`);
     }
 

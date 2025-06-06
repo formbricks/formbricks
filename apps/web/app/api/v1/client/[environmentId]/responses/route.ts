@@ -1,11 +1,13 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { validateFileUploads } from "@/lib/fileValidation";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -18,7 +20,13 @@ interface Context {
 }
 
 export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse({}, true);
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
+  );
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
@@ -85,6 +93,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
+  if (!validateFileUploads(responseInputData.data, survey.questions)) {
+    return responses.badRequestResponse("Invalid file upload response");
+  }
+
   let response: TResponse;
   try {
     const meta: TResponseInput["meta"] = {
@@ -107,7 +119,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error);
+      logger.error({ error, url: request.url }, "Error creating response");
       return responses.internalServerErrorResponse(error.message);
     }
   }

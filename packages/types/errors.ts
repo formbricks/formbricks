@@ -85,6 +85,14 @@ class AuthorizationError extends Error {
   }
 }
 
+class TooManyRequestsError extends Error {
+  statusCode = 429;
+  constructor(message: string) {
+    super(message);
+    this.name = "TooManyRequestsError";
+  }
+}
+
 interface NetworkError {
   code: "network_error";
   message: string;
@@ -116,6 +124,7 @@ export {
   OperationNotAllowedError,
   AuthenticationError,
   AuthorizationError,
+  TooManyRequestsError,
 };
 export type { NetworkError, ForbiddenError };
 
@@ -129,10 +138,11 @@ export interface ApiErrorResponse {
     | "method_not_allowed"
     | "not_authenticated"
     | "forbidden"
-    | "network_error";
+    | "network_error"
+    | "too_many_requests";
   message: string;
   status: number;
-  url: URL;
+  url?: URL;
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
   responseMessage?: string;
 }

@@ -1,10 +1,8 @@
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { prisma } from "@formbricks/database";
-import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
 
@@ -13,13 +11,15 @@ export const updateAttributes = async (
   userId: string,
   environmentId: string,
   contactAttributesParam: TContactAttributes
-): Promise<{ success: boolean; messages?: string[] }> => {
+): Promise<{ success: boolean; messages?: string[]; ignoreEmailAttribute?: boolean }> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
     [environmentId, ZId],
     [contactAttributesParam, ZContactAttributes]
   );
+
+  let ignoreEmailAttribute = false;
 
   // Fetch contact attribute keys and email check in parallel
   const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
@@ -58,6 +58,10 @@ export const updateAttributes = async (
     ? ["The email already exists for this environment and was not updated."]
     : [];
 
+  if (emailExists) {
+    ignoreEmailAttribute = true;
+  }
+
   // First, update all existing attributes
   if (existingAttributes.length > 0) {
     await prisma.$transaction(
@@ -78,11 +82,6 @@ export const updateAttributes = async (
         })
       )
     );
-
-    // Revalidate cache for existing attributes
-    for (const attribute of existingAttributes) {
-      contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
-    }
   }
 
   // Then, try to create new attributes if any exist
@@ -110,19 +109,12 @@ export const updateAttributes = async (
           })
         )
       );
-
-      // Batch revalidate caches for new attributes
-      for (const attribute of newAttributes) {
-        contactAttributeKeyCache.revalidate({ environmentId, key: attribute.key });
-        contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
-      }
-
-      contactAttributeKeyCache.revalidate({ environmentId });
     }
   }
 
   return {
     success: true,
     messages,
+    ignoreEmailAttribute,
   };
 };

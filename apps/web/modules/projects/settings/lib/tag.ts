@@ -1,7 +1,6 @@
 import "server-only";
+import { validateInputs } from "@/lib/utils/validate";
 import { prisma } from "@formbricks/database";
-import { tagCache } from "@formbricks/lib/tag/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TTag } from "@formbricks/types/tags";
 
@@ -13,11 +12,6 @@ export const deleteTag = async (id: string): Promise<TTag> => {
       where: {
         id,
       },
-    });
-
-    tagCache.revalidate({
-      id,
-      environmentId: tag.environmentId,
     });
 
     return tag;
@@ -37,11 +31,6 @@ export const updateTagName = async (id: string, name: string): Promise<TTag> => 
       data: {
         name,
       },
-    });
-
-    tagCache.revalidate({
-      id: tag.id,
-      environmentId: tag.environmentId,
     });
 
     return tag;
@@ -163,15 +152,6 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
         },
       }),
     ]);
-
-    tagCache.revalidate({
-      id: originalTagId,
-      environmentId: originalTag.environmentId,
-    });
-
-    tagCache.revalidate({
-      id: newTagId,
-    });
 
     return newTag;
   } catch (error) {

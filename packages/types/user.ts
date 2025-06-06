@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
-export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW"]);
+export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
 export const ZUserObjective = z.enum([
@@ -28,13 +28,14 @@ export const ZUserName = z
   .min(1, { message: "Name should be at least 1 character long" })
   .regex(/^[\p{L}\p{M}\s'\d-]+$/u, "Invalid name format");
 
-export const ZUserEmail = z.string().email({ message: "Invalid email" });
+export const ZUserEmail = z.string().max(255).email({ message: "Invalid email" });
 
 export type TUserEmail = z.infer<typeof ZUserEmail>;
 
 export const ZUserPassword = z
   .string()
   .min(8)
+  .max(128, { message: "Password must be 128 characters or less" })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
 
 export type TUserPassword = z.infer<typeof ZUserPassword>;
@@ -57,6 +58,8 @@ export const ZUser = z.object({
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
+  lastLoginAt: z.date().nullable(),
+  isActive: z.boolean().default(true),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -71,6 +74,8 @@ export const ZUserUpdateInput = z.object({
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
+  lastLoginAt: z.date().nullish(),
+  isActive: z.boolean().optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;

@@ -1,8 +1,9 @@
+import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@/lib/constants";
 import { SAMLSSOConnectionWithEncodedMetadata, SAMLSSORecord } from "@boxyhq/saml-jackson";
 import { ConnectionAPIController } from "@boxyhq/saml-jackson/dist/controller/api";
 import fs from "fs/promises";
 import path from "path";
-import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 
 const getPreloadedConnectionFile = async () => {
   const preloadedConnections = await fs.readdir(path.join(SAML_XML_DIR));
@@ -41,7 +42,7 @@ export const preloadConnection = async (connectionController: ConnectionAPIContr
     const preloadedConnectionMetadata = await getPreloadedConnectionMetadata();
 
     if (!preloadedConnectionMetadata) {
-      console.log("No preloaded connection metadata found");
+      logger.info("No preloaded connection metadata found");
       return;
     }
 
@@ -68,6 +69,6 @@ export const preloadConnection = async (connectionController: ConnectionAPIContr
       });
     }
   } catch (error) {
-    console.error("Error preloading connection:", error.message);
+    logger.error(error, "Error preloading connection");
   }
 };

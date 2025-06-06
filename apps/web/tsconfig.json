@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "jsx": "preserve",
+    "jsxImportSource": "react",
     "paths": {
       "@/*": ["./*"],
       "@prisma/client/*": ["@formbricks/database/client/*"]
@@ -10,6 +12,7 @@
         "name": "next"
       }
     ],
+    "skipLibCheck": true,
     "strictNullChecks": true
   },
   "exclude": ["../../.env", "node_modules"],

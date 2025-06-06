@@ -1,10 +1,9 @@
 "use client";
 
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { T } from "@tolgee/react";
-import { signOut } from "next-auth/react";
+import { T, useTranslate } from "@tolgee/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -17,7 +16,6 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
-  formbricksLogout: () => Promise<void>;
 }
 
 export const DeleteAccountModal = ({
@@ -25,12 +23,12 @@ export const DeleteAccountModal = ({
   open,
   user,
   isFormbricksCloud,
-  formbricksLogout,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
   const { t } = useTranslate();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -39,13 +37,18 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
-      await formbricksLogout();
-      // redirect to account deletion survey in Formbricks Cloud
+
+      // Sign out with account deletion reason (no automatic redirect)
+      await signOutWithAudit({
+        reason: "account_deletion",
+        redirect: false, // Prevent NextAuth automatic redirect
+      });
+
+      // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        await signOut({ redirect: true });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        await signOut({ callbackUrl: "/auth/login" });
+        window.location.replace("/auth/login");
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -88,6 +91,7 @@ export const DeleteAccountModal = ({
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
         <form
+          data-testid="deleteAccountForm"
           onSubmit={async (e) => {
             e.preventDefault();
             await deleteAccount();
@@ -98,6 +102,7 @@ export const DeleteAccountModal = ({
             })}
           </label>
           <Input
+            data-testid="deleteAccountConfirmation"
             value={inputValue}
             onChange={handleInputChange}
             placeholder={user.email}

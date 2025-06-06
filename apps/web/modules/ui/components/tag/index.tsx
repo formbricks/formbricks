@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import { XCircleIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 
 interface Tag {
   tagId: string;
@@ -37,14 +37,14 @@ export const Tag = ({
       </div>
 
       {allowDelete && (
-        <span
+        <button
           className="cursor-pointer text-sm"
           onClick={() => {
             if (tags && setTagsState) setTagsState(tags.filter((tag) => tag.tagId !== tagId));
             onDelete(tagId);
           }}>
           <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
-        </span>
+        </button>
       )}
     </div>
   );

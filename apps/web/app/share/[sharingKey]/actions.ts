@@ -1,14 +1,10 @@
 "use server";
 
+import { getResponseCountBySurveyId, getResponseFilteringValues, getResponses } from "@/lib/response/service";
+import { getSurveyIdByResultShareKey } from "@/lib/survey/service";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import {
-  getResponseCountBySurveyId,
-  getResponseFilteringValues,
-  getResponses,
-} from "@formbricks/lib/response/service";
-import { getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -47,7 +43,7 @@ export const getSummaryBySurveySharingKeyAction = actionClient
     const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
     if (!surveyId) throw new AuthorizationError("Not authorized");
 
-    return await getSurveySummary(surveyId, parsedInput.filterCriteria);
+    return getSurveySummary(surveyId, parsedInput.filterCriteria);
   });
 
 const ZGetResponseCountBySurveySharingKeyAction = z.object({
@@ -61,7 +57,7 @@ export const getResponseCountBySurveySharingKeyAction = actionClient
     const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
     if (!surveyId) throw new AuthorizationError("Not authorized");
 
-    return await getResponseCountBySurveyId(surveyId, parsedInput.filterCriteria);
+    return getResponseCountBySurveyId(surveyId, parsedInput.filterCriteria);
   });
 
 const ZGetSurveyFilterDataBySurveySharingKeyAction = z.object({

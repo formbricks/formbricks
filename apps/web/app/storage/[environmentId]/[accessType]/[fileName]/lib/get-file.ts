@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { UPLOADS_DIR, isS3Configured } from "@/lib/constants";
+import { getLocalFile, getS3File } from "@/lib/storage/service";
 import { notFound } from "next/navigation";
 import path from "node:path";
-import { UPLOADS_DIR, isS3Configured } from "@formbricks/lib/constants";
-import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 
 export const getFile = async (
   environmentId: string,
@@ -19,7 +19,7 @@ export const getFile = async (
         headers: {
           "Content-Type": metaData.contentType,
           "Content-Disposition": "attachment",
-          "Cache-Control": "public, max-age=1200, s-maxage=1200, stale-while-revalidate=300",
+          "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
           Vary: "Accept-Encoding",
         },
       });
@@ -35,10 +35,7 @@ export const getFile = async (
       status: 302,
       headers: {
         Location: signedUrl,
-        "Cache-Control":
-          accessType === "public"
-            ? `public, max-age=3600, s-maxage=3600, stale-while-revalidate=300`
-            : `public, max-age=600, s-maxage=3600, stale-while-revalidate=300`,
+        "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
       },
     });
   } catch (error: unknown) {

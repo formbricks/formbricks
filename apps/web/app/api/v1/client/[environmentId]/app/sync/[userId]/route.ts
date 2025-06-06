@@ -5,22 +5,22 @@ import { getSyncSurveys } from "@/app/api/v1/client/[environmentId]/app/sync/lib
 import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { contactCache } from "@/lib/cache/contact";
-import { NextRequest, userAgent } from "next/server";
-import { prisma } from "@formbricks/database";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getActionClasses } from "@/lib/actionClass/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getEnvironment, updateEnvironment } from "@/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
+} from "@/lib/organization/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@formbricks/lib/posthogServer";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+} from "@/lib/posthogServer";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { NextRequest, userAgent } from "next/server";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -103,7 +103,7 @@ export const GET = async (
             },
           });
         } catch (error) {
-          console.error(`Error sending plan limits reached event to Posthog: ${error}`);
+          logger.error({ error, url: request.url }, `Error sending plan limits reached event to Posthog`);
         }
       }
     }
@@ -132,14 +132,6 @@ export const GET = async (
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });
-
-      if (contact) {
-        contactCache.revalidate({
-          userId: contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
-          id: contact.id,
-          environmentId,
-        });
-      }
     }
 
     const contactAttributes = contact.attributes.reduce((acc, attribute) => {
@@ -187,7 +179,10 @@ export const GET = async (
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    console.error(error);
+    logger.error(
+      { error, url: request.url },
+      "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]"
+    );
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

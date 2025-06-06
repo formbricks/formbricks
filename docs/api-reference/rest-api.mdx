@@ -5,9 +5,8 @@ description: "
 Formbricks provides two APIs: the Public Client API for frontend survey interactions and the Management API for backend management tasks."
 ---
 
-<Info>
-  View our [API Documentation](/api-reference) in more than 30 frameworks and languages.
-</Info>
+Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has *different* authentication requirements, and provides access to different data and settings.
+
 
 ## Public Client API
 
@@ -17,7 +16,7 @@ We currently have the following Client API methods exposed and below is their do
 
 - [Displays API](/api-reference/client-api->-display/create-display) - Mark a survey as displayed or link a display to a response for a person.
 
-- [People API](/api-reference/client-api->-people/create-person) - Create & Update a Person (e.g., attributes, email, userId, etc.)
+- [Contacts API](/api-reference/client-api->-contacts/update-contact-attributes) - Update contact attributes.
 
 - [Responses API](/api-reference/client-api->-response/create-response) - Create & Update a Response for a Survey.
 
@@ -41,89 +40,8 @@ We currently have the following Management API methods exposed and below is thei
 
 - [Webhook API](/api-reference/management-api->-webhook/get-all-webhooks) - List, Create, and Delete Webhooks
 
-## How to Generate an API key
 
-API requests require a personal API key for authorization. This API key gives you the same rights as if you were logged in at Formbricks UI - **keep it private!**
-
-- Go to your settings on [Formbricks UI](https://app.formbricks.com).
-
-- Go to page “API keys”
-
-![API Keys](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738097810/image_jvhqsd.jpg)
-
-- Create a key for the development or production environment.
-
-- Copy the key immediately. You won’t be able to see it again.
-
-![API Key Label](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738098072/image_zjkvok.jpg)
-
-<Note>
-  **Store API key safely! Anyone who has your API key has full control over your
-  account. For security reasons, you cannot view the API key again.**
-</Note>
-
-## Test your API Key
-
-Hit the below request to verify that you are authenticated with your API Key and the server is responding.
-
-### Get My Profile
-
-Get the project details and environment type of your account.
-
-### Mandatory Headers
-
-| Name            | x-Api-Key                |
-| --------------- | ------------------------ |
-| **Type**        | string                   |
-| **Description** | Your Formbricks API key. |
-
-### Request
-
-```bash cURL
-GET - /api/v1/me
-
-curl --location \
-'https://app.formbricks.com/api/v1/me' \
---header \
-'x-api-key: <your-api-key>'
-```
-
-### Response
-
-<CodeGroup>
-  
-
-```bash 200 (Success)
-{
-  "id": "cll2m30r70004mx0huqkitgqv",
-  "createdAt": "2023-08-08T18:04:59.922Z",
-  "updatedAt": "2023-08-08T18:04:59.922Z",
-  "type": "production",
-  "project": {
-      "id": "cll2m30r60003mx0hnemjfckr",
-      "name": "My Project"
-  },
-  "appSetupCompleted": false,
-  "websiteSetupCompleted": false,
-}
-```
-
-```bash 401 (Not Authenticated)
-Not authenticated
-```
-</CodeGroup>
-
-
-### Delete a personal API key
-
-- Go to settings on [app.formbricks.com](https://app.formbricks.com/).
-
-- Go to the page “API keys”.
-
-- Find the key you wish to revoke and select “Delete”.
-
-- Your API key will stop working immediately.
 
 ---
 
-**Can’t figure it out?** Get help in [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
+**Need help?** Reach out in [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).

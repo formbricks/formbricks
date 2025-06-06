@@ -1,8 +1,8 @@
+import { STRIPE_API_VERSION, STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
+import { env } from "@/lib/env";
+import { getOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
-import { STRIPE_API_VERSION, WEBAPP_URL } from "@formbricks/lib/constants";
-import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
-import { getOrganization } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -53,6 +53,9 @@ export const createSubscription = async (
       payment_method_data: { allow_redisplay: "always" },
       ...(!isNewOrganization && {
         customer: organization.billing.stripeCustomerId ?? undefined,
+        customer_update: {
+          name: "auto",
+        },
       }),
     };
 
@@ -96,7 +99,7 @@ export const createSubscription = async (
       url: "",
     };
   } catch (err) {
-    console.error(err);
+    logger.error(err, "Error creating subscription");
     return {
       status: 500,
       newPlan: true,

@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -14,8 +16,6 @@ import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
@@ -230,7 +230,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 description={t("environments.surveys.edit.upgrade_notice_description")}
                 buttons={[
                   {
-                    text: t("common.start_free_trial"),
+                    text: isFormbricksCloud
+                      ? t("common.start_free_trial")
+                      : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
                       : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",

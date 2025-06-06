@@ -1,0 +1,77 @@
+---
+title: "Email Follow-ups"
+description: "Automatically send customized emails to respondents based on their survey responses or specific survey endings."
+icon: "envelope"
+---
+
+<Note>
+  Email followups is a paid feature. It is only available for users on paid plans or if you have [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+## What are Email Follow-ups?
+
+Email followups allow you to automatically send customized emails to respondents based on their survey responses or when they reach specific survey endings. This feature is perfect for:
+- Sending thank you notes
+- Following up with respondents
+- Providing additional information
+- Sharing survey response data
+
+### Trigger Types
+
+<Card title="Response-based">
+  Emails are sent when a response to your survey is completed.
+</Card>
+
+<Card title="Ending-based">
+  Emails are triggered when respondents reach specific survey endings.
+</Card>
+
+## Setting Up Email Follow-ups
+
+<Steps>
+  <Step title="Go to Follow-ups Section and Create New Follow-up">
+    Navigate to the survey editor and access the Follow-ups section.
+  </Step>
+
+  <Step title="Configure Recipients">
+    The "To" field can be configured to use:
+
+    <ul>
+      <li><strong>Email Questions:</strong> Responses to question type `Open Text` of type `email`</li>
+      <li><strong>Contact Info:</strong> Responses to question type `Contact`</li>
+      <li><strong>Hidden Fields:</strong> Values from hidden fields</li>
+      <li><strong>Team Members:</strong> Members of your team</li>
+      <li><strong>Yourself:</strong> Your own email address</li>
+    </ul>
+
+    <Image src="/images/xm-and-surveys/core-features/email-followups/followup-recipient.webp" alt="Followup recipient configuration" />
+  </Step>
+
+  <Step title="Set Up Reply-To">
+    - Add one or more valid email addresses
+    - Addresses can be added by typing and pressing space or comma
+    - Invalid email addresses are automatically rejected
+  </Step>
+
+  <Step title="Configure Email Content">
+    <Image src="/images/xm-and-surveys/core-features/email-followups/followup-content.webp" alt="Followup content configuration" />
+
+    <ul>
+      <li><strong>Subject:</strong> Customize your email subject line</li>
+      <li><strong>Body:</strong> Supports basic HTML formatting (`p`, `span`, `b`, `strong`, `i`, `em`, `a`, `br` tags)</li>
+      <li>
+        <strong>Survey Response Data:</strong> Option to include detailed response data with support for:
+        <ul>
+          <li>File uploads</li>
+          <li>Images</li>
+          <li>Rankings</li>
+          <li>Translations</li>
+        </ul>
+      </li>
+    </ul>
+  </Step>
+
+  <Step title="Save to Activate">
+    Once you've configured all settings, save your survey to activate the email follow-up.
+  </Step>
+</Steps>

@@ -44,8 +44,8 @@ export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSu
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (
-            <div
-              className="group cursor-pointer"
+            <button
+              className="group w-full cursor-pointer"
               key={summaryItem.title}
               onClick={() =>
                 setFilter(
@@ -74,7 +74,7 @@ export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSu
               <div className="group-hover:opacity-80">
                 <ProgressBar barColor="bg-brand-dark" progress={summaryItem.percentage / 100} />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

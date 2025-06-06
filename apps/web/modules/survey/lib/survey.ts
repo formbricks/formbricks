@@ -2,9 +2,6 @@ import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Organization, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -41,6 +38,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  recaptcha: true,
   isBackButtonHidden: true,
   languages: {
     select: {
@@ -88,57 +86,49 @@ export const selectSurvey = {
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(
-  async (organizationId: string): Promise<Organization["billing"] | null> =>
-    cache(
-      async () => {
-        try {
-          const organization = await prisma.organization.findFirst({
-            where: {
-              id: organizationId,
-            },
-            select: {
-              billing: true,
-            },
-          });
+  async (organizationId: string): Promise<Organization["billing"] | null> => {
+    try {
+      const organization = await prisma.organization.findFirst({
+        where: {
+          id: organizationId,
+        },
+        select: {
+          billing: true,
+        },
+      });
 
-          if (!organization) {
-            throw new ResourceNotFoundError("Organization", null);
-          }
-
-          return organization.billing;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`survey-lib-getOrganizationBilling-${organizationId}`],
-      {
-        tags: [organizationCache.tag.byId(organizationId)],
+      if (!organization) {
+        throw new ResourceNotFoundError("Organization", null);
       }
-    )()
+
+      return organization.billing;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
 );
 
-export const getSurvey = reactCache(
-  async (surveyId: string): Promise<TSurvey> =>
-    cache(
-      async () => {
-        const survey = await prisma.survey.findUnique({
-          where: { id: surveyId },
-          select: selectSurvey,
-        });
+export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey> => {
+  try {
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      select: selectSurvey,
+    });
 
-        if (!survey) {
-          throw new ResourceNotFoundError("Survey", surveyId);
-        }
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
 
-        return transformPrismaSurvey<TSurvey>(survey);
-      },
-      [`survey-editor-getSurvey-${surveyId}`],
-      {
-        tags: [surveyCache.tag.byId(surveyId)],
-      }
-    )()
-);
+    return transformPrismaSurvey<TSurvey>(survey);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});

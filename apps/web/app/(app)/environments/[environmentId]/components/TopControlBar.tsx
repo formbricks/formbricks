@@ -1,6 +1,5 @@
 import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
@@ -24,7 +23,6 @@ export const TopControlBar = ({
           <TopControlButtons
             environment={environment}
             environments={environments}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             membershipRole={membershipRole}
             projectPermission={projectPermission}
           />

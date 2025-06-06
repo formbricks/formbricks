@@ -1,12 +1,11 @@
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
 import { prisma } from "@formbricks/database";
-import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
-import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
-import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const setupTwoFactorAuth = async (
@@ -121,10 +120,6 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
     },
   });
 
-  userCache.revalidate({
-    id,
-  });
-
   return {
     message: "Two factor authentication enabled",
   };
@@ -220,10 +215,6 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
       twoFactorEnabled: false,
       twoFactorSecret: null,
     },
-  });
-
-  userCache.revalidate({
-    id,
   });
 
   return {

@@ -1,5 +1,6 @@
 ---
 title: "Framework Guides"
+description: "Easily add the Formbricks App Survey SDK to your app with guides for different frameworks."
 icon: "book"
 ---
 
@@ -10,25 +11,32 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
     [All you need to do is add three lines of code to your HTML script, and that's it!](https://formbricks.com/docs/app-surveys/framework-guides#html)
   </Card>
 
-<Card title="React.js" icon="react" color="lightblue" href="#reactjs">
+<Card title="React.js" icon="react" color="lightblue" href="#react-js">
   [Load our JavaScript library with your environment ID, and you're ready to
   go!](https://formbricks.com/docs/app-surveys/framework-guides#react-js)
 </Card>
 
-<Card title="Next.js" icon="react" href="#nextjs">
-  [Natively add us to your Next.js project, with support for both App and Pages
-  project
+<Card title="Next.js" icon="react" href="#next-js">
+  [Natively add us to your Next.js project, with support for both App and Pages project
   structure.](https://formbricks.com/docs/app-surveys/framework-guides#next-js)
 </Card>
 
 <Card title="Vue.js" icon="vuejs" href="#vue-js">
-  Learn how to use Formbricks' React Native SDK to integrate your surveys into
-  React Native applications.
+  Learn how to use Formbricks' React Native SDK to integrate your surveys into React Native applications.
 </Card>
 
   <Card title="React Native" icon="react" color="lightblue" href="#react-native">
     [Easily integrate our SDK with your React Native app for seamless survey support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
   </Card>
+
+  <Card title="Swift" icon="swift" color="orange" href="#swift">
+  [Use our iOS SDK to quickly integrate surveys into your iOS applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
+  </Card>
+
+  <Card title="Android" icon="android" color="green" href="#android">
+  [Integrate surveys into your Android applications using our native Kotlin SDK.](https://formbricks.com/docs/app-surveys/framework-guides#android)
+  </Card>
+
 </CardGroup>
 
 ## Prerequisites
@@ -47,10 +55,9 @@ All you need to do is copy a `<script>` tag to your HTML head:
 <!-- START Formbricks Surveys -->
 <script type="text/javascript">
 !function(){
-    var apiHost = "https://app.formbricks.com";
+    var appUrl = "https://app.formbricks.com";
     var environmentId = "<your-environment-id>";
-    var userId = "<your-user-id>"; //optional
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -60,7 +67,7 @@ All you need to do is copy a `<script>` tag to your HTML head:
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -88,10 +95,9 @@ Update your `App.js/ts` file to initialize Formbricks.
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -102,12 +108,12 @@ function App() {
 export default App;
 ```
 
-## Required Customizations
+### Required Customizations
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -147,10 +153,9 @@ export default function FormbricksProvider() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "<environment-id>",
-      apiHost: "<api-host>",
-      userId: "<user-id>", //optional
+      appUrl: "<app-url>",
     });
   }, []);
 
@@ -192,10 +197,9 @@ import { useEffect } from "react";
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -220,7 +224,7 @@ export default function App({ Component, pageProps }: AppProps) {
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
 
@@ -246,10 +250,9 @@ yarn add @formbricks/js
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -278,7 +281,7 @@ router.afterEach((to, from) => {
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -306,8 +309,7 @@ import Formbricks from "@formbricks/react-native";
 
 const config = {
   environmentId: "<environment-id>",
-  apiHost: "<api-host>",
-  userId: "<user-id>", // optional
+  appUrl: "<app-url>",
 };
 
 export default function App() {
@@ -320,12 +322,167 @@ export default function App() {
 }
 ```
 
-## Required Customizations
+### Required Customizations
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## Swift
+
+Install the Formbricks iOS SDK using the following steps:
+
+**Swift Package Manager**
+
+1. In Xcode choose **File → Add Packages…**
+2. Enter your repo URL (e.g. `https://github.com/formbricks/ios.git`)
+3. Choose version rule (e.g. "Up to Next Major" starting at `1.0.0`).
+4. Import in your code:
+
+   ```swift
+   import FormbricksSDK
+   ```
+
+**CocoaPods**
+
+1. Add the following to your `Podfile`:
+
+   ```ruby
+   platform :ios, '16.6'
+   use_frameworks! :linkage => :static
+
+   target 'YourTargetName' do
+     pod 'FormbricksSDK', '1.0.0 (or the latest version)'
+   end
+   ```
+
+2. Run `pod install` in your project directory
+3. Import in your code:
+   ```swift
+   import FormbricksSDK
+   ```
+
+Now start using FormbricksSDK
+
+```swift
+import FormbricksSDK
+
+// 1. Build your config (you can also inject userId + attributes here)
+let config = FormbricksConfig.Builder(
+        appUrl: "https://your‑app.bricks.com",
+        environmentId: "YOUR_ENV_ID"
+    )
+    .setLogLevel(.debug)
+    .build()
+
+// 2. Initialize the SDK (once per launch)
+Formbricks.setup(with: config)
+
+// 3. Identify the user
+Formbricks.setUserId("user‑123")
+
+// 4. Track events
+Formbricks.track("button_pressed")
+
+// 5. Set or add user attributes
+Formbricks.setAttribute("blue", forKey: "favoriteColor")
+Formbricks.setAttributes([
+    "plan": "pro",
+    "tier": "gold"
+])
+
+// 6. Change language (no userId required):
+Formbricks.setLanguage("de")
+
+// 7. Log out (no userId required):
+Formbricks.logout()
+
+// 8. Clean up SDK state (optional):
+Formbricks.cleanup(waitForOperations: true) {
+    print("SDK torn down")
+}
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| app-url        | string | URL of the hosted Formbricks instance. |
+
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## Android
+
+Install the Formbricks Android SDK using the following steps:
+
+### Installation
+
+Add the Maven Central repository and the Formbricks SDK dependency to your application's `build.gradle.kts`:
+
+```kotlin
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("com.formbricks:android:1.0.0") // replace with latest version
+}
+```
+
+Enable DataBinding in your app's module build.gradle.kts:
+
+```kotlin
+android {
+  buildFeatures {
+    dataBinding = true
+  }
+}
+```
+
+### Usage
+
+```kotlin
+// 1. Initialize the SDK
+val config = FormbricksConfig.Builder(
+    "https://your-formbricks-server.com",
+    "YOUR_ENVIRONMENT_ID"
+)
+  .setLoggingEnabled(true)
+  .setFragmentManager(supportFragmentManager)
+  .build()
+
+// 2. Setup Formbricks
+Formbricks.setup(this, config)
+
+// 3. Identify the user
+Formbricks.setUserId("user‑123")
+
+// 4. Track events
+Formbricks.track("button_pressed")
+
+// 5. Set or add user attributes
+Formbricks.setAttribute("test@web.com", "email")
+Formbricks.setAttributes(mapOf(Pair("attr1", "val1"), Pair("attr2", "val2")))
+
+// 6. Change language (no userId required):
+Formbricks.setLanguage("de")
+
+// 7. Log out:
+Formbricks.logout()
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 ## Validate your setup
 
@@ -337,6 +494,10 @@ To this:
 ![second validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122750/image_ymaenn.jpg)
 
 ## Debugging Formbricks Integration
+
+<Note>
+  The debug mode is only available in the JavaScript SDK and works exclusively in the browser. It is not supported in mobile SDKs such as React Native, iOS, or Android.
+</Note>
 
 Enabling debug mode in your browser can help troubleshoot issues with Formbricks. Here’s how to activate it and what to look for in the logs.
 

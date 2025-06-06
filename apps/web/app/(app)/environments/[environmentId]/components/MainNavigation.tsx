@@ -2,8 +2,11 @@
 
 import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { cn } from "@/lib/cn";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
@@ -40,14 +43,10 @@ import {
   UserIcon,
   UsersIcon,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -63,6 +62,7 @@ interface NavigationProps {
   projects: TProject[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud: boolean;
+  isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
@@ -79,6 +79,7 @@ export const MainNavigation = ({
   isFormbricksCloud,
   organizationProjectsLimit,
   isLicenseActive,
+  isDevelopment,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -89,6 +90,7 @@ export const MainNavigation = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
@@ -108,7 +110,7 @@ export const MainNavigation = ({
 
   useEffect(() => {
     const toggleTextOpacity = () => {
-      setIsTextVisible(isCollapsed ? true : false);
+      setIsTextVisible(isCollapsed);
     };
     const timeoutId = setTimeout(toggleTextOpacity, 150);
     return () => clearTimeout(timeoutId);
@@ -169,7 +171,7 @@ export const MainNavigation = ({
         name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
-        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+        isActive: pathname?.includes("/actions"),
       },
       {
         name: t("common.integrations"),
@@ -296,7 +298,7 @@ export const MainNavigation = ({
 
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"
@@ -388,9 +390,14 @@ export const MainNavigation = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
-                      const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
-                      router.push(route.url);
-                      await formbricksLogout();
+                      const route = await signOutWithAudit({
+                        reason: "user_initiated",
+                        redirectUrl: "/auth/login",
+                        organizationId: organization.id,
+                        redirect: false,
+                        callbackUrl: "/auth/login",
+                      });
+                      router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}

@@ -1,127 +1,93 @@
-import { prisma } from "@formbricks/database";
-import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { cache } from "@formbricks/lib/cache";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { organizationCache } from "@formbricks/lib/organization/cache";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
+import "server-only";
+import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@formbricks/lib/posthogServer";
-import { projectCache } from "@formbricks/lib/project/cache";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+} from "@/lib/posthogServer";
+import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
+import { withCache } from "@/modules/cache/lib/withCache";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TJsEnvironmentState } from "@formbricks/types/js";
-import { getActionClassesForEnvironmentState } from "./actionClass";
-import { getProjectForEnvironmentState } from "./project";
-import { getSurveysForEnvironmentState } from "./survey";
+import { getEnvironmentStateData } from "./data";
 
 /**
+ * Optimized environment state fetcher using new caching approach
+ * Uses withCache for Redis-backed caching with graceful fallback
+ * Single database query via optimized data service
  *
- * @param environmentId
+ * @param environmentId - The environment ID to fetch state for
  * @returns The environment state
- * @throws ResourceNotFoundError if the environment or organization does not exist
+ * @throws ResourceNotFoundError if environment, organization, or project not found
  */
 export const getEnvironmentState = async (
   environmentId: string
-): Promise<{ data: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
-  cache(
+): Promise<{ data: TJsEnvironmentState["data"] }> => {
+  // Use withCache for efficient Redis caching with automatic fallback
+  const getCachedEnvironmentState = withCache(
     async () => {
-      let revalidateEnvironment = false;
-      const [environment, organization, project] = await Promise.all([
-        getEnvironment(environmentId),
-        getOrganizationByEnvironmentId(environmentId),
-        getProjectForEnvironmentState(environmentId),
-      ]);
+      // Single optimized database call replacing multiple service calls
+      const { environment, organization, surveys, actionClasses } =
+        await getEnvironmentStateData(environmentId);
 
-      if (!environment) {
-        throw new ResourceNotFoundError("environment", environmentId);
-      }
-
-      if (!organization) {
-        throw new ResourceNotFoundError("organization", null);
-      }
-
-      if (!project) {
-        throw new ResourceNotFoundError("project", null);
-      }
-
+      // Handle app setup completion update if needed
+      // This is a one-time setup flag that can tolerate TTL-based cache expiration
       if (!environment.appSetupCompleted) {
         await Promise.all([
           prisma.environment.update({
-            where: {
-              id: environmentId,
-            },
+            where: { id: environmentId },
             data: { appSetupCompleted: true },
           }),
           capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
         ]);
-
-        revalidateEnvironment = true;
       }
 
-      // check if MAU limit is reached
+      // Check monthly response limits for Formbricks Cloud
       let isMonthlyResponsesLimitReached = false;
-
       if (IS_FORMBRICKS_CLOUD) {
         const monthlyResponseLimit = organization.billing.limits.monthly.responses;
-
         const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
         isMonthlyResponsesLimitReached =
           monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
-      }
 
-      if (isMonthlyResponsesLimitReached) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
-            limits: {
-              projects: null,
-              monthly: {
-                miu: null,
-                responses: organization.billing.limits.monthly.responses,
+        // Send plan limits event if needed
+        if (isMonthlyResponsesLimitReached) {
+          try {
+            await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+              plan: organization.billing.plan,
+              limits: {
+                projects: null,
+                monthly: {
+                  miu: null,
+                  responses: organization.billing.limits.monthly.responses,
+                },
               },
-            },
-          });
-        } catch (err) {
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+            });
+          } catch (err) {
+            logger.error(err, "Error sending plan limits reached event to Posthog");
+          }
         }
       }
 
-      const [surveys, actionClasses] = await Promise.all([
-        getSurveysForEnvironmentState(environmentId),
-        getActionClassesForEnvironmentState(environmentId),
-      ]);
-
-      const filteredSurveys = surveys.filter(
-        (survey) => survey.type === "app" && survey.status === "inProgress"
-      );
-
+      // Build the response data
       const data: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
+        surveys: !isMonthlyResponsesLimitReached ? surveys : [],
         actionClasses,
-        project: project,
+        project: environment.project,
+        ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       };
 
-      return {
-        data,
-        revalidateEnvironment,
-      };
+      return { data };
     },
-    [`environmentState-${environmentId}`],
     {
-      ...(IS_FORMBRICKS_CLOUD && { revalidate: 24 * 60 * 60 }),
-      tags: [
-        environmentCache.tag.byId(environmentId),
-        organizationCache.tag.byEnvironmentId(environmentId),
-        projectCache.tag.byEnvironmentId(environmentId),
-        surveyCache.tag.byEnvironmentId(environmentId),
-        actionClassCache.tag.byEnvironmentId(environmentId),
-      ],
+      // Use enterprise-grade cache key pattern
+      key: createCacheKey.environment.state(environmentId),
+      // 30 minutes TTL ensures fresh data for hourly SDK checks
+      // Balances performance with freshness requirements
+      ttl: 60 * 30 * 1000, // 30 minutes in milliseconds
     }
-  )();
+  );
+
+  return getCachedEnvironmentState();
+};

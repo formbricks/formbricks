@@ -153,13 +153,15 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
       await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
+
       await page.locator("input[type=file]").setInputFiles({
-        name: "file.txt",
-        mimeType: "text/plain",
+        name: "file.doc",
+        mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
+
       await page.getByText("Uploading...").waitFor({ state: "hidden" });
       await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
 
@@ -205,22 +207,20 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 
       // Address Question
       await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
-      await expect(
-        page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
-      ).toBeVisible();
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+        .getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Contact Info Question
       await expect(page.getByText(surveys.createAndSubmit.contactInfo.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
+      await expect(page.getByLabel(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
       await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
 
       // Ranking Question
@@ -841,11 +841,11 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
       await expect(
-        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("button").nth(0)
       ).toBeVisible();
       await page.locator("input[type=file]").setInputFiles({
-        name: "file.txt",
-        mimeType: "text/plain",
+        name: "file.doc",
+        mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
       await page.getByText("Uploading...").waitFor({ state: "hidden" });
@@ -866,21 +866,17 @@ test.describe("Testing Survey with advanced logic", async () => {
       // Address Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.address.question)).toBeVisible();
       await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+        page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
       ).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+        .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
-      await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
-      ).toBeVisible();
+      await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+        .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)
         .fill("This is my city");
-      await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip)
-      ).toBeVisible();
-      await page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
+      await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
@@ -895,10 +891,10 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.goBack();
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
-      await page.waitForLoadState("networkidle");
+      const currentUrl = page.url();
+      const updatedUrl = currentUrl.replace("summary?share=true", "responses");
 
-      await page.getByRole("button", { name: "Close" }).click();
-      await page.getByRole("link").filter({ hasText: "Responses" }).click();
+      await page.goto(updatedUrl);
       await page.waitForSelector("#response-table");
 
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();

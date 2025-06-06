@@ -1,30 +1,23 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import {
-  getResponseCountAction,
-  getSurveySummaryAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import {
-  getResponseCountBySurveySharingKeyAction,
-  getSummaryBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/actions";
+import { getSummaryBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
-const initialSurveySummary: TSurveySummary = {
+const defaultSurveySummary: TSurveySummary = {
   meta: {
     completedPercentage: 0,
     completedResponses: 0,
@@ -44,12 +37,9 @@ interface SummaryPageProps {
   survey: TSurvey;
   surveyId: string;
   webAppUrl: string;
-  user?: TUser;
-  totalResponseCount: number;
-  isAIEnabled: boolean;
-  documentsPerPage?: number;
   locale: TUserLocale;
   isReadOnly: boolean;
+  initialSurveySummary?: TSurveySummary;
 }
 
 export const SummaryPage = ({
@@ -57,100 +47,69 @@ export const SummaryPage = ({
   survey,
   surveyId,
   webAppUrl,
-  totalResponseCount,
-  isAIEnabled,
-  documentsPerPage,
   locale,
   isReadOnly,
+  initialSurveySummary,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
   const searchParams = useSearchParams();
-  const isShareEmbedModalOpen = searchParams.get("share") === "true";
 
-  const [responseCount, setResponseCount] = useState<number | null>(null);
-  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
+    initialSurveySummary || defaultSurveySummary
+  );
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  const filters = useMemo(
-    () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [selectedFilter, dateRange, survey]
-  );
+  // Only fetch data when filters change or when there's no initial data
+  useEffect(() => {
+    // If we have initial data and no filters are applied, don't fetch
+    const hasNoFilters =
+      (!selectedFilter ||
+        Object.keys(selectedFilter).length === 0 ||
+        (selectedFilter.filter && selectedFilter.filter.length === 0)) &&
+      (!dateRange || (!dateRange.from && !dateRange.to));
 
-  // Use a ref to keep the latest state and props
-  const latestFiltersRef = useRef(filters);
-  latestFiltersRef.current = filters;
+    if (initialSurveySummary && hasNoFilters) {
+      setIsLoading(false);
+      return;
+    }
 
-  const getResponseCount = useCallback(() => {
-    if (isSharingPage)
-      return getResponseCountBySurveySharingKeyAction({
-        sharingKey,
-        filterCriteria: latestFiltersRef.current,
-      });
-    return getResponseCountAction({
-      surveyId,
-      filterCriteria: latestFiltersRef.current,
-    });
-  }, [isSharingPage, sharingKey, surveyId]);
-
-  const getSummary = useCallback(() => {
-    if (isSharingPage)
-      return getSummaryBySurveySharingKeyAction({
-        sharingKey,
-        filterCriteria: latestFiltersRef.current,
-      });
-
-    return getSurveySummaryAction({
-      surveyId,
-      filterCriteria: latestFiltersRef.current,
-    });
-  }, [isSharingPage, sharingKey, surveyId]);
-
-  const handleInitialData = useCallback(
-    async (isInitialLoad = false) => {
-      if (isInitialLoad) {
-        setIsLoading(true);
-      }
+    const fetchSummary = async () => {
+      setIsLoading(true);
 
       try {
-        const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
-          getResponseCount(),
-          getSummary(),
-        ]);
+        // Recalculate filters inside the effect to ensure we have the latest values
+        const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
+        let updatedSurveySummary;
 
-        const responseCount = updatedResponseCountData?.data ?? 0;
-        const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+        if (isSharingPage) {
+          updatedSurveySummary = await getSummaryBySurveySharingKeyAction({
+            sharingKey,
+            filterCriteria: currentFilters,
+          });
+        } else {
+          updatedSurveySummary = await getSurveySummaryAction({
+            surveyId,
+            filterCriteria: currentFilters,
+          });
+        }
 
-        setResponseCount(responseCount);
+        const surveySummary = updatedSurveySummary?.data ?? defaultSurveySummary;
         setSurveySummary(surveySummary);
       } catch (error) {
         console.error(error);
       } finally {
-        if (isInitialLoad) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    },
-    [getResponseCount, getSummary]
-  );
+    };
 
-  useEffect(() => {
-    handleInitialData(true);
-  }, [filters, isSharingPage, sharingKey, surveyId, handleInitialData]);
-
-  useIntervalWhenFocused(
-    () => {
-      handleInitialData(false);
-    },
-    10000,
-    !isShareEmbedModalOpen,
-    false
-  );
+    fetchSummary();
+  }, [selectedFilter, dateRange, survey, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
@@ -180,12 +139,9 @@ export const SummaryPage = ({
       <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}
-        responseCount={responseCount}
+        responseCount={surveySummary.meta.totalResponses}
         survey={surveyMemoized}
         environment={environment}
-        totalResponseCount={totalResponseCount}
-        isAIEnabled={isAIEnabled}
-        documentsPerPage={documentsPerPage}
         locale={locale}
       />
     </>

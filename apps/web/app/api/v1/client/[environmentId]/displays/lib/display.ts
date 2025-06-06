@@ -1,7 +1,6 @@
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { displayCache } from "@formbricks/lib/display/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContactByUserId } from "./contact";
@@ -49,14 +48,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
         }),
       },
       select: { id: true, contactId: true, surveyId: true },
-    });
-
-    displayCache.revalidate({
-      id: display.id,
-      contactId: display.contactId,
-      surveyId: display.surveyId,
-      userId,
-      environmentId,
     });
 
     return display;

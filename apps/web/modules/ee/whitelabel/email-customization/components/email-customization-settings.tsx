@@ -1,6 +1,8 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { handleFileUpload } from "@/app/lib/fileUpload";
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationEmailLogoUrlAction,
@@ -10,23 +12,19 @@ import {
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
-import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
-const DEFAULT_LOGO_URL =
-  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
 
 interface EmailCustomizationSettingsProps {
   organization: TOrganization;
@@ -35,6 +33,7 @@ interface EmailCustomizationSettingsProps {
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
   user: TUser | null;
+  fbLogoUrl: string;
 }
 
 export const EmailCustomizationSettings = ({
@@ -44,15 +43,16 @@ export const EmailCustomizationSettings = ({
   isReadOnly,
   isFormbricksCloud,
   user,
+  fbLogoUrl,
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslate();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || DEFAULT_LOGO_URL);
+  const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || fbLogoUrl);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null) as React.RefObject<HTMLInputElement>;
 
-  const isDefaultLogo = logoUrl === DEFAULT_LOGO_URL;
+  const isDefaultLogo = logoUrl === fbLogoUrl;
 
   const router = useRouter();
 
@@ -120,7 +120,13 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
+    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+
+    if (error) {
+      toast.error(error);
+      setIsSaving(false);
+      return;
+    }
 
     const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
       organizationId: organization.id,
@@ -162,7 +168,7 @@ export const EmailCustomizationSettings = ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: t("common.start_free_trial"),
+      text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
@@ -202,13 +208,18 @@ export const EmailCustomizationSettings = ({
 
                     <div className="flex items-center gap-2">
                       <Button
+                        data-testid="replace-logo-button"
                         variant="secondary"
                         onClick={() => inputRef.current?.click()}
-                        disabled={isReadOnly}>
+                        disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
                         {t("environments.settings.general.replace_logo")}
                       </Button>
-                      <Button onClick={removeLogo} variant="outline" disabled={isReadOnly}>
+                      <Button
+                        data-testid="remove-logo-button"
+                        onClick={removeLogo}
+                        variant="outline"
+                        disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="h-4 w-4" />
                         {t("environments.settings.general.remove_logo")}
                       </Button>
@@ -233,7 +244,11 @@ export const EmailCustomizationSettings = ({
               </div>
 
               <div className="flex gap-4">
-                <Button variant="secondary" disabled={isReadOnly} onClick={sendTestEmail}>
+                <Button
+                  data-testid="send-test-email-button"
+                  variant="secondary"
+                  disabled={isReadOnly || isSaving}
+                  onClick={sendTestEmail}>
                   {t("common.send_test_email")}
                 </Button>
                 <Button onClick={handleSave} disabled={!logoFile || isReadOnly} loading={isSaving}>
@@ -243,7 +258,8 @@ export const EmailCustomizationSettings = ({
             </div>
             <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
               <Image
-                src={logoUrl || DEFAULT_LOGO_URL}
+                data-testid="email-customization-preview-image"
+                src={logoUrl || fbLogoUrl}
                 alt="Logo"
                 className="mx-auto max-h-[100px] max-w-full object-contain"
                 width={192}

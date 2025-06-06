@@ -1,5 +1,6 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -8,7 +9,6 @@ import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -117,6 +117,7 @@ export const RatingQuestionForm = ({
                 { label: t("environments.surveys.edit.five_points_recommended"), value: 5 },
                 { label: t("environments.surveys.edit.three_points"), value: 3 },
                 { label: t("environments.surveys.edit.four_points"), value: 4 },
+                { label: t("environments.surveys.edit.six_points"), value: 6 },
                 { label: t("environments.surveys.edit.seven_points"), value: 7 },
                 { label: t("environments.surveys.edit.ten_points"), value: 10 },
               ]}

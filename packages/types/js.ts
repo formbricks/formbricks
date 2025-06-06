@@ -36,6 +36,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     delay: true,
     projectOverwrites: true,
     isBackButtonHidden: true,
+    recaptcha: true,
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
@@ -69,6 +70,7 @@ export const ZJsEnvironmentState = z.object({
     surveys: z.array(ZJsEnvironmentStateSurvey),
     actionClasses: z.array(ZJsEnvironmentStateActionClass),
     project: ZJsEnvironmentStateProject,
+    recaptchaSiteKey: z.string().optional(),
   }),
 });
 
@@ -84,6 +86,7 @@ export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),
   data: z.object({
     userId: z.string().nullable(),
+    contactId: z.string().nullable(),
     segments: z.array(ZId), // segment ids the person belongs to
     displays: z.array(
       z.object({

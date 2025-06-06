@@ -1,11 +1,13 @@
 "use server";
 
+import { INVITE_DISABLED } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
 import { z } from "zod";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserName } from "@formbricks/types/user";
@@ -18,39 +20,60 @@ const ZInviteOrganizationMemberAction = z.object({
 
 export const inviteOrganizationMemberAction = authenticatedActionClient
   .schema(ZInviteOrganizationMemberAction)
-  .action(async ({ ctx, parsedInput }) => {
-    if (INVITE_DISABLED) {
-      throw new AuthenticationError("Invite disabled");
-    }
+  .action(
+    withAuditLogging(
+      "created",
+      "invite",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        if (INVITE_DISABLED) {
+          throw new AuthenticationError("Invite disabled");
+        }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: parsedInput.organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+          ],
+        });
 
-    const invitedUserId = await inviteUser({
-      organizationId: parsedInput.organizationId,
-      invitee: {
-        email: parsedInput.email,
-        name: parsedInput.name,
-      },
-      currentUserId: ctx.user.id,
-    });
+        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
-    await sendInviteMemberEmail(
-      invitedUserId,
-      parsedInput.email,
-      ctx.user.name,
-      "",
-      false, // is onboarding invite
-      undefined
-    );
+        const invitedUserId = await inviteUser({
+          organizationId: parsedInput.organizationId,
+          invitee: {
+            email: parsedInput.email,
+            name: parsedInput.name,
+          },
+          currentUserId: ctx.user.id,
+        });
 
-    return invitedUserId;
-  });
+        await sendInviteMemberEmail(
+          invitedUserId,
+          parsedInput.email,
+          ctx.user.name,
+          "",
+          false, // is onboarding invite
+          undefined
+        );
+
+        ctx.auditLoggingCtx.inviteId = invitedUserId;
+        ctx.auditLoggingCtx.newObject = {
+          invitedUserId,
+          email: parsedInput.email,
+          name: parsedInput.name,
+        };
+
+        return invitedUserId;
+      }
+    )
+  );

@@ -1,10 +1,10 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
 import { Project } from "@prisma/client";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
@@ -23,7 +23,7 @@ export const BrandingSettingsCard = async ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: t("common.start_free_trial"),
+      text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",

@@ -6,208 +6,6 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/api/v1/client/responses/{responseId}": {
-      "put": {
-        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "responseId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "data": {
-                    "hs8yd14l9h8u353tjmv6rzawqqq": "clicked",
-                    "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                  },
-                  "finished": true
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {}
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 08:09:19 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "nonexistentid",
-                    "resource_type": "Response"
-                  },
-                  "message": "Response not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 08:13:50 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update Response",
-        "tags": ["Client API > Response"]
-      }
-    },
     "/api/v1/client/{environmentId}/contacts/{userId}/attributes": {
       "put": {
         "description": "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks.",
@@ -1711,6 +1509,208 @@
           }
         },
         "summary": "Create Response",
+        "tags": ["Client API > Response"]
+      }
+    },
+    "/api/v1/client/{environmentId}/responses/{responseId}": {
+      "put": {
+        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "responseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "data": {
+                    "hs8yd14l9h8u353tjmv6rzawqqq": "clicked",
+                    "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
+                  },
+                  "finished": true
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {}
+                },
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Access-Control-Allow-Credentials": {
+                "schema": {
+                  "example": "true",
+                  "type": "boolean"
+                }
+              },
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "example": "*",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 08:09:19 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-headers": {
+                "schema": {
+                  "example": "Content-Type, Authorization",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-methods": {
+                "schema": {
+                  "example": "GET, POST, PUT, DELETE, OPTIONS",
+                  "type": "string"
+                }
+              },
+              "cache-control": {
+                "schema": {
+                  "example": "private, no-store",
+                  "type": "string"
+                }
+              },
+              "content-type": {
+                "schema": {
+                  "example": "application/json",
+                  "type": "string"
+                }
+              },
+              "vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "not_found",
+                  "details": {
+                    "resource_id": "nonexistentid",
+                    "resource_type": "Response"
+                  },
+                  "message": "Response not found"
+                },
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Not Found",
+            "headers": {
+              "Access-Control-Allow-Credentials": {
+                "schema": {
+                  "example": "true",
+                  "type": "boolean"
+                }
+              },
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "example": "*",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 08:13:50 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-headers": {
+                "schema": {
+                  "example": "Content-Type, Authorization",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-methods": {
+                "schema": {
+                  "example": "GET, POST, PUT, DELETE, OPTIONS",
+                  "type": "string"
+                }
+              },
+              "cache-control": {
+                "schema": {
+                  "example": "private, no-store",
+                  "type": "string"
+                }
+              },
+              "content-type": {
+                "schema": {
+                  "example": "application/json",
+                  "type": "string"
+                }
+              },
+              "vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update Response",
         "tags": ["Client API > Response"]
       }
     },
@@ -5672,6 +5672,343 @@
         "tags": ["Management API > Response"]
       }
     },
+    "/api/v1/management/storage": {
+      "post": {
+        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3 along with a local upload URL.",
+        "parameters": [
+          {
+            "example": "{{apiKey}}",
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "allowedFileExtensions": ["png", "jpg", "jpeg"],
+                "environmentId": "env123",
+                "fileName": "profile.png",
+                "fileType": "image/png"
+              },
+              "schema": {
+                "properties": {
+                  "allowedFileExtensions": {
+                    "description": "Optional. List of allowed file extensions.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "environmentId": {
+                    "description": "The ID of the environment.",
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "description": "The name of the file to be uploaded.",
+                    "type": "string"
+                  },
+                  "fileType": {
+                    "description": "The MIME type of the file.",
+                    "type": "string"
+                  }
+                },
+                "required": ["fileName", "fileType", "environmentId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "fileUrl": "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile--fid--abc123.png",
+                    "localUrl": "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile.png",
+                    "signedUrl": "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/public",
+                    "updatedFileName": "profile--fid--abc123.png"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "fileUrl": {
+                          "description": "URL where the uploaded file can be accessed.",
+                          "type": "string"
+                        },
+                        "localUrl": {
+                          "description": "URL for uploading the file to local storage.",
+                          "type": "string"
+                        },
+                        "signedUrl": {
+                          "description": "Signed URL for uploading the file to S3.",
+                          "type": "string"
+                        },
+                        "updatedFileName": {
+                          "description": "The updated file name after processing.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK - Returns the signed URL, updated file name, and file URL."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "fileName is required"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Bad Request - Missing required fields or invalid file extension."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Not authenticated"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Unauthorized - Authentication failed or user not logged in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "User does not have access to environment env123"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Forbidden - User does not have access to the specified environment."
+          }
+        },
+        "summary": "Upload Public File",
+        "tags": ["Management API > Storage"]
+      }
+    },
+    "/api/v1/management/storage/local": {
+      "post": {
+        "description": "Management API endpoint for uploading public files to local storage. This endpoint requires authentication. File metadata is provided via headers (X-File-Type, X-File-Name, X-Environment-ID, X-Signature, X-UUID, X-Timestamp) and the file is provided as a multipart/form-data file field named \"file\". The \"Content-Type\" header must be set to a valid MIME type.",
+        "parameters": [
+          {
+            "example": "{{apiKey}}",
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "MIME type of the file. Must be a valid MIME type.",
+            "in": "header",
+            "name": "X-File-Type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "URI encoded file name.",
+            "in": "header",
+            "name": "X-File-Name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ID of the environment.",
+            "in": "header",
+            "name": "X-Environment-ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Signature for verifying the request.",
+            "in": "header",
+            "name": "X-Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unique identifier for the signed upload.",
+            "in": "header",
+            "name": "X-UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Timestamp used for the signature.",
+            "in": "header",
+            "name": "X-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "The file to be uploaded as a valid file object (buffer).",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": ["file"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "message": "File uploaded successfully"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "message": {
+                          "description": "Success message.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK - File uploaded successfully."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "fileType is required"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Bad Request - Missing required fields, invalid header values, or file issues."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Not authenticated"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Unauthorized - Authentication failed, invalid signature, or user not authorized."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "File upload failed"
+                },
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Detailed error message.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Internal Server Error - File upload failed due to server error."
+          }
+        },
+        "servers": [
+          {
+            "description": "Formbricks API Server",
+            "url": "https://app.formbricks.com/api/v1"
+          }
+        ],
+        "summary": "Upload Public File to Local Storage",
+        "tags": ["Management API > Storage"]
+      }
+    },
     "/api/v1/management/surveys": {
       "get": {
         "description": "Fetches all existing surveys",
@@ -7725,7 +8062,7 @@
           }
         },
         "summary": "Health Check",
-        "tags": ["default"]
+        "tags": ["Health"]
       }
     }
   },

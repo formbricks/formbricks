@@ -162,6 +162,7 @@ export const ThemeStylingPreviewSurvey = ({
               borderRadius={project.styling.roundness ?? 8}>
               <Fragment key={surveyFormKey}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={{ ...survey, type: "app" }}
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
@@ -179,14 +180,15 @@ export const ThemeStylingPreviewSurvey = ({
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
-                <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+                <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo projectLogo={project.logo} previewSurvey />
-                </div>
+                </button>
               )}
               <div
                 key={surveyFormKey}
                 className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={project.linkSurveyBranding}
                   isRedirectDisabled={true}
@@ -203,17 +205,19 @@ export const ThemeStylingPreviewSurvey = ({
 
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-        <div
+        <button
+          type="button"
           className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("link")}>
           {t("common.link_survey")}
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("app")}>
           {t("common.app_survey")}
-        </div>
+        </button>
       </div>
     </div>
   );
