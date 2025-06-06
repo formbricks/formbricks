@@ -15,13 +15,15 @@ class FormbricksConfig private constructor(
     val userId: String?,
     val attributes: Map<String,String>?,
     val loggingEnabled: Boolean,
-    val fragmentManager: FragmentManager?
+    val fragmentManager: FragmentManager?,
+    val autoDismissErrors: Boolean = true,
 ) {
     class Builder(private val appUrl: String, private val environmentId: String) {
         private var userId: String? = null
         private var attributes: MutableMap<String,String> = mutableMapOf()
         private var loggingEnabled = false
         private var fragmentManager: FragmentManager? = null
+        private var autoDismissErrors = true
 
         fun setUserId(userId: String): Builder {
             this.userId = userId
@@ -48,6 +50,11 @@ class FormbricksConfig private constructor(
             return this
         }
 
+        fun setAutoDismissErrors(autoDismissErrors: Boolean): Builder {
+            this.autoDismissErrors = autoDismissErrors
+            return this
+        }
+
         fun build(): FormbricksConfig {
             return FormbricksConfig(
                 appUrl = appUrl,
@@ -55,7 +62,8 @@ class FormbricksConfig private constructor(
                 userId = userId,
                 attributes = attributes,
                 loggingEnabled = loggingEnabled,
-                fragmentManager = fragmentManager
+                fragmentManager = fragmentManager,
+                autoDismissErrors = autoDismissErrors
             )
         }
     }

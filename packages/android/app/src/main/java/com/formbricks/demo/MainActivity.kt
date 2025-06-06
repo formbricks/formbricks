@@ -3,20 +3,18 @@ package com.formbricks.demo
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.FragmentActivity
 import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.FormbricksCallback
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
 import com.formbricks.formbrickssdk.model.enums.SuccessType
 import java.util.UUID
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         Formbricks.callback = object: FormbricksCallback {
             override fun onSurveyStarted() {
@@ -65,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         val setUserIdButton = findViewById<Button>(R.id.setUserId)
         setUserIdButton.setOnClickListener {
-            Formbricks.setUserId(UUID.randomUUID().toString())
+            Formbricks.setUserId(UUID.randomUUID().toString(), true)
         }
 
         val setAttributeButton = findViewById<Button>(R.id.setAttribute)

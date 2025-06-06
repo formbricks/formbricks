@@ -12,6 +12,7 @@ import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.getProjectStylingJson
 import com.formbricks.formbrickssdk.model.environment.getStyling
 import com.formbricks.formbrickssdk.model.environment.getSurveyJson
+import com.google.gson.Gson
 import com.google.gson.JsonObject
 
 /**
@@ -111,14 +112,22 @@ class FormbricksViewModel : ViewModel() {
         </html>
 """
 
-    fun loadHtml(surveyId: String) {
+    fun loadHtml(surveyId: String, hiddenFields: Map<String, Any>? = null) {
         val environment = SurveyManager.environmentDataHolder.guard { return }
-        val json = getJson(environment, surveyId)
+        val json = getJson(
+            environmentDataHolder = environment,
+            surveyId = surveyId,
+            hiddenFields = hiddenFields
+        )
         val htmlString = htmlTemplate.replace("{{WEBVIEW_DATA}}", json)
         html.postValue(htmlString)
     }
 
-    private fun getJson(environmentDataHolder: EnvironmentDataHolder, surveyId: String): String {
+    private fun getJson(
+        environmentDataHolder: EnvironmentDataHolder,
+        surveyId: String,
+        hiddenFields: Map<String, Any>? = null
+    ): String {
         val jsonObject = JsonObject()
         environmentDataHolder.getSurveyJson(surveyId).let { jsonObject.add("survey", it) }
         jsonObject.addProperty("isBrandingEnabled", true)
@@ -136,6 +145,7 @@ class FormbricksViewModel : ViewModel() {
         } else {
             jsonObject.addProperty("languageCode", "default")
         }
+        hiddenFields?.let { jsonObject.add("hiddenFieldsRecord", Gson().toJsonTree(it)) }
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false
