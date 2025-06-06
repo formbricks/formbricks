@@ -2,7 +2,7 @@
 
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
-import { generateUserAvatar } from "@/modules/auth/signup/lib/avatar";
+import { generateCommunityAvatar, generateUserAvatar } from "@/modules/auth/signup/lib/avatar";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
@@ -52,6 +52,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
   const { inviteToken, emailVerificationDisabled } = parsedInput;
   const hashedPassword = await hashPassword(parsedInput.password);
   const avatarUrl = generateUserAvatar(parsedInput.email);
+  const communityAvatarUrl = generateCommunityAvatar(parsedInput.email);
 
   const user = await createUser({
     email: parsedInput.email.toLowerCase(),
@@ -59,6 +60,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
     password: hashedPassword,
     locale: parsedInput.userLocale,
     imageUrl: avatarUrl,
+    communityAvatarUrl: communityAvatarUrl,
   });
 
   // Handle invite flow

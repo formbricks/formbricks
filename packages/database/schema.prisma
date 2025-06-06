@@ -847,6 +847,7 @@ model User {
   communityMembers          UserCommunity[]  @relation("creator")
   communityName             String?
   communityDescription      String?
+  communityAvatarUrl        String?
 
   socials UserSocial[] @relation("userSocial")
 
@@ -866,6 +867,8 @@ model UserSocial {
   socialName   String
   socialEmail  String
   provider     String
+
+  @@unique([userId, provider])
 }
 
 /// Maps a short URL to its full destination.
