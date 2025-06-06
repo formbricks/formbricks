@@ -3,7 +3,7 @@
 ################################################################################
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
-  version = "16.4"
+  version = "16.6"
 }
 
 moved {
