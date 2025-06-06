@@ -56,36 +56,55 @@ export const PUT = async (
       body: ZContactAttributeKeyUpdateSchema,
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params, body } = parsedInput;
+
+      if (auditLog) {
+        auditLog.targetId = params.contactAttributeKeyId;
+      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error as ApiErrorResponseV2);
+        return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "PUT")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "environment", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "environment", issue: "unauthorized" }],
+          },
+          auditLog
+        );
       }
 
       if (res.data.isUnique) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "contactAttributeKey", issue: "cannot update unique contact attribute key" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "contactAttributeKey", issue: "cannot update unique contact attribute key" }],
+          },
+          auditLog
+        );
       }
 
       const updatedContactAttributeKey = await updateContactAttributeKey(params.contactAttributeKeyId, body);
 
       if (!updatedContactAttributeKey.ok) {
-        return handleApiError(request, updatedContactAttributeKey.error as ApiErrorResponseV2);
+        return handleApiError(request, updatedContactAttributeKey.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = res.data;
+        auditLog.newObject = updatedContactAttributeKey.data;
       }
 
       return responses.successResponse(updatedContactAttributeKey);
     },
+    action: "updated",
+    targetType: "contactAttributeKey",
   });
 
 export const DELETE = async (
@@ -98,35 +117,53 @@ export const DELETE = async (
       params: z.object({ contactAttributeKeyId: ZContactAttributeKeyIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params } = parsedInput;
+
+      if (auditLog) {
+        auditLog.targetId = params.contactAttributeKeyId;
+      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
-        return handleApiError(request, res.error as ApiErrorResponseV2);
+        return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "DELETE")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "environment", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "environment", issue: "unauthorized" }],
+          },
+          auditLog
+        );
       }
 
       if (res.data.isUnique) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "contactAttributeKey", issue: "cannot delete unique contact attribute key" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "contactAttributeKey", issue: "cannot delete unique contactAttributeKey" }],
+          },
+          auditLog
+        );
       }
 
       const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
 
       if (!deletedContactAttributeKey.ok) {
-        return handleApiError(request, deletedContactAttributeKey.error as ApiErrorResponseV2);
+        return handleApiError(request, deletedContactAttributeKey.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = res.data;
       }
 
       return responses.successResponse(deletedContactAttributeKey);
     },
+    action: "deleted",
+    targetType: "contactAttributeKey",
   });

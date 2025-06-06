@@ -7,6 +7,8 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -179,10 +181,33 @@ export const POST = async (request: Request) => {
 
     // Update survey status if necessary
     if (survey.autoComplete && responseCount >= survey.autoComplete) {
-      await updateSurvey({
-        ...survey,
-        status: "completed",
-      });
+      let logStatus: TAuditStatus = "success";
+
+      try {
+        await updateSurvey({
+          ...survey,
+          status: "completed",
+        });
+      } catch (error) {
+        logStatus = "failure";
+        logger.error(
+          { error, url: request.url, surveyId },
+          `Failed to update survey ${surveyId} status to completed`
+        );
+      } finally {
+        await queueAuditEvent({
+          status: logStatus,
+          action: "updated",
+          targetType: "survey",
+          userId: UNKNOWN_DATA,
+          userType: "system",
+          targetId: survey.id,
+          organizationId: organization.id,
+          newObject: {
+            status: "completed",
+          },
+        });
+      }
     }
 
     // Await webhook and email promises with allSettled to prevent early rejection
