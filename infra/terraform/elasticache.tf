@@ -102,9 +102,9 @@ module "elasticache_user_group" {
     passwords = [random_password.valkey[each.key].result]
   }
   users = {
-    formbricks = {
+    "${each.key}" = {
       access_string = "on ~* +@all"
-      passwords     = [random_password.valkey.result]
+      passwords     = [random_password.valkey[each.key].result]
     }
   }
   engine = "redis"
