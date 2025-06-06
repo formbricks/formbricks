@@ -102,7 +102,7 @@ module "elasticache_user_group" {
     passwords = [random_password.valkey[each.key].result]
   }
   users = {
-    "${each.key}" = {
+    "${each.value}" = {
       access_string = "on ~* +@all"
       passwords     = [random_password.valkey[each.key].result]
     }
