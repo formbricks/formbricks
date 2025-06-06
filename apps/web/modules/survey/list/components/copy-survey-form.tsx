@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@/modules/survey/list/types/surveys";
@@ -47,11 +48,13 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
             surveyId: survey.id,
             targetEnvironmentId: environment,
           });
+          console.log(result);
 
           if (result?.data) {
             toast.success(t("environments.surveys.copy_survey_success"));
           } else {
-            toast.error(t("environments.surveys.copy_survey_error"));
+            const errorMessage = getFormattedErrorMessage(result);
+            toast.error(errorMessage);
           }
         });
       });

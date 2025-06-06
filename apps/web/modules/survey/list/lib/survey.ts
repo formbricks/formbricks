@@ -319,9 +319,7 @@ export const copySurveyToOtherEnvironment = async (
         })
       : [];
 
-    const existingActionClassMap = new Map(
-      existingActionClasses.map((ac) => [`${ac.name}-${ac.type}`, true])
-    );
+    const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
 
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
@@ -362,14 +360,21 @@ export const copySurveyToOtherEnvironment = async (
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
           // Check if an action class with the same name but different type already exists
           const hasNameConflict =
-            !isSameEnvironment &&
-            existingActionClassMap.has(
-              `${trigger.actionClass.name}-${trigger.actionClass.type === "code" ? "noCode" : "code"}`
-            );
+            !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
 
-          const modifiedName = hasNameConflict
-            ? `${trigger.actionClass.name} (copy)`
-            : trigger.actionClass.name;
+          let modifiedName = trigger.actionClass.name;
+          if (hasNameConflict) {
+            // Find a unique name by appending (copy), (copy 2), (copy 3), etc.
+            let copyNumber = 1;
+            let candidateName = `${trigger.actionClass.name} (copy)`;
+
+            while (existingActionClassNames.has(candidateName)) {
+              copyNumber++;
+              candidateName = `${trigger.actionClass.name} (copy ${copyNumber})`;
+            }
+
+            modifiedName = candidateName;
+          }
 
           const baseActionClassData = {
             name: modifiedName,
@@ -387,9 +392,8 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    // Only try to connect if there's no name conflict
                     key_environmentId: {
-                      key: hasNameConflict ? `non_existent_key_${Date.now()}` : trigger.actionClass.key!,
+                      key: trigger.actionClass.key!,
                       environmentId: targetEnvironmentId,
                     },
                   },
@@ -405,9 +409,8 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    // Only try to connect if there's no name conflict and the name matches exactly
                     name_environmentId: {
-                      name: hasNameConflict ? `non_existent_name_${Date.now()}` : trigger.actionClass.name,
+                      name: trigger.actionClass.name,
                       environmentId: targetEnvironmentId,
                     },
                   },
