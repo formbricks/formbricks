@@ -103,10 +103,16 @@ jobs:
       - name: Purge Cloudflare Cache
         if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
         env:
-          CF_ZONE_ID: ${{ inputs.ENVIRONMENT == 'prod' && secrets.CLOUDFLARE_ZONE_ID || secrets.CLOUDFLARE_STAGE_ZONE_ID }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PURGE_HOST: "app.formbricks.com"
         run: |
+          # Set hostname based on environment
+          if [[ "${{ inputs.ENVIRONMENT }}" == "prod" ]]; then
+            PURGE_HOST="app.formbricks.com"
+          else
+            PURGE_HOST="stage.app.formbricks.com"
+          fi
+
           echo "Purging Cloudflare cache for host: $PURGE_HOST (environment: ${{ inputs.ENVIRONMENT }}, zone: $CF_ZONE_ID)"
 
           # Prepare JSON payload for selective cache purge
