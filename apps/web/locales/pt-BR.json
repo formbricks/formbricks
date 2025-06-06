@@ -597,7 +597,6 @@
       "contact_deleted_successfully": "Contato excluído com sucesso",
       "contact_not_found": "Nenhum contato encontrado",
       "contacts_table_refresh": "Atualizar contatos",
-      "contacts_table_refresh_error": "Ocorreu um erro ao atualizar os contatos. Por favor, tente novamente.",
       "contacts_table_refresh_success": "Contatos atualizados com sucesso",
       "first_name": "Primeiro Nome",
       "last_name": "Sobrenome",
@@ -760,6 +759,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Controle de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave de API",
         "api_key_copied_to_clipboard": "Chave da API copiada para a área de transferência",

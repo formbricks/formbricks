@@ -1,4 +1,3 @@
-import { actionClassCache } from "@/lib/actionClass/cache";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -24,12 +23,6 @@ export const createActionClass = async (
               : actionClassInput.noCodeConfig
             : undefined,
       },
-    });
-
-    actionClassCache.revalidate({
-      name: actionClassPrisma.name,
-      environmentId: actionClassPrisma.environmentId,
-      id: actionClassPrisma.id,
     });
 
     return actionClassPrisma;

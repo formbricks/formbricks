@@ -1,4 +1,3 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import {
   TContactAttributeKeyInput,
   TGetContactAttributeKeysFilter,
@@ -17,14 +16,6 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
-    },
-  },
-}));
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: vi.fn(),
     },
   },
 }));
@@ -96,10 +87,6 @@ describe("createContactAttributeKey", () => {
 
     const result = await createContactAttributeKey(inputContactAttributeKey);
     expect(prisma.contactAttributeKey.create).toHaveBeenCalled();
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: createdContactAttributeKey.environmentId,
-      key: createdContactAttributeKey.key,
-    });
     expect(result.ok).toBe(true);
 
     if (result.ok) {

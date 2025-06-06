@@ -1,4 +1,3 @@
-import { webhookCache } from "@/lib/cache/webhook";
 import { captureTelemetry } from "@/lib/telemetry";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { WebhookSource } from "@prisma/client";
@@ -16,11 +15,7 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    revalidate: vi.fn(),
-  },
-}));
+
 vi.mock("@/lib/telemetry", () => ({
   captureTelemetry: vi.fn(),
 }));
@@ -87,16 +82,12 @@ describe("createWebhook", () => {
     updatedAt: new Date(),
   };
 
-  test("creates a webhook and revalidates cache", async () => {
+  test("creates a webhook", async () => {
     vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
 
     const result = await createWebhook(inputWebhook);
     expect(captureTelemetry).toHaveBeenCalledWith("webhook_created");
     expect(prisma.webhook.create).toHaveBeenCalled();
-    expect(webhookCache.revalidate).toHaveBeenCalledWith({
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
-    });
     expect(result.ok).toBe(true);
 
     if (result.ok) {

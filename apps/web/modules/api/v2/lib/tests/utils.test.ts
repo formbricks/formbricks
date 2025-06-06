@@ -18,6 +18,9 @@ vi.mock("@sentry/nextjs", () => ({
 vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mocked-sentry-dsn",
   IS_PRODUCTION: true,
+  AUDIT_LOG_ENABLED: true,
+  ENCRYPTION_KEY: "mocked-encryption-key",
+  REDIS_URL: "mock-url",
 }));
 
 describe("utils", () => {

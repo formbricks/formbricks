@@ -597,7 +597,6 @@
       "contact_deleted_successfully": "聯絡人已成功刪除",
       "contact_not_found": "找不到此聯絡人",
       "contacts_table_refresh": "重新整理聯絡人",
-      "contacts_table_refresh_error": "重新整理聯絡人時發生錯誤，請再試一次",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "first_name": "名字",
       "last_name": "姓氏",
@@ -760,6 +759,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",

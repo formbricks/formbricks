@@ -1,7 +1,3 @@
-import { cache } from "@/lib/cache";
-import { teamCache } from "@/lib/cache/team";
-import { organizationCache } from "@/lib/organization/cache";
-import { projectCache } from "@/lib/project/cache";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetProjectTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -55,47 +51,36 @@ export const getProjectTeamsQuery = (organizationId: string, params: TGetProject
 };
 
 export const validateTeamIdAndProjectId = reactCache(
-  async (organizationId: string, teamId: string, projectId: string) =>
-    cache(
-      async (): Promise<Result<boolean, ApiErrorResponseV2>> => {
-        try {
-          const hasAccess = await prisma.organization.findFirst({
-            where: {
-              id: organizationId,
-              teams: {
-                some: {
-                  id: teamId,
-                },
-              },
-              projects: {
-                some: {
-                  id: projectId,
-                },
-              },
+  async (organizationId: string, teamId: string, projectId: string) => {
+    try {
+      const hasAccess = await prisma.organization.findFirst({
+        where: {
+          id: organizationId,
+          teams: {
+            some: {
+              id: teamId,
             },
-          });
+          },
+          projects: {
+            some: {
+              id: projectId,
+            },
+          },
+        },
+      });
 
-          if (!hasAccess) {
-            return err({ type: "not_found", details: [{ field: "teamId/projectId", issue: "not_found" }] });
-          }
-
-          return ok(true);
-        } catch (error) {
-          return err({
-            type: "internal_server_error",
-            details: [{ field: "teamId/projectId", issue: error.message }],
-          });
-        }
-      },
-      [`validateTeamIdAndProjectId-${organizationId}-${teamId}-${projectId}`],
-      {
-        tags: [
-          teamCache.tag.byId(teamId),
-          projectCache.tag.byId(projectId),
-          organizationCache.tag.byId(organizationId),
-        ],
+      if (!hasAccess) {
+        return err({ type: "not_found", details: [{ field: "teamId/projectId", issue: "not_found" }] });
       }
-    )()
+
+      return ok(true);
+    } catch (error) {
+      return err({
+        type: "internal_server_error",
+        details: [{ field: "teamId/projectId", issue: error.message }],
+      });
+    }
+  }
 );
 
 export const checkAuthenticationAndAccess = async (
@@ -106,7 +91,7 @@ export const checkAuthenticationAndAccess = async (
   const hasAccess = await validateTeamIdAndProjectId(authentication.organizationId, teamId, projectId);
 
   if (!hasAccess.ok) {
-    return err(hasAccess.error);
+    return err(hasAccess.error as ApiErrorResponseV2);
   }
 
   return ok(true);

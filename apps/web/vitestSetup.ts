@@ -4,6 +4,29 @@ import ResizeObserver from "resize-observer-polyfill";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
+// mock next-auth EARLY to prevent SessionProvider errors
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: {
+      user: {
+        id: "test-user-id",
+        email: "test@example.com",
+        name: "Test User",
+      },
+    },
+    status: "authenticated",
+  }),
+  signOut: vi.fn().mockResolvedValue(undefined),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// mock our useSignOut hook directly to avoid next-auth issues in tests
+vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
+  useSignOut: () => ({
+    signOut: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // Make ResizeObserver available globally (Vitest/Jest environment)
 // This is used by radix-ui
 if (!global.ResizeObserver) {
@@ -23,16 +46,6 @@ vi.mock("react-hot-toast", () => ({
   },
   success: vi.fn(),
   error: vi.fn(),
-}));
-
-// mock next cache
-
-vi.mock("next/cache", () => ({
-  __esModule: true,
-  unstable_cache: (fn: (params: unknown[]) => {}) => {
-    return async (params: unknown[]) => fn(params);
-  },
-  revalidateTag: vi.fn(),
 }));
 
 // mock react cache
@@ -88,6 +101,11 @@ vi.mock("server-only", () => {
   return {};
 });
 
+// mock server actions that might be called in tests
+vi.mock("@/modules/auth/actions/sign-out", () => ({
+  logSignOutAction: vi.fn().mockResolvedValue(undefined),
+}));
+
 // mock prisma client
 
 vi.mock("@prisma/client", async () => {
@@ -141,6 +159,25 @@ vi.mock("crypto", async () => {
     },
   };
 });
+
+// mock next/headers to prevent audit log system from failing
+vi.mock("next/headers", () => ({
+  headers: () => ({
+    get: () => null,
+    has: () => false,
+    keys: () => [],
+    values: () => [],
+    entries: () => [],
+    forEach: () => {},
+  }),
+  cookies: () => ({
+    get: () => null,
+    has: () => false,
+    getAll: () => [],
+    set: () => {},
+    delete: () => {},
+  }),
+}));
 
 beforeEach(() => {
   vi.resetModules();

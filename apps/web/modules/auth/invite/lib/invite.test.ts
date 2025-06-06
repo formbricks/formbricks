@@ -1,4 +1,3 @@
-import { inviteCache } from "@/lib/cache/invite";
 import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -11,15 +10,6 @@ vi.mock("@formbricks/database", () => ({
     invite: {
       delete: vi.fn(),
       findUnique: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache/invite", () => ({
-  inviteCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: (id: string) => `invite-${id}`,
     },
   },
 }));
@@ -47,10 +37,6 @@ describe("invite", () => {
           id: true,
           organizationId: true,
         },
-      });
-      expect(inviteCache.revalidate).toHaveBeenCalledWith({
-        id: "test-id",
-        organizationId: "org-id",
       });
     });
 

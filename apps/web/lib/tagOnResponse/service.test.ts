@@ -2,9 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { responseCache } from "../response/cache";
 import { getResponse } from "../response/service";
-import { tagOnResponseCache } from "./cache";
 import { addTagToRespone, deleteTagOnResponse, getTagsOnResponsesCount } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -19,21 +17,6 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("../response/service", () => ({
   getResponse: vi.fn(),
-}));
-
-vi.mock("../response/cache", () => ({
-  responseCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("./cache", () => ({
-  tagOnResponseCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: vi.fn(),
-    },
-  },
 }));
 
 describe("TagOnResponse Service", () => {
@@ -77,18 +60,6 @@ describe("TagOnResponse Service", () => {
         },
       },
     });
-
-    expect(responseCache.revalidate).toHaveBeenCalledWith({
-      id: "response1",
-      surveyId: "survey1",
-      contactId: "contact1",
-    });
-
-    expect(tagOnResponseCache.revalidate).toHaveBeenCalledWith({
-      tagId: "tag1",
-      responseId: "response1",
-      environmentId: "env1",
-    });
   });
 
   test("deleteTagOnResponse should delete a tag from a response", async () => {
@@ -129,18 +100,6 @@ describe("TagOnResponse Service", () => {
         },
       },
     });
-
-    expect(responseCache.revalidate).toHaveBeenCalledWith({
-      id: "response1",
-      surveyId: "survey1",
-      contactId: "contact1",
-    });
-
-    expect(tagOnResponseCache.revalidate).toHaveBeenCalledWith({
-      tagId: "tag1",
-      responseId: "response1",
-      environmentId: "env1",
-    });
   });
 
   test("getTagsOnResponsesCount should return tag counts for an environment", async () => {
@@ -150,7 +109,6 @@ describe("TagOnResponse Service", () => {
     ];
 
     vi.mocked(prisma.tagsOnResponses.groupBy).mockResolvedValue(mockTagsCount as any);
-    vi.mocked(tagOnResponseCache.tag.byEnvironmentId).mockReturnValue("env1");
 
     const result = await getTagsOnResponsesCount("env1");
 

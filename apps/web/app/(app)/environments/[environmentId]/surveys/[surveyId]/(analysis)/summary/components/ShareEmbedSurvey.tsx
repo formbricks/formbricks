@@ -101,7 +101,7 @@ export const ShareEmbedSurvey = ({
   };
 
   const handleInitialPageButton = () => {
-    setOpen(false);
+    setShowView("start");
   };
 
   return (

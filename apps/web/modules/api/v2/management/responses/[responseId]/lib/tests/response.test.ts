@@ -1,5 +1,4 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
-import { responseCache } from "@/lib/response/cache";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -20,16 +19,6 @@ vi.mock("../survey", () => ({
 
 vi.mock("../utils", () => ({
   findAndDeleteUploadedFilesInResponse: vi.fn(),
-}));
-
-vi.mock("@/lib/response/cache", () => ({
-  responseCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn(),
-      byResponseId: vi.fn(),
-    },
-  },
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -195,12 +184,6 @@ describe("Response Lib", () => {
         data: responseInput,
       });
 
-      expect(responseCache.revalidate).toHaveBeenCalledWith({
-        id: response.id,
-        surveyId: response.surveyId,
-        singleUseId: response.singleUseId,
-      });
-
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);
@@ -215,11 +198,6 @@ describe("Response Lib", () => {
       expect(prisma.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
         data: responseInput,
-      });
-
-      expect(responseCache.revalidate).toHaveBeenCalledWith({
-        id: response.id,
-        surveyId: response.surveyId,
       });
 
       expect(result.ok).toBe(true);

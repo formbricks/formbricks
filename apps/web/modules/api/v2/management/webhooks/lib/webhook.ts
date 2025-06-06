@@ -1,4 +1,3 @@
-import { webhookCache } from "@/lib/cache/webhook";
 import { captureTelemetry } from "@/lib/telemetry";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
@@ -68,11 +67,6 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
 
     const createdWebhook = await prisma.webhook.create({
       data: prismaData,
-    });
-
-    webhookCache.revalidate({
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
     });
 
     return ok(createdWebhook);
