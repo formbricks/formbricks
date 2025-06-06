@@ -9,6 +9,7 @@ import Hint from "@theme/Hint";
 
 Audit logs record **who** did **what**, **when**, **from where**, and **with what outcome** across your Formbricks instance.
 
+
 ---
 
 ## Benefits of audit logging
@@ -23,9 +24,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 | Requirement | Notes |
 |-------------|-------|
-| **`ENCRYPTION_KEY`** | Required for integrity hashes and authentication logs. Without this key, audit logging will not be available. |
 | **`redis`** | Used internally to guarantee integrity under concurrency. |
-| **Disk space** | Logs are text‑based (~1 KB per event). A modest volume is sufficient for most setups. |
 
 ---
 
@@ -37,12 +36,14 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 # --- Audit logging ---
 AUDIT_LOG_ENABLED=1
 ENCRYPTION_KEY=your_encryption_key_here        # required for integrity hashes and authentication logs
-REDIS_URL=redis://`redis`:6379                   # existing `redis` instance
+REDIS_URL=redis://`redis`:6379                 # existing `redis` instance
 AUDIT_LOG_GET_USER_IP=1                        # set to 1 to include user IP address in audit logs, 0 to omit (default: 0)
 ```
 
 2. Redeploy your containers.
 3. Confirm you can see audit logs in the output of your containers.
+
+Audit logs are printed to **stdout** as JSON Lines format, making them easily accessible through your container logs or log aggregation systems.
 
 ---
 
@@ -51,27 +52,36 @@ AUDIT_LOG_GET_USER_IP=1                        # set to 1 to include user IP add
 Audit logs are **JSON Lines** (one JSON object per line). A typical entry looks like this:
 
 ```json
-{"timestamp":"2025-05-28T12:34:56Z","action":"webhook.created","actor":{"id":"apiKey_123","type":"api"},"target":{"type":"webhook","id":"wh_456"},"organizationId":"org_789","status":"success","ipAddress":"203.0.113.42","changes":{"url":"https://example.com"},"integrityHash":"…","previousHash":"…"}
+{"level":"audit","time":1749207302158,"pid":20023,"hostname":"Victors-MacBook-Pro.local","name":"formbricks","actor":{"id":"cm90t4t7l0000vrws5hpo5ta5","type":"api"},"action":"created","target":{"id":"cmbkov4dn0000vrg72i7oznqv","type":"webhook"},"timestamp":"2025-06-06T10:55:02.145Z","organizationId":"cm8zovtbm0001vr3efa4n03ms","status":"success","ipAddress":"unknown","apiUrl":"http://localhost:3000/api/v1/webhooks","changes":{"id":"cmbkov4dn0000vrg72i7oznqv","name":"********","createdAt":"2025-06-06T10:55:02.123Z","updatedAt":"2025-06-06T10:55:02.123Z","url":"https://eoy8o887lmsqmhz.m.pipedream.net","source":"user","environmentId":"cm8zowv0b0009vr3ec56w2qf3","triggers":["responseCreated","responseUpdated","responseFinished"],"surveyIds":[]},"integrityHash":"eefa760bf03572c32d8caf7d5012d305bcea321d08b1929781b8c7e537f22aed","previousHash":"f6bc014e835be5499f2b3a0475ed6ec8b97903085059ff8482b16ab5bfd34062"}
 ```
 
 Key fields:
 
 | Field | Description |
 |-------|-------------|
+| `level` | Log level, always `"audit"` for audit events |
+| `time` | Unix timestamp in milliseconds |
+| `pid` | Process ID of the logging instance |
+| `hostname` | Hostname of the server generating the log |
+| `name` | Application name, typically `"formbricks"` |
 | `timestamp` | ISO‑8601 time of the action |
-| `actor` | User or API key responsible |
+| `actor` | User or API key responsible (object with `id` and `type`) |
 | `action` | Constant verb‑noun string (`survey.updated`, `login.failed`, …) |
-| `target` | The resource affected |
+| `target` | The resource affected (object with `id` and `type`) |
 | `status` | `success` or `failure` |
-| `changes` | Only the fields that actually changed (sensitive values redacted) |
+| `organizationId` | Organization identifier where the action occurred |
+| `ipAddress` | User IP address, present only if `AUDIT_LOG_GET_USER_IP=1`, otherwise `"unknown"` |
+| `apiUrl` | (Optional) API endpoint URL if the logs was generated through an API call |
+| `eventId` | (Optional) Available on error logs. You can use it to refer to the system log with this eventId for more details on the error |
+| `changes` | (Optional) Only the fields that actually changed (sensitive values redacted) |
 | `integrityHash` | SHA‑256 hash chaining the entry to the previous one |
-| `ipAddress` | (Optional) User IP address, present only if <code>AUDIT_LOG_GET_USER_IP=1</code> |
+| `previousHash` | SHA‑256 hash of the previous audit log entry for chain integrity |
+| `chainStart` | (Optional) Boolean indicating if this is the start of a new audit chain |
 
 ---
 
 ## Additional details
 
-- **Read‑only:** Audit logs are write‑once; avoid granting write access to the log directory.
 - **Redacted secrets:** Sensitive fields (e‑mails, access tokens, passwords…) are replaced with `"********"` before being written.
 - **Failure events count:** Both successful *and* failed operations are logged.
 - **Single source of truth:** The same logs power the `Formbricks` UI and API endpoints.
