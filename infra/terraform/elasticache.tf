@@ -121,14 +121,14 @@ module "valkey_serverless" {
   engine               = "valkey"
   cache_name           = "${each.value}-valkey-serverless"
   major_engine_version = local.valkey_major_version
-  cache_usage_limits = {
-    data_storage = {
-      maximum = 2
-    }
-    ecpu_per_second = {
-      maximum = 1000
-    }
-  }
+  # cache_usage_limits = {
+  #   data_storage = {
+  #     maximum = 2
+  #   }
+  #   ecpu_per_second = {
+  #     maximum = 1000
+  #   }
+  # }
   subnet_ids = module.vpc.database_subnets
 
   security_group_ids = [
