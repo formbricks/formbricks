@@ -3,7 +3,7 @@
 ################################################################################
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
-  version = "16.4"
+  version = "16.6"
 }
 
 moved {
@@ -64,9 +64,8 @@ module "rds-aurora" {
   enable_http_endpoint = true
 
   serverlessv2_scaling_configuration = {
-    min_capacity             = 0
-    max_capacity             = 50
-    seconds_until_auto_pause = 3600
+    min_capacity = 0.5
+    max_capacity = 50
   }
 
   instance_class = "db.serverless"
