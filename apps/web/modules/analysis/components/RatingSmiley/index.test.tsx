@@ -61,20 +61,20 @@ describe("RatingSmiley", () => {
     cleanup();
   });
 
-  const activeClass = "fill-rating-fill";
+  const activeClass = "bg-rating-fill";
 
   // Test branch: range === 10 => iconsIdx = [0,1,2,...,9]
   test("renders correct icon for range 10 when active", () => {
     // For idx 0, iconsIdx[0] === 0, which corresponds to TiredFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={10} addColors={true} />);
-    const icon = getByTestId("TiredFace");
+    const icon = getByTestId("tired");
     expect(icon).toBeDefined();
     expect(icon.className).toContain(activeClass);
   });
 
   test("renders correct icon for range 10 when inactive", () => {
     const { getByTestId } = render(<RatingSmiley active={false} idx={0} range={10} />);
-    const icon = getByTestId("TiredFace");
+    const icon = getByTestId("tired");
     expect(icon).toBeDefined();
     expect(icon.className).toContain("fill-none");
   });
@@ -83,7 +83,7 @@ describe("RatingSmiley", () => {
   test("renders correct icon for range 7 when active", () => {
     // For idx 0, iconsIdx[0] === 1, which corresponds to WearyFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={7} addColors={true} />);
-    const icon = getByTestId("WearyFace");
+    const icon = getByTestId("weary");
     expect(icon).toBeDefined();
     expect(icon.className).toContain(activeClass);
   });
@@ -92,7 +92,7 @@ describe("RatingSmiley", () => {
   test("renders correct icon for range 5 when active", () => {
     // For idx 0, iconsIdx[0] === 3, which corresponds to FrowningFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={5} addColors={true} />);
-    const icon = getByTestId("FrowningFace");
+    const icon = getByTestId("frowning");
     expect(icon).toBeDefined();
     expect(icon.className).toContain(activeClass);
   });
@@ -101,7 +101,7 @@ describe("RatingSmiley", () => {
   test("renders correct icon for range 4 when active", () => {
     // For idx 0, iconsIdx[0] === 4, corresponding to ConfusedFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={4} addColors={true} />);
-    const icon = getByTestId("ConfusedFace");
+    const icon = getByTestId("confused");
     expect(icon).toBeDefined();
     expect(icon.className).toContain(activeClass);
   });
@@ -110,7 +110,7 @@ describe("RatingSmiley", () => {
   test("renders correct icon for range 3 when active", () => {
     // For idx 0, iconsIdx[0] === 4, corresponding to ConfusedFace.
     const { getByTestId } = render(<RatingSmiley active={true} idx={0} range={3} addColors={true} />);
-    const icon = getByTestId("ConfusedFace");
+    const icon = getByTestId("confused");
     expect(icon).toBeDefined();
     expect(icon.className).toContain(activeClass);
   });
