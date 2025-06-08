@@ -599,7 +599,6 @@
       "contact_deleted_successfully": "聯絡人已成功刪除",
       "contact_not_found": "找不到此聯絡人",
       "contacts_table_refresh": "重新整理聯絡人",
-      "contacts_table_refresh_error": "重新整理聯絡人時發生錯誤，請再試一次",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "first_name": "名字",
       "last_name": "姓氏",
@@ -762,6 +761,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -2631,6 +2631,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "產品經理",
     "product_market_fit_superhuman_question_3_choice_4": "產品負責人",
     "product_market_fit_superhuman_question_3_choice_5": "軟體工程師",
+    "product_market_fit_superhuman_question_3_headline": "您的角色是什麼？",
     "product_market_fit_superhuman_question_3_subheader": "請選取以下其中一個選項：",
     "product_market_fit_superhuman_question_4_headline": "您認為哪些類型的人最能從 {projectName} 中受益？",
     "product_market_fit_superhuman_question_5_headline": "您從 {projectName} 獲得的主要好處是什麼？",

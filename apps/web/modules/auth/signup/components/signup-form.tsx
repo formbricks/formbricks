@@ -108,7 +108,7 @@ export const SignupForm = ({
         email: data.email,
         password: data.password,
         userLocale,
-        inviteToken: inviteToken || "",
+        inviteToken: inviteToken ?? "",
         emailVerificationDisabled,
         turnstileToken,
       });

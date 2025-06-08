@@ -3,6 +3,7 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { Alert } from "@/modules/ui/components/alert";
 import { T, getTranslate } from "@/tolgee/server";
+import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
@@ -46,6 +47,7 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
       );
     }
   } catch (error) {
+    logger.error(error, "Invalid token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>

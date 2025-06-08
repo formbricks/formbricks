@@ -8,6 +8,12 @@ vi.mock("@/lib/jwt", () => ({
   getEmailFromEmailToken: vi.fn(),
 }));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,
   T: ({ keyName, params }) => {
@@ -107,14 +113,33 @@ describe("VerificationRequestedPage", () => {
   });
 
   test("renders invalid token message when token is invalid", async () => {
+    const mockError = new Error("Invalid token");
+    const { logger } = await import("@formbricks/logger");
+
     vi.mocked(getEmailFromEmailToken).mockImplementation(() => {
-      throw new Error("Invalid token");
+      throw mockError;
     });
 
     const searchParams = { token: "invalid-token" };
     const Page = await VerificationRequestedPage({ searchParams });
     render(Page);
 
+    expect(logger.error).toHaveBeenCalledWith(mockError, "Invalid token");
     expect(screen.getByText("auth.verification-requested.invalid_token")).toBeInTheDocument();
+  });
+
+  test("calls logger.error when token parsing throws an error", async () => {
+    const mockError = new Error("JWT malformed");
+    const { logger } = await import("@formbricks/logger");
+
+    vi.mocked(getEmailFromEmailToken).mockImplementation(() => {
+      throw mockError;
+    });
+
+    const searchParams = { token: "malformed-token" };
+    await VerificationRequestedPage({ searchParams });
+
+    expect(logger.error).toHaveBeenCalledWith(mockError, "Invalid token");
+    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 });
