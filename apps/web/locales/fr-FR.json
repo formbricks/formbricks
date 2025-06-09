@@ -2629,6 +2629,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Chef de produit",
     "product_market_fit_superhuman_question_3_choice_4": "Propriétaire de produit",
     "product_market_fit_superhuman_question_3_choice_5": "Ingénieur logiciel",
+    "product_market_fit_superhuman_question_3_headline": "Quel est votre rôle ?",
     "product_market_fit_superhuman_question_3_subheader": "Veuillez sélectionner l'une des options suivantes :",
     "product_market_fit_superhuman_question_4_headline": "Quel type de personnes pensez-vous bénéficierait le plus de $[projectName] ?",
     "product_market_fit_superhuman_question_5_headline": "Quel est le principal avantage que vous tirez de $[projectName] ?",

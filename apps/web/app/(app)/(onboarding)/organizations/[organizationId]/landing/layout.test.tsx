@@ -89,6 +89,8 @@ vi.mock("@/lib/constants", () => ({
   OIDC_ISSUER: "https://mock-oidc-issuer.com",
   OIDC_SIGNING_ALGORITHM: "RS256",
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 vi.mock("@/lib/environment/service");

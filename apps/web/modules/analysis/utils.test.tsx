@@ -3,6 +3,14 @@ import { isValidElement } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { renderHyperlinkedContent } from "./utils";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getFormattedErrorMessage: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/list/actions", () => ({
+  generateSingleUseIdAction: vi.fn(),
+}));
+
 describe("renderHyperlinkedContent", () => {
   afterEach(() => {
     cleanup();

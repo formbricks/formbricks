@@ -7,6 +7,20 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { SurveyAnalysisCTA } from "./SurveyAnalysisCTA";
 
+vi.mock("@/lib/utils/action-client-middleware", () => ({
+  checkAuthorizationUpdated: vi.fn(),
+}));
+vi.mock("@/modules/ee/audit-logs/lib/utils", () => ({
+  withAuditLogging: vi.fn((...args: any[]) => {
+    // Check if the last argument is a function and return it directly
+    if (typeof args[args.length - 1] === "function") {
+      return args[args.length - 1];
+    }
+    // Otherwise, return a new function that takes a function as an argument and returns it
+    return (fn: any) => fn;
+  }),
+}));
+
 // Mock constants
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -30,7 +44,9 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
   IS_POSTHOG_CONFIGURED: true,
+  AUDIT_LOG_ENABLED: true,
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "mock-url",
 }));
 
 // Create a spy for refreshSingleUseId so we can override it in tests
