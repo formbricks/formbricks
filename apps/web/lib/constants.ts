@@ -237,8 +237,6 @@ export enum STRIPE_PROJECT_NAMES {
 export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
   STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
-  SCALE_MAY25_MONTHLY = "formbricks_scale_monthly",
-  SCALE_MAY25_YEARLY = "formbricks_scale_yearly",
 }
 
 export const BILLING_LIMITS = {
