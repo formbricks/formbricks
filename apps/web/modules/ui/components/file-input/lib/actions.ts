@@ -4,9 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
 
 const ZConvertHeicToJpegInput = z.object({
-  file: z.any().refine((val) => {
-    return typeof window === 'undefined' ? true : val instanceof File;
-  }, "Must be a File object"),
+  file: z.instanceof(File),
 });
 
 export const convertHeicToJpegAction = authenticatedActionClient
