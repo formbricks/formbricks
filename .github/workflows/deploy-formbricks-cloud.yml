@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       VERSION:
-        description: 'The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0.'
+        description: "The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0."
         required: true
         type: string
       REPOSITORY:
-        description: 'The repository to use for the Docker image'
+        description: "The repository to use for the Docker image"
         required: false
         type: string
-        default: 'ghcr.io/formbricks/formbricks'
+        default: "ghcr.io/formbricks/formbricks"
       ENVIRONMENT:
-        description: 'The environment to deploy to'
+        description: "The environment to deploy to"
         required: true
         type: choice
         options:
@@ -22,16 +22,16 @@ on:
   workflow_call:
     inputs:
       VERSION:
-        description: 'The version of the Docker image to release'
+        description: "The version of the Docker image to release"
         required: true
         type: string
       REPOSITORY:
-        description: 'The repository to use for the Docker image'
+        description: "The repository to use for the Docker image"
         required: false
         type: string
-        default: 'ghcr.io/formbricks/formbricks'
+        default: "ghcr.io/formbricks/formbricks"
       ENVIRONMENT:
-        description: 'The environment to deploy to'
+        description: "The environment to deploy to"
         required: true
         type: string
 
@@ -75,7 +75,7 @@ jobs:
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.FORMBRICKS_ROLE_ARN }}
         with:
-          helmfile-version: 'v1.0.0'
+          helmfile-version: "v1.0.0"
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
@@ -92,7 +92,7 @@ jobs:
           FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
           FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
         with:
-          helmfile-version: 'v1.0.0'
+          helmfile-version: "v1.0.0"
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
@@ -100,3 +100,43 @@ jobs:
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
+      - name: Purge Cloudflare Cache
+        if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
+        env:
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # Set hostname based on environment
+          if [[ "${{ inputs.ENVIRONMENT }}" == "prod" ]]; then
+            PURGE_HOST="app.formbricks.com"
+          else
+            PURGE_HOST="stage.app.formbricks.com"
+          fi
+
+          echo "Purging Cloudflare cache for host: $PURGE_HOST (environment: ${{ inputs.ENVIRONMENT }}, zone: $CF_ZONE_ID)"
+
+          # Prepare JSON payload for selective cache purge
+          json_payload=$(cat << EOF
+          {
+            "hosts": ["$PURGE_HOST"]
+          }
+          EOF
+          )
+
+          # Make API call to Cloudflare
+          response=$(curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$json_payload")
+
+          echo "Cloudflare API response: $response"
+
+          # Verify the operation was successful
+          if [[ "$(echo "$response" | jq -r .success)" == "true" ]]; then
+            echo "✅ Successfully purged cache for $PURGE_HOST"
+          else
+            echo "❌ Cloudflare cache purge failed"
+            echo "Error details: $(echo "$response" | jq -r .errors)"
+            exit 1
+          fi
