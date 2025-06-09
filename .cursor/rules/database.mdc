@@ -3,18 +3,10 @@ description: >
   This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
   and data patterns. It should be used **only when the agent explicitly requests database schema-level 
   details** to support tasks such as:
-  
-  - Writing or debugging Prisma queries
-  - Designing or reviewing new features or data models
-  - Investigating data relationships or multi-tenancy behavior
-  - Creating API endpoints or integrations that involve surveys, responses, or contacts
-  - Understanding soft-deletion, cascading behaviors, or constraints
-
-  It must NOT be applied automatically in all contexts to avoid unnecessary data injection or complexity.
-
-globs: []
-alwaysApply: agent-requested
----
+description: >
+  This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
+  and data patterns. It should be used **only when the agent explicitly requests database schema-level 
+  details** to support tasks such as:
 # Formbricks Database Schema Reference
 
 This rule provides a reference to the Formbricks database structure. For the most up-to-date and complete schema definitions, please refer to the schema.prisma file directly.
@@ -38,39 +30,9 @@ Organization
 
 For the complete and up-to-date database schema, please refer to:
 - Main schema: `packages/database/schema.prisma`
+- JSON type definitions: `packages/database/json-types.ts`
 
-The schema.prisma file contains all model definitions, relationships, enums, and field types. This ensures you always have access to the most current schema information.
-
-## Common Data Patterns
-
-### JSON Field Structures
-
-#### Survey Questions
-```typescript
-type SurveyQuestion = {
-  id: string;
-  type: 'openText' | 'multipleChoiceSingle' | 'multipleChoiceMulti' | 'nps' | 'cta' | 'rating' | 'consent' | 'pictureSelection' | 'cal' | 'fileUpload' | 'matrix' | 'address';
-  headline: string;
-  subheader?: string;
-  required?: boolean;
-  // Type-specific properties...
-}[];
-```
-
-#### Response Data
-```typescript
-type ResponseData = {
-  [questionId: string]: string | string[] | number;
-};
-```
-
-#### Contact Attributes
-```typescript
-type ResponseContactAttributes = {
-  [attributeKey: string]: string;
-};
-```
-
+The schema.prisma file contains all model definitions, relationships, enums, and field types. The json-types.ts file contains TypeScript type definitions for JSON fields.
 
 ## Data Access Patterns
 
@@ -133,4 +95,7 @@ const contact = await prisma.contact.findUnique({
   }
 });
 ```
+
+This schema supports Formbricks' core functionality: multi-tenant survey management, user targeting, response collection, and analysis, all while maintaining strict data isolation and security.
+
 
