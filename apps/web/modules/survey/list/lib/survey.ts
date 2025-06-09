@@ -315,11 +315,10 @@ export const copySurveyToOtherEnvironment = async (
     const existingActionClasses = !isSameEnvironment
       ? await prisma.actionClass.findMany({
           where: { environmentId: targetEnvironmentId },
-          select: { name: true, type: true },
+          select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
         })
       : [];
 
-    const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
 
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
@@ -358,6 +357,33 @@ export const copySurveyToOtherEnvironment = async (
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
+
+          //check if an action class with same config already exists
+          if (trigger.actionClass.type === "code") {
+            const existingActionClass = existingActionClasses.find(
+              (ac) => ac.key === trigger.actionClass.key
+            );
+
+            if (existingActionClass) {
+              return {
+                actionClass: { connect: { id: existingActionClass.id } },
+              };
+            }
+          } else if (trigger.actionClass.type === "noCode") {
+            const existingActionClass = existingActionClasses.find(
+              (ac) => ac.noCodeConfig === trigger.actionClass.noCodeConfig
+            );
+
+            if (existingActionClass) {
+              return {
+                actionClass: { connect: { id: existingActionClass.id } },
+              };
+            }
+          }
+
+          const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
+
+
           // Check if an action class with the same name but different type already exists
           const hasNameConflict =
             !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
@@ -405,15 +431,9 @@ export const copySurveyToOtherEnvironment = async (
               },
             };
           } else {
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    name_environmentId: {
-                      name: trigger.actionClass.name,
-                      environmentId: targetEnvironmentId,
-                    },
-                  },
+            if (hasNameConflict) {
+              return {
+                actionClass: {
                   create: {
                     ...baseActionClassData,
                     noCodeConfig: trigger.actionClass.noCodeConfig
@@ -421,8 +441,26 @@ export const copySurveyToOtherEnvironment = async (
                       : undefined,
                   },
                 },
-              },
-            };
+              };
+            }
+              return {
+                actionClass: {
+                  connectOrCreate: {
+                    where: {
+                      name_environmentId: {
+                        name: trigger.actionClass.name,
+                        environmentId: targetEnvironmentId,
+                      },
+                    },
+                    create: {
+                      ...baseActionClassData,
+                      noCodeConfig: trigger.actionClass.noCodeConfig
+                        ? structuredClone(trigger.actionClass.noCodeConfig)
+                        : undefined,
+                    },
+                  },
+                },
+              };
           }
         }),
       },
