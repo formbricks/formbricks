@@ -2,11 +2,11 @@
 description: >
   This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
   and data patterns. It should be used **only when the agent explicitly requests database schema-level 
-  details** to support tasks such as:
-description: >
-  This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
-  and data patterns. It should be used **only when the agent explicitly requests database schema-level 
-  details** to support tasks such as:
+  details** to support tasks such as: writing/debugging Prisma queries, designing/reviewing data models, 
+  investigating multi-tenancy behavior, creating API endpoints, or understanding data relationships.
+globs: []
+alwaysApply: agent-requested
+---
 # Formbricks Database Schema Reference
 
 This rule provides a reference to the Formbricks database structure. For the most up-to-date and complete schema definitions, please refer to the schema.prisma file directly.
