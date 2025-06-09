@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 // api endpoint for uploading public files
 // uploaded files will be public, anyone can access the file
@@ -44,12 +45,8 @@ export const POST = async (request: NextRequest): Promise<Response> => {
     //check whether its using API key
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const isAuthorized = authentication.environmentPermissions.some(
-      (permission) =>
-        permission.environmentId === environmentId &&
-        (permission.permission === "write" || permission.permission === "manage")
-    );
-    if (!isAuthorized) {
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
       return responses.unauthorizedResponse();
     }
   } else {

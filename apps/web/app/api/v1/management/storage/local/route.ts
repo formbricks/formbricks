@@ -12,6 +12,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   if (!ENCRYPTION_KEY) {
@@ -58,12 +59,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
     //check whether its using API key
     const authentication = await authenticateRequest(req);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const isAuthorized = authentication.environmentPermissions.some(
-      (permission) =>
-        permission.environmentId === environmentId &&
-        (permission.permission === "write" || permission.permission === "manage")
-    );
-    if (!isAuthorized) {
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
       return responses.unauthorizedResponse();
     }
   } else {
