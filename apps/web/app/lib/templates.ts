@@ -1210,6 +1210,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
             t("templates.feedback_box_question_1_choice_1"),
             t("templates.feedback_box_question_1_choice_2"),
           ],
+          choiceIds: [reusableOptionIds[0], reusableOptionIds[1]],
           headline: t("templates.feedback_box_question_1_headline"),
           required: true,
           subheader: t("templates.feedback_box_question_1_subheader"),
@@ -2054,7 +2055,7 @@ const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
           shuffleOption: "none",
           choices: [
             t("templates.professional_development_survey_question_1_choice_1"),
-            t("templates.professional_development_survey_question_1_choice_1"),
+            t("templates.professional_development_survey_question_1_choice_2"),
           ],
           t,
         }),
@@ -2381,6 +2382,7 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
             t("templates.measure_task_accomplishment_question_1_option_2_label"),
             t("templates.measure_task_accomplishment_question_1_option_3_label"),
           ],
+          choiceIds: [reusableOptionIds[0], reusableOptionIds[1], reusableOptionIds[2]],
           headline: t("templates.measure_task_accomplishment_question_1_headline"),
           required: true,
           t,
@@ -2739,10 +2741,10 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
         buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
-            createChoiceJumpLogic(reusableQuestionIds[0], "2", reusableQuestionIds[1]),
-            createChoiceJumpLogic(reusableQuestionIds[0], "3", reusableQuestionIds[2]),
-            createChoiceJumpLogic(reusableQuestionIds[0], "4", reusableQuestionIds[2]),
-            createChoiceJumpLogic(reusableQuestionIds[0], "5", localSurvey.endings[0].id),
+            createChoiceJumpLogic(reusableQuestionIds[0], 2, reusableQuestionIds[1]),
+            createChoiceJumpLogic(reusableQuestionIds[0], 3, reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], 4, reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], 5, localSurvey.endings[0].id),
           ],
           range: 5,
           scale: "number",
@@ -2795,7 +2797,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
         buildRatingQuestion({
           id: reusableQuestionIds[0],
           logic: [
-            createChoiceJumpLogic(reusableQuestionIds[0], "5", reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[0], 5, reusableQuestionIds[2]),
             {
               id: createId(),
               conditions: {
@@ -2895,8 +2897,8 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         buildRatingQuestion({
           id: reusableQuestionIds[1],
           logic: [
-            createChoiceJumpLogic(reusableQuestionIds[1], "3", reusableQuestionIds[2]),
-            createChoiceJumpLogic(reusableQuestionIds[1], "4", reusableQuestionIds[3]),
+            createChoiceJumpLogic(reusableQuestionIds[1], 3, reusableQuestionIds[2]),
+            createChoiceJumpLogic(reusableQuestionIds[1], 4, reusableQuestionIds[3]),
           ],
           range: 5,
           scale: "number",
@@ -2928,8 +2930,8 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         buildRatingQuestion({
           id: reusableQuestionIds[4],
           logic: [
-            createChoiceJumpLogic(reusableQuestionIds[4], "3", reusableQuestionIds[5]),
-            createChoiceJumpLogic(reusableQuestionIds[4], "4", reusableQuestionIds[6]),
+            createChoiceJumpLogic(reusableQuestionIds[4], 3, reusableQuestionIds[5]),
+            createChoiceJumpLogic(reusableQuestionIds[4], 4, reusableQuestionIds[6]),
           ],
           range: 5,
           scale: "number",
@@ -3003,6 +3005,13 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
             t("templates.understand_low_engagement_question_1_choice_3"),
             t("templates.understand_low_engagement_question_1_choice_4"),
             t("templates.understand_low_engagement_question_1_choice_5"),
+          ],
+          choiceIds: [
+            reusableOptionIds[0],
+            reusableOptionIds[1],
+            reusableOptionIds[2],
+            reusableOptionIds[3],
+            reusableOptionIds[4],
           ],
           headline: t("templates.understand_low_engagement_question_1_headline"),
           required: true,
