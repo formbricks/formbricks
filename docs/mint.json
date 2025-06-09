@@ -291,6 +291,7 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
+        "self-hosting/advanced/license-activation",
         {
           "group": "Enterprise Features",
           "icon": "building",
