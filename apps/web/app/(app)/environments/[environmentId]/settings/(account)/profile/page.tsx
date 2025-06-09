@@ -69,12 +69,12 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             )}
           </SettingsCard>
           <SettingsCard
-            title={"common.community_profile"}
+            title={t("common.community_profile")}
             description={t("environments.settings.profile.update_community_info")}>
             <EditCommunityForm user={user} />
           </SettingsCard>
           <SettingsCard
-            title={"common.community_avatar"}
+            title={t("common.community_avatar")}
             description={t("environments.settings.profile.update_your_community_avatar")}>
             {user && (
               <EditCommunityAvatarForm
