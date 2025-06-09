@@ -319,7 +319,6 @@ export const copySurveyToOtherEnvironment = async (
         })
       : [];
 
-
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
 
@@ -357,7 +356,6 @@ export const copySurveyToOtherEnvironment = async (
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
-
           //check if an action class with same config already exists
           if (trigger.actionClass.type === "code") {
             const existingActionClass = existingActionClasses.find(
@@ -371,7 +369,7 @@ export const copySurveyToOtherEnvironment = async (
             }
           } else if (trigger.actionClass.type === "noCode") {
             const existingActionClass = existingActionClasses.find(
-              (ac) => ac.noCodeConfig === trigger.actionClass.noCodeConfig
+              (ac) => JSON.stringify(ac.noCodeConfig) === JSON.stringify(trigger.actionClass.noCodeConfig)
             );
 
             if (existingActionClass) {
@@ -382,7 +380,6 @@ export const copySurveyToOtherEnvironment = async (
           }
 
           const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
-
 
           // Check if an action class with the same name but different type already exists
           const hasNameConflict =
@@ -443,24 +440,24 @@ export const copySurveyToOtherEnvironment = async (
                 },
               };
             }
-              return {
-                actionClass: {
-                  connectOrCreate: {
-                    where: {
-                      name_environmentId: {
-                        name: trigger.actionClass.name,
-                        environmentId: targetEnvironmentId,
-                      },
-                    },
-                    create: {
-                      ...baseActionClassData,
-                      noCodeConfig: trigger.actionClass.noCodeConfig
-                        ? structuredClone(trigger.actionClass.noCodeConfig)
-                        : undefined,
+            return {
+              actionClass: {
+                connectOrCreate: {
+                  where: {
+                    name_environmentId: {
+                      name: trigger.actionClass.name,
+                      environmentId: targetEnvironmentId,
                     },
                   },
+                  create: {
+                    ...baseActionClassData,
+                    noCodeConfig: trigger.actionClass.noCodeConfig
+                      ? structuredClone(trigger.actionClass.noCodeConfig)
+                      : undefined,
+                  },
                 },
-              };
+              },
+            };
           }
         }),
       },
