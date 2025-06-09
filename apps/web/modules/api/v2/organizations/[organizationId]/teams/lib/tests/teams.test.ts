@@ -1,4 +1,3 @@
-import { organizationCache } from "@/lib/organization/cache";
 import { TGetTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -27,9 +26,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-// Mock organizationCache.revalidate
-vi.spyOn(organizationCache, "revalidate").mockImplementation(() => {});
-
 describe("Teams Lib", () => {
   describe("createTeam", () => {
     test("creates a team successfully and revalidates cache", async () => {
@@ -44,7 +40,6 @@ describe("Teams Lib", () => {
           organizationId: organizationId,
         },
       });
-      expect(organizationCache.revalidate).toHaveBeenCalledWith({ id: organizationId });
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data).toEqual(mockTeam);
     });

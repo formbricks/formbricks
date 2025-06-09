@@ -1,6 +1,4 @@
 import "server-only";
-import { teamCache } from "@/lib/cache/team";
-import { organizationCache } from "@/lib/organization/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
 import {
@@ -27,14 +25,6 @@ export const createTeam = async (
         name,
         organizationId,
       },
-    });
-
-    organizationCache.revalidate({
-      id: organizationId,
-    });
-
-    teamCache.revalidate({
-      organizationId: organizationId,
     });
 
     return ok(team);

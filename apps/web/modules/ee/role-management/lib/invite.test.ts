@@ -1,4 +1,3 @@
-import { inviteCache } from "@/lib/cache/invite";
 import { OrganizationRole, Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -11,12 +10,6 @@ vi.mock("@formbricks/database", () => ({
     invite: {
       update: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/invite", () => ({
-  inviteCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -49,10 +42,6 @@ describe("invite.ts", () => {
       expect(prisma.invite.update).toHaveBeenCalledWith({
         where: { id: "invite-123" },
         data: { role: "member" },
-      });
-      expect(inviteCache.revalidate).toHaveBeenCalledWith({
-        id: "invite-123",
-        organizationId: "org-123",
       });
     });
 

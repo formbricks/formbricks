@@ -5,6 +5,7 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Table } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { SelectedRowSettings } from "./selected-row-settings";
 
@@ -17,7 +18,6 @@ interface DataTableToolbarProps<T> {
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => void;
-  refreshContacts?: () => Promise<void>;
 }
 
 export const DataTableToolbar = <T,>({
@@ -29,9 +29,9 @@ export const DataTableToolbar = <T,>({
   type,
   deleteAction,
   downloadRowsAction,
-  refreshContacts,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslate();
+  const router = useRouter();
 
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
@@ -53,15 +53,8 @@ export const DataTableToolbar = <T,>({
             shouldRender={true}>
             <button
               onClick={async () => {
-                if (refreshContacts) {
-                  try {
-                    await refreshContacts();
-                    toast.success(t("environments.contacts.contacts_table_refresh_success"));
-                  } catch (err) {
-                    console.error(err);
-                    toast.error(t("environments.contacts.contacts_table_refresh_error"));
-                  }
-                }
+                router.refresh();
+                toast.success(t("environments.contacts.contacts_table_refresh_success"));
               }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
               <RefreshCcwIcon strokeWidth={1.5} className={cn("m-1 h-6 w-6 p-0.5")} />

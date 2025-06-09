@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -44,6 +45,8 @@ export const IndividualInviteTab = ({
     teamIds: z.array(z.string()),
   });
 
+  const router = useRouter();
+
   type TFormData = z.infer<typeof ZFormSchema>;
   const { t } = useTranslate();
   const form = useForm<TFormData>({
@@ -68,6 +71,7 @@ export const IndividualInviteTab = ({
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
     onSubmit([data]);
+    router.refresh();
     setOpen(false);
     reset();
   };

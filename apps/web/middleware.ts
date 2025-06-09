@@ -18,10 +18,10 @@ import {
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
 import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { isValidCallbackUrl } from "@/lib/utils/url";
-import { logApiError } from "@/modules/api/v2/lib/utils";
+import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -106,7 +106,6 @@ export const middleware = async (originalRequest: NextRequest) => {
   request.headers.set("x-start-time", Date.now().toString());
 
   // Create a new NextResponse object to forward the new request with headers
-
   const nextResponseWithCustomHeader = NextResponse.next({
     request: {
       headers: request.headers,
@@ -117,25 +116,23 @@ export const middleware = async (originalRequest: NextRequest) => {
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
 
+  const ip = await getClientIpFromHeaders();
+
   if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
     return nextResponseWithCustomHeader;
   }
-
-  let ip =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    ipAddress(request);
 
   if (ip) {
     try {
       await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
+      // NOSONAR - This is a catch all for rate limiting errors
       const apiError: ApiErrorResponseV2 = {
         type: "too_many_requests",
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
       };
-      logApiError(request, apiError);
+      logApiErrorEdge(request, apiError);
       return NextResponse.json(apiError, { status: 429 });
     }
   }

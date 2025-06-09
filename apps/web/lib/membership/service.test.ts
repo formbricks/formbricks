@@ -3,7 +3,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { membershipCache } from "./cache";
 import { createMembership, getMembershipByUserIdOrganizationId } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -13,16 +12,6 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
-
-vi.mock("./cache", () => ({
-  membershipCache: {
-    tag: {
-      byUserId: vi.fn(),
-      byOrganizationId: vi.fn(),
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -111,10 +100,6 @@ describe("Membership Service", () => {
           role: mockMembershipData.role,
         },
       });
-      expect(membershipCache.revalidate).toHaveBeenCalledWith({
-        userId: mockUserId,
-        organizationId: mockOrgId,
-      });
     });
 
     test("returns existing membership if role matches", async () => {
@@ -162,10 +147,6 @@ describe("Membership Service", () => {
           accepted: mockMembershipData.accepted,
           role: "owner",
         },
-      });
-      expect(membershipCache.revalidate).toHaveBeenCalledWith({
-        userId: mockUserId,
-        organizationId: mockOrgId,
       });
     });
 

@@ -598,7 +598,6 @@
       "contact_deleted_successfully": "Contacto eliminado com sucesso",
       "contact_not_found": "Nenhum contacto encontrado",
       "contacts_table_refresh": "Atualizar contactos",
-      "contacts_table_refresh_error": "Algo correu mal ao atualizar os contactos, por favor, tente novamente",
       "contacts_table_refresh_success": "Contactos atualizados com sucesso",
       "first_name": "Primeiro Nome",
       "last_name": "Apelido",
@@ -761,6 +760,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Controlo de Acesso",
         "add_api_key": "Adicionar Chave API",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
@@ -2642,6 +2642,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Gestor de Produto",
     "product_market_fit_superhuman_question_3_choice_4": "Proprietário do Produto",
     "product_market_fit_superhuman_question_3_choice_5": "Engenheiro de Software",
+    "product_market_fit_superhuman_question_3_headline": "Qual é o seu papel?",
     "product_market_fit_superhuman_question_3_subheader": "Por favor, selecione uma das seguintes opções:",
     "product_market_fit_superhuman_question_4_headline": "Que tipo de pessoas acha que mais beneficiariam de $[projectName]?",
     "product_market_fit_superhuman_question_5_headline": "Qual é o principal benefício que recebe de $[projectName]?",

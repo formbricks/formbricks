@@ -15,14 +15,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/team", () => ({
-  teamCache: {
-    tag: {
-      byId: vi.fn((teamId: string) => `team-${teamId}`),
-    },
-  },
-}));
-
 describe("getTeamMemberDetails", () => {
   beforeEach(() => {
     vi.clearAllMocks();

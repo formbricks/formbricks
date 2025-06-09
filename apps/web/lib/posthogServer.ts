@@ -1,4 +1,4 @@
-import { cache } from "@/lib/cache";
+import { createCacheKey, withCache } from "@/modules/cache/lib/withCache";
 import { PostHog } from "posthog-node";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
@@ -37,8 +37,8 @@ export const sendPlanLimitsReachedEventToPosthogWeekly = (
     plan: TOrganizationBillingPlan;
     limits: TOrganizationBillingPlanLimits;
   }
-): Promise<string> =>
-  cache(
+) =>
+  withCache(
     async () => {
       try {
         await capturePosthogEnvironmentEvent(environmentId, "plan limit reached", {
@@ -50,8 +50,8 @@ export const sendPlanLimitsReachedEventToPosthogWeekly = (
         throw error;
       }
     },
-    [`sendPlanLimitsReachedEventToPosthogWeekly-${billing.plan}-${environmentId}`],
     {
-      revalidate: 60 * 60 * 24 * 7, // 7 days
+      key: createCacheKey.custom("analytics", environmentId, `plan_limits_${billing.plan}`),
+      ttl: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
     }
   )();

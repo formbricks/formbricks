@@ -1,6 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { teamCache } from "@/lib/cache/team";
 import { DEFAULT_TEAM_ID } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -11,65 +9,47 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 
-export const getOrganizationByTeamId = reactCache(
-  async (teamId: string): Promise<Organization | null> =>
-    cache(
-      async () => {
-        validateInputs([teamId, z.string().cuid2()]);
+export const getOrganizationByTeamId = reactCache(async (teamId: string): Promise<Organization | null> => {
+  validateInputs([teamId, z.string().cuid2()]);
 
-        try {
-          const team = await prisma.team.findUnique({
-            where: {
-              id: teamId,
-            },
-            select: {
-              organization: true,
-            },
-          });
-
-          if (!team) {
-            return null;
-          }
-          return team.organization;
-        } catch (error) {
-          logger.error(error, `Error getting organization by team id ${teamId}`);
-          return null;
-        }
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
       },
-      [`getOrganizationByTeamId-${teamId}`],
-      {
-        tags: [teamCache.tag.byId(teamId)],
-      }
-    )()
-);
-
-const getTeam = reactCache(
-  async (teamId: string): Promise<Team> =>
-    cache(
-      async () => {
-        try {
-          const team = await prisma.team.findUnique({
-            where: {
-              id: teamId,
-            },
-          });
-
-          if (!team) {
-            throw new Error("Team not found");
-          }
-
-          return team;
-        } catch (error) {
-          logger.error(error, `Team not found ${teamId}`);
-          throw error;
-        }
+      select: {
+        organization: true,
       },
-      [`getTeam-${teamId}`],
-      {
-        tags: [teamCache.tag.byId(teamId)],
-      }
-    )()
-);
+    });
+
+    if (!team) {
+      return null;
+    }
+    return team.organization;
+  } catch (error) {
+    logger.error(error, `Error getting organization by team id ${teamId}`);
+    return null;
+  }
+});
+
+const getTeam = reactCache(async (teamId: string): Promise<Team> => {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+    });
+
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
+    return team;
+  } catch (error) {
+    logger.error(error, `Team not found ${teamId}`);
+    throw error;
+  }
+});
 
 export const createDefaultTeamMembership = async (userId: string) => {
   try {
