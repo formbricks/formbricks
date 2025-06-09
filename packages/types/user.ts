@@ -111,6 +111,7 @@ export const ZUserWhitelistInfo = z.object({
       communityMembers: z.number().optional(),
     })
     .optional(),
+  createdSurveys: z.number().optional(),
 });
 
 export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;

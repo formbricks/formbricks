@@ -41,12 +41,9 @@ export function AddUserCommunityButton({ creatorId, className }: Props): React.J
       aria-label={t("common.add_community")}
       onClick={handleAddUserCommunity}
       disabled={loading}
-      variant={"secondary"}
-      className={cn(
-        "ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        className
-      )}>
-      {loading ? <LoadingSpinner /> : <>{t("common.add_community")}</>}
+      variant={"default"}
+      className={cn("text-sm", className)}>
+      {loading ? <LoadingSpinner /> : <>{t("common.join_community")}</>}
     </Button>
   );
 }

@@ -29,9 +29,14 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
           <div className="flex h-full flex-col justify-between">
             <div className="flex flex-col gap-2">
               <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
-                {community.name || community.email}
+                {community.communityName || community.email}
               </h3>
-              <p className="text-base font-normal">Community description</p>
+              <div className="min-h-16">
+                <p className="line-clamp-2 text-base font-normal">
+                  {" "}
+                  {community.communityDescription && community.communityDescription.substring(0, 150)}
+                </p>
+              </div>
             </div>
             {community._count?.communityMembers !== undefined && (
               <div className="flex flex-row flex-nowrap gap-1 text-xs">
@@ -39,6 +44,16 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
                 <span>Members: {community._count.communityMembers}</span>
               </div>
             )}
+
+            <div className="mt-2 flex flex-row flex-nowrap gap-1 text-xs">
+              <span className="text-xs">
+                #{" "}
+                {t("common.surveys", {
+                  count: community.createdSurveys,
+                })}
+                : {community.createdSurveys || 0}
+              </span>
+            </div>
           </div>
           <div className="w-full">
             <Button
@@ -47,7 +62,7 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
                 window.location.href = `/environments/${environmentId}/communities/${community.id}/summary`;
               }}
               className={cn(
-                "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-2 whitespace-nowrap rounded-md px-4 py-2 text-xs font-normal text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
+                "bg-primary-50 ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-end gap-2 whitespace-nowrap rounded-md px-4 py-2 text-base font-semibold text-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:text-sm"
               )}>
               {t("common.join")}
               <ArrowRightIcon

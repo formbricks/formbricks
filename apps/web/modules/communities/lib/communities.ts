@@ -189,7 +189,22 @@ export const getAvailableUserCommunities = async ({
       },
     });
 
-    return availableUserCommunities;
+    const availableUserCommunitiesWithSurveysCount = await Promise.all(
+      availableUserCommunities.map(async (community) => {
+        const surveysCount = await prisma.survey.count({
+          where: {
+            createdBy: community.id,
+          },
+        });
+
+        return {
+          ...community,
+          createdSurveys: surveysCount,
+        };
+      })
+    );
+
+    return availableUserCommunitiesWithSurveysCount;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
