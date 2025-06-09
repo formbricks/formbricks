@@ -1,7 +1,19 @@
 ---
-description: 
-globs: 
-alwaysApply: false
+description: >
+  This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
+  and data patterns. It should be used **only when the agent explicitly requests database schema-level 
+  details** to support tasks such as:
+  
+  - Writing or debugging Prisma queries
+  - Designing or reviewing new features or data models
+  - Investigating data relationships or multi-tenancy behavior
+  - Creating API endpoints or integrations that involve surveys, responses, or contacts
+  - Understanding soft-deletion, cascading behaviors, or constraints
+
+  It must NOT be applied automatically in all contexts to avoid unnecessary data injection or complexity.
+
+globs: []
+alwaysApply: agent-requested
 ---
 # Formbricks Database Schema Reference
 
