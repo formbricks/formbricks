@@ -1,4 +1,3 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ContactAttributeKey } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -23,15 +22,6 @@ vi.mock("@formbricks/database", () => ({
     contactAttribute: {
       findMany: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    tag: {
-      byId: () => "mockTag",
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -118,12 +108,6 @@ describe("updateContactAttributeKey", () => {
     if (result.ok) {
       expect(result.data).toEqual(updatedKey);
     }
-
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: "cak123",
-      environmentId: mockContactAttributeKey.environmentId,
-      key: mockUpdateInput.key,
-    });
   });
 
   test("returns not_found if record does not exist", async () => {
@@ -184,12 +168,6 @@ describe("deleteContactAttributeKey", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockContactAttributeKey);
     }
-
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: "cak123",
-      environmentId: mockContactAttributeKey.environmentId,
-      key: mockContactAttributeKey.key,
-    });
   });
 
   test("returns not_found if record does not exist", async () => {

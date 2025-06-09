@@ -29,20 +29,8 @@ vi.mock("@/lib/posthogServer", () => ({
   sendPlanLimitsReachedEventToPosthogWeekly: vi.fn(),
 }));
 
-vi.mock("@/lib/response/cache", () => ({
-  responseCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/response/utils", () => ({
   calculateTtcTotal: vi.fn((ttc) => ttc),
-}));
-
-vi.mock("@/lib/responseNote/cache", () => ({
-  responseNoteCache: {
-    revalidate: vi.fn(),
-  },
 }));
 
 vi.mock("@/lib/telemetry", () => ({

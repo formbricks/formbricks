@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -11,8 +10,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurveys } from "./surveys";
 
 // Mock dependencies
-vi.mock("@/lib/cache");
-vi.mock("@/lib/survey/cache");
 vi.mock("@/lib/survey/utils");
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
@@ -75,10 +72,6 @@ const mockSurveyTransformed3: TSurvey = {
 describe("getSurveys (Management API)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Mock the cache function to simply execute the underlying function
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
     vi.mocked(transformPrismaSurvey).mockImplementation((survey) => ({
       ...survey,
       displayPercentage: null,
@@ -112,7 +105,6 @@ describe("getSurveys (Management API)", () => {
     expect(transformPrismaSurvey).toHaveBeenCalledTimes(1);
     expect(transformPrismaSurvey).toHaveBeenCalledWith(mockSurveyPrisma2);
     expect(surveys).toEqual([mockSurveyTransformed2]);
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should return surveys for multiple environment IDs without limit and offset", async () => {
@@ -138,7 +130,6 @@ describe("getSurveys (Management API)", () => {
     });
     expect(transformPrismaSurvey).toHaveBeenCalledTimes(3);
     expect(surveys).toEqual([mockSurveyTransformed1, mockSurveyTransformed2, mockSurveyTransformed3]);
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should return an empty array if no surveys are found", async () => {
@@ -149,7 +140,6 @@ describe("getSurveys (Management API)", () => {
     expect(prisma.survey.findMany).toHaveBeenCalled();
     expect(transformPrismaSurvey).not.toHaveBeenCalled();
     expect(surveys).toEqual([]);
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should handle PrismaClientKnownRequestError", async () => {
@@ -161,7 +151,6 @@ describe("getSurveys (Management API)", () => {
 
     await expect(getSurveys([environmentId1])).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting surveys");
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should handle generic errors", async () => {
@@ -170,7 +159,6 @@ describe("getSurveys (Management API)", () => {
 
     await expect(getSurveys([environmentId1])).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should throw validation error for invalid input", async () => {
@@ -182,6 +170,5 @@ describe("getSurveys (Management API)", () => {
 
     await expect(getSurveys([invalidEnvId])).rejects.toThrow(validationError);
     expect(prisma.survey.findMany).not.toHaveBeenCalled();
-    expect(cache).toHaveBeenCalledTimes(1); // Cache wrapper is still called
   });
 });

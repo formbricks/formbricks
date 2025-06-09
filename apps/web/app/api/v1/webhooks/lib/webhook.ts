@@ -1,6 +1,4 @@
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
-import { cache } from "@/lib/cache";
-import { webhookCache } from "@/lib/cache/webhook";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Webhook } from "@prisma/client";
@@ -27,12 +25,6 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
       },
     });
 
-    webhookCache.revalidate({
-      id: createdWebhook.id,
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
-    });
-
     return createdWebhook;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -49,30 +41,23 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
   }
 };
 
-export const getWebhooks = (environmentIds: string[], page?: number): Promise<Webhook[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentIds, ZId.array()], [page, ZOptionalNumber]);
+export const getWebhooks = async (environmentIds: string[], page?: number): Promise<Webhook[]> => {
+  validateInputs([environmentIds, ZId.array()], [page, ZOptionalNumber]);
 
-      try {
-        const webhooks = await prisma.webhook.findMany({
-          where: {
-            environmentId: { in: environmentIds },
-          },
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-        return webhooks;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    environmentIds.map((environmentId) => `getWebhooks-${environmentId}-${page}`),
-    {
-      tags: environmentIds.map((environmentId) => webhookCache.tag.byEnvironmentId(environmentId)),
+  try {
+    const webhooks = await prisma.webhook.findMany({
+      where: {
+        environmentId: { in: environmentIds },
+      },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
+    return webhooks;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
-  )();
+
+    throw error;
+  }
+};

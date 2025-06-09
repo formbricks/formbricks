@@ -1,5 +1,4 @@
 import { isValidImageFile } from "@/lib/fileValidation";
-import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -33,11 +32,6 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
         lastLoginAt: true,
         isActive: true,
       },
-    });
-
-    userCache.revalidate({
-      email: updatedUser.email,
-      id: updatedUser.id,
     });
 
     return updatedUser;

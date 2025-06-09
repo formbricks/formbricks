@@ -597,7 +597,6 @@
       "contact_deleted_successfully": "Contact supprimé avec succès",
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Rafraîchir les contacts",
-      "contacts_table_refresh_error": "Une erreur s'est produite lors de la mise à jour des contacts. Veuillez réessayer.",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "first_name": "Prénom",
       "last_name": "Nom de famille",
@@ -760,6 +759,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Contrôle d'accès",
         "add_api_key": "Ajouter une clé API",
         "api_key": "Clé API",
         "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
@@ -2629,6 +2629,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Chef de produit",
     "product_market_fit_superhuman_question_3_choice_4": "Propriétaire de produit",
     "product_market_fit_superhuman_question_3_choice_5": "Ingénieur logiciel",
+    "product_market_fit_superhuman_question_3_headline": "Quel est votre rôle ?",
     "product_market_fit_superhuman_question_3_subheader": "Veuillez sélectionner l'une des options suivantes :",
     "product_market_fit_superhuman_question_4_headline": "Quel type de personnes pensez-vous bénéficierait le plus de $[projectName] ?",
     "product_market_fit_superhuman_question_5_headline": "Quel est le principal avantage que vous tirez de $[projectName] ?",

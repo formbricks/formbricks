@@ -1,6 +1,3 @@
-import { teamCache } from "@/lib/cache/team";
-import { membershipCache } from "@/lib/membership/cache";
-import { userCache } from "@/lib/user/cache";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -38,10 +35,6 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn(),
   },
 }));
-
-vi.spyOn(membershipCache, "revalidate").mockImplementation(() => {});
-vi.spyOn(userCache, "revalidate").mockImplementation(() => {});
-vi.spyOn(teamCache, "revalidate").mockImplementation(() => {});
 
 describe("Users Lib", () => {
   describe("getUsers", () => {
@@ -150,8 +143,6 @@ describe("Users Lib", () => {
       );
 
       expect(prisma.user.create).toHaveBeenCalled();
-      expect(teamCache.revalidate).toHaveBeenCalled();
-      expect(membershipCache.revalidate).toHaveBeenCalled();
       expect(result.ok).toBe(true);
     });
   });
@@ -182,9 +173,6 @@ describe("Users Lib", () => {
       );
 
       expect(prisma.user.findUnique).toHaveBeenCalled();
-      expect(teamCache.revalidate).toHaveBeenCalledTimes(3);
-      expect(membershipCache.revalidate).toHaveBeenCalled();
-      expect(userCache.revalidate).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.teams).toContain("NewTeam");

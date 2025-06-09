@@ -11,9 +11,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/team", () => ({ teamCache: { tag: { byProjectId: vi.fn(), byId: vi.fn() } } }));
-vi.mock("@/lib/project/cache", () => ({ projectCache: { tag: { byId: vi.fn() } } }));
-
 const mockProject = { id: "p1" };
 const mockTeams = [
   {

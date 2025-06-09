@@ -1,9 +1,9 @@
 "use client";
 
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { T, useTranslate } from "@tolgee/react";
-import { signOut } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -28,6 +28,7 @@ export const DeleteAccountModal = ({
   const { t } = useTranslate();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -36,12 +37,18 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
-      // redirect to account deletion survey in Formbricks Cloud
+
+      // Sign out with account deletion reason (no automatic redirect)
+      await signOutWithAudit({
+        reason: "account_deletion",
+        redirect: false, // Prevent NextAuth automatic redirect
+      });
+
+      // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        await signOut({ redirect: true });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        await signOut({ callbackUrl: "/auth/login" });
+        window.location.replace("/auth/login");
       }
     } catch (error) {
       toast.error("Something went wrong");

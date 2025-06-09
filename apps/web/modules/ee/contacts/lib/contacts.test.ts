@@ -31,21 +31,7 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/cache", () => ({ cache: (fn) => fn }));
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    revalidate: vi.fn(),
-    tag: { byEnvironmentId: (env) => `env-${env}`, byId: (id) => `id-${id}` },
-  },
-}));
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: { revalidate: vi.fn() },
-}));
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: { revalidate: vi.fn() },
-}));
 vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
-vi.mock("react", () => ({ cache: (fn) => fn }));
 
 const environmentId = "env1";
 const contactId = "contact1";

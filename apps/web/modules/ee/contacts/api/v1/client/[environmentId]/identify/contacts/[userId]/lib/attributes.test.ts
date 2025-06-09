@@ -11,14 +11,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: {
-    tag: {
-      byContactId: vi.fn((contactId) => `contact-${contactId}-contactAttributes`),
-    },
-  },
-}));
-
 const mockContactId = "xn8b8ol97q2pcp8dnlpsfs1m";
 
 describe("getContactAttributes", () => {

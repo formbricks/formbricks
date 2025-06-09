@@ -1,4 +1,3 @@
-import { displayCache } from "@/lib/display/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,13 +6,6 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExist } from "./contact";
 import { createDisplay } from "./display";
-
-// Mock dependencies
-vi.mock("@/lib/display/cache", () => ({
-  displayCache: {
-    revalidate: vi.fn(),
-  },
-}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn((inputs) => inputs.map((input) => input[0])), // Pass through validation for testing
@@ -79,12 +71,6 @@ describe("createDisplay", () => {
       },
       select: { id: true, contactId: true, surveyId: true },
     });
-    expect(displayCache.revalidate).toHaveBeenCalledWith({
-      id: displayId,
-      contactId,
-      surveyId,
-      environmentId,
-    });
     expect(result).toEqual(mockDisplay); // Changed this line
   });
 
@@ -100,12 +86,6 @@ describe("createDisplay", () => {
         survey: { connect: { id: surveyId } },
       },
       select: { id: true, contactId: true, surveyId: true },
-    });
-    expect(displayCache.revalidate).toHaveBeenCalledWith({
-      id: displayId,
-      contactId: null,
-      surveyId,
-      environmentId,
     });
     expect(result).toEqual(mockDisplayWithoutContact); // Changed this line
   });
@@ -125,12 +105,6 @@ describe("createDisplay", () => {
       },
       select: { id: true, contactId: true, surveyId: true },
     });
-    expect(displayCache.revalidate).toHaveBeenCalledWith({
-      id: displayId,
-      contactId: null, // Assuming prisma returns null if contact wasn't connected
-      surveyId,
-      environmentId,
-    });
     expect(result).toEqual(mockDisplayWithoutContact); // Changed this line
   });
 
@@ -143,7 +117,6 @@ describe("createDisplay", () => {
     await expect(createDisplay(displayInput)).rejects.toThrow(ValidationError);
     expect(doesContactExist).not.toHaveBeenCalled();
     expect(prisma.display.create).not.toHaveBeenCalled();
-    expect(displayCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError on Prisma known request error", async () => {
@@ -155,7 +128,6 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(prismaError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(DatabaseError);
-    expect(displayCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw original error on other errors during creation", async () => {
@@ -164,7 +136,6 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(genericError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(genericError);
-    expect(displayCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw original error if doesContactExist fails", async () => {
@@ -173,6 +144,5 @@ describe("createDisplay", () => {
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactCheckError);
     expect(prisma.display.create).not.toHaveBeenCalled();
-    expect(displayCache.revalidate).not.toHaveBeenCalled();
   });
 });

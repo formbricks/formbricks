@@ -1,36 +1,27 @@
 import "server-only";
-import { cache } from "@/lib/cache";
 import { ZId } from "@formbricks/types/common";
 import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
 import { validateInputs } from "../utils/validate";
-import { organizationCache } from "./cache";
 import { getOrganizationsByUserId } from "./service";
 
-export const canUserAccessOrganization = (userId: string, organizationId: string): Promise<boolean> =>
-  cache(
-    async () => {
-      validateInputs([userId, ZId], [organizationId, ZId]);
+export const canUserAccessOrganization = async (userId: string, organizationId: string): Promise<boolean> => {
+  validateInputs([userId, ZId], [organizationId, ZId]);
 
-      try {
-        const userOrganizations = await getOrganizationsByUserId(userId);
+  try {
+    const userOrganizations = await getOrganizationsByUserId(userId);
 
-        const givenOrganizationExists = userOrganizations.filter(
-          (organization) => (organization.id = organizationId)
-        );
-        if (!givenOrganizationExists) {
-          return false;
-        }
-        return true;
-      } catch (error) {
-        throw error;
-      }
-    },
-    [`canUserAccessOrganization-${userId}-${organizationId}`],
-    {
-      tags: [organizationCache.tag.byId(organizationId)],
+    const givenOrganizationExists = userOrganizations.filter(
+      (organization) => (organization.id = organizationId)
+    );
+    if (!givenOrganizationExists) {
+      return false;
     }
-  )();
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const verifyUserRoleAccess = async (
   organizationId: string,

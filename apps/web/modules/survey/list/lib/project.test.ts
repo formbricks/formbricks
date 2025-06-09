@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TProjectWithLanguages } from "@/modules/survey/list/types/surveys";
 import { Prisma } from "@prisma/client";
@@ -6,10 +5,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getProjectWithLanguagesByEnvironmentId, getUserProjects } from "./project";
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn(),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -23,20 +18,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    tag: {
-      byEnvironmentId: vi.fn((id) => `environment-${id}`),
-      byUserId: vi.fn((id) => `user-${id}`),
-      byOrganizationId: vi.fn((id) => `organization-${id}`),
-    },
-  },
-}));
-
-vi.mock("react", () => ({
-  cache: (fn: any) => fn,
-}));
-
 describe("Project module", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -46,14 +27,10 @@ describe("Project module", () => {
     test("should return project with languages when successful", async () => {
       const mockProject: TProjectWithLanguages = {
         id: "project-id",
-        languages: [
-          { alias: "en", code: "English" },
-          { alias: "es", code: "Spanish" },
-        ],
-      };
+        languages: [{ language: { id: "lang-1", code: "en" } }],
+      } as any;
 
-      vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
+      vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject as any);
 
       const result = await getProjectWithLanguagesByEnvironmentId("env-id");
 
@@ -71,18 +48,10 @@ describe("Project module", () => {
           languages: true,
         },
       });
-      expect(cache).toHaveBeenCalledWith(
-        expect.any(Function),
-        ["survey-list-getProjectByEnvironmentId-env-id"],
-        {
-          tags: ["environment-env-id"],
-        }
-      );
     });
 
     test("should return null when no project is found", async () => {
       vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(null);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       const result = await getProjectWithLanguagesByEnvironmentId("env-id");
 
@@ -96,7 +65,6 @@ describe("Project module", () => {
       });
 
       vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(prismaError);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       await expect(getProjectWithLanguagesByEnvironmentId("env-id")).rejects.toThrow(DatabaseError);
     });
@@ -105,7 +73,6 @@ describe("Project module", () => {
       const error = new Error("Unknown error");
 
       vi.mocked(prisma.project.findFirst).mockRejectedValueOnce(error);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       await expect(getProjectWithLanguagesByEnvironmentId("env-id")).rejects.toThrow("Unknown error");
     });
@@ -120,19 +87,12 @@ describe("Project module", () => {
       };
 
       const mockProjects: TUserProject[] = [
-        {
-          id: "project-1",
-          name: "Project 1",
-          environments: [
-            { id: "env-1", type: "production" },
-            { id: "env-2", type: "development" },
-          ],
-        },
-      ];
+        { id: "project-1", name: "Project 1" },
+        { id: "project-2", name: "Project 2" },
+      ] as any;
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
-      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
 
       const result = await getUserProjects("user-id", "org-id");
 
@@ -158,13 +118,6 @@ describe("Project module", () => {
           },
         },
       });
-      expect(cache).toHaveBeenCalledWith(
-        expect.any(Function),
-        ["survey-list-getUserProjects-user-id-org-id"],
-        {
-          tags: ["user-user-id", "organization-org-id"],
-        }
-      );
     });
 
     test("should return user projects for member role with project team filter", async () => {
@@ -175,16 +128,12 @@ describe("Project module", () => {
       };
 
       const mockProjects: TUserProject[] = [
-        {
-          id: "project-1",
-          name: "Project 1",
-          environments: [{ id: "env-1", type: "production" }],
-        },
-      ];
+        { id: "project-1", name: "Project 1" },
+        { id: "project-2", name: "Project 2" },
+      ] as any;
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
-      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
 
       const result = await getUserProjects("user-id", "org-id");
 
@@ -219,7 +168,6 @@ describe("Project module", () => {
 
     test("should throw ValidationError when user is not a member of the organization", async () => {
       vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(null);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       await expect(getUserProjects("user-id", "org-id")).rejects.toThrow(ValidationError);
     });
@@ -236,9 +184,8 @@ describe("Project module", () => {
         code: "P2002",
       });
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(prismaError);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       await expect(getUserProjects("user-id", "org-id")).rejects.toThrow(DatabaseError);
     });
@@ -252,9 +199,8 @@ describe("Project module", () => {
 
       const error = new Error("Unknown error");
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership);
+      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(error);
-      vi.mocked(cache).mockImplementationOnce((fn) => async () => fn());
 
       await expect(getUserProjects("user-id", "org-id")).rejects.toThrow("Unknown error");
     });

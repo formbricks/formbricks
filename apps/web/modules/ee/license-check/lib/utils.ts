@@ -1,5 +1,10 @@
 import "server-only";
-import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  IS_FORMBRICKS_CLOUD,
+  IS_RECAPTCHA_CONFIGURED,
+  PROJECT_FEATURE_KEYS,
+} from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
@@ -72,7 +77,7 @@ export const getMultiLanguagePermission = async (
 const getSpecificFeatureFlag = async (
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso"
+    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso" | "auditLogs"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -94,6 +99,11 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
 
 export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
+};
+
+export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
+  if (!AUDIT_LOG_ENABLED) return false;
+  return getSpecificFeatureFlag("auditLogs");
 };
 
 export const getIsSamlSsoEnabled = async (): Promise<boolean> => {

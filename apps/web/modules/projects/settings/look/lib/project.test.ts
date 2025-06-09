@@ -4,12 +4,7 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getProjectByEnvironmentId } from "./project";
 
-vi.mock("@/lib/cache", () => ({ cache: (fn: any) => fn }));
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: { tag: { byEnvironmentId: vi.fn(() => "env-tag") } },
-}));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
-vi.mock("react", () => ({ cache: (fn: any) => fn }));
 vi.mock("@formbricks/database", () => ({ prisma: { project: { findFirst: vi.fn() } } }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 

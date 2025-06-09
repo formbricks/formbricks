@@ -1,11 +1,8 @@
-import { cache } from "@/lib/cache";
-import { segmentCache } from "@/lib/cache/segment";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { err, ok } from "@formbricks/types/error-handlers";
 import {
   TBaseFilters,
   TSegmentAttributeFilter,
@@ -254,38 +251,28 @@ const processFilters = async (
  * Transforms a segment filter into a Prisma query for contacts
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (segmentId: string, filters: TBaseFilters, environmentId: string) =>
-    cache(
-      async (): Promise<Result<SegmentFilterQueryResult, ApiErrorResponseV2>> => {
-        try {
-          const baseWhereClause = {
-            environmentId,
-          };
+  async (segmentId: string, filters: TBaseFilters, environmentId: string) => {
+    try {
+      const baseWhereClause = {
+        environmentId,
+      };
 
-          // Initialize an empty stack for tracking the current evaluation path
-          const segmentPath = new Set<string>([segmentId]);
-          const filtersWhereClause = await processFilters(filters, segmentPath);
+      // Initialize an empty stack for tracking the current evaluation path
+      const segmentPath = new Set<string>([segmentId]);
+      const filtersWhereClause = await processFilters(filters, segmentPath);
 
-          const whereClause = {
-            AND: [baseWhereClause, filtersWhereClause],
-          };
+      const whereClause = {
+        AND: [baseWhereClause, filtersWhereClause],
+      };
 
-          return ok({ whereClause });
-        } catch (error) {
-          logger.error(
-            { error, segmentId, environmentId },
-            "Error transforming segment filter to Prisma query"
-          );
-          return err({
-            type: "bad_request",
-            message: "Failed to convert segment filters to Prisma query",
-            details: [{ field: "segment", issue: "Invalid segment filters" }],
-          });
-        }
-      },
-      [`segmentFilterToPrismaQuery-${segmentId}-${environmentId}-${JSON.stringify(filters)}`],
-      {
-        tags: [segmentCache.tag.byEnvironmentId(environmentId), segmentCache.tag.byId(segmentId)],
-      }
-    )()
+      return ok({ whereClause });
+    } catch (error) {
+      logger.error({ error, segmentId, environmentId }, "Error transforming segment filter to Prisma query");
+      return err({
+        type: "bad_request",
+        message: "Failed to convert segment filters to Prisma query",
+        details: [{ field: "segment", issue: "Invalid segment filters" }],
+      });
+    }
+  }
 );
