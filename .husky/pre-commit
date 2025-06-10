@@ -1,21 +1,21 @@
-# #!/bin/sh
-# . "$(dirname "$0")/_/husky.sh"
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
-# # Load environment variables from .env files
-# if [ -f .env ]; then
-#   set -a
-#   . .env
-#   set +a
-# fi
+# Load environment variables from .env files
+if [ -f .env ]; then
+  set -a
+  . .env
+  set +a
+fi
 
-# pnpm lint-staged
+pnpm lint-staged
 
-# # Run tolgee-pull if branch.json exists and NEXT_PUBLIC_TOLGEE_API_KEY is not set
-# if [ -f branch.json ]; then
-#   if [ -z "$NEXT_PUBLIC_TOLGEE_API_KEY" ]; then
-#     echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
-#   else
-#     pnpm run tolgee-pull
-#     git add apps/web/locales
-#   fi
-# fi
+# Run tolgee-pull if branch.json exists and NEXT_PUBLIC_TOLGEE_API_KEY is not set
+if [ -f branch.json ]; then
+  if [ -z "$NEXT_PUBLIC_TOLGEE_API_KEY" ]; then
+    echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
+  else
+    pnpm run tolgee-pull
+    git add apps/web/locales
+  fi
+fi
