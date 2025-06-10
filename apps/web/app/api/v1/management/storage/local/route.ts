@@ -1,19 +1,37 @@
 // headers -> "Content-Type" should be present and set to a valid MIME type
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
 import { validateLocalSignedUrl } from "@/lib/crypto";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { validateFile } from "@/lib/fileValidation";
 import { putFileToLocalStorage } from "@/lib/storage/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession } from "next-auth";
+import { getServerSession, Session } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
+import { authenticateRequest } from "@/app/api/v1/auth";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+
+
+export const checkAuth = async (session: Session | null, environmentId: string, request: NextRequest) => {
+  if (!session) {
+    //check whether its using API key
+    const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
+  } else {
+    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+    if (!isUserAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+  }
+};
 
 
 export const POST = async (req: NextRequest): Promise<Response> => {
@@ -40,19 +58,8 @@ export const POST = async (req: NextRequest): Promise<Response> => {
 
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    //check whether its using API key
-    const authentication = await authenticateRequest(req);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
-    }
-  } else {
-    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-    if (!isUserAuthorized) {
-      return responses.unauthorizedResponse();
-    }
-  }
+  const authResponse = await checkAuth(session, environmentId, req);
+  if (authResponse) return authResponse;
 
   const fileName = decodeURIComponent(encodedFileName);
 
