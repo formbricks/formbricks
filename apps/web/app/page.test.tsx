@@ -11,6 +11,10 @@ vi.mock("@/lib/environment/service", () => ({
   getFirstEnvironmentIdByUserId: vi.fn(),
 }));
 
+vi.mock("@/lib/project/service", () => ({
+  getUserProjects: vi.fn(),
+}));
+
 vi.mock("@/lib/instance/service", () => ({
   getIsFreshInstance: vi.fn(),
 }));
@@ -48,8 +52,11 @@ vi.mock("@/modules/ui/components/client-logout", () => ({
 }));
 
 vi.mock("@/app/ClientEnvironmentRedirect", () => ({
-  default: ({ environmentId }: { environmentId: string }) => (
-    <div data-testid="client-environment-redirect">Environment ID: {environmentId}</div>
+  default: ({ environmentId, userEnvironments }: { environmentId: string; userEnvironments?: string[] }) => (
+    <div data-testid="client-environment-redirect">
+      Environment ID: {environmentId}
+      {userEnvironments && ` | User Environments: ${userEnvironments.join(", ")}`}
+    </div>
   ),
 }));
 
@@ -312,6 +319,7 @@ describe("Page", () => {
     const { getFirstEnvironmentIdByUserId } = await import("@/lib/environment/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
+    const { getUserProjects } = await import("@/lib/project/service");
     const { render } = await import("@testing-library/react");
 
     const mockUser: TUser = {
@@ -365,6 +373,43 @@ describe("Page", () => {
     };
 
     const mockEnvironmentId = "test-env-id";
+    const mockUserProjects = [
+      {
+        id: "project-1",
+        name: "Test Project",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationId: "test-org-id",
+        styling: { allowStyleOverwrite: true },
+        recontactDays: 0,
+        inAppSurveyBranding: false,
+        linkSurveyBranding: false,
+        config: { channel: "link" as const, industry: "saas" as const },
+        placement: "bottomRight" as const,
+        clickOutsideClose: false,
+        darkOverlay: false,
+        languages: [],
+        logo: null,
+        environments: [
+          {
+            id: "test-env-id",
+            type: "production" as const,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "project-1",
+            appSetupCompleted: true,
+          },
+          {
+            id: "test-env-dev",
+            type: "development" as const,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "project-1",
+            appSetupCompleted: true,
+          },
+        ],
+      },
+    ] as any;
 
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "test-user-id" },
@@ -374,6 +419,7 @@ describe("Page", () => {
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([mockOrganization]);
     vi.mocked(getFirstEnvironmentIdByUserId).mockResolvedValue(mockEnvironmentId);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
+    vi.mocked(getUserProjects).mockResolvedValue(mockUserProjects);
     vi.mocked(getAccessFlags).mockReturnValue({
       isManager: false,
       isOwner: false,
