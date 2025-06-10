@@ -52,6 +52,9 @@ vi.mock("@formbricks/database", () => ({
     response: {
       count: vi.fn(),
     },
+    organization: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -98,6 +101,7 @@ describe("License Core Logic", () => {
       saml: true,
       spamProtection: true,
       ai: false,
+      auditLogs: true,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -226,6 +230,7 @@ describe("License Core Logic", () => {
             ai: false,
             saml: false,
             spamProtection: false,
+            auditLogs: false,
           },
           lastChecked: expect.any(Date),
           version: 1,
@@ -245,6 +250,7 @@ describe("License Core Logic", () => {
           ai: false,
           saml: false,
           spamProtection: false,
+          auditLogs: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -271,6 +277,7 @@ describe("License Core Logic", () => {
         ai: false,
         saml: false,
         spamProtection: false,
+        auditLogs: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -376,6 +383,7 @@ describe("License Core Logic", () => {
               saml: true,
               spamProtection: true,
               ai: true,
+              auditLogs: true,
             },
           };
         }
@@ -395,6 +403,7 @@ describe("License Core Logic", () => {
         saml: true,
         spamProtection: true,
         ai: true,
+        auditLogs: true,
       });
     });
 
@@ -477,9 +486,3 @@ describe("License Core Logic", () => {
     });
   });
 });
-
-// Helper mock for process.env if not already globally available in test environment
-if (typeof process === "undefined") {
-  global.process = { env: {} } as any;
-}
-vi.stubGlobal("process", global.process);

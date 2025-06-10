@@ -1,14 +1,19 @@
 // @ts-nocheck // We can remove this when we update the prisma client and the typescript version
 // if we don't add this we get build errors with prisma due to type-nesting
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import * as Sentry from "@sentry/nextjs";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
+import { logApiErrorEdge } from "./utils-edge";
 
-export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
-  logApiError(request, err);
+export const handleApiError = (
+  request: Request,
+  err: ApiErrorResponseV2,
+  auditLog?: ApiAuditLog
+): Response => {
+  logApiError(request, err, auditLog);
 
   switch (err.type) {
     case "bad_request":
@@ -50,7 +55,7 @@ export const formatZodError = (error: { issues: (ZodIssue | ZodCustomIssue)[] })
   });
 };
 
-export const logApiRequest = (request: Request, responseStatus: number): void => {
+export const logApiRequest = (request: Request, responseStatus: number, auditLog?: ApiAuditLog): void => {
   const method = request.method;
   const url = new URL(request.url);
   const path = url.pathname;
@@ -73,29 +78,22 @@ export const logApiRequest = (request: Request, responseStatus: number): void =>
       queryParams: safeQueryParams,
     })
     .info("API Request Details");
+
+  logAuditLog(request, auditLog);
 };
 
-export const logApiError = (request: Request, error: ApiErrorResponseV2): void => {
-  const correlationId = request.headers.get("x-request-id") ?? "";
+export const logApiError = (request: Request, error: ApiErrorResponseV2, auditLog?: ApiAuditLog): void => {
+  logApiErrorEdge(request, error);
 
-  // Send the error to Sentry if the DSN is set and the error type is internal_server_error
-  // This is useful for tracking down issues without overloading Sentry with errors
-  if (SENTRY_DSN && IS_PRODUCTION && error.type === "internal_server_error") {
-    const err = new Error(`API V2 error, id: ${correlationId}`);
+  logAuditLog(request, auditLog);
+};
 
-    Sentry.captureException(err, {
-      extra: {
-        details: error.details,
-        type: error.type,
-        correlationId,
-      },
-    });
+const logAuditLog = (request: Request, auditLog?: ApiAuditLog): void => {
+  if (AUDIT_LOG_ENABLED && auditLog) {
+    const correlationId = request.headers.get("x-request-id") ?? "";
+    queueAuditEvent({
+      ...auditLog,
+      eventId: correlationId,
+    }).catch((err) => logger.error({ err, correlationId }, "Failed to queue audit event from logApiError"));
   }
-
-  logger
-    .withContext({
-      correlationId,
-      error,
-    })
-    .error("API Error Details");
 };
