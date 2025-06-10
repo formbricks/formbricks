@@ -12,7 +12,11 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "environmentId is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "environmentId is required"
+        });
     });
 
     test("should return bad request response when fileType is missing", async () => {
@@ -20,7 +24,11 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "contentType is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "contentType is required",
+        });
     });
 
     test("should return bad request response when encodedFileName is missing", async () => {
@@ -28,7 +36,11 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "fileName is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "fileName is required",
+        });
     });
 
     test("should return bad request response when environmentId is undefined", async () => {
@@ -36,7 +48,11 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "environmentId is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "environmentId is required",
+        });
     });
 
     test("should return bad request response when fileType is undefined", async () => {
@@ -44,7 +60,11 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "contentType is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "contentType is required",
+        });
     });
 
     test("should return bad request response when encodedFileName is undefined", async () => {
@@ -52,6 +72,10 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeDefined();
         expect(result?.status).toBe(400);
         const body = await result?.json();
-        expect(body).toEqual({ error: "fileName is required" });
+        expect(body).toEqual({
+            code: "bad_request",
+            details: {},
+            message: "fileName is required",
+        });
     });
 }); 
