@@ -3,15 +3,32 @@
   "packageManager": "pnpm@9.15.9",
   "private": true,
   "version": "0.1.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "src"
+    "dist",
+    "schema.prisma",
+    "migration"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    },
+    "./types/survey-follow-up": {
+      "types": "./dist/types/survey-follow-up.d.ts",
+      "require": "./dist/types/survey-follow-up.js",
+      "import": "./dist/types/survey-follow-up.js"
+    }
+  },
   "scripts": {
-    "clean": "rimraf .turbo node_modules",
-    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" tsx ./src/scripts/apply-migrations.ts",
+    "clean": "rimraf .turbo node_modules dist",
+    "build": "pnpm generate && vite build",
+    "dev": "vite build --watch",
+    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" node ./dist/scripts/apply-migrations.js",
     "db:migrate:dev": "dotenv -e ../../.env -- sh -c \"pnpm prisma generate && tsx ./src/scripts/apply-migrations.ts\"",
-    "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" tsx ./src/scripts/create-saml-database.ts",
+    "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- tsx ./src/scripts/create-saml-database.ts",
     "db:push": "prisma db push --accept-data-loss",
     "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
@@ -19,7 +36,6 @@
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
-    "build": "pnpm generate",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
@@ -36,6 +52,8 @@
     "dotenv-cli": "8.0.0",
     "prisma": "6.7.0",
     "prisma-json-types-generator": "3.4.1",
-    "ts-node": "10.9.2"
+    "ts-node": "10.9.2",
+    "vite": "6.3.5",
+    "vite-plugin-dts": "4.5.3"
   }
 }

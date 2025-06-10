@@ -62,6 +62,9 @@ RUN touch apps/web/.env
 # Install the dependencies
 RUN pnpm install --ignore-scripts
 
+# Build the database package first
+RUN pnpm build --filter=@formbricks/database
+
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
@@ -112,11 +115,8 @@ RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages
 COPY --from=installer /app/packages/database/migration ./packages/database/migration
 RUN chown -R nextjs:nextjs ./packages/database/migration && chmod -R 755 ./packages/database/migration
 
-COPY --from=installer /app/packages/database/src ./packages/database/src
-RUN chown -R nextjs:nextjs ./packages/database/src && chmod -R 755 ./packages/database/src
-
-COPY --from=installer /app/packages/database/node_modules ./packages/database/node_modules
-RUN chown -R nextjs:nextjs ./packages/database/node_modules && chmod -R 755 ./packages/database/node_modules
+COPY --from=installer /app/packages/database/dist ./packages/database/dist
+RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
 COPY --from=installer /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
 RUN chown -R nextjs:nextjs ./packages/database/node_modules/@formbricks/logger/dist && chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
@@ -142,7 +142,7 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
+RUN npm install --ignore-scripts -g pino-pretty 
 RUN npm install -g prisma
 
 EXPOSE 3000
