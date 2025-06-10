@@ -13,6 +13,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
+
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   if (!ENCRYPTION_KEY) {
@@ -29,27 +31,9 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   const signedTimestamp = jsonInput.timestamp as string;
   const environmentId = jsonInput.environmentId as string;
 
-  if (!environmentId) {
-    return responses.badRequestResponse("environmentId is required");
-  }
+  checkForRequiredFields(environmentId, fileType, encodedFileName);
 
-  if (!fileType) {
-    return responses.badRequestResponse("contentType is required");
-  }
-
-  if (!encodedFileName) {
-    return responses.badRequestResponse("fileName is required");
-  }
-
-  if (!signedSignature) {
-    return responses.unauthorizedResponse();
-  }
-
-  if (!signedUuid) {
-    return responses.unauthorizedResponse();
-  }
-
-  if (!signedTimestamp) {
+  if (!signedSignature || !signedUuid || !signedTimestamp) {
     return responses.unauthorizedResponse();
   }
 
