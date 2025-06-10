@@ -189,6 +189,7 @@ export function RankingQuestion({
                           handleItemClick(item);
                         }}
                         type="button"
+                        aria-label={`Select ${getLocalizedValue(item.label,languageCode)} for ranking`}
                         className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
                         <span
                           className={cn(
@@ -206,12 +207,13 @@ export function RankingQuestion({
                       {isSorted ? (
                         <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
                           <button
-                            tabIndex={-1}
+                            tabIndex={isFirst?-1:0}
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
                               handleMove(item.id, "up");
                             }}
+                            aria-label={`Move ${getLocalizedValue(item.label,languageCode)} up`}
                             className={cn(
                               "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
                               isFirst
@@ -234,7 +236,7 @@ export function RankingQuestion({
                             </svg>
                           </button>
                           <button
-                            tabIndex={-1}
+                            tabIndex={isLast?-1:0}
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
@@ -246,6 +248,7 @@ export function RankingQuestion({
                                 ? "fb-opacity-30 fb-cursor-not-allowed"
                                 : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
                             )}
+                            aria-label={`Move ${getLocalizedValue(item.label,languageCode)} down`}
                             disabled={isLast}>
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
