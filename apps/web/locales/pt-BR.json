@@ -1891,7 +1891,6 @@
       }
     }
   },
-  "professional_development_survey_question_1_choice_2": "Não",
   "s": {
     "check_inbox_or_spam": "Por favor, dá uma olhada na sua pasta de spam se você não encontrar o e-mail na sua caixa de entrada.",
     "completed": "Essa pesquisa gratuita e de código aberto foi encerrada.",
@@ -2652,6 +2651,7 @@
     "professional_development_survey_description": "Avalie a satisfação dos funcionários com oportunidades de desenvolvimento profissional.",
     "professional_development_survey_name": "Avaliação de Desenvolvimento Profissional",
     "professional_development_survey_question_1_choice_1": "Sim",
+    "professional_development_survey_question_1_choice_2": "Não",
     "professional_development_survey_question_1_headline": "Você está interessado em atividades de desenvolvimento profissional?",
     "professional_development_survey_question_2_choice_1": "Eventos de networking",
     "professional_development_survey_question_2_choice_2": "Conferencias ou seminários",
