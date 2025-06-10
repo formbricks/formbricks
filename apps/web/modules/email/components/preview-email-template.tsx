@@ -60,7 +60,11 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
     );
   }
   if (scale === "number") {
-    return <Text className="m-0 flex h-10 items-center">{i + 1}</Text>;
+    return (
+      <Text className="m-0 h-[48px] text-center text-[14px] leading-[48px]">
+        {i + 1}
+      </Text>
+    );
   }
   if (scale === "star") {
     return <Text className="m-auto text-3xl">⭐</Text>;
@@ -228,8 +232,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                            firstQuestion.scale === "number" &&
-                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                          firstQuestion.scale === "number" &&
+                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
