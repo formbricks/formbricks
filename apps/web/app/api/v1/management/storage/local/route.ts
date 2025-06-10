@@ -7,32 +7,10 @@ import { validateLocalSignedUrl } from "@/lib/crypto";
 import { validateFile } from "@/lib/fileValidation";
 import { putFileToLocalStorage } from "@/lib/storage/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession, Session } from "next-auth";
+import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
-import { authenticateRequest } from "@/app/api/v1/auth";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-
-
-export const checkAuth = async (session: Session | null, environmentId: string, request: NextRequest) => {
-  if (!session) {
-    //check whether its using API key
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
-    }
-  } else {
-    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-    if (!isUserAuthorized) {
-      return responses.unauthorizedResponse();
-    }
-  }
-};
-
+import { checkAuth, checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   if (!ENCRYPTION_KEY) {
