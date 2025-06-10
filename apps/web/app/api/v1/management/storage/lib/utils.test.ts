@@ -1,5 +1,4 @@
 import { checkForRequiredFields } from "./utils";
-import { responses } from "@/app/lib/api/response";
 import { describe, it, expect } from "vitest";
 
 describe("checkForRequiredFields", () => {
@@ -8,33 +7,51 @@ describe("checkForRequiredFields", () => {
         expect(result).toBeUndefined();
     });
 
-    it("should return bad request response when environmentId is missing", () => {
+    it("should return bad request response when environmentId is missing", async () => {
         const result = checkForRequiredFields("", "image/jpeg", "test.jpg");
-        expect(result).toEqual(responses.badRequestResponse("environmentId is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "environmentId is required" });
     });
 
-    it("should return bad request response when fileType is missing", () => {
+    it("should return bad request response when fileType is missing", async () => {
         const result = checkForRequiredFields("env123", "", "test.jpg");
-        expect(result).toEqual(responses.badRequestResponse("contentType is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "contentType is required" });
     });
 
-    it("should return bad request response when encodedFileName is missing", () => {
+    it("should return bad request response when encodedFileName is missing", async () => {
         const result = checkForRequiredFields("env123", "image/jpeg", "");
-        expect(result).toEqual(responses.badRequestResponse("fileName is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "fileName is required" });
     });
 
-    it("should return bad request response when environmentId is undefined", () => {
+    it("should return bad request response when environmentId is undefined", async () => {
         const result = checkForRequiredFields(undefined as any, "image/jpeg", "test.jpg");
-        expect(result).toEqual(responses.badRequestResponse("environmentId is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "environmentId is required" });
     });
 
-    it("should return bad request response when fileType is undefined", () => {
+    it("should return bad request response when fileType is undefined", async () => {
         const result = checkForRequiredFields("env123", undefined as any, "test.jpg");
-        expect(result).toEqual(responses.badRequestResponse("contentType is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "contentType is required" });
     });
 
-    it("should return bad request response when encodedFileName is undefined", () => {
+    it("should return bad request response when encodedFileName is undefined", async () => {
         const result = checkForRequiredFields("env123", "image/jpeg", undefined as any);
-        expect(result).toEqual(responses.badRequestResponse("fileName is required"));
+        expect(result).toBeDefined();
+        expect(result?.status).toBe(400);
+        const body = await result?.json();
+        expect(body).toEqual({ error: "fileName is required" });
     });
 }); 
