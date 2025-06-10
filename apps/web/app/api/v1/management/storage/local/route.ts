@@ -31,7 +31,8 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   const signedTimestamp = jsonInput.timestamp as string;
   const environmentId = jsonInput.environmentId as string;
 
-  checkForRequiredFields(environmentId, fileType, encodedFileName);
+  const requiredFieldResponse = checkForRequiredFields(environmentId, fileType, encodedFileName);
+  if (requiredFieldResponse) return requiredFieldResponse;
 
   if (!signedSignature || !signedUuid || !signedTimestamp) {
     return responses.unauthorizedResponse();

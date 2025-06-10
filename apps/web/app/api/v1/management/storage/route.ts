@@ -29,7 +29,8 @@ export const POST = async (request: NextRequest): Promise<Response> => {
 
   const { fileName, fileType, environmentId, allowedFileExtensions } = storageInput;
 
-  checkForRequiredFields(environmentId, fileType, fileName);
+  const requiredFieldResponse = checkForRequiredFields(environmentId, fileType, fileName);
+  if (requiredFieldResponse) return requiredFieldResponse;
 
   const session = await getServerSession(authOptions);
 
