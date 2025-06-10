@@ -1,5 +1,5 @@
-import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -8,23 +8,40 @@ import { ActionDetailModal } from "./ActionDetailModal";
 // Import mocked components
 import { ActionSettingsTab } from "./ActionSettingsTab";
 
-// Mock child components
-vi.mock("@/modules/ui/components/modal-with-tabs", () => ({
-  ModalWithTabs: vi.fn(({ tabs, icon, label, description, open, setOpen }) => (
-    <div data-testid="modal-with-tabs">
-      <span data-testid="modal-label">{label}</span>
-      <span data-testid="modal-description">{description}</span>
-      <span data-testid="modal-open">{open.toString()}</span>
-      <button onClick={() => setOpen(false)}>Close</button>
-      {icon}
-      {tabs.map((tab) => (
-        <div key={tab.title}>
-          <h2>{tab.title}</h2>
-          {tab.children}
-        </div>
-      ))}
-    </div>
-  )),
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
 }));
 
 vi.mock("./ActionActivityTab", () => ({
@@ -42,6 +59,19 @@ vi.mock("@/app/(app)/environments/[environmentId]/actions/utils", () => ({
     noCode: <div data-testid="nocode-icon">No Code Icon Mock</div>,
     // Add other types if needed by other tests or default props
   },
+}));
+
+// Mock useTranslate
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations = {
+        "common.activity": "Activity",
+        "common.settings": "Settings",
+      };
+      return translations[key] || key;
+    },
+  }),
 }));
 
 const mockEnvironmentId = "test-env-id";
@@ -89,58 +119,68 @@ describe("ActionDetailModal", () => {
     vi.clearAllMocks(); // Clear mocks after each test
   });
 
-  test("renders ModalWithTabs with correct props", () => {
+  test("renders correctly when open", () => {
     render(<ActionDetailModal {...defaultProps} />);
 
-    const mockedModalWithTabs = vi.mocked(ModalWithTabs);
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Action");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("This is a test action");
+    expect(screen.getByTestId("code-icon")).toBeInTheDocument();
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    expect(screen.getByText("Settings")).toBeInTheDocument();
+    // Only the first tab (Activity) should be active initially
+    expect(screen.getByTestId("action-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("action-settings-tab")).not.toBeInTheDocument();
+  });
 
-    expect(mockedModalWithTabs).toHaveBeenCalled();
-    const props = mockedModalWithTabs.mock.calls[0][0];
+  test("does not render when open is false", () => {
+    render(<ActionDetailModal {...defaultProps} open={false} />);
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+  });
 
-    // Check basic props
-    expect(props.open).toBe(true);
-    expect(props.setOpen).toBe(mockSetOpen);
-    expect(props.label).toBe(mockActionClass.name);
-    expect(props.description).toBe(mockActionClass.description);
+  test("switches tabs correctly", async () => {
+    const user = userEvent.setup();
+    render(<ActionDetailModal {...defaultProps} />);
 
-    // Check icon data-testid based on the mock for the default 'code' type
-    expect(props.icon).toBeDefined();
-    if (!props.icon) {
-      throw new Error("Icon prop is not defined");
-    }
-    expect((props.icon as any).props["data-testid"]).toBe("code-icon");
+    // Initially shows activity tab (first tab is active)
+    expect(screen.getByTestId("action-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("action-settings-tab")).not.toBeInTheDocument();
 
-    // Check tabs structure
-    expect(props.tabs).toHaveLength(2);
-    expect(props.tabs[0].title).toBe("common.activity");
-    expect(props.tabs[1].title).toBe("common.settings");
+    // Click settings tab
+    const settingsTab = screen.getByText("Settings");
+    await user.click(settingsTab);
 
-    // Check if the correct mocked components are used as children
-    // Access the mocked functions directly
-    const mockedActionActivityTab = vi.mocked(ActionActivityTab);
-    const mockedActionSettingsTab = vi.mocked(ActionSettingsTab);
+    // Now shows settings tab content
+    expect(screen.queryByTestId("action-activity-tab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("action-settings-tab")).toBeInTheDocument();
 
-    if (!props.tabs[0].children || !props.tabs[1].children) {
-      throw new Error("Tabs children are not defined");
-    }
+    // Click activity tab again
+    const activityTab = screen.getByText("Activity");
+    await user.click(activityTab);
 
-    expect((props.tabs[0].children as any).type).toBe(mockedActionActivityTab);
-    expect((props.tabs[1].children as any).type).toBe(mockedActionSettingsTab);
+    // Back to activity tab content
+    expect(screen.getByTestId("action-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("action-settings-tab")).not.toBeInTheDocument();
+  });
 
-    // Check props passed to child components
-    const activityTabProps = (props.tabs[0].children as any).props;
-    expect(activityTabProps.otherEnvActionClasses).toBe(mockOtherEnvActionClasses);
-    expect(activityTabProps.otherEnvironment).toBe(mockOtherEnvironment);
-    expect(activityTabProps.isReadOnly).toBe(false);
-    expect(activityTabProps.environment).toBe(mockEnvironment);
-    expect(activityTabProps.actionClass).toBe(mockActionClass);
-    expect(activityTabProps.environmentId).toBe(mockEnvironmentId);
+  test("resets to first tab when modal is reopened", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<ActionDetailModal {...defaultProps} />);
 
-    const settingsTabProps = (props.tabs[1].children as any).props;
-    expect(settingsTabProps.actionClass).toBe(mockActionClass);
-    expect(settingsTabProps.actionClasses).toBe(mockActionClasses);
-    expect(settingsTabProps.setOpen).toBe(mockSetOpen);
-    expect(settingsTabProps.isReadOnly).toBe(false);
+    // Switch to settings tab
+    const settingsTab = screen.getByText("Settings");
+    await user.click(settingsTab);
+    expect(screen.getByTestId("action-settings-tab")).toBeInTheDocument();
+
+    // Close modal
+    rerender(<ActionDetailModal {...defaultProps} open={false} />);
+
+    // Reopen modal
+    rerender(<ActionDetailModal {...defaultProps} open={true} />);
+
+    // Should be back to activity tab (first tab)
+    expect(screen.getByTestId("action-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("action-settings-tab")).not.toBeInTheDocument();
   });
 
   test("renders correct icon based on action type", () => {
@@ -148,33 +188,68 @@ describe("ActionDetailModal", () => {
     const noCodeAction: TActionClass = { ...mockActionClass, type: "noCode" } as TActionClass;
     render(<ActionDetailModal {...defaultProps} actionClass={noCodeAction} />);
 
-    const mockedModalWithTabs = vi.mocked(ModalWithTabs);
-    const props = mockedModalWithTabs.mock.calls[0][0];
+    expect(screen.getByTestId("nocode-icon")).toBeInTheDocument();
+    expect(screen.queryByTestId("code-icon")).not.toBeInTheDocument();
+  });
 
-    // Expect the 'nocode-icon' based on the updated mock and action type
-    expect(props.icon).toBeDefined();
+  test("handles action without description", () => {
+    const actionWithoutDescription = { ...mockActionClass, description: "" };
+    render(<ActionDetailModal {...defaultProps} actionClass={actionWithoutDescription} />);
 
-    if (!props.icon) {
-      throw new Error("Icon prop is not defined");
-    }
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Action");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("");
+  });
 
-    expect((props.icon as any).props["data-testid"]).toBe("nocode-icon");
+  test("passes correct props to ActionActivityTab", () => {
+    render(<ActionDetailModal {...defaultProps} />);
+
+    const mockedActionActivityTab = vi.mocked(ActionActivityTab);
+    expect(mockedActionActivityTab).toHaveBeenCalledWith(
+      {
+        otherEnvActionClasses: mockOtherEnvActionClasses,
+        otherEnvironment: mockOtherEnvironment,
+        isReadOnly: false,
+        environment: mockEnvironment,
+        actionClass: mockActionClass,
+        environmentId: mockEnvironmentId,
+      },
+      undefined
+    );
+  });
+
+  test("passes correct props to ActionSettingsTab when tab is active", async () => {
+    const user = userEvent.setup();
+    render(<ActionDetailModal {...defaultProps} />);
+
+    // ActionSettingsTab should not be called initially since first tab is active
+    const mockedActionSettingsTab = vi.mocked(ActionSettingsTab);
+    expect(mockedActionSettingsTab).not.toHaveBeenCalled();
+
+    // Click the settings tab to activate ActionSettingsTab
+    const settingsTab = screen.getByText("Settings");
+    await user.click(settingsTab);
+
+    // Now ActionSettingsTab should be called with correct props
+    expect(mockedActionSettingsTab).toHaveBeenCalledWith(
+      {
+        actionClass: mockActionClass,
+        actionClasses: mockActionClasses,
+        setOpen: mockSetOpen,
+        isReadOnly: false,
+      },
+      undefined
+    );
   });
 
   test("passes isReadOnly prop correctly", () => {
     render(<ActionDetailModal {...defaultProps} isReadOnly={true} />);
-    // Access the mocked component directly
-    const mockedModalWithTabs = vi.mocked(ModalWithTabs);
-    const props = mockedModalWithTabs.mock.calls[0][0];
 
-    if (!props.tabs[0].children || !props.tabs[1].children) {
-      throw new Error("Tabs children are not defined");
-    }
-
-    const activityTabProps = (props.tabs[0].children as any).props;
-    expect(activityTabProps.isReadOnly).toBe(true);
-
-    const settingsTabProps = (props.tabs[1].children as any).props;
-    expect(settingsTabProps.isReadOnly).toBe(true);
+    const mockedActionActivityTab = vi.mocked(ActionActivityTab);
+    expect(mockedActionActivityTab).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isReadOnly: true,
+      }),
+      undefined
+    );
   });
 });

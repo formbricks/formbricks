@@ -27,16 +27,55 @@ vi.mock("@/modules/ee/contacts/segments/actions", () => ({
 }));
 
 // Mock child components that are complex or have their own tests
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, setOpen, children, noPadding, closeOnOutsideClick, size, className }) =>
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
     open ? (
-      <div data-testid="modal" className={className} data-size={size} data-nopadding={noPadding}>
+      <div data-testid="dialog">
         {children}
-        <button data-testid="modal-close-outside" onClick={() => closeOnOutsideClick && setOpen(false)}>
-          Close Outside
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
         </button>
       </div>
     ) : null,
+  DialogContent: ({
+    children,
+    className,
+    disableCloseOnOutsideClick,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    disableCloseOnOutsideClick?: boolean;
+  }) => (
+    <div
+      data-testid="dialog-content"
+      className={className}
+      data-disable-close-on-outside-click={disableCloseOnOutsideClick}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 vi.mock("./add-filter-modal", () => ({
@@ -84,12 +123,12 @@ describe("CreateSegmentModal", () => {
     render(<CreateSegmentModal {...defaultProps} />);
     const createButton = screen.getByText("common.create_segment");
     expect(createButton).toBeInTheDocument();
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
 
     await userEvent.click(createButton);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
-    expect(screen.getByText("common.create_segment", { selector: "h3" })).toBeInTheDocument(); // Modal title
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByText("common.create_segment", { selector: "h2" })).toBeInTheDocument(); // Modal title
   });
 
   test("closes modal on cancel button click", async () => {
@@ -97,11 +136,11 @@ describe("CreateSegmentModal", () => {
     const createButton = screen.getByText("common.create_segment");
     await userEvent.click(createButton);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     const cancelButton = screen.getByText("common.cancel");
     await userEvent.click(cancelButton);
 
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   test("updates title and description state on input change", async () => {
@@ -144,7 +183,7 @@ describe("CreateSegmentModal", () => {
     await userEvent.click(openModalButton);
 
     // Get modal and scope queries
-    const modal = await screen.findByTestId("modal");
+    const modal = await screen.findByTestId("dialog");
 
     // Find the save button using getByText with a specific selector within the modal
     const saveButton = within(modal).getByText("common.create_segment", {
@@ -168,7 +207,7 @@ describe("CreateSegmentModal", () => {
     await userEvent.click(createButton);
 
     // Get modal and scope queries
-    const modal = await screen.findByTestId("modal");
+    const modal = await screen.findByTestId("dialog");
 
     const titleInput = within(modal).getByPlaceholderText("environments.segments.ex_power_users");
     const descriptionInput = within(modal).getByPlaceholderText(
@@ -196,7 +235,7 @@ describe("CreateSegmentModal", () => {
       });
     });
     expect(toast.success).toHaveBeenCalledWith("environments.segments.segment_saved_successfully");
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument(); // Modal should close on success
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument(); // Modal should close on success
   });
 
   test("shows error toast if createSegmentAction fails", async () => {
@@ -219,7 +258,7 @@ describe("CreateSegmentModal", () => {
     });
     expect(getFormattedErrorMessage).toHaveBeenCalledWith(errorResponse);
     expect(toast.error).toHaveBeenCalledWith("Formatted API Error");
-    expect(screen.getByTestId("modal")).toBeInTheDocument(); // Modal should stay open on error
+    expect(screen.getByTestId("dialog")).toBeInTheDocument(); // Modal should stay open on error
   });
 
   test("shows generic error toast if Zod parsing succeeds during save error handling", async () => {
@@ -230,7 +269,7 @@ describe("CreateSegmentModal", () => {
     await userEvent.click(openModalButton);
 
     // Get the modal element
-    const modal = await screen.findByTestId("modal");
+    const modal = await screen.findByTestId("dialog");
 
     const titleInput = within(modal).getByPlaceholderText("environments.segments.ex_power_users");
     await userEvent.type(titleInput, "Generic Error Segment");
@@ -253,7 +292,7 @@ describe("CreateSegmentModal", () => {
 
     // Now that we know the catch block ran, verify the action was called
     expect(createSegmentAction).toHaveBeenCalled();
-    expect(screen.getByTestId("modal")).toBeInTheDocument(); // Modal should stay open
+    expect(screen.getByTestId("dialog")).toBeInTheDocument(); // Modal should stay open
   });
 
   test("opens AddFilterModal when 'Add Filter' button is clicked", async () => {

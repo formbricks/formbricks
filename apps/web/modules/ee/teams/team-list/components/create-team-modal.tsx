@@ -3,10 +3,16 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
-import { H4 } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -48,45 +54,45 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
   };
 
   return (
-    <Modal noPadding closeOnOutsideClick={true} size="md" open={open} setOpen={setOpen}>
-      <div className="rounded-t-lg bg-slate-100">
-        <div className="flex w-full items-center gap-4 p-6">
-          <div className="flex items-center space-x-2">
-            <UsersIcon className="h-5 w-5" />
-            <H4>{t("environments.settings.teams.create_new_team")}</H4>
-          </div>
-        </div>
-      </div>
-      <form onSubmit={handleTeamCreation}>
-        <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
-          <Label htmlFor="team-name" className="mb-1 text-sm font-medium text-slate-900">
-            {t("environments.settings.teams.team_name")}
-          </Label>
-          <Input
-            id="team-name"
-            name="team-name"
-            value={teamName}
-            onChange={(e) => {
-              setTeamName(e.target.value);
-            }}
-            placeholder={t("environments.settings.teams.enter_team_name")}
-          />
-        </div>
-        <div className="flex items-end justify-end gap-2 p-6 pt-0">
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              setTeamName("");
-            }}>
-            {t("common.cancel")}
-          </Button>
-          <Button disabled={!teamName || isLoading} loading={isLoading} type="submit">
-            {t("environments.settings.teams.create")}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <UsersIcon />
+          <DialogTitle>{t("environments.settings.teams.create_new_team")}</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleTeamCreation} className="gap-y-4 pt-4">
+          <DialogBody>
+            <div className="grid w-full gap-y-2 pb-4">
+              <Label htmlFor="team-name">{t("environments.settings.teams.team_name")}</Label>
+              <Input
+                id="team-name"
+                name="team-name"
+                value={teamName}
+                onChange={(e) => {
+                  setTeamName(e.target.value);
+                }}
+                placeholder={t("environments.settings.teams.enter_team_name")}
+              />
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setTeamName("");
+              }}>
+              {t("common.cancel")}
+            </Button>
+            <Button disabled={!teamName || isLoading} loading={isLoading} type="submit">
+              {t("environments.settings.teams.create")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
