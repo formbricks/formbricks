@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 
-export const checkForRequiredFields = (environmentId: string, fileType: string, encodedFileName: string) => {
+export const checkForRequiredFields = (environmentId: string, fileType: string, encodedFileName: string): Response | undefined => {
     if (!environmentId) {
         return responses.badRequestResponse("environmentId is required");
     }
