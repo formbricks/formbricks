@@ -99,6 +99,15 @@ export const ZUserCreateInput = z.object({
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
 
+export const ZCommunityMember = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
+  email: ZUserEmail.optional(),
+});
+
+export type TCommunityMember = z.infer<typeof ZCommunityMember>;
+
 export const ZUserWhitelistInfo = z.object({
   id: z.string(),
   email: ZUserEmail,
@@ -112,6 +121,8 @@ export const ZUserWhitelistInfo = z.object({
     })
     .optional(),
   createdSurveys: z.number().optional(),
+  createdAt: z.date().optional(),
+  members: z.array(ZCommunityMember).optional(),
 });
 
 export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;

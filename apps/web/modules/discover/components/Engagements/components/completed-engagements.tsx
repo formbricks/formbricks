@@ -10,8 +10,9 @@ import React, { useEffect, useState } from "react";
 interface CompletedSurveysProps {
   searchQuery: string;
   creatorId?: string;
-  setActiveTab: (id: string) => void;
+  setActiveTab?: (id: string) => void;
   sortBy?: string;
+  showEmptyBorder?: boolean;
 }
 
 export function CompletedSurveys({
@@ -19,6 +20,7 @@ export function CompletedSurveys({
   creatorId,
   setActiveTab,
   sortBy = "updatedAt",
+  showEmptyBorder = true,
 }: CompletedSurveysProps): React.JSX.Element {
   const [completedSurveys, setCompletedSurveys] = useState<TExtendedSurvey[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +59,7 @@ export function CompletedSurveys({
   }
 
   if (!completedSurveys || completedSurveys.length == 0) {
-    return <NoCompletedEngagements setActiveTab={setActiveTab} />;
+    return <NoCompletedEngagements setActiveTab={setActiveTab} border={showEmptyBorder} />;
   }
 
   return (

@@ -56,7 +56,9 @@ export const MyCommunityCard = ({ creator, environmentId, className = "" }: MyCo
               <UsersIcon className="mr-1 h-4 w-4" strokeWidth={3} />
               {/* TODO: Add members here (see AvailableSurveyCard for reference) */}
               <div className="flex items-center gap-1">
-                <span>Members: 1</span>
+                <span>
+                  {t("common.members")}: {creator._count?.communityMembers}
+                </span>
               </div>
             </div>
           </div>

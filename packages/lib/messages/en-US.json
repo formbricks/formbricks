@@ -120,6 +120,7 @@
     "are_you_sure": "Are you sure?",
     "are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
     "attributes": "Attributes",
+    "available_surveys": "Available engagements",
     "avatar": "Avatar",
     "back": "Back",
     "billing": "Billing",
@@ -147,6 +148,7 @@
     "community_not_found": "Community not found",
     "community_profile": "Community profile",
     "completed": "Completed",
+    "completed_surveys": "Completed engagements",
     "configuration": "Configuration",
     "confirm": "Confirm",
     "connect": "Connect",
@@ -306,6 +308,7 @@
     "participant": "participant",
     "participants": "participants",
     "password": "Password",
+    "past_surveys": "Past engagements",
     "paused": "Paused",
     "pay_reward": "Pay Reward",
     "pending_downgrade": "Pending Downgrade",
@@ -643,9 +646,13 @@
       "add": {
         "community_successfully_added": "Community successfully added"
       },
+      "community_created": "Community created",
       "remove": {
         "community_successfully_removed": "Community successfully removed"
-      }
+      },
+      "total_engagements": "Total engagements",
+
+      "total_rewards_given": "Total rewards given"
     },
     "connect": {
       "congrats": "Congrats!",

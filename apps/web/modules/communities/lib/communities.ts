@@ -253,7 +253,32 @@ export const getCommunity = async ({ communityId }: { communityId: string }): Pr
       throw new InvalidInputError("Community does not exist!");
     }
 
-    return community;
+    const surveysCount = await prisma.survey.count({
+      where: {
+        createdBy: community.id,
+      },
+    });
+
+    const communityMembers = await prisma.userCommunity.findMany({
+      where: {
+        creatorId: communityId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...community,
+      createdSurveys: surveysCount,
+      members: communityMembers.map((member) => member.user),
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

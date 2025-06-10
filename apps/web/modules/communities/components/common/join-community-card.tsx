@@ -41,7 +41,9 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
             {community._count?.communityMembers !== undefined && (
               <div className="flex flex-row flex-nowrap gap-1 text-xs">
                 <UsersRoundIcon className="h-4 w-4" />
-                <span>Members: {community._count.communityMembers}</span>
+                <span>
+                  {t("common.members")}: {community._count.communityMembers}
+                </span>
               </div>
             )}
 

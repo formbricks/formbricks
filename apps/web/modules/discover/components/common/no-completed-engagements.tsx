@@ -2,14 +2,16 @@ import { useTranslate } from "@tolgee/react";
 import { SparkleIcon } from "lucide-react";
 
 interface NoCompletedEngagementsProps {
-  setActiveTab: (id: string) => void;
+  border?: boolean;
+  setActiveTab?: (id: string) => void;
 }
 
-export const NoCompletedEngagements = ({ setActiveTab }: NoCompletedEngagementsProps) => {
+export const NoCompletedEngagements = ({ border = true, setActiveTab }: NoCompletedEngagementsProps) => {
   const { t } = useTranslate();
 
   return (
-    <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-12 text-center">
+    <div
+      className={`col-span-full flex flex-col items-center justify-center rounded-lg ${border ? "border border-slate-200 bg-slate-50" : ""} px-4 py-12 text-center`}>
       <div className="mb-4 rounded-full bg-slate-100 p-3">
         <SparkleIcon className="h-8 w-8 text-slate-400" strokeWidth={1.5} />
       </div>
@@ -20,11 +22,13 @@ export const NoCompletedEngagements = ({ setActiveTab }: NoCompletedEngagementsP
         {t("environments.activity.card.complete_your_first_engagement_to_earn_rewards")}
       </p>
 
-      <button
-        onClick={() => setActiveTab("available-surveys")}
-        className="bg-primary hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white">
-        {t("environments.activity.card.find_engagement")}
-      </button>
+      {setActiveTab && (
+        <button
+          onClick={() => setActiveTab("available-surveys")}
+          className="bg-primary hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white">
+          {t("environments.activity.card.find_engagement")}
+        </button>
+      )}
     </div>
   );
 };
