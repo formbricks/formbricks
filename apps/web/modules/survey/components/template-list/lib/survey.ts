@@ -1,6 +1,4 @@
-import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { surveyCache } from "@/lib/survey/cache";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
@@ -105,11 +103,6 @@ export const createSurvey = async (
           },
         },
       });
-
-      segmentCache.revalidate({
-        id: newSegment.id,
-        environmentId: survey.environmentId,
-      });
     }
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
@@ -123,12 +116,6 @@ export const createSurvey = async (
         },
       }),
     };
-
-    surveyCache.revalidate({
-      id: survey.id,
-      environmentId: survey.environmentId,
-      resultShareKey: survey.resultShareKey ?? undefined,
-    });
 
     if (createdBy) {
       await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
@@ -205,12 +192,6 @@ export const handleTriggerUpdates = (
       },
     };
   }
-
-  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
-    surveyCache.revalidate({
-      actionClassId: trigger.actionClass.id,
-    });
-  });
 
   return triggersUpdate;
 };

@@ -105,7 +105,12 @@ export const env = createEnv({
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     USER_MANAGEMENT_MINIMUM_ROLE: z.enum(["owner", "manager", "disabled"]).optional(),
-    SESSION_MAX_AGE: z.string().transform((val) => parseInt(val)).optional(),
+    AUDIT_LOG_ENABLED: z.enum(["1", "0"]).optional(),
+    AUDIT_LOG_GET_USER_IP: z.enum(["1", "0"]).optional(),
+    SESSION_MAX_AGE: z
+      .string()
+      .transform((val) => parseInt(val))
+      .optional(),
   },
 
   /*
@@ -201,6 +206,8 @@ export const env = createEnv({
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     USER_MANAGEMENT_MINIMUM_ROLE: process.env.USER_MANAGEMENT_MINIMUM_ROLE,
+    AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
+    AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
   },
 });

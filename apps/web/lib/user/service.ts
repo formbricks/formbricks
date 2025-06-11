@@ -1,5 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
 import { isValidImageFile } from "@/lib/fileValidation";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { Prisma } from "@prisma/client";
@@ -11,7 +10,6 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { validateInputs } from "../utils/validate";
-import { userCache } from "./cache";
 
 const responseSelection = {
   id: true,
@@ -32,68 +30,50 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's user
-export const getUser = reactCache(
-  async (id: string): Promise<TUser | null> =>
-    cache(
-      async () => {
-        validateInputs([id, ZId]);
+export const getUser = reactCache(async (id: string): Promise<TUser | null> => {
+  validateInputs([id, ZId]);
 
-        try {
-          const user = await prisma.user.findUnique({
-            where: {
-              id,
-            },
-            select: responseSelection,
-          });
-
-          if (!user) {
-            return null;
-          }
-          return user;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id,
       },
-      [`getUser-${id}`],
-      {
-        tags: [userCache.tag.byId(id)],
-      }
-    )()
-);
+      select: responseSelection,
+    });
 
-export const getUserByEmail = reactCache(
-  async (email: string): Promise<TUser | null> =>
-    cache(
-      async () => {
-        validateInputs([email, z.string().email()]);
+    if (!user) {
+      return null;
+    }
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
 
-        try {
-          const user = await prisma.user.findFirst({
-            where: {
-              email,
-            },
-            select: responseSelection,
-          });
+    throw error;
+  }
+});
 
-          return user;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
+export const getUserByEmail = reactCache(async (email: string): Promise<TUser | null> => {
+  validateInputs([email, z.string().email()]);
 
-          throw error;
-        }
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
       },
-      [`getUserByEmail-${email}`],
-      {
-        tags: [userCache.tag.byEmail(email)],
-      }
-    )()
-);
+      select: responseSelection,
+    });
+
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
@@ -107,11 +87,6 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
       },
       data: data,
       select: responseSelection,
-    });
-
-    userCache.revalidate({
-      email: updatedUser.email,
-      id: updatedUser.id,
     });
 
     return updatedUser;
@@ -136,13 +111,6 @@ const deleteUserById = async (id: string): Promise<TUser> => {
       },
       select: responseSelection,
     });
-
-    userCache.revalidate({
-      email: user.email,
-      id,
-      count: true,
-    });
-
     return user;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -201,35 +169,26 @@ export const getUsersWithOrganization = async (organizationId: string): Promise<
   }
 };
 
-export const getUserLocale = reactCache(
-  async (id: string): Promise<TUserLocale | undefined> =>
-    cache(
-      async () => {
-        validateInputs([id, ZId]);
+export const getUserLocale = reactCache(async (id: string): Promise<TUserLocale | undefined> => {
+  validateInputs([id, ZId]);
 
-        try {
-          const user = await prisma.user.findUnique({
-            where: {
-              id,
-            },
-            select: responseSelection,
-          });
-
-          if (!user) {
-            return undefined;
-          }
-          return user.locale;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id,
       },
-      [`getUserLocale-${id}`],
-      {
-        tags: [userCache.tag.byId(id)],
-      }
-    )()
-);
+      select: responseSelection,
+    });
+
+    if (!user) {
+      return undefined;
+    }
+    return user.locale;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});

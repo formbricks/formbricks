@@ -66,6 +66,8 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "AUDIT_LOG_ENABLED",
+        "AUDIT_LOG_GET_USER_IP",
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",

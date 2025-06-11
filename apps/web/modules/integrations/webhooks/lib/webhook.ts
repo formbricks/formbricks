@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { webhookCache } from "@/lib/cache/webhook";
 import { validateInputs } from "@/lib/utils/validate";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
@@ -19,7 +17,7 @@ export const updateWebhook = async (
   webhookInput: Partial<TWebhookInput>
 ): Promise<boolean> => {
   try {
-    const updatedWebhook = await prisma.webhook.update({
+    await prisma.webhook.update({
       where: {
         id: webhookId,
       },
@@ -29,12 +27,6 @@ export const updateWebhook = async (
         triggers: webhookInput.triggers,
         surveyIds: webhookInput.surveyIds || [],
       },
-    });
-
-    webhookCache.revalidate({
-      id: updatedWebhook.id,
-      environmentId: updatedWebhook.environmentId,
-      source: updatedWebhook.source,
     });
 
     return true;
@@ -49,16 +41,10 @@ export const updateWebhook = async (
 
 export const deleteWebhook = async (id: string): Promise<boolean> => {
   try {
-    let deletedWebhook = await prisma.webhook.delete({
+    await prisma.webhook.delete({
       where: {
         id,
       },
-    });
-
-    webhookCache.revalidate({
-      id: deletedWebhook.id,
-      environmentId: deletedWebhook.environmentId,
-      source: deletedWebhook.source,
     });
 
     return true;
@@ -78,7 +64,7 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
     if (isDiscordWebhook(webhookInput.url)) {
       throw new UnknownError("Discord webhooks are currently not supported.");
     }
-    const createdWebhook = await prisma.webhook.create({
+    await prisma.webhook.create({
       data: {
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
@@ -88,12 +74,6 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
           },
         },
       },
-    });
-
-    webhookCache.revalidate({
-      id: createdWebhook.id,
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
     });
 
     return true;
@@ -110,34 +90,27 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
   }
 };
 
-export const getWebhooks = (environmentId: string): Promise<Webhook[]> =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
+export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => {
+  validateInputs([environmentId, ZId]);
 
-      try {
-        const webhooks = await prisma.webhook.findMany({
-          where: {
-            environmentId: environmentId,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        });
-        return webhooks;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getWebhooks-${environmentId}`],
-    {
-      tags: [webhookCache.tag.byEnvironmentId(environmentId)],
+  try {
+    const webhooks = await prisma.webhook.findMany({
+      where: {
+        environmentId: environmentId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return webhooks;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
-  )();
+
+    throw error;
+  }
+};
 
 export const testEndpoint = async (url: string): Promise<boolean> => {
   try {

@@ -1,4 +1,3 @@
-import { projectCache } from "@/lib/project/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -11,12 +10,6 @@ vi.mock("@formbricks/database", () => ({
     project: {
       update: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -104,13 +97,6 @@ describe("updateProjectBranding", () => {
         },
       },
     });
-    expect(projectCache.revalidate).toHaveBeenCalledWith({
-      id: "test-project-id",
-      organizationId: "test-org-id",
-    });
-    expect(projectCache.revalidate).toHaveBeenCalledWith({
-      environmentId: "test-env-id",
-    });
   });
 
   test("should throw ValidationError when validation fails", async () => {
@@ -125,7 +111,6 @@ describe("updateProjectBranding", () => {
 
     await expect(updateProjectBranding("test-project-id", inputProject)).rejects.toThrow(ValidationError);
     expect(prisma.project.update).not.toHaveBeenCalled();
-    expect(projectCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw ValidationError when prisma update fails", async () => {
@@ -141,6 +126,5 @@ describe("updateProjectBranding", () => {
     };
 
     await expect(updateProjectBranding("test-project-id", inputProject)).rejects.toThrow(ValidationError);
-    expect(projectCache.revalidate).not.toHaveBeenCalled();
   });
 });

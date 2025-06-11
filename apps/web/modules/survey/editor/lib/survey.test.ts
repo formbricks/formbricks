@@ -1,4 +1,3 @@
-import { surveyCache } from "@/lib/survey/cache";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey } from "@/modules/survey/lib/survey";
@@ -20,18 +19,6 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -693,7 +680,6 @@ describe("Survey Editor Library Tests", () => {
       expect(result).toEqual({
         create: [{ actionClassId: "action2" }],
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
     });
 
     test("should identify deleted triggers correctly", () => {
@@ -712,7 +698,6 @@ describe("Survey Editor Library Tests", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
     });
 
     test("should handle both added and deleted triggers", () => {
@@ -735,9 +720,6 @@ describe("Survey Editor Library Tests", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action2" });
-      expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action3" });
     });
 
     test("should validate triggers before processing", () => {

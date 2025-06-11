@@ -109,7 +109,7 @@ export const SummaryPage = ({
     };
 
     fetchSummary();
-  }, [selectedFilter, dateRange, survey.id, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
+  }, [selectedFilter, dateRange, survey, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

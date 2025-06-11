@@ -1,15 +1,33 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { signOut } from "next-auth/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { LandingSidebar } from "./landing-sidebar";
+
+// Mock constants that this test needs
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  WEBAPP_URL: "http://localhost:3000",
+}));
+
+// Mock server actions that this test needs
+vi.mock("@/modules/auth/actions/sign-out", () => ({
+  logSignOutAction: vi.fn().mockResolvedValue(undefined),
+}));
 
 // Module mocks must be declared before importing the component
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({ t: (key: string) => key, isLoading: false }),
 }));
-vi.mock("next-auth/react", () => ({ signOut: vi.fn() }));
+
+// Mock our useSignOut hook
+const mockSignOut = vi.fn();
+vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
+  useSignOut: () => ({
+    signOut: mockSignOut,
+  }),
+}));
+
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/modules/organization/components/CreateOrganizationModal", () => ({
   CreateOrganizationModal: ({ open }: { open: boolean }) => (
@@ -70,6 +88,12 @@ describe("LandingSidebar component", () => {
     const logoutItem = await screen.findByText("common.logout");
     await userEvent.click(logoutItem);
 
-    expect(signOut).toHaveBeenCalledWith({ callbackUrl: "/auth/login" });
+    expect(mockSignOut).toHaveBeenCalledWith({
+      reason: "user_initiated",
+      redirectUrl: "/auth/login",
+      organizationId: "o1",
+      redirect: true,
+      callbackUrl: "/auth/login",
+    });
   });
 });
