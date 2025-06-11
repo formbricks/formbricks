@@ -109,17 +109,8 @@ RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
-# COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
-# RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
-
-# COPY --from=installer /app/packages/database/migration ./packages/database/migration
-# RUN chown -R nextjs:nextjs ./packages/database/migration && chmod -R 755 ./packages/database/migration
-
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
-
-COPY --from=installer /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
-RUN chown -R nextjs:nextjs ./packages/database/node_modules/@formbricks/logger/dist && chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
 
 COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
 RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
