@@ -37,7 +37,6 @@ export default defineConfig({
       external: [
         // External dependencies that should not be bundled
         "@prisma/client",
-        "@formbricks/logger",
         "zod",
         "zod-openapi",
         "@paralleldrive/cuid2",
