@@ -16,19 +16,6 @@ vi.mock("@formbricks/logger", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("@/lib/cache", () => ({
-  cache: (fn: any) => fn,
-}));
-vi.mock("@/lib/organization/cache", () => ({
-  organizationCache: {
-    tag: {
-      byEnvironmentId: (id: string) => `tag-${id}`,
-    },
-  },
-}));
-vi.mock("react", () => ({
-  cache: (fn: any) => fn,
-}));
 
 describe("getOrganizationBillingByEnvironmentId", () => {
   const environmentId = "env-123";

@@ -11,9 +11,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/cache", () => ({
-  cache: (fn: any) => fn,
-}));
 vi.mock("react", () => ({
   cache: (fn: any) => fn,
 }));

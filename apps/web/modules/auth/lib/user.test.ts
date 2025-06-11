@@ -1,4 +1,3 @@
-import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -27,16 +26,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEmail: vi.fn(),
-      byId: vi.fn(),
-    },
-  },
-}));
-
 describe("User Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,7 +42,6 @@ describe("User Management", () => {
       });
 
       expect(result).toEqual(mockPrismaUser);
-      expect(userCache.revalidate).toHaveBeenCalled();
     });
 
     test("throws InvalidInputError when email already exists", async () => {
@@ -82,7 +70,6 @@ describe("User Management", () => {
       const result = await updateUser(mockUser.id, mockUpdateData);
 
       expect(result).toEqual({ ...mockPrismaUser, name: mockUpdateData.name });
-      expect(userCache.revalidate).toHaveBeenCalled();
     });
 
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
@@ -105,7 +92,6 @@ describe("User Management", () => {
       const result = await updateUserLastLoginAt(mockUser.email);
 
       expect(result).toEqual(void 0);
-      expect(userCache.revalidate).toHaveBeenCalled();
     });
 
     test("throws ResourceNotFoundError when user doesn't exist", async () => {

@@ -1,9 +1,7 @@
 import "server-only";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import {
   getMonthlyOrganizationResponseCount,
@@ -71,12 +69,12 @@ export const createResponse = async (
 
     const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
     if (!organizationIdResult.ok) {
-      return err(organizationIdResult.error);
+      return err(organizationIdResult.error as ApiErrorResponseV2);
     }
 
     const billing = await getOrganizationBilling(organizationIdResult.data);
     if (!billing.ok) {
-      return err(billing.error);
+      return err(billing.error as ApiErrorResponseV2);
     }
     const billingData = billing.data;
 
@@ -84,21 +82,10 @@ export const createResponse = async (
       data: prismaData,
     });
 
-    responseCache.revalidate({
-      environmentId,
-      id: response.id,
-      ...(singleUseId && { singleUseId }),
-      surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
-
     if (IS_FORMBRICKS_CLOUD) {
       const responsesCountResult = await getMonthlyOrganizationResponseCount(organizationIdResult.data);
       if (!responsesCountResult.ok) {
-        return err(responsesCountResult.error);
+        return err(responsesCountResult.error as ApiErrorResponseV2);
       }
 
       const responsesCount = responsesCountResult.data;

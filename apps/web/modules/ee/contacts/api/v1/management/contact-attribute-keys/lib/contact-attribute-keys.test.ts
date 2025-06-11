@@ -1,4 +1,3 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -15,15 +14,6 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       count: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    tag: {
-      byEnvironmentId: vi.fn((id) => `contactAttributeKey-environment-${id}`),
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -48,7 +38,6 @@ describe("getContactAttributeKeys", () => {
       where: { environmentId: { in: mockEnvironmentIds } },
     });
     expect(result).toEqual(mockAttributeKeys);
-    expect(contactAttributeKeyCache.tag.byEnvironmentId).toHaveBeenCalledTimes(mockEnvironmentIds.length);
   });
 
   test("should throw DatabaseError if Prisma call fails", async () => {
@@ -111,11 +100,6 @@ describe("createContactAttributeKey", () => {
         type,
         environment: { connect: { id: environmentId } },
       },
-    });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: mockCreatedAttributeKey.id,
-      environmentId: mockCreatedAttributeKey.environmentId,
-      key: mockCreatedAttributeKey.key,
     });
     expect(result).toEqual(mockCreatedAttributeKey);
   });

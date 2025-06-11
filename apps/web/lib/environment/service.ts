@@ -16,89 +16,69 @@ import {
   ZEnvironmentUpdateInput,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
-import { environmentCache } from "./cache";
 
-export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<TEnvironment | null> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
+export const getEnvironment = reactCache(async (environmentId: string): Promise<TEnvironment | null> => {
+  validateInputs([environmentId, ZId]);
 
-        try {
-          const environment = await prisma.environment.findUnique({
-            where: {
-              id: environmentId,
-            },
-          });
-          return environment;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting environment");
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+  try {
+    const environment = await prisma.environment.findUnique({
+      where: {
+        id: environmentId,
       },
-      [`getEnvironment-${environmentId}`],
-      {
-        tags: [environmentCache.tag.byId(environmentId)],
-      }
-    )()
-);
+    });
+    return environment;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      logger.error(error, "Error getting environment");
+      throw new DatabaseError(error.message);
+    }
 
-export const getEnvironments = reactCache(
-  async (projectId: string): Promise<TEnvironment[]> =>
-    cache(
-      async (): Promise<TEnvironment[]> => {
-        validateInputs([projectId, ZId]);
-        let projectPrisma;
-        try {
-          projectPrisma = await prisma.project.findFirst({
-            where: {
-              id: projectId,
-            },
-            include: {
-              environments: true,
-            },
-          });
+    throw error;
+  }
+});
 
-          if (!projectPrisma) {
-            throw new ResourceNotFoundError("Project", projectId);
-          }
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-
-        const environments: TEnvironment[] = [];
-        for (let environment of projectPrisma.environments) {
-          let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
-          environments.push(targetEnvironment);
-        }
-
-        try {
-          return environments;
-        } catch (error) {
-          if (error instanceof z.ZodError) {
-            logger.error(error, "Error getting environments");
-          }
-          throw new ValidationError("Data validation of environments array failed");
-        }
+export const getEnvironments = reactCache(async (projectId: string): Promise<TEnvironment[]> => {
+  validateInputs([projectId, ZId]);
+  let projectPrisma;
+  try {
+    projectPrisma = await prisma.project.findFirst({
+      where: {
+        id: projectId,
       },
-      [`getEnvironments-${projectId}`],
-      {
-        tags: [environmentCache.tag.byProjectId(projectId)],
-      }
-    )()
-);
+      include: {
+        environments: true,
+      },
+    });
+
+    if (!projectPrisma) {
+      throw new ResourceNotFoundError("Project", projectId);
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+
+  const environments: TEnvironment[] = [];
+  for (let environment of projectPrisma.environments) {
+    let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
+    environments.push(targetEnvironment);
+  }
+
+  try {
+    return environments;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      logger.error(error, "Error getting environments");
+    }
+    throw new ValidationError("Data validation of environments array failed");
+  }
+});
 
 export const updateEnvironment = async (
   environmentId: string,
@@ -113,11 +93,6 @@ export const updateEnvironment = async (
         id: environmentId,
       },
       data: newData,
-    });
-
-    environmentCache.revalidate({
-      id: environmentId,
-      projectId: updatedEnvironment.projectId,
     });
 
     return updatedEnvironment;
@@ -196,11 +171,6 @@ export const createEnvironment = async (
           ],
         },
       },
-    });
-
-    environmentCache.revalidate({
-      id: environment.id,
-      projectId: environment.projectId,
     });
 
     await capturePosthogEnvironmentEvent(environment.id, "environment created", {

@@ -1,6 +1,3 @@
-import { segmentCache } from "@/lib/cache/segment";
-import { responseCache } from "@/lib/response/cache";
-import { surveyCache } from "@/lib/survey/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -9,22 +6,6 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { deleteSurvey } from "./surveys";
 
-// Mock dependencies
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
-vi.mock("@/lib/response/cache", () => ({
-  responseCache: {
-    revalidate: vi.fn(),
-  },
-}));
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
-  },
-}));
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
@@ -91,14 +72,7 @@ describe("deleteSurvey", () => {
       },
     });
     expect(prisma.segment.delete).not.toHaveBeenCalled();
-    expect(segmentCache.revalidate).not.toHaveBeenCalled(); // No segment to revalidate
-    expect(responseCache.revalidate).toHaveBeenCalledWith({ surveyId, environmentId });
-    expect(surveyCache.revalidate).toHaveBeenCalledTimes(1); // Only for surveyId
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({
-      id: surveyId,
-      environmentId,
-      resultShareKey: undefined,
-    });
+
     expect(deletedSurvey).toEqual(mockDeletedSurveyLink);
   });
 
@@ -112,9 +86,6 @@ describe("deleteSurvey", () => {
     await expect(deleteSurvey(surveyId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError, surveyId }, "Error deleting survey");
     expect(prisma.segment.delete).not.toHaveBeenCalled();
-    expect(segmentCache.revalidate).not.toHaveBeenCalled();
-    expect(responseCache.revalidate).not.toHaveBeenCalled();
-    expect(surveyCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should handle PrismaClientKnownRequestError during segment deletion", async () => {
@@ -128,7 +99,6 @@ describe("deleteSurvey", () => {
     await expect(deleteSurvey(surveyId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError, surveyId }, "Error deleting survey");
     expect(prisma.segment.delete).toHaveBeenCalledWith({ where: { id: segmentId } });
-    // Caches might have been partially revalidated before the error
   });
 
   test("should handle generic errors during deletion", async () => {
@@ -136,7 +106,7 @@ describe("deleteSurvey", () => {
     vi.mocked(prisma.survey.delete).mockRejectedValue(genericError);
 
     await expect(deleteSurvey(surveyId)).rejects.toThrow(genericError);
-    expect(logger.error).not.toHaveBeenCalled(); // Should not log generic errors here
+    expect(logger.error).not.toHaveBeenCalled();
     expect(prisma.segment.delete).not.toHaveBeenCalled();
   });
 

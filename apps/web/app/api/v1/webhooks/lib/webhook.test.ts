@@ -1,6 +1,5 @@
 import { createWebhook } from "@/app/api/v1/webhooks/lib/webhook";
 import { TWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
-import { webhookCache } from "@/lib/cache/webhook";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, WebhookSource } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
@@ -16,12 +15,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
@@ -31,7 +24,7 @@ describe("createWebhook", () => {
     cleanup();
   });
 
-  test("should create a webhook and revalidate the cache when provided with valid input data", async () => {
+  test("should create a webhook", async () => {
     const webhookInput: TWebhookInput = {
       environmentId: "test-env-id",
       name: "Test Webhook",
@@ -74,12 +67,6 @@ describe("createWebhook", () => {
       },
     });
 
-    expect(webhookCache.revalidate).toHaveBeenCalledWith({
-      id: createdWebhook.id,
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
-    });
-
     expect(result).toEqual(createdWebhook);
   });
 
@@ -118,39 +105,6 @@ describe("createWebhook", () => {
     );
 
     await expect(createWebhook(webhookInput)).rejects.toThrowError(DatabaseError);
-  });
-
-  test("should call webhookCache.revalidate with the correct parameters after successfully creating a webhook", async () => {
-    const webhookInput: TWebhookInput = {
-      environmentId: "env-id",
-      name: "Test Webhook",
-      url: "https://example.com",
-      source: "user",
-      triggers: ["responseCreated"],
-      surveyIds: ["survey1"],
-    };
-
-    const createdWebhook = {
-      id: "webhook123",
-      environmentId: "env-id",
-      name: "Test Webhook",
-      url: "https://example.com",
-      source: "user",
-      triggers: ["responseCreated"],
-      surveyIds: ["survey1"],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any;
-
-    vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
-
-    await createWebhook(webhookInput);
-
-    expect(webhookCache.revalidate).toHaveBeenCalledWith({
-      id: createdWebhook.id,
-      environmentId: createdWebhook.environmentId,
-      source: createdWebhook.source,
-    });
   });
 
   test("should throw a DatabaseError when provided with invalid surveyIds", async () => {
@@ -197,7 +151,5 @@ describe("createWebhook", () => {
         },
       },
     });
-
-    expect(webhookCache.revalidate).not.toHaveBeenCalled();
   });
 });

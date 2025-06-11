@@ -1,21 +1,10 @@
-import { cache } from "@/lib/cache";
-import { webhookCache } from "@/lib/cache/webhook";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getWebhookCountBySource } from "./webhook";
 
-// Mock dependencies
-vi.mock("@/lib/cache");
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    tag: {
-      byEnvironmentIdAndSource: vi.fn((envId, source) => `webhook_${envId}_${source ?? "all"}`),
-    },
-  },
-}));
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -29,12 +18,6 @@ const environmentId = "test-environment-id";
 const sourceZapier = "zapier";
 
 describe("getWebhookCountBySource", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -56,13 +39,6 @@ describe("getWebhookCountBySource", () => {
         source: sourceZapier,
       },
     });
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function),
-      [`getWebhookCountBySource-${environmentId}-${sourceZapier}`],
-      {
-        tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, sourceZapier)],
-      }
-    );
   });
 
   test("should return total webhook count when source is undefined", async () => {
@@ -82,13 +58,6 @@ describe("getWebhookCountBySource", () => {
         source: undefined,
       },
     });
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function),
-      [`getWebhookCountBySource-${environmentId}-undefined`],
-      {
-        tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, undefined)],
-      }
-    );
   });
 
   test("should throw DatabaseError on Prisma known request error", async () => {
@@ -100,7 +69,6 @@ describe("getWebhookCountBySource", () => {
 
     await expect(getWebhookCountBySource(environmentId, sourceZapier)).rejects.toThrow(DatabaseError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should throw original error on other errors", async () => {
@@ -109,6 +77,5 @@ describe("getWebhookCountBySource", () => {
 
     await expect(getWebhookCountBySource(environmentId)).rejects.toThrow(genericError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,7 @@
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { segmentCache } from "@/lib/cache/segment";
-import { getContactAttributes } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/attributes";
+import {
+  getPersonSegmentIds,
+  getSegments,
+} from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -8,30 +9,28 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
-import { getPersonSegmentIds, getSegments } from "./segments";
 
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: {
-    tag: {
-      byContactId: vi.fn((contactId) => `contactAttributeCache-contactId-${contactId}`),
+// Mock the cache functions
+vi.mock("@/modules/cache/lib/withCache", () => ({
+  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
+}));
+
+vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+  createCacheKey: {
+    environment: {
+      segments: vi.fn((environmentId) => `segments-${environmentId}`),
     },
   },
 }));
 
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    tag: {
-      byEnvironmentId: vi.fn((environmentId) => `segmentCache-environmentId-${environmentId}`),
-    },
-  },
-}));
-
-vi.mock(
-  "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/attributes",
-  () => ({
-    getContactAttributes: vi.fn(),
-  })
-);
+// Mock React cache
+vi.mock("react", async () => {
+  const actual = await vi.importActual("react");
+  return {
+    ...actual,
+    cache: <T extends (...args: any[]) => any>(fn: T): T => fn, // Return the function with the same type signature
+  };
+});
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   evaluateSegment: vi.fn(),
@@ -51,8 +50,26 @@ const mockContactUserId = "xrgbcxn5y9so92igacthutfw";
 const mockDeviceType = "desktop";
 
 const mockSegmentsData = [
-  { id: "segment1", filters: [{}] as TBaseFilter[] },
-  { id: "segment2", filters: [{}] as TBaseFilter[] },
+  {
+    id: "segment1",
+    filters: [{}] as TBaseFilter[],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    environmentId: mockEnvironmentId,
+    description: null,
+    title: "Segment 1",
+    isPrivate: false,
+  },
+  {
+    id: "segment2",
+    filters: [{}] as TBaseFilter[],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    environmentId: mockEnvironmentId,
+    description: null,
+    title: "Segment 2",
+    isPrivate: false,
+  },
 ];
 
 const mockContactAttributesData = {
@@ -81,7 +98,6 @@ describe("segments lib", () => {
       });
 
       expect(result).toEqual(mockSegmentsData);
-      expect(segmentCache.tag.byEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
     });
 
     test("should throw DatabaseError on Prisma known request error", async () => {
@@ -105,7 +121,6 @@ describe("segments lib", () => {
 
   describe("getPersonSegmentIds", () => {
     beforeEach(() => {
-      vi.mocked(getContactAttributes).mockResolvedValue(mockContactAttributesData);
       vi.mocked(prisma.segment.findMany).mockResolvedValue(mockSegmentsData); // Mock for getSegments call
     });
 
@@ -116,10 +131,10 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
+        mockContactAttributesData,
         mockDeviceType
       );
 
-      expect(getContactAttributes).toHaveBeenCalledWith(mockContactId);
       expect(evaluateSegment).toHaveBeenCalledTimes(mockSegmentsData.length);
 
       mockSegmentsData.forEach((segment) => {
@@ -136,8 +151,6 @@ describe("segments lib", () => {
       });
 
       expect(result).toEqual(mockSegmentsData.map((s) => s.id));
-      expect(segmentCache.tag.byEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
-      expect(contactAttributeCache.tag.byContactId).toHaveBeenCalledWith(mockContactId);
     });
 
     test("should return empty array if no segments exist", async () => {
@@ -148,11 +161,11 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
+        mockContactAttributesData,
         mockDeviceType
       );
 
       expect(result).toEqual([]);
-      expect(getContactAttributes).not.toHaveBeenCalled();
       expect(evaluateSegment).not.toHaveBeenCalled();
     });
 
@@ -163,11 +176,11 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
+        mockContactAttributesData,
         mockDeviceType
       );
 
       expect(result).toEqual([]);
-      expect(getContactAttributes).not.toHaveBeenCalled();
       expect(evaluateSegment).not.toHaveBeenCalled();
     });
 
@@ -180,6 +193,7 @@ describe("segments lib", () => {
         mockEnvironmentId,
         mockContactId,
         mockContactUserId,
+        mockContactAttributesData,
         mockDeviceType
       );
 

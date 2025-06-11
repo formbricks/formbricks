@@ -12,7 +12,7 @@ export const getEnvironmentId = async (
   const result = await fetchEnvironmentId(id, isResponseId);
 
   if (!result.ok) {
-    return result;
+    return { ok: false, error: result.error as ApiErrorResponseV2 };
   }
 
   return ok(result.data.environmentId);
@@ -29,7 +29,7 @@ export const getEnvironmentIdFromSurveyIds = async (
   const result = await fetchEnvironmentIdFromSurveyIds(surveyIds);
 
   if (!result.ok) {
-    return result;
+    return { ok: false, error: result.error as ApiErrorResponseV2 };
   }
 
   // Check if all items in the array are the same

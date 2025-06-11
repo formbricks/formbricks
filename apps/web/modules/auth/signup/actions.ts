@@ -6,15 +6,16 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { actionClient } from "@/lib/utils/action-client";
+import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
+import { UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreatedUser = ZUser.pick({
@@ -79,23 +80,21 @@ async function createUserSafely(
       locale: userLocale,
     });
   } catch (error) {
-    if (error instanceof InvalidInputError && error.message === "User with this email already exists") {
-      userAlreadyExisted = true;
-    } else {
-      throw error;
-    }
+    userAlreadyExisted = true;
   }
 
   return { user, userAlreadyExisted };
 }
 
-async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): Promise<void> {
+async function handleInviteAcceptance(ctx: ActionClientCtx, inviteToken: string, user: TCreatedUser): Promise<void> {
   const inviteTokenData = verifyInviteToken(inviteToken);
   const invite = await getInvite(inviteTokenData.inviteId);
 
   if (!invite) {
     throw new Error("Invalid invite ID");
   }
+  ctx.auditLoggingCtx.organizationId = invite.organizationId;
+
 
   await createMembership(invite.organizationId, user.id, {
     accepted: true,
@@ -123,13 +122,15 @@ async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): 
 
   await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
   await deleteInvite(invite.id);
+
 }
 
-async function handleOrganizationCreation(user: TCreatedUser): Promise<void> {
+async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   if (!isMultiOrgEnabled) return;
 
   const organization = await createOrganization({ name: `${user.name}'s Organization` });
+  ctx.auditLoggingCtx.organizationId = organization.id;
 
   await createMembership(organization.id, user.id, {
     role: "owner",
@@ -149,14 +150,15 @@ async function handleOrganizationCreation(user: TCreatedUser): Promise<void> {
 }
 
 async function handlePostUserCreation(
+  ctx: ActionClientCtx,
   user: TCreatedUser,
   inviteToken: string | undefined,
   emailVerificationDisabled: boolean | undefined
 ): Promise<void> {
   if (inviteToken) {
-    await handleInviteAcceptance(inviteToken, user);
+    await handleInviteAcceptance(ctx, inviteToken, user);
   } else {
-    await handleOrganizationCreation(user);
+    await handleOrganizationCreation(ctx, user);
   }
 
   if (!emailVerificationDisabled) {
@@ -164,25 +166,34 @@ async function handlePostUserCreation(
   }
 }
 
-export const createUserAction = actionClient.schema(ZCreateUserAction).action(async ({ parsedInput }) => {
-  await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.name);
+export const createUserAction = actionClient.schema(ZCreateUserAction).action(
+  withAuditLogging(
+    "created",
+    "user",
+    async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
+      await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.name);
 
-  const hashedPassword = await hashPassword(parsedInput.password);
-  const { user, userAlreadyExisted } = await createUserSafely(
-    parsedInput.email,
-    parsedInput.name,
-    hashedPassword,
-    parsedInput.userLocale
-  );
+      const hashedPassword = await hashPassword(parsedInput.password);
+      const { user, userAlreadyExisted } = await createUserSafely(
+        parsedInput.email,
+        parsedInput.name,
+        hashedPassword,
+        parsedInput.userLocale
+      );
 
-  if (!userAlreadyExisted && user) {
-    await handlePostUserCreation(user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
-  }
+      if (!userAlreadyExisted && user) {
+        await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
+      }
 
-  revalidatePath("/auth/signup");
+      if (user) {
+        ctx.auditLoggingCtx.userId = user.id;
+        ctx.auditLoggingCtx.newObject = user;
+      }
 
-  return {
-    success: true,
-    message: "If this email is already registered, we'll send you a confirmation.",
-  };
-});
+      return {
+        success: true,
+        message: "If this email is already registered, we'll send you a confirmation.",
+      };
+    }
+  )
+);

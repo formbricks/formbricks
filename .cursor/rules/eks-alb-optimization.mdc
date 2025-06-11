@@ -1,0 +1,152 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# EKS & ALB Optimization Guide for Error Reduction
+
+## Infrastructure Overview
+
+This project uses AWS EKS with Application Load Balancer (ALB) for the Formbricks application. The infrastructure has been optimized to minimize ELB 502/504 errors through careful configuration of connection handling, health checks, and pod lifecycle management.
+
+## Key Infrastructure Files
+
+### Terraform Configuration
+- **Main Infrastructure**: [infra/terraform/main.tf](mdc:infra/terraform/main.tf) - EKS cluster, VPC, Karpenter, and core AWS resources
+- **Monitoring**: [infra/terraform/cloudwatch.tf](mdc:infra/terraform/cloudwatch.tf) - CloudWatch alarms for 502/504 error tracking and alerting
+- **Database**: [infra/terraform/rds.tf](mdc:infra/terraform/rds.tf) - Aurora PostgreSQL configuration
+
+### Helm Configuration
+- **Production**: [infra/formbricks-cloud-helm/values.yaml.gotmpl](mdc:infra/formbricks-cloud-helm/values.yaml.gotmpl) - Optimized ALB and pod configurations
+- **Staging**: [infra/formbricks-cloud-helm/values-staging.yaml.gotmpl](mdc:infra/formbricks-cloud-helm/values-staging.yaml.gotmpl) - Staging environment with spot instances
+- **Deployment**: [infra/formbricks-cloud-helm/helmfile.yaml.gotmpl](mdc:infra/formbricks-cloud-helm/helmfile.yaml.gotmpl) - Multi-environment Helm releases
+
+## ALB Optimization Patterns
+
+### Connection Handling Optimizations
+```yaml
+# Key ALB annotations for reducing 502/504 errors
+alb.ingress.kubernetes.io/load-balancer-attributes: |
+  idle_timeout.timeout_seconds=120,
+  connection_logs.s3.enabled=false,
+  access_logs.s3.enabled=false
+
+alb.ingress.kubernetes.io/target-group-attributes: |
+  deregistration_delay.timeout_seconds=30,
+  stickiness.enabled=false,
+  load_balancing.algorithm.type=least_outstanding_requests,
+  target_group_health.dns_failover.minimum_healthy_targets.count=1
+```
+
+### Health Check Configuration
+- **Interval**: 15 seconds for faster detection of unhealthy targets
+- **Timeout**: 5 seconds to prevent false positives
+- **Thresholds**: 2 healthy, 3 unhealthy for balanced responsiveness
+- **Path**: `/health` endpoint optimized for < 100ms response time
+
+## Pod Lifecycle Management
+
+### Graceful Shutdown Pattern
+```yaml
+# PreStop hook to allow connection draining
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 15"]
+
+# Termination grace period for complete cleanup
+terminationGracePeriodSeconds: 45
+```
+
+### Health Probe Strategy
+- **Startup Probe**: 5s initial delay, 5s interval, max 60s startup time
+- **Readiness Probe**: 10s delay, 10s interval for traffic readiness
+- **Liveness Probe**: 30s delay, 30s interval for container health
+
+### Rolling Update Configuration
+```yaml
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%  # Maintain capacity during updates
+    maxSurge: 50%        # Allow faster rollouts
+```
+
+## Karpenter Node Management
+
+### Node Lifecycle Optimization
+- **Startup Taints**: Prevent traffic during node initialization
+- **Graceful Shutdown**: 30s grace period for pod eviction
+- **Consolidation Delay**: 60s to reduce unnecessary churn
+- **Eviction Policies**: Configured for smooth pod migrations
+
+### Instance Selection
+- **Families**: c8g, c7g, m8g, m7g, r8g, r7g (ARM64 Graviton)
+- **Sizes**: 2, 4, 8 vCPUs for cost optimization
+- **Bottlerocket AMI**: Enhanced security and performance
+
+## Monitoring & Alerting
+
+### Critical ALB Metrics
+1. **ELB 502 Errors**: Threshold 20 over 5 minutes
+2. **ELB 504 Errors**: Threshold 15 over 5 minutes  
+3. **Target Connection Errors**: Threshold 50 over 5 minutes
+4. **4XX Errors**: Threshold 100 over 10 minutes (client issues)
+
+### Expected Improvements
+- **60-80% reduction** in ELB 502 errors
+- **Faster recovery** during pod restarts
+- **Better connection reuse** efficiency
+- **Improved autoscaling** responsiveness
+
+## Deployment Patterns
+
+### Infrastructure Updates
+1. **Terraform First**: Apply infrastructure changes via [infra/deploy-improvements.sh](mdc:infra/deploy-improvements.sh)
+2. **Helm Second**: Deploy application configurations
+3. **Verification**: Check pod status, endpoints, and ALB health
+4. **Monitoring**: Watch CloudWatch metrics for 24-48 hours
+
+### Environment-Specific Configurations
+- **Production**: On-demand instances, stricter resource limits
+- **Staging**: Spot instances, rate limiting disabled, relaxed resources
+
+## Troubleshooting Patterns
+
+### 502 Error Investigation
+1. Check pod readiness and health probe status
+2. Verify ALB target group health
+3. Review deregistration timing during deployments
+4. Monitor connection pool utilization
+
+### 504 Error Analysis  
+1. Check application response times
+2. Verify timeout configurations (ALB: 120s, App: aligned)
+3. Review database query performance
+4. Monitor resource utilization during traffic spikes
+
+### Connection Error Patterns
+1. Verify Karpenter node lifecycle timing
+2. Check pod termination grace periods
+3. Review ALB connection draining settings
+4. Monitor cluster autoscaling events
+
+## Best Practices
+
+### When Making Changes
+- **Test in staging first** with same configurations
+- **Monitor metrics** for 24-48 hours after changes
+- **Use gradual rollouts** with proper health checks
+- **Maintain ALB timeout alignment** across all layers
+
+### Performance Optimization
+- **Health endpoint** should respond < 100ms consistently  
+- **Connection pooling** aligned with ALB idle timeouts
+- **Resource requests/limits** tuned for consistent performance
+- **Graceful shutdown** implemented in application code
+
+### Monitoring Strategy
+- **Real-time alerts** for error rate spikes
+- **Trend analysis** for connection patterns
+- **Capacity planning** based on LCU usage
+- **4XX pattern analysis** for client behavior insights

@@ -29,9 +29,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/cache/invite", () => ({
-  inviteCache: { revalidate: vi.fn(), tag: { byOrganizationId: (id) => id, byId: (id) => id } },
-}));
 vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 
