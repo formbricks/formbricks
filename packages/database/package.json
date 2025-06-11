@@ -40,15 +40,15 @@
     "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" node ./dist/scripts/apply-migrations.js",
     "db:migrate:dev": "dotenv -e ../../.env -- sh -c \"pnpm prisma generate && node ./dist/scripts/apply-migrations.js\"",
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
-    "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.ts",
+    "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.js",
     "db:push": "prisma db push --accept-data-loss",
     "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
     "db:start": "pnpm db:setup",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
-    "generate-data-migration": "node ./dist/scripts/generate-data-migration.ts",
-    "create-migration": "dotenv -e ../../.env -- node ./dist/scripts/create-migration.ts"
+    "generate-data-migration": "node ./dist/scripts/generate-data-migration.js",
+    "create-migration": "dotenv -e ../../.env -- node ./dist/scripts/create-migration.js"
   },
   "dependencies": {
     "@formbricks/logger": "workspace:*",
