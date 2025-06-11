@@ -106,8 +106,8 @@ RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.n
 COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
-# COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
-# RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
+RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
 # COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 # RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
