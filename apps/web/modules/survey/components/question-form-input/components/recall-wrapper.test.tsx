@@ -86,6 +86,7 @@ describe("RecallWrapper", () => {
     ),
     usedLanguageCode: "en",
     isRecallAllowed: true,
+    shouldDisplaySurveyQuestions: true,
     onAddFallback: vi.fn(),
   };
 

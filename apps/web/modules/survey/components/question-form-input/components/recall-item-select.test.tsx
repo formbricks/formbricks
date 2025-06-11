@@ -75,11 +75,38 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={true}
       />
     );
 
     expect(screen.getByText("_Question 1_")).toBeInTheDocument();
     expect(screen.getByText("_Question 2_")).toBeInTheDocument();
+    expect(screen.getByText("_hidden1_")).toBeInTheDocument();
+    expect(screen.getByText("_hidden2_")).toBeInTheDocument();
+    expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
+    expect(screen.getByText("_Variable 2_")).toBeInTheDocument();
+
+    expect(screen.queryByText("_Current Question_")).not.toBeInTheDocument();
+    expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
+  });
+
+  test("renders recall items from only hidden fields, and variables (not from questions)", async () => {
+    render(
+      <RecallItemSelect
+        localSurvey={mockSurvey}
+        questionId="current-q"
+        addRecallItem={mockAddRecallItem}
+        setShowRecallItemSelect={mockSetShowRecallItemSelect}
+        recallItems={mockRecallItems}
+        selectedLanguageCode="en"
+        hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={false}
+      />
+    );
+
+    expect(screen.queryByText("_Question 1_")).not.toBeInTheDocument();
+    expect(screen.queryByText("_Question 2_")).not.toBeInTheDocument();
+
     expect(screen.getByText("_hidden1_")).toBeInTheDocument();
     expect(screen.getByText("_hidden2_")).toBeInTheDocument();
     expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
@@ -100,6 +127,7 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -122,6 +150,7 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -148,6 +177,7 @@ describe("RecallItemSelect", () => {
         recallItems={selectedRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -166,6 +196,7 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
+        shouldDisplaySurveyQuestions={true}
       />
     );
 

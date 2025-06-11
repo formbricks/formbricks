@@ -310,6 +310,8 @@ export const QuestionFormInput = ({
                 inputRef.current?.focus();
               }}
               isRecallAllowed={id === "headline" || id === "subheader"}
+              // Don't display survey questions in recall dropdown for welcome cards.
+              shouldDisplaySurveyQuestions={!isWelcomeCard}
               usedLanguageCode={usedLanguageCode}
               render={({
                 value,

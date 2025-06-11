@@ -51,6 +51,7 @@ interface RecallItemSelectProps {
   recallItems: TSurveyRecallItem[];
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
+  shouldDisplaySurveyQuestions: boolean;
 }
 
 export const RecallItemSelect = ({
@@ -60,6 +61,7 @@ export const RecallItemSelect = ({
   setShowRecallItemSelect,
   recallItems,
   selectedLanguageCode,
+  shouldDisplaySurveyQuestions,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -109,6 +111,8 @@ export const RecallItemSelect = ({
   }, [localSurvey.variables, recallItemIds]);
 
   const surveyQuestionRecallItems = useMemo(() => {
+    if (!shouldDisplaySurveyQuestions) return [];
+
     const isEndingCard = !localSurvey.questions.map((question) => question.id).includes(questionId);
     const idx = isEndingCard
       ? localSurvey.questions.length
@@ -125,7 +129,7 @@ export const RecallItemSelect = ({
       });
 
     return filteredQuestions;
-  }, [localSurvey.questions, questionId, recallItemIds]);
+  }, [localSurvey.questions, questionId, recallItemIds, shouldDisplaySurveyQuestions]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(

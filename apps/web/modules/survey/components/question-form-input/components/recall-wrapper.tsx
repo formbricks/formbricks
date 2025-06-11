@@ -36,6 +36,7 @@ interface RecallWrapperProps {
   render: (props: RecallWrapperRenderProps) => React.ReactNode;
   usedLanguageCode: string;
   isRecallAllowed: boolean;
+  shouldDisplaySurveyQuestions: boolean;
   onAddFallback: (fallback: string) => void;
 }
 
@@ -47,6 +48,7 @@ export const RecallWrapper = ({
   render,
   usedLanguageCode,
   isRecallAllowed,
+  shouldDisplaySurveyQuestions,
   onAddFallback,
 }: RecallWrapperProps) => {
   const { t } = useTranslate();
@@ -274,6 +276,7 @@ export const RecallWrapper = ({
                 recallItems={recallItems}
                 selectedLanguageCode={usedLanguageCode}
                 hiddenFields={localSurvey.hiddenFields}
+                shouldDisplaySurveyQuestions={shouldDisplaySurveyQuestions}
               />
             )}
 

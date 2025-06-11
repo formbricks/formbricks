@@ -159,6 +159,7 @@ export const EndScreenForm = ({
                     inputRef.current?.focus();
                   }}
                   isRecallAllowed
+                  shouldDisplaySurveyQuestions={true}
                   localSurvey={localSurvey}
                   usedLanguageCode={"default"}
                   render={({ value, onChange, highlightedJSX, children }) => {

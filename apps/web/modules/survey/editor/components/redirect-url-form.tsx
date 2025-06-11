@@ -38,6 +38,7 @@ export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: Redir
             inputRef.current?.focus();
           }}
           isRecallAllowed
+          shouldDisplaySurveyQuestions={true}
           localSurvey={localSurvey}
           usedLanguageCode={"default"}
           render={({ value, onChange, highlightedJSX, children }) => {
