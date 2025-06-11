@@ -29,7 +29,7 @@ interface RecallWrapperRenderProps {
 }
 
 interface RecallWrapperProps {
-  value: string;
+  value: string | undefined;
   onChange: (val: string, recallItems: TSurveyRecallItem[], fallbacks: { [id: string]: string }) => void;
   localSurvey: TSurvey;
   questionId: string;
