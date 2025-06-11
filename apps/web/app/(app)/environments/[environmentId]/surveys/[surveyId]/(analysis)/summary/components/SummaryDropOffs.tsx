@@ -23,7 +23,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="">
-        <div className="grid min-h-10 grid-cols-6 items-center rounded-t-xl border-b border-slate-200 bg-slate-100 text-lg font-semibold text-slate-600">
+        <div className="grid min-h-10 grid-cols-6 items-center rounded-t-xl border-b border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
           <div className="col-span-3 px-4 md:px-6">{t("common.questions")}</div>
           <div className="flex justify-end px-4 md:px-6">
             <TooltipProvider delayDuration={50}>
@@ -45,7 +45,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
         {dropOff.map((quesDropOff) => (
           <div
             key={quesDropOff.questionId}
-            className="grid grid-cols-6 items-start border-b border-slate-100 text-xs text-slate-800 md:text-base">
+            className="grid grid-cols-6 items-start border-b border-slate-100 text-xs text-slate-800 md:text-sm">
             <div className="col-span-3 flex gap-3 px-4 py-2 md:px-6">
               {getIcon(quesDropOff.questionType)}
               <p>
@@ -59,7 +59,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                     "default"
                   )["default"],
                   "@",
-                  ["text-base"]
+                  ["text-sm"]
                 )}
               </p>
             </div>
@@ -71,7 +71,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
             </div>
             <div className="px-4 py-2 text-right md:px-6">
               <span className="mr-1 font-mono font-medium">{quesDropOff.dropOffCount}</span>
-              <span className="inline-block w-14 text-left text-base">
+              <span className="inline-block w-14 text-left text-sm">
                 ({Math.round(quesDropOff.dropOffPercentage)}%)
               </span>
             </div>
