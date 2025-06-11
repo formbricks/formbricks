@@ -38,7 +38,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
             </TooltipProvider>
           </div>
           <div className="px-4 text-right md:px-6">{t("environments.surveys.summary.impressions")}</div>
-          <div className="px-4 text-right md:mr-1 md:pl-6 md:pr-20">
+          <div className="px-4 text-right md:mr-1 md:pl-6 md:pr-6">
             {t("environments.surveys.summary.drop_offs")}
           </div>
         </div>
@@ -70,10 +70,10 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
               {quesDropOff.impressions}
             </div>
             <div className="px-4 py-2 text-right md:px-6">
-              <span className="mr-1 font-mono font-medium">{quesDropOff.dropOffCount}</span>
-              <span className="inline-block w-14 text-left text-sm">
-                ({Math.round(quesDropOff.dropOffPercentage)}%)
+              <span className="mr-1 inline-block w-fit rounded-xl bg-slate-100 px-2 py-1 text-left text-xs">
+                {Math.round(quesDropOff.dropOffPercentage)}%
               </span>
+              <span className="mr-1 font-mono font-medium">{quesDropOff.dropOffCount}</span>
             </div>
           </div>
         ))}
