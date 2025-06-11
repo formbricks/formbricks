@@ -309,7 +309,7 @@ export const createJumpLogic = (
 // Helper function to create jump logic based on choice selection
 export const createChoiceJumpLogic = (
   sourceQuestionId: string,
-  choiceId: string,
+  choiceId: string | number,
   targetId: string
 ): TSurveyLogic => ({
   id: createId(),

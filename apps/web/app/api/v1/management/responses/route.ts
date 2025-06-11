@@ -1,6 +1,7 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -91,46 +92,78 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = async (request: Request): Promise<Response> => {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const inputResult = await validateInput(request);
-    if (inputResult.error) return inputResult.error;
-
-    const responseInput = inputResult.data;
-    const environmentId = responseInput.environmentId;
-
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-      return responses.unauthorizedResponse();
-    }
-
-    const surveyResult = await validateSurvey(responseInput, environmentId);
-    if (surveyResult.error) return surveyResult.error;
-
-    if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
-      return responses.badRequestResponse("Invalid file upload response");
-    }
-
-    if (responseInput.createdAt && !responseInput.updatedAt) {
-      responseInput.updatedAt = responseInput.createdAt;
-    }
-
+export const POST = withApiLogging(
+  async (request: Request, _, auditLog: ApiAuditLog) => {
     try {
-      const response = await createResponse(responseInput);
-      return responses.successResponse(response, true);
-    } catch (error) {
-      if (error instanceof InvalidInputError) {
-        return responses.badRequestResponse(error.message);
+      const authentication = await authenticateRequest(request);
+      if (!authentication) {
+        return {
+          response: responses.notAuthenticatedResponse(),
+        };
       }
-      logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
-      return responses.internalServerErrorResponse(error.message);
+      auditLog.userId = authentication.apiKeyId;
+      auditLog.organizationId = authentication.organizationId;
+
+      const inputResult = await validateInput(request);
+      if (inputResult.error) {
+        return {
+          response: inputResult.error,
+        };
+      }
+
+      const responseInput = inputResult.data;
+      const environmentId = responseInput.environmentId;
+
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+        return {
+          response: responses.unauthorizedResponse(),
+        };
+      }
+
+      const surveyResult = await validateSurvey(responseInput, environmentId);
+      if (surveyResult.error) {
+        return {
+          response: surveyResult.error,
+        };
+      }
+
+      if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
+        return {
+          response: responses.badRequestResponse("Invalid file upload response"),
+        };
+      }
+
+      if (responseInput.createdAt && !responseInput.updatedAt) {
+        responseInput.updatedAt = responseInput.createdAt;
+      }
+
+      try {
+        const response = await createResponse(responseInput);
+        auditLog.targetId = response.id;
+        auditLog.newObject = response;
+        return {
+          response: responses.successResponse(response, true),
+        };
+      } catch (error) {
+        if (error instanceof InvalidInputError) {
+          return {
+            response: responses.badRequestResponse(error.message),
+          };
+        }
+        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
+        return {
+          response: responses.internalServerErrorResponse(error.message),
+        };
+      }
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      throw error;
     }
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    throw error;
-  }
-};
+  },
+  "created",
+  "response"
+);

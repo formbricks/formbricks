@@ -51,24 +51,35 @@ export const POST = async (request: NextRequest) =>
     schemas: {
       body: ZContactAttributeKeyInput,
     },
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
       if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "environmentId", issue: "does not have permission to create contact attribute key" },
-          ],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [
+              { field: "environmentId", issue: "does not have permission to create contact attribute key" },
+            ],
+          },
+          auditLog
+        );
       }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);
 
       if (!createContactAttributeKeyResult.ok) {
-        return handleApiError(request, createContactAttributeKeyResult.error as ApiErrorResponseV2);
+        return handleApiError(request, createContactAttributeKeyResult.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.targetId = createContactAttributeKeyResult.data.id;
+        auditLog.newObject = createContactAttributeKeyResult.data;
       }
 
       return responses.createdResponse(createContactAttributeKeyResult);
     },
+    action: "created",
+    targetType: "contactAttributeKey",
   });
