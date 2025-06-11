@@ -27,7 +27,12 @@ export interface MigrationScript {
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-const MIGRATIONS_DIR = path.resolve(__dirname, "../../migration");
+
+// Determine if we're running from built or source code
+const isBuilt = __filename.includes("/dist/");
+const MIGRATIONS_DIR = isBuilt
+  ? path.resolve(__dirname, "../migration") // From dist/scripts to dist/migration
+  : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
@@ -197,11 +202,13 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
     const files = await fs.readdir(migrationPath);
 
     const hasSchemaMigration = files.includes("migration.sql");
-    const hasDataMigration = files.includes("migration.ts");
+    // Check for the appropriate data migration file extension based on build status
+    const dataMigrationFileName = isBuilt ? "migration.js" : "migration.ts";
+    const hasDataMigration = files.includes(dataMigrationFileName);
 
     if (hasSchemaMigration && hasDataMigration) {
       throw new Error(
-        `Migration directory ${dirName} has both migration.sql and migration.ts. This should not happen.`
+        `Migration directory ${dirName} has both migration.sql and ${dataMigrationFileName}. This should not happen.`
       );
     }
 
@@ -236,7 +243,9 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
       }
 
       // It's a data migration, dynamically import and extract the scripts
-      const modulePath = path.join(migrationPath, "migration.ts");
+      // Use .js extension when running from built code, .ts when running from source
+      const migrationFileExtension = isBuilt ? "migration.js" : "migration.ts";
+      const modulePath = path.join(migrationPath, migrationFileExtension);
       const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
 
       // Check each export in the module for a DataMigrationScript (type: "data")
@@ -248,7 +257,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
       }
     } else {
       logger.warn(
-        `Migration directory ${dirName} doesn't have migration.sql or data-migration.ts. Skipping...`
+        `Migration directory ${dirName} doesn't have migration.sql or ${dataMigrationFileName}. Skipping...`
       );
     }
   }

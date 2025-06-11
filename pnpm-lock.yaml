@@ -654,6 +654,9 @@ importers:
       ts-node:
         specifier: 10.9.2
         version: 10.9.2(@types/node@22.15.18)(typescript@5.8.3)
+      unplugin-dts:
+        specifier: 1.0.0-beta.0
+        version: 1.0.0-beta.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.18))(esbuild@0.25.4)(rollup@4.40.2)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0))(webpack@5.99.8(esbuild@0.25.4))
       vite:
         specifier: 6.3.5
         version: 6.3.5(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0)
@@ -9321,12 +9324,43 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
+  unplugin-dts@1.0.0-beta.0:
+    resolution: {integrity: sha512-Q8aYNTtLlJ21z/+R7WpxlLA56a0MlwOCMoiwP9EGa5YuiwVgmt8Kp9Fw1x9xbPNi5BzfOQt44/N8w+CTGnQ+7Q==}
+    peerDependencies:
+      '@microsoft/api-extractor': '>=7'
+      '@rspack/core': ^1
+      esbuild: '*'
+      rolldown: '*'
+      rollup: '>=3'
+      typescript: '>=4'
+      vite: '>=3'
+      webpack: ^4 || ^5
+    peerDependenciesMeta:
+      '@microsoft/api-extractor':
+        optional: true
+      '@rspack/core':
+        optional: true
+      esbuild:
+        optional: true
+      rolldown:
+        optional: true
+      rollup:
+        optional: true
+      vite:
+        optional: true
+      webpack:
+        optional: true
+
   unplugin@1.0.1:
     resolution: {integrity: sha512-aqrHaVBWW1JVKBHmGo33T5TxeL0qWzfvjWokObHA9bYmN7eNDkwOxmLjhioHl9878qDFMAaT51XNroRyuz7WxA==}
 
   unplugin@1.16.1:
     resolution: {integrity: sha512-4/u/j4FrCKdi17jaxuJA0jClGxB1AvU2hw/IuayPc4ay1XGaJs/rbb4v5WKwAjNifjmXK9PIFyuPiaK8azyR9w==}
     engines: {node: '>=14.0.0'}
+
+  unplugin@2.3.5:
+    resolution: {integrity: sha512-RyWSb5AHmGtjjNQ6gIlA67sHOsWpsbWpwDokLwTcejVdOjEkJZh7QKu14J00gDDVSh8kGH4KYC/TNBceXFZhtw==}
+    engines: {node: '>=18.12.0'}
 
   unrs-resolver@1.7.2:
     resolution: {integrity: sha512-BBKpaylOW8KbHsu378Zky/dGh4ckT/4NW/0SHRABdqRLcQJ2dAOjDo9g97p04sWflm0kqPqpUatxReNV/dqI5A==}
@@ -19614,6 +19648,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  terser-webpack-plugin@5.3.14(esbuild@0.25.4)(webpack@5.99.8(esbuild@0.25.4)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.25
+      jest-worker: 27.5.1
+      schema-utils: 4.3.2
+      serialize-javascript: 6.0.2
+      terser: 5.39.1
+      webpack: 5.99.8(esbuild@0.25.4)
+    optionalDependencies:
+      esbuild: 0.25.4
+    optional: true
+
   terser-webpack-plugin@5.3.14(webpack@5.99.8):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
@@ -19926,6 +19972,27 @@ snapshots:
 
   universalify@2.0.1: {}
 
+  unplugin-dts@1.0.0-beta.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.18))(esbuild@0.25.4)(rollup@4.40.2)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0))(webpack@5.99.8(esbuild@0.25.4)):
+    dependencies:
+      '@rollup/pluginutils': 5.1.4(rollup@4.40.2)
+      '@volar/typescript': 2.4.13
+      '@vue/language-core': 2.2.0(typescript@5.8.3)
+      compare-versions: 6.1.1
+      debug: 4.4.1
+      kolorist: 1.8.0
+      local-pkg: 1.1.1
+      magic-string: 0.30.17
+      typescript: 5.8.3
+      unplugin: 2.3.5
+    optionalDependencies:
+      '@microsoft/api-extractor': 7.52.8(@types/node@22.15.18)
+      esbuild: 0.25.4
+      rollup: 4.40.2
+      vite: 6.3.5(@types/node@22.15.18)(jiti@2.4.2)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0)
+      webpack: 5.99.8(esbuild@0.25.4)
+    transitivePeerDependencies:
+      - supports-color
+
   unplugin@1.0.1:
     dependencies:
       acorn: 8.14.1
@@ -19936,6 +20003,12 @@ snapshots:
   unplugin@1.16.1:
     dependencies:
       acorn: 8.14.1
+      webpack-virtual-modules: 0.6.2
+
+  unplugin@2.3.5:
+    dependencies:
+      acorn: 8.14.1
+      picomatch: 4.0.2
       webpack-virtual-modules: 0.6.2
 
   unrs-resolver@1.7.2:
@@ -20205,6 +20278,38 @@ snapshots:
       - '@swc/core'
       - esbuild
       - uglify-js
+
+  webpack@5.99.8(esbuild@0.25.4):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.7
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.14.1
+      browserslist: 4.24.5
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.1
+      es-module-lexer: 1.7.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.2
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.14(esbuild@0.25.4)(webpack@5.99.8(esbuild@0.25.4))
+      watchpack: 2.4.2
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    optional: true
 
   whatwg-encoding@3.1.1:
     dependencies:

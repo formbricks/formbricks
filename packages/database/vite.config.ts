@@ -1,5 +1,18 @@
-import { resolve } from "path";
+import { copyFileSync, globSync, mkdirSync } from "fs";
+import { dirname, resolve } from "path";
 import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
+
+const migrationTsFiles = globSync("migration/**/migration.ts", { cwd: __dirname });
+const migrationEntries = migrationTsFiles.reduce(
+  (acc, file) => {
+    const dir = dirname(file);
+    const entryName = `${dir}/migration`;
+    acc[entryName] = resolve(__dirname, file);
+    return acc;
+  },
+  {} as unknown as Record<string, string>
+);
 
 export default defineConfig({
   resolve: {
@@ -16,6 +29,7 @@ export default defineConfig({
         "scripts/migration-runner": resolve(__dirname, "src/scripts/migration-runner.ts"),
         "scripts/generate-data-migration": resolve(__dirname, "src/scripts/generate-data-migration.ts"),
         "scripts/create-migration": resolve(__dirname, "src/scripts/create-migration.ts"),
+        ...migrationEntries,
       },
       output: {
         format: "esm",
@@ -33,4 +47,24 @@ export default defineConfig({
     target: "node18",
     ssr: true, // Server-side rendering mode for Node.js
   },
+  plugins: [
+    dts({
+      rollupTypes: false,
+      include: ["src/**/*"],
+      exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+      insertTypesEntry: true,
+    }),
+    {
+      name: "copy-sql-migrations",
+      writeBundle() {
+        const sqlFiles = globSync("migration/**/migration.sql", { cwd: __dirname });
+        sqlFiles.forEach((file) => {
+          const srcPath = resolve(__dirname, file);
+          const destPath = resolve(__dirname, "dist", file);
+          mkdirSync(dirname(destPath), { recursive: true });
+          copyFileSync(srcPath, destPath);
+        });
+      },
+    },
+  ],
 });

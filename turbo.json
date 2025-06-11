@@ -205,7 +205,7 @@
     },
     "db:setup": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"],
       "outputs": []
     },
     "db:start": {
