@@ -61,7 +61,7 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
   }
   if (scale === "number") {
     return (
-      <Text className="m-0 h-[48px] text-center text-[14px] leading-[48px]">
+      <Text className="m-0 h-[44px] text-center text-[14px] leading-[44px]">
         {i + 1}
       </Text>
     );
