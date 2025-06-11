@@ -29,7 +29,7 @@ interface RecallWrapperRenderProps {
 }
 
 interface RecallWrapperProps {
-  value: string;
+  value: string | undefined;
   onChange: (val: string, recallItems: TSurveyRecallItem[], fallbacks: { [id: string]: string }) => void;
   localSurvey: TSurvey;
   questionId: string;
@@ -53,10 +53,10 @@ export const RecallWrapper = ({
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-    value.includes("#recall:") ? getRecallItems(value, localSurvey, usedLanguageCode) : []
+    value?.includes("#recall:") ? getRecallItems(value, localSurvey, usedLanguageCode) : []
   );
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(
-    value.includes("/fallback:") ? getFallbackValues(value) : {}
+    value?.includes("/fallback:") ? getFallbackValues(value) : {}
   );
 
   const [internalValue, setInternalValue] = useState<string>(headlineToRecall(value, recallItems, fallbacks));
@@ -251,7 +251,7 @@ export const RecallWrapper = ({
         isRecallSelectVisible: showRecallItemSelect,
         children: (
           <div>
-            {internalValue.includes("recall:") && (
+            {internalValue?.includes("recall:") && (
               <Button
                 variant="ghost"
                 type="button"
