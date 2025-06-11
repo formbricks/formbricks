@@ -141,7 +141,7 @@ export const SurveyDropDownMenu = ({
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-40">
+        <DropdownMenuContent className="w-42">
           <DropdownMenuGroup>
             {!isSurveyCreationDeletionDisabled && (
               <>
