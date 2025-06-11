@@ -29,7 +29,7 @@ const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // Determine if we're running from built or source code
-const isBuilt = __filename.includes("/dist/");
+const isBuilt = __filename.split(path.sep).includes("dist");
 const MIGRATIONS_DIR = isBuilt
   ? path.resolve(__dirname, "../migration") // From dist/scripts to dist/migration
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration

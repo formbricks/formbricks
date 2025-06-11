@@ -1,4 +1,5 @@
 import { promises as fs } from "fs";
+import { glob } from "glob";
 import { dirname, resolve } from "path";
 import { Plugin, UserConfig, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
@@ -6,10 +7,8 @@ import dts from "vite-plugin-dts";
 const copySqlMigrationsPlugin: Plugin = {
   name: "copy-sql-migrations",
   async writeBundle() {
-    const sqlFiles = [];
-    for await (const file of fs.glob("migration/**/migration.sql", { cwd: __dirname })) {
-      sqlFiles.push(file);
-    }
+    const sqlFiles = await glob("migration/**/migration.sql", { cwd: __dirname });
+
     await Promise.all(
       sqlFiles.map(async (file) => {
         const srcPath = resolve(__dirname, file);
@@ -46,8 +45,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
           "scripts/apply-migrations": resolve(__dirname, "src/scripts/apply-migrations.ts"),
           "scripts/create-saml-database": resolve(__dirname, "src/scripts/create-saml-database.ts"),
           "scripts/migration-runner": resolve(__dirname, "src/scripts/migration-runner.ts"),
-          "scripts/generate-data-migration": resolve(__dirname, "src/scripts/generate-data-migration.ts"),
-          "scripts/create-migration": resolve(__dirname, "src/scripts/create-migration.ts"),
           ...migrationEntries,
         },
         output: {
@@ -62,7 +59,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
         ],
       },
       emptyOutDir: true,
-      target: "node18",
       ssr: true, // Server-side rendering mode for Node.js
     },
     plugins: [

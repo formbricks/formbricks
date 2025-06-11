@@ -47,8 +47,8 @@
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
-    "generate-data-migration": "node ./dist/scripts/generate-data-migration.js",
-    "create-migration": "dotenv -e ../../.env -- node ./dist/scripts/create-migration.js"
+    "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
+    "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {
     "@formbricks/logger": "workspace:*",
@@ -61,6 +61,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "dotenv-cli": "8.0.0",
+    "glob": "11.0.2",
     "prisma": "6.7.0",
     "prisma-json-types-generator": "3.4.1",
     "ts-node": "10.9.2",
