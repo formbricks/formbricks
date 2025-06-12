@@ -42,7 +42,7 @@ export const EndScreenForm = ({
 
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
-      (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
+    (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
   return (
     <form>
@@ -159,7 +159,6 @@ export const EndScreenForm = ({
                     inputRef.current?.focus();
                   }}
                   isRecallAllowed
-                  shouldDisplaySurveyQuestions={true}
                   localSurvey={localSurvey}
                   usedLanguageCode={"default"}
                   render={({ value, onChange, highlightedJSX, children }) => {

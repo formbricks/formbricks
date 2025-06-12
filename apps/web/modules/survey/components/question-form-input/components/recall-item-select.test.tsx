@@ -75,7 +75,6 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -90,17 +89,16 @@ describe("RecallItemSelect", () => {
     expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
   });
 
-  test("renders recall items from only hidden fields, and variables (not from questions)", async () => {
+  test("do not render questions if questionId is 'start' (welcome card)", async () => {
     render(
       <RecallItemSelect
         localSurvey={mockSurvey}
-        questionId="current-q"
+        questionId="start"
         addRecallItem={mockAddRecallItem}
         setShowRecallItemSelect={mockSetShowRecallItemSelect}
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={false}
       />
     );
 
@@ -127,7 +125,6 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -150,7 +147,6 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -177,7 +173,6 @@ describe("RecallItemSelect", () => {
         recallItems={selectedRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={true}
       />
     );
 
@@ -196,7 +191,6 @@ describe("RecallItemSelect", () => {
         recallItems={mockRecallItems}
         selectedLanguageCode="en"
         hiddenFields={mockSurvey.hiddenFields}
-        shouldDisplaySurveyQuestions={true}
       />
     );
 
