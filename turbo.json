@@ -6,7 +6,7 @@
       "outputs": ["dist/**"]
     },
     "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
@@ -29,6 +29,9 @@
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
+    },
+    "@formbricks/js-core#lint": {
+      "dependsOn": ["@formbricks/database#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
