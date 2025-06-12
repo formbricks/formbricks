@@ -156,6 +156,7 @@ const addRecords = async (
     }),
   });
   const res = await req.json();
+  console.log(res);
 
   return res;
 };
@@ -186,6 +187,7 @@ export const writeData = async (
   const responses = values[0];
   const questions = values[1];
 
+  // 1) Build the record payload
   const data: Record<string, string> = {};
   for (let i = 0; i < questions.length; i++) {
     data[questions[i]] =
@@ -194,34 +196,68 @@ export const writeData = async (
         : responses[i];
   }
 
+  // 2) Fetch the current table schema
   const req = await tableFetcher(key, configData.baseId);
   const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
+  const currentTable = tables.find((t) => t.id === configData.tableId);
 
-  const currentTable = tables.find((table) => table.id === configData.tableId);
-  if (currentTable) {
-    const currentFields = new Set(currentTable.fields.map((field) => field.name));
-    const fieldsToCreate = new Set<string>();
-    for (const field of questions) {
-      const hasField = currentFields.has(field);
-      if (!hasField) {
-        fieldsToCreate.add(field);
-      }
-    }
-
-    if (fieldsToCreate.size > 0) {
-      const createFieldPromise: Promise<any>[] = [];
-      fieldsToCreate.forEach((fieldName) => {
-        createFieldPromise.push(
-          addField(key, configData.baseId, configData.tableId, {
-            name: fieldName,
-            type: "singleLineText",
-          })
-        );
-      });
-
-      await Promise.all(createFieldPromise);
-    }
+  if (!currentTable) {
+    throw new Error(`Table with ID ${configData.tableId} not found`);
   }
 
+  // 3) Figure out which fields need creating
+  const existingFields = new Set(currentTable.fields.map((f) => f.name));
+  const fieldsToCreate = questions.filter((q) => !existingFields.has(q));
+
+  // 4) Create any missing fields
+  if (fieldsToCreate.length > 0) {
+    console.log(`Creating fields: ${fieldsToCreate.join(", ")}`);
+    await Promise.all(
+      fieldsToCreate.map((fieldName) =>
+        addField(key, configData.baseId, configData.tableId, {
+          name: fieldName,
+          type: "singleLineText",
+        })
+      )
+    );
+
+    // 5) Wait for the new fields to show up
+    await waitForFieldsToExist(key, configData, fieldsToCreate);
+  }
+
+  // 6) Finally, add the records
+  console.log("Adding records now that fields are in place");
   await addRecords(key, configData.baseId, configData.tableId, data);
 };
+
+async function waitForFieldsToExist(
+  key: TIntegrationAirtableCredential,
+  configData: TIntegrationAirtableConfigData,
+  fieldNames: string[],
+  maxRetries = 5,
+  intervalMs = 2000
+) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const schema = await tableFetcher(key, configData.baseId);
+    const table = ZIntegrationAirtableTablesWithFields.parse(schema)
+      .tables.find((t) => t.id === configData.tableId)!;
+    const existing = new Set(table.fields.map((f) => f.name));
+
+    if (fieldNames.every((f) => existing.has(f))) {
+      console.log("All fields are now live in Airtable");
+      return;
+    }
+
+    console.log(
+      `Attempt ${attempt}/${maxRetries}: fields not live yet, retrying in ${intervalMs / 1000
+      }s…`
+    );
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error(
+    `Timed out waiting for fields [${fieldNames.join(
+      ", "
+    )}] to become available.`
+  );
+}
