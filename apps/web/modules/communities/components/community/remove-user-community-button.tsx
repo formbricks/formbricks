@@ -38,7 +38,7 @@ export function RemoveUserCommunityButton({ creatorId, className }: Props): Reac
 
   return (
     <Button
-      aria-label={t("common.remove_community")}
+      aria-label={t("common.leave_community")}
       onClick={handleRemoveUserCommunity}
       disabled={loading}
       variant="destructive"
@@ -46,7 +46,7 @@ export function RemoveUserCommunityButton({ creatorId, className }: Props): Reac
         "ring-offset-background focus-visible:ring-ring group inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         className
       )}>
-      {loading ? <LoadingSpinner /> : <>{t("common.remove_community")}</>}
+      {loading ? <LoadingSpinner /> : <>{t("common.leave_community")}</>}
     </Button>
   );
 }

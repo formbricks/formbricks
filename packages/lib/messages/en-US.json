@@ -242,6 +242,8 @@
     "label": "Label",
     "language": "Language",
     "learn_more": "Learn more",
+    "leave": "Leave",
+    "leave_community": "Leave community",
     "license": "License",
     "light_overlay": "Light overlay",
     "limits_reached": "Limits Reached",
@@ -428,6 +430,7 @@
     "try_again": "Try again",
     "type": "Type",
     "unlock_more_projects_with_a_higher_plan": "Unlock more projects with a higher plan.",
+    "unnamed_user": "Unnamed user",
     "update": "Update",
     "updated": "Updated",
     "updated_at": "Updated at",
@@ -443,6 +446,7 @@
     "verified_address": "Verified Address",
     "verified_email": "Verified Email",
     "video": "Video",
+    "view_all": "View all",
     "view_community": "View Community",
     "wallet": "Wallet",
     "warning": "Warning",
@@ -647,6 +651,8 @@
         "community_successfully_added": "Community successfully added"
       },
       "community_created": "Community created",
+      "confirm_leave": "Are you sure you want to leave this community?",
+
       "remove": {
         "community_successfully_removed": "Community successfully removed"
       },

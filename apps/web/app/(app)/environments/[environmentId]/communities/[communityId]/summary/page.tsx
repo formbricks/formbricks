@@ -1,11 +1,11 @@
 import VerifiedImage from "@/images/illustrations/verified-rounded.svg";
-import AddUserCommunityButton from "@/modules/communities/components/common/add-user-community-button";
+import CommunityActions from "@/modules/communities/components/community/community-actions";
 import { CommunityStatCard } from "@/modules/communities/components/community/community-stat-card";
-// import { CommunityClient } from "@/modules/communities/components/community/community-client";
+import MembersModal from "@/modules/communities/components/community/members-modal";
 import { getCommunity } from "@/modules/communities/lib/communities";
 import AvailableEngagements from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
-// import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getTranslate } from "@/tolgee/server";
 import Image from "next/image";
@@ -15,7 +15,8 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
   const params = await props.params;
   const t = await getTranslate();
 
-  // const { environment } = await getEnvironmentAuth(params.environmentId);
+  const { session } = await getEnvironmentAuth(params.environmentId);
+  const currentUserId = session?.user.id;
 
   const communityId = params.communityId;
 
@@ -29,7 +30,7 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
     throw new Error(t("common.community_not_found"));
   }
 
-  // console.log("Community:", community);
+  console.log("Community:", community);
 
   return (
     <PageContentWrapper>
@@ -46,16 +47,53 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
             />
           )}
         </div>
-        <div className="max-w-xs">
-          <AddUserCommunityButton creatorId={community.id} />
-        </div>
+        <CommunityActions community={community} currentUserId={currentUserId} />
       </div>
 
-      <div>
-        <div>
+      <div className="flex justify-between gap-4 pt-4">
+        <div className="max-w-2xl">
           {community.communityDescription ? (
             <p className="mt-2 text-lg">{community.communityDescription}</p>
           ) : null}
+        </div>
+
+        <div className="p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-slate-800">
+              {t("common.members")} ({community.members?.length || 0})
+            </h2>
+            {community.members && community.members.length > 0 && (
+              <MembersModal members={community.members} />
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center">
+            {community.members && community.members.length > 0 ? (
+              <div className="flex -space-x-3 overflow-visible">
+                {community.members.slice(0, 10).map((member, idx) => (
+                  <div key={member.id} className="relative" style={{ zIndex: idx }}>
+                    <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-white">
+                      {member.imageUrl ? (
+                        <Image
+                          src={member.imageUrl}
+                          alt={member.name || "Member"}
+                          width={44}
+                          height={44}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="bg-primary-100 text-primary-800 flex h-full w-full items-center justify-center text-base font-medium">
+                          {(member.name && member.name.charAt(0)) ||
+                            (member.email && member.email.charAt(0)) ||
+                            "?"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

@@ -118,6 +118,7 @@ export const getCompletedSurveysAction = authenticatedActionClient
               id: survey.createdBy,
             },
             select: {
+              id: true,
               name: true,
               imageUrl: true,
               communityName: true,
@@ -126,6 +127,7 @@ export const getCompletedSurveysAction = authenticatedActionClient
           });
           if (user) {
             creator = {
+              id: user.id,
               name: user.name || "",
               imageUrl: user.imageUrl || "",
               communityName: user.communityName || "",
@@ -242,6 +244,7 @@ export const getAvailableSurveysAction = authenticatedActionClient
           });
           if (user) {
             creator = {
+              id: user.id,
               name: user.name,
               imageUrl: user.imageUrl,
               communityName: user.communityName || "",

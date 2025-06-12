@@ -42,7 +42,7 @@ export function AddUserCommunityButton({ creatorId, className }: Props): React.J
       onClick={handleAddUserCommunity}
       disabled={loading}
       variant={"default"}
-      className={cn("text-sm", className)}>
+      className={cn("min-w-36 text-sm", className)}>
       {loading ? <LoadingSpinner /> : <>{t("common.join_community")}</>}
     </Button>
   );
