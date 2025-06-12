@@ -156,7 +156,6 @@ const addRecords = async (
     }),
   });
   const res = await req.json();
-  console.log(res);
 
   return res;
 };
@@ -211,7 +210,6 @@ export const writeData = async (
 
   // 4) Create any missing fields
   if (fieldsToCreate.length > 0) {
-    console.log(`Creating fields: ${fieldsToCreate.join(", ")}`);
     await Promise.all(
       fieldsToCreate.map((fieldName) =>
         addField(key, configData.baseId, configData.tableId, {
@@ -226,7 +224,6 @@ export const writeData = async (
   }
 
   // 6) Finally, add the records
-  console.log("Adding records now that fields are in place");
   await addRecords(key, configData.baseId, configData.tableId, data);
 };
 
@@ -244,11 +241,10 @@ async function waitForFieldsToExist(
     const existing = new Set(table.fields.map((f) => f.name));
 
     if (fieldNames.every((f) => existing.has(f))) {
-      console.log("All fields are now live in Airtable");
       return;
     }
 
-    console.log(
+    logger.error(
       `Attempt ${attempt}/${maxRetries}: fields not live yet, retrying in ${intervalMs / 1000
       }s…`
     );
