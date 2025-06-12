@@ -52,6 +52,11 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
   return match ? match[0] : null;
 };
 
+export const removeRecallFromText = (text: string, id: string): string => {
+  const pattern = new RegExp(`#recall:${id}\\/fallback:(\\S*)#`, "g");
+  return text.replace(pattern, "");
+};
+
 const getRecallItemLabel = <T extends TSurvey>(
   recallItemId: string,
   survey: T,

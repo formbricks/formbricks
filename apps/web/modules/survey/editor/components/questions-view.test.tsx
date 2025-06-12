@@ -1,4 +1,4 @@
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { checkForEmptyFallBackValue, extractIds } from "@/lib/utils/recall";
 import { validateQuestion, validateSurveyQuestionsInBatch } from "@/modules/survey/editor/lib/validation";
 import { DndContext } from "@dnd-kit/core";
 import { createId } from "@paralleldrive/cuid2";
@@ -53,6 +53,8 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
 vi.mock("@/lib/utils/recall", () => ({
   checkForEmptyFallBackValue: vi.fn(),
   extractRecallInfo: vi.fn(),
+  extractIds: vi.fn(),
+  removeRecallFromText: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/multi-language-surveys/components/multi-language-card", () => ({
@@ -429,11 +431,14 @@ describe("QuestionsView", () => {
   });
 
   test("handles question card drag end", async () => {
+    vi.mocked(extractIds).mockReturnValue([]);
     renderComponent();
     const dragButton = screen.getByText("Simulate Drag End questions");
     await userEvent.click(dragButton);
-    expect(setLocalSurvey).toHaveBeenCalledTimes(1);
-    const updatedSurvey = setLocalSurvey.mock.calls[0][0];
+    // setLocalSurvey is called first to save questions with reprocessed recalls
+    // and then to save questions in reordered state.
+    expect(setLocalSurvey).toHaveBeenCalledTimes(2);
+    const updatedSurvey = setLocalSurvey.mock.calls[1][0];
     // Based on the hardcoded IDs in the mock DndContext
     expect(updatedSurvey.questions[0].id).toBe("q2");
     expect(updatedSurvey.questions[1].id).toBe("q1");
