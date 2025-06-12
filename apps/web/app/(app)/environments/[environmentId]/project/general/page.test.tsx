@@ -29,6 +29,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: 1,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 describe("GeneralSettingsPage re-export", () => {
   test("should re-export GeneralSettingsPage component", () => {
     expect(Page).toBe(GeneralSettingsPage);
