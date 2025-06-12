@@ -14,22 +14,12 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
       "import": "./dist/index.js"
     },
-    "./types/survey-follow-up": {
-      "types": "./types/survey-follow-up.ts",
-      "require": "./types/survey-follow-up.ts",
-      "import": "./types/survey-follow-up.ts"
-    },
-    "./types/error": {
-      "types": "./types/error.ts",
-      "require": "./types/error.ts",
-      "import": "./types/error.ts"
+    "./types/*": {
+      "import": "./types/*.ts"
     },
     "./zod/*": {
-      "types": "./zod/*.ts",
-      "require": "./zod/*.ts",
       "import": "./zod/*.ts"
     }
   },
