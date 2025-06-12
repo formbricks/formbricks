@@ -1,5 +1,5 @@
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
@@ -73,7 +73,7 @@ export const getSurveyOpenGraphMetadata = (surveyId: string, surveyName: string)
   const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${encodedName}`;
 
   return {
-    metadataBase: new URL(getSurveyDomain()),
+    metadataBase: new URL(getPublicDomain()),
     openGraph: {
       title: surveyName,
       description: "Thanks a lot for your time 🙏",

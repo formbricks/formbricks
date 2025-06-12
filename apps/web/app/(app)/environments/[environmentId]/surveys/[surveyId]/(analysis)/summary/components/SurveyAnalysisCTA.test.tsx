@@ -21,6 +21,8 @@ vi.mock("@/modules/ee/audit-logs/lib/utils", () => ({
   }),
 }));
 
+const mockPublicDomain = "https://public-domain.com";
+
 // Mock constants
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -72,7 +74,7 @@ vi.mock("next/navigation", () => ({
 
 // Mock copySurveyLink to return a predictable string
 vi.mock("@/modules/survey/lib/client-utils", () => ({
-  copySurveyLink: vi.fn((url: string, id: string) => `${url}?id=${id}`),
+  copySurveyLink: vi.fn((url: string, suId: string) => `${url}?suId=${suId}`),
 }));
 
 // Mock the copy survey action
@@ -103,6 +105,10 @@ vi.mock("@/app/share/[sharingKey]/actions", () => ({
   getResponseCountBySurveySharingKeyAction: vi.fn(() => Promise.resolve({ data: 5 })),
 }));
 
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(() => mockPublicDomain),
+}));
+
 vi.spyOn(toast, "success");
 vi.spyOn(toast, "error");
 
@@ -123,7 +129,6 @@ const dummySurvey = {
 } as unknown as TSurvey;
 const dummyEnvironment = { id: "env123", appSetupCompleted: true } as TEnvironment;
 const dummyUser = { id: "user123", name: "Test User" } as TUser;
-const surveyDomain = "https://surveys.test.formbricks.com";
 
 describe("SurveyAnalysisCTA - handleCopyLink", () => {
   afterEach(() => {
@@ -136,7 +141,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -147,9 +152,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
 
     await waitFor(() => {
       expect(refreshSingleUseIdSpy).toHaveBeenCalled();
-      expect(writeTextMock).toHaveBeenCalledWith(
-        "https://surveys.test.formbricks.com/s/survey123?id=newSingleUseId"
-      );
+      expect(writeTextMock).toHaveBeenCalledWith("https://public-domain.com/s/survey123?suId=newSingleUseId");
       expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
     });
   });
@@ -161,7 +164,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -194,7 +197,7 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -215,7 +218,7 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={0}
       />
@@ -237,7 +240,7 @@ describe("SurveyAnalysisCTA - Edit functionality", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={true}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -266,7 +269,7 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -309,7 +312,7 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -335,7 +338,7 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />
@@ -369,7 +372,7 @@ describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertD
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        surveyDomain={surveyDomain}
+        publicDomain={mockPublicDomain}
         user={dummyUser}
         responseCount={5}
       />

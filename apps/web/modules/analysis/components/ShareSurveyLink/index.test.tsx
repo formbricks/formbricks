@@ -93,7 +93,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl=""
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -114,7 +114,7 @@ describe("ShareSurveyLink", () => {
     const DummyWrapper = () => (
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl="initial"
         setSurveyUrl={setSurveyUrl}
         locale="fr-FR"
@@ -134,7 +134,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -160,7 +160,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl={surveyUrl}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -185,7 +185,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -205,7 +205,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -227,7 +227,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        surveyDomain={dummySurveyDomain}
+        publicDomain={dummySurveyDomain}
         surveyUrl=""
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}

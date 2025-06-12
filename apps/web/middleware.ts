@@ -17,7 +17,8 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { IS_PRODUCTION, RATE_LIMITING_DISABLED, SURVEY_URL, WEBAPP_URL } from "@/lib/constants";
+import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
@@ -71,10 +72,11 @@ const applyRateLimiting = async (request: NextRequest, ip: string) => {
 
 const handleSurveyDomain = (request: NextRequest): Response | null => {
   try {
-    if (!SURVEY_URL) return null;
+    const PUBLIC_URL = env.PUBLIC_URL;
+    if (!PUBLIC_URL) return null;
 
     const host = request.headers.get("host") || "";
-    const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
+    const surveyDomain = PUBLIC_URL ? new URL(PUBLIC_URL).host : "";
     if (host !== surveyDomain) return null;
 
     return new NextResponse(null, { status: 404 });
