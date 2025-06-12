@@ -85,7 +85,7 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
-    PUBLIC_URL: z.string().optional(),
+    PUBLIC_URL: z.string().url().optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     TERMS_URL: z
       .string()

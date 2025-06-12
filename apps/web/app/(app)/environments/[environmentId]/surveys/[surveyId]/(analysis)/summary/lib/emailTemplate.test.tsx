@@ -34,6 +34,12 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 vi.mock("@/lib/getPublicUrl", () => ({
   getPublicDomain: vi.fn().mockReturnValue("https://public-domain.com"),
 }));

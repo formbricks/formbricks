@@ -51,6 +51,12 @@ vi.mock("@/lib/constants", () => ({
   REDIS_URL: "mock-url",
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 // Create a spy for refreshSingleUseId so we can override it in tests
 const refreshSingleUseIdSpy = vi.fn(() => Promise.resolve("newSingleUseId"));
 
