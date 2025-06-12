@@ -21,10 +21,7 @@ const copySqlMigrationsPlugin: Plugin = {
 };
 
 export default defineConfig(async (): Promise<UserConfig> => {
-  const migrationTsFiles = [];
-  for await (const file of fs.glob("migration/**/migration.ts", { cwd: __dirname })) {
-    migrationTsFiles.push(file);
-  }
+  const migrationTsFiles = await glob("migration/**/migration.ts", { cwd: __dirname });
   const migrationEntries = migrationTsFiles.reduce((acc: Record<string, string>, file: string) => {
     const dir = dirname(file);
     const entryName = `${dir}/migration`;
