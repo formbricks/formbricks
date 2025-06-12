@@ -13,7 +13,7 @@ const dummySurvey = {
   type: "link",
   status: "completed",
 } as any;
-const dummySurveyDomain = "http://dummy.com";
+const dummyPublicDomain = "http://dummy.com";
 const dummyLocale = "en-US";
 
 vi.mock("@/lib/constants", () => ({
@@ -93,7 +93,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
+        publicDomain={dummyPublicDomain}
         surveyUrl=""
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -103,7 +103,7 @@ describe("ShareSurveyLink", () => {
       expect(setSurveyUrl).toHaveBeenCalled();
     });
     const url = setSurveyUrl.mock.calls[0][0];
-    expect(url).toContain(`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`);
+    expect(url).toContain(`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`);
     expect(url).not.toContain("lang=");
   });
 
@@ -114,7 +114,7 @@ describe("ShareSurveyLink", () => {
     const DummyWrapper = () => (
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
+        publicDomain={dummyPublicDomain}
         surveyUrl="initial"
         setSurveyUrl={setSurveyUrl}
         locale="fr-FR"
@@ -130,12 +130,12 @@ describe("ShareSurveyLink", () => {
   test("preview button opens new window with preview query", async () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
 
-    const setSurveyUrl = vi.fn().mockReturnValue(`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`);
+    const setSurveyUrl = vi.fn().mockReturnValue(`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`);
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
-        surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
+        publicDomain={dummyPublicDomain}
+        surveyUrl={`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
       />
@@ -156,11 +156,11 @@ describe("ShareSurveyLink", () => {
     vi.mocked(copySurveyLink).mockImplementation((url: string, newId: string) => `${url}?suId=${newId}`);
 
     const setSurveyUrl = vi.fn();
-    const surveyUrl = `${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`;
+    const surveyUrl = `${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`;
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
+        publicDomain={dummyPublicDomain}
         surveyUrl={surveyUrl}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
@@ -185,8 +185,8 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
-        surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
+        publicDomain={dummyPublicDomain}
+        surveyUrl={`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
       />
@@ -205,8 +205,8 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
-        surveyUrl={`${dummySurveyDomain}/s/${dummySurvey.id}?suId=dummySuId`}
+        publicDomain={dummyPublicDomain}
+        surveyUrl={`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`}
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}
       />
@@ -227,7 +227,7 @@ describe("ShareSurveyLink", () => {
     render(
       <ShareSurveyLink
         survey={dummySurvey}
-        publicDomain={dummySurveyDomain}
+        publicDomain={dummyPublicDomain}
         surveyUrl=""
         setSurveyUrl={setSurveyUrl}
         locale={dummyLocale}

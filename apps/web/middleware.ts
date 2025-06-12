@@ -70,14 +70,14 @@ const applyRateLimiting = async (request: NextRequest, ip: string) => {
   }
 };
 
-const handleSurveyDomain = (request: NextRequest): Response | null => {
+const handlePublicDomain = (request: NextRequest): Response | null => {
   try {
     const PUBLIC_URL = env.PUBLIC_URL;
     if (!PUBLIC_URL) return null;
 
     const host = request.headers.get("host") || "";
-    const surveyDomain = PUBLIC_URL ? new URL(PUBLIC_URL).host : "";
-    if (host !== surveyDomain) return null;
+    const publicDomain = PUBLIC_URL ? new URL(PUBLIC_URL).host : "";
+    if (host !== publicDomain) return null;
 
     return new NextResponse(null, { status: 404 });
   } catch (error) {
@@ -96,7 +96,7 @@ export const middleware = async (originalRequest: NextRequest) => {
   }
 
   // Handle survey domain routing.
-  const surveyResponse = handleSurveyDomain(originalRequest);
+  const surveyResponse = handlePublicDomain(originalRequest);
   if (surveyResponse) return surveyResponse;
 
   // Create a new Request object to override headers and add a unique request ID header

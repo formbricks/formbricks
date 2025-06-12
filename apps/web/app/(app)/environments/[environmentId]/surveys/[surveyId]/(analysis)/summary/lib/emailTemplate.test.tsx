@@ -123,7 +123,7 @@ const mockComputedStyling = {
   thankYouCardIconBgColor: "#DDDDDD",
 } as any;
 
-const mockSurveyDomain = "https://app.formbricks.com";
+const mockPublicDomain = "https://app.formbricks.com";
 const mockRawHtml = `${doctype}<html><body>Test Email Content for ${mockSurvey.name}</body></html>`;
 const mockCleanedHtml = `<html><body>Test Email Content for ${mockSurvey.name}</body></html>`;
 
@@ -138,7 +138,7 @@ describe("getEmailTemplateHtml", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(mockProject);
     vi.mocked(getStyling).mockReturnValue(mockComputedStyling);
-    vi.mocked(getPublicDomain).mockReturnValue(mockSurveyDomain);
+    vi.mocked(getPublicDomain).mockReturnValue(mockPublicDomain);
     vi.mocked(getPreviewEmailTemplateHtml).mockResolvedValue(mockRawHtml);
   });
 
@@ -150,7 +150,7 @@ describe("getEmailTemplateHtml", () => {
     expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockSurvey.environmentId);
     expect(getStyling).toHaveBeenCalledWith(mockProject, mockSurvey);
     expect(getPublicDomain).toHaveBeenCalledTimes(1);
-    const expectedSurveyUrl = `${mockSurveyDomain}/s/${mockSurvey.id}`;
+    const expectedSurveyUrl = `${mockPublicDomain}/s/${mockSurvey.id}`;
     expect(getPreviewEmailTemplateHtml).toHaveBeenCalledWith(
       mockSurvey,
       expectedSurveyUrl,
