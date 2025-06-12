@@ -15,7 +15,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
-import { UnknownError } from "@formbricks/types/errors";
+import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreatedUser = ZUser.pick({
@@ -80,7 +80,11 @@ async function createUserSafely(
       locale: userLocale,
     });
   } catch (error) {
-    userAlreadyExisted = true;
+    if (error instanceof InvalidInputError) {
+      userAlreadyExisted = true;
+    } else {
+      throw error;
+    }
   }
 
   return { user, userAlreadyExisted };
@@ -192,7 +196,6 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(
 
       return {
         success: true,
-        message: "If this email is already registered, we'll send you a confirmation.",
       };
     }
   )
