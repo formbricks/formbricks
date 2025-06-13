@@ -117,7 +117,7 @@ export const SignupForm = ({
       const token = emailTokenActionResponse?.data;
 
       const url = emailVerificationDisabled
-        ? `/auth/signup-without-verification-success`
+        ? `/auth/signup-without-verification-success?token=${token}`
         : `/auth/verification-requested?token=${token}`;
 
       if (createUserResponse?.data) {
