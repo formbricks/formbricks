@@ -1,4 +1,4 @@
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
@@ -17,7 +17,7 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   }
 
   const styling = getStyling(project, survey);
-  const surveyUrl = getSurveyDomain() + "/s/" + survey.id;
+  const surveyUrl = getPublicDomain() + "/s/" + survey.id;
   const html = await getPreviewEmailTemplateHtml(survey, surveyUrl, styling, locale, t);
   const doctype =
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';

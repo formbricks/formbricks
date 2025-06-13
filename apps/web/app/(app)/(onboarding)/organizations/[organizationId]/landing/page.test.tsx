@@ -23,7 +23,6 @@ vi.mock("@/lib/constants", () => ({
   IS_DEVELOPMENT: true,
   E2E_TESTING: false,
   WEBAPP_URL: "http://localhost:3000",
-  SURVEY_URL: "http://localhost:3000/survey",
   ENCRYPTION_KEY: "mock-encryption-key",
   CRON_SECRET: "mock-cron-secret",
   DEFAULT_BRAND_COLOR: "#64748b",

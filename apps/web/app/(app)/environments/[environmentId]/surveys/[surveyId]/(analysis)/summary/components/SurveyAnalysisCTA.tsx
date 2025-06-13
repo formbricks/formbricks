@@ -24,7 +24,7 @@ interface SurveyAnalysisCTAProps {
   environment: TEnvironment;
   isReadOnly: boolean;
   user: TUser;
-  surveyDomain: string;
+  publicDomain: string;
   responseCount: number;
 }
 
@@ -40,7 +40,7 @@ export const SurveyAnalysisCTA = ({
   environment,
   isReadOnly,
   user,
-  surveyDomain,
+  publicDomain,
   responseCount,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
@@ -56,7 +56,7 @@ export const SurveyAnalysisCTA = ({
     dropdown: false,
   });
 
-  const surveyUrl = useMemo(() => `${surveyDomain}/s/${survey.id}`, [survey.id, surveyDomain]);
+  const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
   const { refreshSingleUseId } = useSingleUseId(survey);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
@@ -202,7 +202,7 @@ export const SurveyAnalysisCTA = ({
             <ShareEmbedSurvey
               key={key}
               survey={survey}
-              surveyDomain={surveyDomain}
+              publicDomain={publicDomain}
               open={modalState[key as keyof ModalState]}
               setOpen={setOpen}
               user={user}

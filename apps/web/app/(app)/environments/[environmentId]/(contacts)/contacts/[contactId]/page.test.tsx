@@ -30,6 +30,12 @@ vi.mock("@/lib/constants", () => ({
   REDIS_URL: "redis://localhost:6379",
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 describe("Contact Page Re-export", () => {
   test("should re-export SingleContactPage", () => {
     expect(Page).toBe(SingleContactPage);

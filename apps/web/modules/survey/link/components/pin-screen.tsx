@@ -16,7 +16,7 @@ interface PinScreenProps {
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
-  surveyDomain: string;
+  publicDomain: string;
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -35,7 +35,7 @@ export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
     project,
-    surveyDomain,
+    publicDomain,
     webAppUrl,
     emailVerificationStatus,
     singleUseId,
@@ -124,7 +124,7 @@ export const PinScreen = (props: PinScreenProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
-      surveyDomain={surveyDomain}
+      publicDomain={publicDomain}
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}

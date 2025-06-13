@@ -24,7 +24,7 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
-  surveyDomain: string;
+  publicDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -33,7 +33,7 @@ interface ShareEmbedSurveyProps {
 
 export const ShareEmbedSurvey = ({
   survey,
-  surveyDomain,
+  publicDomain,
   open,
   modalView,
   setOpen,
@@ -66,16 +66,16 @@ export const ShareEmbedSurvey = ({
   useEffect(() => {
     const fetchSurveyUrl = async () => {
       try {
-        const url = await getSurveyUrl(survey, surveyDomain, "default");
+        const url = await getSurveyUrl(survey, publicDomain, "default");
         setSurveyUrl(url);
       } catch (error) {
         console.error("Failed to fetch survey URL:", error);
         // Fallback to a default URL if fetching fails
-        setSurveyUrl(`${surveyDomain}/s/${survey.id}`);
+        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
       }
     };
     fetchSurveyUrl();
-  }, [survey, surveyDomain]);
+  }, [survey, publicDomain]);
 
   useEffect(() => {
     if (survey.type !== "link") {
@@ -120,7 +120,7 @@ export const ShareEmbedSurvey = ({
               <ShareSurveyLink
                 survey={survey}
                 surveyUrl={surveyUrl}
-                surveyDomain={surveyDomain}
+                publicDomain={publicDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -174,7 +174,7 @@ export const ShareEmbedSurvey = ({
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
-            surveyDomain={surveyDomain}
+            publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
           />

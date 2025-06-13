@@ -3,7 +3,7 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -40,7 +40,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);
 
-  const surveyDomain = getSurveyDomain();
+  const publicDomain = getPublicDomain();
 
   return (
     <PageContentWrapper>
@@ -52,7 +52,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             survey={survey}
             isReadOnly={isReadOnly}
             user={user}
-            surveyDomain={surveyDomain}
+            publicDomain={publicDomain}
             responseCount={initialSurveySummary?.meta.totalResponses ?? 0}
           />
         }>

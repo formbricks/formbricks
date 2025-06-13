@@ -15,6 +15,15 @@ vi.mock("@aws-sdk/client-s3", () => ({
   GetObjectCommand: vi.fn(),
 }));
 
+vi.mock("@aws-sdk/s3-presigned-post", () => ({
+  createPresignedPost: vi.fn(() =>
+    Promise.resolve({
+      url: "https://test-bucket.s3.test-region.amazonaws.com",
+      fields: { key: "test-key", policy: "test-policy" },
+    })
+  ),
+}));
+
 // Mock environment variables
 vi.mock("../constants", () => ({
   S3_ACCESS_KEY: "test-access-key",
@@ -34,9 +43,30 @@ vi.mock("../constants", () => ({
   UPLOADS_DIR: "/tmp/uploads",
 }));
 
+// Mock getPublicDomain
+vi.mock("../getPublicUrl", () => ({
+  getPublicDomain: () => "https://public-domain.com",
+}));
+
 // Mock crypto functions
 vi.mock("crypto", () => ({
   randomUUID: () => "test-uuid",
+}));
+
+// Mock local signed url generation
+vi.mock("../crypto", () => ({
+  generateLocalSignedUrl: () => ({
+    signature: "test-signature",
+    timestamp: 123456789,
+    uuid: "test-uuid",
+  }),
+}));
+
+// Mock env
+vi.mock("../env", () => ({
+  env: {
+    S3_BUCKET_NAME: "test-bucket",
+  },
 }));
 
 describe("Storage Service", () => {
@@ -129,6 +159,40 @@ describe("Storage Service", () => {
       mockSend.mockRejectedValueOnce(error);
 
       await expect(putFile(fileName, fileBuffer, accessType, environmentId)).rejects.toThrow("Upload failed");
+    });
+  });
+
+  describe("getUploadSignedUrl", () => {
+    let getUploadSignedUrl: any;
+
+    beforeEach(async () => {
+      const serviceModule = await import("./service");
+      getUploadSignedUrl = serviceModule.getUploadSignedUrl;
+    });
+
+    test("should use PUBLIC_URL for public files with S3", async () => {
+      const result = await getUploadSignedUrl("test.jpg", "env123", "image/jpeg", "public");
+
+      expect(result.fileUrl).toContain("https://public-domain.com");
+      expect(result.fileUrl).toMatch(
+        /https:\/\/public-domain\.com\/storage\/env123\/public\/test--fid--test-uuid\.jpg/
+      );
+    });
+
+    test("should use WEBAPP_URL for private files with S3", async () => {
+      const result = await getUploadSignedUrl("test.jpg", "env123", "image/jpeg", "private");
+
+      expect(result.fileUrl).toContain("http://test-webapp");
+      expect(result.fileUrl).toMatch(
+        /http:\/\/test-webapp\/storage\/env123\/private\/test--fid--test-uuid\.jpg/
+      );
+    });
+
+    test("should contain signed URL and presigned fields for S3", async () => {
+      const result = await getUploadSignedUrl("test.jpg", "env123", "image/jpeg", "public");
+
+      expect(result.signedUrl).toBe("https://test-bucket.s3.test-region.amazonaws.com");
+      expect(result.presignedFields).toEqual({ key: "test-key", policy: "test-policy" });
     });
   });
 });

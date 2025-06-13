@@ -15,7 +15,7 @@ import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
-  surveyDomain: string;
+  publicDomain: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
@@ -24,7 +24,7 @@ interface ShareSurveyLinkProps {
 export const ShareSurveyLink = ({
   survey,
   surveyUrl,
-  surveyDomain,
+  publicDomain,
   setSurveyUrl,
   locale,
 }: ShareSurveyLinkProps) => {
@@ -34,7 +34,7 @@ export const ShareSurveyLink = ({
   useEffect(() => {
     const fetchSurveyUrl = async () => {
       try {
-        const url = await getSurveyUrl(survey, surveyDomain, language);
+        const url = await getSurveyUrl(survey, publicDomain, language);
         setSurveyUrl(url);
       } catch (error) {
         const errorMessage = getFormattedErrorMessage(error);
@@ -42,11 +42,11 @@ export const ShareSurveyLink = ({
       }
     };
     fetchSurveyUrl();
-  }, [survey, language, surveyDomain, setSurveyUrl]);
+  }, [survey, language, publicDomain, setSurveyUrl]);
 
   const generateNewSingleUseLink = async () => {
     try {
-      const newUrl = await getSurveyUrl(survey, surveyDomain, language);
+      const newUrl = await getSurveyUrl(survey, publicDomain, language);
       setSurveyUrl(newUrl);
       toast.success(t("environments.surveys.new_single_use_link_generated"));
     } catch (error) {
