@@ -18,8 +18,8 @@ test.describe("Email Signup Flow Test", async () => {
     await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-    await page.waitForURL("/auth/signup-without-verification-success");
-    await expect(page).toHaveURL("/auth/signup-without-verification-success");
+    await page.waitForURL(/\/auth\/signup-without-verification-success.*/);
+    await expect(page).toHaveURL(/\/auth\/signup-without-verification-success.*/);
   });
 
   test("No Name", async ({ page }) => {
