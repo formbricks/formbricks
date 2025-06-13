@@ -27,15 +27,9 @@ export const hasPublicDomainConfigured = (): boolean => {
  * Check if the current request is coming from the public domain
  */
 export const isRequestFromPublicDomain = (request: NextRequest): boolean => {
-  console.log(
-    "request",
-    request.headers.forEach((value, key) => console.log(key, value))
-  );
   const host = request.headers.get("host");
   const publicDomain = getPublicDomain();
 
-  console.log("host", host);
-  console.log("publicDomain", publicDomain);
   if (!publicDomain) return false;
 
   return host === publicDomain;
