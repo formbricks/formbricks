@@ -38,13 +38,15 @@ export const MyCommunityCard = ({ creator, environmentId, className = "" }: MyCo
                 {creator.communityName || creator.name || creator.email}
               </p>
               {/* TODO: Add verified check here and display if verified */}
-              <Image
-                src={VerifiedImage as string}
-                alt={t("verified check icon")}
-                className="h-5 w-5"
-                width={20}
-                height={20}
-              />
+              {creator.whitelist && (
+                <Image
+                  src={VerifiedImage as string}
+                  alt={t("verified check icon")}
+                  className="h-5 w-5"
+                  width={20}
+                  height={20}
+                />
+              )}
             </div>
             {/* TODO: Add community description here */}
             <p className="mb-4 line-clamp-2 text-sm text-slate-500">

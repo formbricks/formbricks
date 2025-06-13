@@ -30,8 +30,6 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
     throw new Error(t("common.community_not_found"));
   }
 
-  console.log("Community:", community);
-
   return (
     <PageContentWrapper>
       <div className="flex items-center justify-between">
@@ -50,54 +48,49 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
         <CommunityActions community={community} currentUserId={currentUserId} />
       </div>
 
-      <div className="flex justify-between gap-4 pt-4">
+      <div className="gap-4 pt-4">
         <div className="max-w-2xl">
           {community.communityDescription ? (
             <p className="mt-2 text-lg">{community.communityDescription}</p>
           ) : null}
         </div>
 
-        <div className="p-4">
-          <div className="mb-3 flex items-center gap-2">
+        <div className="pt-6">
+          <div className="mb-3 flex items-center gap-4">
             <h2 className="text-lg font-semibold text-slate-800">
               {t("common.members")} ({community.members?.length || 0})
             </h2>
+            <div className="flex flex-wrap items-center">
+              {community.members && community.members.length > 0 ? (
+                <div className="flex -space-x-3 overflow-visible">
+                  {community.members.slice(0, 10).map((member, idx) => (
+                    <div key={member.id} className="relative" style={{ zIndex: idx }}>
+                      <div className="h-11 w-11">
+                        {member.imageUrl ? (
+                          <Image
+                            src={member.imageUrl}
+                            alt={member.name || t("common.unnamed_user")}
+                            width={44}
+                            height={44}
+                            className="h-full w-full rounded-full border-2 border-white"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-200"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             {community.members && community.members.length > 0 && (
               <MembersModal members={community.members} />
             )}
           </div>
-
-          <div className="flex flex-wrap items-center">
-            {community.members && community.members.length > 0 ? (
-              <div className="flex -space-x-3 overflow-visible">
-                {community.members.slice(0, 10).map((member, idx) => (
-                  <div key={member.id} className="relative" style={{ zIndex: idx }}>
-                    <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-white">
-                      {member.imageUrl ? (
-                        <Image
-                          src={member.imageUrl}
-                          alt={member.name || "Member"}
-                          width={44}
-                          height={44}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="bg-primary-100 text-primary-800 flex h-full w-full items-center justify-center text-base font-medium">
-                          {(member.name && member.name.charAt(0)) ||
-                            (member.email && member.email.charAt(0)) ||
-                            "?"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-10 pt-10">
+      <div className="grid grid-cols-2 gap-10 pt-20">
         <CommunityStatCard
           value={community.createdSurveys || 0}
           label={t("environments.community.total_engagements")}

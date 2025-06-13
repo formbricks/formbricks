@@ -1,4 +1,5 @@
 import CommmunityPlaceholderOne from "@/images/illustrations/community-placeholder-1.png";
+import VerifiedImage from "@/images/illustrations/verified-rounded.svg";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
@@ -28,9 +29,20 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
         <div className="flex h-full w-full flex-col justify-between gap-4">
           <div className="flex h-full flex-col justify-between">
             <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
-                {community.communityName || community.email}
-              </h3>
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
+                  {community.communityName || community.email}
+                </h3>
+                {community.whitelist && (
+                  <Image
+                    src={VerifiedImage as string}
+                    alt={t("verified check icon")}
+                    className="h-5 w-5"
+                    width={20}
+                    height={20}
+                  />
+                )}
+              </div>
               <div className="min-h-16">
                 <p className="line-clamp-2 text-base font-normal">
                   {" "}

@@ -74,6 +74,10 @@ const config = {
           DEFAULT: "#157BA3",
           foreground: "#EFDCFF",
         },
+        quaternary: {
+          DEFAULT: "#E0F3FA",
+          foreground: "#157BA3",
+        },
         accent: {
           DEFAULT: "#f4f6f8", // light gray background
           foreground: "#38B5DB", // same as primary default for consistency

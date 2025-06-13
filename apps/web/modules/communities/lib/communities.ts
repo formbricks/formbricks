@@ -269,6 +269,16 @@ export const getCommunity = async ({ communityId }: { communityId: string }): Pr
             id: true,
             name: true,
             imageUrl: true,
+            socials: {
+              select: {
+                id: true,
+                provider: true,
+                socialId: true,
+                socialName: true,
+                socialEmail: true,
+                socialAvatar: true,
+              },
+            },
           },
         },
       },

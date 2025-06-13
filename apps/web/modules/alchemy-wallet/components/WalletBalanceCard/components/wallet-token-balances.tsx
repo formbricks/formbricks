@@ -2,7 +2,6 @@
 
 import Address from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/address";
 import NoTokensCTACard from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/no-tokens-cta-card";
-import { WalletModal } from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-modal";
 import WalletTokenItemSkeleton from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-token-item-skeleton";
 import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
 import { Button } from "@/modules/ui/components/button";
@@ -11,7 +10,7 @@ import { useUser } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
 import { formatUnits } from "ethers";
-import { PlusIcon, SendIcon } from "lucide-react";
+import { SendIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -31,7 +30,6 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
   const [balances, setBalances] = useState<TokenBalance[] | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<TokenBalance | null>(null);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const openSendModal = useCallback(() => {
     setShowSendModal(true);
@@ -144,10 +142,6 @@ export function WalletTokenBalances({ className = "" }: { className?: string }) 
       <div className="col-span-3 flex flex-col gap-2">
         <div className="flex w-full items-center gap-2">
           <h3 className="text-lg font-medium text-slate-900">{t("common.token_holdings")}</h3>
-          <WalletModal address={address} open={showWalletModal} setOpen={setShowWalletModal} />
-          <Button className="h-6 w-6 rounded-md p-0" onClick={() => setShowWalletModal(true)}>
-            <PlusIcon className="h-4 w-4" strokeWidth={2} />
-          </Button>
         </div>
 
         <div className="md:hidden">

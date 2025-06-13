@@ -99,11 +99,23 @@ export const ZUserCreateInput = z.object({
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
 
+export const ZUserSocial = z.object({
+  id: z.string(),
+  provider: z.string(),
+  socialId: z.string(),
+  socialName: z.string().nullable(),
+  socialEmail: z.string(),
+  socialAvatar: z.string().nullable(),
+});
+
+export type TUserSocial = z.infer<typeof ZUserSocial>;
+
 export const ZCommunityMember = z.object({
   id: z.string(),
   name: z.string().nullable(),
   imageUrl: z.string().url().nullable(),
   email: ZUserEmail.optional(),
+  socials: z.array(ZUserSocial).optional(),
 });
 
 export type TCommunityMember = z.infer<typeof ZCommunityMember>;

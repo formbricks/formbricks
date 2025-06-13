@@ -1,4 +1,4 @@
-import RewardIcon from "@/images/reward.svg";
+import defaultEngageCardImg from "@/images/illustrations/default-engage-card.png";
 import { getUserResponseAction } from "@/modules/discover/components/Engagements/actions";
 import { SurveyInfoModal } from "@/modules/discover/components/common/survey-response-modal";
 import { ChainContext } from "@/modules/discover/context/chain-context";
@@ -52,12 +52,35 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
   }, [survey.id, response]);
 
   return (
-    <div className="relative my-4 flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex min-h-[200px] flex-col justify-between p-6 pb-3">
+    <div className="relative my-4 flex w-full flex-col rounded-xl bg-white shadow-sm">
+      <div
+        className={`bg-tertiary-foreground flex h-[124px] w-full items-start rounded-t-xl px-[18px] ${
+          chainName ? "justify-between" : "justify-end"
+        }`}>
+        {survey.reward?.amount && (
+          <div className="mt-4 flex h-[34px] items-center gap-2 rounded-lg bg-white/50 pl-4 pr-4">
+            <span className="text-sm font-medium text-slate-700">
+              {`${t("common.reward")}: ${survey.reward?.amount} ${survey.reward?.symbol}`}
+            </span>
+          </div>
+        )}
+        <div className="relative h-[124px] w-[133px] overflow-hidden">
+          <Image
+            src={defaultEngageCardImg}
+            alt={t("default-engage-card-png")}
+            className="object-contain"
+            fill
+            priority
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col justify-between rounded-b-xl p-6 pb-3">
         <div className="mb-2 flex w-full flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge size="tiny" type="gray" text={surveyTypeLabel} />
+            <Badge size="large" type="brand" text={surveyTypeLabel} />
           </div>
+
           <div className="flex items-center gap-1 text-slate-700">
             {survey.responseCount != undefined && (
               <div className="flex items-center py-0.5 text-xs">
@@ -67,10 +90,10 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
                   <span>
                     {survey.responseCount <= 1 ? t("common.participant") : t("common.participants")}
                   </span>
-                  <span className="mx-1 -mt-1">|</span>
                 </div>
               </div>
             )}
+            <span className="mx-1 -mt-1">|</span>
             <div className="flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
               <CheckCircleIcon className="mr-1 h-3 w-3" />
               {t("common.completed")}
@@ -82,30 +105,8 @@ export const CompletedSurveyCard = ({ survey }: CompletedSurveyCardProps) => {
           <p className="mb-1 line-clamp-1 text-lg font-medium">{survey.name}</p>
           <p className="mb-4 line-clamp-2 text-sm text-slate-500">{survey.description}</p>
         </div>
-
-        {chainName && (
-          <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-md bg-purple-100 px-1.5 py-1">
-                <Image src={RewardIcon as string} className="h-5 w-5" alt="reward icon" />
-                <div className="text-sm text-slate-600">
-                  <span className="mr-1 font-medium">{t("common.reward")}:</span>
-                  <span className="font-bold">
-                    {survey.reward?.amount} {survey.reward?.symbol}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* <div className="flex items-center gap-2">
-                      <span className="relative mr-1 flex h-5 w-5 shrink-0 overflow-hidden rounded-md">
-                        <div className="mx-auto w-80 bg-slate-500" />
-                      </span>
-                      <span className="text-xs text-slate-500">{chainName}</span>
-                    </div> */}
-          </div>
-        )}
       </div>
+
       <div className="p-6 pt-0">
         {survey.creator && (
           <div className="mb-4 flex items-center">
