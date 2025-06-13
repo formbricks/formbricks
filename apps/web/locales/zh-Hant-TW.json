@@ -80,7 +80,7 @@
     "signup_without_verification_success": {
       "user_successfully_created": "使用者建立成功",
       "user_successfully_created_description": "您的新使用者已成功建立。請點擊下方按鈕並登入您的帳戶。",
-      "user_successfully_created_info": "如果此電子郵件尚未註冊，將建立一個新帳戶；否則，不會執行任何操作。"
+      "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
     "testimonial_1": "我們在同一個平台上測量文件的清晰度，並從客戶流失中學習。很棒的產品，團隊反應非常迅速！",
     "testimonial_all_features_included": "包含所有功能",
@@ -96,7 +96,7 @@
       "please_confirm_your_email_address": "請確認您的電子郵件地址",
       "resend_verification_email": "重新發送驗證電子郵件",
       "verification_email_resent_successfully": "驗證電子郵件已發送！請檢查您的收件箱。",
-      "verification_email_successfully_sent_info": "如果此電子郵件尚未與帳戶關聯，您將收到一封驗證電子郵件。",
+      "verification_email_successfully_sent_info": "如果有一個帳戶與 {email} 相關聯，我們已發送驗證連結至該地址。請檢查您的收件箱以完成註冊。",
       "we_sent_an_email_to": "我們已發送一封電子郵件至 <email>'{'email'}'</email>。",
       "you_didnt_receive_an_email_or_your_link_expired": "您沒有收到電子郵件或您的連結已過期？"
     },
