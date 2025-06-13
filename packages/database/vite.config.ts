@@ -49,13 +49,11 @@ export default defineConfig(async (): Promise<UserConfig> => {
             format: "esm",
             entryFileNames: "[name].js",
             chunkFileNames: "[name].js",
-            assetFileNames: "[name].[ext]",
           },
           {
             format: "cjs",
             entryFileNames: "[name].cjs",
             chunkFileNames: "[name].cjs",
-            assetFileNames: "[name].[ext]",
           },
         ],
         external: [

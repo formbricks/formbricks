@@ -64,7 +64,7 @@
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "build": {
       "dependsOn": ["^build"],
