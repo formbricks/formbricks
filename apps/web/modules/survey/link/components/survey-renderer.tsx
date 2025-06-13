@@ -6,7 +6,7 @@ import {
   RECAPTCHA_SITE_KEY,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -108,13 +108,13 @@ export const renderSurvey = async ({
   const languageCode = getLanguageCode();
   const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
-  const surveyDomain = getSurveyDomain();
+  const publicDomain = getPublicDomain();
 
   if (isSurveyPinProtected) {
     return (
       <PinScreen
         surveyId={survey.id}
-        surveyDomain={surveyDomain}
+        publicDomain={publicDomain}
         project={project}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={singleUseId}
@@ -139,7 +139,7 @@ export const renderSurvey = async ({
     <LinkSurvey
       survey={survey}
       project={project}
-      surveyDomain={surveyDomain}
+      publicDomain={publicDomain}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}

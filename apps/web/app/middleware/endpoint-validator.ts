@@ -8,6 +8,9 @@ export const isVerifyEmailRoute = (url: string) => url === "/auth/verify-email";
 export const isForgotPasswordRoute = (url: string) => url === "/auth/forgot-password";
 
 export const isClientSideApiRoute = (url: string): boolean => {
+  // Open Graph image generation route is a client side API route but it should not be rate limited
+  if (url.includes("/api/v1/client/og")) return false;
+
   if (url.includes("/api/v1/js/actions")) return true;
   if (url.includes("/api/v1/client/storage")) return true;
   const regex = /^\/api\/v\d+\/client\//;

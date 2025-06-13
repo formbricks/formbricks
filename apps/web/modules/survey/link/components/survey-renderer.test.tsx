@@ -49,8 +49,8 @@ vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn().mockResolvedValue("en"),
 }));
 
-vi.mock("@/lib/getSurveyUrl", () => ({
-  getSurveyDomain: vi.fn().mockReturnValue("https://survey-domain.com"),
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn().mockReturnValue("https://public-domain.com"),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({

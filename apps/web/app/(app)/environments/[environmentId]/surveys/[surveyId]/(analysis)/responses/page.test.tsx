@@ -3,7 +3,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import Page from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
@@ -65,8 +65,8 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 1000,
 }));
 
-vi.mock("@/lib/getSurveyUrl", () => ({
-  getSurveyDomain: vi.fn(),
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(),
 }));
 
 vi.mock("@/lib/response/service", () => ({
@@ -160,7 +160,7 @@ const mockEnvironment = {
 
 const mockTags: TTag[] = [{ id: "tag1", name: "Tag 1", environmentId: mockEnvironmentId } as unknown as TTag];
 const mockLocale: TUserLocale = "en-US";
-const mockSurveyDomain = "http://customdomain.com";
+const mockPublicDomain = "http://customdomain.com";
 
 const mockParams = {
   environmentId: mockEnvironmentId,
@@ -179,7 +179,7 @@ describe("ResponsesPage", () => {
     vi.mocked(getTagsByEnvironmentId).mockResolvedValue(mockTags);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
     vi.mocked(findMatchingLocale).mockResolvedValue(mockLocale);
-    vi.mocked(getSurveyDomain).mockReturnValue(mockSurveyDomain);
+    vi.mocked(getPublicDomain).mockReturnValue(mockPublicDomain);
   });
 
   afterEach(() => {
@@ -205,7 +205,7 @@ describe("ResponsesPage", () => {
         survey: mockSurvey,
         isReadOnly: false,
         user: mockUser,
-        surveyDomain: mockSurveyDomain,
+        publicDomain: mockPublicDomain,
       }),
       undefined
     );
