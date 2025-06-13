@@ -21,7 +21,6 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
-  webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
@@ -43,7 +42,6 @@ export const LinkSurvey = ({
   singleUseId,
   singleUseResponse,
   publicDomain,
-  webAppUrl,
   responseCount,
   verifiedEmail,
   languageCode,
@@ -178,7 +176,7 @@ export const LinkSurvey = ({
       PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
-        appUrl={webAppUrl}
+        appUrl={publicDomain}
         environmentId={survey.environmentId}
         isPreviewMode={isPreview}
         survey={survey}

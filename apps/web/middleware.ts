@@ -7,7 +7,7 @@ import {
   syncUserIdentificationLimiter,
   verifyEmailLimiter,
 } from "@/app/middleware/bucket";
-import { hasPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
+import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
@@ -76,10 +76,10 @@ const applyRateLimiting = async (request: NextRequest, ip: string) => {
  */
 const handleDomainAwareRouting = (request: NextRequest): Response | null => {
   try {
-    const hasPublicDomain = hasPublicDomainConfigured();
+    const publicDomainConfigured = isPublicDomainConfigured();
 
     // When PUBLIC_URL is not configured, admin domain allows all routes (backward compatibility)
-    if (!hasPublicDomain) return null;
+    if (!publicDomainConfigured) return null;
 
     const isPublicDomain = isRequestFromPublicDomain(request);
 

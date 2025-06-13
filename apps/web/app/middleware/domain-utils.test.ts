@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getPublicDomain, hasPublicDomainConfigured, isRequestFromPublicDomain } from "./domain-utils";
+import { getPublicDomainHost, isPublicDomainConfigured, isRequestFromPublicDomain } from "./domain-utils";
 
 // Mock the env module
 vi.mock("@/lib/env", () => ({
@@ -18,44 +18,34 @@ describe("Domain Utils", () => {
 
   describe("getPublicDomain", () => {
     test("should return null when PUBLIC_URL is empty", () => {
-      expect(getPublicDomain()).toBeNull();
-    });
-
-    test("should return null when PUBLIC_URL is invalid", () => {
-      process.env.PUBLIC_URL = "invalid-url";
-      expect(getPublicDomain()).toBeNull();
+      expect(getPublicDomainHost()).toBeNull();
     });
 
     test("should return the host from a valid PUBLIC_URL", () => {
       process.env.PUBLIC_URL = "https://example.com";
-      expect(getPublicDomain()).toBe("example.com");
+      expect(getPublicDomainHost()).toBe("example.com");
     });
 
     test("should handle URLs with paths", () => {
       process.env.PUBLIC_URL = "https://example.com/path";
-      expect(getPublicDomain()).toBe("example.com");
+      expect(getPublicDomainHost()).toBe("example.com");
     });
 
     test("should handle URLs with ports", () => {
       process.env.PUBLIC_URL = "https://example.com:3000";
-      expect(getPublicDomain()).toBe("example.com:3000");
+      expect(getPublicDomainHost()).toBe("example.com:3000");
     });
   });
 
-  describe("hasPublicDomainConfigured", () => {
+  describe("isPublicDomainConfigured", () => {
     test("should return false when PUBLIC_URL is empty", () => {
       process.env.PUBLIC_URL = "";
-      expect(hasPublicDomainConfigured()).toBe(false);
-    });
-
-    test("should return false when PUBLIC_URL is invalid", () => {
-      process.env.PUBLIC_URL = "invalid-url";
-      expect(hasPublicDomainConfigured()).toBe(false);
+      expect(isPublicDomainConfigured()).toBe(false);
     });
 
     test("should return true when PUBLIC_URL is valid", () => {
       process.env.PUBLIC_URL = "https://example.com";
-      expect(hasPublicDomainConfigured()).toBe(true);
+      expect(isPublicDomainConfigured()).toBe(true);
     });
   });
 

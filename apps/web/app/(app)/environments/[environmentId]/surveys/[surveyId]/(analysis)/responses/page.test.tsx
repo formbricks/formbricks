@@ -224,7 +224,7 @@ describe("ResponsesPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        webAppUrl: "http://localhost:3000",
+        publicDomain: mockPublicDomain,
         environmentTags: mockTags,
         user: mockUser,
         responsesPerPage: 10,

@@ -1,4 +1,8 @@
-import { getAllPublicRoutePatterns, getPublicOnlyRoutePatterns, matchesAnyPattern } from "./route-config";
+import {
+  getAllPubliclyAccessibleRoutePatterns,
+  getPublicDomainRoutePatterns,
+  matchesAnyPattern,
+} from "./route-config";
 
 export const isLoginRoute = (url: string) =>
   url === "/api/auth/callback/credentials" || url === "/auth/login";
@@ -49,7 +53,7 @@ export const isSyncWithUserIdentificationEndpoint = (
  * Uses whitelist approach - only explicitly allowed routes are accessible
  */
 export const isPublicDomainRoute = (url: string): boolean => {
-  const publicRoutePatterns = getAllPublicRoutePatterns();
+  const publicRoutePatterns = getAllPubliclyAccessibleRoutePatterns();
   return matchesAnyPattern(url, publicRoutePatterns);
 };
 
@@ -58,7 +62,7 @@ export const isPublicDomainRoute = (url: string): boolean => {
  * When PUBLIC_URL is configured, admin domain should only allow admin-specific routes + health
  */
 export const isAdminDomainRoute = (url: string): boolean => {
-  const publicOnlyRoutePatterns = getPublicOnlyRoutePatterns();
+  const publicOnlyRoutePatterns = getPublicDomainRoutePatterns();
   const isPublicRoute = matchesAnyPattern(url, publicOnlyRoutePatterns);
 
   if (isPublicRoute) {

@@ -17,7 +17,6 @@ interface PinScreenProps {
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
-  webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
@@ -36,7 +35,6 @@ export const PinScreen = (props: PinScreenProps) => {
     surveyId,
     project,
     publicDomain,
-    webAppUrl,
     emailVerificationStatus,
     singleUseId,
     singleUseResponse,
@@ -125,7 +123,6 @@ export const PinScreen = (props: PinScreenProps) => {
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
       publicDomain={publicDomain}
-      webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
       isEmbed={isEmbed}

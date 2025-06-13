@@ -1,26 +1,22 @@
 import { env } from "@/lib/env";
 import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
 
 /**
  * Get the public domain from PUBLIC_URL environment variable
  */
-export const getPublicDomain = (): string | null => {
-  try {
-    const PUBLIC_URL = env.PUBLIC_URL;
-    if (!PUBLIC_URL || PUBLIC_URL.trim() === "") return null;
-    return new URL(PUBLIC_URL).host;
-  } catch (error) {
-    logger.error(error, "Error getting public domain");
-    return null;
-  }
+export const getPublicDomainHost = (): string | null => {
+  const PUBLIC_URL = env.PUBLIC_URL;
+  if (!PUBLIC_URL) return null;
+
+  console.log("PUBLIC_URL", PUBLIC_URL);
+  return new URL(PUBLIC_URL).host;
 };
 
 /**
  * Check if PUBLIC_URL is configured (has a valid public domain)
  */
-export const hasPublicDomainConfigured = (): boolean => {
-  return getPublicDomain() !== null;
+export const isPublicDomainConfigured = (): boolean => {
+  return getPublicDomainHost() !== null;
 };
 
 /**
@@ -28,9 +24,9 @@ export const hasPublicDomainConfigured = (): boolean => {
  */
 export const isRequestFromPublicDomain = (request: NextRequest): boolean => {
   const host = request.headers.get("host");
-  const publicDomain = getPublicDomain();
+  const publicDomainHost = getPublicDomainHost();
 
-  if (!publicDomain) return false;
+  if (!publicDomainHost) return false;
 
-  return host === publicDomain;
+  return host === publicDomainHost;
 };

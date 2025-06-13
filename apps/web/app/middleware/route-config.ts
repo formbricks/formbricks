@@ -30,14 +30,14 @@ const COMMON_ROUTES = {
 /**
  * Get public only route patterns as a flat array
  */
-export const getPublicOnlyRoutePatterns = (): RegExp[] => {
+export const getPublicDomainRoutePatterns = (): RegExp[] => {
   return Object.values(PUBLIC_ROUTES).flat();
 };
 
 /**
  * Get all public route patterns as a flat array
  */
-export const getAllPublicRoutePatterns = (): RegExp[] => {
+export const getAllPubliclyAccessibleRoutePatterns = (): RegExp[] => {
   const routes = {
     ...PUBLIC_ROUTES,
     ...COMMON_ROUTES,

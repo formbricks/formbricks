@@ -3,7 +3,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import SurveyPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/page";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -38,9 +38,12 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
-  WEBAPP_URL: "http://localhost:3000",
   RESPONSES_PER_PAGE: 10,
   SESSION_MAX_AGE: 1000,
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(),
 }));
 
 vi.mock(
@@ -211,7 +214,7 @@ describe("SurveyPage", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
-    vi.mocked(getPublicDomain).mockReturnValue("test.domain.com");
+    vi.mocked(getPublicDomain).mockReturnValue("http://localhost:3000");
     vi.mocked(getSurveySummary).mockResolvedValue(mockSurveySummary);
     vi.mocked(notFound).mockClear();
   });
@@ -250,7 +253,7 @@ describe("SurveyPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        webAppUrl: WEBAPP_URL,
+        publicDomain: "http://localhost:3000",
         isReadOnly: false,
         locale: mockUser.locale ?? DEFAULT_LOCALE,
         initialSurveySummary: mockSurveySummary,

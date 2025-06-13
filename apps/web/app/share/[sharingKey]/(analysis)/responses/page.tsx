@@ -2,6 +2,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
@@ -46,6 +47,7 @@ const Page = async (props: ResponsesPageProps) => {
   }
 
   const locale = await findMatchingLocale();
+  const publicDomain = getPublicDomain();
 
   return (
     <div className="flex w-full justify-center">
@@ -57,7 +59,7 @@ const Page = async (props: ResponsesPageProps) => {
           environment={environment}
           survey={survey}
           surveyId={surveyId}
-          webAppUrl={WEBAPP_URL}
+          publicDomain={publicDomain}
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
           locale={locale}
