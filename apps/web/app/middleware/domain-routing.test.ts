@@ -63,23 +63,19 @@ describe("domain routing", () => {
         "/product/settings",
         "/api/v1/management/users",
         "/api/v2/management/surveys",
-        "/s/survey123", // Public routes also allowed for backward compatibility
-        "/c/jwt-token",
-        "/api/v1/client/test",
-        "/share/abc/summary",
         "/pipeline/jobs", // Fallback routes
         "/cron/tasks",
         "/random/uncategorized/route",
       ];
 
       allRoutes.forEach((route) => {
-        expect(isAdminDomainRoute(route, false)).toBe(true);
+        expect(isAdminDomainRoute(route)).toBe(true);
       });
     });
 
     test("should block public routes when PUBLIC_URL is configured", () => {
       // Health should still be allowed
-      expect(isAdminDomainRoute("/health", true)).toBe(true);
+      expect(isAdminDomainRoute("/health")).toBe(true);
 
       // Admin routes should be allowed
       const adminRoutes = [
@@ -97,7 +93,7 @@ describe("domain routing", () => {
       ];
 
       adminRoutes.forEach((route) => {
-        expect(isAdminDomainRoute(route, true)).toBe(true);
+        expect(isAdminDomainRoute(route)).toBe(true);
       });
 
       // Public routes should be blocked on admin domain
@@ -110,7 +106,7 @@ describe("domain routing", () => {
       ];
 
       publicRoutes.forEach((route) => {
-        expect(isAdminDomainRoute(route, true)).toBe(false);
+        expect(isAdminDomainRoute(route)).toBe(false);
       });
     });
   });
@@ -128,7 +124,7 @@ describe("domain routing", () => {
       ];
 
       allowedPublicRoutes.forEach((route) => {
-        expect(isRouteAllowedForDomain(route, true, true)).toBe(true);
+        expect(isRouteAllowedForDomain(route, true)).toBe(true);
       });
 
       // Blocked routes
@@ -147,32 +143,7 @@ describe("domain routing", () => {
       ];
 
       blockedPublicRoutes.forEach((route) => {
-        expect(isRouteAllowedForDomain(route, true, true)).toBe(false);
-      });
-    });
-
-    test("should allow all routes on admin domain when PUBLIC_URL not configured", () => {
-      const allRoutes = [
-        "/",
-        "/environments/123",
-        "/auth/login",
-        "/setup/organization",
-        "/organizations/123",
-        "/product/settings",
-        "/api/v1/management/users",
-        "/api/v2/management/surveys",
-        "/s/survey123",
-        "/c/jwt-token",
-        "/api/v1/client/test",
-        "/share/abc/summary",
-        "/health",
-        "/pipeline/jobs",
-        "/cron/tasks",
-        "/random/route",
-      ];
-
-      allRoutes.forEach((route) => {
-        expect(isRouteAllowedForDomain(route, false, false)).toBe(true);
+        expect(isRouteAllowedForDomain(route, true)).toBe(false);
       });
     });
 
@@ -194,7 +165,7 @@ describe("domain routing", () => {
       ];
 
       adminRoutes.forEach((route) => {
-        expect(isRouteAllowedForDomain(route, false, true)).toBe(true);
+        expect(isRouteAllowedForDomain(route, false)).toBe(true);
       });
 
       // Public routes should be blocked on admin domain
@@ -207,7 +178,7 @@ describe("domain routing", () => {
       ];
 
       publicRoutes.forEach((route) => {
-        expect(isRouteAllowedForDomain(route, false, true)).toBe(false);
+        expect(isRouteAllowedForDomain(route, false)).toBe(false);
       });
     });
   });
@@ -215,8 +186,8 @@ describe("domain routing", () => {
   describe("edge cases", () => {
     test("should handle empty paths", () => {
       expect(isPublicDomainRoute("")).toBe(false);
-      expect(isAdminDomainRoute("", false)).toBe(true);
-      expect(isAdminDomainRoute("", true)).toBe(true);
+      expect(isAdminDomainRoute("")).toBe(true);
+      expect(isAdminDomainRoute("")).toBe(true);
     });
 
     test("should handle paths with query parameters", () => {

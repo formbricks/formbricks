@@ -230,19 +230,19 @@ describe("endpoint-validator", () => {
 
     test("should block public routes on admin domain when PUBLIC_URL is configured", () => {
       // Admin routes should be allowed
-      expect(isRouteAllowedForDomain("/", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/environments/123", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/auth/login", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/api/v1/management/users", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/health", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/pipeline/jobs", false, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/cron/tasks", false, true)).toBe(true);
+      expect(isRouteAllowedForDomain("/", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/environments/123", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/auth/login", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/api/v1/management/users", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/health", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/pipeline/jobs", false)).toBe(true);
+      expect(isRouteAllowedForDomain("/cron/tasks", false)).toBe(true);
 
       // Public routes should be blocked on admin domain
-      expect(isRouteAllowedForDomain("/s/survey123", false, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/c/jwt-token", false, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/api/v1/client/test", false, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/share/abc/summary", false, true)).toBe(false);
+      expect(isRouteAllowedForDomain("/s/survey123", false)).toBe(false);
+      expect(isRouteAllowedForDomain("/c/jwt-token", false)).toBe(false);
+      expect(isRouteAllowedForDomain("/api/v1/client/test", false)).toBe(false);
+      expect(isRouteAllowedForDomain("/share/abc/summary", false)).toBe(false);
     });
   });
 });
