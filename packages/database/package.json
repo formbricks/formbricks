@@ -3,7 +3,7 @@
   "packageManager": "pnpm@9.15.9",
   "private": true,
   "version": "0.1.0",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "type": "module",
   "files": [
@@ -14,7 +14,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./types/*": {
       "import": "./types/*.ts"
