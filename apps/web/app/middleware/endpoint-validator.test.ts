@@ -245,4 +245,32 @@ describe("endpoint-validator", () => {
       expect(isRouteAllowedForDomain("/share/abc/summary", false)).toBe(false);
     });
   });
+
+  describe("edge cases", () => {
+    test("should handle empty paths", () => {
+      expect(isPublicDomainRoute("")).toBe(false);
+      expect(isAdminDomainRoute("")).toBe(true);
+      expect(isAdminDomainRoute("")).toBe(true);
+    });
+
+    test("should handle paths with query parameters", () => {
+      expect(isPublicDomainRoute("/s/survey123?param=value")).toBe(true);
+      expect(isPublicDomainRoute("/environments/123?tab=settings")).toBe(false);
+    });
+
+    test("should handle paths with fragments", () => {
+      expect(isPublicDomainRoute("/s/survey123#section")).toBe(true);
+      expect(isPublicDomainRoute("/environments/123#overview")).toBe(false);
+    });
+
+    test("should handle nested survey routes", () => {
+      expect(isPublicDomainRoute("/s/survey123/preview")).toBe(true);
+      expect(isPublicDomainRoute("/s/survey123/embed")).toBe(true);
+    });
+
+    test("should handle nested client API routes", () => {
+      expect(isPublicDomainRoute("/api/v1/client/env123/actions")).toBe(true);
+      expect(isPublicDomainRoute("/api/v2/client/env456/responses")).toBe(true);
+    });
+  });
 });
