@@ -70,7 +70,7 @@ export const getSurveyOpenGraphMetadata = (surveyId: string, surveyName: string)
   const brandColor = getBrandColorForURL(COLOR_DEFAULTS.brandColor); // Default color
   const encodedName = getNameForURL(surveyName);
 
-  const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${encodedName}`;
+  const ogImgURL = `/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`;
 
   return {
     metadataBase: new URL(getSurveyDomain()),
