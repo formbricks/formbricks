@@ -4,6 +4,7 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -34,8 +35,8 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  let environmentId: string | null = null;
-  environmentId = await getFirstEnvironmentIdByUserId(session.user.id);
+  let firstEnvironmentId: string | null = null;
+  firstEnvironmentId = await getFirstEnvironmentIdByUserId(session.user.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
@@ -43,7 +44,7 @@ const Page = async () => {
   );
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
-  if (!environmentId) {
+  if (!firstEnvironmentId) {
     if (isOwner || isManager) {
       return redirect(`/organizations/${userOrganizations[0].id}/projects/new/mode`);
     } else {
@@ -51,7 +52,15 @@ const Page = async () => {
     }
   }
 
-  return <ClientEnvironmentRedirect environmentId={environmentId} />;
+  let userEnvironments: string[] = [];
+
+  for (const org of userOrganizations) {
+    const projects = await getUserProjects(session.user.id, org.id);
+    const environmentIds = projects.flatMap((project) => project.environments.map((env) => env.id));
+    userEnvironments.push(...environmentIds);
+  }
+
+  return <ClientEnvironmentRedirect environmentId={firstEnvironmentId} userEnvironments={userEnvironments} />;
 };
 
 export default Page;

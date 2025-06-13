@@ -1,5 +1,6 @@
 "use client";
 
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
@@ -37,6 +38,8 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
+
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
 
       // Sign out with account deletion reason (no automatic redirect)
       await signOutWithAudit({

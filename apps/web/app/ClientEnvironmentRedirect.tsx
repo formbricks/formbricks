@@ -6,21 +6,26 @@ import { useEffect } from "react";
 
 interface ClientEnvironmentRedirectProps {
   environmentId: string;
+  userEnvironments?: string[];
 }
 
-const ClientEnvironmentRedirect = ({ environmentId }: ClientEnvironmentRedirectProps) => {
+const ClientEnvironmentRedirect = ({ environmentId, userEnvironments }: ClientEnvironmentRedirectProps) => {
   const router = useRouter();
 
   useEffect(() => {
     const lastEnvironmentId = localStorage.getItem(FORMBRICKS_ENVIRONMENT_ID_LS);
 
-    if (lastEnvironmentId) {
-      // Redirect to the last environment the user was in
+    if (lastEnvironmentId && userEnvironments && userEnvironments.includes(lastEnvironmentId)) {
       router.push(`/environments/${lastEnvironmentId}`);
     } else {
+      // If the last environmentId is not valid, remove it from localStorage and redirect to the provided environmentId
+      if (lastEnvironmentId) {
+        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      }
+
       router.push(`/environments/${environmentId}`);
     }
-  }, [environmentId, router]);
+  }, [environmentId, userEnvironments, router]);
 
   return null;
 };
