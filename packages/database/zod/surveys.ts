@@ -1,4 +1,4 @@
-import { type Survey, SurveyStatus, SurveyType } from "@prisma/client";
+import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
@@ -92,10 +92,10 @@ const ZSurveyBase = z.object({
   }),
   questions: z.array(ZSurveyQuestion).openapi({
     description: "The questions of the survey",
-  }) as z.ZodType<Survey["questions"]>,
+  }),
   endings: z.array(ZSurveyEnding).default([]).openapi({
     description: "The endings of the survey",
-  }) as z.ZodType<Survey["endings"]>,
+  }),
   thankYouCard: z
     .object({
       enabled: z.boolean(),
@@ -115,7 +115,7 @@ const ZSurveyBase = z.object({
     }),
   variables: z.array(ZSurveyVariable).openapi({
     description: "Survey variables",
-  }) as z.ZodType<Survey["variables"]>,
+  }),
   displayOption: z.enum(["displayOnce", "displayMultiple", "displaySome", "respondMultiple"]).openapi({
     description: "Display options for the survey",
   }),
@@ -219,10 +219,10 @@ const ZSurveyBase = z.object({
   }),
   displayPercentage: z.number().nullable().openapi({
     description: "The display percentage of the survey",
-  }) as z.ZodType<Survey["displayPercentage"]>,
+  }),
 });
 
-export const ZSurvey = ZSurveyBase satisfies z.ZodType<Survey>;
+export const ZSurvey = ZSurveyBase;
 
 export const ZSurveyWithoutQuestionType = ZSurveyBase.omit({
   questions: true,
