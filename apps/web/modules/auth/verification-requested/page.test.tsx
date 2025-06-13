@@ -84,18 +84,9 @@ describe("VerificationRequestedPage", () => {
     expect(
       screen.getByText("auth.verification-requested.please_confirm_your_email_address")
     ).toBeInTheDocument();
-    expect(screen.getByText(/auth\.verification-requested\.we_sent_an_email_to/)).toBeInTheDocument();
     expect(screen.getAllByText(/test@example\.com/)).toHaveLength(2);
     expect(
-      screen.getByText(
-        /auth\.verification-requested\.please_click_the_link_in_the_email_to_activate_your_account/
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("auth.verification-requested.verification_email_successfully_sent_info")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")
+      screen.getByText("auth.verification-requested.verification_email_successfully_sent_info test@example.com")
     ).toBeInTheDocument();
     expect(
       screen.getByText(`Mocked RequestVerificationEmail: ${mockEmail.toLowerCase()}`)

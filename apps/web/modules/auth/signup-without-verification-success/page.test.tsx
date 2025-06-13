@@ -1,3 +1,4 @@
+import { getEmailFromEmailToken } from "@/lib/jwt";
 import { SignupWithoutVerificationSuccessPage } from "@/modules/auth/signup-without-verification-success/page";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -5,6 +6,12 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,
+  T: ({ keyName, params }) => {
+    if (params && params.email) {
+      return `${keyName} ${params.email}`;
+    }
+    return keyName;
+  },
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -47,23 +54,27 @@ vi.mock("@/modules/ui/components/alert", () => ({
   Alert: ({ children }) => <div>{children}</div>,
 }));
 
+vi.mock("@/lib/jwt", () => ({
+  getEmailFromEmailToken: vi.fn(),
+}));
+
+
 describe("SignupWithoutVerificationSuccessPage", () => {
   afterEach(() => {
     cleanup();
   });
 
   test("renders the success page correctly", async () => {
-    const Page = await SignupWithoutVerificationSuccessPage();
+    vi.mocked(getEmailFromEmailToken).mockReturnValue("test@example.com");
+
+    const Page = await SignupWithoutVerificationSuccessPage({ searchParams: { token: "test-token" } });
     render(Page);
 
     expect(
       screen.getByText("auth.signup_without_verification_success.user_successfully_created")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("auth.signup_without_verification_success.user_successfully_created_description")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("auth.signup_without_verification_success.user_successfully_created_info")
+      screen.getByText("auth.signup_without_verification_success.user_successfully_created_info test@example.com")
     ).toBeInTheDocument();
     expect(screen.getByText("Mocked BackToLoginButton")).toBeInTheDocument();
   });

@@ -238,7 +238,7 @@ describe("SignupForm", () => {
       expect(createEmailTokenAction).toHaveBeenCalledWith({ email: "test@example.com" });
     });
 
-    expect(pushMock).toHaveBeenCalledWith("/auth/signup-without-verification-success");
+    expect(pushMock).toHaveBeenCalledWith("/auth/signup-without-verification-success?token=token123");
   });
 
   test("submits the form successfully when turnstile is configured, but createEmailTokenAction don't return data", async () => {
