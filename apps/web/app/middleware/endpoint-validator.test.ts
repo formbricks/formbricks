@@ -72,6 +72,9 @@ describe("endpoint-validator", () => {
       expect(isClientSideApiRoute("/api/v1/management/something")).toBe(false);
       expect(isClientSideApiRoute("/api/something")).toBe(false);
       expect(isClientSideApiRoute("/auth/login")).toBe(false);
+
+      // exception for open graph image generation route, it should not be rate limited
+      expect(isClientSideApiRoute("/api/v1/client/og")).toBe(false);
     });
   });
 

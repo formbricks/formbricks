@@ -177,7 +177,7 @@ describe("Metadata Utils", () => {
           description: "Thanks a lot for your time 🙏",
           url: `/s/${surveyId}`,
           siteName: "",
-          images: [`/api/v1/og?brandColor=${brandColor}&name=${encodedName}`],
+          images: [`/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`],
           locale: "en_US",
           type: "website",
         },
@@ -185,7 +185,7 @@ describe("Metadata Utils", () => {
           card: "summary_large_image",
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
-          images: [`/api/v1/og?brandColor=${brandColor}&name=${encodedName}`],
+          images: [`/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`],
         },
       });
     });
