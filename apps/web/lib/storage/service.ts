@@ -95,15 +95,15 @@ type TGetFileResponse = {
 type TGetSignedUrlResponse =
   | { signedUrl: string; fileUrl: string; presignedFields: Object }
   | {
-    signedUrl: string;
-    updatedFileName: string;
-    fileUrl: string;
-    signingData: {
-      signature: string;
-      timestamp: number;
-      uuid: string;
+      signedUrl: string;
+      updatedFileName: string;
+      fileUrl: string;
+      signingData: {
+        signature: string;
+        timestamp: number;
+        uuid: string;
+      };
     };
-  };
 
 const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   const getObjectCommand = new GetObjectCommand({
@@ -167,6 +167,7 @@ export const getUploadSignedUrl = async (
   const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
   // Use PUBLIC_URL for public files, WEBAPP_URL for private files
+  const publicDomain = getPublicDomain();
   const baseUrl = accessType === "public" ? getPublicDomain() : WEBAPP_URL;
 
   // handle the local storage case first
@@ -177,7 +178,7 @@ export const getUploadSignedUrl = async (
       return {
         signedUrl:
           accessType === "private"
-            ? new URL(`${baseUrl}/api/v1/client/${environmentId}/storage/local`).href
+            ? new URL(`${publicDomain}/api/v1/client/${environmentId}/storage/local`).href
             : new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
         signingData: {
           signature,
