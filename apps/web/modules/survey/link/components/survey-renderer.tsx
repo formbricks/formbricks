@@ -4,7 +4,6 @@ import {
   IS_RECAPTCHA_CONFIGURED,
   PRIVACY_URL,
   RECAPTCHA_SITE_KEY,
-  WEBAPP_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
