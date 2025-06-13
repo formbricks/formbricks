@@ -62,6 +62,7 @@ vi.mock("@/lib/jwt", () => ({
 describe("SignupWithoutVerificationSuccessPage", () => {
   afterEach(() => {
     cleanup();
+    vi.resetAllMocks();
   });
 
   test("renders the success page correctly", async () => {
