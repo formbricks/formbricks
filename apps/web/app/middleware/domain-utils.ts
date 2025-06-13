@@ -8,7 +8,6 @@ export const getPublicDomainHost = (): string | null => {
   const PUBLIC_URL = env.PUBLIC_URL;
   if (!PUBLIC_URL) return null;
 
-  console.log("PUBLIC_URL", PUBLIC_URL);
   return new URL(PUBLIC_URL).host;
 };
 
