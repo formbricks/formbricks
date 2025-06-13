@@ -2,6 +2,7 @@ import { getEmailFromEmailToken } from "@/lib/jwt";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { T, getTranslate } from "@/tolgee/server";
+import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
@@ -19,10 +20,9 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
             </h1>
             <p className="text-center text-sm text-slate-700">
               <T
-                keyName="auth.verification-requested.we_sent_an_email_to"
+                keyName="auth.verification-requested.verification_email_successfully_sent_info"
                 params={{ email, span: <span /> }}
               />
-              {t("auth.verification-requested.please_click_the_link_in_the_email_to_activate_your_account")}
             </p>
             <hr className="my-4" />
             <p className="text-center text-xs text-slate-500">
@@ -42,6 +42,7 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
       );
     }
   } catch (error) {
+    logger.error(error, "Invalid token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>

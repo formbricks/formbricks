@@ -6,7 +6,7 @@ import { getUserByEmail } from "@/modules/auth/lib/user";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 
 const ZResendVerificationEmailAction = z.object({
@@ -23,10 +23,15 @@ export const resendVerificationEmailAction = actionClient.schema(ZResendVerifica
         throw new ResourceNotFoundError("user", parsedInput.email);
       }
       if (user.emailVerified) {
-        throw new InvalidInputError("Email address has already been verified");
+        return {
+          success: true,
+        };
       }
       ctx.auditLoggingCtx.userId = user.id;
-      return await sendVerificationEmail(user);
+      await sendVerificationEmail(user);
+      return {
+        success: true,
+      };
     }
   )
 );

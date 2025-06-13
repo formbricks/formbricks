@@ -79,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "User successfully created",
-      "user_successfully_created_description": "Your new user has been created successfully. Please click the button below and sign in to your account."
+      "user_successfully_created_description": "Your new user has been created successfully. Please click the button below and sign in to your account.",
+      "user_successfully_created_info": "We’ve checked for an account associated with {email}. If none existed, we’ve created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
     "testimonial_1": "We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!",
     "testimonial_all_features_included": "All features included",
@@ -95,6 +96,7 @@
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
       "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",
+      "verification_email_successfully_sent_info": "If there’s an account associated with {email}, we’ve sent a verification link to that address. Please check your inbox to complete the sign-up.",
       "we_sent_an_email_to": "We sent an email to {email}. ",
       "you_didnt_receive_an_email_or_your_link_expired": "You didn't receive an email or your link expired?"
     },

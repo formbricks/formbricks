@@ -79,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Benutzer erfolgreich erstellt",
-      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an."
+      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an.",
+      "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Wenn keines existierte, haben wir eines für Dich erstellt. Wenn bereits ein Konto existierte, wurden keine Änderungen vorgenommen. Bitte melde Dich unten an, um fortzufahren."
     },
     "testimonial_1": "Als open-source Firma ist uns Datenschutz extrem wichtig! Formbricks bietet die perfekte Mischung aus modernster Technologie und solidem Datenschutz.",
     "testimonial_all_features_included": "Alle Funktionen enthalten",
@@ -95,6 +96,7 @@
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
+      "verification_email_successfully_sent_info": "Wenn ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe dein Postfach, um die Anmeldung abzuschließen.",
       "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },
