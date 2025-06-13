@@ -22,6 +22,9 @@ const PUBLIC_ROUTES = {
 
 const COMMON_ROUTES = {
   HEALTH_ROUTES: [/^\/health$/], // /health endpoint
+  PUBLIC_STORAGE_ROUTES: [
+    /^\/storage\/[^/]+\/public\//, // /storage/[environmentId]/public/** - public storage
+  ],
 } as const;
 
 /**
