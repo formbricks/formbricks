@@ -53,36 +53,26 @@ export const isPublicDomainRoute = (url: string): boolean => {
 /**
  * Check if the route should be accessible on the admin domain (WEBAPP_URL)
  * When PUBLIC_URL is configured, admin domain should only allow admin-specific routes + health
- * When PUBLIC_URL is not configured, admin domain allows all routes (backward compatibility)
  */
-export const isAdminDomainRoute = (url: string, hasPublicDomain: boolean = false): boolean => {
-  if (hasPublicDomain) {
-    const publicOnlyRoutePatterns = getPublicOnlyRoutePatterns();
-    const isPublicRoute = matchesAnyPattern(url, publicOnlyRoutePatterns);
+export const isAdminDomainRoute = (url: string): boolean => {
+  const publicOnlyRoutePatterns = getPublicOnlyRoutePatterns();
+  const isPublicRoute = matchesAnyPattern(url, publicOnlyRoutePatterns);
 
-    if (isPublicRoute) {
-      return false;
-    }
-
-    // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline, cron)
-    return true;
+  if (isPublicRoute) {
+    return false;
   }
 
-  // When PUBLIC_URL is not configured, allow all routes (backward compatibility)
+  // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline, cron)
   return true;
 };
 
 /**
  * Determine if a request should be allowed based on domain and route
  */
-export const isRouteAllowedForDomain = (
-  url: string,
-  isPublicDomain: boolean,
-  hasPublicDomain: boolean = false
-): boolean => {
+export const isRouteAllowedForDomain = (url: string, isPublicDomain: boolean): boolean => {
   if (isPublicDomain) {
     return isPublicDomainRoute(url);
   }
 
-  return isAdminDomainRoute(url, hasPublicDomain);
+  return isAdminDomainRoute(url);
 };

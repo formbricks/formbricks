@@ -18,10 +18,6 @@ const PUBLIC_ROUTES = {
   SHARE_ROUTES: [
     /^\/share\//, // /share/** - shared survey results
   ],
-
-  HEALTH_ROUTES: [
-    /^\/health$/, // /health endpoint
-  ],
 } as const;
 
 const COMMON_ROUTES = {

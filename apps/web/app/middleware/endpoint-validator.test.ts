@@ -140,8 +140,6 @@ describe("endpoint-validator", () => {
     });
   });
 
-  // Static assets are handled by middleware matcher and don't need explicit route checking
-
   describe("isPublicDomainRoute", () => {
     test("should return true for health endpoint", () => {
       expect(isPublicDomainRoute("/health")).toBe(true);
@@ -184,85 +182,50 @@ describe("endpoint-validator", () => {
 
   describe("isAdminDomainRoute", () => {
     test("should return true for health endpoint (backward compatibility)", () => {
-      expect(isAdminDomainRoute("/health", false)).toBe(true);
-      expect(isAdminDomainRoute("/health", true)).toBe(true);
+      expect(isAdminDomainRoute("/health")).toBe(true);
+      expect(isAdminDomainRoute("/health")).toBe(true);
     });
 
     // Static assets are not handled by domain routing - middleware doesn't run on them
 
-    test("should return true for admin routes when PUBLIC_URL not configured", () => {
-      expect(isAdminDomainRoute("/", false)).toBe(true);
-      expect(isAdminDomainRoute("/environments/123", false)).toBe(true);
-      expect(isAdminDomainRoute("/environments/123/surveys", false)).toBe(true);
-      expect(isAdminDomainRoute("/auth/login", false)).toBe(true);
-      expect(isAdminDomainRoute("/auth/signup", false)).toBe(true);
-      expect(isAdminDomainRoute("/setup/organization", false)).toBe(true);
-      expect(isAdminDomainRoute("/setup/team", false)).toBe(true);
-      expect(isAdminDomainRoute("/organizations/123", false)).toBe(true);
-      expect(isAdminDomainRoute("/organizations/123/settings", false)).toBe(true);
-      expect(isAdminDomainRoute("/product/settings", false)).toBe(true);
-      expect(isAdminDomainRoute("/product/features", false)).toBe(true);
-      expect(isAdminDomainRoute("/api/v1/management/users", false)).toBe(true);
-      expect(isAdminDomainRoute("/api/v2/management/surveys", false)).toBe(true);
-      expect(isAdminDomainRoute("/pipeline/jobs", false)).toBe(true);
-      expect(isAdminDomainRoute("/cron/tasks", false)).toBe(true);
-      expect(isAdminDomainRoute("/random/route", false)).toBe(true);
-      // Public routes also allowed for backward compatibility
-      expect(isAdminDomainRoute("/s/survey123", false)).toBe(true);
-      expect(isAdminDomainRoute("/c/jwt-token", false)).toBe(true);
-      expect(isAdminDomainRoute("/api/v1/client/test", false)).toBe(true);
-    });
-
-    test("should block public routes when PUBLIC_URL is configured", () => {
-      // Admin routes should be allowed
-      expect(isAdminDomainRoute("/", true)).toBe(true);
-      expect(isAdminDomainRoute("/environments/123", true)).toBe(true);
-      expect(isAdminDomainRoute("/auth/login", true)).toBe(true);
-      expect(isAdminDomainRoute("/setup/organization", true)).toBe(true);
-      expect(isAdminDomainRoute("/organizations/123", true)).toBe(true);
-      expect(isAdminDomainRoute("/product/settings", true)).toBe(true);
-      expect(isAdminDomainRoute("/api/v1/management/users", true)).toBe(true);
-      expect(isAdminDomainRoute("/api/v2/management/surveys", true)).toBe(true);
-      expect(isAdminDomainRoute("/pipeline/jobs", true)).toBe(true);
-      expect(isAdminDomainRoute("/cron/tasks", true)).toBe(true);
-      expect(isAdminDomainRoute("/random/route", true)).toBe(true);
-
-      // Public routes should be blocked on admin domain
-      expect(isAdminDomainRoute("/s/survey123", true)).toBe(false);
-      expect(isAdminDomainRoute("/c/jwt-token", true)).toBe(false);
-      expect(isAdminDomainRoute("/api/v1/client/test", true)).toBe(false);
-      expect(isAdminDomainRoute("/share/abc/summary", true)).toBe(false);
+    test("should return true for admin routes", () => {
+      expect(isAdminDomainRoute("/")).toBe(true);
+      expect(isAdminDomainRoute("/environments/123")).toBe(true);
+      expect(isAdminDomainRoute("/environments/123/surveys")).toBe(true);
+      expect(isAdminDomainRoute("/auth/login")).toBe(true);
+      expect(isAdminDomainRoute("/auth/signup")).toBe(true);
+      expect(isAdminDomainRoute("/setup/organization")).toBe(true);
+      expect(isAdminDomainRoute("/setup/team")).toBe(true);
+      expect(isAdminDomainRoute("/organizations/123")).toBe(true);
+      expect(isAdminDomainRoute("/organizations/123/settings")).toBe(true);
+      expect(isAdminDomainRoute("/product/settings")).toBe(true);
+      expect(isAdminDomainRoute("/product/features")).toBe(true);
+      expect(isAdminDomainRoute("/api/v1/management/users")).toBe(true);
+      expect(isAdminDomainRoute("/api/v2/management/surveys")).toBe(true);
+      expect(isAdminDomainRoute("/pipeline/jobs")).toBe(true);
+      expect(isAdminDomainRoute("/cron/tasks")).toBe(true);
+      expect(isAdminDomainRoute("/random/route")).toBe(true);
+      expect(isAdminDomainRoute("/s/survey123")).toBe(false);
+      expect(isAdminDomainRoute("/c/jwt-token")).toBe(false);
+      expect(isAdminDomainRoute("/api/v1/client/test")).toBe(false);
     });
   });
 
   describe("isRouteAllowedForDomain", () => {
     test("should allow public routes on public domain", () => {
-      expect(isRouteAllowedForDomain("/s/survey123", true, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/c/jwt-token", true, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/api/v1/client/test", true, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/share/abc/summary", true, true)).toBe(true);
-      expect(isRouteAllowedForDomain("/health", true, true)).toBe(true);
+      expect(isRouteAllowedForDomain("/s/survey123", true)).toBe(true);
+      expect(isRouteAllowedForDomain("/c/jwt-token", true)).toBe(true);
+      expect(isRouteAllowedForDomain("/api/v1/client/test", true)).toBe(true);
+      expect(isRouteAllowedForDomain("/share/abc/summary", true)).toBe(true);
+      expect(isRouteAllowedForDomain("/health", true)).toBe(true);
       // Static assets not tested - middleware doesn't run on them
     });
 
     test("should block admin routes on public domain", () => {
-      expect(isRouteAllowedForDomain("/", true, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/environments/123", true, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/auth/login", true, true)).toBe(false);
-      expect(isRouteAllowedForDomain("/api/v1/management/users", true, true)).toBe(false);
-    });
-
-    test("should allow all routes on admin domain when PUBLIC_URL not configured", () => {
-      expect(isRouteAllowedForDomain("/", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/environments/123", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/auth/login", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/api/v1/management/users", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/s/survey123", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/c/jwt-token", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/api/v1/client/test", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/health", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/pipeline/jobs", false, false)).toBe(true);
-      expect(isRouteAllowedForDomain("/cron/tasks", false, false)).toBe(true);
+      expect(isRouteAllowedForDomain("/", true)).toBe(false);
+      expect(isRouteAllowedForDomain("/environments/123", true)).toBe(false);
+      expect(isRouteAllowedForDomain("/auth/login", true)).toBe(false);
+      expect(isRouteAllowedForDomain("/api/v1/management/users", true)).toBe(false);
     });
 
     test("should block public routes on admin domain when PUBLIC_URL is configured", () => {

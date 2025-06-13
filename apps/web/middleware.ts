@@ -78,6 +78,7 @@ const handleDomainAwareRouting = (request: NextRequest): Response | null => {
   try {
     const hasPublicDomain = hasPublicDomainConfigured();
 
+    // When PUBLIC_URL is not configured, admin domain allows all routes (backward compatibility)
     if (!hasPublicDomain) return null;
 
     const isPublicDomain = isRequestFromPublicDomain(request);
@@ -85,7 +86,7 @@ const handleDomainAwareRouting = (request: NextRequest): Response | null => {
     const pathname = request.nextUrl.pathname;
 
     // Check if the route is allowed for the current domain
-    const isAllowed = isRouteAllowedForDomain(pathname, isPublicDomain, hasPublicDomain);
+    const isAllowed = isRouteAllowedForDomain(pathname, isPublicDomain);
 
     if (!isAllowed) {
       return new NextResponse(null, { status: 404 });
