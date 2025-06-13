@@ -104,13 +104,15 @@ describe("SummaryDropOffs", () => {
 
     // Check drop-off counts and percentages
     expect(screen.getByText("20")).toBeInTheDocument();
-    expect(screen.getByText("(20%)")).toBeInTheDocument();
-
     expect(screen.getByText("15")).toBeInTheDocument();
-    expect(screen.getByText("(19%)")).toBeInTheDocument(); // 18.75% rounded to 19%
-
     expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("(15%)")).toBeInTheDocument(); // 15.38% rounded to 15%
+
+    // Check percentage values
+    const percentageElements = screen.getAllByText(/\d+%/);
+    expect(percentageElements).toHaveLength(3);
+    expect(percentageElements[0]).toHaveTextContent("20%");
+    expect(percentageElements[1]).toHaveTextContent("19%");
+    expect(percentageElements[2]).toHaveTextContent("15%");
   });
 
   test("renders empty state when dropOff array is empty", () => {
