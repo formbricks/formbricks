@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
+import { delay } from "../utils/promises";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
@@ -43,6 +44,8 @@ export const getTables = async (key: TIntegrationAirtableCredential, baseId: str
   const res = await tableFetcher(key, baseId);
   return ZIntegrationAirtableTables.parse(res);
 };
+
+
 
 export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const formBody = Object.keys(formData)
@@ -178,6 +181,18 @@ const addField = async (
   return await req.json();
 };
 
+const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: string, tableId: string) => {
+  const req = await tableFetcher(key, baseId);
+  const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
+  const currentTable = tables.find((t) => t.id === tableId);
+
+  if (!currentTable) {
+    throw new Error(`Table with ID ${tableId} not found`);
+  }
+
+  return new Set(currentTable.fields.map((f) => f.name));
+};
+
 export const writeData = async (
   key: TIntegrationAirtableCredential,
   configData: TIntegrationAirtableConfigData,
@@ -195,35 +210,34 @@ export const writeData = async (
         : responses[i];
   }
 
-  // 2) Fetch the current table schema
-  const req = await tableFetcher(key, configData.baseId);
-  const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
-  const currentTable = tables.find((t) => t.id === configData.tableId);
-
-  if (!currentTable) {
-    throw new Error(`Table with ID ${configData.tableId} not found`);
-  }
-
-  // 3) Figure out which fields need creating
-  const existingFields = new Set(currentTable.fields.map((f) => f.name));
+  // 2) Figure out which fields need creating
+  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
   const fieldsToCreate = questions.filter((q) => !existingFields.has(q));
 
-  // 4) Create any missing fields
+  // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {
-    await Promise.all(
-      fieldsToCreate.map((fieldName) =>
-        addField(key, configData.baseId, configData.tableId, {
-          name: fieldName,
-          type: "singleLineText",
-        })
-      )
-    );
+    // Sequential processing with delays 
+    const DELAY_BETWEEN_REQUESTS = 250; // 250ms = 4 requests per second (staying under 5/sec limit)
 
-    // 5) Wait for the new fields to show up
+    for (let i = 0; i < fieldsToCreate.length; i++) {
+      const fieldName = fieldsToCreate[i];
+
+      await addField(key, configData.baseId, configData.tableId, {
+        name: fieldName,
+        type: "singleLineText",
+      });
+
+      // Add delay between requests (except for the last one)
+      if (i < fieldsToCreate.length - 1) {
+        await delay(DELAY_BETWEEN_REQUESTS);
+      }
+    }
+
+    // 4) Wait for the new fields to show up
     await waitForFieldsToExist(key, configData, fieldsToCreate);
   }
 
-  // 6) Finally, add the records
+  // 5) Finally, add the records
   await addRecords(key, configData.baseId, configData.tableId, data);
 };
 
@@ -235,25 +249,27 @@ async function waitForFieldsToExist(
   intervalMs = 2000
 ) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const schema = await tableFetcher(key, configData.baseId);
-    const table = ZIntegrationAirtableTablesWithFields.parse(schema)
-      .tables.find((t) => t.id === configData.tableId)!;
-    const existing = new Set(table.fields.map((f) => f.name));
+    const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+    const missingFields = fieldNames.filter((f) => !existingFields.has(f));
 
-    if (fieldNames.every((f) => existing.has(f))) {
+    if (missingFields.length === 0) {
       return;
     }
 
     logger.error(
-      `Attempt ${attempt}/${maxRetries}: fields not live yet, retrying in ${intervalMs / 1000
-      }s…`
+      `Attempt ${attempt}/${maxRetries}: ${missingFields.length} field(s) still missing [${missingFields.join(
+        ", "
+      )}], retrying in ${intervalMs / 1000}s…`
     );
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 
+  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+  const missingFields = fieldNames.filter((f) => !existingFields.has(f));
+
   throw new Error(
-    `Timed out waiting for fields [${fieldNames.join(
+    `Timed out waiting for ${missingFields.length} field(s) [${missingFields.join(
       ", "
-    )}] to become available.`
+    )}] to become available. Available fields: [${Array.from(existingFields).join(", ")}]`
   );
 }
