@@ -7,18 +7,19 @@ import {
   syncUserIdentificationLimiter,
   verifyEmailLimiter,
 } from "@/app/middleware/bucket";
+import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
+  isRouteAllowedForDomain,
   isShareUrlRoute,
   isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
 import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
@@ -70,34 +71,38 @@ const applyRateLimiting = async (request: NextRequest, ip: string) => {
   }
 };
 
-const handlePublicDomain = (request: NextRequest): Response | null => {
+/**
+ * Handle domain-aware routing based on PUBLIC_URL and WEBAPP_URL
+ */
+const handleDomainAwareRouting = (request: NextRequest): Response | null => {
   try {
-    const PUBLIC_URL = env.PUBLIC_URL;
-    if (!PUBLIC_URL) return null;
+    const publicDomainConfigured = isPublicDomainConfigured();
 
-    const host = request.headers.get("host") || "";
-    const publicDomain = PUBLIC_URL ? new URL(PUBLIC_URL).host : "";
-    if (host !== publicDomain) return null;
+    // When PUBLIC_URL is not configured, admin domain allows all routes (backward compatibility)
+    if (!publicDomainConfigured) return null;
 
-    return new NextResponse(null, { status: 404 });
+    const isPublicDomain = isRequestFromPublicDomain(request);
+
+    const pathname = request.nextUrl.pathname;
+
+    // Check if the route is allowed for the current domain
+    const isAllowed = isRouteAllowedForDomain(pathname, isPublicDomain);
+
+    if (!isAllowed) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    return null; // Allow the request to continue
   } catch (error) {
-    logger.error(error, "Error handling survey domain");
+    logger.error(error, "Error handling domain-aware routing");
     return new NextResponse(null, { status: 404 });
   }
-};
-
-const isSurveyRoute = (request: NextRequest) => {
-  return request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
 };
 
 export const middleware = async (originalRequest: NextRequest) => {
-  if (isSurveyRoute(originalRequest)) {
-    return NextResponse.next();
-  }
-
-  // Handle survey domain routing.
-  const surveyResponse = handlePublicDomain(originalRequest);
-  if (surveyResponse) return surveyResponse;
+  // Handle domain-aware routing first
+  const domainResponse = handleDomainAwareRouting(originalRequest);
+  if (domainResponse) return domainResponse;
 
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {

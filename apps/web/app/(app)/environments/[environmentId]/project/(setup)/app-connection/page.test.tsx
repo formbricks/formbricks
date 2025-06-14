@@ -29,6 +29,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://example.com",
+  },
+}));
+
 describe("AppConnectionPage Re-export", () => {
   test("should re-export AppConnectionPage correctly", () => {
     expect(AppConnectionPage).toBe(OriginalAppConnectionPage);

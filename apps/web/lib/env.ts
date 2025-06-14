@@ -85,7 +85,23 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
-    PUBLIC_URL: z.string().url().optional(),
+    PUBLIC_URL: z
+      .string()
+      .url()
+      .refine(
+        (url) => {
+          try {
+            const parsed = new URL(url);
+            return parsed.host && parsed.host.length > 0;
+          } catch {
+            return false;
+          }
+        },
+        {
+          message: "PUBLIC_URL must be a valid URL with a proper host (e.g., https://example.com)",
+        }
+      )
+      .optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     TERMS_URL: z
       .string()

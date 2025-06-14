@@ -4,7 +4,6 @@ import {
   IS_RECAPTCHA_CONFIGURED,
   PRIVACY_URL,
   RECAPTCHA_SITE_KEY,
-  WEBAPP_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -119,7 +118,6 @@ export const renderSurvey = async ({
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={singleUseId}
         singleUseResponse={singleUseResponse}
-        webAppUrl={WEBAPP_URL}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
@@ -143,7 +141,6 @@ export const renderSurvey = async ({
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
-      webAppUrl={WEBAPP_URL}
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}

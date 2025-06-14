@@ -1,7 +1,7 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -59,7 +59,7 @@ const Page = async (props) => {
         environment={environment}
         survey={survey}
         surveyId={params.surveyId}
-        webAppUrl={WEBAPP_URL}
+        publicDomain={publicDomain}
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
