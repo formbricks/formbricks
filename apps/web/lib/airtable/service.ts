@@ -14,7 +14,7 @@ import {
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
-import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
 import { truncateText } from "../utils/strings";
 
 export const getBases = async (key: string) => {
@@ -119,8 +119,6 @@ export const getAirtableToken = async (environmentId: string) => {
 
     return access_token;
   } catch (error) {
-    await deleteIntegration(environmentId);
-
     throw new Error("invalid token");
   }
 };
@@ -222,10 +220,14 @@ export const writeData = async (
     for (let i = 0; i < fieldsToCreate.length; i++) {
       const fieldName = fieldsToCreate[i];
 
-      await addField(key, configData.baseId, configData.tableId, {
+      const createRes = await addField(key, configData.baseId, configData.tableId, {
         name: fieldName,
         type: "singleLineText",
       });
+
+      if (createRes?.error) {
+        throw new Error(`Failed to create field "${fieldName}": ${JSON.stringify(createRes)}`);
+      }
 
       // Add delay between requests (except for the last one)
       if (i < fieldsToCreate.length - 1) {
