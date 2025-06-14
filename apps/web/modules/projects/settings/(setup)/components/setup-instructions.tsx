@@ -19,10 +19,10 @@ const tabs = [
 
 interface SetupInstructionsProps {
   environmentId: string;
-  webAppUrl: string;
+  publicDomain: string;
 }
 
-export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstructionsProps) => {
+export const SetupInstructions = ({ environmentId, publicDomain }: SetupInstructionsProps) => {
   const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
@@ -45,7 +45,7 @@ export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstruction
 if (typeof window !== "undefined") {
   formbricks.setup({
     environmentId: "${environmentId}", 
-    appUrl: "${webAppUrl}",
+    appUrl: "${publicDomain}",
   });
 }`}
             </CodeBlock>
@@ -129,7 +129,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:"${environmentId}",appUrl:"${window.location.protocol}//${window.location.host}"}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${publicDomain}/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:"${environmentId}",appUrl:"${window.location.protocol}//${window.location.host}"}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>

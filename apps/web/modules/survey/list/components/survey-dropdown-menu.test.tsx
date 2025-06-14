@@ -59,7 +59,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={{ ...fakeSurvey, status: "completed" }}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={mockRefresh}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
@@ -91,7 +91,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={fakeSurvey}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
@@ -131,7 +131,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={fakeSurvey}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
@@ -154,7 +154,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={{ ...fakeSurvey, responseCount: 0 }}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
@@ -180,7 +180,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={fakeSurvey}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}
@@ -207,7 +207,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={{ ...fakeSurvey, responseCount: 5 }}
-        surveyDomain="http://survey.test"
+        publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}

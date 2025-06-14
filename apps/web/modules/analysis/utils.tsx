@@ -32,10 +32,10 @@ export const renderHyperlinkedContent = (data: string): JSX.Element[] => {
 
 export const getSurveyUrl = async (
   survey: TSurvey,
-  surveyDomain: string,
+  publicDomain: string,
   language: string
 ): Promise<string> => {
-  let url = `${surveyDomain}/s/${survey.id}`;
+  let url = `${publicDomain}/s/${survey.id}`;
   const queryParams: string[] = [];
 
   if (survey.singleUse?.enabled) {

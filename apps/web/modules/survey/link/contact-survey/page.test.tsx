@@ -41,6 +41,12 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PASSWORD: "password",
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 vi.mock("@/modules/ee/contacts/lib/contact-survey-link");
 vi.mock("@/modules/survey/link/lib/metadata-utils");
 vi.mock("@/modules/survey/link/lib/data", () => ({

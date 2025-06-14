@@ -1,9 +1,8 @@
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
-import { getTranslate } from "@/tolgee/server";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -35,7 +34,16 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
 }));
 
-vi.mock("@/lib/getSurveyUrl");
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn().mockReturnValue("https://public-domain.com"),
+}));
+
 vi.mock("@/lib/project/service");
 vi.mock("@/lib/survey/service");
 vi.mock("@/lib/utils/styling");
@@ -121,7 +129,7 @@ const mockComputedStyling = {
   thankYouCardIconBgColor: "#DDDDDD",
 } as any;
 
-const mockSurveyDomain = "https://app.formbricks.com";
+const mockPublicDomain = "https://app.formbricks.com";
 const mockRawHtml = `${doctype}<html><body>Test Email Content for ${mockSurvey.name}</body></html>`;
 const mockCleanedHtml = `<html><body>Test Email Content for ${mockSurvey.name}</body></html>`;
 
@@ -136,7 +144,7 @@ describe("getEmailTemplateHtml", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(mockProject);
     vi.mocked(getStyling).mockReturnValue(mockComputedStyling);
-    vi.mocked(getSurveyDomain).mockReturnValue(mockSurveyDomain);
+    vi.mocked(getPublicDomain).mockReturnValue(mockPublicDomain);
     vi.mocked(getPreviewEmailTemplateHtml).mockResolvedValue(mockRawHtml);
   });
 
@@ -147,8 +155,8 @@ describe("getEmailTemplateHtml", () => {
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockSurvey.environmentId);
     expect(getStyling).toHaveBeenCalledWith(mockProject, mockSurvey);
-    expect(getSurveyDomain).toHaveBeenCalledTimes(1);
-    const expectedSurveyUrl = `${mockSurveyDomain}/s/${mockSurvey.id}`;
+    expect(getPublicDomain).toHaveBeenCalledTimes(1);
+    const expectedSurveyUrl = `${mockPublicDomain}/s/${mockSurvey.id}`;
     expect(getPreviewEmailTemplateHtml).toHaveBeenCalledWith(
       mockSurvey,
       expectedSurveyUrl,

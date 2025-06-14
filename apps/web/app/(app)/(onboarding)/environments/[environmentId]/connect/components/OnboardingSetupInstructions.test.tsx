@@ -33,7 +33,7 @@ describe("OnboardingSetupInstructions", () => {
   // Provide some default props for testing
   const defaultProps = {
     environmentId: "env-123",
-    webAppUrl: "https://example.com",
+    publicDomain: "https://example.com",
     channel: "app" as const, // Assuming channel is either "app" or "website"
     widgetSetupCompleted: false,
   };

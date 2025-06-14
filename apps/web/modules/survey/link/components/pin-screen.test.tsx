@@ -27,7 +27,7 @@ describe("PinScreen", () => {
       logo: "logo.png",
       linkSurveyBranding: true,
     },
-    surveyDomain: "survey.example.com",
+    publicDomain: "survey.example.com",
     webAppUrl: "https://app.example.com",
     IS_FORMBRICKS_CLOUD: false,
     languageCode: "en",

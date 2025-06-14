@@ -27,7 +27,7 @@ describe("ConnectWithFormbricks", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
-        webAppUrl={webAppUrl}
+        publicDomain={webAppUrl}
         widgetSetupCompleted={false}
         channel={channel}
       />
@@ -40,7 +40,7 @@ describe("ConnectWithFormbricks", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
-        webAppUrl={webAppUrl}
+        publicDomain={webAppUrl}
         widgetSetupCompleted={true}
         channel={channel}
       />
@@ -53,7 +53,7 @@ describe("ConnectWithFormbricks", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
-        webAppUrl={webAppUrl}
+        publicDomain={webAppUrl}
         widgetSetupCompleted={true}
         channel={channel}
       />
@@ -67,7 +67,7 @@ describe("ConnectWithFormbricks", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
-        webAppUrl={webAppUrl}
+        publicDomain={webAppUrl}
         widgetSetupCompleted={false}
         channel={channel}
       />

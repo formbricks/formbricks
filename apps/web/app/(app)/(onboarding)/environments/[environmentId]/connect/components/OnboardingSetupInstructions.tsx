@@ -18,14 +18,14 @@ const tabs = [
 
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
-  webAppUrl: string;
+  publicDomain: string;
   channel: TProjectConfigChannel;
   widgetSetupCompleted: boolean;
 }
 
 export const OnboardingSetupInstructions = ({
   environmentId,
-  webAppUrl,
+  publicDomain,
   channel,
   widgetSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
@@ -34,7 +34,7 @@ export const OnboardingSetupInstructions = ({
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-      var appUrl = "${webAppUrl}";
+      var appUrl = "${publicDomain}";
       var environmentId = "${environmentId}";
       var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
@@ -44,7 +44,7 @@ export const OnboardingSetupInstructions = ({
   const htmlSnippetForWebsiteSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-    var appUrl = "${webAppUrl}";
+    var appUrl = "${publicDomain}";
     var environmentId = "${environmentId}";
     var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
@@ -57,7 +57,7 @@ export const OnboardingSetupInstructions = ({
   if (typeof window !== "undefined") {
     formbricks.setup({
       environmentId: "${environmentId}",
-      appUrl: "${webAppUrl}",
+      appUrl: "${publicDomain}",
     });
   }
   
@@ -75,7 +75,7 @@ export const OnboardingSetupInstructions = ({
   if (typeof window !== "undefined") {
     formbricks.setup({
       environmentId: "${environmentId}",
-      appUrl: "${webAppUrl}",
+      appUrl: "${publicDomain}",
     });
   }
   

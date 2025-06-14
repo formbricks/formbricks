@@ -25,7 +25,7 @@ describe("getMetadataForLinkSurvey", () => {
   const mockBrandColor = "#123456";
   const mockEncodedBrandColor = "123456";
   const mockEncodedName = "Test-Survey";
-  const mockOgImageUrl = `/api/v1/og?brandColor=${mockEncodedBrandColor}&name=${mockEncodedName}`;
+  const mockOgImageUrl = `/api/v1/client/og?brandColor=${mockEncodedBrandColor}&name=${mockEncodedName}`;
 
   beforeEach(() => {
     vi.resetAllMocks();

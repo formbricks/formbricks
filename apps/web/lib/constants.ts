@@ -13,8 +13,6 @@ export const E2E_TESTING = env.E2E_TESTING === "1";
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
-export const SURVEY_URL = env.SURVEY_URL;
-
 // encryption keys
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 

@@ -1,8 +1,9 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -50,6 +51,8 @@ const Page = async (props: SummaryPageProps) => {
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);
 
+  const publicDomain = getPublicDomain();
+
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
@@ -60,7 +63,7 @@ const Page = async (props: SummaryPageProps) => {
           environment={environment}
           survey={survey}
           surveyId={survey.id}
-          webAppUrl={WEBAPP_URL}
+          publicDomain={publicDomain}
           isReadOnly={true}
           locale={DEFAULT_LOCALE}
           initialSurveySummary={initialSurveySummary}

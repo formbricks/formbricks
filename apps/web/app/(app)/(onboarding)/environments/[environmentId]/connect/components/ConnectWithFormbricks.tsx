@@ -12,14 +12,14 @@ import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
-  webAppUrl: string;
+  publicDomain: string;
   widgetSetupCompleted: boolean;
   channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
   environment,
-  webAppUrl,
+  publicDomain,
   widgetSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
@@ -49,7 +49,7 @@ export const ConnectWithFormbricks = ({
         <div className="flex w-1/2 flex-col space-y-4">
           <OnboardingSetupInstructions
             environmentId={environment.id}
-            webAppUrl={webAppUrl}
+            publicDomain={publicDomain}
             channel={channel}
             widgetSetupCompleted={widgetSetupCompleted}
           />

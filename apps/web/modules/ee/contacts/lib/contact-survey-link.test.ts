@@ -1,5 +1,6 @@
-import { ENCRYPTION_KEY, SURVEY_URL } from "@/lib/constants";
+import { ENCRYPTION_KEY } from "@/lib/constants";
 import * as crypto from "@/lib/crypto";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as contactSurveyLink from "./contact-survey-link";
@@ -15,7 +16,10 @@ vi.mock("jsonwebtoken", () => ({
 // Mock constants - MUST be a literal object without using variables
 vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
-  SURVEY_URL: "https://test.formbricks.com",
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn().mockReturnValue("https://test.formbricks.com"),
 }));
 
 vi.mock("@/lib/crypto", () => ({
@@ -73,7 +77,7 @@ describe("Contact Survey Link", () => {
       // Verify the returned URL
       expect(result).toEqual({
         ok: true,
-        data: `${SURVEY_URL}/c/${mockToken}`,
+        data: `${getPublicDomain()}/c/${mockToken}`,
       });
     });
 
@@ -98,7 +102,7 @@ describe("Contact Survey Link", () => {
       // Re‑mock constants to simulate missing ENCRYPTION_KEY
       vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
-        SURVEY_URL: "https://test.formbricks.com",
+        PUBLIC_URL: "https://test.formbricks.com",
       }));
       // Re‑import the modules so they pick up the new mock
       const { getContactSurveyLink } = await import("./contact-survey-link");
@@ -172,7 +176,6 @@ describe("Contact Survey Link", () => {
       vi.resetModules();
       vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
-        SURVEY_URL: "https://test.formbricks.com",
       }));
       const { verifyContactSurveyToken } = await import("./contact-survey-link");
       const result = verifyContactSurveyToken(mockToken);

@@ -29,6 +29,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));

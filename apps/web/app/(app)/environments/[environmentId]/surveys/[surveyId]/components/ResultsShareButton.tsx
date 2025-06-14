@@ -21,10 +21,10 @@ import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurvey
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  webAppUrl: string;
+  publicDomain: string;
 }
 
-export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
+export const ResultsShareButton = ({ survey, publicDomain }: ResultsShareButtonProps) => {
   const { t } = useTranslate();
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -34,7 +34,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
   const handlePublish = async () => {
     const resultShareKeyResponse = await generateResultShareUrlAction({ surveyId: survey.id });
     if (resultShareKeyResponse?.data) {
-      setSurveyUrl(webAppUrl + "/share/" + resultShareKeyResponse.data);
+      setSurveyUrl(publicDomain + "/share/" + resultShareKeyResponse.data);
       setShowPublishModal(true);
     } else {
       const errorMessage = getFormattedErrorMessage(resultShareKeyResponse);
@@ -58,13 +58,13 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
     const fetchSharingKey = async () => {
       const resultShareUrlResponse = await getResultShareUrlAction({ surveyId: survey.id });
       if (resultShareUrlResponse?.data) {
-        setSurveyUrl(webAppUrl + "/share/" + resultShareUrlResponse.data);
+        setSurveyUrl(publicDomain + "/share/" + resultShareUrlResponse.data);
         setShowPublishModal(true);
       }
     };
 
     fetchSharingKey();
-  }, [survey.id, webAppUrl]);
+  }, [survey.id, publicDomain]);
 
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {

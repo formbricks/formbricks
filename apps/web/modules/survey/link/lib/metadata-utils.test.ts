@@ -1,4 +1,5 @@
-import { IS_FORMBRICKS_CLOUD, SURVEY_URL } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
@@ -24,7 +25,6 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: vi.fn(() => false),
   WEBAPP_URL: "https://test.formbricks.com",
-  SURVEY_URL: "https://surveys.test.formbricks.com",
 }));
 
 vi.mock("@/lib/styling/constants", () => ({
@@ -171,13 +171,13 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(SURVEY_URL as any),
+        metadataBase: new URL(getPublicDomain() as any),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
           url: `/s/${surveyId}`,
           siteName: "",
-          images: [`/api/v1/og?brandColor=${brandColor}&name=${encodedName}`],
+          images: [`/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`],
           locale: "en_US",
           type: "website",
         },
@@ -185,7 +185,7 @@ describe("Metadata Utils", () => {
           card: "summary_large_image",
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
-          images: [`/api/v1/og?brandColor=${brandColor}&name=${encodedName}`],
+          images: [`/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`],
         },
       });
     });

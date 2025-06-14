@@ -44,13 +44,13 @@ vi.mock("@tolgee/react", () => ({
 
 vi.mock("./survey-card", () => ({
   SurveyCard: vi.fn(
-    ({ survey, deleteSurvey, duplicateSurvey, isReadOnly, locale, environmentId, surveyDomain }) => (
+    ({ survey, deleteSurvey, duplicateSurvey, isReadOnly, locale, environmentId, publicDomain }) => (
       <div
         data-testid={`survey-card-${survey.id}`}
         data-readonly={isReadOnly}
         data-locale={locale}
         data-env-id={environmentId}
-        data-survey-domain={surveyDomain}>
+        data-public-domain={publicDomain}>
         <span>{survey.name}</span>
         <button data-testid={`delete-${survey.id}`} onClick={() => deleteSurvey(survey.id)}>
           Delete
@@ -102,7 +102,7 @@ const mockLocalStorage = {
 const defaultProps = {
   environmentId: "test-env-id",
   isReadOnly: false,
-  surveyDomain: "test.formbricks.com",
+  publicDomain: "test.formbricks.com",
   userId: "test-user-id",
   surveysPerPage: 3,
   currentProjectChannel: "link" as TProjectConfigChannel,
@@ -157,13 +157,13 @@ describe("SurveysList", () => {
     }));
     vi.mock("./survey-card", () => ({
       SurveyCard: vi.fn(
-        ({ survey, deleteSurvey, duplicateSurvey, isReadOnly, locale, environmentId, surveyDomain }) => (
+        ({ survey, deleteSurvey, duplicateSurvey, isReadOnly, locale, environmentId, publicDomain }) => (
           <div
             data-testid={`survey-card-${survey.id}`}
             data-readonly={isReadOnly}
             data-locale={locale}
             data-env-id={environmentId}
-            data-survey-domain={surveyDomain}>
+            data-public-domain={publicDomain}>
             <span>{survey.name}</span>
             <button data-testid={`delete-${survey.id}`} onClick={() => deleteSurvey(survey.id)}>
               Delete

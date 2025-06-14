@@ -42,6 +42,7 @@ vi.mock("next/link", () => {
 describe("SetupInstructions Component", () => {
   const environmentId = "env123";
   const webAppUrl = "https://example.com";
+  const publicDomain = "https://example.com";
 
   beforeEach(() => {
     // Optionally reset mocks if needed
@@ -49,7 +50,7 @@ describe("SetupInstructions Component", () => {
   });
 
   test("renders npm instructions by default", () => {
-    render(<SetupInstructions environmentId={environmentId} webAppUrl={webAppUrl} />);
+    render(<SetupInstructions environmentId={environmentId} publicDomain={publicDomain} />);
 
     // Verify that the npm tab is active by default by checking for a code block with npm install instructions.
     expect(screen.getByText("pnpm install @formbricks/js")).toBeInTheDocument();
@@ -60,7 +61,7 @@ describe("SetupInstructions Component", () => {
   });
 
   test("switches to html tab and displays html instructions", async () => {
-    render(<SetupInstructions environmentId="env123" webAppUrl="https://example.com" />);
+    render(<SetupInstructions environmentId="env123" publicDomain="https://example.com" />);
 
     // Instead of getByRole (which finds multiple buttons), use getAllByRole and select the first HTML tab.
     const htmlTabButtons = screen.getAllByRole("button", { name: /HTML/i });
@@ -76,7 +77,7 @@ describe("SetupInstructions Component", () => {
   });
 
   test("npm instructions code block contains environmentId and webAppUrl", async () => {
-    render(<SetupInstructions environmentId={environmentId} webAppUrl={webAppUrl} />);
+    render(<SetupInstructions environmentId={environmentId} publicDomain={publicDomain} />);
 
     // The NPM tab is the default view.
     // Find all code block elements.
@@ -88,6 +89,6 @@ describe("SetupInstructions Component", () => {
     );
     expect(setupCodeBlock).toBeDefined();
     expect(setupCodeBlock?.textContent).toContain(environmentId);
-    expect(setupCodeBlock?.textContent).toContain(webAppUrl);
+    expect(setupCodeBlock?.textContent).toContain(publicDomain);
   });
 });
