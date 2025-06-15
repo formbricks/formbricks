@@ -42,10 +42,6 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 1000,
 }));
 
-vi.mock("@/lib/getPublicUrl", () => ({
-  getPublicDomain: vi.fn(),
-}));
-
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation",
   () => ({
