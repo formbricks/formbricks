@@ -79,7 +79,6 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Benutzer erfolgreich erstellt",
-      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an.",
       "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Wenn keines existierte, haben wir eines für Dich erstellt. Wenn bereits ein Konto existierte, wurden keine Änderungen vorgenommen. Bitte melde Dich unten an, um fortzufahren."
     },
     "testimonial_1": "Als open-source Firma ist uns Datenschutz extrem wichtig! Formbricks bietet die perfekte Mischung aus modernster Technologie und solidem Datenschutz.",
@@ -92,12 +91,10 @@
       "invalid_token": "Ungültiges Token ☹️",
       "new_email_verification_success": "Wenn die Adresse gültig ist, wurde eine Bestätigungs-E-Mail gesendet.",
       "no_email_provided": "Keine E-Mail bereitgestellt",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
       "verification_email_successfully_sent_info": "Wenn ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe dein Postfach, um die Anmeldung abzuschließen.",
-      "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },
     "verify": {
@@ -132,6 +129,8 @@
     "and": "und",
     "and_response_limit_of": "und Antwortlimit von",
     "anonymous": "Anonym",
+    "api_key_label": "Plain-API-Schlüssel",
+    "api_key_label_placeholder": "plainApiKey_xxxx",
     "api_keys": "API-Schlüssel",
     "app": "App",
     "app_survey": "App-Umfrage",
@@ -708,6 +707,13 @@
         "update_connection_tooltip": "Verbinde die Integration erneut, um neu hinzugefügte Datenbanken einzuschließen. Deine bestehenden Integrationen bleiben erhalten."
       },
       "notion_integration_description": "Sende Daten an deine Notion Datenbank",
+      "plain": {
+        "add_key": "Plain-API-Schlüssel hinzufügen",
+        "add_key_description": "Fügen Sie Ihren Plain-API-Schlüssel hinzu, um sich mit Plain zu verbinden",
+        "connect_with_plain": "Mit Plain verbinden",
+        "plain_integration": "Plain Integration",
+        "plain_integration_description": "Threads auf Plain mit Formbricks-Antworten erstellen"
+      },
       "please_select_a_survey_error": "Bitte wähle eine Umfrage aus",
       "select_at_least_one_question_error": "Bitte wähle mindestens eine Frage aus",
       "slack": {

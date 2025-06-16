@@ -1,52 +1,74 @@
 "use client";
 
-import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
-import { MousePointerClickIcon, PlusIcon } from "lucide-react";
+import { KeyIcon } from "lucide-react";
 import { useState } from "react";
-import { TActionClass } from "@formbricks/types/action-classes";
 
-interface AddActionModalProps {
+interface AddKeyModalProps {
   environmentId: string;
-  actionClasses: TActionClass[];
-  isReadOnly: boolean;
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
 }
 
-export const AddKeyModal = ({ environmentId, actionClasses, isReadOnly }: AddActionModalProps) => {
+export const AddKeyModal = ({
+  environmentId,
+  open: externalOpen,
+  setOpen: externalSetOpen,
+}: AddKeyModalProps) => {
   const { t } = useTranslate();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [keyLabel, setKeyLabel] = useState("");
 
-  const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalSetOpen || setInternalOpen;
 
   return (
-    <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        {t("common.add_action")}
-        <PlusIcon />
-      </Button>
-      <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
-        <div className="flex h-full flex-col rounded-lg">
-          <div className="rounded-t-lg bg-slate-100">
-            <div className="flex w-full items-center justify-between p-6">
-              <div className="flex items-center space-x-2">
-                <div className="mr-1.5 h-6 w-6 text-slate-500">
-                  <MousePointerClickIcon className="h-5 w-5" />
+    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
+      <div className="flex h-full flex-col rounded-lg">
+        <div className="rounded-t-lg bg-slate-100">
+          <div className="flex w-full items-center justify-between p-6">
+            <div className="flex items-center space-x-2">
+              <div className="mr-1.5 h-6 w-6 text-slate-500">
+                <KeyIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xl font-medium text-slate-700">
+                  {t("environments.integrations.plain.add_key")}
                 </div>
-                <div>
-                  <div className="text-xl font-medium text-slate-700">
-                    {t("environments.actions.track_new_user_action")}
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
-                  </div>
+                <div className="text-sm text-slate-500">
+                  {t("environments.integrations.plain.add_key_description")}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </Modal>
-    </>
+        <div className="p-6">
+          <div className="mb-4">
+            <label htmlFor="keyLabel" className="mb-2 block text-sm font-medium text-slate-700">
+              {t("environments.integrations.plain.api_key_label")}
+            </label>
+            <Input
+              id="keyLabel"
+              name="keyLabel"
+              placeholder={t("environments.integrations.plain.api_key_label_placeholder")}
+              value={keyLabel}
+              onChange={(e) => setKeyLabel(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="default" disabled={!keyLabel.trim()}>
+              {t("common.connect")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 };

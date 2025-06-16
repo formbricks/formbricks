@@ -58,7 +58,6 @@ export const PlainWrapper = ({
 
   return (
     <>
-      <AddKeyModal environmentId={environment.id} actionClasses={[]} isReadOnly={false} />
       {isConnected && notionIntegration ? (
         <>
           <AddIntegrationModal
@@ -81,12 +80,15 @@ export const PlainWrapper = ({
           />
         </>
       ) : (
-        <ConnectIntegration
-          isEnabled={enabled}
-          integrationType={"plain"}
-          handleAuthorization={handlePlainAuthorization}
-          integrationLogoSrc={PlainLogo}
-        />
+        <>
+          <AddKeyModal environmentId={environment.id} open={open} setOpen={setOpen} />
+          <ConnectIntegration
+            isEnabled={enabled}
+            integrationType={"plain"}
+            handleAuthorization={handlePlainAuthorization}
+            integrationLogoSrc={PlainLogo}
+          />
+        </>
       )}
     </>
   );
