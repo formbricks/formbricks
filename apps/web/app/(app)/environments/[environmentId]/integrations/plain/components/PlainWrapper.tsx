@@ -1,82 +1,70 @@
 "use client";
 
-import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
-import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
 import PlainLogo from "@/images/plain.webp";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import {
-  TIntegrationNotion,
-  TIntegrationNotionConfigData,
-  TIntegrationNotionDatabase,
-} from "@formbricks/types/integration/notion";
+import { TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
+import { TIntegrationPlain } from "@formbricks/types/integration/plain";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { authorize } from "../../notion/lib/notion";
+import { AddIntegrationModal } from "./AddIntegrationModal";
 import { AddKeyModal } from "./AddKeyModal";
+import { ManageIntegration } from "./ManageIntegration";
 
-interface NotionWrapperProps {
-  notionIntegration: TIntegrationNotion | undefined;
+interface PlainWrapperProps {
+  plainIntegration: TIntegrationPlain | undefined;
   enabled: boolean;
   environment: TEnvironment;
   webAppUrl: string;
   surveys: TSurvey[];
-  databasesArray: TIntegrationNotionDatabase[];
+  databasesArray: any[];
   locale: TUserLocale;
 }
 
 export const PlainWrapper = ({
-  notionIntegration,
+  plainIntegration,
   enabled,
   environment,
   webAppUrl,
   surveys,
-  databasesArray,
   locale,
-}: NotionWrapperProps) => {
+}: PlainWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [open, setOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(
-    notionIntegration ? notionIntegration.config.key?.bot_id : false
-  );
+  const [isConnected, setIsConnected] = useState(plainIntegration ? plainIntegration.config.key : false);
   const [selectedIntegration, setSelectedIntegration] = useState<
-    (TIntegrationNotionConfigData & { index: number }) | null
+    (TIntegrationPlainConfigData & { index: number }) | null
   >(null);
-
-  const handleNotionAuthorization = async () => {
-    authorize(environment.id, webAppUrl).then((url: string) => {
-      if (url) {
-        window.location.replace(url);
-      }
-    });
-  };
 
   const handlePlainAuthorization = async () => {
     setOpen(true);
   };
 
+  // Debug the plainIntegration object
+  console.log("Plain Integration:", plainIntegration);
+
   return (
     <>
-      {isConnected && notionIntegration ? (
+      {isConnected && plainIntegration ? (
         <>
           <AddIntegrationModal
             environmentId={environment.id}
             surveys={surveys}
             open={isModalOpen}
             setOpen={setModalOpen}
-            notionIntegration={notionIntegration}
-            databases={databasesArray}
+            plainIntegration={plainIntegration}
+            databases={[]}
             selectedIntegration={selectedIntegration}
           />
           <ManageIntegration
             environment={environment}
-            notionIntegration={notionIntegration}
+            plainIntegration={plainIntegration}
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}
-            handleNotionAuthorization={handleNotionAuthorization}
+            handlePlainAuthorization={handlePlainAuthorization}
           />
         </>
       ) : (

@@ -6,6 +6,8 @@ import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { KeyIcon } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { connectPlainIntegrationAction } from "../actions";
 
 interface AddKeyModalProps {
   environmentId: string;
@@ -21,6 +23,7 @@ export const AddKeyModal = ({
   const { t } = useTranslate();
   const [internalOpen, setInternalOpen] = useState(false);
   const [keyLabel, setKeyLabel] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = externalSetOpen || setInternalOpen;
@@ -60,11 +63,29 @@ export const AddKeyModal = ({
             />
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
               {t("common.cancel")}
             </Button>
-            <Button variant="default" disabled={!keyLabel.trim()}>
-              {t("common.connect")}
+            <Button
+              variant="default"
+              disabled={!keyLabel.trim() || isSubmitting}
+              onClick={async () => {
+                try {
+                  setIsSubmitting(true);
+                  await connectPlainIntegrationAction({
+                    environmentId,
+                    key: keyLabel.trim(),
+                  });
+                  toast.success(t("environments.integrations.plain.connection_success"));
+                  setOpen(false);
+                } catch (error) {
+                  console.error("Error connecting Plain integration:", error);
+                  toast.error(t("environments.integrations.plain.connection_error"));
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}>
+              {isSubmitting ? t("common.connecting") : t("common.connect")}
             </Button>
           </div>
         </div>

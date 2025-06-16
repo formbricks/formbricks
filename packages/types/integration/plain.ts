@@ -1,34 +1,48 @@
 import { z } from "zod";
 import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./shared-types";
 
-export const ZIntegrationPlainCredential = z.object({
-  api_key: z.string(),
-  // workspace_icon: z.string().nullable(),
-  // workspace_id: z.string(),
-  // workspace_name: z.string().nullable(),
-});
+export const ZIntegrationPlainCredential = z.string().min(1);
 
 export type TIntegrationPlainCredential = z.infer<typeof ZIntegrationPlainCredential>;
 
+// Define Plain field types
+export const ZPlainFieldType = z.enum([
+  "componentText",
+  "title",
+  "customerIdentifier",
+  "threadField",
+  "labelTypeId",
+  "assignedTo",
+  "tenantId",
+]);
+
+export type TPlainFieldType = z.infer<typeof ZPlainFieldType>;
+
+// Define Plain mapping type
+export const ZPlainMapping = z.object({
+  question: z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+  }),
+  plainField: z.object({
+    id: z.string(),
+    name: z.string(),
+    type: ZPlainFieldType,
+    config: z.record(z.any()).optional(),
+  }),
+});
+
+export type TPlainMapping = z.infer<typeof ZPlainMapping>;
+
 export const ZIntegrationPlainConfigData = z
   .object({
-    // question -> notion database column mapping
-    mapping: z.array(
-      z.object({
-        question: z.object({
-          id: z.string(),
-          name: z.string(),
-          type: z.string(),
-        }),
-        column: z.object({
-          id: z.string(),
-          name: z.string(),
-          type: z.string(),
-        }),
-      })
-    ),
-    databaseId: z.string(),
-    databaseName: z.string(),
+    // question -> plain thread mapping
+    mapping: z.array(ZPlainMapping),
+    customerIdentifierField: z.enum(["emailAddress", "externalId", "customerId"]).default("emailAddress"),
+    includeCreatedAt: z.boolean().default(true),
+    includeComponents: z.boolean().default(true),
+    titleTemplate: z.string().optional(),
   })
   .merge(
     ZIntegrationBaseSurveyData.omit({
