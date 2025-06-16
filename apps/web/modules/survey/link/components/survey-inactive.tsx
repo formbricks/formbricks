@@ -34,9 +34,7 @@ export const SurveyInactive = async ({
   const showCTA =
     status !== "link invalid" &&
     status !== "response submitted" &&
-    ((status !== "paused" && status !== "completed") ||
-      (project && project.linkSurveyBranding) ||
-      !project) &&
+    ((status !== "paused" && status !== "completed") || project?.linkSurveyBranding || !project) &&
     !(status === "completed" && surveyClosedMessage);
 
   return (
