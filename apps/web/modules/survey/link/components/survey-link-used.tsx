@@ -10,7 +10,7 @@ import footerLogo from "../lib/footerlogo.svg";
 
 interface SurveyLinkUsedProps {
   singleUseMessage: TSurveySingleUse | null;
-  project: Pick<Project, "linkSurveyBranding">;
+  project?: Pick<Project, "linkSurveyBranding">;
 }
 
 export const SurveyLinkUsed = ({ singleUseMessage, project }: SurveyLinkUsedProps) => {
@@ -27,7 +27,7 @@ export const SurveyLinkUsed = ({ singleUseMessage, project }: SurveyLinkUsedProp
           {singleUseMessage?.subheading ?? defaultSubheading}
         </p>
       </div>
-      {project.linkSurveyBranding && (
+      {(!project || project.linkSurveyBranding) && (
         <div>
           <Link href="https://formbricks.com">
             <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />

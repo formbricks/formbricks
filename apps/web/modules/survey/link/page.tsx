@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface LinkSurveyPageProps {
   params: Promise<{
@@ -43,7 +44,14 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   const isPreview = searchParams.preview === "true";
 
   // Use optimized survey data fetcher (includes all necessary data)
-  const survey = await getSurveyWithMetadata(params.surveyId);
+  let survey: TSurvey | null = null;
+  try {
+    survey = await getSurveyWithMetadata(params.surveyId);
+  } catch (error) {
+    logger.error(error, "Error fetching survey");
+    return notFound();
+  }
+
   const suId = searchParams.suId;
 
   const isSingleUseSurvey = survey?.singleUse?.enabled;
