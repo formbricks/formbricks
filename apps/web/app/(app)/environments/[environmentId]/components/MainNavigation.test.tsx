@@ -220,6 +220,9 @@ describe("MainNavigation", () => {
     const mockSignOut = vi.fn().mockResolvedValue({ url: "/auth/login" });
     vi.mocked(useSignOut).mockReturnValue({ signOut: mockSignOut });
 
+    // Set up localStorage spy on the mocked localStorage
+    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
+
     render(<MainNavigation {...defaultProps} />);
 
     // Find the avatar and get its parent div which acts as the trigger
@@ -240,6 +243,9 @@ describe("MainNavigation", () => {
     const logoutButton = screen.getByText("common.logout");
     await userEvent.click(logoutButton);
 
+    // Verify localStorage.removeItem is called with the correct key
+    expect(removeItemSpy).toHaveBeenCalledWith("formbricks-environment-id");
+
     expect(mockSignOut).toHaveBeenCalledWith({
       reason: "user_initiated",
       redirectUrl: "/auth/login",
@@ -247,9 +253,13 @@ describe("MainNavigation", () => {
       redirect: false,
       callbackUrl: "/auth/login",
     });
+
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/auth/login");
     });
+
+    // Clean up spy
+    removeItemSpy.mockRestore();
   });
 
   test("handles organization switching", async () => {
