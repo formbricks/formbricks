@@ -79,8 +79,8 @@ type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
-      "sticky top-[-32px] z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left",
-      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 md:[&>svg~*]:flex md:[&>svg~*]:items-center md:[&>svg~*]:pl-6",
+      "sticky top-[-32px] z-10 flex min-h-4 flex-shrink-0 flex-col gap-y-1 bg-white text-center md:text-left",
+      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 md:[&>svg~*]:flex md:[&>svg~*]:items-center md:[&>svg~*]:pl-6 [&svg]:top-[-0.25rem]",
       className
     )}
     {...props}
@@ -107,7 +107,7 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 DialogFooter.displayName = "DialogFooter";
 
 const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("mt-4 flex-1 overflow-y-auto", className)} {...props} />
+  <div className={cn("mt-4 flex-1 overflow-y-auto text-sm", className)} {...props} />
 );
 DialogBody.displayName = "DialogBody";
 
