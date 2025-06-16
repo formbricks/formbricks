@@ -7,9 +7,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -44,7 +42,6 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
-    let userId: string | undefined = undefined;
 
     const organization = await getOrganizationByEnvironmentId(environmentId);
     if (!organization) {
@@ -53,7 +50,6 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
 
     if (contactId) {
       contact = await getContact(contactId);
-      userId = contact?.attributes.userId;
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
@@ -100,19 +96,6 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
         : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-
-    responseCache.revalidate({
-      environmentId,
-      id: response.id,
-      contactId: contact?.id,
-      ...(singleUseId && { singleUseId }),
-      userId,
-      surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
 
     if (IS_FORMBRICKS_CLOUD) {
       const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);

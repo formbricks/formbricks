@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/common";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surveys/types";
@@ -13,7 +13,7 @@ vi.stubGlobal("crypto", {
 
 describe("getMimeType", () => {
   Object.entries(mimeTypes).forEach(([extension, expectedMimeType]) => {
-    it(`should return "${expectedMimeType}" for extension "${extension}"`, () => {
+    test(`should return "${expectedMimeType}" for extension "${extension}"`, () => {
       expect(getMimeType(extension as TAllowedFileExtension)).toBe(expectedMimeType);
     });
   });
@@ -59,7 +59,7 @@ describe("getDefaultLanguageCode", () => {
     // ... other mandatory fields with default/mock values if needed
   };
 
-  it("should return the code of the default language", () => {
+  test("should return the code of the default language", () => {
     const survey: TJsEnvironmentStateSurvey = {
       ...baseMockSurvey,
       languages: [mockSurveyLanguageEs, mockSurveyLanguageEn],
@@ -67,7 +67,7 @@ describe("getDefaultLanguageCode", () => {
     expect(getDefaultLanguageCode(survey)).toBe("en");
   });
 
-  it("should return undefined if no default language", () => {
+  test("should return undefined if no default language", () => {
     const survey: TJsEnvironmentStateSurvey = {
       ...baseMockSurvey,
       languages: [{ ...mockSurveyLanguageEs, default: false }], // Ensure 'default' is explicitly false
@@ -75,7 +75,7 @@ describe("getDefaultLanguageCode", () => {
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
   });
 
-  it("should return undefined if languages array is empty", () => {
+  test("should return undefined if languages array is empty", () => {
     const survey: TJsEnvironmentStateSurvey = {
       ...baseMockSurvey,
       languages: [],
@@ -95,23 +95,23 @@ describe("getShuffledRowIndices", () => {
     mockGetRandomValues.mockReset();
   });
 
-  it('should return unshuffled for "none"', () => {
+  test('should return unshuffled for "none"', () => {
     expect(getShuffledRowIndices(5, "none")).toEqual([0, 1, 2, 3, 4]);
   });
 
-  it('should shuffle all for "all"', () => {
+  test('should shuffle all for "all"', () => {
     setNextRandomNormalizedValue(0.1);
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledRowIndices(3, "all")).toEqual([1, 2, 0]);
   });
 
-  it('should shuffle except last for "exceptLast"', () => {
+  test('should shuffle except last for "exceptLast"', () => {
     setNextRandomNormalizedValue(0.1);
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledRowIndices(4, "exceptLast")).toEqual([1, 2, 0, 3]);
   });
 
-  it("should handle n=0 or n=1", () => {
+  test("should handle n=0 or n=1", () => {
     expect(getShuffledRowIndices(0, "all")).toEqual([]);
     expect(getShuffledRowIndices(1, "all")).toEqual([0]);
     expect(getShuffledRowIndices(1, "exceptLast")).toEqual([0]);
@@ -130,34 +130,34 @@ describe("getShuffledChoicesIds", () => {
   ];
   const choicesWithOther: TSurveyQuestionChoice[] = [...choicesBase, { id: "other", label: { en: "Other" } }];
 
-  it('should return unshuffled for "none"', () => {
+  test('should return unshuffled for "none"', () => {
     expect(getShuffledChoicesIds(choicesBase, "none")).toEqual(["c1", "c2", "c3"]);
     expect(getShuffledChoicesIds(choicesWithOther, "none")).toEqual(["c1", "c2", "c3", "other"]);
   });
 
-  it('should shuffle all (no "other") for "all"', () => {
+  test('should shuffle all (no "other") for "all"', () => {
     setNextRandomNormalizedValue(0.1);
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledChoicesIds(choicesBase, "all")).toEqual(["c2", "c3", "c1"]);
   });
 
-  it('should shuffle all (with "other") for "all", keeping "other" last', () => {
+  test('should shuffle all (with "other") for "all", keeping "other" last', () => {
     setNextRandomNormalizedValue(0.1);
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledChoicesIds(choicesWithOther, "all")).toEqual(["c2", "c3", "c1", "other"]);
   });
 
-  it('should shuffle except last (no "other") for "exceptLast"', () => {
+  test('should shuffle except last (no "other") for "exceptLast"', () => {
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledChoicesIds(choicesBase, "exceptLast")).toEqual(["c2", "c1", "c3"]);
   });
 
-  it('should shuffle except last (with "other") for "exceptLast", keeping "other" truly last', () => {
+  test('should shuffle except last (with "other") for "exceptLast", keeping "other" truly last', () => {
     setNextRandomNormalizedValue(0.1);
     expect(getShuffledChoicesIds(choicesWithOther, "exceptLast")).toEqual(["c2", "c1", "c3", "other"]);
   });
 
-  it("should handle empty or single choice arrays", () => {
+  test("should handle empty or single choice arrays", () => {
     expect(getShuffledChoicesIds([], "all")).toEqual([]);
     const singleChoice = [{ id: "s1", label: { en: "Single" } }];
     expect(getShuffledChoicesIds(singleChoice, "all")).toEqual(["s1"]);

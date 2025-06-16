@@ -33,7 +33,8 @@ const Page = async (props) => {
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
-  const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
+  // Get response count for the CTA component
+  const responseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const locale = await findMatchingLocale();
   const surveyDomain = getSurveyDomain();
@@ -49,15 +50,10 @@ const Page = async (props) => {
             isReadOnly={isReadOnly}
             user={user}
             surveyDomain={surveyDomain}
-            responseCount={totalResponseCount}
+            responseCount={responseCount}
           />
         }>
-        <SurveyAnalysisNavigation
-          environmentId={environment.id}
-          survey={survey}
-          activeId="responses"
-          initialTotalResponseCount={totalResponseCount}
-        />
+        <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />
       </PageHeader>
       <ResponsePage
         environment={environment}

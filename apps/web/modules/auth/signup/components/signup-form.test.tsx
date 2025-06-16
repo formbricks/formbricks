@@ -125,6 +125,7 @@ const defaultProps = {
 describe("SignupForm", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   test("toggles the signup form on button click", () => {
@@ -237,7 +238,7 @@ describe("SignupForm", () => {
       expect(createEmailTokenAction).toHaveBeenCalledWith({ email: "test@example.com" });
     });
 
-    expect(pushMock).toHaveBeenCalledWith("/auth/signup-without-verification-success");
+    expect(pushMock).toHaveBeenCalledWith("/auth/signup-without-verification-success?token=token123");
   });
 
   test("submits the form successfully when turnstile is configured, but createEmailTokenAction don't return data", async () => {
@@ -363,5 +364,43 @@ describe("SignupForm", () => {
     });
 
     expect(pushMock).toHaveBeenCalledWith("/auth/verification-requested?token=token123");
+  });
+
+  test("shows an error message when createUserAction fails", async () => {
+    // Set up mocks for the API actions
+    vi.mocked(createUserAction).mockResolvedValue(undefined);
+    vi.mocked(createEmailTokenAction).mockResolvedValue({ data: "token123" });
+    vi.mocked(getFormattedErrorMessage).mockReturnValue("user creation failed");
+
+    render(<SignupForm {...defaultProps} />);
+
+    // Click the button to reveal the signup form
+    const toggleButton = screen.getByTestId("signup-show-login");
+    fireEvent.click(toggleButton);
+
+    // Fill out the form fields
+    fireEvent.change(screen.getByTestId("signup-name"), { target: { value: "Test User" } });
+    fireEvent.change(screen.getByTestId("signup-email"), { target: { value: "test@example.com" } });
+    fireEvent.change(screen.getByTestId("signup-password"), { target: { value: "Password123" } });
+
+    // Submit the form.
+    const submitButton = screen.getByTestId("signup-submit");
+    fireEvent.submit(submitButton);
+
+    await waitFor(() => {
+      expect(createUserAction).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(createEmailTokenAction).toHaveBeenCalledWith({ email: "test@example.com" });
+    });
+
+    // An error message should be shown.
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("user creation failed");
+    });
+
+    // router.push should not have been called.
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

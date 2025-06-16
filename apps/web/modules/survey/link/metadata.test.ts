@@ -1,11 +1,11 @@
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
+import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getBrandColorForURL, getNameForURL, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
-vi.mock("@/modules/survey/link/lib/survey", () => ({
+vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyMetadata: vi.fn(),
 }));
 
@@ -77,6 +77,15 @@ describe("getMetadataForLinkSurvey", () => {
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });
@@ -153,6 +162,15 @@ describe("getMetadataForLinkSurvey", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -182,6 +200,15 @@ describe("getMetadataForLinkSurvey", () => {
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });

@@ -31,7 +31,7 @@ export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProp
     if (!email) return toast.error(t("auth.verification-requested.no_email_provided"));
     const response = await resendVerificationEmailAction({ email });
     if (response?.data) {
-      toast.success(t("auth.verification-requested.verification_email_successfully_sent", { email }));
+      toast.success(t("auth.verification-requested.verification_email_resent_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(response);
       toast.error(errorMessage);

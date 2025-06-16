@@ -1,6 +1,3 @@
-import { contactCache } from "@/lib/cache/contact";
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -27,35 +24,6 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn((callback) => callback(prisma)),
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
-  },
-}));
-
-// Mock cache functions
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: (id: string) => `contacts-${id}`,
-      byEnvironmentId: (environmentId: string) => `environments-${environmentId}-contacts`,
-    },
-  },
-}));
-
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: (environmentId: string) => `contactAttributes-${environmentId}`,
-    },
-  },
-}));
-
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: (environmentId: string) => `environments-${environmentId}-contactAttributeKeys`,
-    },
   },
 }));
 
@@ -162,13 +130,6 @@ describe("upsertBulkContacts", () => {
 
     // Verify that the raw SQL query was executed to upsert attributes
     expect(prisma.$executeRaw).toHaveBeenCalled();
-
-    // Verify that caches were revalidated
-    expect(contactCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
-    // Since two new contacts are created with same id "mock-id", expect at least one revalidation with id "mock-id"
-    expect(contactCache.revalidate).toHaveBeenCalledWith({ id: "mock-id" });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
-    expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
   });
 
   test("should update existing contacts when provided contacts match an existing email", async () => {
@@ -326,17 +287,6 @@ describe("upsertBulkContacts", () => {
 
       // Verify that the transaction was executed
       expect(prisma.$transaction).toHaveBeenCalled();
-
-      // Verify that caches were revalidated
-      expect(contactCache.revalidate).toHaveBeenCalledWith({
-        environmentId: mockEnvironmentId,
-      });
-      expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-        environmentId: mockEnvironmentId,
-      });
-      expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({
-        environmentId: mockEnvironmentId,
-      });
     }
   });
 
@@ -395,11 +345,6 @@ describe("upsertBulkContacts", () => {
 
     // Verify that the raw SQL query was executed for inserting attributes
     expect(prisma.$executeRaw).toHaveBeenCalled();
-
-    // Verify that caches were revalidated
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
   });
 
   test("should update attribute key names when they change", async () => {
@@ -467,10 +412,5 @@ describe("upsertBulkContacts", () => {
 
     // Verify that the raw SQL query was executed for updating attribute keys
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "attr-key-name", key: "name", name: "Full Name" }]);
-
-    // Verify that caches were revalidated
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
   });
 });

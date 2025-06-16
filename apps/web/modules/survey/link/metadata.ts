@@ -1,5 +1,5 @@
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
+import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBrandColorForURL, getNameForURL, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
@@ -34,6 +34,15 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     ...baseMetadata,
     alternates: {
       canonical: canonicalPath,
+    },
+    robots: {
+      index: false,
+      follow: true,
+      googleBot: {
+        index: false,
+        follow: true,
+        noimageindex: true,
+      },
     },
   };
 };

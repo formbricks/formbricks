@@ -17,25 +17,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/organization/cache", () => ({
-  organizationCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
 vi.mock("react", () => ({
   cache: vi.fn((fn) => fn),
 }));

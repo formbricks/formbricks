@@ -1,11 +1,12 @@
 import { responses } from "@/app/lib/api/response";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { validateFile } from "@/lib/fileValidation";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
+import { checkAuth, checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
+
 
 // api endpoint for uploading public files
 // uploaded files will be public, anyone can access the file
@@ -13,29 +14,26 @@ import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 // use this to upload files for a specific resource, e.g. a user profile picture or a survey
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export const POST = async (req: NextRequest): Promise<Response> => {
+
+export const POST = async (request: NextRequest): Promise<Response> => {
   let storageInput;
 
   try {
-    storageInput = await req.json();
+    storageInput = await request.json();
   } catch (error) {
-    logger.error({ error, url: req.url }, "Error parsing JSON input");
+    logger.error({ error, url: request.url }, "Error parsing JSON input");
     return responses.badRequestResponse("Malformed JSON input, please check your request body");
   }
 
   const { fileName, fileType, environmentId, allowedFileExtensions } = storageInput;
 
-  if (!fileName) {
-    return responses.badRequestResponse("fileName is required");
-  }
+  const requiredFieldResponse = checkForRequiredFields(environmentId, fileType, fileName);
+  if (requiredFieldResponse) return requiredFieldResponse;
+  const session = await getServerSession(authOptions);
 
-  if (!fileType) {
-    return responses.badRequestResponse("fileType is required");
-  }
+  const authResponse = await checkAuth(session, environmentId, request);
+  if (authResponse) return authResponse;
 
-  if (!environmentId) {
-    return responses.badRequestResponse("environmentId is required");
-  }
 
   // Perform server-side file validation first to block dangerous file types
   const fileValidation = validateFile(fileName, fileType);
@@ -51,19 +49,6 @@ export const POST = async (req: NextRequest): Promise<Response> => {
         `File extension is not allowed, allowed extensions are: ${allowedFileExtensions.join(", ")}`
       );
     }
-  }
-
-  // auth and upload private file
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user) {
-    return responses.notAuthenticatedResponse();
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
   }
 
   return await getSignedUrlForPublicFile(fileName, environmentId, fileType);

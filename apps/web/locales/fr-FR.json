@@ -9,10 +9,11 @@
     "continue_with_saml": "Continuer avec SAML SSO",
     "email-change": {
       "confirm_password_description": "Veuillez confirmer votre mot de passe avant de changer votre adresse e-mail",
-      "email_already_exists": "Cet e-mail est déjà utilisé",
       "email_change_success": "E-mail changé avec succès",
       "email_change_success_description": "Vous avez changé votre adresse e-mail avec succès. Veuillez vous connecter avec votre nouvelle adresse e-mail.",
       "email_verification_failed": "Échec de la vérification de l'email",
+      "email_verification_loading": "Vérification de l'email en cours...",
+      "email_verification_loading_description": "Nous mettons à jour votre adresse email dans notre système. Cela peut prendre quelques secondes.",
       "invalid_or_expired_token": "Échec du changement d'email. Votre jeton est invalide ou expiré.",
       "new_email": "Nouvel Email",
       "old_email": "Ancien Email"
@@ -78,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Utilisateur créé avec succès",
-      "user_successfully_created_description": "Votre nouvel utilisateur a été créé avec succès. Veuillez cliquer sur le bouton ci-dessous et vous connecter à votre compte."
+      "user_successfully_created_description": "Votre nouvel utilisateur a été créé avec succès. Veuillez cliquer sur le bouton ci-dessous et vous connecter à votre compte.",
+      "user_successfully_created_info": "Nous avons vérifié s'il existait un compte associé à {email}. Si aucun n'existait, nous en avons créé un pour vous. Si un compte existait déjà, aucune modification n'a été apportée. Veuillez vous connecter ci-dessous pour continuer."
     },
     "testimonial_1": "Nous mesurons la clarté de nos documents et apprenons des abandons, le tout sur une seule plateforme. Excellent produit, équipe très réactive !",
     "testimonial_all_features_included": "Toutes les fonctionnalités incluses",
@@ -88,11 +90,13 @@
     "verification-requested": {
       "invalid_email_address": "Adresse e-mail invalide",
       "invalid_token": "Jeton non valide ☹️",
+      "new_email_verification_success": "Si l'adresse est valide, un email de vérification a été envoyé.",
       "no_email_provided": "Aucun e-mail fourni",
       "please_click_the_link_in_the_email_to_activate_your_account": "Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
-      "verification_email_successfully_sent": "Email de vérification envoyé à {email}. Veuillez vérifier pour compléter la mise à jour.",
+      "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
+      "verification_email_successfully_sent_info": "Si un compte est associé à {email}, nous avons envoyé un lien de vérification à cette adresse. Veuillez vérifier votre boîte de réception pour terminer l'inscription.",
       "we_sent_an_email_to": "Nous avons envoyé un email à {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"
     },
@@ -595,7 +599,6 @@
       "contact_deleted_successfully": "Contact supprimé avec succès",
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Rafraîchir les contacts",
-      "contacts_table_refresh_error": "Une erreur s'est produite lors de la mise à jour des contacts. Veuillez réessayer.",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "first_name": "Prénom",
       "last_name": "Nom de famille",
@@ -758,6 +761,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Contrôle d'accès",
         "add_api_key": "Ajouter une clé API",
         "api_key": "Clé API",
         "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
@@ -984,7 +988,7 @@
         "2000_monthly_identified_users": "2000 Utilisateurs Identifiés Mensuels",
         "30000_monthly_identified_users": "30000 Utilisateurs Identifiés Mensuels",
         "3_projects": "3 Projets",
-        "5000_monthly_responses": "5000 Réponses Mensuelles",
+        "5000_monthly_responses": "5,000 Réponses Mensuelles",
         "5_projects": "5 Projets",
         "7500_monthly_identified_users": "7500 Utilisateurs Identifiés Mensuels",
         "advanced_targeting": "Ciblage Avancé",
@@ -1149,6 +1153,7 @@
         "disable_two_factor_authentication": "Désactiver l'authentification à deux facteurs",
         "disable_two_factor_authentication_description": "Si vous devez désactiver l'authentification à deux facteurs, nous vous recommandons de la réactiver dès que possible.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Chaque code de sauvegarde peut être utilisé exactement une fois pour accorder l'accès sans votre authentificateur.",
+        "email_change_initiated": "Votre demande de changement d'email a été initiée.",
         "enable_two_factor_authentication": "Activer l'authentification à deux facteurs",
         "enter_the_code_from_your_authenticator_app_below": "Entrez le code de votre application d'authentification ci-dessous.",
         "file_size_must_be_less_than_10mb": "La taille du fichier doit être inférieure à 10 Mo.",
@@ -1766,7 +1771,7 @@
         "link_to_public_results_copied": "Lien vers les résultats publics copié",
         "make_sure_the_survey_type_is_set_to": "Assurez-vous que le type d'enquête est défini sur",
         "mobile_app": "Application mobile",
-        "no_response_matches_filter": "Aucune réponse ne correspond à votre filtre",
+        "no_responses_found": "Aucune réponse trouvée",
         "only_completed": "Uniquement terminé",
         "other_values_found": "D'autres valeurs trouvées",
         "overall": "Globalement",
@@ -2626,6 +2631,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Chef de produit",
     "product_market_fit_superhuman_question_3_choice_4": "Propriétaire de produit",
     "product_market_fit_superhuman_question_3_choice_5": "Ingénieur logiciel",
+    "product_market_fit_superhuman_question_3_headline": "Quel est votre rôle ?",
     "product_market_fit_superhuman_question_3_subheader": "Veuillez sélectionner l'une des options suivantes :",
     "product_market_fit_superhuman_question_4_headline": "Quel type de personnes pensez-vous bénéficierait le plus de $[projectName] ?",
     "product_market_fit_superhuman_question_5_headline": "Quel est le principal avantage que vous tirez de $[projectName] ?",
@@ -2647,6 +2653,7 @@
     "professional_development_survey_description": "Évaluer la satisfaction des employés concernant les opportunités de croissance et de développement professionnel.",
     "professional_development_survey_name": "Sondage sur le développement professionnel",
     "professional_development_survey_question_1_choice_1": "Oui",
+    "professional_development_survey_question_1_choice_2": "Non",
     "professional_development_survey_question_1_headline": "Êtes-vous intéressé par des activités de développement professionnel ?",
     "professional_development_survey_question_2_choice_1": "Événements de réseautage",
     "professional_development_survey_question_2_choice_2": "Conférences ou séminaires",

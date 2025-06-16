@@ -1,5 +1,3 @@
-import { teamCache } from "@/lib/cache/team";
-import { projectCache } from "@/lib/project/cache";
 import { OrganizationRole, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -14,18 +12,6 @@ vi.mock("@formbricks/database", () => ({
     teamUser: {
       create: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/team", () => ({
-  teamCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -53,8 +39,6 @@ describe("createTeamMembership", () => {
 
     expect(prisma.team.findUnique).toHaveBeenCalledTimes(2);
     expect(prisma.teamUser.create).toHaveBeenCalledTimes(2);
-    expect(teamCache.revalidate).toHaveBeenCalledTimes(5);
-    expect(projectCache.revalidate).toHaveBeenCalledTimes(1);
   });
 
   test("handles database errors", async () => {

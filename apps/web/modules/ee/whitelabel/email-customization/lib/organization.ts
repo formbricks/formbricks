@@ -1,7 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { organizationCache } from "@/lib/organization/cache";
-import { projectCache } from "@/lib/project/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -25,7 +22,7 @@ export const updateOrganizationEmailLogoUrl = async (
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const updatedOrganization = await prisma.organization.update({
+    await prisma.organization.update({
       where: { id: organizationId },
       data: {
         whitelabel: {
@@ -45,22 +42,6 @@ export const updateOrganizationEmailLogoUrl = async (
           },
         },
       },
-    });
-
-    organizationCache.revalidate({
-      id: organizationId,
-    });
-
-    for (const project of updatedOrganization.projects) {
-      for (const environment of project.environments) {
-        organizationCache.revalidate({
-          environmentId: environment.id,
-        });
-      }
-    }
-
-    projectCache.revalidate({
-      organizationId: organizationId,
     });
 
     return true;
@@ -111,22 +92,6 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
       },
     });
 
-    organizationCache.revalidate({
-      id: organizationId,
-    });
-
-    for (const project of organization.projects) {
-      for (const environment of project.environments) {
-        organizationCache.revalidate({
-          environmentId: environment.id,
-        });
-      }
-    }
-
-    projectCache.revalidate({
-      organizationId: organizationId,
-    });
-
     return true;
   } catch (error) {
     if (
@@ -140,29 +105,20 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   }
 };
 
-export const getOrganizationLogoUrl = reactCache(
-  async (organizationId: string): Promise<string | null> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZId]);
-        try {
-          const organization = await prisma.organization.findUnique({
-            where: { id: organizationId },
-            select: {
-              whitelabel: true,
-            },
-          });
-          return organization?.whitelabel?.logoUrl ?? null;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
+export const getOrganizationLogoUrl = reactCache(async (organizationId: string): Promise<string | null> => {
+  validateInputs([organizationId, ZId]);
+  try {
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        whitelabel: true,
       },
-      [`getOrganizationLogoUrl-${organizationId}`],
-      {
-        tags: [organizationCache.tag.byId(organizationId)],
-      }
-    )()
-);
+    });
+    return organization?.whitelabel?.logoUrl ?? null;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+});

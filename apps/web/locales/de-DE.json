@@ -9,10 +9,11 @@
     "continue_with_saml": "Login mit SAML SSO",
     "email-change": {
       "confirm_password_description": "Bitte bestätige dein Passwort, bevor du deine E-Mail-Adresse änderst",
-      "email_already_exists": "Diese E-Mail wird bereits verwendet",
       "email_change_success": "E-Mail erfolgreich geändert",
       "email_change_success_description": "Du hast deine E-Mail-Adresse erfolgreich geändert. Bitte logge dich mit deiner neuen E-Mail-Adresse ein.",
       "email_verification_failed": "E-Mail-Bestätigung fehlgeschlagen",
+      "email_verification_loading": "E-Mail-Bestätigung läuft...",
+      "email_verification_loading_description": "Wir aktualisieren Ihre E-Mail-Adresse in unserem System. Dies kann einige Sekunden dauern.",
       "invalid_or_expired_token": "E-Mail-Änderung fehlgeschlagen. Dein Token ist ungültig oder abgelaufen.",
       "new_email": "Neue E-Mail",
       "old_email": "Alte E-Mail"
@@ -78,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Benutzer erfolgreich erstellt",
-      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an."
+      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an.",
+      "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Wenn keines existierte, haben wir eines für Dich erstellt. Wenn bereits ein Konto existierte, wurden keine Änderungen vorgenommen. Bitte melde Dich unten an, um fortzufahren."
     },
     "testimonial_1": "Als open-source Firma ist uns Datenschutz extrem wichtig! Formbricks bietet die perfekte Mischung aus modernster Technologie und solidem Datenschutz.",
     "testimonial_all_features_included": "Alle Funktionen enthalten",
@@ -88,11 +90,13 @@
     "verification-requested": {
       "invalid_email_address": "Ungültige E-Mail-Adresse",
       "invalid_token": "Ungültiges Token ☹️",
+      "new_email_verification_success": "Wenn die Adresse gültig ist, wurde eine Bestätigungs-E-Mail gesendet.",
       "no_email_provided": "Keine E-Mail bereitgestellt",
       "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
-      "verification_email_successfully_sent": "Bestätigungs-E-Mail an {email} gesendet. Bitte überprüfen Sie, um das Update abzuschließen.",
+      "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
+      "verification_email_successfully_sent_info": "Wenn ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe dein Postfach, um die Anmeldung abzuschließen.",
       "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },
@@ -595,7 +599,6 @@
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
       "contact_not_found": "Kein solcher Kontakt gefunden",
       "contacts_table_refresh": "Kontakte aktualisieren",
-      "contacts_table_refresh_error": "Beim Aktualisieren der Kontakte ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "first_name": "Vorname",
       "last_name": "Nachname",
@@ -758,6 +761,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
@@ -1149,6 +1153,7 @@
         "disable_two_factor_authentication": "Zwei-Faktor-Authentifizierung deaktivieren",
         "disable_two_factor_authentication_description": "Wenn Du die Zwei-Faktor-Authentifizierung deaktivieren musst, empfehlen wir, sie so schnell wie möglich wieder zu aktivieren.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Jeder Backup-Code kann genau einmal verwendet werden, um Zugang ohne deinen Authenticator zu gewähren.",
+        "email_change_initiated": "Deine Anfrage zur Änderung der E-Mail wurde eingeleitet.",
         "enable_two_factor_authentication": "Zwei-Faktor-Authentifizierung aktivieren",
         "enter_the_code_from_your_authenticator_app_below": "Gib den Code aus deiner Authentifizierungs-App unten ein.",
         "file_size_must_be_less_than_10mb": "Dateigröße muss weniger als 10MB sein.",
@@ -1766,7 +1771,7 @@
         "link_to_public_results_copied": "Link zu öffentlichen Ergebnissen kopiert",
         "make_sure_the_survey_type_is_set_to": "Stelle sicher, dass der Umfragetyp richtig eingestellt ist",
         "mobile_app": "Mobile App",
-        "no_response_matches_filter": "Keine Antwort entspricht deinem Filter",
+        "no_responses_found": "Keine Antworten gefunden",
         "only_completed": "Nur vollständige Antworten",
         "other_values_found": "Andere Werte gefunden",
         "overall": "Insgesamt",
@@ -2626,6 +2631,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Produktmanager",
     "product_market_fit_superhuman_question_3_choice_4": "People Manager",
     "product_market_fit_superhuman_question_3_choice_5": "Softwareentwickler",
+    "product_market_fit_superhuman_question_3_headline": "Was ist deine Rolle?",
     "product_market_fit_superhuman_question_3_subheader": "Bitte wähle eine der folgenden Optionen aus:",
     "product_market_fit_superhuman_question_4_headline": "Wer würde am ehesten von $[projectName] profitieren?",
     "product_market_fit_superhuman_question_5_headline": "Welchen Mehrwert ziehst Du aus $[projectName]?",
@@ -2647,6 +2653,7 @@
     "professional_development_survey_description": "Bewerte die Zufriedenheit der Mitarbeiter mit beruflichen Entwicklungsmöglichkeiten.",
     "professional_development_survey_name": "Berufliche Entwicklungsbewertung",
     "professional_development_survey_question_1_choice_1": "Ja",
+    "professional_development_survey_question_1_choice_2": "Nein",
     "professional_development_survey_question_1_headline": "Sind Sie an beruflichen Entwicklungsmöglichkeiten interessiert?",
     "professional_development_survey_question_2_choice_1": "Networking-Veranstaltungen",
     "professional_development_survey_question_2_choice_2": "Konferenzen oder Seminare",

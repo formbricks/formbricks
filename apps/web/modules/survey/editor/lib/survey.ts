@@ -1,5 +1,3 @@
-import { segmentCache } from "@/lib/cache/segment";
-import { surveyCache } from "@/lib/survey/cache";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -106,7 +104,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             };
           }
 
-          const updatedSegment = await prisma.segment.update({
+          await prisma.segment.update({
             where: { id: segment.id },
             data: updatedInput,
             select: {
@@ -115,9 +113,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
               id: true,
             },
           });
-
-          segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
-          updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
           logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
@@ -155,11 +150,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           });
         }
       }
-
-      segmentCache.revalidate({
-        id: segment.id,
-        environmentId: segment.environmentId,
-      });
     } else if (type === "app") {
       if (!currentSurvey.segment) {
         await prisma.survey.update({
@@ -188,10 +178,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
               },
             },
           },
-        });
-
-        segmentCache.revalidate({
-          environmentId,
         });
       }
     }
@@ -298,13 +284,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       segment: surveySegment,
     };
 
-    surveyCache.revalidate({
-      id: modifiedSurvey.id,
-      environmentId: modifiedSurvey.environmentId,
-      segmentId: modifiedSurvey.segment?.id,
-      resultShareKey: currentSurvey.resultShareKey ?? undefined,
-    });
-
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -372,12 +351,6 @@ export const handleTriggerUpdates = (
       },
     };
   }
-
-  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
-    surveyCache.revalidate({
-      actionClassId: trigger.actionClass.id,
-    });
-  });
 
   return triggersUpdate;
 };

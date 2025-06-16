@@ -1,3 +1,4 @@
+import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import Page from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page";
@@ -61,6 +62,7 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
   WEBAPP_URL: "http://localhost:3000",
   RESPONSES_PER_PAGE: 10,
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/lib/getSurveyUrl", () => ({
@@ -107,6 +109,14 @@ vi.mock("@/modules/ui/components/page-header", () => ({
 
 vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,
+}));
+
+vi.mock("next/navigation", () => ({
+  useParams: () => ({
+    environmentId: "test-env-id",
+    surveyId: "test-survey-id",
+    sharingKey: null,
+  }),
 }));
 
 const mockEnvironmentId = "test-env-id";
@@ -180,7 +190,7 @@ describe("ResponsesPage", () => {
   test("renders correctly with all data", async () => {
     const props = { params: mockParams };
     const jsx = await Page(props);
-    render(jsx);
+    render(<ResponseFilterProvider>{jsx}</ResponseFilterProvider>);
 
     await screen.findByTestId("page-content-wrapper");
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
@@ -196,7 +206,6 @@ describe("ResponsesPage", () => {
         isReadOnly: false,
         user: mockUser,
         surveyDomain: mockSurveyDomain,
-        responseCount: 10,
       }),
       undefined
     );
@@ -206,7 +215,6 @@ describe("ResponsesPage", () => {
         environmentId: mockEnvironmentId,
         survey: mockSurvey,
         activeId: "responses",
-        initialTotalResponseCount: 10,
       }),
       undefined
     );

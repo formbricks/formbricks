@@ -9,10 +9,11 @@
     "continue_with_saml": "使用 SAML SSO 繼續",
     "email-change": {
       "confirm_password_description": "在更改您的電子郵件地址之前，請確認您的密碼",
-      "email_already_exists": "此電子郵件地址已被使用",
       "email_change_success": "電子郵件已成功更改",
       "email_change_success_description": "您已成功更改電子郵件地址。請使用您的新電子郵件地址登入。",
       "email_verification_failed": "電子郵件驗證失敗",
+      "email_verification_loading": "電子郵件驗證進行中...",
+      "email_verification_loading_description": "我們正在系統中更新您的電子郵件地址。這可能需要幾秒鐘。",
       "invalid_or_expired_token": "電子郵件更改失敗。您的 token 無效或已過期。",
       "new_email": "新 電子郵件",
       "old_email": "舊 電子郵件"
@@ -78,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "使用者建立成功",
-      "user_successfully_created_description": "您的新使用者已成功建立。請點擊下方按鈕並登入您的帳戶。"
+      "user_successfully_created_description": "您的新使用者已成功建立。請點擊下方按鈕並登入您的帳戶。",
+      "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
     "testimonial_1": "我們在同一個平台上測量文件的清晰度，並從客戶流失中學習。很棒的產品，團隊反應非常迅速！",
     "testimonial_all_features_included": "包含所有功能",
@@ -88,11 +90,13 @@
     "verification-requested": {
       "invalid_email_address": "無效的電子郵件地址",
       "invalid_token": "無效的權杖 ☹️",
+      "new_email_verification_success": "如果地址有效，驗證電子郵件已發送。",
       "no_email_provided": "未提供電子郵件",
       "please_click_the_link_in_the_email_to_activate_your_account": "請點擊電子郵件中的連結以啟用您的帳戶。",
       "please_confirm_your_email_address": "請確認您的電子郵件地址",
       "resend_verification_email": "重新發送驗證電子郵件",
-      "verification_email_successfully_sent": "验证电子邮件已发送至 {email}。请验证以完成更新。",
+      "verification_email_resent_successfully": "驗證電子郵件已發送！請檢查您的收件箱。",
+      "verification_email_successfully_sent_info": "如果有一個帳戶與 {email} 相關聯，我們已發送驗證連結至該地址。請檢查您的收件箱以完成註冊。",
       "we_sent_an_email_to": "我們已發送一封電子郵件至 <email>'{'email'}'</email>。",
       "you_didnt_receive_an_email_or_your_link_expired": "您沒有收到電子郵件或您的連結已過期？"
     },
@@ -595,7 +599,6 @@
       "contact_deleted_successfully": "聯絡人已成功刪除",
       "contact_not_found": "找不到此聯絡人",
       "contacts_table_refresh": "重新整理聯絡人",
-      "contacts_table_refresh_error": "重新整理聯絡人時發生錯誤，請再試一次",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "first_name": "名字",
       "last_name": "姓氏",
@@ -758,6 +761,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -1149,6 +1153,7 @@
         "disable_two_factor_authentication": "停用雙重驗證",
         "disable_two_factor_authentication_description": "如果您需要停用 2FA，我們建議您盡快重新啟用它。",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "每個備份碼只能使用一次，以便在沒有驗證器的情況下授予存取權限。",
+        "email_change_initiated": "您的 email 更改請求已啟動。",
         "enable_two_factor_authentication": "啟用雙重驗證",
         "enter_the_code_from_your_authenticator_app_below": "在下方輸入您驗證器應用程式中的程式碼。",
         "file_size_must_be_less_than_10mb": "檔案大小必須小於 10MB。",
@@ -1766,7 +1771,7 @@
         "link_to_public_results_copied": "已複製公開結果的連結",
         "make_sure_the_survey_type_is_set_to": "請確保問卷類型設定為",
         "mobile_app": "行動應用程式",
-        "no_response_matches_filter": "沒有任何回應符合您的篩選器",
+        "no_responses_found": "找不到回應",
         "only_completed": "僅已完成",
         "other_values_found": "找到其他值",
         "overall": "整體",
@@ -2626,6 +2631,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "產品經理",
     "product_market_fit_superhuman_question_3_choice_4": "產品負責人",
     "product_market_fit_superhuman_question_3_choice_5": "軟體工程師",
+    "product_market_fit_superhuman_question_3_headline": "您的角色是什麼？",
     "product_market_fit_superhuman_question_3_subheader": "請選取以下其中一個選項：",
     "product_market_fit_superhuman_question_4_headline": "您認為哪些類型的人最能從 {projectName} 中受益？",
     "product_market_fit_superhuman_question_5_headline": "您從 {projectName} 獲得的主要好處是什麼？",
@@ -2647,6 +2653,7 @@
     "professional_development_survey_description": "評估員工對專業成長和發展機會的滿意度。",
     "professional_development_survey_name": "專業發展問卷",
     "professional_development_survey_question_1_choice_1": "是",
+    "professional_development_survey_question_1_choice_2": "否",
     "professional_development_survey_question_1_headline": "您對專業發展活動感興趣嗎？",
     "professional_development_survey_question_2_choice_1": "人脈交流活動",
     "professional_development_survey_question_2_choice_2": "研討會或研討會",

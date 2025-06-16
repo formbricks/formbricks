@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurveys } from "@/lib/survey/service";
 import { anySurveyHasFilters } from "@/lib/survey/utils";
@@ -13,15 +12,6 @@ import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSyncSurveys } from "./survey";
-
-// Mock dependencies
-vi.mock("@/lib/cache", async () => {
-  const actual = await vi.importActual("@/lib/cache");
-  return {
-    ...(actual as any),
-    cache: vi.fn((fn) => fn()), // Mock cache function to just execute the passed function
-  };
-});
 
 vi.mock("@/lib/project/service", () => ({
   getProjectByEnvironmentId: vi.fn(),
@@ -120,9 +110,6 @@ const baseSurvey: TSurvey = {
 
 describe("getSyncSurveys", () => {
   beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(mockProject);
     vi.mocked(prisma.display.findMany).mockResolvedValue([]);
     vi.mocked(prisma.response.findMany).mockResolvedValue([]);

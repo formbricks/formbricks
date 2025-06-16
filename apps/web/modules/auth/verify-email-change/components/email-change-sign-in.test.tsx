@@ -28,12 +28,17 @@ describe("EmailChangeSignIn", () => {
 
   test("shows loading state initially", () => {
     render(<EmailChangeSignIn token="valid-token" />);
-    expect(screen.getByText("auth.email-change.email_verification_failed")).toBeInTheDocument();
+    expect(screen.getByText("auth.email-change.email_verification_loading")).toBeInTheDocument();
   });
 
   test("handles successful email change verification", async () => {
     vi.mocked(verifyEmailChangeAction).mockResolvedValueOnce({
-      data: { id: "123", email: "test@example.com", emailVerified: new Date(), locale: "en-US" },
+      data: {
+        id: "123",
+        email: "test@example.com",
+        emailVerified: new Date().toISOString(),
+        locale: "en-US",
+      },
     });
 
     render(<EmailChangeSignIn token="valid-token" />);

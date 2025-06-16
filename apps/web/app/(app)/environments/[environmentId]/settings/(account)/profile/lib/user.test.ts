@@ -2,17 +2,7 @@ import { verifyPassword as mockVerifyPasswordImported } from "@/modules/auth/lib
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkUserExistsByEmail, verifyUserPassword } from "./user";
-
-// Mock dependencies
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    tag: {
-      byId: vi.fn((id) => `user-${id}-tag`),
-      byEmail: vi.fn((email) => `user-email-${email}-tag`),
-    },
-  },
-}));
+import { getIsEmailUnique, verifyUserPassword } from "./user";
 
 vi.mock("@/modules/auth/lib/utils", () => ({
   verifyPassword: vi.fn(),
@@ -25,9 +15,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-// reactCache (from "react") and unstable_cache (from "next/cache") are mocked in vitestSetup.ts
-// to be pass-through, so the inner logic of cached functions is tested.
 
 const mockPrismaUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockVerifyPasswordUtil = vi.mocked(mockVerifyPasswordImported);
@@ -116,27 +103,27 @@ describe("User Library Tests", () => {
     });
   });
 
-  describe("checkUserExistsByEmail", () => {
+  describe("getIsEmailUnique", () => {
     const email = "test@example.com";
 
-    test("should return true if user exists", async () => {
+    test("should return false if user exists", async () => {
       mockPrismaUserFindUnique.mockResolvedValue({
         id: "some-user-id",
       } as any);
 
-      const result = await checkUserExistsByEmail(email);
-      expect(result).toBe(true);
+      const result = await getIsEmailUnique(email);
+      expect(result).toBe(false);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { email },
         select: { id: true },
       });
     });
 
-    test("should return false if user does not exist", async () => {
+    test("should return true if user does not exist", async () => {
       mockPrismaUserFindUnique.mockResolvedValue(null);
 
-      const result = await checkUserExistsByEmail(email);
-      expect(result).toBe(false);
+      const result = await getIsEmailUnique(email);
+      expect(result).toBe(true);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { email },
         select: { id: true },

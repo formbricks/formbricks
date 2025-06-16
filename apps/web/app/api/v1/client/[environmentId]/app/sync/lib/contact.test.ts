@@ -1,6 +1,5 @@
-import { cache } from "@/lib/cache";
 import { TContact } from "@/modules/ee/contacts/types/contact";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getContactByUserId } from "./contact";
 
@@ -12,15 +11,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-// Mock cache\
-vi.mock("@/lib/cache", async () => {
-  const actual = await vi.importActual("@/lib/cache");
-  return {
-    ...(actual as any),
-    cache: vi.fn((fn) => fn()), // Mock cache function to just execute the passed function
-  };
-});
 
 const environmentId = "test-environment-id";
 const userId = "test-user-id";
@@ -37,12 +27,6 @@ const contactMock: Partial<TContact> & {
 };
 
 describe("getContactByUserId", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   afterEach(() => {
     vi.resetAllMocks();
   });

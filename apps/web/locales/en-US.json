@@ -9,10 +9,11 @@
     "continue_with_saml": "Continue with SAML SSO",
     "email-change": {
       "confirm_password_description": "Please confirm your password before changing your email address",
-      "email_already_exists": "This email is already in use",
       "email_change_success": "Email changed successfully",
       "email_change_success_description": "You have successfully changed your email address. Please log in with your new email address.",
       "email_verification_failed": "Email verification failed",
+      "email_verification_loading": "Email verification in progress...",
+      "email_verification_loading_description": "We are updating your email address in our system. This may take a few seconds.",
       "invalid_or_expired_token": "Email change failed. Your token is invalid or expired.",
       "new_email": "New Email",
       "old_email": "Old Email"
@@ -78,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "User successfully created",
-      "user_successfully_created_description": "Your new user has been created successfully. Please click the button below and sign in to your account."
+      "user_successfully_created_description": "Your new user has been created successfully. Please click the button below and sign in to your account.",
+      "user_successfully_created_info": "We’ve checked for an account associated with {email}. If none existed, we’ve created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
     "testimonial_1": "We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!",
     "testimonial_all_features_included": "All features included",
@@ -88,11 +90,13 @@
     "verification-requested": {
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
+      "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
       "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
-      "verification_email_successfully_sent": "Verification email sent to {email}. Please verify to complete the update.",
+      "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",
+      "verification_email_successfully_sent_info": "If there’s an account associated with {email}, we’ve sent a verification link to that address. Please check your inbox to complete the sign-up.",
       "we_sent_an_email_to": "We sent an email to {email}. ",
       "you_didnt_receive_an_email_or_your_link_expired": "You didn't receive an email or your link expired?"
     },
@@ -595,7 +599,6 @@
       "contact_deleted_successfully": "Contact deleted successfully",
       "contact_not_found": "No such contact found",
       "contacts_table_refresh": "Refresh contacts",
-      "contacts_table_refresh_error": "Something went wrong while refreshing contacts, please try again",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -758,6 +761,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
@@ -984,7 +988,7 @@
         "2000_monthly_identified_users": "2000 Monthly Identified Users",
         "30000_monthly_identified_users": "30000 Monthly Identified Users",
         "3_projects": "3 Projects",
-        "5000_monthly_responses": "5000 Monthly Responses",
+        "5000_monthly_responses": "5,000 Monthly Responses",
         "5_projects": "5 Projects",
         "7500_monthly_identified_users": "7500 Monthly Identified Users",
         "advanced_targeting": "Advanced Targeting",
@@ -1149,6 +1153,7 @@
         "disable_two_factor_authentication": "Disable two factor authentication",
         "disable_two_factor_authentication_description": "If you need to disable 2FA, we recommend re-enabling it as soon as possible.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Each backup code can be used exactly once to grant access without your authenticator.",
+        "email_change_initiated": "Your email change request has been initiated.",
         "enable_two_factor_authentication": "Enable two factor authentication",
         "enter_the_code_from_your_authenticator_app_below": "Enter the code from your authenticator app below.",
         "file_size_must_be_less_than_10mb": "File size must be less than 10MB.",
@@ -1766,7 +1771,7 @@
         "link_to_public_results_copied": "Link to public results copied",
         "make_sure_the_survey_type_is_set_to": "Make sure the survey type is set to",
         "mobile_app": "Mobile app",
-        "no_response_matches_filter": "No response matches your filter",
+        "no_responses_found": "No responses found",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
@@ -2626,6 +2631,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Product Manager",
     "product_market_fit_superhuman_question_3_choice_4": "Product Owner",
     "product_market_fit_superhuman_question_3_choice_5": "Software Engineer",
+    "product_market_fit_superhuman_question_3_headline": "What is your role?",
     "product_market_fit_superhuman_question_3_subheader": "Please select one of the following options:",
     "product_market_fit_superhuman_question_4_headline": "What type of people do you think would most benefit from $[projectName]?",
     "product_market_fit_superhuman_question_5_headline": "What is the main benefit you receive from $[projectName]?",
@@ -2647,6 +2653,7 @@
     "professional_development_survey_description": "Assess employee satisfaction with professional growth and development opportunities.",
     "professional_development_survey_name": "Professional Development Survey",
     "professional_development_survey_question_1_choice_1": "Yes",
+    "professional_development_survey_question_1_choice_2": "No",
     "professional_development_survey_question_1_headline": "Are you interested in professional development activities?",
     "professional_development_survey_question_2_choice_1": "Networking events",
     "professional_development_survey_question_2_choice_2": "Conferences or seminars",

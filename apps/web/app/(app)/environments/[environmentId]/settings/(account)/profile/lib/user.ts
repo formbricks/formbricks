@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { userCache } from "@/lib/user/cache";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { User } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -7,28 +5,21 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getUserById = reactCache(
-  async (userId: string): Promise<Pick<User, "password" | "identityProvider">> =>
-    cache(
-      async () => {
-        const user = await prisma.user.findUnique({
-          where: {
-            id: userId,
-          },
-          select: {
-            password: true,
-            identityProvider: true,
-          },
-        });
-        if (!user) {
-          throw new ResourceNotFoundError("user", userId);
-        }
-        return user;
+  async (userId: string): Promise<Pick<User, "password" | "identityProvider">> => {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
       },
-      [`getUserById-${userId}`],
-      {
-        tags: [userCache.tag.byId(userId)],
-      }
-    )()
+      select: {
+        password: true,
+        identityProvider: true,
+      },
+    });
+    if (!user) {
+      throw new ResourceNotFoundError("user", userId);
+    }
+    return user;
+  }
 );
 
 export const verifyUserPassword = async (userId: string, password: string): Promise<boolean> => {
@@ -47,24 +38,15 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
   return true;
 };
 
-export const checkUserExistsByEmail = reactCache(
-  async (email: string): Promise<boolean> =>
-    cache(
-      async () => {
-        const user = await prisma.user.findUnique({
-          where: {
-            email: email.toLowerCase(),
-          },
-          select: {
-            id: true,
-          },
-        });
+export const getIsEmailUnique = reactCache(async (email: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.toLowerCase(),
+    },
+    select: {
+      id: true,
+    },
+  });
 
-        return !!user;
-      },
-      [`checkUserExistsByEmail-${email}`],
-      {
-        tags: [userCache.tag.byEmail(email)],
-      }
-    )()
-);
+  return !user;
+});

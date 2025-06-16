@@ -6,7 +6,6 @@ import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { contactCache } from "@/lib/cache/contact";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnvironment, updateEnvironment } from "@/lib/environment/service";
 import {
@@ -133,14 +132,6 @@ export const GET = async (
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });
-
-      if (contact) {
-        contactCache.revalidate({
-          userId: contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
-          id: contact.id,
-          environmentId,
-        });
-      }
     }
 
     const contactAttributes = contact.attributes.reduce((acc, attribute) => {

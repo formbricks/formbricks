@@ -25,6 +25,8 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: "587",
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 vi.mock("next-auth", () => ({

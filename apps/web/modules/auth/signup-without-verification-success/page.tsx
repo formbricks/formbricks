@@ -1,21 +1,26 @@
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { getTranslate } from "@/tolgee/server";
+import { getTranslate, T } from "@/tolgee/server";
+import { getEmailFromEmailToken } from "@/lib/jwt";
 
-export const SignupWithoutVerificationSuccessPage = async () => {
+export const SignupWithoutVerificationSuccessPage = async ({ searchParams }) => {
   const t = await getTranslate();
+  const { token } = await searchParams;
+  const email = getEmailFromEmailToken(token);
+
   return (
-    <div className="bg-gradient-radial flex min-h-screen from-slate-200 to-slate-50">
-      <FormWrapper>
-        <h1 className="leading-2 mb-4 text-center font-bold">
-          {t("auth.signup_without_verification_success.user_successfully_created")}
-        </h1>
-        <p className="text-center text-sm">
-          {t("auth.signup_without_verification_success.user_successfully_created_description")}
-        </p>
-        <hr className="my-4" />
-        <BackToLoginButton />
-      </FormWrapper>
-    </div>
+    <FormWrapper>
+      <h1 className="leading-2 mb-4 text-center font-bold">
+        {t("auth.signup_without_verification_success.user_successfully_created")}
+      </h1>
+      <p className="text-center text-sm">
+        <T
+          keyName="auth.signup_without_verification_success.user_successfully_created_info"
+          params={{ email, span: <span /> }}
+        />
+      </p>
+      <hr className="my-4" />
+      <BackToLoginButton />
+    </FormWrapper>
   );
 };
