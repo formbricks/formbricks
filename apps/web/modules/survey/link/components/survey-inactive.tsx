@@ -34,7 +34,10 @@ export const SurveyInactive = async ({
   const showCTA =
     status !== "link invalid" &&
     status !== "response submitted" &&
-    ((status !== "paused" && status !== "completed") || !project || project.linkSurveyBranding);
+    ((status !== "paused" && status !== "completed") ||
+      (project && project.linkSurveyBranding) ||
+      !project) &&
+    !(status === "completed" && surveyClosedMessage);
 
   return (
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
