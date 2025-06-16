@@ -170,3 +170,27 @@ export const getOrganizationProjectsCount = reactCache(async (organizationId: st
     throw error;
   }
 });
+
+export const getProjectsByOrganizationIds = reactCache(
+  async (organizationIds: string[]): Promise<Pick<TProject, "environments">[]> => {
+    validateInputs([organizationIds, ZId.array()]);
+    try {
+      const projects = await prisma.project.findMany({
+        where: {
+          organizationId: {
+            in: organizationIds,
+          },
+        },
+        select: { environments: true },
+      });
+
+      return projects;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(err.message);
+      }
+
+      throw err;
+    }
+  }
+);

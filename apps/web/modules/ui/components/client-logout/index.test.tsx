@@ -28,12 +28,9 @@ describe("ClientLogout", () => {
   });
 
   test("calls signOut with correct parameters on render", () => {
-    render(<ClientLogout userId="user123" userEmail="test@example.com" />);
+    render(<ClientLogout />);
 
-    expect(mockUseSignOut).toHaveBeenCalledWith({
-      id: "user123",
-      email: "test@example.com",
-    });
+    expect(mockUseSignOut).toHaveBeenCalled();
 
     expect(mockSignOut).toHaveBeenCalledWith({
       reason: "forced_logout",
@@ -46,10 +43,7 @@ describe("ClientLogout", () => {
   test("handles missing userId and userEmail", () => {
     render(<ClientLogout />);
 
-    expect(mockUseSignOut).toHaveBeenCalledWith({
-      id: "",
-      email: "",
-    });
+    expect(mockUseSignOut).toHaveBeenCalled();
 
     expect(mockSignOut).toHaveBeenCalledWith({
       reason: "forced_logout",

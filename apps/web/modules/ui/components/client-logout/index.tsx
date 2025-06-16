@@ -4,13 +4,8 @@ import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { useEffect } from "react";
 
-interface ClientLogoutProps {
-  userId?: string;
-  userEmail?: string;
-}
-
-export const ClientLogout = ({ userId, userEmail }: ClientLogoutProps) => {
-  const { signOut: signOutWithAudit } = useSignOut({ id: userId ?? "", email: userEmail ?? "" });
+export const ClientLogout = () => {
+  const { signOut: signOutWithAudit } = useSignOut();
 
   useEffect(() => {
     localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);

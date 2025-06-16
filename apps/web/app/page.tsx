@@ -3,7 +3,7 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserProjects } from "@/lib/project/service";
+import { getProjectsByOrganizationIds } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -34,25 +34,25 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  const userEnvironmentsSet = new Set<string>();
-  let firstProductionEnvironmentId: string | null = null;
+  const projectsByOrg = await getProjectsByOrganizationIds(userOrganizations.map((org) => org.id));
 
-  const projectsByOrg = await Promise.all(
-    userOrganizations.map((org) => getUserProjects(session.user.id, org.id))
+  // Flatten all environments from all projects across all organizations
+  const allEnvironments = projectsByOrg.flatMap((project) => project.environments);
+
+  // Find first production environment and collect all other environment IDs in one pass
+  const { firstProductionEnvironmentId, otherEnvironmentIds } = allEnvironments.reduce(
+    (acc, env) => {
+      if (env.type === "production" && !acc.firstProductionEnvironmentId) {
+        acc.firstProductionEnvironmentId = env.id;
+      } else {
+        acc.otherEnvironmentIds.add(env.id);
+      }
+      return acc;
+    },
+    { firstProductionEnvironmentId: null as string | null, otherEnvironmentIds: new Set<string>() }
   );
 
-  for (const projects of projectsByOrg) {
-    for (const project of projects) {
-      for (const env of project.environments) {
-        userEnvironmentsSet.add(env.id);
-        if (!firstProductionEnvironmentId && env.type === "production") {
-          firstProductionEnvironmentId = env.id;
-        }
-      }
-    }
-  }
-
-  const userEnvironments = [...userEnvironmentsSet];
+  const userEnvironments = [...otherEnvironmentIds];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
@@ -70,10 +70,7 @@ const Page = async () => {
   }
 
   // Put the first production environment at the front of the array
-  const sortedUserEnvironments = [
-    firstProductionEnvironmentId,
-    ...userEnvironments.filter((id) => id !== firstProductionEnvironmentId),
-  ];
+  const sortedUserEnvironments = [firstProductionEnvironmentId, ...userEnvironments];
 
   return <ClientEnvironmentRedirect userEnvironments={sortedUserEnvironments} />;
 };
