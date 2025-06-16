@@ -4,7 +4,7 @@ description: "Configuring your domain for Formbricks."
 icon: "globe"
 ---
 
-Formbricks supports both single domain and dual domain configurations with our new Public/Private Domain Split feature. This guide will help you set up your domains correctly for enhanced security and organization.
+Formbricks supports both single domain and dual domain configurations with Public/Private Domain Split feature. This guide will help you set up your domains correctly for enhanced security and organization.
 
 ## Single Domain Setup
 
@@ -29,13 +29,16 @@ NEXTAUTH_URL=https://formbricks.example.com
 
 ## Public / Private Domain Split
 
-Formbricks now supports a powerful domain separation feature that allows you to serve public content (surveys, public APIs) from a different domain than your private admin interface. This provides enhanced security and better organization.
+Formbricks supports a powerful domain separation feature that allows you to serve public content (surveys, public APIs) from a different domain than your private admin interface. This provides enhanced security and better organization. It enables you to:
+
+- Serve public content (surveys, public APIs) from a different domain than your private admin interface
+- Restrict admin functionality to the private domain
+- Ensure authentication and sensitive operations only occur on the private domain
 
 ### Why Use Domain Split?
 
 - **Enhanced Security**: Separate public-facing surveys from your admin interface
 - **Better Organization**: Use dedicated domains for different purposes (e.g., `admin.company.com` for management, `surveys.company.com` for public surveys)
-- **Improved Performance**: Optimize each domain for its specific purpose
 
 ### Configuration
 
@@ -43,6 +46,11 @@ To set up Public/Private Domain Split:
 
 1. **Private Domain (WEBAPP_URL)**: Your admin/management interface
 2. **Public Domain (PUBLIC_URL)**: For surveys and public-facing content
+
+**Important Security Note**: Formbricks handles application-level domain restrictions to ensure each domain
+can only access specific resources within the application. However, all domain configuration (DNS, SSL
+certificates, reverse proxy setup) and firewall configuration that comes with this feature to enhance
+security must be configured by you. Formbricks does not manage your infrastructure-level security settings.
 
 ### Example Configuration
 
@@ -137,36 +145,12 @@ formbricks.setup({
 });
 ```
 
-#### Key SDK Changes Made
-
-- **Component Updates**: `ConnectWithFormbricks` component now uses `publicDomain` prop instead of `webAppUrl`
-- **Setup Instructions**: All setup instructions dynamically show the correct domain based on your configuration
-- **Connection Flow**: Environment connection flow automatically uses the appropriate domain
-- **File Uploads**: Public file uploads now route through the public domain
-- **Survey Rendering**: Survey widgets and embeds automatically connect to the public domain
-
-#### Migration for Existing SDK Implementations
-
-If you're upgrading from a previous version:
-
-1. **Check your current setup**: Identify if you're using single or multi-domain configuration
-2. **Update appUrl parameter**: Ensure it points to the correct domain based on your setup
-3. **Test connections**: Verify that surveys load correctly after the change
-4. **Update documentation**: Update any internal documentation referencing the old domain structure
-
 ### DNS and SSL Configuration
 
 1. **Set up DNS records** for both domains
 2. **Configure SSL certificates** for both domains
 3. **Update your reverse proxy** (nginx, Apache, Cloudflare, etc.) to route both domains to your Formbricks instance
 4. **Firewall rules**: Ensure both domains can reach your Formbricks instance
-
-### Important Security Considerations
-
-- The public domain serves only survey-related content and public APIs
-- Admin functionality is restricted to the private domain
-- Authentication and sensitive operations only occur on the private domain
-- Cross-origin requests are properly configured between the domains
 
 ### Fallback Behavior
 
@@ -175,17 +159,5 @@ If `PUBLIC_URL` is not set:
 - All content (admin and public) is served from `WEBAPP_URL`
 - The system behaves as a single domain setup
 - No domain separation occurs
-
-### Migration from SURVEY_URL
-
-If you were previously using `SURVEY_URL`, it has been replaced by `PUBLIC_URL`. The functionality remains the same, but the naming is clearer:
-
-```bash
-# Old configuration
-SURVEY_URL=https://surveys.example.com
-
-# New configuration
-PUBLIC_URL=https://surveys.example.com
-```
 
 If you have any questions or require help, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
