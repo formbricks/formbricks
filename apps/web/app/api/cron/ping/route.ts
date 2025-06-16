@@ -14,7 +14,7 @@ export const POST = async () => {
     return responses.notAuthenticatedResponse();
   }
 
-  if (env.TELEMETRY_DISABLED !== "1") {
+  if (env.TELEMETRY_DISABLED === "1") {
     return responses.successResponse({}, true);
   }
 
