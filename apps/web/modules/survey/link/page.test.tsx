@@ -2,8 +2,7 @@ import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import "@testing-library/jest-dom/vitest";
@@ -11,7 +10,6 @@ import { cleanup, render } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { LinkSurveyPage, generateMetadata } from "./page";
 
@@ -367,6 +365,22 @@ describe("LinkSurveyPage", () => {
       status: "link invalid",
       project: undefined,
     });
+  });
+
+  test("LinkSurveyPage calls notFound when getSurveyWithMetadata throws an error", async () => {
+    const databaseError = new Error("Database connection failed");
+    vi.mocked(getSurveyWithMetadata).mockRejectedValue(databaseError);
+
+    const props = {
+      params: Promise.resolve({ surveyId: "survey123" }),
+      searchParams: Promise.resolve({}),
+    };
+
+    await LinkSurveyPage(props);
+
+    expect(getSurveyWithMetadata).toHaveBeenCalledWith("survey123");
+    expect(logger.error).toHaveBeenCalledWith(databaseError, "Error fetching survey");
+    expect(notFound).toHaveBeenCalled();
   });
 });
 
