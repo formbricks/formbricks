@@ -109,39 +109,13 @@ All other routes are restricted to the private domain (`WEBAPP_URL`) for securit
 When using PUBLIC_URL (multi-domain setup), all SDK configurations must use the **public domain**:
 
 ```js
-// JavaScript/React/Vue.js/Next.js SDKs
-formbricks.setup({
+Formbricks.setup({
   environmentId: "your-environment-id",
   appUrl: "https://surveys.example.com", // Use PUBLIC_URL domain
 });
 ```
 
-```jsx
-// React Native SDK
-await formbricks.setup({
-  environmentId: "your-environment-id",
-  appUrl: "https://surveys.example.com", // Use PUBLIC_URL domain
-});
-```
-
-```swift
-// iOS Swift SDK
-FormbricksSDK.shared.configure(
-  appUrl: "https://surveys.example.com", // Use PUBLIC_URL domain
-  environmentId: "yourEnvironmentId"
-)
-```
-
-#### Single Domain Setup SDK Configuration
-
-When PUBLIC_URL is not configured (single domain setup), SDKs use the admin domain:
-
-```js
-formbricks.setup({
-  environmentId: "your-environment-id",
-  appUrl: "https://formbricks.example.com", // Use WEBAPP_URL domain
-});
-```
+Please refer to the [Framework Guides](/xm-and-surveys/surveys/website-app-surveys/framework-guides) for step-by-step instructions specific to your platform.
 
 ### DNS and SSL Configuration
 
