@@ -171,7 +171,7 @@ export const getOrganizationProjectsCount = reactCache(async (organizationId: st
   }
 });
 
-export const getProjectsByOrganizationIds = reactCache(
+export const getProjectEnvironmentsByOrganizationIds = reactCache(
   async (organizationIds: string[]): Promise<Pick<TProject, "environments">[]> => {
     validateInputs([organizationIds, ZId.array()]);
     try {

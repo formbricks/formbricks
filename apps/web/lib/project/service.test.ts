@@ -7,8 +7,8 @@ import { ITEMS_PER_PAGE } from "../constants";
 import {
   getProject,
   getProjectByEnvironmentId,
+  getProjectEnvironmentsByOrganizationIds,
   getProjects,
-  getProjectsByOrganizationIds,
   getUserProjects,
 } from "./service";
 
@@ -499,7 +499,7 @@ describe("Project Service", () => {
 
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-    const result = await getProjectsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
 
     expect(result).toEqual(mockProjects);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
@@ -518,7 +518,7 @@ describe("Project Service", () => {
 
     vi.mocked(prisma.project.findMany).mockResolvedValue([]);
 
-    const result = await getProjectsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
 
     expect(result).toEqual([]);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
@@ -540,12 +540,12 @@ describe("Project Service", () => {
     });
     vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
 
-    await expect(getProjectsByOrganizationIds([organizationId1, organizationId2])).rejects.toThrow(
+    await expect(getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2])).rejects.toThrow(
       DatabaseError
     );
   });
 
   test("getProjectsByOrganizationIds should throw ValidationError with wrong input", async () => {
-    await expect(getProjectsByOrganizationIds(["wrong-id"])).rejects.toThrow(ValidationError);
+    await expect(getProjectEnvironmentsByOrganizationIds(["wrong-id"])).rejects.toThrow(ValidationError);
   });
 });
