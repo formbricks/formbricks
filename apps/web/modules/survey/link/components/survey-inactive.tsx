@@ -31,6 +31,11 @@ export const SurveyInactive = async ({
     "response submitted": t("s.response_submitted"),
   };
 
+  const showCTA =
+    status !== "link invalid" &&
+    status !== "response submitted" &&
+    ((status !== "paused" && status !== "completed") || !project || project.linkSurveyBranding);
+
   return (
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
       <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">
@@ -45,13 +50,11 @@ export const SurveyInactive = async ({
             ? surveyClosedMessage.subheading
             : descriptions[status]}
         </p>
-        {!(status === "completed" && surveyClosedMessage) &&
-          status !== "link invalid" &&
-          status !== "response submitted" && (
-            <Button className="mt-2" asChild>
-              <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
-            </Button>
-          )}
+        {showCTA && (
+          <Button className="mt-2" asChild>
+            <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
+          </Button>
+        )}
       </div>
       {(!project || project.linkSurveyBranding) && (
         <div>
