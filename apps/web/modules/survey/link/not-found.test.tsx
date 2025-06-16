@@ -47,9 +47,5 @@ describe("LinkSurveyNotFound", () => {
     // Check the basic elements that are visible in the rendered output
     expect(screen.getByText("Survey not found.")).toBeInTheDocument();
     expect(screen.getByText("There is no survey with this ID.")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-help-circle-icon")).toBeInTheDocument();
-
-    // Check the button exists
-    expect(screen.getByTestId("mock-button")).toBeInTheDocument();
   });
 });

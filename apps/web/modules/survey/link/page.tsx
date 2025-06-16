@@ -63,7 +63,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     // check if the single use id is present for single use surveys
     if (!suId) {
       const project = await getProjectByEnvironmentId(survey.environmentId);
-      return <SurveyInactive status="link invalid" project={project || undefined} />;
+      return <SurveyInactive status="link invalid" project={project ?? undefined} />;
     }
 
     // if encryption is enabled, validate the single use id
@@ -72,7 +72,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
       validatedSingleUseId = validateSurveySingleUseId(suId);
       if (!validatedSingleUseId) {
         const project = await getProjectByEnvironmentId(survey.environmentId);
-        return <SurveyInactive status="link invalid" project={project || undefined} />;
+        return <SurveyInactive status="link invalid" project={project ?? undefined} />;
       }
     }
     // if encryption is disabled, use the suId as is
