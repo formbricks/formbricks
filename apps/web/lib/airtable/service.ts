@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import { delay } from "../utils/promises";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
@@ -15,6 +14,7 @@ import {
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
+import { delay } from "../utils/promises";
 import { truncateText } from "../utils/strings";
 
 export const getBases = async (key: string) => {
@@ -44,8 +44,6 @@ export const getTables = async (key: TIntegrationAirtableCredential, baseId: str
   const res = await tableFetcher(key, baseId);
   return ZIntegrationAirtableTables.parse(res);
 };
-
-
 
 export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const formBody = Object.keys(formData)
@@ -102,7 +100,11 @@ export const getAirtableToken = async (environmentId: string) => {
       });
 
       if (!newToken) {
-        throw new Error("Failed to create new token");
+        logger.error("Failed to fetch new Airtable token", {
+          environmentId,
+          airtableIntegration,
+        });
+        throw new Error("Failed to fetch new Airtable token");
       }
 
       await createOrUpdateIntegration(environmentId, {
@@ -119,7 +121,11 @@ export const getAirtableToken = async (environmentId: string) => {
 
     return access_token;
   } catch (error) {
-    throw new Error("invalid token");
+    logger.error("Failed to get Airtable token", {
+      environmentId,
+      error,
+    });
+    throw new Error("Failed to get Airtable token");
   }
 };
 
@@ -214,7 +220,7 @@ export const writeData = async (
 
   // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {
-    // Sequential processing with delays 
+    // Sequential processing with delays
     const DELAY_BETWEEN_REQUESTS = 250; // 250ms = 4 requests per second (staying under 5/sec limit)
 
     for (let i = 0; i < fieldsToCreate.length; i++) {
@@ -250,24 +256,27 @@ async function waitForFieldsToExist(
   maxRetries = 5,
   intervalMs = 2000
 ) {
+  let existingFields: Set<string> = new Set(),
+    missingFields: string[] = [];
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-    const missingFields = fieldNames.filter((f) => !existingFields.has(f));
+    existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+    missingFields = fieldNames.filter((f) => !existingFields.has(f));
 
     if (missingFields.length === 0) {
       return;
     }
 
-    logger.error(
-      `Attempt ${attempt}/${maxRetries}: ${missingFields.length} field(s) still missing [${missingFields.join(
-        ", "
-      )}], retrying in ${intervalMs / 1000}s…`
-    );
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
+    if (attempt < maxRetries) {
+      logger.error(
+        `Attempt ${attempt}/${maxRetries}: ${missingFields.length} field(s) still missing [${missingFields.join(
+          ", "
+        )}], retrying in ${intervalMs / 1000}s…`
+      );
 
-  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-  const missingFields = fieldNames.filter((f) => !existingFields.has(f));
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+  }
 
   throw new Error(
     `Timed out waiting for ${missingFields.length} field(s) [${missingFields.join(
