@@ -1,17 +1,67 @@
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { render } from "@testing-library/react";
-import { signOut } from "next-auth/react";
-import { describe, expect, test, vi } from "vitest";
+import { type MockedFunction, beforeEach, describe, expect, test, vi } from "vitest";
 import { ClientLogout } from "./index";
 
+// Mock the localStorage
+const mockRemoveItem = vi.fn();
+Object.defineProperty(window, "localStorage", {
+  value: {
+    removeItem: mockRemoveItem,
+  },
+});
+
 // Mock next-auth/react
-vi.mock("next-auth/react", () => ({
-  signOut: vi.fn(),
+const mockSignOut = vi.fn();
+vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
+  useSignOut: vi.fn(),
 }));
 
+const mockUseSignOut = useSignOut as MockedFunction<typeof useSignOut>;
+
 describe("ClientLogout", () => {
-  test("calls signOut on render", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseSignOut.mockReturnValue({
+      signOut: mockSignOut,
+    });
+  });
+
+  test("calls signOut with correct parameters on render", () => {
+    render(<ClientLogout userId="user123" userEmail="test@example.com" />);
+
+    expect(mockUseSignOut).toHaveBeenCalledWith({
+      id: "user123",
+      email: "test@example.com",
+    });
+
+    expect(mockSignOut).toHaveBeenCalledWith({
+      reason: "forced_logout",
+      redirectUrl: "/auth/login",
+      redirect: false,
+      callbackUrl: "/auth/login",
+    });
+  });
+
+  test("handles missing userId and userEmail", () => {
     render(<ClientLogout />);
-    expect(signOut).toHaveBeenCalled();
+
+    expect(mockUseSignOut).toHaveBeenCalledWith({
+      id: "",
+      email: "",
+    });
+
+    expect(mockSignOut).toHaveBeenCalledWith({
+      reason: "forced_logout",
+      redirectUrl: "/auth/login",
+      redirect: false,
+      callbackUrl: "/auth/login",
+    });
+  });
+
+  test("removes environment ID from localStorage", () => {
+    render(<ClientLogout />);
+    expect(mockRemoveItem).toHaveBeenCalledWith("formbricks-environment-id");
   });
 
   test("renders null", () => {
