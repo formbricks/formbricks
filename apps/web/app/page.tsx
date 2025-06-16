@@ -34,34 +34,31 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  let userEnvironments: string[] = [];
+  const userEnvironmentsSet = new Set<string>();
   let firstProductionEnvironmentId: string | null = null;
 
-  // Get all projects and environments, and find the first production environment
-  for (const org of userOrganizations) {
-    const projects = await getUserProjects(session.user.id, org.id);
+  const projectsByOrg = await Promise.all(
+    userOrganizations.map((org) => getUserProjects(session.user.id, org.id))
+  );
 
+  for (const projects of projectsByOrg) {
     for (const project of projects) {
-      const environmentIds = project.environments.map((env) => env.id);
-      userEnvironments.push(...environmentIds);
-
-      // Find the first production environment
-      if (!firstProductionEnvironmentId) {
-        const productionEnvironment = project.environments.find(
-          (environment) => environment.type === "production"
-        );
-
-        if (productionEnvironment) {
-          firstProductionEnvironmentId = productionEnvironment.id;
+      for (const env of project.environments) {
+        userEnvironmentsSet.add(env.id);
+        if (!firstProductionEnvironmentId && env.type === "production") {
+          firstProductionEnvironmentId = env.id;
         }
       }
     }
   }
 
+  const userEnvironments = [...userEnvironmentsSet];
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
     userOrganizations[0].id
   );
+
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
   if (!firstProductionEnvironmentId) {
