@@ -102,9 +102,7 @@ When PUBLIC_URL is configured, the following routes are automatically served fro
 
 All other routes are restricted to the private domain (`WEBAPP_URL`) for security purposes. The admin domain can access the health endpoint (/health) and public file storage (`/storage/{environmentId}/{accessType}/{fileName}`), while all other public routes are exclusively accessible on the public domain (`PUBLIC_URL`) and will return a 404 error if accessed from the admin domain.
 
-### App URL SDK Changes
-
-The domain separation introduces important changes to how SDKs connect to Formbricks:
+### App URL SDK Configuration
 
 #### Multi-Domain Setup SDK Configuration
 
