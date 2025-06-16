@@ -1,3 +1,4 @@
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -78,6 +79,11 @@ describe("DeleteAccountModal", () => {
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
 
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
+
     // Mock window.location.replace
     Object.defineProperty(window, "location", {
       writable: true,
@@ -94,6 +100,8 @@ describe("DeleteAccountModal", () => {
       />
     );
 
+    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
+
     const input = screen.getByTestId("deleteAccountConfirmation");
     fireEvent.change(input, { target: { value: mockUser.email } });
 
@@ -106,6 +114,7 @@ describe("DeleteAccountModal", () => {
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
       });
+      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
       expect(window.location.replace).toHaveBeenCalledWith("/auth/login");
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
@@ -115,6 +124,11 @@ describe("DeleteAccountModal", () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
+
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
 
     Object.defineProperty(window, "location", {
       writable: true,
@@ -137,12 +151,15 @@ describe("DeleteAccountModal", () => {
     const form = screen.getByTestId("deleteAccountForm");
     fireEvent.submit(form);
 
+    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
+
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
       });
+      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
       expect(window.location.replace).toHaveBeenCalledWith(
         "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2"
       );

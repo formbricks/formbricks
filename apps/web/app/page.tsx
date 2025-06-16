@@ -1,5 +1,4 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
-import { getFirstEnvironmentIdByUserId } from "@/lib/environment/service";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -35,8 +34,29 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  let firstEnvironmentId: string | null = null;
-  firstEnvironmentId = await getFirstEnvironmentIdByUserId(session.user.id);
+  let userEnvironments: string[] = [];
+  let firstProductionEnvironmentId: string | null = null;
+
+  // Get all projects and environments, and find the first production environment
+  for (const org of userOrganizations) {
+    const projects = await getUserProjects(session.user.id, org.id);
+
+    for (const project of projects) {
+      const environmentIds = project.environments.map((env) => env.id);
+      userEnvironments.push(...environmentIds);
+
+      // Find the first production environment
+      if (!firstProductionEnvironmentId) {
+        const productionEnvironment = project.environments.find(
+          (environment) => environment.type === "production"
+        );
+
+        if (productionEnvironment) {
+          firstProductionEnvironmentId = productionEnvironment.id;
+        }
+      }
+    }
+  }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
@@ -44,7 +64,7 @@ const Page = async () => {
   );
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
-  if (!firstEnvironmentId) {
+  if (!firstProductionEnvironmentId) {
     if (isOwner || isManager) {
       return redirect(`/organizations/${userOrganizations[0].id}/projects/new/mode`);
     } else {
@@ -52,15 +72,13 @@ const Page = async () => {
     }
   }
 
-  let userEnvironments: string[] = [];
+  // Put the first production environment at the front of the array
+  const sortedUserEnvironments = [
+    firstProductionEnvironmentId,
+    ...userEnvironments.filter((id) => id !== firstProductionEnvironmentId),
+  ];
 
-  for (const org of userOrganizations) {
-    const projects = await getUserProjects(session.user.id, org.id);
-    const environmentIds = projects.flatMap((project) => project.environments.map((env) => env.id));
-    userEnvironments.push(...environmentIds);
-  }
-
-  return <ClientEnvironmentRedirect environmentId={firstEnvironmentId} userEnvironments={userEnvironments} />;
+  return <ClientEnvironmentRedirect userEnvironments={sortedUserEnvironments} />;
 };
 
 export default Page;
