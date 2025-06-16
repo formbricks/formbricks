@@ -92,7 +92,6 @@
       "invalid_token": "Jeton non valide ☹️",
       "new_email_verification_success": "Si l'adresse est valide, un email de vérification a été envoyé.",
       "no_email_provided": "Aucun e-mail fourni",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
       "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",

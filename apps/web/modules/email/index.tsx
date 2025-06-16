@@ -11,7 +11,7 @@ import {
   SMTP_USER,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
@@ -294,9 +294,9 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const t = await getTranslate();
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
     }
-    return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+    return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
   const surveyLink = getSurveyLink();
 

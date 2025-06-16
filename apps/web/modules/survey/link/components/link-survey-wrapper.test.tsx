@@ -82,7 +82,7 @@ describe("LinkSurveyWrapper", () => {
     IMPRINT_URL: "https://imprint.url",
     PRIVACY_URL: "https://privacy.url",
     IS_FORMBRICKS_CLOUD: true,
-    surveyDomain: "https://survey.domain",
+    publicDomain: "https://public-domain.com",
     isBrandingEnabled: true,
   } as any;
 
@@ -107,7 +107,7 @@ describe("LinkSurveyWrapper", () => {
     expect(screen.getByTestId("client-logo")).toBeInTheDocument();
     expect(screen.getByTestId("survey-content")).toBeInTheDocument();
     expect(screen.getByTestId("legal-footer")).toBeInTheDocument();
-    expect(screen.getByTestId("legal-footer")).toHaveTextContent("https://survey.domain/s/survey123");
+    expect(screen.getByTestId("legal-footer")).toHaveTextContent("https://public-domain.com/s/survey123");
   });
 
   test("handles background loaded state correctly", async () => {

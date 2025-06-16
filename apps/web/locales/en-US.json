@@ -92,7 +92,6 @@
       "invalid_token": "Invalid token ☹️",
       "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
       "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",

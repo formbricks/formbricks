@@ -92,7 +92,6 @@
       "invalid_token": "Ungültiges Token ☹️",
       "new_email_verification_success": "Wenn die Adresse gültig ist, wurde eine Bestätigungs-E-Mail gesendet.",
       "no_email_provided": "Keine E-Mail bereitgestellt",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
