@@ -18,19 +18,8 @@ test.describe("Email Signup Flow Test", async () => {
     await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-    await page.waitForURL("/auth/signup-without-verification-success");
-    await expect(page).toHaveURL("/auth/signup-without-verification-success");
-  });
-
-  test("Email is taken", async ({ page }) => {
-    await page.fill('input[name="name"]', name);
-    await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', email);
-    await page.getByPlaceholder("work@email.com").press("Tab");
-    await page.fill('input[name="password"]', password);
-    await page.press('input[name="password"]', "Enter");
-    let alertMessage = "User with this email already exists";
-    await (await page.waitForSelector(`text=${alertMessage}`)).isVisible();
+    await page.waitForURL(/\/auth\/signup-without-verification-success.*/);
+    await expect(page).toHaveURL(/\/auth\/signup-without-verification-success.*/);
   });
 
   test("No Name", async ({ page }) => {

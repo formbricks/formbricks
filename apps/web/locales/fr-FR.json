@@ -79,7 +79,8 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Utilisateur créé avec succès",
-      "user_successfully_created_description": "Votre nouvel utilisateur a été créé avec succès. Veuillez cliquer sur le bouton ci-dessous et vous connecter à votre compte."
+      "user_successfully_created_description": "Votre nouvel utilisateur a été créé avec succès. Veuillez cliquer sur le bouton ci-dessous et vous connecter à votre compte.",
+      "user_successfully_created_info": "Nous avons vérifié s'il existait un compte associé à {email}. Si aucun n'existait, nous en avons créé un pour vous. Si un compte existait déjà, aucune modification n'a été apportée. Veuillez vous connecter ci-dessous pour continuer."
     },
     "testimonial_1": "Nous mesurons la clarté de nos documents et apprenons des abandons, le tout sur une seule plateforme. Excellent produit, équipe très réactive !",
     "testimonial_all_features_included": "Toutes les fonctionnalités incluses",
@@ -95,6 +96,7 @@
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
       "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
+      "verification_email_successfully_sent_info": "Si un compte est associé à {email}, nous avons envoyé un lien de vérification à cette adresse. Veuillez vérifier votre boîte de réception pour terminer l'inscription.",
       "we_sent_an_email_to": "Nous avons envoyé un email à {email}",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"
     },

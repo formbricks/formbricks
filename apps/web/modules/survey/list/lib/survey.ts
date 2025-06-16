@@ -311,6 +311,14 @@ export const copySurveyToOtherEnvironment = async (
       if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
     }
 
+    // Fetch existing action classes in target environment for name conflict checks
+    const existingActionClasses = !isSameEnvironment
+      ? await prisma.actionClass.findMany({
+          where: { environmentId: targetEnvironmentId },
+          select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
+        })
+      : [];
+
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
 
@@ -348,8 +356,51 @@ export const copySurveyToOtherEnvironment = async (
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
+          //check if an action class with same config already exists
+          if (trigger.actionClass.type === "code") {
+            const existingActionClass = existingActionClasses.find(
+              (ac) => ac.key === trigger.actionClass.key
+            );
+
+            if (existingActionClass) {
+              return {
+                actionClass: { connect: { id: existingActionClass.id } },
+              };
+            }
+          } else if (trigger.actionClass.type === "noCode") {
+            const existingActionClass = existingActionClasses.find(
+              (ac) => JSON.stringify(ac.noCodeConfig) === JSON.stringify(trigger.actionClass.noCodeConfig)
+            );
+
+            if (existingActionClass) {
+              return {
+                actionClass: { connect: { id: existingActionClass.id } },
+              };
+            }
+          }
+
+          const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
+
+          // Check if an action class with the same name but different type already exists
+          const hasNameConflict =
+            !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
+
+          let modifiedName = trigger.actionClass.name;
+          if (hasNameConflict) {
+            // Find a unique name by appending (copy), (copy 2), (copy 3), etc.
+            let copyNumber = 1;
+            let candidateName = `${trigger.actionClass.name} (copy)`;
+
+            while (existingActionClassNames.has(candidateName)) {
+              copyNumber++;
+              candidateName = `${trigger.actionClass.name} (copy ${copyNumber})`;
+            }
+
+            modifiedName = candidateName;
+          }
+
           const baseActionClassData = {
-            name: trigger.actionClass.name,
+            name: modifiedName,
             environment: { connect: { id: targetEnvironmentId } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
@@ -364,7 +415,10 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    key_environmentId: { key: trigger.actionClass.key!, environmentId: targetEnvironmentId },
+                    key_environmentId: {
+                      key: trigger.actionClass.key!,
+                      environmentId: targetEnvironmentId,
+                    },
                   },
                   create: {
                     ...baseActionClassData,
@@ -374,6 +428,18 @@ export const copySurveyToOtherEnvironment = async (
               },
             };
           } else {
+            if (hasNameConflict) {
+              return {
+                actionClass: {
+                  create: {
+                    ...baseActionClassData,
+                    noCodeConfig: trigger.actionClass.noCodeConfig
+                      ? structuredClone(trigger.actionClass.noCodeConfig)
+                      : undefined,
+                  },
+                },
+              };
+            }
             return {
               actionClass: {
                 connectOrCreate: {
