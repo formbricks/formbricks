@@ -60,10 +60,12 @@ export const renderSurvey = async ({
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
   if (survey.status !== "inProgress" && !isPreview) {
+    const project = await getProjectByEnvironmentId(survey.environmentId);
     return (
       <SurveyInactive
         status={survey.status}
         surveyClosedMessage={survey.surveyClosedMessage ? survey.surveyClosedMessage : undefined}
+        project={project || undefined}
       />
     );
   }

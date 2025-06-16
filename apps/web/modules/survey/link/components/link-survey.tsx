@@ -118,7 +118,7 @@ export const LinkSurvey = ({
   }, [survey.isVerifyEmailEnabled, verifiedEmail]);
 
   if (hasFinishedSingleUseResponse) {
-    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
+    return <SurveyLinkUsed singleUseMessage={survey.singleUse} project={project} />;
   }
 
   if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified") {
