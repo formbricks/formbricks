@@ -3,13 +3,9 @@ import { cleanup } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
 import Page from "./page";
-
-// Mock dependencies
-vi.mock("@/lib/environment/service", () => ({
-  getFirstEnvironmentIdByUserId: vi.fn(),
-}));
 
 vi.mock("@/lib/project/service", () => ({
   getUserProjects: vi.fn(),
@@ -156,7 +152,7 @@ describe("Page", () => {
     const { getIsFreshInstance } = await import("@/lib/instance/service");
     const { getUser } = await import("@/lib/user/service");
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
-    const { getFirstEnvironmentIdByUserId } = await import("@/lib/environment/service");
+    const { getUserProjects } = await import("@/lib/project/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
     const { redirect } = await import("next/navigation");
@@ -211,13 +207,21 @@ describe("Page", () => {
       role: "owner",
     };
 
+    const mockUserProjects = [
+      {
+        id: "test-project-id",
+        name: "Test Project",
+        environments: [],
+      },
+    ];
+
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "test-user-id" },
     } as any);
     vi.mocked(getIsFreshInstance).mockResolvedValue(false);
     vi.mocked(getUser).mockResolvedValue(mockUser);
+    vi.mocked(getUserProjects).mockResolvedValue(mockUserProjects as unknown as TProject[]);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([mockOrganization]);
-    vi.mocked(getFirstEnvironmentIdByUserId).mockResolvedValue(null);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getAccessFlags).mockReturnValue({
       isManager: false,
@@ -235,8 +239,8 @@ describe("Page", () => {
     const { getServerSession } = await import("next-auth");
     const { getIsFreshInstance } = await import("@/lib/instance/service");
     const { getUser } = await import("@/lib/user/service");
+    const { getUserProjects } = await import("@/lib/project/service");
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
-    const { getFirstEnvironmentIdByUserId } = await import("@/lib/environment/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
     const { redirect } = await import("next/navigation");
@@ -291,13 +295,21 @@ describe("Page", () => {
       role: "member",
     };
 
+    const mockUserProjects = [
+      {
+        id: "test-project-id",
+        name: "Test Project",
+        environments: [],
+      },
+    ];
+
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "test-user-id" },
     } as any);
     vi.mocked(getIsFreshInstance).mockResolvedValue(false);
     vi.mocked(getUser).mockResolvedValue(mockUser);
+    vi.mocked(getUserProjects).mockResolvedValue(mockUserProjects as unknown as TProject[]);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([mockOrganization]);
-    vi.mocked(getFirstEnvironmentIdByUserId).mockResolvedValue(null);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getAccessFlags).mockReturnValue({
       isManager: false,
@@ -316,7 +328,6 @@ describe("Page", () => {
     const { getIsFreshInstance } = await import("@/lib/instance/service");
     const { getUser } = await import("@/lib/user/service");
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
-    const { getFirstEnvironmentIdByUserId } = await import("@/lib/environment/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
     const { getUserProjects } = await import("@/lib/project/service");
@@ -372,7 +383,6 @@ describe("Page", () => {
       role: "member",
     };
 
-    const mockEnvironmentId = "test-env-id";
     const mockUserProjects = [
       {
         id: "project-1",
@@ -417,7 +427,6 @@ describe("Page", () => {
     vi.mocked(getIsFreshInstance).mockResolvedValue(false);
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([mockOrganization]);
-    vi.mocked(getFirstEnvironmentIdByUserId).mockResolvedValue(mockEnvironmentId);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getUserProjects).mockResolvedValue(mockUserProjects);
     vi.mocked(getAccessFlags).mockReturnValue({
@@ -431,7 +440,7 @@ describe("Page", () => {
     const { container } = render(result);
 
     expect(container.querySelector('[data-testid="client-environment-redirect"]')).toHaveTextContent(
-      `Environment ID: ${mockEnvironmentId}`
+      `User Environments: test-env-id, test-env-dev`
     );
   });
 });
