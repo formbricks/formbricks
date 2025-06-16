@@ -1,9 +1,3 @@
-import { actionClassCache } from "@/lib/actionClass/cache";
-import { cache } from "@/lib/cache";
-import { segmentCache } from "@/lib/cache/segment";
-import { projectCache } from "@/lib/project/cache";
-import { responseCache } from "@/lib/response/cache";
-import { surveyCache } from "@/lib/survey/cache";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
@@ -29,11 +23,6 @@ import {
   surveySelect,
 } from "./survey";
 
-// Mocked modules
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn, _options) => fn), // Return the function itself, not its execution result
-}));
-
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
@@ -41,46 +30,6 @@ vi.mock("react", async (importOriginal) => {
     cache: vi.fn((fn) => fn), // Return the function itself, as reactCache is a HOF
   };
 });
-
-vi.mock("@/lib/actionClass/cache", () => ({
-  actionClassCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/response/cache", () => ({
-  responseCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: vi.fn((id) => `response-env-${id}`),
-      bySurveyId: vi.fn((id) => `response-survey-${id}`),
-    },
-  },
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: vi.fn((id) => `survey-env-${id}`),
-      byId: vi.fn((id) => `survey-${id}`),
-      byActionClassId: vi.fn((id) => `survey-actionclass-${id}`),
-      byResultShareKey: vi.fn((key) => `survey-resultsharekey-${key}`),
-    },
-  },
-}));
 
 vi.mock("@/lib/survey/utils", () => ({
   checkForInvalidImagesInQuestions: vi.fn(),
@@ -125,6 +74,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    actionClass: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -136,13 +88,7 @@ vi.mock("@formbricks/logger", () => ({
 
 // Helper to reset mocks
 const resetMocks = () => {
-  vi.mocked(cache).mockClear();
   vi.mocked(reactCache).mockClear();
-  vi.mocked(actionClassCache.revalidate).mockClear();
-  vi.mocked(segmentCache.revalidate).mockClear();
-  vi.mocked(projectCache.revalidate).mockClear();
-  vi.mocked(responseCache.revalidate).mockClear();
-  vi.mocked(surveyCache.revalidate).mockClear();
   vi.mocked(checkForInvalidImagesInQuestions).mockClear();
   vi.mocked(validateInputs).mockClear();
   vi.mocked(buildOrderByClause).mockClear();
@@ -157,6 +103,7 @@ const resetMocks = () => {
   vi.mocked(prisma.survey.create).mockReset();
   vi.mocked(prisma.segment.delete).mockReset();
   vi.mocked(prisma.segment.findFirst).mockReset();
+  vi.mocked(prisma.actionClass.findMany).mockReset();
   vi.mocked(logger.error).mockClear();
 };
 
@@ -221,7 +168,7 @@ describe("getSurvey", () => {
 
   test("should return a survey if found", async () => {
     const prismaSurvey = { ...mockSurveyPrisma, _count: { responses: 5 } };
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue(prismaSurvey);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(prismaSurvey as any);
 
     const survey = await getSurvey(surveyId);
 
@@ -230,8 +177,6 @@ describe("getSurvey", () => {
       where: { id: surveyId },
       select: surveySelect,
     });
-    expect(surveyCache.tag.byId).toHaveBeenCalledWith(surveyId);
-    expect(responseCache.tag.bySurveyId).toHaveBeenCalledWith(surveyId);
   });
 
   test("should return null if survey not found", async () => {
@@ -269,7 +214,7 @@ describe("getSurveys", () => {
   }));
 
   test("should return surveys with default parameters", async () => {
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
     const surveys = await getSurveys(environmentId);
 
     expect(surveys).toEqual(expectedSurveys);
@@ -280,12 +225,10 @@ describe("getSurveys", () => {
       take: undefined,
       skip: undefined,
     });
-    expect(surveyCache.tag.byEnvironmentId).toHaveBeenCalledWith(environmentId);
-    expect(responseCache.tag.byEnvironmentId).toHaveBeenCalledWith(environmentId);
   });
 
   test("should return surveys with limit and offset", async () => {
-    vi.mocked(prisma.survey.findMany).mockResolvedValue([mockPrismaSurveys[0]]);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([mockPrismaSurveys[0]] as any);
     const surveys = await getSurveys(environmentId, 1, 1);
 
     expect(surveys).toEqual([expectedSurveys[0]]);
@@ -302,7 +245,7 @@ describe("getSurveys", () => {
     const filterCriteria: any = { name: "Test", sortBy: "createdAt" };
     vi.mocked(buildWhereClause).mockReturnValue({ AND: [{ name: { contains: "Test" } }] }); // Mock correct return type
     vi.mocked(buildOrderByClause).mockReturnValue([{ createdAt: "desc" }]); // Mock specific return
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
 
     const surveys = await getSurveys(environmentId, undefined, undefined, filterCriteria);
 
@@ -355,8 +298,8 @@ describe("getSurveysSortedByRelevance", () => {
   test("should fetch inProgress surveys first, then others if limit not met", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1); // 1 inProgress survey
     vi.mocked(prisma.survey.findMany)
-      .mockResolvedValueOnce([mockInProgressPrisma]) // In-progress surveys
-      .mockResolvedValueOnce([mockOtherPrisma]); // Additional surveys
+      .mockResolvedValueOnce([mockInProgressPrisma] as any) // In-progress surveys
+      .mockResolvedValueOnce([mockOtherPrisma] as any); // Additional surveys
 
     const surveys = await getSurveysSortedByRelevance(environmentId, 2, 0);
 
@@ -382,7 +325,7 @@ describe("getSurveysSortedByRelevance", () => {
 
   test("should only fetch inProgress surveys if limit is met", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1);
-    vi.mocked(prisma.survey.findMany).mockResolvedValueOnce([mockInProgressPrisma]);
+    vi.mocked(prisma.survey.findMany).mockResolvedValueOnce([mockInProgressPrisma] as any);
 
     const surveys = await getSurveysSortedByRelevance(environmentId, 1, 0);
     expect(surveys).toEqual([expectedInProgressSurvey]);
@@ -431,13 +374,6 @@ describe("deleteSurvey", () => {
       where: { id: surveyId },
       select: expect.objectContaining({ id: true, environmentId: true, segment: expect.anything() }),
     });
-    expect(responseCache.revalidate).toHaveBeenCalledWith({ surveyId, environmentId });
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({
-      id: surveyId,
-      environmentId,
-      resultShareKey: "sharekey1",
-    });
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "action_1" });
     expect(prisma.segment.delete).not.toHaveBeenCalled();
   });
 
@@ -451,7 +387,6 @@ describe("deleteSurvey", () => {
     await deleteSurvey(surveyId);
 
     expect(prisma.segment.delete).not.toHaveBeenCalled();
-    expect(segmentCache.revalidate).toHaveBeenCalledWith({ id: "segment_public_1", environmentId });
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
@@ -545,6 +480,7 @@ describe("copySurveyToOtherEnvironment", () => {
       .mockResolvedValueOnce(mockTargetProject);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
   });
 
   test("should copy survey to a different environment successfully", async () => {
@@ -595,10 +531,6 @@ describe("copySurveyToOtherEnvironment", () => {
       })
     );
     expect(checkForInvalidImagesInQuestions).toHaveBeenCalledWith(mockExistingSurveyDetails.questions);
-    expect(actionClassCache.revalidate).toHaveBeenCalledTimes(2);
-    expect(surveyCache.revalidate).toHaveBeenCalledWith(expect.objectContaining({ id: "new_cuid2_id" }));
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "ac1" });
-    expect(surveyCache.revalidate).toHaveBeenCalledWith({ actionClassId: "ac2" });
   });
 
   test("should copy survey to the same environment successfully", async () => {
@@ -649,10 +581,6 @@ describe("copySurveyToOtherEnvironment", () => {
         }),
       })
     );
-    expect(segmentCache.revalidate).toHaveBeenCalledWith({
-      id: "new_seg_private",
-      environmentId: targetEnvironmentId,
-    });
   });
 
   test("should handle public segment: connect if same env, create new if different env (no existing in target)", async () => {
@@ -685,6 +613,7 @@ describe("copySurveyToOtherEnvironment", () => {
       .mockResolvedValueOnce(mockTargetProject);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null); // No existing public segment with same title in target
+    vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
 
     // Case 2: Different environment, segment with same title does not exist in target
     await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);
@@ -718,6 +647,7 @@ describe("copySurveyToOtherEnvironment", () => {
       .mockResolvedValueOnce(mockTargetProject);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue({ id: "existing_target_seg" } as any); // Segment with same title EXISTS
+    vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
     const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(1234567890);
 
     await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);
@@ -795,7 +725,6 @@ describe("copySurveyToOtherEnvironment", () => {
         }),
       })
     );
-    expect(projectCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should handle survey with no triggers", async () => {
@@ -809,9 +738,6 @@ describe("copySurveyToOtherEnvironment", () => {
           triggers: { create: [] },
         }),
       })
-    );
-    expect(surveyCache.revalidate).not.toHaveBeenCalledWith(
-      expect.objectContaining({ actionClassId: expect.any(String) })
     );
   });
 });

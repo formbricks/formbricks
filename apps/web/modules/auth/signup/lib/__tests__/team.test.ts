@@ -1,6 +1,4 @@
 import { MOCK_IDS, MOCK_INVITE, MOCK_TEAM, MOCK_TEAM_USER } from "./__mocks__/team-mocks";
-import { teamCache } from "@/lib/cache/team";
-import { projectCache } from "@/lib/project/cache";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { OrganizationRole } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -26,28 +24,8 @@ const setupMocks = () => {
     DEFAULT_ORGANIZATION_ID: "org-123",
   }));
 
-  vi.mock("@/lib/cache/team", () => ({
-    teamCache: {
-      revalidate: vi.fn(),
-      tag: {
-        byId: vi.fn().mockReturnValue("tag-id"),
-        byOrganizationId: vi.fn().mockReturnValue("tag-org-id"),
-      },
-    },
-  }));
-
-  vi.mock("@/lib/project/cache", () => ({
-    projectCache: {
-      revalidate: vi.fn(),
-    },
-  }));
-
   vi.mock("@/lib/membership/service", () => ({
     getMembershipByUserIdOrganizationId: vi.fn(),
-  }));
-
-  vi.mock("@formbricks/lib/cache", () => ({
-    cache: vi.fn((fn) => fn),
   }));
 
   vi.mock("@formbricks/logger", () => ({
@@ -101,17 +79,6 @@ describe("Team Management", () => {
             userId: MOCK_IDS.userId,
             role: "admin",
           },
-        });
-
-        expect(projectCache.revalidate).toHaveBeenCalledWith({ id: MOCK_IDS.projectId });
-        expect(teamCache.revalidate).toHaveBeenCalledWith({ id: MOCK_IDS.teamId });
-        expect(teamCache.revalidate).toHaveBeenCalledWith({
-          userId: MOCK_IDS.userId,
-          organizationId: MOCK_IDS.organizationId,
-        });
-        expect(projectCache.revalidate).toHaveBeenCalledWith({
-          userId: MOCK_IDS.userId,
-          organizationId: MOCK_IDS.organizationId,
         });
       });
     });

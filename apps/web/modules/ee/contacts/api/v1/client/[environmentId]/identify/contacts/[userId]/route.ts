@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { contactCache } from "@/lib/cache/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
@@ -48,14 +47,6 @@ export const GET = async (
         userId,
         device: deviceType,
       });
-
-      if (personState.revalidateProps?.revalidate) {
-        contactCache.revalidate({
-          environmentId,
-          userId,
-          id: personState.revalidateProps.contactId,
-        });
-      }
 
       return responses.successResponse(personState.state, true);
     } catch (err) {

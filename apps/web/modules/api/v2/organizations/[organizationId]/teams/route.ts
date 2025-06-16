@@ -46,19 +46,30 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput: { body, params } }) => {
+    handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "organizationId", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "organizationId", issue: "unauthorized" }],
+          },
+          auditLog
+        );
       }
 
       const createTeamResult = await createTeam(body!, authentication.organizationId);
       if (!createTeamResult.ok) {
-        return handleApiError(request, createTeamResult.error);
+        return handleApiError(request, createTeamResult.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.targetId = createTeamResult.data.id;
+        auditLog.newObject = createTeamResult.data;
       }
 
       return responses.createdResponse({ data: createTeamResult.data });
     },
+    action: "created",
+    targetType: "team",
   });

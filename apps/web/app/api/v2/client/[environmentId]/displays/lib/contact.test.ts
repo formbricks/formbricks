@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { contactCache } from "@/lib/cache/contact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { doesContactExist } from "./contact";
@@ -9,16 +7,6 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
       findFirst: vi.fn(),
-    },
-  },
-}));
-
-// Mock cache module
-vi.mock("@/lib/cache");
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    tag: {
-      byId: vi.fn((id) => `contact-${id}`),
     },
   },
 }));
@@ -35,12 +23,6 @@ vi.mock("react", async () => {
 const contactId = "test-contact-id";
 
 describe("doesContactExist", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -55,9 +37,6 @@ describe("doesContactExist", () => {
       where: { id: contactId },
       select: { id: true },
     });
-    expect(cache).toHaveBeenCalledWith(expect.any(Function), [`doesContactExistDisplaysApiV2-${contactId}`], {
-      tags: [contactCache.tag.byId(contactId)],
-    });
   });
 
   test("should return false if contact does not exist", async () => {
@@ -69,9 +48,6 @@ describe("doesContactExist", () => {
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: { id: contactId },
       select: { id: true },
-    });
-    expect(cache).toHaveBeenCalledWith(expect.any(Function), [`doesContactExistDisplaysApiV2-${contactId}`], {
-      tags: [contactCache.tag.byId(contactId)],
     });
   });
 });

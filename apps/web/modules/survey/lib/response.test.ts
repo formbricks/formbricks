@@ -1,23 +1,8 @@
-import { cache } from "@/lib/cache";
-import { responseCache } from "@/lib/response/cache";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getResponseCountBySurveyId } from "./response";
-
-// Mock dependencies
-vi.mock("@/lib/cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("@/lib/response/cache", () => ({
-  responseCache: {
-    tag: {
-      bySurveyId: vi.fn((surveyId) => `survey-${surveyId}-responses`),
-    },
-  },
-}));
 
 vi.mock("react", async () => {
   const actual = await vi.importActual("react");
@@ -52,8 +37,6 @@ describe("getResponseCountBySurveyId", () => {
     expect(prisma.response.count).toHaveBeenCalledWith({
       where: { surveyId },
     });
-    expect(cache).toHaveBeenCalledTimes(1);
-    expect(responseCache.tag.bySurveyId).toHaveBeenCalledWith(surveyId);
   });
 
   test("should throw DatabaseError if PrismaClientKnownRequestError occurs", async () => {
@@ -67,7 +50,6 @@ describe("getResponseCountBySurveyId", () => {
     expect(prisma.response.count).toHaveBeenCalledWith({
       where: { surveyId },
     });
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 
   test("should throw generic error if an unknown error occurs", async () => {
@@ -78,6 +60,5 @@ describe("getResponseCountBySurveyId", () => {
     expect(prisma.response.count).toHaveBeenCalledWith({
       where: { surveyId },
     });
-    expect(cache).toHaveBeenCalledTimes(1);
   });
 });

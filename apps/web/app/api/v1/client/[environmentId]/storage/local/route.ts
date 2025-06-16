@@ -19,15 +19,12 @@ interface Context {
 }
 
 export const OPTIONS = async (): Promise<Response> => {
-  return Response.json(
+  return responses.successResponse(
     {},
-    {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    }
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
   );
 };
 

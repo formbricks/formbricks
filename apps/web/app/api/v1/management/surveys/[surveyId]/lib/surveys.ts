@@ -1,6 +1,3 @@
-import { segmentCache } from "@/lib/cache/segment";
-import { responseCache } from "@/lib/response/cache";
-import { surveyCache } from "@/lib/survey/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -27,43 +24,12 @@ export const deleteSurvey = async (surveyId: string) => {
     });
 
     if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
-      const deletedSegment = await prisma.segment.delete({
+      await prisma.segment.delete({
         where: {
           id: deletedSurvey.segment.id,
         },
       });
-
-      if (deletedSegment) {
-        segmentCache.revalidate({
-          id: deletedSegment.id,
-          environmentId: deletedSurvey.environmentId,
-        });
-      }
     }
-
-    responseCache.revalidate({
-      surveyId,
-      environmentId: deletedSurvey.environmentId,
-    });
-    surveyCache.revalidate({
-      id: deletedSurvey.id,
-      environmentId: deletedSurvey.environmentId,
-      resultShareKey: deletedSurvey.resultShareKey ?? undefined,
-    });
-
-    if (deletedSurvey.segment?.id) {
-      segmentCache.revalidate({
-        id: deletedSurvey.segment.id,
-        environmentId: deletedSurvey.environmentId,
-      });
-    }
-
-    // Revalidate public triggers by actionClassId
-    deletedSurvey.triggers.forEach((trigger) => {
-      surveyCache.revalidate({
-        actionClassId: trigger.actionClass.id,
-      });
-    });
 
     return deletedSurvey;
   } catch (error) {

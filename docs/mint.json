@@ -291,6 +291,7 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
+        "self-hosting/advanced/license-activation",
         {
           "group": "Enterprise Features",
           "icon": "building",
@@ -301,7 +302,8 @@
             "self-hosting/advanced/enterprise-features/contact-management-segments",
             "self-hosting/advanced/enterprise-features/multi-language-surveys",
             "self-hosting/advanced/enterprise-features/oidc-sso",
-            "self-hosting/advanced/enterprise-features/saml-sso"
+            "self-hosting/advanced/enterprise-features/saml-sso",
+            "self-hosting/advanced/enterprise-features/audit-logging"
           ]
         },
         "self-hosting/advanced/rate-limiting"
@@ -312,7 +314,7 @@
       "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
     },
     {
-      "group": "API v2 Documentation (Draft)",
+      "group": "API v2 Documentation (Beta)",
       "pages": ["api-v2-reference/introduction"]
     }
   ],
@@ -791,7 +793,7 @@
       "url": "api-reference"
     },
     {
-      "name": "API v2 Reference (WIP 👷‍♂️)",
+      "name": "API v2 Reference (Beta)",
       "openapi": "/api-v2-reference/openapi.yml",
       "url": "api-v2-reference"
     }

@@ -1,5 +1,3 @@
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -84,11 +82,6 @@ export const updateAttributes = async (
         })
       )
     );
-
-    // Revalidate cache for existing attributes
-    for (const attribute of existingAttributes) {
-      contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
-    }
   }
 
   // Then, try to create new attributes if any exist
@@ -116,14 +109,6 @@ export const updateAttributes = async (
           })
         )
       );
-
-      // Batch revalidate caches for new attributes
-      for (const attribute of newAttributes) {
-        contactAttributeKeyCache.revalidate({ environmentId, key: attribute.key });
-        contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
-      }
-
-      contactAttributeKeyCache.revalidate({ environmentId });
     }
   }
 

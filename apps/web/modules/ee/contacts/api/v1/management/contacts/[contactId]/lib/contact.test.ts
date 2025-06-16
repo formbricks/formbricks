@@ -1,4 +1,3 @@
-import { contactCache } from "@/lib/cache/contact";
 import { Contact, Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -10,15 +9,6 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findUnique: vi.fn(),
       delete: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/cache/contact", () => ({
-  contactCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn((id) => `contact-${id}`),
     },
   },
 }));
@@ -49,7 +39,6 @@ describe("contact lib", () => {
 
       expect(result).toEqual(mockContact);
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({ where: { id: mockContactId } });
-      expect(contactCache.tag.byId).toHaveBeenCalledWith(mockContactId);
     });
 
     test("should return null if contact not found", async () => {
@@ -94,7 +83,7 @@ describe("contact lib", () => {
       ],
     } as unknown as Contact;
 
-    test("should delete contact and revalidate cache", async () => {
+    test("should delete contact", async () => {
       vi.mocked(prisma.contact.delete).mockResolvedValue(mockDeletedContact);
       await deleteContact(mockContactId);
 
@@ -106,14 +95,9 @@ describe("contact lib", () => {
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });
-      expect(contactCache.revalidate).toHaveBeenCalledWith({
-        id: mockContactId,
-        userId: undefined,
-        environmentId: mockEnvironmentId,
-      });
     });
 
-    test("should delete contact and revalidate cache with userId", async () => {
+    test("should delete contact with userId", async () => {
       vi.mocked(prisma.contact.delete).mockResolvedValue(mockDeletedContactWithUserId);
       await deleteContact(mockContactId);
 
@@ -124,11 +108,6 @@ describe("contact lib", () => {
           environmentId: true,
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
-      });
-      expect(contactCache.revalidate).toHaveBeenCalledWith({
-        id: mockContactId,
-        userId: "user123",
-        environmentId: mockEnvironmentId,
       });
     });
 

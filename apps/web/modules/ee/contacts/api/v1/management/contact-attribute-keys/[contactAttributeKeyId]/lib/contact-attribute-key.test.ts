@@ -1,4 +1,3 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -22,19 +21,6 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       count: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    tag: {
-      byId: vi.fn((id) => `contactAttributeKey-${id}`),
-      byEnvironmentId: vi.fn((environmentId) => `environments-${environmentId}-contactAttributeKeys`),
-      byEnvironmentIdAndKey: vi.fn(
-        (environmentId, key) => `contactAttributeKey-environment-${environmentId}-key-${key}`
-      ),
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -83,7 +69,6 @@ describe("getContactAttributeKey", () => {
     expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
     });
-    expect(contactAttributeKeyCache.tag.byId).toHaveBeenCalledWith(mockContactAttributeKeyId);
   });
 
   test("should return null if contact attribute key not found", async () => {
@@ -142,11 +127,6 @@ describe("createContactAttributeKey", () => {
         environment: { connect: { id: mockEnvironmentId } },
       },
     });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: createdAttributeKey.id,
-      environmentId: createdAttributeKey.environmentId,
-      key: createdAttributeKey.key,
-    });
   });
 
   test("should throw OperationNotAllowedError if max attribute classes reached", async () => {
@@ -199,7 +179,7 @@ describe("deleteContactAttributeKey", () => {
     vi.clearAllMocks();
   });
 
-  test("should delete contact attribute key and revalidate cache", async () => {
+  test("should delete contact attribute key", async () => {
     const deletedAttributeKey = { ...mockContactAttributeKey };
     vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValue(deletedAttributeKey);
 
@@ -208,11 +188,6 @@ describe("deleteContactAttributeKey", () => {
     expect(result).toEqual(deletedAttributeKey);
     expect(prisma.contactAttributeKey.delete).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
-    });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: deletedAttributeKey.id,
-      environmentId: deletedAttributeKey.environmentId,
-      key: deletedAttributeKey.key,
     });
   });
 
@@ -252,7 +227,7 @@ describe("updateContactAttributeKey", () => {
     vi.clearAllMocks();
   });
 
-  test("should update contact attribute key and revalidate cache", async () => {
+  test("should update contact attribute key", async () => {
     vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(updatedAttributeKey);
 
     const result = await updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData);
@@ -261,11 +236,6 @@ describe("updateContactAttributeKey", () => {
     expect(prisma.contactAttributeKey.update).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
       data: { description: updateData.description },
-    });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: updatedAttributeKey.id,
-      environmentId: updatedAttributeKey.environmentId,
-      key: updatedAttributeKey.key,
     });
   });
 

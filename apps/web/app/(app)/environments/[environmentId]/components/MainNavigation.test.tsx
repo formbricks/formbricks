@@ -1,6 +1,6 @@
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -10,6 +10,17 @@ import { TUser } from "@formbricks/types/user";
 import { getLatestStableFbReleaseAction } from "../actions/actions";
 import { MainNavigation } from "./MainNavigation";
 
+// Mock constants that this test needs
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  WEBAPP_URL: "http://localhost:3000",
+}));
+
+// Mock server actions that this test needs
+vi.mock("@/modules/auth/actions/sign-out", () => ({
+  logSignOutAction: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({ push: vi.fn() })),
@@ -17,6 +28,9 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next-auth/react", () => ({
   signOut: vi.fn(),
+}));
+vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
+  useSignOut: vi.fn(() => ({ signOut: vi.fn() })),
 }));
 vi.mock("@/app/(app)/environments/[environmentId]/actions/actions", () => ({
   getLatestStableFbReleaseAction: vi.fn(),
@@ -203,7 +217,9 @@ describe("MainNavigation", () => {
   });
 
   test("renders user dropdown and handles logout", async () => {
-    vi.mocked(signOut).mockResolvedValue({ url: "/auth/login" });
+    const mockSignOut = vi.fn().mockResolvedValue({ url: "/auth/login" });
+    vi.mocked(useSignOut).mockReturnValue({ signOut: mockSignOut });
+
     render(<MainNavigation {...defaultProps} />);
 
     // Find the avatar and get its parent div which acts as the trigger
@@ -224,7 +240,13 @@ describe("MainNavigation", () => {
     const logoutButton = screen.getByText("common.logout");
     await userEvent.click(logoutButton);
 
-    expect(signOut).toHaveBeenCalledWith({ redirect: false, callbackUrl: "/auth/login" });
+    expect(mockSignOut).toHaveBeenCalledWith({
+      reason: "user_initiated",
+      redirectUrl: "/auth/login",
+      organizationId: "org1",
+      redirect: false,
+      callbackUrl: "/auth/login",
+    });
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/auth/login");
     });

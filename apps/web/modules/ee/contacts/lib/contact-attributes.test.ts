@@ -11,17 +11,7 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/cache", () => ({ cache: (fn) => fn }));
-vi.mock("@/lib/cache/contact-attribute", () => ({
-  contactAttributeCache: {
-    tag: { byContactId: (id) => `contact-${id}`, byEnvironmentId: (env) => `env-${env}` },
-  },
-}));
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: { tag: { byEnvironmentIdAndKey: (env, key) => `env-${env}-key-${key}` } },
-}));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
-vi.mock("react", () => ({ cache: (fn) => fn }));
 
 const contactId = "contact-1";
 const environmentId = "env-1";

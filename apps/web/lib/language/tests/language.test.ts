@@ -6,9 +6,7 @@ import {
   mockProjectId,
   mockUpdatedLanguage,
 } from "./__mocks__/data.mock";
-import { projectCache } from "@/lib/project/cache";
 import { getProject } from "@/lib/project/service";
-import { surveyCache } from "@/lib/survey/cache";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -29,12 +27,6 @@ vi.mock("@formbricks/database", () => ({
 // stub out project/service and caches
 vi.mock("@/lib/project/service", () => ({
   getProject: vi.fn(),
-}));
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: { revalidate: vi.fn() },
-}));
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: { revalidate: vi.fn() },
 }));
 
 const fakeProject = {
@@ -60,8 +52,6 @@ describe("createLanguage", () => {
     vi.mocked(prisma.language.create).mockResolvedValue(mockLanguage);
     const result = await createLanguage(mockProjectId, mockLanguageInput);
     expect(result).toEqual(mockLanguage);
-    // projectCache.revalidate called for each env
-    expect(projectCache.revalidate).toHaveBeenCalledTimes(2);
   });
 
   describe("sad path", () => {
@@ -95,9 +85,6 @@ describe("updateLanguage", () => {
     vi.mocked(prisma.language.update).mockResolvedValue(mockUpdatedLanguageWithSurveyLanguage);
     const result = await updateLanguage(mockProjectId, mockLanguageId, mockLanguageUpdate);
     expect(result).toEqual(mockUpdatedLanguage);
-    // caches revalidated
-    expect(projectCache.revalidate).toHaveBeenCalled();
-    expect(surveyCache.revalidate).toHaveBeenCalled();
   });
 
   describe("sad path", () => {
@@ -125,7 +112,6 @@ describe("deleteLanguage", () => {
     vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
     const result = await deleteLanguage(mockLanguageId, mockProjectId);
     expect(result).toEqual(mockLanguage);
-    expect(projectCache.revalidate).toHaveBeenCalledTimes(2);
   });
 
   describe("sad path", () => {
