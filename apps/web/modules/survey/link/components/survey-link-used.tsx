@@ -1,5 +1,6 @@
 "use client";
 
+import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
@@ -9,9 +10,10 @@ import footerLogo from "../lib/footerlogo.svg";
 
 interface SurveyLinkUsedProps {
   singleUseMessage: TSurveySingleUse | null;
+  project: Pick<Project, "linkSurveyBranding">;
 }
 
-export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
+export const SurveyLinkUsed = ({ singleUseMessage, project }: SurveyLinkUsedProps) => {
   const { t } = useTranslate();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");
@@ -25,11 +27,13 @@ export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
           {singleUseMessage?.subheading ?? defaultSubheading}
         </p>
       </div>
-      <div>
-        <Link href="https://formbricks.com">
-          <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
-        </Link>
-      </div>
+      {project.linkSurveyBranding && (
+        <div>
+          <Link href="https://formbricks.com">
+            <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

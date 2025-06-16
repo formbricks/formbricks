@@ -1,5 +1,6 @@
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
+import { Project } from "@prisma/client";
 import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,9 +10,11 @@ import footerLogo from "../lib/footerlogo.svg";
 export const SurveyInactive = async ({
   status,
   surveyClosedMessage,
+  project,
 }: {
   status: "paused" | "completed" | "link invalid" | "scheduled" | "response submitted";
   surveyClosedMessage?: TSurveyClosedMessage | null;
+  project?: Pick<Project, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
   const icons = {
@@ -51,11 +54,13 @@ export const SurveyInactive = async ({
             </Button>
           )}
       </div>
-      <div>
-        <Link href="https://formbricks.com">
-          <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
-        </Link>
-      </div>
+      {(!project || project.linkSurveyBranding) && (
+        <div>
+          <Link href="https://formbricks.com">
+            <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
