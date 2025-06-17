@@ -1,6 +1,6 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -42,10 +42,10 @@ export const GET = async (
 
     const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
 
-    const surveyDomain = getSurveyDomain();
+    const publicDomain = getPublicDomain();
     // map single use ids to survey links
     const surveyLinks = singleUseIds.map(
-      (singleUseId) => `${surveyDomain}/s/${survey.id}?suId=${singleUseId}`
+      (singleUseId) => `${publicDomain}/s/${survey.id}?suId=${singleUseId}`
     );
 
     return responses.successResponse(surveyLinks);

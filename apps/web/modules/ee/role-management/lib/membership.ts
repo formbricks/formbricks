@@ -1,8 +1,4 @@
 import "server-only";
-import { membershipCache } from "@/lib/cache/membership";
-import { teamCache } from "@/lib/cache/team";
-import { organizationCache } from "@/lib/organization/cache";
-import { projectCache } from "@/lib/project/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
@@ -29,7 +25,7 @@ export const updateMembership = async (
       data,
     });
 
-    const teamMemberships = await prisma.teamUser.findMany({
+    await prisma.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -55,39 +51,13 @@ export const updateMembership = async (
       });
     }
 
-    const organizationMembers = await prisma.membership.findMany({
+    await prisma.membership.findMany({
       where: {
         organizationId,
       },
       select: {
         userId: true,
       },
-    });
-
-    teamCache.revalidate({
-      userId,
-      organizationId,
-    });
-
-    teamMemberships.forEach((teamMembership) => {
-      teamCache.revalidate({
-        id: teamMembership.teamId,
-      });
-    });
-
-    organizationMembers.forEach((member) => {
-      organizationCache.revalidate({
-        userId: member.userId,
-      });
-    });
-
-    membershipCache.revalidate({
-      userId,
-      organizationId,
-    });
-
-    projectCache.revalidate({
-      userId,
     });
 
     return membership;

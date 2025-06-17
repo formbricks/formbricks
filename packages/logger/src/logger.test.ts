@@ -8,20 +8,62 @@ const originalNodeEnv = process.env.NODE_ENV;
 const originalLogLevel = process.env.LOG_LEVEL;
 const originalNextRuntime = process.env.NEXT_RUNTIME;
 
+function createMockLogger(): Pino.Logger {
+  return {
+    debug: vi.fn().mockReturnThis(),
+    info: vi.fn().mockReturnThis(),
+    audit: vi.fn().mockReturnThis(),
+    warn: vi.fn().mockReturnThis(),
+    error: vi.fn().mockReturnThis(),
+    fatal: vi.fn().mockReturnThis(),
+    child: vi.fn().mockReturnThis(),
+    flush: vi.fn(),
+    level: "info",
+    trace: vi.fn().mockReturnThis(),
+    silent: vi.fn().mockReturnThis(),
+    // LoggerExtras
+    version: "1.0.0",
+    levels: {
+      values: {},
+      labels: {},
+    },
+    useLevelLabels: false,
+    levelVal: 30,
+    setLevel: vi.fn(),
+    setBindings: vi.fn(),
+    getBindings: vi.fn(),
+    isLevelEnabled: vi.fn().mockReturnValue(true),
+    pino: vi.fn(),
+    // EventEmitter methods
+    onChild: vi.fn(),
+    on: vi.fn(),
+    addListener: vi.fn(),
+    once: vi.fn(),
+    off: vi.fn(),
+    removeListener: vi.fn(),
+    removeAllListeners: vi.fn(),
+    emit: vi.fn(),
+    listenerCount: vi.fn(),
+    prependListener: vi.fn(),
+    prependOnceListener: vi.fn(),
+    eventNames: vi.fn(),
+    listeners: vi.fn(),
+    rawListeners: vi.fn(),
+    // Remaining required properties
+    bindings: () => ({ level: "info", severity: "info" }),
+    setMaxListeners: vi.fn(),
+    getMaxListeners: vi.fn(),
+    // Custom levels for logger
+    customLevels: { audit: 35 },
+    useOnlyCustomLevels: true,
+  } as unknown as Pino.Logger;
+}
+
 // Define the mock before any imports that use it
 // Move mock outside of any function to avoid hoisting issues
 vi.mock("pino", () => {
-  // Create a factory function that returns the mock
   return {
-    default: vi.fn(() => ({
-      debug: vi.fn().mockReturnThis(),
-      info: vi.fn().mockReturnThis(),
-      warn: vi.fn().mockReturnThis(),
-      error: vi.fn().mockReturnThis(),
-      fatal: vi.fn().mockReturnThis(),
-      child: vi.fn().mockReturnThis(),
-      flush: vi.fn(),
-    })),
+    default: vi.fn(() => createMockLogger()),
     stdSerializers: {
       err: vi.fn(),
       req: vi.fn(),
@@ -124,16 +166,10 @@ describe("Logger", () => {
     // Create a child spy before importing the logger
     const childSpy = vi.fn().mockReturnThis();
 
-    // Set up the mock to capture the child call
-    vi.mocked(Pino).mockReturnValue({
-      debug: vi.fn().mockReturnThis(),
-      info: vi.fn().mockReturnThis(),
-      warn: vi.fn().mockReturnThis(),
-      error: vi.fn().mockReturnThis(),
-      fatal: vi.fn().mockReturnThis(),
-      child: childSpy,
-      flush: vi.fn(),
-    } as unknown as Pino.Logger<string>);
+    const mockLogger = createMockLogger();
+    mockLogger.child = childSpy;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    vi.mocked(Pino).mockReturnValue(mockLogger as any);
 
     // Now import the logger with our updated mock
     const { logger } = await import("./logger");
@@ -152,16 +188,10 @@ describe("Logger", () => {
     // Create a child spy before importing the logger
     const childSpy = vi.fn().mockReturnThis();
 
-    // Set up the mock to capture the child call
-    vi.mocked(Pino).mockReturnValue({
-      debug: vi.fn().mockReturnThis(),
-      info: vi.fn().mockReturnThis(),
-      warn: vi.fn().mockReturnThis(),
-      error: vi.fn().mockReturnThis(),
-      fatal: vi.fn().mockReturnThis(),
-      child: childSpy,
-      flush: vi.fn(),
-    } as unknown as Pino.Logger<string>);
+    const mockLogger = createMockLogger();
+    mockLogger.child = childSpy;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    vi.mocked(Pino).mockReturnValue(mockLogger as any);
 
     // Now import the logger with our updated mock
     const { logger } = await import("./logger");
@@ -194,6 +224,9 @@ describe("Logger", () => {
 
     process.env.NEXT_RUNTIME = "nodejs";
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
+
     await import("./logger");
 
     // Check that process handlers were attached
@@ -210,6 +243,9 @@ describe("Logger", () => {
     processSpy.mockImplementation(() => process); // Return process for chaining
 
     process.env.NEXT_RUNTIME = "edge";
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
 
     await import("./logger");
 

@@ -20,7 +20,7 @@ interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  webAppUrl: string;
+  publicDomain: string;
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
@@ -32,7 +32,7 @@ export const ResponsePage = ({
   environment,
   survey,
   surveyId,
-  webAppUrl,
+  publicDomain,
   user,
   environmentTags,
   responsesPerPage,
@@ -155,7 +155,7 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} publicDomain={publicDomain} />}
       </div>
       <ResponseDataView
         survey={survey}

@@ -3,6 +3,7 @@
 import { PasswordConfirmationModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/password-confirmation-modal";
 import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -16,8 +17,6 @@ import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -39,7 +38,6 @@ export const EditProfileDetailsForm = ({
   emailVerificationDisabled: boolean;
 }) => {
   const { t } = useTranslate();
-  const router = useRouter();
 
   const form = useForm<TEditProfileNameForm>({
     defaultValues: {
@@ -53,6 +51,7 @@ export const EditProfileDetailsForm = ({
 
   const { isSubmitting, isDirty } = form.formState;
   const [showModal, setShowModal] = useState(false);
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const handleConfirmPassword = async (password: string) => {
     const values = form.getValues();
@@ -86,8 +85,12 @@ export const EditProfileDetailsForm = ({
         toast.success(t("auth.verification-requested.new_email_verification_success"));
       } else {
         toast.success(t("environments.settings.profile.email_change_initiated"));
-        await signOut({ redirect: false });
-        router.push(`/email-change-without-verification-success`);
+        await signOutWithAudit({
+          reason: "email_change",
+          redirectUrl: "/email-change-without-verification-success",
+          redirect: true,
+          callbackUrl: "/email-change-without-verification-success",
+        });
         return;
       }
     } else {

@@ -1,5 +1,3 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -14,27 +12,20 @@ import {
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache(
-  (environmentIds: string[]): Promise<TContactAttributeKey[]> =>
-    cache(
-      async () => {
-        try {
-          const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-            where: { environmentId: { in: environmentIds } },
-          });
+  async (environmentIds: string[]): Promise<TContactAttributeKey[]> => {
+    try {
+      const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
+        where: { environmentId: { in: environmentIds } },
+      });
 
-          return contactAttributeKeys;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      environmentIds.map((id) => `getContactAttributeKeys-attribute-keys-management-api-${id}`),
-      {
-        tags: environmentIds.map((id) => contactAttributeKeyCache.tag.byEnvironmentId(id)),
+      return contactAttributeKeys;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+      throw error;
+    }
+  }
 );
 
 export const createContactAttributeKey = async (
@@ -68,12 +59,6 @@ export const createContactAttributeKey = async (
           },
         },
       },
-    });
-
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
     });
 
     return contactAttributeKey;

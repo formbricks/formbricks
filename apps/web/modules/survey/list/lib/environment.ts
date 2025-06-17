@@ -1,6 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { environmentCache } from "@/lib/environment/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Environment, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -9,88 +7,64 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const doesEnvironmentExist = reactCache(
-  async (environmentId: string): Promise<string | null> =>
-    cache(
-      async () => {
-        const environment = await prisma.environment.findUnique({
-          where: {
-            id: environmentId,
-          },
-          select: {
-            id: true,
-          },
-        });
+export const doesEnvironmentExist = reactCache(async (environmentId: string): Promise<string | null> => {
+  const environment = await prisma.environment.findUnique({
+    where: {
+      id: environmentId,
+    },
+    select: {
+      id: true,
+    },
+  });
 
-        if (!environment) {
-          throw new ResourceNotFoundError("Environment", environmentId);
-        }
+  if (!environment) {
+    throw new ResourceNotFoundError("Environment", environmentId);
+  }
 
-        return environment.id;
-      },
-
-      [`survey-list-doesEnvironmentExist-${environmentId}`],
-      {
-        tags: [environmentCache.tag.byId(environmentId)],
-      }
-    )()
-);
+  return environment.id;
+});
 
 export const getProjectIdIfEnvironmentExists = reactCache(
-  async (environmentId: string): Promise<string | null> =>
-    cache(
-      async () => {
-        const environment = await prisma.environment.findUnique({
-          where: {
-            id: environmentId,
-          },
-          select: {
-            projectId: true,
-          },
-        });
-
-        if (!environment) {
-          throw new ResourceNotFoundError("Environment", environmentId);
-        }
-
-        return environment.projectId;
+  async (environmentId: string): Promise<string | null> => {
+    const environment = await prisma.environment.findUnique({
+      where: {
+        id: environmentId,
       },
-      [`survey-list-getProjectIdIfEnvironmentExists-${environmentId}`],
-      {
-        tags: [environmentCache.tag.byId(environmentId)],
-      }
-    )()
+      select: {
+        projectId: true,
+      },
+    });
+
+    if (!environment) {
+      throw new ResourceNotFoundError("Environment", environmentId);
+    }
+
+    return environment.projectId;
+  }
 );
 
 export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<Pick<Environment, "id" | "type"> | null> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, z.string().cuid2()]);
+  async (environmentId: string): Promise<Pick<Environment, "id" | "type"> | null> => {
+    validateInputs([environmentId, z.string().cuid2()]);
 
-        try {
-          const environment = await prisma.environment.findUnique({
-            where: {
-              id: environmentId,
-            },
-            select: {
-              id: true,
-              type: true,
-            },
-          });
-          return environment;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error fetching environment");
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`survey-list-getEnvironment-${environmentId}`],
-      {
-        tags: [environmentCache.tag.byId(environmentId)],
+    try {
+      const environment = await prisma.environment.findUnique({
+        where: {
+          id: environmentId,
+        },
+        select: {
+          id: true,
+          type: true,
+        },
+      });
+      return environment;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error fetching environment");
+        throw new DatabaseError(error.message);
       }
-    )()
+
+      throw error;
+    }
+  }
 );

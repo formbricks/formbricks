@@ -8,8 +8,31 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+// Mock constants that this test needs
+vi.mock("@/lib/constants", () => ({
+  EMAIL_VERIFICATION_DISABLED: false,
+  SESSION_MAX_AGE: 86400,
+  NEXTAUTH_SECRET: "test-secret",
+  WEBAPP_URL: "http://localhost:3000",
+  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
+  REDIS_URL: undefined,
+  AUDIT_LOG_ENABLED: false,
+  AUDIT_LOG_GET_USER_IP: false,
+  ENTERPRISE_LICENSE_KEY: undefined,
+  SENTRY_DSN: undefined,
+  BREVO_API_KEY: undefined,
+}));
+
 // Mock next/headers
 vi.mock("next/headers", () => ({
+  headers: () => ({
+    get: () => null,
+    has: () => false,
+    keys: () => [],
+    values: () => [],
+    entries: () => [],
+    forEach: () => {},
+  }),
   cookies: () => ({
     get: (name: string) => {
       if (name === "next-auth.callback-url") {
@@ -73,7 +96,7 @@ describe("authOptions", () => {
         id: mockUser.id,
         email: mockUser.email,
         password: null,
-      });
+      } as any);
 
       const credentials = { email: mockUser.email, password: mockPassword };
 
@@ -87,7 +110,7 @@ describe("authOptions", () => {
         id: mockUserId,
         email: mockUser.email,
         password: mockHashedPassword,
-      });
+      } as any);
 
       const credentials = { email: mockUser.email, password: "wrongPassword" };
 
@@ -106,7 +129,7 @@ describe("authOptions", () => {
         twoFactorEnabled: false,
       };
 
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(fakeUser);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(fakeUser as any);
 
       const credentials = { email: mockUser.email, password: mockPassword };
 
@@ -128,7 +151,7 @@ describe("authOptions", () => {
           twoFactorEnabled: true,
           backupCodes: null,
         };
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
         const credentials = { email: mockUser.email, password: mockPassword, backupCode: "123456" };
 
@@ -157,7 +180,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if email is already verified", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
       const credentials = { token: createToken(mockUser.id, mockUser.email) };
 
@@ -167,7 +190,7 @@ describe("authOptions", () => {
     });
 
     test("should update user and verify email when token is valid", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({ id: mockUser.id, emailVerified: null });
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({ id: mockUser.id, emailVerified: null } as any);
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
         password: mockHashedPassword,
@@ -175,7 +198,7 @@ describe("authOptions", () => {
         twoFactorSecret: null,
         identityProviderAccountId: null,
         groupId: null,
-      });
+      } as any);
 
       const credentials = { token: createToken(mockUserId, mockUser.email) };
 
@@ -193,7 +216,7 @@ describe("authOptions", () => {
           locale: mockUser.locale,
           email: mockUser.email,
           emailVerified: mockUser.emailVerified,
-        });
+        } as any);
 
         const token = { email: mockUser.email };
         if (!authOptions.callbacks?.jwt) {
@@ -259,7 +282,7 @@ describe("authOptions", () => {
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted_secret",
       };
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
       const credentials = { email: mockUser.email, password: mockPassword };
 
@@ -276,7 +299,7 @@ describe("authOptions", () => {
         twoFactorEnabled: true,
         twoFactorSecret: null,
       };
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
       const credentials = {
         email: mockUser.email,

@@ -5,9 +5,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -148,19 +146,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-
-    responseCache.revalidate({
-      environmentId,
-      id: response.id,
-      contactId: contact?.id,
-      ...(singleUseId && { singleUseId }),
-      userId: userId ?? undefined,
-      surveyId,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
 
     if (IS_FORMBRICKS_CLOUD) {
       const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);

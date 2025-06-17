@@ -36,7 +36,7 @@ interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  webAppUrl: string;
+  publicDomain: string;
   locale: TUserLocale;
   isReadOnly: boolean;
   initialSurveySummary?: TSurveySummary;
@@ -46,7 +46,7 @@ export const SummaryPage = ({
   environment,
   survey,
   surveyId,
-  webAppUrl,
+  publicDomain,
   locale,
   isReadOnly,
   initialSurveySummary,
@@ -109,7 +109,7 @@ export const SummaryPage = ({
     };
 
     fetchSummary();
-  }, [selectedFilter, dateRange, survey.id, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
+  }, [selectedFilter, dateRange, survey, isSharingPage, sharingKey, surveyId, initialSurveySummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
@@ -133,7 +133,7 @@ export const SummaryPage = ({
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
         {!isReadOnly && !isSharingPage && (
-          <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />
+          <ResultsShareButton survey={surveyMemoized} publicDomain={publicDomain} />
         )}
       </div>
       <ScrollToTop containerId="mainContent" />

@@ -1,6 +1,3 @@
-import { contactCache } from "@/lib/cache/contact";
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 import { createId } from "@paralleldrive/cuid2";
@@ -359,30 +356,6 @@ export const upsertBulkContacts = async (
           `;
           }
         }
-
-        contactCache.revalidate({
-          environmentId,
-        });
-
-        // revalidate all the new contacts:
-        for (const newContact of newContacts) {
-          contactCache.revalidate({
-            id: newContact.id,
-          });
-        }
-
-        // revalidate all the existing contacts:
-        for (const existingContact of existingContactsByEmail) {
-          contactCache.revalidate({
-            id: existingContact.id,
-          });
-        }
-
-        contactAttributeKeyCache.revalidate({
-          environmentId,
-        });
-
-        contactAttributeCache.revalidate({ environmentId });
       },
       {
         timeout: 10 * 1000, // 10 seconds

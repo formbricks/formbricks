@@ -23,7 +23,6 @@ vi.mock("@/lib/constants", () => ({
   IS_DEVELOPMENT: true,
   E2E_TESTING: false,
   WEBAPP_URL: "http://localhost:3000",
-  SURVEY_URL: "http://localhost:3000/survey",
   ENCRYPTION_KEY: "mock-encryption-key",
   CRON_SECRET: "mock-cron-secret",
   DEFAULT_BRAND_COLOR: "#64748b",
@@ -98,6 +97,8 @@ vi.mock("@/lib/constants", () => ({
   OIDC_ISSUER: "https://mock-oidc-issuer.com",
   OIDC_SIGNING_ALGORITHM: "RS256",
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 vi.mock("@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar", () => ({

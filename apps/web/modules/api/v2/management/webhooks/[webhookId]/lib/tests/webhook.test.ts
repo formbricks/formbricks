@@ -1,4 +1,3 @@
-import { webhookCache } from "@/lib/cache/webhook";
 import {
   mockedPrismaWebhookUpdateReturn,
   prismaNotFoundError,
@@ -16,15 +15,6 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/webhook", () => ({
-  webhookCache: {
-    tag: {
-      byId: () => "mockTag",
-    },
-    revalidate: vi.fn(),
   },
 }));
 
@@ -71,8 +61,6 @@ describe("updateWebhook", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockedPrismaWebhookUpdateReturn);
     }
-
-    expect(webhookCache.revalidate).toHaveBeenCalled();
   });
 
   test("returns not_found if record does not exist", async () => {
@@ -101,7 +89,6 @@ describe("deleteWebhook", () => {
     vi.mocked(prisma.webhook.delete).mockResolvedValueOnce(mockedPrismaWebhookUpdateReturn);
     const result = await deleteWebhook("123");
     expect(result.ok).toBe(true);
-    expect(webhookCache.revalidate).toHaveBeenCalled();
   });
 
   test("returns not_found if record does not exist", async () => {

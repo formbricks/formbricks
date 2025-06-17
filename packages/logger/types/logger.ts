@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const LOG_LEVELS = ["debug", "info", "warn", "error", "fatal"] as const;
+export const LOG_LEVELS = ["debug", "info", "warn", "error", "fatal", "audit"] as const;
 
 export const ZLogLevel = z.enum(LOG_LEVELS);
 
