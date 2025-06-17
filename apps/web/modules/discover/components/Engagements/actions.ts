@@ -346,3 +346,124 @@ export const getUserResponseAction = authenticatedActionClient
 
     return userResponse;
   });
+
+export const getPastEngagementsAction = authenticatedActionClient
+  .schema(ZGetAvailableSurveysAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const searchQuery = parsedInput.searchQuery;
+    const creatorId = parsedInput.creatorId;
+    const sortBy = parsedInput.sortBy || "updatedAt";
+    const orderBy = buildOrderByClause(sortBy);
+
+    const surveysPrisma = await prisma.survey.findMany({
+      where: {
+        closeOnDate: {
+          lt: new Date(),
+        },
+        ...(creatorId
+          ? {
+              creator: {
+                id: creatorId,
+              },
+            }
+          : {}),
+
+        //search query if provided
+        OR: [
+          {
+            name: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      include: {
+        responses: {
+          where: {
+            data: {
+              path: ["verifiedEmail"],
+              equals: ctx.user.email,
+            },
+          },
+        },
+        creator: true,
+        triggers: {
+          include: {
+            actionClass: true,
+          },
+        },
+        followUps: true,
+        segment: true,
+        languages: {
+          include: {
+            language: true,
+          },
+        },
+      },
+      orderBy,
+      take: parsedInput.take,
+      skip: parsedInput.skip,
+    });
+
+    const extendedSurveys = await Promise.all(
+      surveysPrisma.map(async (survey) => {
+        let surveyType = "link";
+        switch (survey.type) {
+          case "app":
+            surveyType = "app";
+            break;
+          default:
+            surveyType = "link";
+        }
+
+        let creator: TSurveyCreator | undefined = undefined;
+        if (survey.createdBy) {
+          const user = await prisma.user.findFirst({
+            where: {
+              id: survey.createdBy,
+            },
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true,
+              communityName: true,
+              communityAvatarUrl: true,
+            },
+          });
+
+          if (user) {
+            creator = {
+              id: user.id,
+              name: user.name || "",
+              imageUrl: user.imageUrl || "",
+              communityName: user.communityName || "",
+              communityAvatarUrl: user.communityAvatarUrl || "",
+            };
+          }
+        }
+
+        const responseCount = await prisma.response.count({
+          where: {
+            surveyId: survey.id,
+          },
+        });
+
+        return {
+          ...survey,
+          type: surveyType,
+          responseCount,
+          creator,
+          segment: survey.segment ? { ...survey.segment, surveys: [] } : null,
+        };
+      })
+    );
+
+    return extendedSurveys as TExtendedSurvey[];
+  });
