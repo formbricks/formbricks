@@ -59,8 +59,8 @@ const DialogContent = React.forwardRef<
         {...props}>
         {children}
         {!hideCloseButton && (
-          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute right-3 top-[-0.25rem] z-10 mb-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none">
-            <XIcon className="size-4" />
+          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent absolute right-3 top-[-0.25rem] z-10 rounded-sm bg-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:text-slate-500">
+            <XIcon className="size-4 text-slate-500" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -107,7 +107,7 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 DialogFooter.displayName = "DialogFooter";
 
 const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("mt-4 flex-1 overflow-y-auto text-sm", className)} {...props} />
+  <div className={cn("flex-1 overflow-y-auto text-sm", className)} {...props} />
 );
 DialogBody.displayName = "DialogBody";
 
