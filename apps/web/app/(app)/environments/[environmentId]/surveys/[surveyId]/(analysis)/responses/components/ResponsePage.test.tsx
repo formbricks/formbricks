@@ -24,6 +24,13 @@ vi.mock(
   })
 );
 
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCountView",
+  () => ({
+    ResponseCountView: vi.fn(() => <div data-testid="response-count-view">ResponseCountView</div>),
+  })
+);
+
 vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter", () => ({
   CustomFilter: vi.fn(() => <div data-testid="custom-filter">CustomFilter</div>),
 }));
@@ -161,6 +168,7 @@ describe("ResponsePage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("custom-filter")).toBeInTheDocument();
       expect(screen.getByTestId("results-share-button")).toBeInTheDocument();
+      expect(screen.getByTestId("response-count-view")).toBeInTheDocument();
       expect(screen.getByTestId("response-data-view")).toBeInTheDocument();
     });
     expect(mockGetResponsesAction).toHaveBeenCalled();
@@ -244,6 +252,21 @@ describe("ResponsePage", () => {
         expect(latestCallArgs[0].responses).toHaveLength(mockResponses.length - 1);
       }
     });
+    await waitFor(async () => {
+      const latestCallArgs = vi
+        .mocked(
+          (
+            await import(
+              "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCountView"
+            )
+          ).ResponseCountView
+        )
+        .mock.calls.pop();
+
+      if (latestCallArgs) {
+        expect(latestCallArgs[0].totalCount).toBe(mockResponses.length - 1);
+      }
+    });
   });
 
   test("updates a response", async () => {
@@ -305,6 +328,7 @@ describe("ResponsePage", () => {
           filterCriteria: { someNewFilter: "value" },
         })
       );
+      expect(mockGetResponsesAction).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -339,6 +363,21 @@ describe("ResponsePage", () => {
         expect(latestCallArgs[0].hasMore).toBe(false);
       }
     });
+    await waitFor(async () => {
+      const latestCallArgs = vi
+        .mocked(
+          (
+            await import(
+              "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCountView"
+            )
+          ).ResponseCountView
+        )
+        .mock.calls.pop();
+
+      if (latestCallArgs) {
+        expect(latestCallArgs[0].totalCount).toEqual(0);
+      }
+    });
   });
 
   test("handles API errors gracefully for getResponsesAction", async () => {
@@ -365,7 +404,21 @@ describe("ResponsePage", () => {
     mockGetResponseCountAction.mockResolvedValue({ data: null as any });
     render(<ResponsePage {...defaultProps} />);
     // No direct visual change, but ensure no crash and component renders
-    await waitFor(() => {
+    await waitFor(async () => {
+      const latestCallArgs = vi
+        .mocked(
+          (
+            await import(
+              "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCountView"
+            )
+          ).ResponseCountView
+        )
+        .mock.calls.pop();
+      if (latestCallArgs) {
+        expect(latestCallArgs[0].totalCount).toEqual(0);
+        expect(latestCallArgs[0].filteredCount).toEqual(0);
+        expect(latestCallArgs[0].paginatedCount).toEqual(0);
+      }
       expect(screen.getByTestId("response-data-view")).toBeInTheDocument();
     });
   });
