@@ -105,6 +105,7 @@ const defaultProps = {
   responsesPerPage: 10,
   locale: mockLocale,
   isReadOnly: false,
+  publicDomain: "domain1",
 };
 
 const mockResponseFilterState = {

@@ -1,4 +1,5 @@
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import React from "react";
 
 interface ResponseCountViewProps {
   totalCount: number;
@@ -6,11 +7,11 @@ interface ResponseCountViewProps {
   paginatedCount: number;
 }
 
-export default function ResponseCountView({
+export const ResponseCountView: React.FC<ResponseCountViewProps> = ({
   totalCount,
   filteredCount,
   paginatedCount,
-}: ResponseCountViewProps) {
+}) => {
   const { resetState } = useResponseFilter();
 
   return (
@@ -26,4 +27,4 @@ export default function ResponseCountView({
       )}
     </div>
   );
-}
+};
