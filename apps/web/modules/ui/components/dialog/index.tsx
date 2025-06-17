@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 overflow-y-auto rounded-t-lg border bg-white p-4 shadow-lg md:overflow-hidden md:rounded-lg",
+          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:overflow-hidden md:rounded-lg",
           width === "default" ? "md:w-[720px]" : "md:w-[720px] lg:w-[960px]",
           className
         )}
@@ -107,7 +107,7 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 DialogFooter.displayName = "DialogFooter";
 
 const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("mt-4 flex-1 text-sm md:overflow-y-auto", className)} {...props} />
+  <div className={cn("mt-4 flex-1 overflow-y-auto text-sm", className)} {...props} />
 );
 DialogBody.displayName = "DialogBody";
 
