@@ -59,6 +59,9 @@ export const ZUser = z.object({
   notificationSettings: ZUserNotificationSettings,
   whitelist: z.boolean(),
   locale: ZUserLocale,
+  communityName: z.string().nullable(),
+  communityDescription: z.string().nullable(),
+  communityAvatarUrl: z.string().url().nullable(),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -73,6 +76,9 @@ export const ZUserUpdateInput = z.object({
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
+  communityName: z.string().nullish(),
+  communityDescription: z.string().nullish(),
+  communityAvatarUrl: z.string().nullish(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
@@ -88,9 +94,31 @@ export const ZUserCreateInput = z.object({
   identityProvider: ZUserIdentityProvider.optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),
+  communityAvatarUrl: z.string().nullish(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserSocial = z.object({
+  id: z.string(),
+  provider: z.string(),
+  socialId: z.string(),
+  socialName: z.string().nullable(),
+  socialEmail: z.string(),
+  socialAvatar: z.string().nullable(),
+});
+
+export type TUserSocial = z.infer<typeof ZUserSocial>;
+
+export const ZCommunityMember = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
+  email: ZUserEmail.optional(),
+  socials: z.array(ZUserSocial).optional(),
+});
+
+export type TCommunityMember = z.infer<typeof ZCommunityMember>;
 
 export const ZUserWhitelistInfo = z.object({
   id: z.string(),
@@ -104,6 +132,9 @@ export const ZUserWhitelistInfo = z.object({
       communityMembers: z.number().optional(),
     })
     .optional(),
+  createdSurveys: z.number().optional(),
+  createdAt: z.date().optional(),
+  members: z.array(ZCommunityMember).optional(),
 });
 
 export type TUserWhitelistInfo = z.infer<typeof ZUserWhitelistInfo>;

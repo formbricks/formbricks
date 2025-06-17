@@ -1,6 +1,6 @@
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-import { generateUserAvatar } from "@/modules/auth/signup/lib/avatar";
+import { generateCommunityAvatar, generateUserAvatar } from "@/modules/auth/signup/lib/avatar";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
@@ -92,12 +92,14 @@ export const authOptions: NextAuthOptions = {
 
           if (!user) {
             const avatarUrl = generateUserAvatar(data.email);
+            const communityAvatarUrl = generateCommunityAvatar(data.email);
             user = await prisma.user.create({
               data: {
                 email: data.email,
                 name: "",
                 emailVerified: new Date(),
                 imageUrl: avatarUrl,
+                communityAvatarUrl: communityAvatarUrl,
               },
             });
           }

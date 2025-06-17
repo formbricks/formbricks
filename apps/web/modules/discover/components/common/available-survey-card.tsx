@@ -8,6 +8,7 @@ import { formatDistance } from "date-fns";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
 import { Clock } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useContext, useEffect, useState } from "react";
 
 interface AvailableSurveyCardProps {
@@ -89,7 +90,13 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
       <div className="p-6 pt-0">
         {survey.creator && (
           <div className="mb-4 flex items-center">
-            {survey.creator.imageUrl ? (
+            {survey.creator.communityAvatarUrl ? (
+              <img
+                src={survey.creator.communityAvatarUrl}
+                alt={t("")}
+                className="mr-2 h-6 w-6 rounded-full object-cover"
+              />
+            ) : survey.creator.imageUrl ? (
               <img
                 src={survey.creator.imageUrl}
                 alt={t("")}
@@ -100,7 +107,13 @@ export const AvailableSurveyCard = ({ survey }: AvailableSurveyCardProps) => {
             )}
             <span className="text-xs text-slate-500">
               {t("common.created_by")}{" "}
-              <span className="font-medium text-slate-600">{survey.creator.name} </span>
+              <Link
+                href={`/environments/${survey.environmentId}/communities/${survey.creator.id}/summary`}
+                className="underline">
+                <span className="font-medium text-slate-600">
+                  {survey.creator.communityName || survey.creator.name}
+                </span>
+              </Link>
             </span>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { CommunitiesClient } from "@/modules/communities/components/communities-client";
+import { CommunitiesClient } from "@/modules/communities/components/communities/communities-client";
 import { getTranslate } from "@/tolgee/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 

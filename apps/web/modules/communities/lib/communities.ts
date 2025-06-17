@@ -189,7 +189,22 @@ export const getAvailableUserCommunities = async ({
       },
     });
 
-    return availableUserCommunities;
+    const availableUserCommunitiesWithSurveysCount = await Promise.all(
+      availableUserCommunities.map(async (community) => {
+        const surveysCount = await prisma.survey.count({
+          where: {
+            createdBy: community.id,
+          },
+        });
+
+        return {
+          ...community,
+          createdSurveys: surveysCount,
+        };
+      })
+    );
+
+    return availableUserCommunitiesWithSurveysCount;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -238,7 +253,42 @@ export const getCommunity = async ({ communityId }: { communityId: string }): Pr
       throw new InvalidInputError("Community does not exist!");
     }
 
-    return community;
+    const surveysCount = await prisma.survey.count({
+      where: {
+        createdBy: community.id,
+      },
+    });
+
+    const communityMembers = await prisma.userCommunity.findMany({
+      where: {
+        creatorId: communityId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            socials: {
+              select: {
+                id: true,
+                provider: true,
+                socialId: true,
+                socialName: true,
+                socialEmail: true,
+                socialAvatar: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      ...community,
+      createdSurveys: surveysCount,
+      members: communityMembers.map((member) => member.user),
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

@@ -93,6 +93,7 @@ export function Engagements({
                     setActiveTab={setActiveTab}
                     creatorId={communityId}
                     sortBy={sortBy}
+                    showEmptyBorder={true}
                   />
                 );
               default:

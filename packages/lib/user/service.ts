@@ -27,6 +27,9 @@ const responseSelection = {
   notificationSettings: true,
   whitelist: true,
   locale: true,
+  communityName: true,
+  communityDescription: true,
+  communityAvatarUrl: true,
 };
 
 // function to retrive basic information about a user's user

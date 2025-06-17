@@ -24,9 +24,8 @@ export const NavigationLink = ({
   loading,
   query,
 }: NavigationLinkProps) => {
-  const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
-  const inactiveClass =
-    "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
+  const activeClass = " font-semibold text-slate-900";
+  const inactiveClass = "hover:bg-slate-50 hover:border-slate-300 transition-all duration-150 ease-in-out";
 
   if (loading) {
     return <li className="mb-1 ml-4 min-h-8 animate-pulse rounded-l-md bg-slate-200 py-2 pl-2" />;

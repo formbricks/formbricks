@@ -10,17 +10,20 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organiza
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
+import { EditCommunityAvatarForm } from "./components/EditCommunityAvatarForm";
+import { EditCommunityForm } from "./components/EditCommunityDetailsForm";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
-import { ManageSocialNetworks } from "./components/ManageSocialNetworks";
+
+// import { ManageSocialNetworks } from "./components/ManageSocialNetworks";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const isMultiOrgEnabled = false;
   const params = await props.params;
   const t = await getTranslate();
   const { environmentId } = params;
-  const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
-  const SUPABASE_URL = process.env.SUPABASE_URL || "";
+  // const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
+  // const SUPABASE_URL = process.env.SUPABASE_URL || "";
 
   const { session } = await getEnvironmentAuth(params.environmentId);
 
@@ -41,18 +44,19 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       </PageHeader>
       {user && (
         <div>
-          {SUPABASE_KEY && SUPABASE_URL ? (
+          {/* {SUPABASE_KEY && SUPABASE_URL ? (
             <SettingsCard
-              title={t("environments.settings.profile.socail_accounts")}
+              title={t("environments.settings.profile.social_accounts")}
               description={t("environments.settings.profile.manage_social_networks")}>
               <ManageSocialNetworks user={user} SUPABASE_URL={SUPABASE_URL} SUPABASE_KEY={SUPABASE_KEY} />
             </SettingsCard>
-          ) : null}
+          ) : null} */}
           <SettingsCard
             title={t("environments.settings.profile.personal_information")}
             description={t("environments.settings.profile.update_personal_info")}>
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
+
           <SettingsCard
             title={t("common.avatar")}
             description={t("environments.settings.profile.organization_identification")}>
@@ -61,6 +65,22 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                 session={session}
                 environmentId={environmentId}
                 imageUrl={user.imageUrl}
+              />
+            )}
+          </SettingsCard>
+          <SettingsCard
+            title={t("common.community_profile")}
+            description={t("environments.settings.profile.update_community_info")}>
+            <EditCommunityForm user={user} />
+          </SettingsCard>
+          <SettingsCard
+            title={t("common.community_avatar")}
+            description={t("environments.settings.profile.update_your_community_avatar")}>
+            {user && (
+              <EditCommunityAvatarForm
+                session={session}
+                environmentId={environmentId}
+                communityAvatarUrl={user.communityAvatarUrl}
               />
             )}
           </SettingsCard>

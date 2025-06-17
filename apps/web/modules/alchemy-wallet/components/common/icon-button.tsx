@@ -33,7 +33,7 @@ export function IconButton({
       {/* TODO: Update component so that the Icon size is updated */}
       {/* Currently size is overridden by Button */}
       {/* Can use !h-4 !w-4 to force as alternative */}
-      <Icon className="!h-6 !w-6" strokeWidth={2} />
+      <Icon className="h-4 w-4 md:!h-6 md:!w-6" strokeWidth={2} />
     </Button>
   );
 }

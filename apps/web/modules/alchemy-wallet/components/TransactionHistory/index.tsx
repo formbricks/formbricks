@@ -81,15 +81,17 @@ interface TransactionCardContainerProps {
 
 export function TransactionCardContainer({ title, className = "", children }: TransactionCardContainerProps) {
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-      <div
-        className={cn(
-          "shadow-card-20 relative my-5 flex w-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left",
-          className
-        )}
-        id="transaction-history">
-        {children}
+    <div className="flex w-full flex-col items-center">
+      <div className="w-full p-4 md:w-2/3 md:p-0">
+        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+        <div
+          className={cn(
+            "shadow-card-20 relative my-5 flex w-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left",
+            className
+          )}
+          id="transaction-history">
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
-import AddUserCommunityButton from "@/modules/communities/components/common/add-user-community-button";
 import ViewCommunityButton from "@/modules/communities/components/common/view-community-button";
+import AddUserCommunityButton from "@/modules/communities/components/community/add-user-community-button";
 import { cn } from "@formbricks/lib/cn";
 import { TUserWhitelistInfo } from "@formbricks/types/user";
 

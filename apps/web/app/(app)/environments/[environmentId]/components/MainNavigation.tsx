@@ -204,7 +204,7 @@ export const MainNavigation = ({
       {project && (
         <aside
           className={cn(
-            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "bg-quaternary z-40 hidden flex-col justify-between rounded-r-xl border-r border-slate-200 pt-3 shadow-md transition-all duration-100 sm:flex",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
             environment.type === "development" ? `h-[calc(100vh-1.25rem)]` : "h-screen"
           )}>
@@ -221,13 +221,7 @@ export const MainNavigation = ({
                   <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
                 </Link>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSidebar}
-                className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
-                )}>
+              <Button variant="ghost" size="icon" onClick={toggleSidebar} className={cn("rounded-xl")}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />
                 ) : (
