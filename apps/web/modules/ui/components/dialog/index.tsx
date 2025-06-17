@@ -106,8 +106,12 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 
 DialogFooter.displayName = "DialogFooter";
 
-const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex-1 overflow-y-auto text-sm", className)} {...props} />
+const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
+  <section
+    className={cn("flex-1 overflow-y-auto text-sm", className)}
+    aria-label="Dialog content"
+    {...props}
+  />
 );
 DialogBody.displayName = "DialogBody";
 
