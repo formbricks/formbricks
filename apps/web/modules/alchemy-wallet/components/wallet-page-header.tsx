@@ -1,13 +1,16 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { useUser } from "@account-kit/react";
+import { UseUserResult } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { WalletModal } from "./WalletBalanceCard/components/wallet-modal";
 
-export const WalletPageHeader = () => {
-  const user = useUser();
+interface WalletPageHeaderProps {
+  user?: UseUserResult;
+}
+
+export const WalletPageHeader = ({ user }: WalletPageHeaderProps) => {
   const address = user?.address || "";
   const [showWalletModal, setShowWalletModal] = useState(false);
   const { t } = useTranslate();
@@ -17,9 +20,9 @@ export const WalletPageHeader = () => {
   };
 
   return (
-    <div className="mb-6 flex items-center justify-between">
+    <div className="mb-6 flex items-center justify-between px-4">
       <h2 className="text-2xl font-bold text-slate-900">My Wallet</h2>
-      <div className="flex gap-2">
+      <div className="hidden gap-2 md:flex">
         <Button
           variant="outline"
           className="text-tertiary hover:bg-primary/10 rounded-lg border-2 border-[#51D6FF]"

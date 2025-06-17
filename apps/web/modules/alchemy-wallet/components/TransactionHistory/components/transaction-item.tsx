@@ -105,17 +105,19 @@ export function TransactionItem({ isFromSelf, isToSelf, transfer }: TransactionI
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:gap-4">
-            <p className="text-sm font-semibold">{transactionUIData.actionText}</p>
+            <div className="w-full md:w-1/3">
+              <p className="text-sm font-semibold">{transactionUIData.actionText}</p>
+              <span className="text-xs">{transactionUIData.tag}</span>
+            </div>
             <span className={`text-sm font-normal ${transactionUIData.color} mt-1 sm:mt-0`}>
               {transactionUIData.amountText}
             </span>
-          </div>
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:gap-4">
-            <span className="text-xs">{transactionUIData.tag}</span>
-            <span className="text-xs">
+            <span className="mt-1 text-xs sm:mt-0">
               {transfer.timestamp ? formatDateWithOrdinal(new Date(transfer.timestamp)) : "N/A"}
             </span>
           </div>
+
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:gap-4"></div>
         </div>
       </div>
     </>

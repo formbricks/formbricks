@@ -1988,6 +1988,7 @@
         "external_link": "External link",
         "pending_rewards": "Pending Rewards",
         "scan_qr_to_deposit": "Scan QR to deposit",
+        "token_types_owned": "# Token types owned",
         "wallet_address": "Wallet Address",
         "you_dont_have_any_tokens_in_your_wallet_yet": "You don't have any tokens in your wallet yet."
       },
