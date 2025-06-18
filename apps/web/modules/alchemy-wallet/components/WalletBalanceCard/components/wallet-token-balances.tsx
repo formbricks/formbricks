@@ -4,7 +4,6 @@ import Address from "@/modules/alchemy-wallet/components/WalletBalanceCard/compo
 import NoTokensCTACard from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/no-tokens-cta-card";
 import WalletTokenItemSkeleton from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-token-item-skeleton";
 import SendModal from "@/modules/alchemy-wallet/components/common/send-modal";
-import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslate } from "@tolgee/react";
 import { TokenBalance } from "@wonderchain/sdk/dist/blockscout-client";
