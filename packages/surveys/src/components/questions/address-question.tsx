@@ -43,7 +43,7 @@ export function AddressQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
-}: AddressQuestionProps) {
+}: Readonly<AddressQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
