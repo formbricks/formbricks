@@ -5,6 +5,7 @@ import MembersModal from "@/modules/communities/components/community/members-mod
 import { getCommunity } from "@/modules/communities/lib/communities";
 import AvailableEngagements from "@/modules/discover/components/Engagements/components/available-engagements";
 import CompletedSurveys from "@/modules/discover/components/Engagements/components/completed-engagements";
+import PastEngagements from "@/modules/discover/components/Engagements/components/past-engagements";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getTranslate } from "@/tolgee/server";
@@ -116,6 +117,14 @@ const CommunityPage = async (props: { params: Promise<{ environmentId: string; c
           {t("common.available_surveys")}
           <div className="grid grid-cols-3 gap-10">
             <AvailableEngagements searchQuery="" creatorId={community.id} />
+          </div>
+        </div>
+        <div className="space-y-10">
+          <div className="text-2xl font-bold">
+            {t("common.past_surveys")}
+            <div className="grid grid-cols-3 gap-10">
+              <PastEngagements searchQuery="" creatorId={community.id} />
+            </div>
           </div>
         </div>
         <div className="space-y-10">

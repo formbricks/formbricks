@@ -42,9 +42,7 @@ export function WalletTokenBalances({ balances, className }: WalletTokenBalances
         <div className="flex items-center gap-2">
           <div className="max-w-[100px] truncate font-medium">{balance.token.name}</div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
           onClick={() => {
             setSelectedBalance(balance);
             openSendModal();
@@ -52,13 +50,13 @@ export function WalletTokenBalances({ balances, className }: WalletTokenBalances
           className="flex flex-nowrap items-center gap-1 px-2 py-1 text-xs">
           <SendIcon className="h-3 w-3" strokeWidth={2} />
           {t("common.withdraw")}
-        </Button>
+        </button>
       </div>
 
       <div className="mt-2 flex flex-col gap-1 text-sm">
         <div className="flex justify-between gap-1">
           <span className="text-slate-500">{t("common.address")}:</span>
-          <Address address={formatAddress(balance.token.address, 3)} />
+          <Address address={formatAddress(balance.token.address, 3)} variant="small" />
         </div>
         <div className="flex justify-between">
           <span className="text-slate-500">{t("common.value")}:</span>
@@ -145,7 +143,7 @@ export function WalletTokenBalances({ balances, className }: WalletTokenBalances
                 <TableHead>{t("common.token")}</TableHead>
                 <TableHead>{t("common.address")}</TableHead>
                 <TableHead align="right">{t("common.value")}</TableHead>
-                <TableHead align="right">{t("common.actions")}</TableHead>
+                <TableHead align="right"></TableHead>
               </TableRow>
             </TableHeader>
 
@@ -154,22 +152,20 @@ export function WalletTokenBalances({ balances, className }: WalletTokenBalances
                 <TableRow key={balance.token.address}>
                   <TableCell>{balance.token.name}</TableCell>
                   <TableCell>
-                    <Address address={balance.token.address} />{" "}
+                    <Address address={balance.token.address} variant="small" />{" "}
                   </TableCell>
                   <TableCell align="right">
                     {formatUnits(balance.value, parseInt(balance.token.decimals, 10))}
                   </TableCell>
                   <TableCell align="right">
-                    <Button
-                      variant="secondary"
+                    <button
                       onClick={() => {
                         setSelectedBalance(balance);
                         openSendModal();
                       }}
-                      className="inline-flex flex-nowrap items-center gap-2">
-                      <SendIcon className="h-4 w-4" strokeWidth={2} />
+                      className="text-tertiary inline-flex flex-nowrap items-center gap-2 font-bold">
                       {t("common.withdraw")}
-                    </Button>
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}

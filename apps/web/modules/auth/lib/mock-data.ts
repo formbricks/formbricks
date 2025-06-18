@@ -19,4 +19,7 @@ export const mockUser: TUser = {
   whitelist: false,
   role: "other",
   locale: "en-US",
+  communityName: "Mock Community",
+  communityDescription: "This is a mock community for testing",
+  communityAvatarUrl: null,
 };

@@ -5,12 +5,15 @@ import { LucideIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 
+type IconSize = "sm" | "md" | "lg";
+
 interface IconButtonProps {
   className?: string;
   icon: LucideIcon;
   label: string;
   loading?: boolean;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+  iconSize?: IconSize;
 }
 
 export function IconButton({
@@ -18,9 +21,18 @@ export function IconButton({
   icon,
   label,
   loading = false,
+  iconSize = "lg",
   onClick,
 }: IconButtonProps): React.JSX.Element {
   const Icon = icon;
+
+  const sizeStyles = {
+    sm: "!h-4 !w-4",
+    md: "!h-5 !w-5",
+    lg: "!h-6 !w-6",
+  };
+
+  const iconSizeStyle = sizeStyles[iconSize];
 
   return (
     <Button
@@ -33,7 +45,7 @@ export function IconButton({
       {/* TODO: Update component so that the Icon size is updated */}
       {/* Currently size is overridden by Button */}
       {/* Can use !h-4 !w-4 to force as alternative */}
-      <Icon className="h-4 w-4 md:!h-6 md:!w-6" strokeWidth={2} />
+      <Icon className={`h-4 w-4 md:${iconSizeStyle}`} strokeWidth={2} />
     </Button>
   );
 }
