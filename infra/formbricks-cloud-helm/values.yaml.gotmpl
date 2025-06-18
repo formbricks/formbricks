@@ -89,6 +89,51 @@ deployment:
   nodeSelector:
     karpenter.sh/capacity-type: on-demand
   reloadOnChange: true
+  # Pod lifecycle management for zero-downtime deployments
+  lifecycle:
+    preStop:
+      exec:
+        command: ["/bin/sh", "-c", "sleep 15"]
+  # Health probes configuration
+  probes:
+    readiness:
+      httpGet:
+        path: /health
+        port: 3000
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+    liveness:
+      httpGet:
+        path: /health
+        port: 3000
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+    startup:
+      httpGet:
+        path: /health
+        port: 3000
+        scheme: HTTP
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 12
+  # Pod termination grace period
+  terminationGracePeriodSeconds: 45
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 50%
 autoscaling:
   enabled: true
   maxReplicas: 95
@@ -135,6 +180,39 @@ ingress:
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/target-type: ip
+    # Enhanced ALB configuration for connection handling
+    alb.ingress.kubernetes.io/load-balancer-attributes: |
+      idle_timeout.timeout_seconds=120,
+      connection_logs.s3.enabled=false,
+      access_logs.s3.enabled=false
+    # Target group health check optimizations
+    alb.ingress.kubernetes.io/target-group-attributes: |
+      deregistration_delay.timeout_seconds=30,
+      stickiness.enabled=false,
+      stickiness.type=lb_cookie,
+      stickiness.lb_cookie.duration_seconds=86400,
+      load_balancing.algorithm.type=least_outstanding_requests,
+      target_group_health.dns_failover.minimum_healthy_targets.count=1,
+      target_group_health.dns_failover.minimum_healthy_targets.percentage=off
+    # Health check configuration
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    # Backend protocol and port
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/backend-protocol-version: HTTP1
+    # Connection draining
+    alb.ingress.kubernetes.io/actions.ssl-redirect: |
+      {
+        "Type": "redirect",
+        "RedirectConfig": {
+          "Protocol": "HTTPS",
+          "Port": "443",
+          "StatusCode": "HTTP_301"
+        }
+      }
   enabled: true
   hosts:
     - host: app.k8s.formbricks.com
@@ -164,3 +242,16 @@ postgresql:
   enabled: false
 redis:
   enabled: false
+
+## Service Configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations:
+    # Service annotations for better ALB integration
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "120"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+  # Session affinity disabled for better load distribution
+  sessionAffinity: None
