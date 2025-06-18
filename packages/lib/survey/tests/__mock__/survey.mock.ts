@@ -136,6 +136,9 @@ export const mockUser: TUser = {
   role: "other",
   locale: "en-US",
   whitelist: false,
+  communityName: "Mock Community",
+  communityDescription: "This is a mock community for testing",
+  communityAvatarUrl: null,
 };
 
 export const mockPrismaPerson: Prisma.ContactGetPayload<{

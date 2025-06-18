@@ -40,6 +40,9 @@ export const mockUser: TUser = {
   imageUrl: null,
   role: null,
   whitelist: false,
+  communityName: "Mock Community",
+  communityDescription: "This is a mock community for testing",
+  communityAvatarUrl: null,
 };
 
 // Mock session
