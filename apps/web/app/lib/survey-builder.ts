@@ -66,7 +66,7 @@ export const buildMultipleChoiceQuestion = ({
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
     shuffleOption: shuffleOption || "none",
-    required: required ?? true,
+    required: required ?? false,
     logic,
   };
 };
