@@ -15,12 +15,12 @@ interface SearchSectionProps {
 }
 
 const getSortOptions = (t: (key: string) => string): TSortOption[] => [
+  // {
+  //   label: t("common.updated_at"),
+  //   value: "updatedAt",
+  // },
   {
-    label: t("common.updated_at"),
-    value: "updatedAt",
-  },
-  {
-    label: t("common.created_at"),
+    label: t("common.latest"),
     value: "createdAt",
   },
   {
@@ -29,7 +29,7 @@ const getSortOptions = (t: (key: string) => string): TSortOption[] => [
   },
 ];
 
-export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy }: SearchSectionProps) {
+export function SearchSection({ setSearchQuery, sortBy = "createdAt", setSortBy }: SearchSectionProps) {
   const { t } = useTranslate();
   const [query, setQuery] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -57,7 +57,7 @@ export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy 
 
   const getCurrentSortLabel = () => {
     const currentOption = sortOptions.find((option) => option.value === sortBy);
-    return currentOption?.label || t("environments.surveys.updated_at");
+    return currentOption?.label || t("common.latest");
   };
 
   return (
@@ -87,11 +87,9 @@ export function SearchSection({ setSearchQuery, sortBy = "updatedAt", setSortBy 
 
       <div className="relative">
         <button
-          className="flex h-10 items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          className="flex h-10 min-w-28 items-center justify-between gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-          <span className="text-slate-900">
-            {t("common.sort_by")}: {getCurrentSortLabel()}
-          </span>
+          <span className="text-slate-900">{getCurrentSortLabel()}</span>
           <ChevronDown className="h-4 w-4" />
         </button>
 

@@ -28,7 +28,7 @@ export const TopControlButtons = ({ environment }: TopControlButtonsProps) => {
         </Button>
       </TooltipRenderer> */}
 
-      <TooltipRenderer tooltipContent={t("common.account")}>
+      <TooltipRenderer className="" tooltipContent={t("common.account")}>
         <Button
           variant="ghost"
           size="icon"
