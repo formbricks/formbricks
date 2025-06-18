@@ -28,6 +28,9 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
         notificationSettings: true,
         locale: true,
         whitelist: true,
+        communityName: true,
+        communityDescription: true,
+        communityAvatarUrl: true,
       },
     });
 
