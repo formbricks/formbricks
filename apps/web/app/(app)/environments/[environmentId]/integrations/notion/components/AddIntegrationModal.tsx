@@ -12,9 +12,16 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XIcon } from "lucide-react";
 import Image from "next/image";
@@ -452,31 +459,21 @@ export const AddIntegrationModal = ({
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} size="lg">
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image
-                  className="w-12"
-                  src={NotionLogo}
-                  alt={t("environments.integrations.notion.notion_logo")}
-                />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.notion.link_notion_database")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.integrations.notion.sync_responses_with_a_notion_database")}
-                </div>
-              </div>
-            </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <div className="text-primary mr-1.5 h-6 w-6">
+            <Image
+              className="w-12"
+              src={NotionLogo}
+              alt={t("environments.integrations.notion.notion_logo")}
+            />
           </div>
-        </div>
-        <form onSubmit={handleSubmit(linkDatabase)} className="w-full">
-          <div className="flex justify-between rounded-lg p-6">
+          <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(linkDatabase)} className="contents">
+          <DialogBody className="flex-1 overflow-y-auto">
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
@@ -530,43 +527,40 @@ export const AddIntegrationModal = ({
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              {selectedIntegration ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  loading={isDeleting}
-                  onClick={() => {
-                    deleteLink();
-                  }}>
-                  {t("common.delete")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setOpen(false);
-                    resetForm();
-                    setMapping([]);
-                  }}>
-                  {t("common.cancel")}
-                </Button>
-              )}
+          </DialogBody>
+
+          <DialogFooter>
+            {selectedIntegration ? (
               <Button
-                type="submit"
-                loading={isLinkingDatabase}
-                disabled={mapping.filter((m) => m.error).length > 0}>
-                {selectedIntegration
-                  ? t("common.update")
-                  : t("environments.integrations.notion.link_database")}
+                type="button"
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  deleteLink();
+                }}>
+                {t("common.delete")}
               </Button>
-            </div>
-          </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                  setMapping([]);
+                }}>
+                {t("common.cancel")}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              loading={isLinkingDatabase}
+              disabled={mapping.filter((m) => m.error).length > 0}>
+              {selectedIntegration ? t("common.update") : t("environments.integrations.notion.link_database")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
