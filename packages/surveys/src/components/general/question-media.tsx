@@ -43,6 +43,9 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           onLoad={() => {
             setIsLoading(false);
           }}
+          onError={() => {
+            setIsLoading(false);
+          }}
         />
       ) : null}
       {videoUrlWithParams ? (
@@ -54,6 +57,9 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
               frameBorder="0"
               className={cn("fb-rounded-custom fb-aspect-video fb-w-full", isLoading ? "fb-opacity-0" : "")}
               onLoad={() => {
+                setIsLoading(false);
+              }}
+              onError={() => {
                 setIsLoading(false);
               }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
