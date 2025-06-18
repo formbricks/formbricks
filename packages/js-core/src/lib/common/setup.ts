@@ -1,12 +1,9 @@
 /* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
-import {
-  addCleanupEventListeners,
-  addEventListeners,
-  removeAllEventListeners,
-} from "@/lib/common/event-listeners";
+import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
+import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
@@ -24,17 +21,10 @@ import {
   type MissingFieldError,
   type MissingPersonError,
   type NetworkError,
-  type NotSetupError,
   type Result,
   err,
   okVoid,
 } from "@/types/error";
-
-let isSetup = false;
-
-export const setIsSetup = (state: boolean): void => {
-  isSetup = state;
-};
 
 const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
@@ -99,7 +89,7 @@ export const setup = async (
     }
   }
 
-  if (isSetup) {
+  if (getIsSetup()) {
     logger.debug("Already set up, skipping setup.");
     return okVoid();
   }
@@ -258,7 +248,9 @@ export const setup = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -314,9 +306,11 @@ export const setup = async (
         environment: environmentState,
         filteredSurveys,
       });
-      
+
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`);
+      logger.debug(
+        `${surveyNames.length.toString()} surveys could be shown to current user on trigger: ${surveyNames.join(", ")}`
+      );
     } catch (e) {
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }
@@ -334,35 +328,26 @@ export const setup = async (
   return okVoid();
 };
 
-export const checkSetup = (): Result<void, NotSetupError> => {
-  const logger = Logger.getInstance();
-  logger.debug("Check if set up");
-
-  if (!isSetup) {
-    return err({
-      code: "not_setup",
-      message: "Formbricks is not set up. Call setup() first.",
-    });
-  }
-
-  return okVoid();
-};
-
 export const tearDown = (): void => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
+  const { environment } = appConfig.get();
+  const filteredSurveys = filterSurveys(environment, DEFAULT_USER_STATE_NO_USER_ID);
+
   logger.debug("Setting user state to default");
+
   // clear the user state and set it to the default value
   appConfig.update({
     ...appConfig.get(),
     user: DEFAULT_USER_STATE_NO_USER_ID,
+    filteredSurveys,
   });
 
+  // remove container element from DOM
   removeWidgetContainer();
+  addWidgetContainer();
   setIsSurveyRunning(false);
-  removeAllEventListeners();
-  setIsSetup(false);
 };
 
 export const handleErrorOnFirstSetup = (e: { code: string; responseMessage: string }): Promise<never> => {

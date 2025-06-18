@@ -1,6 +1,5 @@
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { userCache } from "@/lib/user/cache";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import crypto from "crypto";
@@ -121,10 +120,6 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
     },
   });
 
-  userCache.revalidate({
-    id,
-  });
-
   return {
     message: "Two factor authentication enabled",
   };
@@ -220,10 +215,6 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
       twoFactorEnabled: false,
       twoFactorSecret: null,
     },
-  });
-
-  userCache.revalidate({
-    id,
   });
 
   return {

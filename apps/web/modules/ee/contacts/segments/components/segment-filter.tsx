@@ -236,7 +236,7 @@ function AttributeSegmentFilter({
         setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
-  }, [resource.qualifier, resource.value]);
+  }, [resource.qualifier, resource.value, t]);
 
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
     return {
@@ -314,7 +314,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <SelectValue>
             <div className={cn("flex items-center gap-2", !isCapitalized(attrKeyValue ?? "") && "lowercase")}>
@@ -327,7 +327,7 @@ function AttributeSegmentFilter({
         <SelectContent>
           {contactAttributeKeys.map((attrClass) => (
             <SelectItem key={attrClass.id} value={attrClass.key}>
-              {attrClass.name}
+              {attrClass.name ?? attrClass.key}
             </SelectItem>
           ))}
         </SelectContent>
@@ -422,7 +422,7 @@ function PersonSegmentFilter({
         setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
-  }, [resource.qualifier, resource.value]);
+  }, [resource.qualifier, resource.value, t]);
 
   const operatorArr = PERSON_OPERATORS.map((operator) => {
     return {
@@ -496,7 +496,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -647,7 +647,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap capitalize"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />

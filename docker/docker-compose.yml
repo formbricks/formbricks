@@ -75,8 +75,8 @@ x-environment: &environment
     # Set the below to 0 to disable cron jobs
     # DOCKER_CRON_ENABLED: 1
 
-    # Set the below to your Survey Domain(default is WEBAPP_URL)
-    # SURVEY_URL:
+    # Set the below to your public domain (default is WEBAPP_URL)
+    # PUBLIC_URL:
 
     # The SENTRY_DSN is used for error tracking and performance monitoring with Sentry.
     # SENTRY_DSN:
@@ -178,6 +178,14 @@ x-environment: &environment
 
     # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
     # REDIS_HTTP_URL:
+
+    ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
+
+    # Set the below to 1 to enable audit logging. The audit log requires Redis to be configured with the REDIS_URL env variable.
+    # AUDIT_LOG_ENABLED: 1
+
+    # Set the below to get the ip address of the user from the request headers
+    # AUDIT_LOG_GET_USER_IP: 1
 
     ############################################# OPTIONAL (OTHER) #############################################
 

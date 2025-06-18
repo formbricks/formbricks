@@ -1,6 +1,4 @@
-import { segmentCache } from "@/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { surveyCache } from "@/lib/survey/cache";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -15,20 +13,8 @@ import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { createSurvey, handleTriggerUpdates } from "./survey";
 
 // Mock dependencies
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/posthogServer", () => ({
   capturePosthogEnvironmentEvent: vi.fn(),
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
-  },
 }));
 
 vi.mock("@/lib/survey/utils", () => ({
@@ -136,8 +122,6 @@ describe("survey module", () => {
       });
       expect(prisma.segment.create).toHaveBeenCalled();
       expect(prisma.survey.update).toHaveBeenCalled();
-      expect(segmentCache.revalidate).toHaveBeenCalled();
-      expect(surveyCache.revalidate).toHaveBeenCalled();
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalledWith("survey-123", "user-123");
       expect(capturePosthogEnvironmentEvent).toHaveBeenCalledWith(
         environmentId,
@@ -269,7 +253,6 @@ describe("survey module", () => {
       expect(result).toEqual({
         create: [{ actionClassId: "action-1" }, { actionClassId: "action-2" }],
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
     });
 
     test("removes triggers", () => {
@@ -289,7 +272,6 @@ describe("survey module", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
     });
 
     test("throws error for invalid trigger", () => {

@@ -29,7 +29,7 @@ interface RecallWrapperRenderProps {
 }
 
 interface RecallWrapperProps {
-  value: string;
+  value: string | undefined;
   onChange: (val: string, recallItems: TSurveyRecallItem[], fallbacks: { [id: string]: string }) => void;
   localSurvey: TSurvey;
   questionId: string;
@@ -53,10 +53,10 @@ export const RecallWrapper = ({
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-    value.includes("#recall:") ? getRecallItems(value, localSurvey, usedLanguageCode) : []
+    value?.includes("#recall:") ? getRecallItems(value, localSurvey, usedLanguageCode) : []
   );
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(
-    value.includes("/fallback:") ? getFallbackValues(value) : {}
+    value?.includes("/fallback:") ? getFallbackValues(value) : {}
   );
 
   const [internalValue, setInternalValue] = useState<string>(headlineToRecall(value, recallItems, fallbacks));
@@ -220,7 +220,7 @@ export const RecallWrapper = ({
           }
           parts.push(
             <span
-              className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
+              className="z-30 flex h-fit cursor-pointer justify-center rounded-md bg-slate-100 text-sm whitespace-pre text-transparent"
               key={`recall-${parts.length}`}>
               {"@" + label}
             </span>
@@ -251,11 +251,11 @@ export const RecallWrapper = ({
         isRecallSelectVisible: showRecallItemSelect,
         children: (
           <div>
-            {internalValue.includes("recall:") && (
+            {internalValue?.includes("recall:") && (
               <Button
                 variant="ghost"
                 type="button"
-                className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
+                className="absolute top-full right-2 z-[1] flex h-6 cursor-pointer items-center rounded-t-none rounded-b-lg bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowFallbackInput(true);

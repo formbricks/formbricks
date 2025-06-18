@@ -1,9 +1,10 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
+import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -47,27 +48,25 @@ const Page = async (props: SummaryPageProps) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+  // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
+  const initialSurveySummary = await getSurveySummary(surveyId);
+
+  const publicDomain = getPublicDomain();
 
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
         <PageHeader pageTitle={survey.name}>
-          <SurveyAnalysisNavigation
-            survey={survey}
-            environmentId={environment.id}
-            activeId="summary"
-            initialTotalResponseCount={totalResponseCount}
-          />
+          <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="summary" />
         </PageHeader>
         <SummaryPage
           environment={environment}
           survey={survey}
           surveyId={survey.id}
-          webAppUrl={WEBAPP_URL}
-          totalResponseCount={totalResponseCount}
+          publicDomain={publicDomain}
           isReadOnly={true}
           locale={DEFAULT_LOCALE}
+          initialSurveySummary={initialSurveySummary}
         />
       </PageContentWrapper>
     </div>

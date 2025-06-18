@@ -1,5 +1,3 @@
-import { teamCache } from "@/lib/cache/team";
-import { projectCache } from "@/lib/project/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import {
@@ -59,14 +57,6 @@ export const createProjectTeam = async (
       },
     });
 
-    projectCache.revalidate({
-      id: projectId,
-    });
-
-    teamCache.revalidate({
-      id: teamId,
-    });
-
     return ok(projectTeam);
   } catch (error) {
     return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
@@ -89,14 +79,6 @@ export const updateProjectTeam = async (
       data: teamInput,
     });
 
-    projectCache.revalidate({
-      id: projectId,
-    });
-
-    teamCache.revalidate({
-      id: teamId,
-    });
-
     return ok(updatedProjectTeam);
   } catch (error) {
     return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
@@ -115,14 +97,6 @@ export const deleteProjectTeam = async (
           teamId,
         },
       },
-    });
-
-    projectCache.revalidate({
-      id: projectId,
-    });
-
-    teamCache.revalidate({
-      id: teamId,
     });
 
     return ok(deletedProjectTeam);

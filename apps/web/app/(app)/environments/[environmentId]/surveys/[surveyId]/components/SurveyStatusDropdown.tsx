@@ -11,6 +11,7 @@ import {
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -28,6 +29,7 @@ export const SurveyStatusDropdown = ({
   survey,
 }: SurveyStatusDropdownProps) => {
   const { t } = useTranslate();
+  const router = useRouter();
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled =
@@ -47,6 +49,8 @@ export const SurveyStatusDropdown = ({
               ? t("common.survey_completed")
               : ""
       );
+
+      router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
       toast.error(errorMessage);
@@ -59,7 +63,7 @@ export const SurveyStatusDropdown = ({
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <p className="text-sm italic text-slate-600">{t("common.draft")}</p>
+          <p className="text-sm text-slate-600 italic">{t("common.draft")}</p>
         </div>
       ) : (
         <Select

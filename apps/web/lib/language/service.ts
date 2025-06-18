@@ -11,9 +11,7 @@ import {
   ZLanguageInput,
   ZLanguageUpdate,
 } from "@formbricks/types/project";
-import { projectCache } from "../project/cache";
 import { getProject } from "../project/service";
-import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 
 const languageSelect = {
@@ -70,12 +68,6 @@ export const createLanguage = async (
       select: languageSelect,
     });
 
-    project.environments.forEach((environment) => {
-      projectCache.revalidate({
-        environmentId: environment.id,
-      });
-    });
-
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -124,13 +116,6 @@ export const deleteLanguage = async (languageId: string, projectId: string): Pro
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 
-    project.environments.forEach((environment) => {
-      projectCache.revalidate({
-        id: prismaLanguage.projectId,
-        environmentId: environment.id,
-      });
-    });
-
     // delete unused surveyLanguages
     const language = { ...prismaLanguage, surveyLanguages: undefined };
 
@@ -157,23 +142,6 @@ export const updateLanguage = async (
       where: { id: languageId },
       data: { ...languageInput, updatedAt: new Date() },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
-    });
-
-    project.environments.forEach((environment) => {
-      projectCache.revalidate({
-        id: prismaLanguage.projectId,
-        environmentId: environment.id,
-      });
-      surveyCache.revalidate({
-        environmentId: environment.id,
-      });
-    });
-
-    // revalidate cache of all connected surveys
-    prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
-      surveyCache.revalidate({
-        id: surveyLanguage.surveyId,
-      });
     });
 
     // delete unused surveyLanguages

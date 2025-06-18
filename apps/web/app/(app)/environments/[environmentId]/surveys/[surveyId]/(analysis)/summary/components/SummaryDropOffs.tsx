@@ -23,9 +23,9 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="">
-        <div className="grid h-10 grid-cols-6 items-center border-y border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
-          <div className="col-span-3 pl-4 md:pl-6">{t("common.questions")}</div>
-          <div className="flex justify-center">
+        <div className="grid min-h-10 grid-cols-6 items-center rounded-t-xl border-b border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
+          <div className="col-span-3 px-4 md:px-6">{t("common.questions")}</div>
+          <div className="flex justify-end px-4 md:px-6">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
@@ -37,14 +37,16 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <div className="px-4 text-center md:px-6">{t("environments.surveys.summary.impressions")}</div>
-          <div className="pr-6 text-center md:pl-6">{t("environments.surveys.summary.drop_offs")}</div>
+          <div className="px-4 text-right md:px-6">{t("environments.surveys.summary.impressions")}</div>
+          <div className="px-4 text-right md:mr-1 md:pr-6 md:pl-6">
+            {t("environments.surveys.summary.drop_offs")}
+          </div>
         </div>
         {dropOff.map((quesDropOff) => (
           <div
             key={quesDropOff.questionId}
-            className="grid grid-cols-6 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-            <div className="col-span-3 flex gap-3 pl-4 md:pl-6">
+            className="grid grid-cols-6 items-start border-b border-slate-100 text-xs text-slate-800 md:text-sm">
+            <div className="col-span-3 flex gap-3 px-4 py-2 md:px-6">
               {getIcon(quesDropOff.questionType)}
               <p>
                 {formatTextWithSlashes(
@@ -57,17 +59,21 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                     "default"
                   )["default"],
                   "@",
-                  ["text-lg"]
+                  ["text-sm"]
                 )}
               </p>
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">
+            <div className="px-4 py-2 text-right font-mono font-medium whitespace-pre-wrap md:px-6">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.impressions}</div>
-            <div className="pl-6 text-center md:px-6">
-              <span className="mr-1.5 font-semibold">{quesDropOff.dropOffCount}</span>
-              <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>
+            <div className="px-4 py-2 text-right font-mono font-medium whitespace-pre-wrap md:px-6">
+              {quesDropOff.impressions}
+            </div>
+            <div className="px-4 py-2 text-right md:px-6">
+              <span className="mr-1 inline-block w-fit rounded-xl bg-slate-100 px-2 py-1 text-left text-xs">
+                {Math.round(quesDropOff.dropOffPercentage)}%
+              </span>
+              <span className="mr-1 font-mono font-medium">{quesDropOff.dropOffCount}</span>
             </div>
           </div>
         ))}

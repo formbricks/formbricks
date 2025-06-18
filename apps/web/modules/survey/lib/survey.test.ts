@@ -18,24 +18,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-// Mock surveyCache
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    tag: {
-      byId: vi.fn((id) => `survey-${id}`),
-    },
-  },
-}));
-
-// Mock organizationCache
-vi.mock("@/lib/organization/cache", () => ({
-  organizationCache: {
-    tag: {
-      byId: vi.fn((id) => `organization-${id}`),
-    },
-  },
-}));
-
 // Mock transformPrismaSurvey
 vi.mock("@/modules/survey/lib/utils", () => ({
   transformPrismaSurvey: vi.fn((survey) => survey),

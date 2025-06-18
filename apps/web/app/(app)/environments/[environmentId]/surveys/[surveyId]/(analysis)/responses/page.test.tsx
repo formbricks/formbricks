@@ -1,8 +1,9 @@
+import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import Page from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
@@ -61,10 +62,11 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
   WEBAPP_URL: "http://localhost:3000",
   RESPONSES_PER_PAGE: 10,
+  SESSION_MAX_AGE: 1000,
 }));
 
-vi.mock("@/lib/getSurveyUrl", () => ({
-  getSurveyDomain: vi.fn(),
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(),
 }));
 
 vi.mock("@/lib/response/service", () => ({
@@ -109,6 +111,14 @@ vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 
+vi.mock("next/navigation", () => ({
+  useParams: () => ({
+    environmentId: "test-env-id",
+    surveyId: "test-survey-id",
+    sharingKey: null,
+  }),
+}));
+
 const mockEnvironmentId = "test-env-id";
 const mockSurveyId = "test-survey-id";
 const mockUserId = "test-user-id";
@@ -150,7 +160,7 @@ const mockEnvironment = {
 
 const mockTags: TTag[] = [{ id: "tag1", name: "Tag 1", environmentId: mockEnvironmentId } as unknown as TTag];
 const mockLocale: TUserLocale = "en-US";
-const mockSurveyDomain = "http://customdomain.com";
+const mockPublicDomain = "http://customdomain.com";
 
 const mockParams = {
   environmentId: mockEnvironmentId,
@@ -169,7 +179,7 @@ describe("ResponsesPage", () => {
     vi.mocked(getTagsByEnvironmentId).mockResolvedValue(mockTags);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
     vi.mocked(findMatchingLocale).mockResolvedValue(mockLocale);
-    vi.mocked(getSurveyDomain).mockReturnValue(mockSurveyDomain);
+    vi.mocked(getPublicDomain).mockReturnValue(mockPublicDomain);
   });
 
   afterEach(() => {
@@ -180,7 +190,7 @@ describe("ResponsesPage", () => {
   test("renders correctly with all data", async () => {
     const props = { params: mockParams };
     const jsx = await Page(props);
-    render(jsx);
+    render(<ResponseFilterProvider>{jsx}</ResponseFilterProvider>);
 
     await screen.findByTestId("page-content-wrapper");
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
@@ -195,8 +205,7 @@ describe("ResponsesPage", () => {
         survey: mockSurvey,
         isReadOnly: false,
         user: mockUser,
-        surveyDomain: mockSurveyDomain,
-        responseCount: 10,
+        publicDomain: mockPublicDomain,
       }),
       undefined
     );
@@ -206,7 +215,6 @@ describe("ResponsesPage", () => {
         environmentId: mockEnvironmentId,
         survey: mockSurvey,
         activeId: "responses",
-        initialTotalResponseCount: 10,
       }),
       undefined
     );
@@ -216,7 +224,7 @@ describe("ResponsesPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        webAppUrl: "http://localhost:3000",
+        publicDomain: mockPublicDomain,
         environmentTags: mockTags,
         user: mockUser,
         responsesPerPage: 10,

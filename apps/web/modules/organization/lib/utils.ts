@@ -4,7 +4,7 @@ import { getOrganization } from "@/lib/organization/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { cache } from "react";
+import { cache as reactCache } from "react";
 import { TOrganizationAuth } from "../types/organization-auth";
 
 /**
@@ -13,7 +13,7 @@ import { TOrganizationAuth } from "../types/organization-auth";
  * Usage:
  *   const { session, organization, ... } = await getOrganizationAuth(params.organizationId);
  */
-export const getOrganizationAuth = cache(async (organizationId: string): Promise<TOrganizationAuth> => {
+export const getOrganizationAuth = reactCache(async (organizationId: string): Promise<TOrganizationAuth> => {
   const t = await getTranslate();
 
   // Perform all fetches in parallel

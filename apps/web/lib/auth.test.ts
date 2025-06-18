@@ -53,12 +53,11 @@ describe("Organization Access", () => {
 
   test("hasOrganizationAccess should return true when user has membership", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "member",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const hasAccess = await hasOrganizationAccess(mockUserId, mockOrgId);
@@ -74,12 +73,11 @@ describe("Organization Access", () => {
 
   test("isManagerOrOwner should return true for manager role", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "manager",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const isManager = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -88,12 +86,11 @@ describe("Organization Access", () => {
 
   test("isManagerOrOwner should return true for owner role", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "owner",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const isOwner = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -102,12 +99,11 @@ describe("Organization Access", () => {
 
   test("isManagerOrOwner should return false for member role", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "member",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const isManagerOrOwnerRole = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -116,12 +112,11 @@ describe("Organization Access", () => {
 
   test("isOwner should return true only for owner role", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "owner",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const isOwnerRole = await isOwner(mockUserId, mockOrgId);
@@ -130,12 +125,11 @@ describe("Organization Access", () => {
 
   test("isOwner should return false for non-owner roles", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "manager",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const isOwnerRole = await isOwner(mockUserId, mockOrgId);
@@ -153,12 +147,11 @@ describe("Organization Authority", () => {
 
   test("hasOrganizationAuthority should return true for manager", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "manager",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const hasAuthority = await hasOrganizationAuthority(mockUserId, mockOrgId);
@@ -173,12 +166,11 @@ describe("Organization Authority", () => {
 
   test("hasOrganizationAuthority should throw for member role", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "member",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     await expect(hasOrganizationAuthority(mockUserId, mockOrgId)).rejects.toThrow(AuthenticationError);
@@ -186,12 +178,11 @@ describe("Organization Authority", () => {
 
   test("hasOrganizationOwnership should return true for owner", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "owner",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     const hasOwnership = await hasOrganizationOwnership(mockUserId, mockOrgId);
@@ -206,12 +197,11 @@ describe("Organization Authority", () => {
 
   test("hasOrganizationOwnership should throw for non-owner roles", async () => {
     vi.mocked(prisma.membership.findUnique).mockResolvedValue({
-      id: "membership123",
       userId: mockUserId,
       organizationId: mockOrgId,
       role: "manager",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accepted: true,
+      deprecatedRole: null,
     });
 
     await expect(hasOrganizationOwnership(mockUserId, mockOrgId)).rejects.toThrow(AuthenticationError);

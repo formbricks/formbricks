@@ -9,7 +9,6 @@
     "continue_with_saml": "Continue with SAML SSO",
     "email-change": {
       "confirm_password_description": "Please confirm your password before changing your email address",
-      "email_already_exists": "This email is already in use",
       "email_change_success": "Email changed successfully",
       "email_change_success_description": "You have successfully changed your email address. Please log in with your new email address.",
       "email_verification_failed": "Email verification failed",
@@ -80,7 +79,7 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "User successfully created",
-      "user_successfully_created_description": "Your new user has been created successfully. Please click the button below and sign in to your account."
+      "user_successfully_created_info": "We’ve checked for an account associated with {email}. If none existed, we’ve created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
     "testimonial_1": "We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!",
     "testimonial_all_features_included": "All features included",
@@ -92,11 +91,10 @@
       "invalid_token": "Invalid token ☹️",
       "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Please click the link in the email to activate your account.",
       "please_confirm_your_email_address": "Please confirm your email address",
       "resend_verification_email": "Resend verification email",
-      "verification_email_successfully_sent": "Verification email sent to {email}. Please verify to complete the update.",
-      "we_sent_an_email_to": "We sent an email to {email}. ",
+      "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",
+      "verification_email_successfully_sent_info": "If there’s an account associated with {email}, we’ve sent a verification link to that address. Please check your inbox to complete the sign-up.",
       "you_didnt_receive_an_email_or_your_link_expired": "You didn't receive an email or your link expired?"
     },
     "verify": {
@@ -598,7 +596,6 @@
       "contact_deleted_successfully": "Contact deleted successfully",
       "contact_not_found": "No such contact found",
       "contacts_table_refresh": "Refresh contacts",
-      "contacts_table_refresh_error": "Something went wrong while refreshing contacts, please try again",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -761,6 +758,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Access Control",
         "add_api_key": "Add API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
@@ -1158,7 +1156,6 @@
         "file_size_must_be_less_than_10mb": "File size must be less than 10MB.",
         "invalid_file_type": "Invalid file type. Only JPEG, PNG, and WEBP files are allowed.",
         "lost_access": "Lost access",
-        "new_email_update_success": "Your email change request was received.",
         "or_enter_the_following_code_manually": "Or enter the following code manually:",
         "organization_identification": "Assist your organization in identifying you on Formbricks",
         "organizations_delete_message": "You are the only owner of these organizations, so they <b>will be deleted as well.</b>",
@@ -1771,7 +1768,7 @@
         "link_to_public_results_copied": "Link to public results copied",
         "make_sure_the_survey_type_is_set_to": "Make sure the survey type is set to",
         "mobile_app": "Mobile app",
-        "no_response_matches_filter": "No response matches your filter",
+        "no_responses_found": "No responses found",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
@@ -1895,12 +1892,12 @@
   },
   "s": {
     "check_inbox_or_spam": "Please also check your spam folder if you don't see the email in your inbox.",
-    "completed": "This free & open-source survey has been closed.",
-    "create_your_own": "Create your own",
+    "completed": "This survey is closed.",
+    "create_your_own": "Create your own open-source survey",
     "enter_pin": "This survey is protected. Enter the PIN below",
     "just_curious": "Just curious?",
     "link_invalid": "This survey can only be taken by invitation.",
-    "paused": "This free & open-source survey is temporarily paused.",
+    "paused": "This survey is temporarily paused.",
     "please_try_again_with_the_original_link": "Please try again with the original link",
     "preview_survey_questions": "Preview survey questions.",
     "question_preview": "Question Preview",
@@ -2631,6 +2628,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Product Manager",
     "product_market_fit_superhuman_question_3_choice_4": "Product Owner",
     "product_market_fit_superhuman_question_3_choice_5": "Software Engineer",
+    "product_market_fit_superhuman_question_3_headline": "What is your role?",
     "product_market_fit_superhuman_question_3_subheader": "Please select one of the following options:",
     "product_market_fit_superhuman_question_4_headline": "What type of people do you think would most benefit from $[projectName]?",
     "product_market_fit_superhuman_question_5_headline": "What is the main benefit you receive from $[projectName]?",
@@ -2652,6 +2650,7 @@
     "professional_development_survey_description": "Assess employee satisfaction with professional growth and development opportunities.",
     "professional_development_survey_name": "Professional Development Survey",
     "professional_development_survey_question_1_choice_1": "Yes",
+    "professional_development_survey_question_1_choice_2": "No",
     "professional_development_survey_question_1_headline": "Are you interested in professional development activities?",
     "professional_development_survey_question_2_choice_1": "Networking events",
     "professional_development_survey_question_2_choice_2": "Conferences or seminars",

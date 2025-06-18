@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@/modules/survey/list/types/surveys";
@@ -42,14 +43,20 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     try {
       filteredData.forEach(async (project) => {
         project.environments.forEach(async (environment) => {
-          await copySurveyToOtherEnvironmentAction({
+          const result = await copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,
             targetEnvironmentId: environment,
           });
+
+          if (result?.data) {
+            toast.success(t("environments.surveys.copy_survey_success"));
+          } else {
+            const errorMessage = getFormattedErrorMessage(result);
+            toast.error(errorMessage);
+          }
         });
       });
-      toast.success(t("environments.surveys.copy_survey_success"));
     } catch (error) {
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
@@ -98,11 +105,11 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
                                             field.onChange([...field.value, environment.id]);
                                           }
                                         }}
-                                        className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+                                        className="focus:ring-opacity-50 mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500"
                                         id={environment.id}
                                       />
                                       <Label htmlFor={environment.id}>
-                                        <p className="text-sm font-medium capitalize text-slate-900">
+                                        <p className="text-sm font-medium text-slate-900 capitalize">
                                           {environment.type}
                                         </p>
                                       </Label>
@@ -121,8 +128,8 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
             );
           })}
         </div>
-        <div className="fixed bottom-0 left-0 right-0 z-10 flex w-full justify-end space-x-2 bg-white">
-          <div className="flex w-full justify-end pb-4 pr-4">
+        <div className="fixed right-0 bottom-0 left-0 z-10 flex w-full justify-end space-x-2 bg-white">
+          <div className="flex w-full justify-end pr-4 pb-4">
             <Button type="button" onClick={onCancel} variant="ghost">
               {t("common.cancel")}
             </Button>

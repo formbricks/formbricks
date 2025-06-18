@@ -1,6 +1,6 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { WEBAPP_URL } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
@@ -16,6 +16,7 @@ export const AppConnectionPage = async (props) => {
 
   const { environment } = await getEnvironmentAuth(params.environmentId);
 
+  const publicDomain = getPublicDomain();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
@@ -32,7 +33,7 @@ export const AppConnectionPage = async (props) => {
           title={t("environments.project.app-connection.how_to_setup")}
           description={t("environments.project.app-connection.how_to_setup_description")}
           noPadding>
-          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
+          <SetupInstructions environmentId={params.environmentId} publicDomain={publicDomain} />
         </SettingsCard>
         <SettingsCard
           title={t("environments.project.app-connection.environment_id")}
