@@ -170,7 +170,7 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(currentError.message);
+      toast.error(currentError.message + ` ${t("common.at")} ` + currentError.path.join(", "));
       return false;
     }
 

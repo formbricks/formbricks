@@ -8,7 +8,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import { AlertCircleIcon, LinkIcon, MonitorIcon } from "lucide-react";
+//CheckIcon,
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -101,7 +102,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         open ? "" : "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
-      <Collapsible.CollapsibleTrigger
+      {/* <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
@@ -119,7 +120,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
             </p>
           </div>
         </div>
-      </Collapsible.CollapsibleTrigger>
+      </Collapsible.CollapsibleTrigger> */}
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
