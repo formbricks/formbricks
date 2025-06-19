@@ -21,6 +21,7 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -488,6 +489,7 @@ describe("Project Service", () => {
   test("getProjectsByOrganizationIds should return projects for given organization IDs", async () => {
     const organizationId1 = createId();
     const organizationId2 = createId();
+    const userId = createId();
     const mockProjects = [
       {
         environments: [],
@@ -497,16 +499,34 @@ describe("Project Service", () => {
       },
     ];
 
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+      {
+        userId,
+        organizationId: organizationId2,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-    const result = await getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
 
     expect(result).toEqual(mockProjects);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
       where: {
-        organizationId: {
-          in: [organizationId1, organizationId2],
-        },
+        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
       },
       select: { environments: true },
     });
@@ -515,17 +535,36 @@ describe("Project Service", () => {
   test("getProjectsByOrganizationIds should return empty array when no projects are found", async () => {
     const organizationId1 = createId();
     const organizationId2 = createId();
+    const userId = createId();
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+      {
+        userId,
+        organizationId: organizationId2,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
 
     vi.mocked(prisma.project.findMany).mockResolvedValue([]);
 
-    const result = await getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
 
     expect(result).toEqual([]);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
       where: {
-        organizationId: {
-          in: [organizationId1, organizationId2],
-        },
+        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
       },
       select: { environments: true },
     });
@@ -534,18 +573,111 @@ describe("Project Service", () => {
   test("getProjectsByOrganizationIds should throw DatabaseError when prisma throws", async () => {
     const organizationId1 = createId();
     const organizationId2 = createId();
+    const userId = createId();
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
       code: "P2002",
       clientVersion: "5.0.0",
     });
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
     vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
 
     await expect(
-      getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2])
+      getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2], userId)
     ).rejects.toThrow(DatabaseError);
   });
 
   test("getProjectsByOrganizationIds should throw ValidationError with wrong input", async () => {
-    await expect(getUserProjectEnvironmentsByOrganizationIds(["wrong-id"])).rejects.toThrow(ValidationError);
+    const userId = createId();
+    await expect(getUserProjectEnvironmentsByOrganizationIds(["wrong-id"], userId)).rejects.toThrow(
+      ValidationError
+    );
+  });
+
+  test("getProjectsByOrganizationIds should return empty array when user has no memberships", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+
+    // Mock no memberships found
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual([]);
+    expect(prisma.membership.findMany).toHaveBeenCalledWith({
+      where: {
+        userId,
+        organizationId: {
+          in: [organizationId1, organizationId2],
+        },
+      },
+    });
+    // Should not call project.findMany when no memberships
+    expect(prisma.project.findMany).not.toHaveBeenCalled();
+  });
+
+  test("getProjectsByOrganizationIds should handle member role with team access", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+    const mockProjects = [
+      {
+        environments: [],
+      },
+    ];
+
+    // Mock membership where user is a member
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "member" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual(mockProjects);
+    expect(prisma.project.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          {
+            organizationId: organizationId1,
+            projectTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { environments: true },
+    });
   });
 });
