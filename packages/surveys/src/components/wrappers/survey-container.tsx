@@ -20,7 +20,7 @@ export function SurveyContainer({
   onClose,
   clickOutside,
   isOpen = true,
-}: SurveyContainerProps) {
+}: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
   const isCenter = placement === "center";
   const isModal = mode === "modal";

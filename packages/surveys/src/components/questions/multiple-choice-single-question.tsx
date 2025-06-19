@@ -41,7 +41,7 @@ export function MultipleChoiceSingleQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: MultipleChoiceSingleProps) {
+}: Readonly<MultipleChoiceSingleProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);

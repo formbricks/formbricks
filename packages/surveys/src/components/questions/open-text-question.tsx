@@ -43,7 +43,7 @@ export function OpenTextQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: OpenTextQuestionProps) {
+}: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
