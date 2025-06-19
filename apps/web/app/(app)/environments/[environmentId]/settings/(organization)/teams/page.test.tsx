@@ -34,6 +34,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: 1,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 describe("TeamsPage re-export", () => {
   test("should re-export TeamsPage component", () => {
     expect(Page).toBe(TeamsPage);

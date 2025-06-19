@@ -149,7 +149,7 @@ describe("ShareEmbedSurvey", () => {
 
   const defaultProps = {
     survey: mockSurveyWeb,
-    surveyDomain: "test.com",
+    publicDomain: "https://public-domain.com",
     open: true,
     modalView: "start" as "start" | "embed" | "panel",
     setOpen: mockSetOpen,
@@ -158,7 +158,7 @@ describe("ShareEmbedSurvey", () => {
 
   beforeEach(() => {
     mockEmbedViewComponent.mockImplementation(
-      ({ handleInitialPageButton, tabs, activeId, survey, email, surveyUrl, surveyDomain, locale }) => (
+      ({ handleInitialPageButton, tabs, activeId, survey, email, surveyUrl, publicDomain, locale }) => (
         <div>
           <button onClick={() => handleInitialPageButton()}>EmbedViewMockContent</button>
           <div data-testid="embedview-tabs">{JSON.stringify(tabs)}</div>
@@ -166,7 +166,7 @@ describe("ShareEmbedSurvey", () => {
           <div data-testid="embedview-survey-id">{survey.id}</div>
           <div data-testid="embedview-email">{email}</div>
           <div data-testid="embedview-surveyUrl">{surveyUrl}</div>
-          <div data-testid="embedview-surveyDomain">{surveyDomain}</div>
+          <div data-testid="embedview-publicDomain">{publicDomain}</div>
           <div data-testid="embedview-locale">{locale}</div>
         </div>
       )

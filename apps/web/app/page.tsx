@@ -1,9 +1,9 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
-import { getFirstEnvironmentIdByUserId } from "@/lib/environment/service";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getProjectEnvironmentsByOrganizationIds } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -34,16 +34,34 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  let environmentId: string | null = null;
-  environmentId = await getFirstEnvironmentIdByUserId(session.user.id);
+  const projectsByOrg = await getProjectEnvironmentsByOrganizationIds(userOrganizations.map((org) => org.id));
+
+  // Flatten all environments from all projects across all organizations
+  const allEnvironments = projectsByOrg.flatMap((project) => project.environments);
+
+  // Find first production environment and collect all other environment IDs in one pass
+  const { firstProductionEnvironmentId, otherEnvironmentIds } = allEnvironments.reduce(
+    (acc, env) => {
+      if (env.type === "production" && !acc.firstProductionEnvironmentId) {
+        acc.firstProductionEnvironmentId = env.id;
+      } else {
+        acc.otherEnvironmentIds.add(env.id);
+      }
+      return acc;
+    },
+    { firstProductionEnvironmentId: null as string | null, otherEnvironmentIds: new Set<string>() }
+  );
+
+  const userEnvironments = [...otherEnvironmentIds];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
     userOrganizations[0].id
   );
+
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
-  if (!environmentId) {
+  if (!firstProductionEnvironmentId) {
     if (isOwner || isManager) {
       return redirect(`/organizations/${userOrganizations[0].id}/projects/new/mode`);
     } else {
@@ -51,7 +69,10 @@ const Page = async () => {
     }
   }
 
-  return <ClientEnvironmentRedirect environmentId={environmentId} />;
+  // Put the first production environment at the front of the array
+  const sortedUserEnvironments = [firstProductionEnvironmentId, ...userEnvironments];
+
+  return <ClientEnvironmentRedirect userEnvironments={sortedUserEnvironments} />;
 };
 
 export default Page;

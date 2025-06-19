@@ -138,7 +138,7 @@ describe("ResultsShareButton", () => {
 
   test("renders initial state and fetches sharing key (no existing key)", async () => {
     mockGetResultShareUrlAction.mockResolvedValue({ data: null });
-    render(<ResultsShareButton survey={mockSurvey} webAppUrl={webAppUrl} />);
+    render(<ResultsShareButton survey={mockSurvey} publicDomain={webAppUrl} />);
 
     expect(screen.getByTestId("dropdown-menu-trigger")).toBeInTheDocument();
     expect(screen.getByTestId("link-icon")).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe("ResultsShareButton", () => {
 
   test("handles copy private link to clipboard", async () => {
     mockGetResultShareUrlAction.mockResolvedValue({ data: null });
-    render(<ResultsShareButton survey={mockSurvey} webAppUrl={webAppUrl} />);
+    render(<ResultsShareButton survey={mockSurvey} publicDomain={webAppUrl} />);
 
     fireEvent.click(screen.getByTestId("dropdown-menu-trigger")); // Open dropdown
     const copyLinkButton = (await screen.findAllByTestId("dropdown-menu-item")).find((item) =>
@@ -166,7 +166,9 @@ describe("ResultsShareButton", () => {
   test("handles copy public link to clipboard", async () => {
     const shareKey = "publicShareKey";
     mockGetResultShareUrlAction.mockResolvedValue({ data: shareKey });
-    render(<ResultsShareButton survey={{ ...mockSurvey, resultShareKey: shareKey }} webAppUrl={webAppUrl} />);
+    render(
+      <ResultsShareButton survey={{ ...mockSurvey, resultShareKey: shareKey }} publicDomain={webAppUrl} />
+    );
 
     fireEvent.click(screen.getByTestId("dropdown-menu-trigger")); // Open dropdown
     const copyPublicLinkButton = (await screen.findAllByTestId("dropdown-menu-item")).find((item) =>
@@ -184,7 +186,7 @@ describe("ResultsShareButton", () => {
   test("handles publish to web successfully", async () => {
     mockGetResultShareUrlAction.mockResolvedValue({ data: null });
     mockGenerateResultShareUrlAction.mockResolvedValue({ data: "newShareKey" });
-    render(<ResultsShareButton survey={mockSurvey} webAppUrl={webAppUrl} />);
+    render(<ResultsShareButton survey={mockSurvey} publicDomain={webAppUrl} />);
 
     fireEvent.click(screen.getByTestId("dropdown-menu-trigger"));
     const publishButton = (await screen.findAllByTestId("dropdown-menu-item")).find((item) =>
@@ -210,7 +212,9 @@ describe("ResultsShareButton", () => {
     const shareKey = "toUnpublishKey";
     mockGetResultShareUrlAction.mockResolvedValue({ data: shareKey });
     mockDeleteResultShareUrlAction.mockResolvedValue({ data: { id: mockSurvey.id } });
-    render(<ResultsShareButton survey={{ ...mockSurvey, resultShareKey: shareKey }} webAppUrl={webAppUrl} />);
+    render(
+      <ResultsShareButton survey={{ ...mockSurvey, resultShareKey: shareKey }} publicDomain={webAppUrl} />
+    );
 
     fireEvent.click(screen.getByTestId("dropdown-menu-trigger"));
     const unpublishButton = (await screen.findAllByTestId("dropdown-menu-item")).find((item) =>
@@ -234,7 +238,7 @@ describe("ResultsShareButton", () => {
 
   test("opens and closes ShareSurveyResults modal", async () => {
     mockGetResultShareUrlAction.mockResolvedValue({ data: null });
-    render(<ResultsShareButton survey={mockSurvey} webAppUrl={webAppUrl} />);
+    render(<ResultsShareButton survey={mockSurvey} publicDomain={webAppUrl} />);
 
     fireEvent.click(screen.getByTestId("dropdown-menu-trigger"));
     const publishButton = (await screen.findAllByTestId("dropdown-menu-item")).find((item) =>

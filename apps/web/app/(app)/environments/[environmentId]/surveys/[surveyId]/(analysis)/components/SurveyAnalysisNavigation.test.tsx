@@ -49,6 +49,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext");
 vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions");
 vi.mock("@/app/lib/surveys/surveys");

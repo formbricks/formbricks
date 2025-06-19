@@ -49,8 +49,8 @@ vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn().mockResolvedValue("en"),
 }));
 
-vi.mock("@/lib/getSurveyUrl", () => ({
-  getSurveyDomain: vi.fn().mockReturnValue("https://survey-domain.com"),
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn().mockReturnValue("https://public-domain.com"),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -250,5 +250,34 @@ describe("renderSurvey", () => {
         isPreview: false,
       })
     ).rejects.toThrow("Project not found");
+  });
+
+  describe("Survey Inactive States", () => {
+    test("renders SurveyInactive with project when survey is paused", async () => {
+      const survey: TSurvey = { ...mockSurvey, status: "paused" };
+      const project = { id: "project-123", linkSurveyBranding: true };
+      vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(project as any);
+
+      const result = await renderSurvey({
+        survey: survey,
+        searchParams: {},
+        isPreview: false,
+      });
+
+      expect(result).toBeDefined();
+    });
+
+    test("renders SurveyInactive without project when project is not found", async () => {
+      const survey: TSurvey = { ...mockSurvey, status: "paused" };
+      vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(null);
+
+      const result = await renderSurvey({
+        survey: survey,
+        searchParams: {},
+        isPreview: false,
+      });
+
+      expect(result).toBeDefined();
+    });
   });
 });

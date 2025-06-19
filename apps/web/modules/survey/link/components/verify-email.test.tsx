@@ -42,6 +42,12 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
+}));
+
 vi.mock("@/modules/survey/link/actions");
 
 vi.mock("react-hot-toast", () => ({

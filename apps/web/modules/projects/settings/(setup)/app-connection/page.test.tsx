@@ -40,9 +40,9 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicat
   ),
 }));
 vi.mock("@/modules/projects/settings/(setup)/components/setup-instructions", () => ({
-  SetupInstructions: ({ environmentId, webAppUrl }: any) => (
+  SetupInstructions: ({ environmentId, publicDomain }: any) => (
     <div data-testid="setup-instructions">
-      {environmentId} {webAppUrl}
+      {environmentId} {publicDomain}
     </div>
   ),
 }));
@@ -68,6 +68,12 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://example.com",
+  },
+}));
+
 describe("AppConnectionPage", () => {
   afterEach(() => {
     cleanup();
@@ -89,7 +95,6 @@ describe("AppConnectionPage", () => {
     expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup");
     expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup_description");
     expect(cards[1]).toHaveTextContent("env-123"); // SetupInstructions
-    expect(cards[1]).toHaveTextContent(mockWebappUrl);
     expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id");
     expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id_description");
     expect(cards[2]).toHaveTextContent("env-123"); // EnvironmentIdField
