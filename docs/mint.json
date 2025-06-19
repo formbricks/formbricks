@@ -64,12 +64,13 @@
               "pages": [
                 "xm-and-surveys/surveys/link-surveys/data-prefilling",
                 "xm-and-surveys/surveys/link-surveys/embed-surveys",
-                "xm-and-surveys/surveys/link-surveys/market-research-panel",
-                "xm-and-surveys/surveys/link-surveys/pin-protected-surveys",
+                "xm-and-surveys/surveys/link-surveys/personal-links",
                 "xm-and-surveys/surveys/link-surveys/single-use-links",
                 "xm-and-surveys/surveys/link-surveys/source-tracking",
                 "xm-and-surveys/surveys/link-surveys/start-at-question",
-                "xm-and-surveys/surveys/link-surveys/verify-email-before-survey"
+                "xm-and-surveys/surveys/link-surveys/verify-email-before-survey",
+                "xm-and-surveys/surveys/link-surveys/market-research-panel",
+                "xm-and-surveys/surveys/link-surveys/pin-protected-surveys"
               ]
             }
           ]

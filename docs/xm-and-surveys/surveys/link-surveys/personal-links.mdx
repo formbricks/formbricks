@@ -1,0 +1,117 @@
+---
+title: "Personal Links"
+description: "Personal Links enable you to generate unique survey links for individual contacts, allowing you to attribute responses directly to specific people and set expiry dates for better control over survey distribution."
+icon: "user"
+---
+
+<Note>
+  Personal Links are part of the [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+## When to Use Personal Links
+
+Personal Links are ideal when you need to:
+
+- **Track individual responses**: Associate survey responses with specific contacts in your database
+- **Enable targeted follow-ups**: Know exactly who responded and who didn't for personalized outreach
+- **Control survey access**: Set expiry dates to limit when links can be used
+- **Maintain data integrity**: Ensure each contact can only submit one response per survey
+
+## How Personal Links Work
+
+When you generate personal links:
+
+1. **Individual URLs**: Each contact receives a unique survey link tied to their contact record
+2. **Automatic attribution**: Responses are automatically linked to the specific contact who clicked the link
+3. **Single-use by default**: Each link can only be used once to prevent duplicate responses
+4. **Expiry control**: Set expiration dates to control survey access windows
+
+## Generating Personal Links
+
+<Steps>
+  <Step title="Access the Share Modal">
+    Navigate to your survey and click the **Share survey** button in the top bar.
+  </Step>
+  
+  <Step title="Select Personal Links Tab">
+    In the Share Modal, click on the **Personal Links** tab.
+  </Step>
+  
+  <Step title="Choose Your Segment">
+    Select the contact segment you want to generate links for using the dropdown menu.
+    
+    <Note>
+    If no segments are available, you'll see "No segments available" in the dropdown. Create segments first in your Contact Management section.
+    </Note>
+  </Step>
+  
+  <Step title="Set Expiry Date (Optional)">
+    Choose an expiry date for your links. You can only select dates starting from tomorrow onwards.
+    
+    <Warning>
+    Links expire at 00:00:00 UTC on the day after your selected date. This means links remain valid through the entirety of your chosen expiry date.
+    </Warning>
+  </Step>
+  
+  <Step title="Generate and Download">
+    Click **Generate & download links** to create your personal links and download them as a CSV file.
+  </Step>
+</Steps>
+
+## Understanding the CSV Export
+
+Your downloaded CSV file contains the following columns in this order:
+
+| Column | Description |
+|--------|-------------|
+| **Formbricks Contact ID** | Internal contact identifier (`contactId`) |
+| **Custom ID** | Your custom user identifier (`userId`) |
+| **First Name** | Contact's first name |
+| **Last Name** | Contact's last name |
+| **Email** | Contact's email address |
+| **Personal Link** | Unique survey URL for this contact |
+
+<Tip>
+Use the Custom ID column to match contacts with your existing systems, and the Personal Link column for distribution via your preferred communication channels.
+</Tip>
+
+## Limitations and Considerations
+
+<Warning>
+Keep these limitations in mind when using Personal Links
+</Warning>
+
+- **Single-use only**: Each personal link can only be used once
+- **Enterprise feature**: Requires EE license with Contact Management enabled
+- **Segment requirement**: You must have contacts organized in segments
+- **CSV storage**: Generated link lists are not retained in Formbricks - download and store your CSV files securely
+
+## Troubleshooting
+
+### Common Issues
+
+<Tabs>
+  <Tab title="No Segments Available">
+    **Issue**: Dropdown shows "No segments available"
+    
+    **Solution**: Create contact segments in your Contact Management section before generating personal links.
+  </Tab>
+  
+  <Tab title="Generation Failed">
+    **Issue**: "Something went wrong" error message
+    
+    **Solution**: 
+    - Check your internet connection
+    - Verify you have sufficient contacts in the selected segment
+    - Contact support if the issue persists
+  </Tab>
+  
+  <Tab title="Links Not Working">
+    **Issue**: Personal links lead to error pages
+    
+    **Solution**:
+    - Verify the link hasn't expired
+    - Check that the survey is still published
+    - Ensure the link hasn't been used already (single-use limitation)
+  </Tab>
+</Tabs>
