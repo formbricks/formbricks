@@ -38,7 +38,10 @@ export const TemplateContainerWithPreview = ({
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
           <div className="mb-3 ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-end">
-            <h1 className="text-2xl font-bold text-slate-800">
+            <h1 className="text-2xl font-bold text-slate-800"
+               onClick={()=>{
+                   console.log("Hello")
+               }}>
               {t("environments.surveys.templates.create_a_new_survey")}
             </h1>
             <div className="px-6">
