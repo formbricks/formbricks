@@ -32,7 +32,7 @@ export function AvailableCommunities({
     return (
       <div className="flex flex-col gap-4">
         <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{t("common.communities")}</h3>
-        <div className="grid md:grid-cols-2 md:gap-4">
+        <div className="grid md:gap-4 lg:grid-cols-2">
           <LoadingEngagementCard />
           <LoadingEngagementCard />
         </div>
@@ -42,8 +42,10 @@ export function AvailableCommunities({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{t("common.communities")}</h3>
-      <div className="grid md:grid-cols-2 md:gap-4">
+      <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
+        {t("common.available_communities")}
+      </h3>
+      <div className="grid md:gap-4 lg:grid-cols-2">
         {communities?.map((community) => (
           <JoinCommunityCard environmentId={environmentId} key={community.id} community={community} />
         ))}

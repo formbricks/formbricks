@@ -24,7 +24,11 @@ export const JoinCommunityCard = ({ community, environmentId, className = "" }: 
       )}>
       <div className="flex min-h-[200px] flex-row gap-4 p-4">
         <div className="flex h-full flex-col">
-          <Image src={CommmunityPlaceholderOne} alt="Community Placeholder Image" />
+          <Image
+            style={{ height: "100%" }}
+            src={CommmunityPlaceholderOne}
+            alt="Community Placeholder Image"
+          />
         </div>
         <div className="flex h-full w-full flex-col justify-between gap-4">
           <div className="flex h-full flex-col justify-between">

@@ -25,7 +25,7 @@ export function MyComunities({
         <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
           {t("common.communities_i_joined")}
         </h3>
-        <div className="grid md:grid-cols-4 md:gap-4">
+        <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-4">
           <LoadingEngagementCard />
           <LoadingEngagementCard />
           <LoadingEngagementCard />
@@ -40,7 +40,7 @@ export function MyComunities({
       <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
         {t("common.communities_i_joined")}
       </h3>
-      <div className="grid md:grid-cols-4 md:gap-4">
+      <div className="grid md:grid-cols-2 md:gap-4 lg:grid-cols-4">
         {communities &&
           communities.length > 0 &&
           communities.map((community) => {

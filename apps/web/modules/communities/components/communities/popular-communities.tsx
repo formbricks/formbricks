@@ -43,7 +43,7 @@ export function PopularCommunities({
         <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
           {t("common.popular_communities")}
         </h3>
-        <div className="grid md:grid-cols-2 md:gap-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           <LoadingEngagementCard />
           <LoadingEngagementCard />
         </div>
@@ -56,7 +56,7 @@ export function PopularCommunities({
       <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">
         {t("common.popular_communities")}
       </h3>
-      <div className="grid md:grid-cols-2 md:gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {communities &&
           communities.length > 0 &&
           communities.map((community) => {
