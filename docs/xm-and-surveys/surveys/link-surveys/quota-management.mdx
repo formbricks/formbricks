@@ -1,0 +1,122 @@
+---
+title: "Quota Management"
+description: "Control response collection by setting limits on specific segments to ensure balanced and representative survey datasets."
+icon: "chart-pie"
+---
+
+## Overview
+
+Quota Management allows you to set limits on the number of responses collected for specific segments or criteria in your survey. This feature helps ensure you collect a balanced and representative dataset while preventing oversaturation of certain response types.
+
+<Note>
+  Quota Management is part of the [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+### Key benefits
+
+- **Balanced Data Collection**: Ensure your survey responses are evenly distributed across different segments
+- **Cost Control**: Prevent collecting more responses than needed from specific groups
+- **Quality Assurance**: Maintain data quality by avoiding homogeneous response patterns
+- **Automated Management**: Automatically stop collecting responses when quotas are met
+
+### How Quota Management works
+
+When you set up quotas for your survey, Formbricks automatically tracks responses against your defined limits. Once a quota is reached, the system can:
+
+- Prevent new responses from that segment
+- Skip respondents to the end of the survey
+- Redirect respondents to a custom end screen
+
+## Setting up Quotas
+In the first step, you need to define the criteria for the quota:
+
+<Steps>
+  <Step title="Name the quota">
+    Create a Quota and label it e.g. "Mobile Phone Users in Europe"
+  </Step>
+  <Step title="Define quota limits">
+    Set numerical limits for each hidden field value combination e.g. 500
+  </Step>
+  <Step title="Configure actions">
+    Choose what happens when this Quota is met (e.g. skip to specific end screen)
+  </Step>
+</Steps>
+
+### Quota actions
+Configure what happens when a quota reaches its limit:
+
+<Tabs>
+  <Tab title="Skip to End">
+    Jump respondents directly to the survey completion page
+  </Tab>
+  <Tab title="Custom Redirect (soon)">
+    Redirect respondents to a custom thank you page or alternative survey
+  </Tab>
+</Tabs>
+
+
+## Counting against Quotas
+
+### 1. Count by Hidden Field value
+
+Determine if a response falls in or out of a Quota based on hidden field values passed through URL parameters:
+
+```
+https://your-survey-url.com/s/abc123?product=credit-card&region=europe
+```
+
+### 2. Quota by survey responses
+
+Create quotas based on specific answers to survey questions:
+
+<Tabs>
+  <Tab title="Single Question Quota">
+    Set quotas for individual answer options:
+    - Question: "What is your gender?"
+    - Quota: 500 responses for "Male", 500 responses for "Female"
+  </Tab>
+  <Tab title="Multi-Question Quota">
+    Combine multiple question responses:
+    - Criteria: Age group "25-34" AND Location "Urban"
+    - Quota: 200 responses matching both criteria
+  </Tab>
+</Tabs>
+
+### 3. Multi-criteria quotas
+
+Create complex quotas using multiple conditions:
+
+<CodeGroup>
+```example "Hidden Field + Response Combination"
+Hidden Field: product = "mobile"
+AND
+Question Response: satisfaction = "very satisfied"
+```
+
+```example "Multiple Response Criteria"
+Question 1: age_group = "18-25"
+AND
+Question 2: location = "urban"
+AND
+Question 3: income = "high"
+Quota Limit: 50 responses
+```
+</CodeGroup>
+
+### Partial vs. complete responses
+
+<Info>
+  By default, Quota Management includes partial responses in quota counts. You can change this behavior by configuring the quota to only count complete responses.
+</Info>
+
+This means if a respondent starts but doesn't complete the survey, they may still count toward your quota if they've answered the qualifying questions.
+
+## Quota monitoring
+
+<Card title="Live Quota Status" icon="chart-line">
+  Monitor your quotas in real-time through the dashboard:
+  
+  - **Current Count**: See how many responses each quota has collected
+  - **Progress Bars**: Visual representation of quota completion
+  - **Status Indicators**: Active, completed, or paused quota status
+</Card>
