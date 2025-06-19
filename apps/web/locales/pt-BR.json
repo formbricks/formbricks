@@ -79,7 +79,7 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Usuário criado com sucesso",
-      "user_successfully_created_description": "Seu novo usuário foi criado com sucesso. Por favor, clique no botão abaixo e faça login na sua conta."
+      "user_successfully_created_info": "Verificamos se há uma conta associada a {email}. Se não existia, criamos uma para você. Se uma conta já existia, nenhuma alteração foi feita. Por favor, faça login abaixo para continuar."
     },
     "testimonial_1": "Mediamos a clareza dos nossos documentos e aprendemos com a rotatividade tudo em uma única plataforma. Ótimo produto, equipe muito atenciosa!",
     "testimonial_all_features_included": "Todas as funcionalidades incluídas",
@@ -91,11 +91,10 @@
       "invalid_token": "Token inválido ☹️",
       "new_email_verification_success": "Se o endereço for válido, um email de verificação foi enviado.",
       "no_email_provided": "Nenhum e-mail fornecido",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clica no link do e-mail pra ativar sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
       "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
-      "we_sent_an_email_to": "Enviamos um email para {email}",
+      "verification_email_successfully_sent_info": "Se houver uma conta associada a {email}, enviamos um link de verificação para esse endereço. Por favor, verifique sua caixa de entrada para completar o cadastro.",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"
     },
     "verify": {

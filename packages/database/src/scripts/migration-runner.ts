@@ -244,8 +244,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 
       // It's a data migration, dynamically import and extract the scripts
       // Use .js extension when running from built code, .ts when running from source
-      const migrationFileExtension = isBuilt ? "migration.js" : "migration.ts";
-      const modulePath = path.join(migrationPath, migrationFileExtension);
+      const modulePath = path.join(migrationPath, dataMigrationFileName);
       const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
 
       // Check each export in the module for a DataMigrationScript (type: "data")
@@ -283,7 +282,11 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 export async function applyMigrations(): Promise<void> {
   try {
     const allMigrations = await loadMigrations();
-    logger.info(`Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR}`);
+    logger.info(
+      `Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR} (source: ${
+        isBuilt ? "dist" : "src"
+      })`
+    );
     await runMigrations(allMigrations);
   } catch (error) {
     await prisma.$disconnect();
