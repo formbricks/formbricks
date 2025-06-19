@@ -64,6 +64,7 @@
               "pages": [
                 "xm-and-surveys/surveys/link-surveys/data-prefilling",
                 "xm-and-surveys/surveys/link-surveys/embed-surveys",
+                "xm-and-surveys/surveys/link-surveys/quota-management",
                 "xm-and-surveys/surveys/link-surveys/market-research-panel",
                 "xm-and-surveys/surveys/link-surveys/pin-protected-surveys",
                 "xm-and-surveys/surveys/link-surveys/single-use-links",
