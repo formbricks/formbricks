@@ -66,7 +66,7 @@ export const buildMultipleChoiceQuestion = ({
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
     shuffleOption: shuffleOption || "none",
-    required: required ?? true,
+    required: required ?? false,
     logic,
   };
 };
@@ -105,7 +105,7 @@ export const buildOpenTextQuestion = ({
     headline: createI18nString(headline, []),
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
-    required: required ?? true,
+    required: required ?? false,
     longAnswer,
     logic,
     charLimit: {
@@ -153,7 +153,7 @@ export const buildRatingQuestion = ({
     range,
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
-    required: required ?? true,
+    required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
     upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
@@ -194,7 +194,7 @@ export const buildNPSQuestion = ({
     headline: createI18nString(headline, []),
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
-    required: required ?? true,
+    required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
     upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
@@ -230,7 +230,7 @@ export const buildConsentQuestion = ({
     headline: createI18nString(headline, []),
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
-    required: required ?? true,
+    required: required ?? false,
     label: createI18nString(label, []),
     logic,
   };
@@ -269,7 +269,7 @@ export const buildCTAQuestion = ({
     buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
     backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
     dismissButtonLabel: dismissButtonLabel ? createI18nString(dismissButtonLabel, []) : undefined,
-    required: required ?? true,
+    required: required ?? false,
     buttonExternal,
     buttonUrl,
     logic,
