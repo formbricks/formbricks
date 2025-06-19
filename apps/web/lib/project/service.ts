@@ -171,19 +171,57 @@ export const getOrganizationProjectsCount = reactCache(async (organizationId: st
   }
 });
 
-export const getProjectEnvironmentsByOrganizationIds = reactCache(
-  async (organizationIds: string[]): Promise<Pick<TProject, "environments">[]> => {
-    validateInputs([organizationIds, ZId.array()]);
+export const getUserProjectEnvironmentsByOrganizationIds = reactCache(
+  async (organizationIds: string[], userId: string): Promise<Pick<TProject, "environments">[]> => {
+    validateInputs([organizationIds, ZId.array()], [userId, ZId]);
     try {
       if (organizationIds.length === 0) {
         return [];
       }
 
-      const projects = await prisma.project.findMany({
+      const memberships = await prisma.membership.findMany({
         where: {
+          userId,
           organizationId: {
             in: organizationIds,
           },
+        },
+      });
+
+      if (memberships.length === 0) {
+        return [];
+      }
+
+      const whereConditions: Prisma.ProjectWhereInput[] = [];
+
+      for (const membership of memberships) {
+        let projectWhereClause: Prisma.ProjectWhereInput = {
+          organizationId: membership.organizationId,
+        };
+
+        if (membership.role === "member") {
+          projectWhereClause = {
+            ...projectWhereClause,
+            projectTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          };
+        }
+
+        whereConditions.push(projectWhereClause);
+      }
+
+      const projects = await prisma.project.findMany({
+        where: {
+          OR: whereConditions,
         },
         select: { environments: true },
       });

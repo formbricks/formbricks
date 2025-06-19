@@ -7,8 +7,8 @@ import { ITEMS_PER_PAGE } from "../constants";
 import {
   getProject,
   getProjectByEnvironmentId,
-  getProjectEnvironmentsByOrganizationIds,
   getProjects,
+  getUserProjectEnvironmentsByOrganizationIds,
   getUserProjects,
 } from "./service";
 
@@ -499,7 +499,7 @@ describe("Project Service", () => {
 
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-    const result = await getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
 
     expect(result).toEqual(mockProjects);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
@@ -518,7 +518,7 @@ describe("Project Service", () => {
 
     vi.mocked(prisma.project.findMany).mockResolvedValue([]);
 
-    const result = await getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
+    const result = await getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2]);
 
     expect(result).toEqual([]);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
@@ -540,12 +540,12 @@ describe("Project Service", () => {
     });
     vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
 
-    await expect(getProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2])).rejects.toThrow(
-      DatabaseError
-    );
+    await expect(
+      getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2])
+    ).rejects.toThrow(DatabaseError);
   });
 
   test("getProjectsByOrganizationIds should throw ValidationError with wrong input", async () => {
-    await expect(getProjectEnvironmentsByOrganizationIds(["wrong-id"])).rejects.toThrow(ValidationError);
+    await expect(getUserProjectEnvironmentsByOrganizationIds(["wrong-id"])).rejects.toThrow(ValidationError);
   });
 });

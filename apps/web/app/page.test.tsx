@@ -152,7 +152,8 @@ describe("Page", () => {
     const { getIsFreshInstance } = await import("@/lib/instance/service");
     const { getUser } = await import("@/lib/user/service");
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
-    const { getProjectEnvironmentsByOrganizationIds } = await import("@/lib/project/service");
+    const { getUserProjectEnvironmentsByOrganizationIds: getProjectEnvironmentsByOrganizationIds } =
+      await import("@/lib/project/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
     const { redirect } = await import("next/navigation");
@@ -241,7 +242,8 @@ describe("Page", () => {
     const { getServerSession } = await import("next-auth");
     const { getIsFreshInstance } = await import("@/lib/instance/service");
     const { getUser } = await import("@/lib/user/service");
-    const { getProjectEnvironmentsByOrganizationIds } = await import("@/lib/project/service");
+    const { getUserProjectEnvironmentsByOrganizationIds: getProjectEnvironmentsByOrganizationIds } =
+      await import("@/lib/project/service");
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
@@ -334,7 +336,8 @@ describe("Page", () => {
     const { getOrganizationsByUserId } = await import("@/lib/organization/service");
     const { getMembershipByUserIdOrganizationId } = await import("@/lib/membership/service");
     const { getAccessFlags } = await import("@/lib/membership/utils");
-    const { getProjectEnvironmentsByOrganizationIds } = await import("@/lib/project/service");
+    const { getUserProjectEnvironmentsByOrganizationIds: getProjectEnvironmentsByOrganizationIds } =
+      await import("@/lib/project/service");
     const { render } = await import("@testing-library/react");
 
     const mockUser: TUser = {
