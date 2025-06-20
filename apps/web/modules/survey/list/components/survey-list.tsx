@@ -160,6 +160,8 @@ export const SurveysList = ({
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}
+                  surveyCount={surveys.length}
+                  setIsFetching={setIsFetching}
                 />
               );
             })}
