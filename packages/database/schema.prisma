@@ -849,7 +849,8 @@ model User {
   communityDescription      String?
   communityAvatarUrl        String?
 
-  socials UserSocial[] @relation("userSocial")
+  socials  UserSocial[] @relation("userSocial")
+  activity Activity[]
 
   @@index([email])
 }
@@ -1107,4 +1108,30 @@ model UserCommunity {
   creator   User     @relation("creator", fields: [creatorId], references: [id])
 
   @@unique([userId, creatorId])
+}
+
+enum ActivityEventType {
+  MEMBER_JOINED
+  MEMBER_LEFT
+  ENGAGEMENT_COMPLETED
+  ENGAGEMENT_CREATED
+  REWARD_PAID
+}
+
+enum ActivityType {
+  COMMUNITY
+  USER
+}
+
+model Activity {
+  id            String            @default(cuid())
+  createdAt     DateTime          @default(now()) @map(name: "created_at")
+  updatedAt     DateTime          @updatedAt @map(name: "updated_at")
+  activityEvent ActivityEventType
+  activityType  ActivityType
+  subjectId     String
+  subject       User              @relation(fields: [subjectId], references: [id])
+  metadata      Json?
+
+  @@unique([id])
 }
