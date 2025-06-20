@@ -192,9 +192,7 @@ export const getUserProjectEnvironmentsByOrganizationIds = reactCache(
         return [];
       }
 
-      const whereConditions: Prisma.ProjectWhereInput[] = [];
-
-      for (const membership of memberships) {
+      const whereConditions: Prisma.ProjectWhereInput[] = memberships.map((membership) => {
         let projectWhereClause: Prisma.ProjectWhereInput = {
           organizationId: membership.organizationId,
         };
@@ -216,8 +214,8 @@ export const getUserProjectEnvironmentsByOrganizationIds = reactCache(
           };
         }
 
-        whereConditions.push(projectWhereClause);
-      }
+        return projectWhereClause;
+      });
 
       const projects = await prisma.project.findMany({
         where: {
