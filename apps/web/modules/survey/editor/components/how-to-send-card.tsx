@@ -125,7 +125,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            defaultValue="app"
+            defaultValue="link"
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">
