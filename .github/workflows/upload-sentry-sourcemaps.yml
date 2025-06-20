@@ -7,7 +7,6 @@ on:
         description: "Docker image to extract sourcemaps from"
         required: true
         type: string
-        default: "ghcr.io/formbricks/formbricks"
       release_version:
         description: "Release version (e.g., v1.2.3)"
         required: true
