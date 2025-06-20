@@ -44,9 +44,10 @@ jobs:
             echo "DOCKER_IMAGE=${{ inputs.docker_image }}:${{ inputs.release_version }}" >> $GITHUB_ENV
           fi
 
-      - name: Upload Sentry Sourcemaps
+      - name: Upload Sourcemaps to Sentry
         uses: ./.github/actions/upload-sentry-sourcemaps
         with:
-          docker_image: ${{ env.DOCKER_IMAGE }}
+          docker_image: ${{ inputs.docker_image }}
           release_version: ${{ inputs.release_version }}
-          environment: ${{ inputs.environment }} 
+          environment: ${{ inputs.environment }}
+          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }} 
