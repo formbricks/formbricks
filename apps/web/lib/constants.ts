@@ -275,6 +275,10 @@ export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_S
 
 export const SENTRY_DSN = env.SENTRY_DSN;
 
+// Use the app version from package.json (updated during build) for Sentry release
+export const SENTRY_RELEASE =
+  process.env.NODE_ENV === "production" ? `v${require("../package.json").version}` : undefined;
+
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";

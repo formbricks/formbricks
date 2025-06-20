@@ -100,6 +100,15 @@ jobs:
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
+      - name: Upload Sentry Sourcemaps
+        if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
+        continue-on-error: true  # Don't fail deployment if sourcemaps fail
+        uses: ./.github/actions/upload-sentry-sourcemaps
+        with:
+          docker_image: ${{ inputs.REPOSITORY }}:${{ inputs.VERSION }}
+          release_version: ${{ inputs.VERSION }}
+          environment: ${{ inputs.ENVIRONMENT }}
+
       - name: Purge Cloudflare Cache
         if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
         env:

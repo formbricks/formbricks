@@ -1,0 +1,52 @@
+name: Upload Sentry Sourcemaps (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_image:
+        description: "Docker image to extract sourcemaps from"
+        required: true
+        type: string
+        default: "ghcr.io/formbricks/formbricks"
+      release_version:
+        description: "Release version (e.g., v1.2.3)"
+        required: true
+        type: string
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - prod
+          - stage
+      tag_version:
+        description: "Docker image tag (leave empty to use release_version)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  upload-sourcemaps:
+    name: Upload Sourcemaps to Sentry
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Set Docker Image
+        run: |
+          if [ -n "${{ inputs.tag_version }}" ]; then
+            echo "DOCKER_IMAGE=${{ inputs.docker_image }}:${{ inputs.tag_version }}" >> $GITHUB_ENV
+          else
+            echo "DOCKER_IMAGE=${{ inputs.docker_image }}:${{ inputs.release_version }}" >> $GITHUB_ENV
+          fi
+
+      - name: Upload Sentry Sourcemaps
+        uses: ./.github/actions/upload-sentry-sourcemaps
+        with:
+          docker_image: ${{ env.DOCKER_IMAGE }}
+          release_version: ${{ inputs.release_version }}
+          environment: ${{ inputs.environment }} 

@@ -6,14 +6,16 @@ import { useEffect } from "react";
 interface SentryProviderProps {
   children: React.ReactNode;
   sentryDsn?: string;
+  sentryRelease?: string;
   isEnabled?: boolean;
 }
 
-export const SentryProvider = ({ children, sentryDsn, isEnabled }: SentryProviderProps) => {
+export const SentryProvider = ({ children, sentryDsn, sentryRelease, isEnabled }: SentryProviderProps) => {
   useEffect(() => {
     if (sentryDsn && isEnabled) {
       Sentry.init({
         dsn: sentryDsn,
+        release: sentryRelease,
 
         // No tracing while Sentry doesn't update to telemetry 2.0.0 - https://github.com/getsentry/sentry-javascript/issues/15737
         tracesSampleRate: 0,
