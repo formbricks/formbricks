@@ -1,0 +1,125 @@
+name: 'Upload Sentry Sourcemaps'
+description: 'Extract sourcemaps from Docker image and upload to Sentry'
+
+inputs:
+  docker_image:
+    description: 'Docker image to extract sourcemaps from'
+    required: true
+  release_version:
+    description: 'Sentry release version (e.g., v1.2.3)'
+    required: true
+  environment:
+    description: 'Deployment environment (staging, production)'
+    required: true
+  sentry_auth_token:
+    description: 'Sentry authentication token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Sentry CLI
+      shell: bash
+      run: |
+        # Install official Sentry CLI
+        curl -sL https://sentry.io/get-cli/ | bash
+
+    - name: Create Sentry Release
+      shell: bash
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+      run: |
+        echo "🚀 Creating Sentry release: ${{ inputs.release_version }} for environment: ${{ inputs.environment }}"
+        
+        # Create a new release
+        sentry-cli releases new "${{ inputs.release_version }}" \
+          --org="formbricks" \
+          --project="formbricks-cloud" \
+          --skip-if-existing
+        
+        # Associate Git commits with the release
+        sentry-cli releases set-commits "${{ inputs.release_version }}" --auto \
+          --org="formbricks" \
+          --project="formbricks-cloud"
+
+    - name: Extract sourcemaps from Docker image
+      shell: bash
+      run: |
+        echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
+        
+        # Create temporary container from the image
+        docker create --name sentry-sourcemap-container "${{ inputs.docker_image }}"
+        
+        # Extract .next directory containing sourcemaps
+        docker cp sentry-sourcemap-container:/home/nextjs/apps/web/.next ./extracted-next
+        
+        # Clean up container
+        docker rm sentry-sourcemap-container
+        
+        # Verify sourcemaps exist
+        if [ ! -d "./extracted-next/static/chunks" ]; then
+          echo "❌ Error: .next/static/chunks directory not found in Docker image"
+          echo "Expected structure: /home/nextjs/apps/web/.next/static/chunks/"
+          exit 1
+        fi
+        
+        sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
+        echo "✅ Found $sourcemap_count sourcemap files"
+        
+        if [ "$sourcemap_count" -eq 0 ]; then
+          echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
+          exit 1
+        fi
+
+    - name: Upload sourcemaps to Sentry
+      shell: bash
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+      run: |
+        # Upload sourcemaps to Sentry (fail fast if structure is wrong)
+        if [ ! -d "./extracted-next/static/chunks" ]; then
+          echo "❌ ERROR: Expected .next/static/chunks directory not found!"
+          echo "📋 Available directories:"
+          ls -la ./extracted-next/
+          echo "🔍 Available sourcemaps:"
+          find ./extracted-next/static/chunks -name "*.map" -type f | head -5
+          echo "💥 Build structure is unexpected - aborting sourcemap upload"
+          exit 1
+        fi
+        
+        echo "📤 Uploading sourcemaps to Sentry..."
+        sentry-cli sourcemaps upload \
+          --org="formbricks" \
+          --project="formbricks-cloud" \
+          --release="${{ inputs.release_version }}" \
+          --url-prefix="~/_next/static/" \
+          --ext js \
+          --ext map \
+          ./extracted-next/static/
+        echo "✅ Sourcemaps uploaded successfully"
+
+    - name: Finalize Sentry Release
+      shell: bash
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+      run: |
+        # Finalize the release
+        sentry-cli releases finalize "${{ inputs.release_version }}" \
+          --org="formbricks" \
+          --project="formbricks-cloud"
+        
+        # Create deployment record
+        sentry-cli releases deploys "${{ inputs.release_version }}" new \
+          --env="${{ inputs.environment }}" \
+          --org="formbricks" \
+          --project="formbricks-cloud"
+        
+        echo "✅ Sentry release ${{ inputs.release_version }} deployed to ${{ inputs.environment }}"
+
+    - name: Clean up extracted files
+      shell: bash
+      if: always()
+      run: |
+        # Clean up extracted files
+        rm -rf ./extracted-next
+        echo "🧹 Cleaned up extracted files" 

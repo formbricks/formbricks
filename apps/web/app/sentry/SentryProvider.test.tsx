@@ -48,6 +48,24 @@ describe("SentryProvider", () => {
     );
   });
 
+  test("calls Sentry.init with sentryRelease when provided", () => {
+    const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
+    const testRelease = "v1.2.3";
+
+    render(
+      <SentryProvider sentryDsn={sentryDsn} sentryRelease={testRelease} isEnabled>
+        <div data-testid="child">Test Content</div>
+      </SentryProvider>
+    );
+
+    expect(initSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dsn: sentryDsn,
+        release: testRelease,
+      })
+    );
+  });
+
   test("does not call Sentry.init when sentryDsn is not provided", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
