@@ -1,0 +1,216 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Component Migration Automation Rule
+
+## Overview
+This rule automates the migration of deprecated components to new component systems in React/TypeScript codebases.
+
+## Trigger
+When the user requests component migration (e.g., "migrate [DeprecatedComponent] to [NewComponent]" or "component migration").
+
+## Process
+
+### Step 1: Discovery and Planning
+1. **Identify migration parameters:**
+   - Ask user for deprecated component name (e.g., "Modal")
+   - Ask user for new component name(s) (e.g., "Dialog")
+   - Ask for any components to exclude (e.g., "ModalWithTabs")
+   - Ask for specific import paths if needed
+
+2. **Scan codebase** for deprecated components:
+   - Search for `import.*[DeprecatedComponent]` patterns
+   - Exclude specified components that should not be migrated
+   - List all found components with file paths
+   - Present numbered list to user for confirmation
+
+### Step 2: Component-by-Component Migration
+For each component, follow this exact sequence:
+
+#### 2.1 Component Migration
+- **Import changes:**
+  - Ask user to provide the new import structure
+  - Example transformation pattern:
+  ```typescript
+  // FROM:
+  import { [DeprecatedComponent] } from "@/components/ui/[DeprecatedComponent]"
+  
+  // TO:
+  import {
+    [NewComponent],
+    [NewComponentPart1],
+    [NewComponentPart2],
+    // ... other parts
+  } from "@/components/ui/[NewComponent]"
+  ```
+
+- **Props transformation:**
+  - Ask user for prop mapping rules (e.g., `open` → `open`, `setOpen` → `onOpenChange`)
+  - Ask for props to remove (e.g., `noPadding`, `closeOnOutsideClick`, `size`)
+  - Apply transformations based on user specifications
+
+- **Structure transformation:**
+  - Ask user for the new component structure pattern
+  - Apply the transformation maintaining all functionality
+  - Preserve all existing logic, state management, and event handlers
+
+#### 2.2 Wait for User Approval
+- Present the migration changes
+- Wait for explicit user approval before proceeding
+- If rejected, ask for specific feedback and iterate
+#### 2.3 Re-read and Apply Additional Changes
+- Re-read the component file to capture any user modifications
+- Apply any additional improvements the user made
+- Ensure all changes are incorporated
+
+#### 2.4 Test File Updates
+- **Find corresponding test file** (same name with `.test.tsx` or `.test.ts`)
+- **Update test mocks:**
+  - Ask user for new component mock structure
+  - Replace old component mocks with new ones
+  - Example pattern:
+  ```typescript
+  // Add to test setup:
+  jest.mock("@/components/ui/[NewComponent]", () => ({
+    [NewComponent]: ({ children, [props] }: any) => ([mock implementation]),
+    [NewComponentPart1]: ({ children }: any) => <div data-testid="[new-component-part1]">{children}</div>,
+    [NewComponentPart2]: ({ children }: any) => <div data-testid="[new-component-part2]">{children}</div>,
+    // ... other parts
+  }));
+  ```
+- **Update test expectations:**
+  - Change test IDs from old component to new component
+  - Update any component-specific assertions
+  - Ensure all new component parts used in the component are mocked
+
+#### 2.5 Run Tests and Optimize
+- Execute `Node package manager test -- ComponentName.test.tsx`
+- Fix any failing tests
+- Optimize code quality (imports, formatting, etc.)
+- Re-run tests until all pass
+- **Maximum 3 iterations** - if still failing, ask user for guidance
+
+#### 2.6 Wait for Final Approval
+- Present test results and any optimizations made
+- Wait for user approval of the complete migration
+- If rejected, iterate based on feedback
+
+#### 2.7 Git Commit
+- Run: `git add .`
+- Run: `git commit -m "migrate [ComponentName] from [DeprecatedComponent] to [NewComponent]"`
+- Confirm commit was successful
+
+### Step 3: Final Report Generation
+After all components are migrated, generate a comprehensive GitHub PR report:
+
+#### PR Title
+```
+feat: migrate [DeprecatedComponent] components to [NewComponent] system
+```
+
+#### PR Description Template
+```markdown
+## 🔄 [DeprecatedComponent] to [NewComponent] Migration
+
+### Overview
+Migrated [X] [DeprecatedComponent] components to the new [NewComponent] component system to modernize the UI architecture and improve consistency.
+
+### Components Migrated
+[List each component with file path]
+
+### Technical Changes
+- **Imports:** Replaced `[DeprecatedComponent]` with `[NewComponent], [NewComponentParts...]`
+- **Props:** [List prop transformations]
+- **Structure:** Implemented proper [NewComponent] component hierarchy
+- **Styling:** [Describe styling changes]
+- **Tests:** Updated all test mocks and expectations
+
+### Migration Pattern
+```typescript
+// Before
+<[DeprecatedComponent] [oldProps]>
+  [oldStructure]
+</[DeprecatedComponent]>
+
+// After
+<[NewComponent] [newProps]>
+  [newStructure]
+</[NewComponent]>
+```
+
+### Testing
+- ✅ All existing tests updated and passing
+- ✅ Component functionality preserved
+- ✅ UI/UX behavior maintained
+
+### How to Test This PR
+1. **Functional Testing:**
+   - Navigate to each migrated component's usage
+   - Verify [component] opens and closes correctly
+   - Test all interactive elements within [components]
+   - Confirm styling and layout are preserved
+
+2. **Automated Testing:**
+   ```bash
+   Node package manager test
+   ```
+
+3. **Visual Testing:**
+   - Check that all [components] maintain proper styling
+   - Verify responsive behavior
+   - Test keyboard navigation and accessibility
+
+### Breaking Changes
+[List any breaking changes or state "None - this is a drop-in replacement maintaining all existing functionality."]
+
+### Notes
+- [Any excluded components] were preserved as they already use [NewComponent] internally
+- All form validation and complex state management preserved
+- Enhanced code quality with better imports and formatting
+```
+
+## Special Considerations
+
+### Excluded Components
+- **DO NOT MIGRATE** components specified by user as exclusions
+- They may already use the new component internally or have other reasons
+- Inform user these are skipped and why
+
+### Complex Components
+- Preserve all existing functionality (forms, validation, state management)
+- Maintain prop interfaces
+- Keep all event handlers and callbacks
+- Preserve accessibility features
+
+### Test Coverage
+- Ensure all new component parts are mocked when used
+- Mock all new component parts that appear in the component
+- Update test IDs from old component to new component
+- Maintain all existing test scenarios
+
+### Error Handling
+- If tests fail after 3 iterations, stop and ask user for guidance
+- If component is too complex, ask user for specific guidance
+- If unsure about functionality preservation, ask for clarification
+
+### Migration Patterns
+- Always ask user for specific migration patterns before starting
+- Confirm import structures, prop mappings, and component hierarchies
+- Adapt to different component architectures (simple replacements, complex restructuring, etc.)
+
+## Success Criteria
+- All deprecated components successfully migrated to new components
+- All tests passing
+- No functionality lost
+- Code quality maintained or improved
+- User approval on each component
+- Successful git commits for each migration
+- Comprehensive PR report generated
+
+## Usage Examples
+- "migrate Modal to Dialog"
+- "migrate Button to NewButton" 
+- "migrate Card to ModernCard"
+- "component migration" (will prompt for details) 
