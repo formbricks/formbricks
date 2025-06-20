@@ -60,6 +60,8 @@ describe("SurveyCard", () => {
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
         publicDomain={WEBAPP_URL}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
     // Draft survey => link should point to edit
@@ -77,6 +79,8 @@ describe("SurveyCard", () => {
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
         publicDomain={WEBAPP_URL}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
     // When it's read only and draft, we expect no link
@@ -94,6 +98,8 @@ describe("SurveyCard", () => {
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
         publicDomain={WEBAPP_URL}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
     // For non-draft => link to summary

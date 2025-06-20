@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import React, { SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CopySurveyModal } from "./copy-survey-modal";
 
@@ -43,6 +43,8 @@ interface SurveyDropDownMenuProps {
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  surveyCount: number;
+  setIsFetching: React.Dispatch<SetStateAction<boolean>>;
 }
 
 export const SurveyDropDownMenu = ({
@@ -54,6 +56,8 @@ export const SurveyDropDownMenu = ({
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
   duplicateSurvey,
+  surveyCount,
+  setIsFetching,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslate();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -70,6 +74,7 @@ export const SurveyDropDownMenu = ({
     setLoading(true);
     try {
       await deleteSurveyAction({ surveyId });
+      if (surveyCount - 1 === 0) setIsFetching(true);
       deleteSurvey(surveyId);
       router.refresh();
       setDeleteDialogOpen(false);

@@ -63,6 +63,8 @@ describe("SurveyDropDownMenu", () => {
         refreshSingleUseId={mockRefresh}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
@@ -97,6 +99,8 @@ describe("SurveyDropDownMenu", () => {
         deleteSurvey={vi.fn()}
         disabled={false}
         isSurveyCreationDeletionDisabled={false}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
@@ -135,6 +139,8 @@ describe("SurveyDropDownMenu", () => {
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
@@ -158,6 +164,8 @@ describe("SurveyDropDownMenu", () => {
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
@@ -184,6 +192,8 @@ describe("SurveyDropDownMenu", () => {
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
@@ -211,6 +221,8 @@ describe("SurveyDropDownMenu", () => {
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}
+        surveyCount={1}
+        setIsFetching={vi.fn()}
       />
     );
 
