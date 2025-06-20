@@ -47,7 +47,7 @@ jobs:
       - name: Upload Sourcemaps to Sentry
         uses: ./.github/actions/upload-sentry-sourcemaps
         with:
-          docker_image: ${{ inputs.docker_image }}
+          docker_image: ${{ env.DOCKER_IMAGE }}
           release_version: ${{ inputs.release_version }}
           environment: ${{ inputs.environment }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }} 
