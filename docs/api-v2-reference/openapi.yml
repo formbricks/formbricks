@@ -218,39 +218,6 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/displays/{displayId}:
-    put:
-      security: []
-      description: Update a Display for a user. A use case can be when a user submits
-        a response & you want to link it to an existing display.
-      parameters:
-        - in: path
-          name: displayId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                responseId: response123
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                displayId: display123
-              schema:
-                type: object
-          description: OK
-      summary: Update Display
-      tags:
-        - Client API > Display
-      servers:
-        - url: https://app.formbricks.com/api/v2
-          description: Formbricks Client
   /client/{environmentId}/environment:
     get:
       security: []
@@ -443,7 +410,9 @@ paths:
                   description: The ID of the survey associated with the file.
                 fileName:
                   type: string
-                  description: This must be the `fileName` returned from the [Upload Private File](/api-v2-reference/client-api->-file-upload/upload-private-file) endpoint (Step 1).
+                  description: This must be the `fileName` returned from the [Upload Private
+                    File](/api-v2-reference/client-api->-file-upload/upload-private-file)
+                    endpoint (Step 1).
                 fileType:
                   type: string
                   description: The MIME type of the file.
@@ -1581,7 +1550,7 @@ paths:
                             - value
                     required:
                       - attributes
-                  maxItems: 1000
+                  maxItems: 250
               required:
                 - environmentId
                 - contacts
@@ -4393,6 +4362,22 @@ components:
             - enabled
             - message
           description: Email verification configuration (deprecated)
+        recaptcha:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            threshold:
+              type: number
+              multipleOf: 0.1
+              minimum: 0.1
+              maximum: 0.9
+          required:
+            - enabled
+            - threshold
+          description: Google reCAPTCHA configuration
         displayPercentage:
           type:
             - number
@@ -4441,6 +4426,7 @@ components:
         - inlineTriggers
         - isBackButtonHidden
         - verifyEmail
+        - recaptcha
         - displayPercentage
         - questions
     webhook:
