@@ -41,6 +41,12 @@ paths:
         response as finished or you want to change an existing response's value.
       parameters:
         - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+        - in: path
           name: responseId
           required: true
           schema:
@@ -222,6 +228,13 @@ paths:
     get:
       security: []
       description: Retrieves the environment state to be used in Formbricks SDKs
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
       responses:
         "200":
           content:

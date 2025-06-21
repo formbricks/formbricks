@@ -12,6 +12,13 @@ const v1ClientEndpoints = {
       parameters: [
         {
           in: "path",
+          name: "environmentId",
+          required: true,
+          schema: { type: "string" },
+          description: "The ID of the environment.",
+        },
+        {
+          in: "path",
           name: "responseId",
           required: true,
           schema: { type: "string" },
@@ -210,11 +217,19 @@ const v1ClientEndpoints = {
       ],
     },
   },
-
   "/client/{environmentId}/environment": {
     get: {
       security: [],
       description: "Retrieves the environment state to be used in Formbricks SDKs",
+      parameters: [
+        {
+          in: "path",
+          name: "environmentId",
+          required: true,
+          schema: { type: "string" },
+          description: "The ID of the environment.",
+        },
+      ],
       responses: {
         "200": {
           content: {
