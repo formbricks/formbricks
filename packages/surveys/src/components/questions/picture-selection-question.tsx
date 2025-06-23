@@ -128,7 +128,6 @@ export function PictureSelectionQuestion({
                     <button
                       type="button"
                       tabIndex={isCurrent ? 0 : -1}
-                      aria-checked={value.includes(choice.id)}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
                         if (e.key === " ") {
