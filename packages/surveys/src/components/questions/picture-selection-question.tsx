@@ -128,12 +128,13 @@ export function PictureSelectionQuestion({
                     <button
                       type="button"
                       tabIndex={isCurrent ? 0 : -1}
+                      aria-checked={value.includes(choice.id)}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
                         if (e.key === " ") {
                           e.preventDefault();
-                          document.getElementById(choice.id)?.click();
-                          document.getElementById(choice.id)?.focus();
+                          e.currentTarget.click();
+                          e.currentTarget.focus();
                         }
                       }}
                       onClick={() => {
@@ -159,6 +160,9 @@ export function PictureSelectionQuestion({
                         onLoad={() => {
                           setLoadingImages((prev) => ({ ...prev, [choice.id]: false }));
                         }}
+                        onError={() => {
+                          setLoadingImages((prev) => ({ ...prev, [choice.id]: false }));
+                        }}
                       />
                       {question.allowMulti ? (
                         <input
@@ -176,7 +180,7 @@ export function PictureSelectionQuestion({
                       ) : (
                         <input
                           id={`${choice.id}-radio`}
-                          name={`${choice.id}-radio`}
+                          name={`${choice.id}`}
                           type="radio"
                           tabIndex={-1}
                           checked={value.includes(choice.id)}
