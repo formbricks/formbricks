@@ -72,22 +72,23 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               defaultValue={tagName}
               onBlur={(e) => {
                 updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
-                  if (updateTagNameResponse?.data) {
+                  const response = updateTagNameResponse?.data;
+
+                  if (response?.id) {
                     setUpdateTagError(false);
                     toast.success(t("environments.project.tags.tag_updated"));
                   } else {
-                    const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
+                    const errorMessage = response?.error?.message ?? "";
                     if (
-                      errorMessage?.includes(
-                        t("environments.project.tags.unique_constraint_failed_on_the_fields")
-                      )
+                      errorMessage.toLowerCase().includes("already exists") ||
+                      errorMessage.toLowerCase().includes("unique constraint failed")
                     ) {
                       toast.error(t("environments.project.tags.tag_already_exists"), {
                         duration: 2000,
                         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                       });
                     } else {
-                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
+                      toast.error(t("common.something_went_wrong_please_try_again"), {
                         duration: 2000,
                       });
                     }

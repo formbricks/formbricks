@@ -1,5 +1,6 @@
 import "server-only";
 import { validateInputs } from "@/lib/utils/validate";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TTag } from "@formbricks/types/tags";
@@ -34,8 +35,18 @@ export const updateTagName = async (id: string, name: string): Promise<TTag> => 
     });
 
     return tag;
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return {
+        data: null,
+        error: { message: "already exists" },
+      };
+    }
+
+    return {
+      data: null,
+      error: { message: error.message || "Something went wrong" },
+    };
   }
 };
 
