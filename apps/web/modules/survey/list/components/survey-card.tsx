@@ -8,7 +8,7 @@ import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import React, { SetStateAction, useMemo } from "react";
+import { useMemo } from "react";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
@@ -20,8 +20,6 @@ interface SurveyCardProps {
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   locale: TUserLocale;
-  surveyCount: number;
-  setIsFetching: React.Dispatch<SetStateAction<boolean>>;
 }
 export const SurveyCard = ({
   survey,
@@ -31,8 +29,6 @@ export const SurveyCard = ({
   deleteSurvey,
   duplicateSurvey,
   locale,
-  surveyCount,
-  setIsFetching,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
   const surveyStatusLabel = (() => {
@@ -112,8 +108,6 @@ export const SurveyCard = ({
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
-          surveyCount={surveyCount}
-          setIsFetching={setIsFetching}
         />
       </button>
     </>

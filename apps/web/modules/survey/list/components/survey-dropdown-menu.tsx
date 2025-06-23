@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { SetStateAction, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CopySurveyModal } from "./copy-survey-modal";
 
@@ -43,8 +43,6 @@ interface SurveyDropDownMenuProps {
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
-  surveyCount: number;
-  setIsFetching: React.Dispatch<SetStateAction<boolean>>;
 }
 
 export const SurveyDropDownMenu = ({
@@ -56,8 +54,6 @@ export const SurveyDropDownMenu = ({
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
   duplicateSurvey,
-  surveyCount,
-  setIsFetching,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslate();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -74,15 +70,13 @@ export const SurveyDropDownMenu = ({
     setLoading(true);
     try {
       await deleteSurveyAction({ surveyId });
-      if (surveyCount - 1 === 0) setIsFetching(true);
       deleteSurvey(surveyId);
-      router.refresh();
-      setDeleteDialogOpen(false);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
+      router.refresh();
     } catch (error) {
+      setLoading(false);
       toast.error(t("environments.surveys.error_deleting_survey"));
     }
-    setLoading(false);
   };
 
   const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -247,6 +241,7 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+          isDeleting={loading}
         />
       )}
 
