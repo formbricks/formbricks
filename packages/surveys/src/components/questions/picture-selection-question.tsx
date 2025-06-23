@@ -179,7 +179,7 @@ export function PictureSelectionQuestion({
                       ) : (
                         <input
                           id={`${choice.id}-radio`}
-                          name={`${choice.id}`}
+                          name={`${question.id}`}
                           type="radio"
                           tabIndex={-1}
                           checked={value.includes(choice.id)}
