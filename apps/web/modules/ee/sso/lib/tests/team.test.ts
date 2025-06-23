@@ -30,28 +30,8 @@ const setupMocks = () => {
     DEFAULT_ORGANIZATION_ID: "org-123",
   }));
 
-  vi.mock("@/lib/cache/team", () => ({
-    teamCache: {
-      revalidate: vi.fn(),
-      tag: {
-        byId: vi.fn().mockReturnValue("tag-id"),
-        byOrganizationId: vi.fn().mockReturnValue("tag-org-id"),
-      },
-    },
-  }));
-
-  vi.mock("@/lib/project/cache", () => ({
-    projectCache: {
-      revalidate: vi.fn(),
-    },
-  }));
-
   vi.mock("@/lib/membership/service", () => ({
     getMembershipByUserIdOrganizationId: vi.fn(),
-  }));
-
-  vi.mock("@formbricks/lib/cache", () => ({
-    cache: vi.fn((fn) => fn),
   }));
 
   vi.mock("@formbricks/logger", () => ({

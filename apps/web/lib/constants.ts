@@ -7,14 +7,11 @@ export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
-
 export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // URLs
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
-
-export const SURVEY_URL = env.SURVEY_URL;
 
 // encryption keys
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
@@ -282,4 +279,11 @@ export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
 
+export const AUDIT_LOG_ENABLED =
+  env.AUDIT_LOG_ENABLED === "1" &&
+  env.REDIS_URL &&
+  env.REDIS_URL !== "" &&
+  env.ENCRYPTION_KEY &&
+  env.ENCRYPTION_KEY !== ""; // The audit log requires Redis to be configured
+export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;

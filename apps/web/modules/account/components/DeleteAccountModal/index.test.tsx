@@ -1,18 +1,29 @@
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import * as nextAuth from "next-auth/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import * as actions from "./actions";
 import { DeleteAccountModal } from "./index";
 
-vi.mock("next-auth/react", async () => {
-  const actual = await vi.importActual("next-auth/react");
-  return {
-    ...actual,
-    signOut: vi.fn(),
-  };
-});
+// Mock constants that this test needs
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  WEBAPP_URL: "http://localhost:3000",
+}));
+
+// Mock server actions that this test needs
+vi.mock("@/modules/auth/actions/sign-out", () => ({
+  logSignOutAction: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock our useSignOut hook
+const mockSignOut = vi.fn();
+vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
+  useSignOut: () => ({
+    signOut: mockSignOut,
+  }),
+}));
 
 vi.mock("./actions", () => ({
   deleteUserAction: vi.fn(),
@@ -29,6 +40,7 @@ describe("DeleteAccountModal", () => {
 
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   test("renders modal with correct props", () => {
@@ -66,7 +78,17 @@ describe("DeleteAccountModal", () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
-    const signOut = vi.spyOn(nextAuth, "signOut").mockResolvedValue(undefined);
+
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
+
+    // Mock window.location.replace
+    Object.defineProperty(window, "location", {
+      writable: true,
+      value: { replace: vi.fn() },
+    });
 
     render(
       <DeleteAccountModal
@@ -78,6 +100,8 @@ describe("DeleteAccountModal", () => {
       />
     );
 
+    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
+
     const input = screen.getByTestId("deleteAccountConfirmation");
     fireEvent.change(input, { target: { value: mockUser.email } });
 
@@ -86,7 +110,12 @@ describe("DeleteAccountModal", () => {
 
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
-      expect(signOut).toHaveBeenCalledWith({ callbackUrl: "/auth/login" });
+      expect(mockSignOut).toHaveBeenCalledWith({
+        reason: "account_deletion",
+        redirect: false, // Updated to match new implementation
+      });
+      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
+      expect(window.location.replace).toHaveBeenCalledWith("/auth/login");
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
   });
@@ -95,7 +124,11 @@ describe("DeleteAccountModal", () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
-    const signOut = vi.spyOn(nextAuth, "signOut").mockResolvedValue(undefined);
+
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
 
     Object.defineProperty(window, "location", {
       writable: true,
@@ -118,10 +151,18 @@ describe("DeleteAccountModal", () => {
     const form = screen.getByTestId("deleteAccountForm");
     fireEvent.submit(form);
 
+    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
+
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
-      expect(signOut).toHaveBeenCalledWith({ redirect: true });
-      expect(window.location.replace).toHaveBeenCalled();
+      expect(mockSignOut).toHaveBeenCalledWith({
+        reason: "account_deletion",
+        redirect: false, // Updated to match new implementation
+      });
+      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
+      expect(window.location.replace).toHaveBeenCalledWith(
+        "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2"
+      );
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
   });

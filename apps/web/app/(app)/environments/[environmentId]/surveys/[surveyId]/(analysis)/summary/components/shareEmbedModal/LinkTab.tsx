@@ -9,12 +9,12 @@ import { TUserLocale } from "@formbricks/types/user";
 interface LinkTabProps {
   survey: TSurvey;
   surveyUrl: string;
-  surveyDomain: string;
+  publicDomain: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
 }
 
-export const LinkTab = ({ survey, surveyUrl, surveyDomain, setSurveyUrl, locale }: LinkTabProps) => {
+export const LinkTab = ({ survey, surveyUrl, publicDomain, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
 
   const docsLinks = [
@@ -44,7 +44,7 @@ export const LinkTab = ({ survey, surveyUrl, surveyDomain, setSurveyUrl, locale 
         <ShareSurveyLink
           survey={survey}
           surveyUrl={surveyUrl}
-          surveyDomain={surveyDomain}
+          publicDomain={publicDomain}
           setSurveyUrl={setSurveyUrl}
           locale={locale}
         />

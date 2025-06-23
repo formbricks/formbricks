@@ -197,13 +197,15 @@ export const getFallbackValues = (text: string): fallbacks => {
 
 // Transforms headlines in a text to their corresponding recall information.
 export const headlineToRecall = (
-  text: string,
+  text: string | undefined,
   recallItems: TSurveyRecallItem[],
   fallbacks: fallbacks
 ): string => {
+  if (!text) return "";
+
   recallItems.forEach((recallItem) => {
     const recallInfo = `#recall:${recallItem.id}/fallback:${fallbacks[recallItem.id]}#`;
-    text = text.replace(`@${recallItem.label}`, recallInfo);
+    text = text?.replace(`@${recallItem.label}`, recallInfo);
   });
   return text;
 };

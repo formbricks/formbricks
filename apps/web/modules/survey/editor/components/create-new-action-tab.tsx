@@ -11,6 +11,7 @@ import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActionClass } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -41,6 +42,7 @@ export const CreateNewActionTab = ({
   environmentId,
 }: CreateNewActionTabProps) => {
   const { t } = useTranslate();
+  const router = useRouter();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -160,6 +162,7 @@ export const CreateNewActionTab = ({
 
       reset();
       resetAllStates();
+      router.refresh();
       toast.success(t("environments.actions.action_created_successfully"));
     } catch (e: any) {
       toast.error(e.message);

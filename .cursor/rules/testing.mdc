@@ -3,4 +3,5 @@ description: Whenever the user asks to write or update a test file for .tsx or .
 globs: 
 alwaysApply: false
 ---
-Use the rules in this file when writing tests [copilot-instructions.md](mdc:.github/copilot-instructions.md)
+Use the rules in this file when writing tests [copilot-instructions.md](mdc:.github/copilot-instructions.md).
+After writing the tests, run them and check if there's any issue with the tests and if all of them are passing. Fix the issues and rerun the tests until all pass.

@@ -1,5 +1,4 @@
 import { isValidImageFile } from "@/lib/fileValidation";
-import { userCache } from "@/lib/user/cache";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -10,12 +9,6 @@ import { updateUser } from "./user";
 
 vi.mock("@/lib/fileValidation", () => ({
   isValidImageFile: vi.fn(),
-}));
-
-vi.mock("@/lib/user/cache", () => ({
-  userCache: {
-    revalidate: vi.fn(),
-  },
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -75,10 +68,7 @@ describe("updateUser", () => {
         isActive: true,
       },
     });
-    expect(userCache.revalidate).toHaveBeenCalledWith({
-      email: mockUser.email,
-      id: mockUser.id,
-    });
+
     expect(result).toEqual(mockUser);
   });
 

@@ -86,6 +86,7 @@ export const OrganizationActions = ({
         teamIds: data[0].teamIds,
       });
       if (inviteUserActionResult?.data) {
+        router.refresh();
         toast.success(t("environments.settings.general.member_invited_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(inviteUserActionResult);

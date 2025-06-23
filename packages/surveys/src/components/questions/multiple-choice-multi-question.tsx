@@ -41,7 +41,7 @@ export function MultipleChoiceMultiQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: MultipleChoiceMultiProps) {
+}: Readonly<MultipleChoiceMultiProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);

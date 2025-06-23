@@ -1,7 +1,3 @@
-import { membershipCache } from "@/lib/cache/membership";
-import { teamCache } from "@/lib/cache/team";
-import { organizationCache } from "@/lib/organization/cache";
-import { projectCache } from "@/lib/project/cache";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -20,30 +16,6 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       updateMany: vi.fn(),
     },
-  },
-}));
-
-vi.mock("@/lib/cache/membership", () => ({
-  membershipCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/cache/team", () => ({
-  teamCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/organization/cache", () => ({
-  organizationCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -81,15 +53,6 @@ describe("updateMembership", () => {
         },
       },
       data: { role: "owner" },
-    });
-    expect(membershipCache.revalidate).toHaveBeenCalledWith({
-      userId: "user1",
-      organizationId: "org1",
-    });
-    expect(teamCache.revalidate).toHaveBeenCalledTimes(3);
-    expect(organizationCache.revalidate).toHaveBeenCalledTimes(2);
-    expect(projectCache.revalidate).toHaveBeenCalledWith({
-      userId: "user1",
     });
   });
 

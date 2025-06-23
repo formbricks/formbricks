@@ -1,6 +1,7 @@
 "use client";
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
@@ -23,7 +24,7 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
-  surveyDomain: string;
+  publicDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -32,7 +33,7 @@ interface ShareEmbedSurveyProps {
 
 export const ShareEmbedSurvey = ({
   survey,
-  surveyDomain,
+  publicDomain,
   open,
   modalView,
   setOpen,
@@ -63,6 +64,20 @@ export const ShareEmbedSurvey = ({
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
+    const fetchSurveyUrl = async () => {
+      try {
+        const url = await getSurveyUrl(survey, publicDomain, "default");
+        setSurveyUrl(url);
+      } catch (error) {
+        console.error("Failed to fetch survey URL:", error);
+        // Fallback to a default URL if fetching fails
+        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
+      }
+    };
+    fetchSurveyUrl();
+  }, [survey, publicDomain]);
+
+  useEffect(() => {
     if (survey.type !== "link") {
       setActiveId(tabs[3].id);
     }
@@ -86,7 +101,7 @@ export const ShareEmbedSurvey = ({
   };
 
   const handleInitialPageButton = () => {
-    setOpen(false);
+    setShowView("start");
   };
 
   return (
@@ -104,7 +119,7 @@ export const ShareEmbedSurvey = ({
               <ShareSurveyLink
                 survey={survey}
                 surveyUrl={surveyUrl}
-                surveyDomain={surveyDomain}
+                publicDomain={publicDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -158,7 +173,7 @@ export const ShareEmbedSurvey = ({
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
-            surveyDomain={surveyDomain}
+            publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
           />

@@ -1,6 +1,4 @@
-import { environmentCache } from "@/lib/environment/cache";
 import { createEnvironment } from "@/lib/environment/service";
-import { projectCache } from "@/lib/project/cache";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/lib/storage/service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -65,16 +63,6 @@ vi.mock("@formbricks/logger", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    revalidate: vi.fn(),
-  },
-}));
-vi.mock("@/lib/environment/cache", () => ({
-  environmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
 
 vi.mock("@/lib/storage/service", () => ({
   deleteLocalFilesByEnvironmentId: vi.fn(),
@@ -100,11 +88,9 @@ describe("project lib", () => {
   describe("updateProject", () => {
     test("updates project and revalidates cache", async () => {
       vi.mocked(prisma.project.update).mockResolvedValueOnce(baseProject as any);
-      vi.mocked(projectCache.revalidate).mockImplementation(() => {});
       const result = await updateProject("p1", { name: "Project 1", environments: baseProject.environments });
       expect(result).toEqual(ZProject.parse(baseProject));
       expect(prisma.project.update).toHaveBeenCalled();
-      expect(projectCache.revalidate).toHaveBeenCalledWith({ id: "p1", organizationId: "org1" });
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -134,13 +120,11 @@ describe("project lib", () => {
       vi.mocked(createEnvironment).mockResolvedValueOnce(baseProject.environments[0] as any);
       vi.mocked(createEnvironment).mockResolvedValueOnce(baseProject.environments[1] as any);
       vi.mocked(prisma.project.update).mockResolvedValueOnce(baseProject as any);
-      vi.mocked(projectCache.revalidate).mockImplementation(() => {});
       const result = await createProject("org1", { name: "Project 1", teamIds: ["t1"] });
       expect(result).toEqual(baseProject);
       expect(prisma.project.create).toHaveBeenCalled();
       expect(prisma.projectTeam.createMany).toHaveBeenCalled();
       expect(createEnvironment).toHaveBeenCalled();
-      expect(projectCache.revalidate).toHaveBeenCalledWith({ id: "p2", organizationId: "org1" });
     });
 
     test("throws ValidationError if name is missing", async () => {
@@ -176,26 +160,18 @@ describe("project lib", () => {
       vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
 
       vi.mocked(deleteS3FilesByEnvironmentId).mockResolvedValue(undefined);
-      vi.mocked(projectCache.revalidate).mockImplementation(() => {});
-      vi.mocked(environmentCache.revalidate).mockImplementation(() => {});
       const result = await deleteProject("p1");
       expect(result).toEqual(baseProject);
       expect(deleteS3FilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
-      expect(projectCache.revalidate).toHaveBeenCalledWith({ id: "p1", organizationId: "org1" });
-      expect(environmentCache.revalidate).toHaveBeenCalledWith({ projectId: "p1" });
     });
 
     test("deletes project, deletes files, and revalidates cache (local)", async () => {
       vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
       mockIsS3Configured = false;
       vi.mocked(deleteLocalFilesByEnvironmentId).mockResolvedValue(undefined);
-      vi.mocked(projectCache.revalidate).mockImplementation(() => {});
-      vi.mocked(environmentCache.revalidate).mockImplementation(() => {});
       const result = await deleteProject("p1");
       expect(result).toEqual(baseProject);
       expect(deleteLocalFilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
-      expect(projectCache.revalidate).toHaveBeenCalledWith({ id: "p1", organizationId: "org1" });
-      expect(environmentCache.revalidate).toHaveBeenCalledWith({ projectId: "p1" });
     });
 
     test("logs error if file deletion fails", async () => {
@@ -203,8 +179,6 @@ describe("project lib", () => {
       mockIsS3Configured = true;
       vi.mocked(deleteS3FilesByEnvironmentId).mockRejectedValueOnce(new Error("fail"));
       vi.mocked(logger.error).mockImplementation(() => {});
-      vi.mocked(projectCache.revalidate).mockImplementation(() => {});
-      vi.mocked(environmentCache.revalidate).mockImplementation(() => {});
       await deleteProject("p1");
       expect(logger.error).toHaveBeenCalled();
     });

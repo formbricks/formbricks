@@ -25,6 +25,14 @@ vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
   SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://example.com",
+  },
 }));
 
 describe("AppConnectionPage Re-export", () => {

@@ -26,6 +26,8 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
   SESSION_MAX_AGE: 1000,
+  AUDIT_LOG_ENABLED: 1,
+  REDIS_URL: "redis://localhost:6379",
 }));
 
 describe("SurveyCard", () => {
@@ -57,7 +59,7 @@ describe("SurveyCard", () => {
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
-        surveyDomain={WEBAPP_URL}
+        publicDomain={WEBAPP_URL}
       />
     );
     // Draft survey => link should point to edit
@@ -74,7 +76,7 @@ describe("SurveyCard", () => {
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
-        surveyDomain={WEBAPP_URL}
+        publicDomain={WEBAPP_URL}
       />
     );
     // When it's read only and draft, we expect no link
@@ -91,7 +93,7 @@ describe("SurveyCard", () => {
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
         locale="en-US"
-        surveyDomain={WEBAPP_URL}
+        publicDomain={WEBAPP_URL}
       />
     );
     // For non-draft => link to summary

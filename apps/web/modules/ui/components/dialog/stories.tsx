@@ -255,10 +255,21 @@ const renderModal = (args: StoryProps) => {
         <DialogBody>{bodyContent}</DialogBody>
         {showFooter && footerButtonConfiguration === "3" && (
           <DialogFooter className="md:justify-between">
-            <Button className="justify-self-start" variant="ghost">
-              {tertiaryButtonText}
-            </Button>
-            <div className="flex md:space-x-2">
+            <div className="flex w-full flex-col space-y-2 md:hidden">
+              <Button className="w-full">{primaryButtonText}</Button>
+              <Button className="w-full" variant="secondary">
+                {secondaryButtonText}
+              </Button>
+              <Button className="w-full" variant="ghost">
+                {tertiaryButtonText}
+              </Button>
+            </div>
+            <div className="hidden md:block">
+              <Button className="justify-self-start" variant="ghost">
+                {tertiaryButtonText}
+              </Button>
+            </div>
+            <div className="hidden md:flex md:space-x-2">
               <Button variant="secondary">{secondaryButtonText}</Button>
               <Button>{primaryButtonText}</Button>
             </div>
@@ -266,7 +277,15 @@ const renderModal = (args: StoryProps) => {
         )}
         {showFooter && footerButtonConfiguration !== "3" && (
           <DialogFooter>
-            <div className="flex md:space-x-2">
+            <div className="flex w-full flex-col space-y-2 md:hidden">
+              <Button className="w-full">{primaryButtonText}</Button>
+              {footerButtonConfiguration !== "1" && (
+                <Button className="w-full" variant="secondary">
+                  {secondaryButtonText}
+                </Button>
+              )}
+            </div>
+            <div className="hidden md:flex md:space-x-2">
               {footerButtonConfiguration !== "1" && (
                 <Button variant="secondary">{secondaryButtonText}</Button>
               )}

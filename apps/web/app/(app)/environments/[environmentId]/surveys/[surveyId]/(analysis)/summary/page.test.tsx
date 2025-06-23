@@ -3,8 +3,8 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import SurveyPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/page";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { DEFAULT_LOCALE } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
@@ -38,7 +38,6 @@ vi.mock("@/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
-  WEBAPP_URL: "http://localhost:3000",
   RESPONSES_PER_PAGE: 10,
   SESSION_MAX_AGE: 1000,
 }));
@@ -64,8 +63,8 @@ vi.mock(
   })
 );
 
-vi.mock("@/lib/getSurveyUrl", () => ({
-  getSurveyDomain: vi.fn(),
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(),
 }));
 
 vi.mock("@/lib/response/service", () => ({
@@ -211,7 +210,7 @@ describe("SurveyPage", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
-    vi.mocked(getSurveyDomain).mockReturnValue("test.domain.com");
+    vi.mocked(getPublicDomain).mockReturnValue("http://localhost:3000");
     vi.mocked(getSurveySummary).mockResolvedValue(mockSurveySummary);
     vi.mocked(notFound).mockClear();
   });
@@ -235,7 +234,7 @@ describe("SurveyPage", () => {
     expect(vi.mocked(getEnvironmentAuth)).toHaveBeenCalledWith(mockEnvironmentId);
     expect(vi.mocked(getSurvey)).toHaveBeenCalledWith(mockSurveyId);
     expect(vi.mocked(getUser)).toHaveBeenCalledWith(mockUserId);
-    expect(vi.mocked(getSurveyDomain)).toHaveBeenCalled();
+    expect(vi.mocked(getPublicDomain)).toHaveBeenCalled();
 
     expect(vi.mocked(SurveyAnalysisNavigation).mock.calls[0][0]).toEqual(
       expect.objectContaining({
@@ -250,7 +249,7 @@ describe("SurveyPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        webAppUrl: WEBAPP_URL,
+        publicDomain: "http://localhost:3000",
         isReadOnly: false,
         locale: mockUser.locale ?? DEFAULT_LOCALE,
         initialSurveySummary: mockSurveySummary,

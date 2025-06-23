@@ -33,7 +33,12 @@ describe("EmailChangeSignIn", () => {
 
   test("handles successful email change verification", async () => {
     vi.mocked(verifyEmailChangeAction).mockResolvedValueOnce({
-      data: { id: "123", email: "test@example.com", emailVerified: new Date(), locale: "en-US" },
+      data: {
+        id: "123",
+        email: "test@example.com",
+        emailVerified: new Date().toISOString(),
+        locale: "en-US",
+      },
     });
 
     render(<EmailChangeSignIn token="valid-token" />);

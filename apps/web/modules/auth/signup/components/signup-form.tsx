@@ -12,8 +12,7 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -109,21 +108,22 @@ export const SignupForm = ({
         email: data.email,
         password: data.password,
         userLocale,
-        inviteToken: inviteToken || "",
+        inviteToken: inviteToken ?? "",
         emailVerificationDisabled,
         turnstileToken,
       });
 
-      if (createUserResponse?.data) {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.data) {
-          const token = emailTokenActionResponse?.data;
-          const url = emailVerificationDisabled
-            ? `/auth/signup-without-verification-success`
-            : `/auth/verification-requested?token=${token}`;
+      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      const token = emailTokenActionResponse?.data;
 
-          router.push(url);
-        } else {
+      const url = emailVerificationDisabled
+        ? `/auth/signup-without-verification-success?token=${token}`
+        : `/auth/verification-requested?token=${token}`;
+
+      if (createUserResponse?.data) {
+        router.push(url);
+
+        if (!emailTokenActionResponse?.data) {
           if (isTurnstileConfigured) {
             setTurnstileToken(undefined);
             turnstile.reset();

@@ -79,7 +79,7 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "Benutzer erfolgreich erstellt",
-      "user_successfully_created_description": "Dein neuer Benutzer wurde erfolgreich erstellt. Bitte klicke auf den untenstehenden Button und melde Dich in deinem Konto an."
+      "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Wenn keines existierte, haben wir eines für Dich erstellt. Wenn bereits ein Konto existierte, wurden keine Änderungen vorgenommen. Bitte melde Dich unten an, um fortzufahren."
     },
     "testimonial_1": "Als open-source Firma ist uns Datenschutz extrem wichtig! Formbricks bietet die perfekte Mischung aus modernster Technologie und solidem Datenschutz.",
     "testimonial_all_features_included": "Alle Funktionen enthalten",
@@ -91,11 +91,10 @@
       "invalid_token": "Ungültiges Token ☹️",
       "new_email_verification_success": "Wenn die Adresse gültig ist, wurde eine Bestätigungs-E-Mail gesendet.",
       "no_email_provided": "Keine E-Mail bereitgestellt",
-      "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
-      "we_sent_an_email_to": "Wir haben eine E-Mail an {email} gesendet",
+      "verification_email_successfully_sent_info": "Wenn ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe dein Postfach, um die Anmeldung abzuschließen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast Du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },
     "verify": {
@@ -597,7 +596,6 @@
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
       "contact_not_found": "Kein solcher Kontakt gefunden",
       "contacts_table_refresh": "Kontakte aktualisieren",
-      "contacts_table_refresh_error": "Beim Aktualisieren der Kontakte ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "first_name": "Vorname",
       "last_name": "Nachname",
@@ -760,6 +758,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
@@ -2629,6 +2628,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "Produktmanager",
     "product_market_fit_superhuman_question_3_choice_4": "People Manager",
     "product_market_fit_superhuman_question_3_choice_5": "Softwareentwickler",
+    "product_market_fit_superhuman_question_3_headline": "Was ist deine Rolle?",
     "product_market_fit_superhuman_question_3_subheader": "Bitte wähle eine der folgenden Optionen aus:",
     "product_market_fit_superhuman_question_4_headline": "Wer würde am ehesten von $[projectName] profitieren?",
     "product_market_fit_superhuman_question_5_headline": "Welchen Mehrwert ziehst Du aus $[projectName]?",
@@ -2650,6 +2650,7 @@
     "professional_development_survey_description": "Bewerte die Zufriedenheit der Mitarbeiter mit beruflichen Entwicklungsmöglichkeiten.",
     "professional_development_survey_name": "Berufliche Entwicklungsbewertung",
     "professional_development_survey_question_1_choice_1": "Ja",
+    "professional_development_survey_question_1_choice_2": "Nein",
     "professional_development_survey_question_1_headline": "Sind Sie an beruflichen Entwicklungsmöglichkeiten interessiert?",
     "professional_development_survey_question_2_choice_1": "Networking-Veranstaltungen",
     "professional_development_survey_question_2_choice_2": "Konferenzen oder Seminare",

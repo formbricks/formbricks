@@ -39,7 +39,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await page.getByRole("button", { name: "Invite", exact: true }).click();
 
-      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(5000);
 
       // const successToast = await page.waitForSelector(".formbricks__toast__success");
       // expect(successToast).toBeTruthy();
@@ -139,7 +139,6 @@ test.describe("Create, update and delete team", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
     await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
     await expect(page.getByText("Access Control")).toBeVisible();
     await page.getByText("Access Control").click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
@@ -162,8 +161,6 @@ test.describe("Create, update and delete team", async () => {
     await page.locator("#project-0-option").click();
 
     await page.getByRole("button", { name: "Save" }).click();
-
-    await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("cell", { name: "E2E Updated" })).toBeVisible();
 

@@ -126,4 +126,19 @@ describe("SurveyInactive", () => {
     expect(screen.getByTestId("button")).toBeInTheDocument();
     expect(screen.getByTestId("mock-image")).toBeInTheDocument();
   });
+
+  test("shows branding when linkSurveyBranding is true", async () => {
+    const Component = await SurveyInactive({ status: "paused", project: { linkSurveyBranding: true } });
+    render(Component);
+    expect(screen.getByTestId("mock-image")).toBeInTheDocument();
+    expect(screen.getByTestId("footer-link")).toBeInTheDocument();
+    expect(screen.getByTestId("footer-link")).toHaveAttribute("href", "https://formbricks.com");
+  });
+
+  test("hides branding when linkSurveyBranding is false", async () => {
+    const Component = await SurveyInactive({ status: "paused", project: { linkSurveyBranding: false } });
+    render(Component);
+    expect(screen.queryByTestId("mock-image")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("footer-link")).not.toBeInTheDocument();
+  });
 });

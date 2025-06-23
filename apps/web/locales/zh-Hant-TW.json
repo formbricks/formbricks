@@ -79,7 +79,7 @@
     },
     "signup_without_verification_success": {
       "user_successfully_created": "使用者建立成功",
-      "user_successfully_created_description": "您的新使用者已成功建立。請點擊下方按鈕並登入您的帳戶。"
+      "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
     "testimonial_1": "我們在同一個平台上測量文件的清晰度，並從客戶流失中學習。很棒的產品，團隊反應非常迅速！",
     "testimonial_all_features_included": "包含所有功能",
@@ -91,11 +91,10 @@
       "invalid_token": "無效的權杖 ☹️",
       "new_email_verification_success": "如果地址有效，驗證電子郵件已發送。",
       "no_email_provided": "未提供電子郵件",
-      "please_click_the_link_in_the_email_to_activate_your_account": "請點擊電子郵件中的連結以啟用您的帳戶。",
       "please_confirm_your_email_address": "請確認您的電子郵件地址",
       "resend_verification_email": "重新發送驗證電子郵件",
       "verification_email_resent_successfully": "驗證電子郵件已發送！請檢查您的收件箱。",
-      "we_sent_an_email_to": "我們已發送一封電子郵件至 <email>'{'email'}'</email>。",
+      "verification_email_successfully_sent_info": "如果有一個帳戶與 {email} 相關聯，我們已發送驗證連結至該地址。請檢查您的收件箱以完成註冊。",
       "you_didnt_receive_an_email_or_your_link_expired": "您沒有收到電子郵件或您的連結已過期？"
     },
     "verify": {
@@ -597,7 +596,6 @@
       "contact_deleted_successfully": "聯絡人已成功刪除",
       "contact_not_found": "找不到此聯絡人",
       "contacts_table_refresh": "重新整理聯絡人",
-      "contacts_table_refresh_error": "重新整理聯絡人時發生錯誤，請再試一次",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "first_name": "名字",
       "last_name": "姓氏",
@@ -760,6 +758,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -2629,6 +2628,7 @@
     "product_market_fit_superhuman_question_3_choice_3": "產品經理",
     "product_market_fit_superhuman_question_3_choice_4": "產品負責人",
     "product_market_fit_superhuman_question_3_choice_5": "軟體工程師",
+    "product_market_fit_superhuman_question_3_headline": "您的角色是什麼？",
     "product_market_fit_superhuman_question_3_subheader": "請選取以下其中一個選項：",
     "product_market_fit_superhuman_question_4_headline": "您認為哪些類型的人最能從 {projectName} 中受益？",
     "product_market_fit_superhuman_question_5_headline": "您從 {projectName} 獲得的主要好處是什麼？",
@@ -2650,6 +2650,7 @@
     "professional_development_survey_description": "評估員工對專業成長和發展機會的滿意度。",
     "professional_development_survey_name": "專業發展問卷",
     "professional_development_survey_question_1_choice_1": "是",
+    "professional_development_survey_question_1_choice_2": "否",
     "professional_development_survey_question_1_headline": "您對專業發展活動感興趣嗎？",
     "professional_development_survey_question_2_choice_1": "人脈交流活動",
     "professional_development_survey_question_2_choice_2": "研討會或研討會",

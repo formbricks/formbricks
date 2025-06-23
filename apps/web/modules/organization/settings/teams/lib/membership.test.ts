@@ -24,12 +24,6 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn(),
   },
 }));
-vi.mock("@/lib/cache", () => ({ cache: (fn) => fn }));
-vi.mock("@/lib/cache/membership", () => ({
-  membershipCache: { revalidate: vi.fn(), tag: { byOrganizationId: (id) => id, byUserId: (id) => id } },
-}));
-vi.mock("@/lib/cache/organization", () => ({ organizationCache: { revalidate: vi.fn() } }));
-vi.mock("@/lib/cache/team", () => ({ teamCache: { revalidate: vi.fn() } }));
 vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 vi.mock("react", () => ({ cache: (fn) => fn }));

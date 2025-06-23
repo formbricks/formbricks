@@ -1,16 +1,34 @@
-import { cache } from "@/lib/cache";
-import { contactCache } from "@/lib/cache/contact";
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { segmentCache } from "@/lib/cache/segment";
-import { displayCache } from "@/lib/display/cache";
-import { environmentCache } from "@/lib/environment/cache";
-import { organizationCache } from "@/lib/organization/cache";
-import { responseCache } from "@/lib/response/cache";
 import { prisma } from "@formbricks/database";
 import { TJsPersonState } from "@formbricks/types/js";
 import { getPersonSegmentIds } from "./segments";
 
 /**
+ * Optimized single query to get all user state data
+ * Replaces multiple separate queries with one efficient query
+ */
+const getUserStateDataOptimized = async (contactId: string) => {
+  return prisma.contact.findUniqueOrThrow({
+    where: { id: contactId },
+    select: {
+      id: true,
+      responses: {
+        select: { surveyId: true },
+      },
+      displays: {
+        select: {
+          surveyId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+};
+
+/**
+ * Optimized user state fetcher without caching
+ * Uses single database query and efficient data processing
+ * NO CACHING - user state changes frequently with contact updates
  *
  * @param environmentId - The environment id
  * @param userId - The user id
@@ -32,60 +50,34 @@ export const getUserState = async ({
   contactId: string;
   device: "phone" | "desktop";
   attributes: Record<string, string>;
-}): Promise<TJsPersonState["data"]> =>
-  cache(
-    async () => {
-      const contactResponses = await prisma.response.findMany({
-        where: {
-          contactId,
-        },
-        select: {
-          surveyId: true,
-        },
-      });
+}): Promise<TJsPersonState["data"]> => {
+  // Single optimized query for all contact data
+  const contactData = await getUserStateDataOptimized(contactId);
 
-      const contactDisplays = await prisma.display.findMany({
-        where: {
-          contactId,
-        },
-        select: {
-          surveyId: true,
-          createdAt: true,
-        },
-      });
+  // Get segments (this might have its own optimization)
+  const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
 
-      const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
+  // Process displays efficiently
+  const displays = (contactData.displays ?? []).map((display) => ({
+    surveyId: display.surveyId,
+    createdAt: display.createdAt,
+  }));
 
-      const sortedContactDisplaysDate = contactDisplays?.toSorted(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      )[0]?.createdAt;
+  // Get latest display date
+  const lastDisplayAt =
+    contactData.displays && contactData.displays.length > 0 ? contactData.displays[0].createdAt : null;
 
-      // If the person exists, return the persons's state
-      const userState: TJsPersonState["data"] = {
-        contactId,
-        userId,
-        segments,
-        displays:
-          contactDisplays?.map((display) => ({
-            surveyId: display.surveyId,
-            createdAt: display.createdAt,
-          })) ?? [],
-        responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        lastDisplayAt: contactDisplays?.length > 0 ? sortedContactDisplaysDate : null,
-      };
+  // Process responses efficiently
+  const responses = (contactData.responses ?? []).map((response) => response.surveyId);
 
-      return userState;
-    },
-    [`personState-${environmentId}-${userId}-${device}`],
-    {
-      tags: [
-        environmentCache.tag.byId(environmentId),
-        organizationCache.tag.byEnvironmentId(environmentId),
-        contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        segmentCache.tag.byEnvironmentId(environmentId),
-      ],
-    }
-  )();
+  const userState: TJsPersonState["data"] = {
+    contactId,
+    userId,
+    segments,
+    displays,
+    responses,
+    lastDisplayAt,
+  };
+
+  return userState;
+};

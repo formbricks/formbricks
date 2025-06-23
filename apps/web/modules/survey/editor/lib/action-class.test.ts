@@ -1,4 +1,3 @@
-import { actionClassCache } from "@/lib/actionClass/cache";
 import { ActionClass } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -15,12 +14,6 @@ vi.mock("@formbricks/database", () => ({
   },
   PrismaErrorType: {
     UniqueConstraintViolation: "P2002",
-  },
-}));
-
-vi.mock("@/lib/actionClass/cache", () => ({
-  actionClassCache: {
-    revalidate: vi.fn(),
   },
 }));
 
@@ -79,11 +72,6 @@ describe("createActionClass", () => {
         noCodeConfig: undefined,
       },
     });
-    expect(actionClassCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-      name: createdAction.name,
-      id: createdAction.id,
-    });
     expect(result).toEqual(createdAction);
   });
 
@@ -108,11 +96,6 @@ describe("createActionClass", () => {
         noCodeConfig: mockNoCodeActionInput.noCodeConfig,
       },
     });
-    expect(actionClassCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-      name: createdAction.name,
-      id: createdAction.id,
-    });
     expect(result).toEqual(createdAction);
   });
 
@@ -124,7 +107,6 @@ describe("createActionClass", () => {
     vi.mocked(prisma.actionClass.create).mockRejectedValue(prismaError);
 
     await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
-    expect(actionClassCache.revalidate).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError for other database errors", async () => {
@@ -132,6 +114,5 @@ describe("createActionClass", () => {
     vi.mocked(prisma.actionClass.create).mockRejectedValue(genericError);
 
     await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
-    expect(actionClassCache.revalidate).not.toHaveBeenCalled();
   });
 });
