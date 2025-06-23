@@ -80,7 +80,7 @@ const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
       "sticky top-[-32px] z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-left",
-      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 [&>svg~*]:items-center [&>svg~*]:pl-6 md:[&>svg~*]:flex",
+      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 [&>svg~*]:min-h-4 [&>svg~*]:items-center [&>svg~*]:pl-6 md:[&>svg~*]:flex",
       className
     )}
     {...props}
@@ -121,7 +121,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-primary min-h-4 text-sm font-medium leading-none tracking-tight", className)}
+    className={cn("text-primary text-sm font-medium leading-none tracking-tight", className)}
     {...props}
   />
 ));
