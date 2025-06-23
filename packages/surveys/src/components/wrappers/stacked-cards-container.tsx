@@ -30,7 +30,7 @@ export function StackedCardsContainer({
   setQuestionId,
   shouldResetQuestionId = true,
   fullSizeCards = false,
-}: StackedCardsContainerProps) {
+}: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.highlightBorderColor?.light
