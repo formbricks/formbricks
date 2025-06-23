@@ -35,7 +35,6 @@ runs:
         sentry-cli releases new "${{ inputs.release_version }}" \
           --org="formbricks" \
           --project="formbricks-cloud" \
-          --skip-if-existing
         
         # Associate Git commits with the release
         sentry-cli releases set-commits "${{ inputs.release_version }}" --auto \
@@ -92,10 +91,9 @@ runs:
           --org="formbricks" \
           --project="formbricks-cloud" \
           --release="${{ inputs.release_version }}" \
-          --url-prefix="~/_next/static/" \
           --ext js \
           --ext map \
-          ./extracted-next/static/
+          ./extracted-next/
         echo "✅ Sourcemaps uploaded successfully"
 
     - name: Finalize Sentry Release

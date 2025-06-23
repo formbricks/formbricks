@@ -434,11 +434,23 @@ const sentryOptions = {
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
+
+  // Disable automatic release management
+  automaticVercelMonitors: false,
+  autoUploadSourceMaps: false,
+  hideSourceMaps: false,
+  
+  // Don't automatically create releases - we handle this in GitHub Actions
+  release: {
+    create: false,
+    deploy: false,
+    setCommits: false,
+  },
 };
 
 const exportConfig =
-  process.env.SENTRY_DSN && process.env.NODE_ENV === "production"
-    ? withSentryConfig(nextConfig, sentryOptions)
-    : nextConfig;
+  process.env.SENTRY_DSN 
+    ? withSentryConfig(nextConfig, sentryOptions) :
+    nextConfig;
 
 export default exportConfig;
