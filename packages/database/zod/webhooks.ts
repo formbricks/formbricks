@@ -33,7 +33,7 @@ export const ZWebhook = z.object({
     .openapi({
       description: "The triggers of the webhook",
     })
-    .length(1, {
+    .min(1, {
       message: "At least one trigger is required",
     }),
   surveyIds: z.array(z.string().cuid2()).openapi({
