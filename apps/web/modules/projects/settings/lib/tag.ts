@@ -21,32 +21,31 @@ export const deleteTag = async (id: string): Promise<TTag> => {
   }
 };
 
-export const updateTagName = async (id: string, name: string): Promise<TTag> => {
+export const updateTagName = async (
+  id: string,
+  name: string
+): Promise<{ data: TTag | null; error: { message: string } | null }> => {
   validateInputs([id, ZId], [name, ZString]);
 
   try {
     const tag = await prisma.tag.update({
-      where: {
-        id,
-      },
-      data: {
-        name,
-      },
+      where: { id },
+      data: { name },
     });
 
-    return tag;
+    return {
+      data: tag,
+      error: null,
+    };
   } catch (error: any) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return {
         data: null,
         error: { message: "already exists" },
       };
     }
 
-    return {
-      data: null,
-      error: { message: error.message || "Something went wrong" },
-    };
+    throw error;
   }
 };
 

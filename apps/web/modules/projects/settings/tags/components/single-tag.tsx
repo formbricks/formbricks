@@ -71,27 +71,32 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
-                  const response = updateTagNameResponse?.data;
+                const trimmedName = e.target.value.trim();
 
-                  if (response?.id) {
+                updateTagNameAction({ tagId, name: trimmedName }).then((res) => {
+                  const response = res?.data;
+                  const data = response?.data;
+                  const errorMessage = response?.error?.message?.toLowerCase?.() ?? "";
+
+                  if (data?.id) {
                     setUpdateTagError(false);
                     toast.success(t("environments.project.tags.tag_updated"));
                   } else {
-                    const errorMessage = response?.error?.message ?? "";
-                    if (
-                      errorMessage.toLowerCase().includes("already exists") ||
-                      errorMessage.toLowerCase().includes("unique constraint failed")
-                    ) {
-                      toast.error(t("environments.project.tags.tag_already_exists"), {
+                    const isDuplicate =
+                      errorMessage.includes("already exists") ||
+                      errorMessage.includes("unique constraint failed");
+
+                    toast.error(
+                      isDuplicate
+                        ? t("environments.project.tags.tag_already_exists")
+                        : t("common.something_went_wrong_please_try_again"),
+                      {
                         duration: 2000,
-                        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-                      });
-                    } else {
-                      toast.error(t("common.something_went_wrong_please_try_again"), {
-                        duration: 2000,
-                      });
-                    }
+                        icon: isDuplicate ? (
+                          <AlertCircleIcon className="h-5 w-5 text-orange-500" />
+                        ) : undefined,
+                      }
+                    );
                     setUpdateTagError(true);
                   }
                 });
