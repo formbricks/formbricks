@@ -42,12 +42,20 @@ export const extractParts = (text: string): string[] => {
       parts.push(text.slice(i));
       break;
     }
-    const end = text.indexOf("\\", start + 1);
-    if (end === -1) {
-      // No matching `\`, treat as plain text
+    
+    // If the next character is a backslash, treat both as plain text
+    if (text[start + 1] === "\\") {
       parts.push(text.slice(i));
       break;
     }
+    
+    const end = text.indexOf("\\", start + 1);
+    // If no closing backslash or it's escaped, treat as plain text
+    if (end === -1 || (end > 0 && text[end - 1] === '\\')) {
+      parts.push(text.slice(i));
+      break;
+    }
+    
     // Add text before the match
     if (start > i) {
       parts.push(text.slice(i, start));
