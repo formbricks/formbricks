@@ -20,7 +20,7 @@ cronJob:
               key: WEBAPP_URL
               name: formbricks-stage-app-env
       image:
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         repository: quay.io/curl/curl
         tag: latest
       schedule: 0 9 * * *
@@ -43,7 +43,7 @@ cronJob:
               key: WEBAPP_URL
               name: formbricks-stage-app-env
       image:
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         repository: quay.io/curl/curl
         tag: latest
       schedule: 0 0 * * *
@@ -66,7 +66,7 @@ cronJob:
               key: WEBAPP_URL
               name: formbricks-stage-app-env
       image:
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         repository: quay.io/curl/curl
         tag: latest
       schedule: 0 8 * * 1
