@@ -6,13 +6,70 @@ import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 const bulkContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "uploadBulkContacts",
   summary: "Upload Bulk Contacts",
-  description: "Uploads contacts in bulk",
+  description:
+    "Uploads contacts in bulk. Each contact in the payload must have an 'email' attribute present in their attributes array. The email attribute is mandatory and must be a valid email format. Without a valid email, the contact will be skipped during processing.",
   requestBody: {
     required: true,
-    description: "The contacts to upload",
+    description:
+      "The contacts to upload. Each contact must include an 'email' attribute in their attributes array. The email is used as the unique identifier for the contact.",
     content: {
       "application/json": {
         schema: ZContactBulkUploadRequest,
+        example: {
+          environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+          contacts: [
+            {
+              attributes: [
+                {
+                  attributeKey: {
+                    key: "email",
+                    name: "Email Address",
+                  },
+                  value: "john.doe@example.com",
+                },
+                {
+                  attributeKey: {
+                    key: "firstName",
+                    name: "First Name",
+                  },
+                  value: "John",
+                },
+                {
+                  attributeKey: {
+                    key: "lastName",
+                    name: "Last Name",
+                  },
+                  value: "Doe",
+                },
+              ],
+            },
+            {
+              attributes: [
+                {
+                  attributeKey: {
+                    key: "email",
+                    name: "Email Address",
+                  },
+                  value: "jane.smith@example.com",
+                },
+                {
+                  attributeKey: {
+                    key: "firstName",
+                    name: "First Name",
+                  },
+                  value: "Jane",
+                },
+                {
+                  attributeKey: {
+                    key: "lastName",
+                    name: "Last Name",
+                  },
+                  value: "Smith",
+                },
+              ],
+            },
+          ],
+        },
       },
     },
   },
