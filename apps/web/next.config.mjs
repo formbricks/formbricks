@@ -449,7 +449,7 @@ const sentryOptions = {
 };
 
 const exportConfig =
-  process.env.SENTRY_DSN 
+  (process.env.SENTRY_DSN && process.env.NODE_ENV === "production")
     ? withSentryConfig(nextConfig, sentryOptions) :
     nextConfig;
 
