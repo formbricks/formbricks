@@ -197,6 +197,7 @@ tls:
       alpnProtocols:
         - h2
         - http/1.1
+        - acme-tls/1
 EOT
 
   echo "💡 Created traefik.yaml and traefik-dynamic.yaml file."
