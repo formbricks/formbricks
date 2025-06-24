@@ -7,11 +7,11 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "uploadBulkContacts",
   summary: "Upload Bulk Contacts",
   description:
-    "Uploads contacts in bulk. Each contact in the payload must have an 'email' attribute present in their attributes array. The email attribute is mandatory and must be a valid email format.",
+    "Uploads contacts in bulk. Each contact in the payload must have an 'email' attribute present in their attributes array. The email attribute is mandatory and must be a valid email format. Without a valid email, the contact will be skipped during processing.",
   requestBody: {
     required: true,
     description:
-      "The contacts to upload. Each contact must include an 'email' attribute in their attributes array.",
+      "The contacts to upload. **REQUIRED**: Each contact must include an 'email' attribute in their attributes array. The email is used as the unique identifier for the contact.",
     content: {
       "application/json": {
         schema: ZContactBulkUploadRequest,
