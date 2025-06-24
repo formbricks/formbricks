@@ -26,6 +26,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   }
 
   const canRemoveBranding = await getWhiteLabelPermission(organization.billing.plan);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>

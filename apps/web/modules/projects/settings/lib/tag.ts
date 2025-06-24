@@ -2,7 +2,9 @@ import "server-only";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZString } from "@formbricks/types/common";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TTag } from "@formbricks/types/tags";
 
 export const deleteTag = async (id: string): Promise<TTag> => {
@@ -21,30 +23,27 @@ export const deleteTag = async (id: string): Promise<TTag> => {
   }
 };
 
-export const updateTagName = async (
-  id: string,
-  name: string
-): Promise<{ data: TTag | null; error: { message: string } | null }> => {
+export const updateTagName = async (id: string, name: string): Promise<TTag> => {
   validateInputs([id, ZId], [name, ZString]);
 
   try {
     const tag = await prisma.tag.update({
-      where: { id },
-      data: { name },
+      where: {
+        id,
+      },
+      data: {
+        name,
+      },
     });
 
-    return {
-      data: tag,
-      error: null,
-    };
-  } catch (error: any) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return {
-        data: null,
-        error: { message: "already exists" },
-      };
+    return tag;
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
+      throw new InvalidInputError(error.message);
     }
-
     throw error;
   }
 };

@@ -71,32 +71,22 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                const trimmedName = e.target.value.trim();
-
-                updateTagNameAction({ tagId, name: trimmedName }).then((res) => {
-                  const response = res?.data;
-                  const data = response?.data;
-                  const errorMessage = response?.error?.message?.toLowerCase?.() ?? "";
-
-                  if (data?.id) {
+                updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
+                  if (updateTagNameResponse?.data) {
                     setUpdateTagError(false);
                     toast.success(t("environments.project.tags.tag_updated"));
                   } else {
-                    const isDuplicate =
-                      errorMessage.includes("already exists") ||
-                      errorMessage.includes("unique constraint failed");
-
-                    toast.error(
-                      isDuplicate
-                        ? t("environments.project.tags.tag_already_exists")
-                        : t("common.something_went_wrong_please_try_again"),
-                      {
+                    const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
+                    if (errorMessage?.includes("Unique constraint failed")) {
+                      toast.error(t("environments.project.tags.tag_already_exists"), {
                         duration: 2000,
-                        icon: isDuplicate ? (
-                          <AlertCircleIcon className="h-5 w-5 text-orange-500" />
-                        ) : undefined,
-                      }
-                    );
+                        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+                      });
+                    } else {
+                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
+                        duration: 2000,
+                      });
+                    }
                     setUpdateTagError(true);
                   }
                 });
