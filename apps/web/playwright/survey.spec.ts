@@ -103,7 +103,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
         page.locator("#questionCard-3").getByText(surveys.createAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
       expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
       await page.locator("path").nth(3).click();
 
@@ -115,7 +115,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(
         page.locator("#questionCard-4").getByText(surveys.createAndSubmit.npsQuestion.highLabel)
       ).toBeVisible();
-      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
 
       for (let i = 0; i < 11; i++) {
@@ -135,7 +135,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel)).toBeVisible();
       await expect(page.locator("#questionCard-6").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-6").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByText(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.getByLabel(surveys.createAndSubmit.consentQuestion.checkboxLabel).check();
       await page.locator("#questionCard-6").getByRole("button", { name: "Next" }).click();
 
       // Picture Select Question
@@ -760,7 +760,7 @@ test.describe("Testing Survey with advanced logic", async () => {
         page.locator("#questionCard-4").getByText(surveys.createWithLogicAndSubmit.ratingQuestion.highLabel)
       ).toBeVisible();
       expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
-      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
       await page.getByRole("group", { name: "Choices" }).locator("path").nth(3).click();
 
@@ -772,7 +772,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.locator("#questionCard-5").getByText(surveys.createWithLogicAndSubmit.npsQuestion.highLabel)
       ).toBeVisible();
-      await expect(page.locator("#questionCard-5").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-5").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-5").getByRole("button", { name: "Back" })).toBeVisible();
 
       for (let i = 0; i < 11; i++) {
@@ -831,7 +831,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByText(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.getByLabel(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel).check();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
