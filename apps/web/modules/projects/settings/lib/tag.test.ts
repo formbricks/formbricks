@@ -70,7 +70,7 @@ describe("tag lib", () => {
     test("updates tag name and revalidates cache", async () => {
       vi.mocked(prisma.tag.update).mockResolvedValueOnce(baseTag);
       const result = await updateTagName(baseTag.id, "Tag1");
-      expect(result).toEqual(baseTag);
+      expect(result).toEqual({ data: baseTag, error: null });
       expect(prisma.tag.update).toHaveBeenCalledWith({ where: { id: baseTag.id }, data: { name: "Tag1" } });
     });
     test("throws error on prisma error", async () => {
