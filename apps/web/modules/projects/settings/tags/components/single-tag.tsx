@@ -77,11 +77,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                     toast.success(t("environments.project.tags.tag_updated"));
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
-                    if (
-                      errorMessage?.includes(
-                        t("environments.project.tags.unique_constraint_failed_on_the_fields")
-                      )
-                    ) {
+                    if (errorMessage?.includes("Unique constraint failed")) {
                       toast.error(t("environments.project.tags.tag_already_exists"), {
                         duration: 2000,
                         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
