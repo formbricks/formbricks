@@ -1,10 +1,9 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Load environment variables from .env files
-if [ -f .env ]; then
+if [ -f "$(git rev-parse --show-toplevel)/.env" ]; then
   set -a
-  . .env
+  . "$(git rev-parse --show-toplevel)/.env"
   set +a
 fi
 

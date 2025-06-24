@@ -2,19 +2,21 @@
 
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { MatrixColumnChoice } from "@/modules/survey/editor/components/matrix-column-choice";
+import { MatrixRowChoice } from "@/modules/survey/editor/components/matrix-row-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import type { JSX } from "react";
 import toast from "react-hot-toast";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
   localSurvey: TSurvey;
@@ -109,6 +111,42 @@ export const MatrixQuestionForm = ({
     }
   };
 
+  const handleRowDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (!active || !over) {
+      return;
+    }
+
+    const activeIndex = question.rows.findIndex((_, idx) => `row-${idx}` === active.id);
+    const overIndex = question.rows.findIndex((_, idx) => `row-${idx}` === over.id);
+
+    if (activeIndex !== overIndex) {
+      const newRows = [...question.rows];
+      const [reorderedItem] = newRows.splice(activeIndex, 1);
+      newRows.splice(overIndex, 0, reorderedItem);
+      updateQuestion(questionIdx, { rows: newRows });
+    }
+  };
+
+  const handleColumnDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (!active || !over) {
+      return;
+    }
+
+    const activeIndex = question.columns.findIndex((_, idx) => `column-${idx}` === active.id);
+    const overIndex = question.columns.findIndex((_, idx) => `column-${idx}` === over.id);
+
+    if (activeIndex !== overIndex) {
+      const newColumns = [...question.columns];
+      const [reorderedItem] = newColumns.splice(activeIndex, 1);
+      newColumns.splice(overIndex, 0, reorderedItem);
+      updateQuestion(questionIdx, { columns: newColumns });
+    }
+  };
+
   const shuffleOptionsTypes = {
     none: {
       id: "none",
@@ -181,44 +219,35 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
-          <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.rows.map((row, index) => (
-              <div className="flex items-center" key={`${row}-${index}`}>
-                <QuestionFormInput
-                  id={`row-${index}`}
-                  label={""}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                  value={question.rows[index]}
-                  updateMatrixLabel={updateMatrixLabel}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  isInvalid={
-                    isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
-                  }
-                  locale={locale}
-                  onKeyDown={(e) => handleKeyDown(e, "row")}
-                />
-                {question.rows.length > 2 && (
-                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDeleteLabel("row", index);
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </TooltipRenderer>
-                )}
-              </div>
-            ))}
+          <div className="mt-2" id="rows">
+            <DndContext id="matrix-rows" onDragEnd={handleRowDragEnd}>
+              <SortableContext
+                items={question.rows.map((_, idx) => `row-${idx}`)}
+                strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2" ref={parent}>
+                  {question.rows.map((_, index) => (
+                    <MatrixRowChoice
+                      key={`row-${index}`}
+                      rowIdx={index}
+                      questionIdx={questionIdx}
+                      updateMatrixLabel={updateMatrixLabel}
+                      handleDeleteLabel={handleDeleteLabel}
+                      handleKeyDown={handleKeyDown}
+                      isInvalid={isInvalid}
+                      localSurvey={localSurvey}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      question={question}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             <Button
               variant="secondary"
               size="sm"
-              className="w-fit"
+              className="mt-2 w-fit"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("row");
@@ -231,44 +260,35 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
-          <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.columns.map((column, index) => (
-              <div className="flex items-center" key={`${column}-${index}`}>
-                <QuestionFormInput
-                  id={`column-${index}`}
-                  label={""}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                  value={question.columns[index]}
-                  updateMatrixLabel={updateMatrixLabel}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  isInvalid={
-                    isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
-                  }
-                  locale={locale}
-                  onKeyDown={(e) => handleKeyDown(e, "column")}
-                />
-                {question.columns.length > 2 && (
-                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDeleteLabel("column", index);
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </TooltipRenderer>
-                )}
-              </div>
-            ))}
+          <div className="mt-2" id="columns">
+            <DndContext id="matrix-columns" onDragEnd={handleColumnDragEnd}>
+              <SortableContext
+                items={question.columns.map((_, idx) => `column-${idx}`)}
+                strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2" ref={parent}>
+                  {question.columns.map((_, index) => (
+                    <MatrixColumnChoice
+                      key={`column-${index}`}
+                      columnIdx={index}
+                      questionIdx={questionIdx}
+                      updateMatrixLabel={updateMatrixLabel}
+                      handleDeleteLabel={handleDeleteLabel}
+                      handleKeyDown={handleKeyDown}
+                      isInvalid={isInvalid}
+                      localSurvey={localSurvey}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      question={question}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             <Button
               variant="secondary"
               size="sm"
-              className="w-fit"
+              className="mt-2 w-fit"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("column");
