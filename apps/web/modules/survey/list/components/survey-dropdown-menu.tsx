@@ -74,8 +74,9 @@ export const SurveyDropDownMenu = ({
       toast.success(t("environments.surveys.survey_deleted_successfully"));
       router.refresh();
     } catch (error) {
-      setLoading(false);
       toast.error(t("environments.surveys.error_deleting_survey"));
+    } finally {
+      setLoading(false);
     }
   };
 
