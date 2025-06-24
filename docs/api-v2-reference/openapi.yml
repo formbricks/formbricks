@@ -1530,8 +1530,8 @@ paths:
         - Management API > Contacts
       requestBody:
         required: true
-        description: The contacts to upload. Each contact must include an 'email'
-          attribute in their attributes array.
+        description: The contacts to upload. Each contact **must include an 'email'
+          attribute** in their attributes array.
         content:
           application/json:
             schema:
