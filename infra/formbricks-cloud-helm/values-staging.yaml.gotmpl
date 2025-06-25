@@ -74,6 +74,8 @@ cronJob:
 
 ## Deployment & Autoscaling
 deployment:
+  image:
+    pullPolicy: Always
   resources:
     limits:
       cpu: 2

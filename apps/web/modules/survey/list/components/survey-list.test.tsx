@@ -10,7 +10,6 @@ import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyCard } from "./survey-card";
-import { SurveyFilters } from "./survey-filters";
 import { SurveysList, initialFilters as surveyFiltersInitialFiltersFromModule } from "./survey-list";
 import { SurveyLoading } from "./survey-loading";
 
@@ -322,6 +321,24 @@ describe("SurveysList", () => {
       expect(screen.queryByText("Survey One")).not.toBeInTheDocument();
     });
     expect(screen.getByText("Survey Two")).toBeInTheDocument();
+  });
+
+  test("handleDeleteSurvey shows loading state when the last survey is deleted", async () => {
+    const surveysData = [{ ...surveyMock, id: "s1", name: "Last Survey" }];
+    vi.mocked(getSurveysAction).mockResolvedValueOnce({ data: surveysData });
+    const user = userEvent.setup();
+    render(<SurveysList {...defaultProps} />);
+
+    await waitFor(() => expect(screen.getByText("Last Survey")).toBeInTheDocument());
+    expect(screen.queryByTestId("survey-loading")).not.toBeInTheDocument();
+
+    const deleteButtonS1 = screen.getByTestId("delete-s1");
+    await user.click(deleteButtonS1);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Last Survey")).not.toBeInTheDocument();
+      expect(screen.getByTestId("survey-loading")).toBeInTheDocument();
+    });
   });
 
   test("handleDuplicateSurvey adds the duplicated survey to the beginning of the list", async () => {
