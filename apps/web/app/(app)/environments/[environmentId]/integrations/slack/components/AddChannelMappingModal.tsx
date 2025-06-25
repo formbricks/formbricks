@@ -201,8 +201,8 @@ export const AddChannelMappingModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <Image className="w-12" src={SlackLogo} alt="Slack logo" />
+            <div className="size-6">
+              <Image className="w-6" src={SlackLogo} alt="Slack logo" />
             </div>
             <div>
               <DialogTitle>{t("environments.integrations.slack.link_slack_channel")}</DialogTitle>
@@ -212,7 +212,7 @@ export const AddChannelMappingModal = ({
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit(linkChannel)}>
+        <form className="space-y-4" onSubmit={handleSubmit(linkChannel)}>
           <DialogBody>
             <div className="w-full space-y-4">
               <div>
