@@ -178,7 +178,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         </DialogHeader>
 
         <form onSubmit={handleSubmit(submitWebhook)}>
-          <DialogBody className="space-4 pb-4">
+          <DialogBody className="space-y-4 pb-4">
             <div className="col-span-1">
               <Label htmlFor="name">{t("common.name")}</Label>
               <div className="mt-1 flex">
