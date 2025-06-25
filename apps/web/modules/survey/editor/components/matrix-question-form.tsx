@@ -2,13 +2,10 @@
 
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { MatrixLabelChoice } from "@/modules/survey/editor/components/matrix-label-choice";
+import { MatrixLabelSection } from "@/modules/survey/editor/components/matrix-label-section";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
-import { DndContext } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
@@ -215,89 +212,41 @@ export const MatrixQuestionForm = ({
         )}
       </div>
       <div className="mt-3 grid grid-cols-2 gap-4">
+        <MatrixLabelSection
+          type="row"
+          labels={question.rows}
+          question={question}
+          questionIdx={questionIdx}
+          updateMatrixLabel={updateMatrixLabel}
+          handleDeleteLabel={handleDeleteLabel}
+          handleKeyDown={handleKeyDown}
+          handleAddLabel={handleAddLabel}
+          onDragEnd={handleRowDragEnd}
+          isInvalid={isInvalid}
+          localSurvey={localSurvey}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          locale={locale}
+          parent={parent}
+        />
         <div>
-          {/* Rows section */}
-          <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
-          <div className="mt-2" id="rows">
-            <DndContext id="matrix-rows" onDragEnd={handleRowDragEnd}>
-              <SortableContext
-                items={question.rows.map((_, idx) => `row-${idx}`)}
-                strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2" ref={parent}>
-                  {question.rows.map((_, index) => (
-                    <MatrixLabelChoice
-                      key={`row-${index}`}
-                      labelIdx={index}
-                      type="row"
-                      questionIdx={questionIdx}
-                      updateMatrixLabel={updateMatrixLabel}
-                      handleDeleteLabel={handleDeleteLabel}
-                      handleKeyDown={handleKeyDown}
-                      isInvalid={isInvalid}
-                      localSurvey={localSurvey}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
-                      question={question}
-                      locale={locale}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2 w-fit"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAddLabel("row");
-              }}>
-              <PlusIcon />
-              {t("environments.surveys.edit.add_row")}
-            </Button>
-          </div>
-        </div>
-        <div>
-          {/* Columns section */}
-          <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
-          <div className="mt-2" id="columns">
-            <DndContext id="matrix-columns" onDragEnd={handleColumnDragEnd}>
-              <SortableContext
-                items={question.columns.map((_, idx) => `column-${idx}`)}
-                strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2" ref={parent}>
-                  {question.columns.map((_, index) => (
-                    <MatrixLabelChoice
-                      key={`column-${index}`}
-                      labelIdx={index}
-                      type="column"
-                      questionIdx={questionIdx}
-                      updateMatrixLabel={updateMatrixLabel}
-                      handleDeleteLabel={handleDeleteLabel}
-                      handleKeyDown={handleKeyDown}
-                      isInvalid={isInvalid}
-                      localSurvey={localSurvey}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
-                      question={question}
-                      locale={locale}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2 w-fit"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAddLabel("column");
-              }}>
-              <PlusIcon />
-              {t("environments.surveys.edit.add_column")}
-            </Button>
-          </div>
+          <MatrixLabelSection
+            type="column"
+            labels={question.columns}
+            question={question}
+            questionIdx={questionIdx}
+            updateMatrixLabel={updateMatrixLabel}
+            handleDeleteLabel={handleDeleteLabel}
+            handleKeyDown={handleKeyDown}
+            handleAddLabel={handleAddLabel}
+            onDragEnd={handleColumnDragEnd}
+            isInvalid={isInvalid}
+            localSurvey={localSurvey}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            locale={locale}
+            parent={parent}
+          />
           <div className="mt-3 flex flex-1 items-center justify-end gap-2">
             <ShuffleOptionSelect
               shuffleOptionsTypes={shuffleOptionsTypes}
