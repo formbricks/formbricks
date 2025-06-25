@@ -4,11 +4,19 @@ import { logger } from "@formbricks/logger";
 
 // Define the v1 (now v2) client endpoints to be merged
 const v1ClientEndpoints = {
-  "/responses/{responseId}": {
+  "/client/{environmentId}/responses/{responseId}": {
     put: {
+      security: [],
       description:
         "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
       parameters: [
+        {
+          in: "path",
+          name: "environmentId",
+          required: true,
+          schema: { type: "string" },
+          description: "The ID of the environment.",
+        },
         {
           in: "path",
           name: "responseId",
@@ -57,14 +65,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > Response"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/responses": {
+  "/client/{environmentId}/responses": {
     post: {
+      security: [],
       description:
         "Create a response for a survey and its fields with the user's responses. The userId & meta here is optional",
       requestBody: {
@@ -89,14 +98,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > Response"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/contacts/{userId}/attributes": {
+  "/client/{environmentId}/contacts/{userId}/attributes": {
     put: {
+      security: [],
       description:
         "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks.",
       parameters: [
@@ -138,14 +148,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > Contacts"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/identify/contacts/{userId}": {
+  "/client/{environmentId}/identify/contacts/{userId}": {
     get: {
+      security: [],
       description:
         "Retrieves a contact's state including their segments, displays, responses and other tracking information. If the contact doesn't exist, it will be created.",
       parameters: [
@@ -167,14 +178,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > Contacts"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/displays": {
+  "/client/{environmentId}/displays": {
     post: {
+      security: [],
       description:
         "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user.",
       requestBody: {
@@ -199,48 +211,26 @@ const v1ClientEndpoints = {
       tags: ["Client API > Display"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/displays/{displayId}": {
-    put: {
-      description:
-        "Update a Display for a user. A use case can be when a user submits a response & you want to link it to an existing display.",
-      parameters: [{ in: "path", name: "displayId", required: true, schema: { type: "string" } }],
-      requestBody: {
-        content: {
-          "application/json": {
-            schema: { example: { responseId: "response123" }, type: "object" },
-          },
-        },
-      },
-      responses: {
-        "200": {
-          content: {
-            "application/json": {
-              example: { displayId: "display123" },
-              schema: { type: "object" },
-            },
-          },
-          description: "OK",
-        },
-      },
-      summary: "Update Display",
-      tags: ["Client API > Display"],
-      servers: [
-        {
-          url: "https://app.formbricks.com/api/v2/client",
-          description: "Formbricks Client",
-        },
-      ],
-    },
-  },
-  "/{environmentId}/environment": {
+  "/client/{environmentId}/environment": {
     get: {
-      description: "Retrieves the environment state to be used in Formbricks SDKs",
+      security: [],
+      description:
+        "Retrieves the environment state to be used in Formbricks SDKs. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, project settings, or other environment data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
+      parameters: [
+        {
+          in: "path",
+          name: "environmentId",
+          required: true,
+          schema: { type: "string" },
+          description: "The ID of the environment.",
+        },
+      ],
       responses: {
         "200": {
           content: {
@@ -256,14 +246,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > Environment"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/user": {
+  "/client/{environmentId}/user": {
     post: {
+      security: [],
       description:
         "Endpoint for creating or identifying a user within the specified environment. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user.",
       requestBody: {
@@ -288,14 +279,15 @@ const v1ClientEndpoints = {
       tags: ["Client API > User"],
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks Client",
         },
       ],
     },
   },
-  "/{environmentId}/storage": {
+  "/client/{environmentId}/storage": {
     post: {
+      security: [],
       summary: "Upload Private File",
       description:
         "API endpoint for uploading private files. Uploaded files are kept private so that only users with access to the specified environment can retrieve them. The endpoint validates the survey ID, file name, and file type from the request body, and returns a signed URL for S3 uploads along with a local upload URL.",
@@ -442,14 +434,15 @@ const v1ClientEndpoints = {
       },
       servers: [
         {
-          url: "https://app.formbricks.com/api/v2/client",
+          url: "https://app.formbricks.com/api/v2",
           description: "Formbricks API Server",
         },
       ],
     },
   },
-  "/{environmentId}/storage/local": {
+  "/client/{environmentId}/storage/local": {
     post: {
+      security: [],
       summary: "Upload Private File to Local Storage",
       description:
         'API endpoint for uploading private files to local storage. The request must include a valid signature, UUID, and timestamp to verify the upload. The file is provided as a Base64 encoded string in the request body. The "Content-Type" header must be set to a valid MIME type, and the file data must be a valid file object (buffer).',
@@ -478,7 +471,8 @@ const v1ClientEndpoints = {
                 },
                 fileName: {
                   type: "string",
-                  description: "The URI encoded file name.",
+                  description:
+                    "This must be the `fileName` returned from the [Upload Private File](/api-v2-reference/client-api->-file-upload/upload-private-file) endpoint (Step 1).",
                 },
                 fileType: {
                   type: "string",

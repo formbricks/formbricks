@@ -123,6 +123,7 @@ export const SurveysList = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
     setSurveys(newSurveys);
+    if (newSurveys.length === 0) setIsFetching(true);
   };
 
   const handleDuplicateSurvey = async (survey: TSurvey) => {
