@@ -35,6 +35,7 @@ runs:
         sentry-cli releases new "${{ inputs.release_version }}" \
           --org="formbricks" \
           --project="formbricks-cloud" \
+          --skip-if-existing
         
         # Associate Git commits with the release
         sentry-cli releases set-commits "${{ inputs.release_version }}" --auto \
@@ -46,13 +47,22 @@ runs:
       run: |
         echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
         
+        # Set up trap to ensure container cleanup on exit
+        cleanup_container() {
+          if docker ps -a --format '{{.Names}}' | grep -q "sentry-sourcemap-container"; then
+            echo "🧹 Cleaning up Docker container..."
+            docker rm -f sentry-sourcemap-container
+          fi
+        }
+        trap cleanup_container EXIT
+        
         # Create temporary container from the image
         docker create --name sentry-sourcemap-container "${{ inputs.docker_image }}"
         
         # Extract .next directory containing sourcemaps
         docker cp sentry-sourcemap-container:/home/nextjs/apps/web/.next ./extracted-next
         
-        # Clean up container
+        # Clean up container (trap will also handle this)
         docker rm sentry-sourcemap-container
         
         # Verify sourcemaps exist
