@@ -168,7 +168,7 @@ export function MultipleChoiceSingleQuestion({
                           name={question.id}
                           value={getLocalizedValue(choice.label, languageCode)}
                           dir="auto"
-                          className="fb-border-brand fb-text-brand fb-min-h-4 fb-min-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={() => {
                             setOtherSelected(false);
