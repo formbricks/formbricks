@@ -18,29 +18,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install Sentry CLI
-      shell: bash
-      run: |
-        # Install official Sentry CLI
-        curl -sL https://sentry.io/get-cli/ | bash
-
-    - name: Create Sentry Release
-      shell: bash
-      env:
-        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
-      run: |
-        echo "🚀 Creating Sentry release: ${{ inputs.release_version }} for environment: ${{ inputs.environment }}"
-        
-        # Create a new release
-        sentry-cli releases new "${{ inputs.release_version }}" \
-          --org="formbricks" \
-          --project="formbricks-cloud" \
-          --skip-if-existing
-        
-        # Associate Git commits with the release
-        sentry-cli releases set-commits "${{ inputs.release_version }}" --auto \
-          --org="formbricks" \
-          --project="formbricks-cloud"
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Extract sourcemaps from Docker image
       shell: bash
@@ -80,49 +61,17 @@ runs:
           exit 1
         fi
 
-    - name: Upload sourcemaps to Sentry
-      shell: bash
+    - name: Create Sentry release and upload sourcemaps
+      uses: getsentry/action-release@v3
       env:
         SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
-      run: |
-        # Upload sourcemaps to Sentry (fail fast if structure is wrong)
-        if [ ! -d "./extracted-next/static/chunks" ]; then
-          echo "❌ ERROR: Expected .next/static/chunks directory not found!"
-          echo "📋 Available directories:"
-          ls -la ./extracted-next/
-          echo "🔍 Available sourcemaps:"
-          find ./extracted-next/static/chunks -name "*.map" -type f | head -5
-          echo "💥 Build structure is unexpected - aborting sourcemap upload"
-          exit 1
-        fi
-        
-        echo "📤 Uploading sourcemaps to Sentry..."
-        sentry-cli sourcemaps upload \
-          --org="formbricks" \
-          --project="formbricks-cloud" \
-          --release="${{ inputs.release_version }}" \
-          --ext js \
-          --ext map \
-          ./extracted-next/
-        echo "✅ Sourcemaps uploaded successfully"
-
-    - name: Finalize Sentry Release
-      shell: bash
-      env:
-        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
-      run: |
-        # Finalize the release
-        sentry-cli releases finalize "${{ inputs.release_version }}" \
-          --org="formbricks" \
-          --project="formbricks-cloud"
-        
-        # Create deployment record
-        sentry-cli releases deploys "${{ inputs.release_version }}" new \
-          --env="${{ inputs.environment }}" \
-          --org="formbricks" \
-          --project="formbricks-cloud"
-        
-        echo "✅ Sentry release ${{ inputs.release_version }} deployed to ${{ inputs.environment }}"
+        SENTRY_ORG: formbricks
+        SENTRY_PROJECT: formbricks-cloud
+      with:
+        environment: ${{ inputs.environment }}
+        version: ${{ inputs.release_version }}
+        sourcemaps: './extracted-next/'
+        skip_if_existing: true
 
     - name: Clean up extracted files
       shell: bash
