@@ -57,10 +57,12 @@ export const POST = async (request: NextRequest) =>
         );
       }
 
-      const environmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
+      if (body.surveyIds && body.surveyIds.length > 0) {
+        const environmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
 
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+        if (!environmentIdResult.ok) {
+          return handleApiError(request, environmentIdResult.error, auditLog);
+        }
       }
 
       if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
