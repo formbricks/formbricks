@@ -219,7 +219,7 @@ export const AddIntegrationModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpenWithStates}>
-      <DialogContent>
+      <DialogContent className="overflow-visible md:overflow-visible">
         <DialogHeader>
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
@@ -233,8 +233,8 @@ export const AddIntegrationModal = ({
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit(submitHandler)}>
-          <DialogBody>
+        <form className="space-y-4" onSubmit={handleSubmit(submitHandler)}>
+          <DialogBody className="overflow-visible">
             <div className="flex w-full flex-col gap-y-4">
               {airtableArray.length ? (
                 <BaseSelectDropdown
