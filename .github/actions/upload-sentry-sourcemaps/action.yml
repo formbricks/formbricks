@@ -26,14 +26,17 @@ runs:
     - name: Extract sourcemaps from Docker image
       shell: bash
       run: |
+        set -euo pipefail
         echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
         
-        # Set up trap to ensure container cleanup on exit
+        # Set up trap to ensure container cleanup on exit while preserving exit status
         cleanup_container() {
+          local exit_code=$?
           if docker ps -a --format '{{.Names}}' | grep -q "sentry-sourcemap-container"; then
             echo "🧹 Cleaning up Docker container..."
             docker rm -f sentry-sourcemap-container
           fi
+          exit $exit_code
         }
         trap cleanup_container EXIT
         
@@ -42,9 +45,6 @@ runs:
         
         # Extract .next directory containing sourcemaps
         docker cp sentry-sourcemap-container:/home/nextjs/apps/web/.next ./extracted-next
-        
-        # Clean up container (trap will also handle this)
-        docker rm sentry-sourcemap-container
         
         # Verify sourcemaps exist
         if [ ! -d "./extracted-next/static/chunks" ]; then
@@ -76,6 +76,7 @@ runs:
       shell: bash
       if: always()
       run: |
+        set -euo pipefail
         # Clean up extracted files
         rm -rf ./extracted-next
         echo "🧹 Cleaned up extracted files" 
