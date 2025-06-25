@@ -103,7 +103,7 @@ vi.mock("@/modules/ui/components/dialog", () => ({
 }));
 vi.mock("lucide-react", () => ({
   PlusIcon: () => <span data-testid="plus-icon">+</span>,
-  XIcon: () => <span data-testid="x-icon">x</span>,
+  TrashIcon: () => <span data-testid="trash-icon">🗑️</span>,
 }));
 vi.mock("next/image", () => ({
   // eslint-disable-next-line @next/next/no-img-element
@@ -404,7 +404,7 @@ describe("AddIntegrationModal (Notion)", () => {
       expect(columnDropdowns[1]).toHaveValue("p2");
 
       expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
-      expect(screen.getAllByTestId("x-icon").length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("trash-icon").length).toBeGreaterThan(0);
     });
 
     expect(screen.getByText("Delete")).toBeInTheDocument();
@@ -468,8 +468,8 @@ describe("AddIntegrationModal (Notion)", () => {
 
     expect(screen.getAllByTestId("dropdown-select-a-survey-question")).toHaveLength(2);
 
-    const xButton = screen.getAllByTestId("x-icon")[0]; // Get the first X button
-    await userEvent.click(xButton);
+    const trashButton = screen.getAllByTestId("trash-icon")[0]; // Get the first trash button
+    await userEvent.click(trashButton);
 
     expect(screen.getAllByTestId("dropdown-select-a-survey-question")).toHaveLength(1);
   });
