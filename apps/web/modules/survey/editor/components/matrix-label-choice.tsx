@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -8,12 +7,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyLanguage,
-  TSurveyMatrixQuestion,
-} from "@formbricks/types/surveys/types";
+import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
