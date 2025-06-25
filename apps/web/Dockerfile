@@ -150,7 +150,7 @@ RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
 # Create a startup script to handle the conditional logic
-RUN cp /app/apps/web/next-start.sh /home/nextjs/start.sh
+COPY --from=installer /app/apps/web/next-start.sh /home/nextjs/start.sh
 RUN chmod +x /home/nextjs/start.sh && chown nextjs:nextjs /home/nextjs/start.sh
 
 CMD ["/home/nextjs/start.sh"]
