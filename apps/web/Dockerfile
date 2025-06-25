@@ -151,6 +151,6 @@ VOLUME /home/nextjs/apps/web/saml-connection
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/next-start.sh /home/nextjs/start.sh
-RUN chmod +x /home/nextjs/start.sh && chown nextjs:nextjs /home/nextjs/start.sh
+RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 
 CMD ["/home/nextjs/start.sh"]
