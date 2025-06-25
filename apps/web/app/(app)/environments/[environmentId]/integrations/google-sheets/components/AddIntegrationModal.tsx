@@ -214,9 +214,9 @@ export const AddIntegrationModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="mr-1.5 h-6 w-6 text-slate-500">
+            <div className="h-4 w-4">
               <Image
-                className="w-12"
+                className="w-4"
                 src={GoogleSheetLogo}
                 alt={t("environments.integrations.google_sheets.google_sheet_logo")}
               />
@@ -229,7 +229,7 @@ export const AddIntegrationModal = ({
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit(linkSheet)}>
+        <form className="space-y-4" onSubmit={handleSubmit(linkSheet)}>
           <DialogBody>
             <div className="w-full space-y-4">
               <div>
