@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -7,14 +8,20 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
-import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyLanguage,
+  TSurveyMatrixQuestion,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
-interface MatrixRowChoiceProps {
-  rowIdx: number;
+interface MatrixLabelChoiceProps {
+  labelIdx: number;
+  type: "row" | "column";
   questionIdx: number;
-  updateMatrixLabel: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
+  updateMatrixLabel: (index: number, type: "row" | "column", data: TI18nString) => void;
   handleDeleteLabel: (type: "row" | "column", index: number) => void;
   handleKeyDown: (e: React.KeyboardEvent, type: "row" | "column") => void;
   isInvalid: boolean;
@@ -25,8 +32,9 @@ interface MatrixRowChoiceProps {
   locale: TUserLocale;
 }
 
-export const MatrixRowChoice = ({
-  rowIdx,
+export const MatrixLabelChoice = ({
+  labelIdx,
+  type,
   questionIdx,
   updateMatrixLabel,
   handleDeleteLabel,
@@ -37,10 +45,13 @@ export const MatrixRowChoice = ({
   setSelectedLanguageCode,
   question,
   locale,
-}: MatrixRowChoiceProps) => {
+}: MatrixLabelChoiceProps) => {
   const { t } = useTranslate();
+  const labels = type === "row" ? question.rows : question.columns;
+  const surveyLanguages = localSurvey.languages ?? [];
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: `row-${rowIdx}`,
+    id: `${type}-${labelIdx}`,
   });
 
   const style = {
@@ -50,40 +61,47 @@ export const MatrixRowChoice = ({
 
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
+      {/* drag handle */}
       <div {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
-      <div className="flex w-full">
+      <div className="flex w-full space-x-2">
         <QuestionFormInput
-          id={`row-${rowIdx}`}
-          label={""}
+          key={`${type}-${labelIdx}`}
+          id={`${type}-${labelIdx}`}
+          placeholder={t(`environments.surveys.edit.${type}_idx`, {
+            [`${type}Index`]: labelIdx + 1,
+          })}
+          label=""
           localSurvey={localSurvey}
           questionIdx={questionIdx}
-          value={question.rows[rowIdx]}
+          value={labels[labelIdx]}
           updateMatrixLabel={updateMatrixLabel}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
-          isInvalid={isInvalid && !isLabelValidForAllLanguages(question.rows[rowIdx], localSurvey.languages)}
+          isInvalid={isInvalid && !isLabelValidForAllLanguages(labels[labelIdx], surveyLanguages)}
+          onKeyDown={(e) => handleKeyDown(e, type)}
           locale={locale}
-          onKeyDown={(e) => handleKeyDown(e, "row")}
         />
       </div>
 
-      {question.rows.length > 2 && (
-        <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-2"
-            onClick={(e) => {
-              e.preventDefault();
-              handleDeleteLabel("row", rowIdx);
-            }}>
-            <TrashIcon />
-          </Button>
-        </TooltipRenderer>
-      )}
+      <div className="flex gap-2">
+        {labels.length > 2 && (
+          <TooltipRenderer tooltipContent={t(`environments.surveys.edit.delete_${type}`)}>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label={`Delete ${type}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteLabel(type, labelIdx);
+              }}>
+              <TrashIcon />
+            </Button>
+          </TooltipRenderer>
+        )}
+      </div>
     </div>
   );
 };

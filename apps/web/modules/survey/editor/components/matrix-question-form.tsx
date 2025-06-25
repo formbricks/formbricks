@@ -2,8 +2,7 @@
 
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { MatrixColumnChoice } from "@/modules/survey/editor/components/matrix-column-choice";
-import { MatrixRowChoice } from "@/modules/survey/editor/components/matrix-row-choice";
+import { MatrixLabelChoice } from "@/modules/survey/editor/components/matrix-label-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -226,9 +225,10 @@ export const MatrixQuestionForm = ({
                 strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2" ref={parent}>
                   {question.rows.map((_, index) => (
-                    <MatrixRowChoice
+                    <MatrixLabelChoice
                       key={`row-${index}`}
-                      rowIdx={index}
+                      labelIdx={index}
+                      type="row"
                       questionIdx={questionIdx}
                       updateMatrixLabel={updateMatrixLabel}
                       handleDeleteLabel={handleDeleteLabel}
@@ -267,9 +267,10 @@ export const MatrixQuestionForm = ({
                 strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2" ref={parent}>
                   {question.columns.map((_, index) => (
-                    <MatrixColumnChoice
+                    <MatrixLabelChoice
                       key={`column-${index}`}
-                      columnIdx={index}
+                      labelIdx={index}
+                      type="column"
                       questionIdx={questionIdx}
                       updateMatrixLabel={updateMatrixLabel}
                       handleDeleteLabel={handleDeleteLabel}
