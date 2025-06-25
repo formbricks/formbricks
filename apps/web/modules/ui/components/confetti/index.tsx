@@ -14,8 +14,19 @@ export const Confetti: React.FC<ConfettiProps> = ({
 }) => {
   const { width, height } = useWindowSize();
   return (
-    <div className="pointer-events-none fixed inset-0 z-[9999]">
-      <ReactConfetti width={width} height={height} colors={colors} numberOfPieces={400} recycle={false} />
-    </div>
+    <ReactConfetti
+      width={width}
+      height={height}
+      colors={colors}
+      numberOfPieces={400}
+      recycle={false}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        zIndex: 9999,
+        pointerEvents: "none",
+      }}
+    />
   );
 };
