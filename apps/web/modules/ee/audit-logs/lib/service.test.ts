@@ -9,7 +9,7 @@ vi.mock("../../../ee/license-check/lib/utils", () => ({
   getIsAuditLogsEnabled: vi.fn(),
 }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { audit: vi.fn(), error: vi.fn() },
+  logger: { info: vi.fn(), error: vi.fn() },
 }));
 
 const validEvent = {
@@ -37,7 +37,7 @@ describe("logAuditEvent", () => {
   test("logs event if access is granted and event is valid", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     await logAuditEvent(validEvent);
-    expect(logger.audit).toHaveBeenCalledWith(validEvent);
+    expect(logger.info).toHaveBeenCalledWith(validEvent, "Audit event logged");
     expect(logger.error).not.toHaveBeenCalled();
   });
 
@@ -45,7 +45,7 @@ describe("logAuditEvent", () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const invalidEvent = { ...validEvent, action: "invalid.action" };
     await logAuditEvent(invalidEvent as any);
-    expect(logger.audit).not.toHaveBeenCalled();
+    expect(logger.info).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
   });
 
@@ -53,12 +53,12 @@ describe("logAuditEvent", () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const event = { ...validEvent, organizationId: UNKNOWN_DATA };
     await logAuditEvent(event);
-    expect(logger.audit).toHaveBeenCalledWith(event);
+    expect(logger.info).toHaveBeenCalledWith(event, "Audit event logged");
   });
 
-  test("does not throw if logger.audit throws", async () => {
+  test("does not throw if logger.info throws", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
-    logger.audit.mockImplementation(() => {
+    logger.info.mockImplementation(() => {
       throw new Error("fail");
     });
     await logAuditEvent(validEvent);
