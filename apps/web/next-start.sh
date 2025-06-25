@@ -1,4 +1,5 @@
 #!/bin/sh
++set -euo pipefail
 if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then
   echo "Starting cron jobs...";
   supercronic -quiet /app/docker/cronjobs &
