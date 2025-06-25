@@ -13,5 +13,9 @@ export const Confetti: React.FC<ConfettiProps> = ({
   colors?: string[];
 }) => {
   const { width, height } = useWindowSize();
-  return <ReactConfetti width={width} height={height} colors={colors} numberOfPieces={400} recycle={false} />;
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[9999]">
+      <ReactConfetti width={width} height={height} colors={colors} numberOfPieces={400} recycle={false} />
+    </div>
+  );
 };
