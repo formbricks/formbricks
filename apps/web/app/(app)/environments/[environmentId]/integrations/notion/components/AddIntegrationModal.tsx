@@ -23,7 +23,7 @@ import {
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -343,9 +343,9 @@ export const AddIntegrationModal = ({
           col={mapping[idx].column}
           ques={mapping[idx].question}
         />
-        <div className="flex w-full items-center">
+        <div className="flex w-full items-center space-x-2">
           <div className="flex w-full items-center">
-            <div className="w-[340px] max-w-full">
+            <div className="max-w-full flex-1">
               <DropdownSelector
                 placeholder={t("environments.integrations.notion.select_a_survey_question")}
                 items={filteredQuestionItems}
@@ -391,7 +391,7 @@ export const AddIntegrationModal = ({
               />
             </div>
             <div className="h-px w-4 border-t border-t-slate-300" />
-            <div className="w-[340px] max-w-full">
+            <div className="max-w-full flex-1">
               <DropdownSelector
                 placeholder={t("environments.integrations.notion.select_a_field_to_map")}
                 items={getFilteredDbItems()}
@@ -437,22 +437,14 @@ export const AddIntegrationModal = ({
               />
             </div>
           </div>
-          <button
-            type="button"
-            className={`rounded-md p-1 hover:bg-slate-300 ${
-              idx === mapping.length - 1 ? "visible" : "invisible"
-            }`}
-            onClick={addRow}>
-            <PlusIcon className="h-5 w-5 font-bold text-slate-500" />
-          </button>
-          <button
-            type="button"
-            className={`flex-1 rounded-md p-1 hover:bg-red-100 ${
-              mapping.length > 1 ? "visible" : "invisible"
-            }`}
-            onClick={deleteRow}>
-            <XIcon className="h-5 w-5 text-red-500" />
-          </button>
+          <div className="flex space-x-2">
+            <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
+              <TrashIcon />
+            </Button>
+            <Button variant="secondary" size="icon" className="size-10" onClick={addRow}>
+              <PlusIcon />
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -462,18 +454,20 @@ export const AddIntegrationModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <div className="text-primary mr-1.5 h-6 w-6">
-            <Image
-              className="w-12"
-              src={NotionLogo}
-              alt={t("environments.integrations.notion.notion_logo")}
-            />
+          <div className="mb-4 flex items-start space-x-2">
+            <div className="text-primary size-6">
+              <Image
+                className="w-12"
+                src={NotionLogo}
+                alt={t("environments.integrations.notion.notion_logo")}
+              />
+            </div>
+            <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
           </div>
-          <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(linkDatabase)} className="contents">
-          <DialogBody className="flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit(linkDatabase)} className="contents space-y-4">
+          <DialogBody>
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
@@ -518,7 +512,7 @@ export const AddIntegrationModal = ({
                     <Label>
                       {t("environments.integrations.notion.map_formbricks_fields_to_notion_property")}
                     </Label>
-                    <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
+                    <div className="mt-1 space-y-2 overflow-y-auto">
                       {mapping.map((_, idx) => (
                         <MappingRow idx={idx} key={idx} />
                       ))}
