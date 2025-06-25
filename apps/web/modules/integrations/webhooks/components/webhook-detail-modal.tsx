@@ -75,7 +75,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
                 </button>
               ))}
             </div>
-            <div className="flex-1 overflow-y-auto py-4">{tabs[activeTab].children}</div>
+            <div className="flex-1 overflow-y-auto pt-4">{tabs[activeTab].children}</div>
           </div>
         </DialogBody>
       </DialogContent>
