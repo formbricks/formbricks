@@ -136,6 +136,10 @@ RUN chmod -R 755 ./node_modules/zod
 RUN npm install --ignore-scripts -g pino-pretty 
 RUN npm install -g prisma
 
+# Create a startup script to handle the conditional logic
+COPY --from=installer /app/apps/web/next-start.sh /home/nextjs/start.sh
+RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
+
 EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV="production"
@@ -148,10 +152,5 @@ VOLUME /home/nextjs/apps/web/uploads/
 # Prepare volume for SAML preloaded connection
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
-
-# Create a startup script to handle the conditional logic
-COPY --from=installer /app/apps/web/next-start.sh /home/nextjs/start.sh
-RUN ls -la /home/nextjs/start.sh
-RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 
 CMD ["/home/nextjs/start.sh"]
