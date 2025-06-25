@@ -133,9 +133,16 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
         const parts = hostname.split(".");
         const tld = parts[parts.length - 1];
 
-        // TLD validation: must be at least 2 characters and contain only letters
-        // Also limit length to 6 chars to catch fake long TLDs
-        if (tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+        // TLD validation: must be at least 2 characters and contain valid domain characters
+        // Support punycode TLDs (IDNs) which can contain hyphens and numbers
+        // DNS label limit is 63 characters, but most TLDs are much shorter
+        if (
+          tld.length < 2 ||
+          tld.length > 63 ||
+          !/^[a-zA-Z0-9-]+$/.test(tld) ||
+          tld.startsWith("-") ||
+          tld.endsWith("-")
+        ) {
           addIssue();
           return;
         }
