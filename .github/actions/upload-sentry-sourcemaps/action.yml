@@ -71,7 +71,6 @@ runs:
         environment: ${{ inputs.environment }}
         version: ${{ inputs.release_version }}
         sourcemaps: './extracted-next/'
-        skip_if_existing: true
 
     - name: Clean up extracted files
       shell: bash
