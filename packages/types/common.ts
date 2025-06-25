@@ -111,7 +111,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     if (hostname.includes("#recall:")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Recall value is not allow in the hostname",
+        message: "Recall value is not allowed in the hostname",
       });
       return;
     }
