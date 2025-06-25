@@ -101,6 +101,7 @@ jobs:
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
       - name: Upload Sentry Sourcemaps
+        if: inputs.ENVIRONMENT == 'prod'
         uses: ./.github/actions/upload-sentry-sourcemaps
         continue-on-error: true  # Don't fail deployment if sourcemap upload fails
         with:
