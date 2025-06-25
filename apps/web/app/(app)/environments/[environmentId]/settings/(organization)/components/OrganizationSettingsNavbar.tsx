@@ -1,9 +1,9 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface OrganizationSettingsNavbarProps {
@@ -22,9 +22,9 @@ export const OrganizationSettingsNavbar = ({
   loading,
 }: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isMember } = getAccessFlags(membershipRole);
+  const { isMember, isOwner } = getAccessFlags(membershipRole);
   const isPricingDisabled = isMember;
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const navigation = [
     {
@@ -53,6 +53,13 @@ export const OrganizationSettingsNavbar = ({
       href: `/environments/${environmentId}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),
+    },
+    {
+      id: "api-keys",
+      label: t("common.api_keys"),
+      href: `/environments/${environmentId}/settings/api-keys`,
+      current: pathname?.includes("/api-keys"),
+      hidden: !isOwner,
     },
   ];
 

@@ -1,16 +1,13 @@
 import "server-only";
+import { isS3Configured } from "@/lib/constants";
+import { createEnvironment } from "@/lib/environment/service";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/lib/storage/service";
+import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { isS3Configured } from "@formbricks/lib/constants";
-import { environmentCache } from "@formbricks/lib/environment/cache";
-import { createEnvironment } from "@formbricks/lib/environment/service";
-import { projectCache } from "@formbricks/lib/project/cache";
-import {
-  deleteLocalFilesByEnvironmentId,
-  deleteS3FilesByEnvironmentId,
-} from "@formbricks/lib/storage/service";
-import { validateInputs } from "@formbricks/lib/utils/validate";
+import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TProject, TProjectUpdateInput, ZProject, ZProjectUpdateInput } from "@formbricks/types/project";
@@ -64,22 +61,10 @@ export const updateProject = async (
   try {
     const project = ZProject.parse(updatedProject);
 
-    projectCache.revalidate({
-      id: project.id,
-      organizationId: project.organizationId,
-    });
-
-    project.environments.forEach((environment) => {
-      // revalidate environment cache
-      projectCache.revalidate({
-        environmentId: environment.id,
-      });
-    });
-
     return project;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      logger.error(error.errors, "Error updating project");
     }
     throw new ValidationError("Data validation of project failed");
   }
@@ -120,11 +105,6 @@ export const createProject = async (
       });
     }
 
-    projectCache.revalidate({
-      id: project.id,
-      organizationId: project.organizationId,
-    });
-
     const devEnvironment = await createEnvironment(project.id, {
       type: "development",
     });
@@ -139,12 +119,15 @@ export const createProject = async (
 
     return updatedProject;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
       throw new InvalidInputError("A project with this name already exists in your organization");
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw new InvalidInputError("A project with this name already exists in this organization");
       }
       throw new DatabaseError(error.message);
@@ -174,7 +157,7 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
           await Promise.all(s3FilesPromises);
         } catch (err) {
           // fail silently because we don't want to throw an error if the files are not deleted
-          console.error(err);
+          logger.error(err, "Error deleting S3 files");
         }
       } else {
         const localFilesPromises = project.environments.map(async (environment) => {
@@ -185,28 +168,9 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
           await Promise.all(localFilesPromises);
         } catch (err) {
           // fail silently because we don't want to throw an error if the files are not deleted
-          console.error(err);
+          logger.error(err, "Error deleting local files");
         }
       }
-
-      projectCache.revalidate({
-        id: project.id,
-        organizationId: project.organizationId,
-      });
-
-      environmentCache.revalidate({
-        projectId: project.id,
-      });
-
-      project.environments.forEach((environment) => {
-        // revalidate project cache
-        projectCache.revalidate({
-          environmentId: environment.id,
-        });
-        environmentCache.revalidate({
-          id: environment.id,
-        });
-      });
     }
 
     return project;

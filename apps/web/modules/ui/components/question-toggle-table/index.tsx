@@ -1,6 +1,8 @@
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+"use client";
+
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -67,7 +69,7 @@ export const QuestionToggleTable = ({
     });
   };
 
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <table className="mt-4 w-full table-fixed">
       <thead>
@@ -79,7 +81,7 @@ export const QuestionToggleTable = ({
           </th>
           <th className="w-1/6 text-sm font-semibold">{t("common.show")}</th>
           <th className="w-1/6 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
-          <th className="text-sm font-semibold">{t("common.placeholder")}</th>
+          <th className="text-sm font-semibold">{t("common.label")}</th>
         </tr>
       </thead>
       <tbody>
@@ -118,7 +120,6 @@ export const QuestionToggleTable = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={[]}
                 locale={locale}
               />
             </td>

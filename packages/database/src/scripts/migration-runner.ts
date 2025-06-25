@@ -1,8 +1,9 @@
+import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 
 const execAsync = promisify(exec);
 
@@ -27,7 +28,7 @@ const MIGRATIONS_DIR = path.resolve(__dirname, "../../migration");
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
-  console.log(`Starting migrations: ${migrations.length.toString()} to run`);
+  logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
 
   // empty the prisma migrations directory
@@ -38,12 +39,13 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   }
 
   const endTime = Date.now();
-  console.log(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+  logger.info(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
 const runSingleMigration = async (migration: MigrationScript, index: number): Promise<void> => {
   if (migration.type === "data") {
-    console.log(`Running data migration: ${migration.name}`);
+    let hasLock = false;
+    logger.info(`Running data migration: ${migration.name}`);
 
     try {
       await prisma.$transaction(
@@ -56,9 +58,9 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
           `;
 
           if (existingMigration?.[0]?.status === "pending") {
-            console.log(`Data migration ${migration.name} is pending.`);
-            console.log("Either there is another migration which is currently running or this is an error.");
-            console.log(
+            logger.info(`Data migration ${migration.name} is pending.`);
+            logger.info("Either there is another migration which is currently running or this is an error.");
+            logger.info(
               "If you are sure that there is no migration running, you need to manually resolve the issue."
             );
 
@@ -66,15 +68,16 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
           }
 
           if (existingMigration?.[0]?.status === "applied") {
-            console.log(`Data migration ${migration.name} already completed. Skipping...`);
+            logger.info(`Data migration ${migration.name} already completed. Skipping...`);
             return;
           }
 
           if (existingMigration?.[0]?.status === "failed") {
-            console.log(`Data migration ${migration.name} failed previously. Retrying...`);
+            logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
           } else {
             // create a new data migration entry with pending status
             await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+            hasLock = true;
           }
 
           if (migration.run) {
@@ -92,25 +95,28 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
             `;
           }
 
-          console.log(`Data migration ${migration.name} completed successfully`);
+          logger.info(`Data migration ${migration.name} completed successfully`);
         },
         { timeout: TRANSACTION_TIMEOUT }
       );
     } catch (error) {
       // Record migration failure
-      console.error(`Data migration ${migration.name} failed:`, error);
-      // Mark migration as failed
-      await prisma.$queryRaw`
-        INSERT INTO "DataMigration" (id, name, status)
+      logger.error(error, `Data migration ${migration.name} failed`);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we need to check if the migration has a lock
+      if (hasLock) {
+        // Mark migration as failed
+        await prisma.$queryRaw`
+          INSERT INTO "DataMigration" (id, name, status)
         VALUES (${migration.id}, ${migration.name}, 'failed')
-        ON CONFLICT (id) DO UPDATE SET status = 'failed';
-      `;
+          ON CONFLICT (id) DO UPDATE SET status = 'failed';
+        `;
+      }
 
       throw error;
     }
   } else {
     try {
-      console.log(`Running schema migration: ${migration.name}`);
+      logger.info(`Running schema migration: ${migration.name}`);
 
       let copyOnly = false;
 
@@ -138,7 +144,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
         .then((files) => files.find((dir) => dir.includes(migration.name)));
 
       if (!migrationToCopy) {
-        console.error(`Schema migration not found: ${migration.name}`);
+        logger.error(`Schema migration not found: ${migration.name}`);
         return;
       }
 
@@ -149,16 +155,16 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
       await fs.cp(sourcePath, destPath, { recursive: true });
 
       if (copyOnly) {
-        console.log(`Schema migration ${migration.name} copied to migrations directory`);
+        logger.info(`Schema migration ${migration.name} copied to migrations directory`);
         return;
       }
 
       // Run Prisma migrate
       // throws when migrate deploy fails
       await execAsync("pnpm prisma migrate deploy");
-      console.log(`Successfully applied schema migration: ${migration.name}`);
+      logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
-      console.error(`Schema migration ${migration.name} failed:`, err);
+      logger.error(err, `Schema migration ${migration.name} failed`);
       throw err;
     }
   }
@@ -238,7 +244,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
         }
       }
     } else {
-      console.warn(
+      logger.warn(
         `Migration directory ${dirName} doesn't have migration.sql or data-migration.ts. Skipping...`
       );
     }
@@ -265,7 +271,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 export async function applyMigrations(): Promise<void> {
   try {
     const allMigrations = await loadMigrations();
-    console.log(`Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR}`);
+    logger.info(`Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR}`);
     await runMigrations(allMigrations);
   } catch (error) {
     await prisma.$disconnect();
@@ -284,7 +290,7 @@ async function isSchemaMigrationApplied(migrationName: string, prismaClient: Pri
        `;
     return applied.length > 0;
   } catch (error: unknown) {
-    console.error(`Failed to check migration status: ${error as string}`);
+    logger.error(error, `Failed to check migration status`);
     throw new Error(`Could not verify migration status: ${error as string}`);
   }
 }

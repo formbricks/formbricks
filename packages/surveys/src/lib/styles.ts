@@ -1,8 +1,8 @@
+import { isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
-import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
@@ -77,16 +77,17 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("input-background-color", styling.inputColor?.light);
 
   if (styling.questionColor?.light) {
-    let signatureColor = "";
-    let brandingColor = "";
-
-    if (isLight(styling.questionColor.light)) {
-      signatureColor = mixColor(styling.questionColor.light, "#000000", 0.2);
-      brandingColor = mixColor(styling.questionColor.light, "#000000", 0.3);
-    } else {
-      signatureColor = mixColor(styling.questionColor.light, "#ffffff", 0.2);
-      brandingColor = mixColor(styling.questionColor.light, "#ffffff", 0.3);
-    }
+    const isLightQuestionColor = isLight(styling.questionColor.light);
+    const signatureColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.2
+    );
+    const brandingColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.3
+    );
 
     appendCssVariable("signature-text-color", signatureColor);
     appendCssVariable("branding-text-color", brandingColor);
@@ -115,6 +116,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
     appendCssVariable("accent-background-color", accentColor);
     appendCssVariable("accent-background-color-selected", accentColorSelected);
+
+    if (isLight(brandColor)) {
+      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
+    }
   }
 
   // Close the :root block

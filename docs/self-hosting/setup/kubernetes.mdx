@@ -1,0 +1,211 @@
+---
+title: "Kubernetes Deployment"
+description: "Deploy the new Helm chart on a Kubernetes cluster using Helm."
+icon: "circle-nodes"
+---
+
+## Prerequisites
+Ensure you have the following before proceeding:
+
+- A running Kubernetes cluster (EKS, GKE, AKS, Minikube, etc.)
+- An **Ingress Controller** (e.g., Traefik, Nginx)
+- **Helm installed** on your local machine
+- **Production setup requires managed PostgreSQL and Redis services**
+
+> **Note:** Redis is required for **session handling** when deploying multiple pods.
+
+---
+
+## 1. Installation Steps
+
+<Steps>
+<Step title="Install with Default Configuration">
+```sh
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace
+```
+> **Note:** To specify specific version use `--version` flag. E.g., `--version 1.0.0`. Starting from 3.5.0, the chart is available on the GitHub Container Registry (GHCR).
+
+By default:
+- PostgreSQL and Redis are deployed within the cluster.
+- Secrets are dynamically generated and stored as Kubernetes Secrets.
+</Step>
+
+<Step title="Install with an Enterprise License">
+```sh
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
+```
+</Step>
+</Steps>
+
+---
+
+## 2. Configuring Secrets
+
+### Using Kubernetes Secrets (Default)
+By default, **secrets are stored as Kubernetes Secrets**.
+The chart automatically generates **random values** for required secrets.
+
+Modify `values.yaml`:
+```yaml
+secret:
+  enabled: true
+```
+
+---
+
+### Using External Secrets (AWS Secrets Manager, Vault, etc.)
+To use an **external secrets manager**, enable `externalSecret` in `values.yaml`:
+```yaml
+secret:
+  enabled: false  # Disable default secret generation
+
+externalSecret:
+  enabled: true
+  secretStore:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  refreshInterval: "1h"
+  files:
+    redis:
+      data:
+        REDIS_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_PASSWORD
+    postgres:
+      data:
+        POSTGRES_ADMIN_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_ADMIN_PASSWORD
+        POSTGRES_USER_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_USER_PASSWORD
+    app-secrets:
+      data:
+        DATABASE_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: DATABASE_URL
+        REDIS_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_URL
+        ENCRYPTION_KEY:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: ENCRYPTION_KEY
+```
+**Ensure ExternalSecrets Operator is installed:**
+[https://external-secrets.io/latest/](https://external-secrets.io/latest/)
+
+Install with:
+```sh
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
+```
+
+---
+
+## 3. Configuring PostgreSQL and Redis
+
+### Using Managed PostgreSQL and Redis
+For production, we recommend using **managed database and cache services**.
+
+Modify `values.yaml`:
+```yaml
+postgresql:
+  enabled: false
+  externalDatabaseUrl: "postgresql://user:password@your-postgres-host:5432/mydb"
+
+redis:
+  enabled: false
+  externalRedisUrl: "redis://your-redis-host:6379"
+```
+Install with:
+```sh
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
+```
+
+---
+
+### Using In-Cluster PostgreSQL and Redis (Default)
+By default, PostgreSQL and Redis are **deployed inside the cluster**.
+To **ensure in-cluster deployment**, use:
+
+```yaml
+postgresql:
+  enabled: true
+
+redis:
+  enabled: true
+```
+Apply with:
+```sh
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
+```
+
+---
+
+## 4. Upgrading the Deployment
+To apply changes:
+```sh
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks
+```
+
+### Scaling Resources
+```sh
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
+```
+
+### Enabling Autoscaling
+```sh
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
+```
+
+---
+
+## 5. Key Configuration Values
+
+| Field                         | Description                          | Default Value |
+|--------------------------------|--------------------------------------|--------------|
+| `deployment.replicas`         | Number of application replicas       | `1`          |
+| `deployment.image.repository` | Docker image repository              | `"ghcr.io/formbricks/formbricks"` |
+| `deployment.image.tag`        | Docker image tag                     | `"latest"`   |
+| `autoscaling.enabled`         | Enable autoscaling                   | `false`      |
+| `postgresql.enabled`          | Deploy PostgreSQL in cluster         | `true`       |
+| `postgresql.externalDatabaseUrl` | External PostgreSQL URL           | `""`         |
+| `redis.enabled`               | Deploy Redis in cluster              | `true`       |
+| `redis.externalRedisUrl`      | External Redis URL                   | `""`         |
+| `externalSecret.enabled`      | Enable external secrets manager      | `false`      |
+
+**Refer to the Helm chart repository for full configuration options.**
+
+---
+
+## 6. Uninstalling the Deployment
+To remove the deployment:
+```sh
+helm uninstall formbricks -n formbricks
+```
+
+### Removing Persistent Volumes (PVCs)
+By default, **PVCs are not deleted** with Helm.
+To manually remove them:
+```sh
+kubectl delete pvc --all -n formbricks
+```
+
+To completely delete the namespace:
+```sh
+kubectl delete namespace formbricks
+```
+
+---
+
+## Additional Notes
+- **Ingress Setup:** If using an ingress controller, make sure to configure `ingress.enabled: true` in `values.yaml`.
+- **Environment Variables:** Pass custom environment variables via `envFrom` in `values.yaml`.
+- **Backup Strategy:** Ensure you have a backup policy for PostgreSQL if running in-cluster.
+
+**Your Formbricks deployment is now ready!**

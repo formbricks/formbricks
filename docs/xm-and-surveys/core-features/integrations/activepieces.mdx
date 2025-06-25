@@ -1,0 +1,74 @@
+---
+title: "Activepieces"
+description: "A step-by-step guide to integrating Formbricks with Activepieces."
+---
+
+Activepieces is a versatile tool to automate workflows between Formbricks and numerous applications. Here's how to set it up.
+
+<Note>
+  Ensure your survey is finalized before setting up Activepieces. Any changes in the survey will require additional adjustments in the workflow.
+</Note>
+
+## Step 1: Setup your survey incl. `questionId` for every question
+
+Set up the `questionId`s of your survey questions before publishing.
+
+![Update Question ID](/images/xm-and-surveys/core-features/integrations/activepieces/update-question-id.webp)
+
+_Update the Question ID field in every question card under Advanced Settings._
+
+<Note>
+  Already published? Duplicate survey You can only update the questionId before publishing the survey. If already published, simply duplicate it.
+  ![Duplicate Survey](/images/xm-and-surveys/core-features/integrations/activepieces/duplicate-survey.webp)
+</Note>
+
+## Step 2: Setup Activepieces
+
+Visit [Activepieces](https://activepieces.com) to start a new Flow.
+
+![Create New Flow](/images/xm-and-surveys/core-features/integrations/activepieces/create-new-flow.webp)
+
+Search for `Formbricks` and choose the event to trigger the flow, we will choose `Response Finished` here
+
+![Search Formbricks](/images/xm-and-surveys/core-features/integrations/activepieces/search-formbricks.webp)
+
+## Step 3: Connect Formbricks with Activepieces
+
+Click on `Create connection`:
+
+![Create Connection](/images/xm-and-surveys/core-features/integrations/activepieces/create-connection.webp)
+
+Enter the Formbricks API Host and API Key. API Host is by default set to https://app.formbricks.com but can be modified for self-hosting instances. Learn how to get an API Key from the [API Key tutorial](/api-reference/rest-api#how-to-generate-an-api-key).
+
+![Configure Connection](/images/xm-and-surveys/core-features/integrations/activepieces/configure-connection.webp)
+
+## Step 4: Select Survey
+
+Choose from your created surveys:
+
+![Select Survey](/images/xm-and-surveys/core-features/integrations/activepieces/select-survey.webp)
+
+## Step 5: Send a test response
+
+You need a test response for Activepieces setup. Click on Test trigger and submit a test response in the connected Formbricks survey to see the data in Activepieces.
+
+![Test Trigger](/images/xm-and-surveys/core-features/integrations/activepieces/test-trigger.webp)
+
+If the test response is successful, you will see the data in Activepieces.
+
+![Success Response](/images/xm-and-surveys/core-features/integrations/activepieces/success-response.webp)
+
+## Step 6: Set up Google Sheet
+
+Decide on the desired action for the data. Here, we'll send submissions to a Google Sheet. Add Google sheet step to your flow and configure it as follows:
+Choose "Add a Row" for the action. Authenticate with Google and select the spreadsheet you want to add the data to.
+
+![Select Google sheet](/images/xm-and-surveys/core-features/integrations/activepieces/select-gs-sheet.webp)
+
+Specify the fields you want to add to the spreadsheet.
+
+![Match Data](/images/xm-and-surveys/core-features/integrations/activepieces/match-data.webp)
+
+A new row gets added to the spreadsheet for every response:
+
+![Result](/images/xm-and-surveys/core-features/integrations/activepieces/result.webp)

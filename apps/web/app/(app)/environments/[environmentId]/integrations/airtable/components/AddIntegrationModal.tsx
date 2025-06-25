@@ -4,6 +4,8 @@ import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[envir
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -17,15 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -46,7 +45,6 @@ type AddIntegrationModalProps = {
   airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
   airtableIntegration: TIntegrationAirtable;
-  contactAttributeKeys: TContactAttributeKey[];
 } & EditModeProps;
 
 export type IntegrationModalInputs = {
@@ -61,7 +59,7 @@ export type IntegrationModalInputs = {
 };
 
 const NoBaseFoundError = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Alert>
       <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
@@ -79,9 +77,8 @@ export const AddIntegrationModal = ({
   airtableIntegration,
   isEditMode,
   defaultData,
-  contactAttributeKeys,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -323,38 +320,34 @@ export const AddIntegrationModal = ({
                   <Label htmlFor="Surveys">{t("common.questions")}</Label>
                   <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {replaceHeadlineRecall(selectedSurvey, "default", contactAttributeKeys)?.questions.map(
-                        (question) => (
-                          <Controller
-                            key={question.id}
-                            control={control}
-                            name={"questions"}
-                            render={({ field }) => (
-                              <div className="my-1 flex items-center space-x-2">
-                                <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                  <Checkbox
-                                    type="button"
-                                    id={question.id}
-                                    value={question.id}
-                                    className="bg-white"
-                                    checked={field.value?.includes(question.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, question.id])
-                                        : field.onChange(
-                                            field.value?.filter((value) => value !== question.id)
-                                          );
-                                    }}
-                                  />
-                                  <span className="ml-2">
-                                    {getLocalizedValue(question.headline, "default")}
-                                  </span>
-                                </label>
-                              </div>
-                            )}
-                          />
-                        )
-                      )}
+                      {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+                        <Controller
+                          key={question.id}
+                          control={control}
+                          name={"questions"}
+                          render={({ field }) => (
+                            <div className="my-1 flex items-center space-x-2">
+                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                <Checkbox
+                                  type="button"
+                                  id={question.id}
+                                  value={question.id}
+                                  className="bg-white"
+                                  checked={field.value?.includes(question.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, question.id])
+                                      : field.onChange(field.value?.filter((value) => value !== question.id));
+                                  }}
+                                />
+                                <span className="ml-2">
+                                  {getLocalizedValue(question.headline, "default")}
+                                </span>
+                              </label>
+                            </div>
+                          )}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>

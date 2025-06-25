@@ -1,6 +1,8 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyVariables } from "@formbricks/types/surveys/types";
 
@@ -10,7 +12,7 @@ interface HiddenFieldsProps {
 }
 
 export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mt-6 flex flex-col gap-6">
       {variables.map((variable) => {

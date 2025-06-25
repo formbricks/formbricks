@@ -1,14 +1,15 @@
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
-import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
-import { writeData } from "@formbricks/lib/googleSheet/service";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
-import { processResponseData } from "@formbricks/lib/responses";
-import { writeDataToSlack } from "@formbricks/lib/slack/service";
-import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
-import { TAttributes } from "@formbricks/types/attributes";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { writeData as airtableWriteData } from "@/lib/airtable/service";
+import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
+import { writeData } from "@/lib/googleSheet/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { writeData as writeNotionData } from "@/lib/notion/service";
+import { processResponseData } from "@/lib/responses";
+import { writeDataToSlack } from "@/lib/slack/service";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { truncateText } from "@/lib/utils/strings";
+import { logger } from "@formbricks/logger";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -40,14 +41,13 @@ const processDataForIntegration = async (
   includeMetadata: boolean,
   includeHiddenFields: boolean,
   includeCreatedAt: boolean,
-  questionIds: string[],
-  contactAttributes?: TContactAttributes
+  questionIds: string[]
 ): Promise<string[][]> => {
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...questionIds, ...survey.hiddenFields.fieldIds]
       : questionIds;
-  const values = await extractResponses(integrationType, data, ids, survey, contactAttributes);
+  const values = await extractResponses(integrationType, data, ids, survey);
   if (includeMetadata) {
     values[0].push(convertMetaObjectToString(data.response.meta));
     values[1].push("Metadata");
@@ -73,8 +73,7 @@ const processDataForIntegration = async (
 export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TPipelineInput,
-  survey: TSurvey,
-  contactAttributes: TContactAttributes
+  survey: TSurvey
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
@@ -85,18 +84,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!googleResult.ok) {
-          console.error("Error in google sheets integration: ", googleResult.error);
+          logger.error(googleResult.error, "Error in google sheets integration");
         }
         break;
       case "slack":
-        const slackResult = await handleSlackIntegration(
-          integration as TIntegrationSlack,
-          data,
-          survey,
-          contactAttributes
-        );
+        const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         if (!slackResult.ok) {
-          console.error("Error in slack integration: ", slackResult.error);
+          logger.error(slackResult.error, "Error in slack integration");
         }
         break;
       case "airtable":
@@ -106,13 +100,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!airtableResult.ok) {
-          console.error("Error in airtable integration: ", airtableResult.error);
+          logger.error(airtableResult.error, "Error in airtable integration");
         }
         break;
       case "notion":
         const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         if (!notionResult.ok) {
-          console.error("Error in notion integration: ", notionResult.error);
+          logger.error(notionResult.error, "Error in notion integration");
         }
         break;
     }
@@ -199,8 +193,7 @@ const handleGoogleSheetsIntegration = async (
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TPipelineInput,
-  survey: TSurvey,
-  contactAttributes: TContactAttributes
+  survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -214,8 +207,7 @@ const handleSlackIntegration = async (
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             !!element.includeCreatedAt,
-            element.questionIds,
-            contactAttributes
+            element.questionIds
           );
           await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
         }
@@ -238,8 +230,7 @@ const extractResponses = async (
   integrationType: TIntegrationType,
   pipelineData: TPipelineInput,
   questionIds: string[],
-  survey: TSurvey,
-  attributes?: TAttributes
+  survey: TSurvey
 ): Promise<string[][]> => {
   const responses: string[] = [];
   const questions: string[] = [];
@@ -285,7 +276,6 @@ const extractResponses = async (
     questions.push(
       parseRecallInfo(
         getLocalizedValue(question?.headline, "default"),
-        integrationType === "slack" ? attributes : {},
         integrationType === "slack" ? pipelineData.response.data : emptyResponseObject,
         integrationType === "slack" ? pipelineData.response.variables : {}
       ) || ""
@@ -392,6 +382,29 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
           },
         ];
       case "rich_text":
+        if (typeof value === "string") {
+          return [
+            {
+              text: {
+                content:
+                  value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
+              },
+            },
+          ];
+        }
+        if (Array.isArray(value)) {
+          const content = value.join("\n");
+          return [
+            {
+              text: {
+                content:
+                  content.length > NOTION_RICH_TEXT_LIMIT
+                    ? truncateText(content, NOTION_RICH_TEXT_LIMIT)
+                    : content,
+              },
+            },
+          ];
+        }
         return [
           {
             text: {
@@ -419,7 +432,7 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
         return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
-    console.error(error);
+    logger.error(error, "Payload build failed!");
     throw new Error("Payload build failed!");
   }
 };

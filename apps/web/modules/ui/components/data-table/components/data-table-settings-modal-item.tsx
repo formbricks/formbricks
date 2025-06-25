@@ -1,12 +1,14 @@
+"use client";
+
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Column } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface DataTableSettingsModalItemProps<T> {
@@ -15,7 +17,8 @@ interface DataTableSettingsModalItemProps<T> {
 }
 
 export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSettingsModalItemProps<T>) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.id,
   });

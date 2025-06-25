@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="com.formbricks.formbrickssdk.webview.FormbricksViewModel" />
+    </data>
+
+
+    <WebView
+        android:id="@+id/formbricks_webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        bind:htmlText="@{viewModel.html}"/>
+
+</layout>

@@ -1,3 +1,6 @@
+"use client";
+
+import { cn } from "@/lib/cn";
 import {
   Command,
   CommandEmpty,
@@ -9,11 +12,17 @@ import {
 } from "@/modules/ui/components/command";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
-import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
+import React, {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -60,9 +69,9 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-  emptyDropdownText = "environments.surveys.edit.no_option_found",
+  emptyDropdownText,
 }: InputComboboxProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
   const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
@@ -173,14 +182,14 @@ export const InputCombobox = ({
         }
 
         return (
-          <>
+          <Fragment key={idx}>
             {idx !== 0 && <span>,</span>}
             <div className="flex items-center gap-2">
               {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
               {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
               <span>{option.label}</span>
             </div>
-          </>
+          </Fragment>
         );
       });
     } else {
@@ -227,7 +236,7 @@ export const InputCombobox = ({
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-400"
           {...inputProps}
           id={`${id}-input`}
-          value={localValue as string | number}
+          value={localValue ?? undefined}
           onChange={onInputChange}
         />
       )}
@@ -265,7 +274,7 @@ export const InputCombobox = ({
             )}
             <CommandList className="m-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
-                {t(emptyDropdownText)}
+                {emptyDropdownText ? t(emptyDropdownText) : t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>
               {options && options.length > 0 && (
                 <CommandGroup>

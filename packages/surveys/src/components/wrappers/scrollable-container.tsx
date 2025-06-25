@@ -6,7 +6,7 @@ interface ScrollableContainerProps {
   children: JSX.Element;
 }
 
-export function ScrollableContainer({ children }: ScrollableContainerProps) {
+export function ScrollableContainer({ children }: Readonly<ScrollableContainerProps>) {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,9 +48,9 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
         ref={containerRef}
         style={{
           scrollbarGutter: "stable both-edges",
-          maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
+          maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-bg-survey-bg")}>
+        className={cn("fb-overflow-auto fb-px-4 fb-pb-4 fb-bg-survey-bg")}>
         {children}
       </div>
       {!isAtBottom && (

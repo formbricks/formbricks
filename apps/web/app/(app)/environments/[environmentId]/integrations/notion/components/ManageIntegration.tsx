@@ -1,13 +1,16 @@
+"use client";
+
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
-import { Trash2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
+import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TUserLocale } from "@formbricks/types/user";
@@ -21,6 +24,7 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
   >;
   locale: TUserLocale;
+  handleNotionAuthorization: () => void;
 }
 
 export const ManageIntegration = ({
@@ -30,15 +34,16 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   locale,
+  handleNotionAuthorization,
 }: ManageIntegrationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
-  const integrationArray = notionIntegration
-    ? notionIntegration.config.data
-      ? notionIntegration.config.data
-      : []
-    : [];
+
+  let integrationArray: TIntegrationNotionConfigData[] = [];
+  if (notionIntegration?.config.data) {
+    integrationArray = notionIntegration.config.data;
+  }
 
   const handleDeleteIntegration = async () => {
     setisDeleting(true);
@@ -66,7 +71,7 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-end space-x-2">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
@@ -75,6 +80,17 @@ export const ManageIntegration = ({
             })}
           </span>
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={handleNotionAuthorization}>
+                <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                {t("environments.integrations.notion.update_connection")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("environments.integrations.notion.update_connection_tooltip")}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Button
           onClick={() => {
             setSelectedIntegration(null);
@@ -105,9 +121,9 @@ export const ManageIntegration = ({
             {integrationArray &&
               integrationArray.map((data, index) => {
                 return (
-                  <div
-                    key={index}
-                    className="m-2 grid h-16 cursor-pointer grid-cols-6 content-center rounded-lg hover:bg-slate-100"
+                  <button
+                    key={`${index}-${data.databaseId}`}
+                    className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
@@ -116,7 +132,7 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">
                       {timeSince(data.createdAt.toString(), locale)}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
           </div>

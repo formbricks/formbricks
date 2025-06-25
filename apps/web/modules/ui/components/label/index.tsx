@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import * as React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 type LabelType = React.ForwardRefExoticComponent<
   React.PropsWithoutRef<React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>> &

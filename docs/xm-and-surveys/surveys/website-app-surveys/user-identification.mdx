@@ -1,0 +1,74 @@
+---
+title: "User Identification"
+description: "User Identification helps you to not only segment your users but also to see more information about the user who responded to a survey. This helps you to target surveys to specific user segments and see more information about the user who responded to a survey."
+icon: "user"
+---
+
+<Note>
+  User identification is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+### Understanding Identified vs Unidentified Users
+
+In Formbricks, understanding the difference between identified and unidentified users is crucial for effective survey segmentation and targeted feedback collection.
+
+| Feature                                                  | Unidentified Users | Identified Users |
+| -------------------------------------------------------- | ------------------ | ---------------- |
+| Show surveys based on **trigger** actions                | ✅                 | ✅               |
+| Set **recontact details** to avoid survey fatique        | ✅                 | ✅               |
+| Target a subset of users using **attributes & segments** | ❌                 | ✅               |
+| Collect **user information** in Formbricks               | ❌                 | ✅               |
+| Track **custom attributes**                              | ❌                 | ✅               |
+| Counts towards your **monthly tacked user (MTU)** limit  | ❌                 | ✅               |
+| Recommended for **public-facing websites**               | ✅                 | ❌               |
+| Recommended for **web apps after login**                 | ❌                 | ✅               |
+
+## Identified Users
+
+Identified users are those for whom specific information has been set, notably the userId. This identification allows for more precise targeting of surveys and a deeper understanding of the feedback provided. When enabled, all information specified by you and all actions are sent to Formbricks.
+
+This method is recommended for applications where users are required to log in and will often return.
+
+### Setting User ID
+
+To enable user identification, call the `setUserId` function of Formbricks and pass the user id. The user will show up in the Formbricks dashboard. Use a unique string, like a database ID or a unique email address. You can also anonymize the identifier, as long as it is unique for each user.
+
+```javascript
+formbricks.setUserId("<user-id>");
+```
+
+## Setting Custom User Attributes
+
+Use the `setAttribute` function to set custom attributes for the user (e.g., name, plan).
+
+```javascript Setting Custom Attributes
+formbricks.setAttribute("Plan", "free");
+```
+
+The `setAttribute` function works like this:
+
+```javascript Setting Custom Attributes
+formbricks.setAttribute("attribute_key", "attribute_value");
+```
+
+You can also set multiple attributes at once by passing an object to the `setAttributes` function:
+
+```javascript Setting Multiple Custom Attributes
+formbricks.setAttributes({
+  attribute_key_1: "attribute_value_1",
+  attribute_key_2: "attribute_value_2",
+});
+```
+
+<Note>
+  **Note**: the number of different attribute classes (e.g., "Plan," "First Name," etc.) is currently limited
+  to 150 attributes per environment.
+</Note>
+
+### Logging Out Users
+
+When a user logs out of your webpage, also log them out of Formbricks to prevent activity from being linked to the wrong user. Use the logout function:
+
+```javascript Logging out User
+formbricks.logout();
+```

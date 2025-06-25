@@ -1,13 +1,12 @@
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getResponsesByContactId } from "@/lib/response/service";
+import { getSurveys } from "@/lib/survey/service";
+import { getUser } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponsesByContactId } from "@formbricks/lib/response/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -17,21 +16,15 @@ interface ResponseSectionProps {
   environment: TEnvironment;
   contactId: string;
   environmentTags: TTag[];
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
-export const ResponseSection = async ({
-  environment,
-  contactId,
-  environmentTags,
-  contactAttributeKeys,
-}: ResponseSectionProps) => {
+export const ResponseSection = async ({ environment, contactId, environmentTags }: ResponseSectionProps) => {
   const responses = await getResponsesByContactId(contactId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
   const session = await getServerSession(authOptions);
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
@@ -63,7 +56,6 @@ export const ResponseSection = async ({
       responses={responses}
       environment={environment}
       environmentTags={environmentTags}
-      contactAttributeKeys={contactAttributeKeys}
       locale={locale}
       projectPermission={projectPermission}
     />

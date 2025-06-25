@@ -1,26 +1,22 @@
 "use client";
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
+import { BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 interface ProjectConfigNavigationProps {
   activeId: string;
   environmentId?: string;
-  isMultiLanguageAllowed?: boolean;
   loading?: boolean;
-  canDoRoleManagement?: boolean;
 }
 
 export const ProjectConfigNavigation = ({
   activeId,
   environmentId,
-  isMultiLanguageAllowed,
   loading,
-  canDoRoleManagement,
 }: ProjectConfigNavigationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const pathname = usePathname();
 
   let navigation = [
@@ -43,7 +39,6 @@ export const ProjectConfigNavigation = ({
       label: t("common.survey_languages"),
       icon: <LanguagesIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/languages`,
-      hidden: !isMultiLanguageAllowed,
       current: pathname?.includes("/languages"),
     },
     {
@@ -52,13 +47,6 @@ export const ProjectConfigNavigation = ({
       icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/tags`,
       current: pathname?.includes("/tags"),
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      icon: <KeyIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/api-keys`,
-      current: pathname?.includes("/api-keys"),
     },
     {
       id: "app-connection",
@@ -70,8 +58,8 @@ export const ProjectConfigNavigation = ({
     {
       id: "teams",
       label: t("common.team_access"),
+      icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/teams`,
-      hidden: !canDoRoleManagement,
       current: pathname?.includes("/teams"),
     },
   ];

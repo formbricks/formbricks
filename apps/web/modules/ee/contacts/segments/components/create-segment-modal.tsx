@@ -1,16 +1,16 @@
 "use client";
 
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -28,7 +28,7 @@ export function CreateSegmentModal({
   contactAttributeKeys,
   segments,
 }: TCreateSegmentModalProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -84,12 +84,14 @@ export function CreateSegmentModal({
 
       if (createSegmentResponse?.data) {
         toast.success(t("environments.segments.segment_saved_successfully"));
+        handleResetState();
+        router.refresh();
+        setIsCreatingSegment(false);
       } else {
         const errorMessage = getFormattedErrorMessage(createSegmentResponse);
         toast.error(errorMessage);
+        setIsCreatingSegment(false);
       }
-
-      setIsCreatingSegment(false);
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
@@ -101,10 +103,6 @@ export function CreateSegmentModal({
       setIsCreatingSegment(false);
       return;
     }
-
-    handleResetState();
-    setIsCreatingSegment(false);
-    router.refresh();
   };
 
   const isSaveDisabled = useMemo(() => {

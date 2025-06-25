@@ -1,55 +1,57 @@
+const MOCK_PASSWORD = "Mock_password_for_testing_0nly";
+
 export const mockUsers = {
   signup: [
     {
       name: "SignUp Flow User 1",
       email: "signup1@formbricks.com",
-      password: "eN791hZ7wNr9IAscf@",
+      password: MOCK_PASSWORD,
     },
   ],
   onboarding: [
     {
       name: "Onboarding User 1",
       email: "onboarding1@formbricks.com",
-      password: "iHalLonErFGK$X901R0",
+      password: MOCK_PASSWORD,
     },
     {
       name: "Onboarding User 2",
       email: "onboarding2@formbricks.com",
-      password: "231Xh7D&dM8u75EjIYV",
+      password: MOCK_PASSWORD,
     },
     {
       name: "Onboarding User 3",
       email: "onboarding3@formbricks.com",
-      password: "231Xh7D&dM8u75EjIYV",
+      password: MOCK_PASSWORD,
     },
   ],
   survey: [
     {
       name: "Survey User 1",
       email: "survey1@formbricks.com",
-      password: "Y1I*EpURUSb32j5XijP",
+      password: MOCK_PASSWORD,
     },
     {
       name: "Survey User 2",
       email: "survey2@formbricks.com",
-      password: "G73*Gjif22F4JKM1pA",
+      password: MOCK_PASSWORD,
     },
     {
       name: "Survey User 3",
       email: "survey3@formbricks.com",
-      password: "Gj2DGji27D&M8u53V",
+      password: MOCK_PASSWORD,
     },
     {
       name: "Survey User 4",
       email: "survey4@formbricks.com",
-      password: "UU3efj8vJa&M8u5M1",
+      password: MOCK_PASSWORD,
     },
   ],
   js: [
     {
       name: "JS User 1",
       email: "js1@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
+      password: MOCK_PASSWORD,
     },
   ],
   action: [

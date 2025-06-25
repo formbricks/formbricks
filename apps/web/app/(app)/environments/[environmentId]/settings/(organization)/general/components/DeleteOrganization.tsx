@@ -1,15 +1,15 @@
 "use client";
 
 import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { TOrganization } from "@formbricks/types/organizations";
 
 type DeleteOrganizationProps = {
@@ -25,7 +25,7 @@ export const DeleteOrganization = ({
 }: DeleteOrganizationProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const handleDeleteOrganization = async () => {
@@ -100,7 +100,7 @@ const DeleteOrganizationModal = ({
   isDeleting,
 }: DeleteOrganizationModalProps) => {
   const [inputValue, setInputValue] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };

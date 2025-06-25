@@ -1,17 +1,17 @@
 "use client";
 
-import { createActionClassAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { convertDateTimeStringShort } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { getActiveInactiveSurveysAction } from "../actions";
@@ -33,7 +33,7 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -151,15 +151,7 @@ export const ActionActivityTab = ({
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5 h-4 w-4 text-slate-600">
-              {actionClass.type === "code" ? (
-                <Code2Icon className="h-5 w-5" />
-              ) : actionClass.type === "noCode" ? (
-                <MousePointerClickIcon className="h-5 w-5" />
-              ) : actionClass.type === "automatic" ? (
-                <SparklesIcon className="h-5 w-5" />
-              ) : null}
-            </div>
+            <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
             <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
           </div>
         </div>

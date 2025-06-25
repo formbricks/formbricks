@@ -1,34 +1,33 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface LinkSurveyEmailProps {
   surveyName: string;
   surveyLink: string;
-  locale: string;
   logoUrl: string;
 }
 
-export function LinkSurveyEmail({
+export async function LinkSurveyEmail({
   surveyName,
   surveyLink,
-  locale,
   logoUrl,
-}: LinkSurveyEmailProps): React.JSX.Element {
+}: LinkSurveyEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading>{translateEmailText("verification_email_hey", locale)}</Heading>
-        <Text>{translateEmailText("verification_email_thanks", locale)}</Text>
-        <Text>{translateEmailText("verification_email_to_fill_survey", locale)}</Text>
-        <EmailButton href={surveyLink} label={translateEmailText("verification_email_take_survey", locale)} />
+        <Heading className="text-xl">{t("emails.verification_email_hey")}</Heading>
+        <Text className="font-normal">{t("emails.verification_email_thanks")}</Text>
+        <Text className="font-normal">{t("emails.verification_email_to_fill_survey")}</Text>
+        <EmailButton href={surveyLink} label={t("emails.verification_email_take_survey")} />
         <Text className="text-xs text-slate-400">
-          {translateEmailText("verification_email_survey_name", locale)}: {surveyName}
+          {t("emails.verification_email_survey_name")}: {surveyName}
         </Text>
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

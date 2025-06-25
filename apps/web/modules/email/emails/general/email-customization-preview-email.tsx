@@ -1,28 +1,25 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface EmailCustomizationPreviewEmailProps {
   userName: string;
-  locale: string;
   logoUrl?: string;
 }
 
-export function EmailCustomizationPreviewEmail({
+export async function EmailCustomizationPreviewEmail({
   userName,
-  locale,
   logoUrl,
-}: EmailCustomizationPreviewEmailProps): React.JSX.Element {
+}: EmailCustomizationPreviewEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading>
-          {translateEmailText("email_customization_preview_email_heading", locale, {
-            userName,
-          })}
+        <Heading className="text-xl">
+          {t("emails.email_customization_preview_email_heading", { userName })}
         </Heading>
-        <Text>{translateEmailText("email_customization_preview_email_text", locale)}</Text>
+        <Text className="font-normal">{t("emails.email_customization_preview_email_text")}</Text>
       </Container>
     </EmailTemplate>
   );

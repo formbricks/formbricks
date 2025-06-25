@@ -1,0 +1,67 @@
+---
+title: "Advanced Targeting"
+description: "Advanced Targeting allows you to show surveys to a specific segment of your users. You can target surveys based on user attributes, device type, and more. This helps you get more relevant insights while keeping survey fatigue at a minimum. After the initial setup, you can target any segment without touching code."
+icon: "bullseye"
+---
+
+<Note>
+  In self-hosting instances advanced Targeting is part of the [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+### When to use Advanced Targeting?
+
+Advanced Targeting helps you achieve a number of goals:
+
+1. **Relevance**: Keep survey content relevant to respondents.
+
+2. **Cohort-analysis**: Survey specific user cohorts only.
+
+3. **Statistical Relevance:** When surveying a smaller subset of users, statistical relevance is reached with a lot less responses.
+
+## How does Advanced Targeting work?
+
+<Steps>
+  <Step title="Create Segment">
+    To get started, go to the Contacts tab and create a new Segment:
+
+    ![Create a new segment](/images/xm-and-surveys/surveys/website-app-surveys/targeting/contacts.webp "Create a new segment")
+
+  </Step>
+
+  <Step title="Configure Segment based on attributes">
+    In the Segment editor, you can configure your Segment with a combination of Attributes, Segments and Devices. If a user matches either or all of the criteria, they become part of the Segment. See [Segment Configuration](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration) below.
+  </Step>
+
+  <Step title="Create a survey of type Website & App">
+    Create a new survey and go to Settings to change it to Website & App survey:
+
+    ![Create a new segment of type in-app](/images/xm-and-surveys/surveys/website-app-surveys/targeting/survey-type.webp "Create a new segment")
+  </Step>
+
+  <Step title="Choose Segment in Targeting options">
+    ![Choose Segment in Targeting options](/images/xm-and-surveys/surveys/website-app-surveys/targeting/target-audience.webp "Choose Segment in Targeting options")
+
+  </Step>
+
+  <Step title="Publish your survey" icon="party-horn" iconType="solid" />
+</Steps>
+
+### Segment Configuration
+
+There are three means to move Contacts in or out of Segments: **Attributes**, other **Segments** and **Devices**:
+
+1. **Attributes**: If the value of a specific attribute matches, the user becomes part of the Segment.
+
+  ![Attribute filter](/images/xm-and-surveys/surveys/website-app-surveys/targeting/attribute-filter.webp "Attribute filter")
+
+
+2. **Segments**: You can nest Segments meaning that if a user is or is not part of another Segment, they can be included or excluded
+
+   ![Segments filter](/images/xm-and-surveys/surveys/website-app-surveys/targeting/segments-filter.webp "Segments filter")
+
+
+3. **Devices**: If a user uses a Phone or Desktop, you can include or exclude them
+
+   ![Devices filter](/images/xm-and-surveys/surveys/website-app-surveys/targeting/device-filter.webp "Devices filter")
+
+4. **Filter Groups:** You can group any of the above conditions in group and connect them logically with `AND` or `OR`. This allows for maximum granularity.

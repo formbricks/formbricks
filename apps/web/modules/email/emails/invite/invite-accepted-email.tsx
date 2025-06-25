@@ -1,31 +1,30 @@
-import { Container, Text } from "@react-email/components";
+import { getTranslate } from "@/tolgee/server";
+import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface InviteAcceptedEmailProps {
   inviterName: string;
   inviteeName: string;
-  locale: string;
 }
 
-export function InviteAcceptedEmail({
+export async function InviteAcceptedEmail({
   inviterName,
   inviteeName,
-  locale,
-}: InviteAcceptedEmailProps): React.JSX.Element {
+}: InviteAcceptedEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
-        <Text>
-          {translateEmailText("invite_accepted_email_heading", locale)} {inviterName},
+        <Heading className="text-xl">
+          {t("emails.invite_accepted_email_heading", { inviterName })} {inviterName}
+        </Heading>
+        <Text className="font-normal">
+          {t("emails.invite_accepted_email_text_par1", { inviteeName })} {inviteeName}{" "}
+          {t("emails.invite_accepted_email_text_par2")}
         </Text>
-        <Text>
-          {translateEmailText("invite_accepted_email_text_par1", locale)} {inviteeName}{" "}
-          {translateEmailText("invite_accepted_email_text_par2", locale)}
-        </Text>
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

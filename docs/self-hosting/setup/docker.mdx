@@ -1,0 +1,171 @@
+---
+title: "Docker Setup"
+description: "Set up Formbricks quickly using our ready-to-use Docker image."
+icon: "docker"
+---
+
+The image is pre-built and requires minimal setup—just download it and start the container.
+
+### Requirements
+
+Make sure Docker and Docker Compose are installed on your system. These are usually included in tools like Docker Desktop and Rancher Desktop.
+
+<Note>
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the Docker documentation.
+</Note>
+
+## Start
+
+1. **Create a New Directory for Formbricks**
+
+   Open a terminal and run the following commands to create and enter a new directory for Formbricks:
+
+   ```bash
+   mkdir formbricks-quickstart && cd formbricks-quickstart
+   ```
+
+1. **Download the Docker-Compose File**
+
+   Get the docker-compose file from the Formbricks repository by running:
+
+   ```bash
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   ```
+
+1. **Generate NextAuth Secret**
+
+   You need a NextAuth secret for session signing and encryption. Run one of the commands below based on your operating system:
+
+   For Linux:
+
+   ```bash
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   For macOS:
+
+   ```bash
+   sed -i '' "s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+1. **Generate Encryption Key**
+
+   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. Run one of the commands below based on your operating system:
+
+   For Linux:
+
+   ```bash
+   sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   For macOS:
+
+   ```bash
+   sed -i '' "s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+1. **Generate Cron Secret**
+
+   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:
+
+   For Linux:
+
+   ```bash
+   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   For macOS:
+
+   ```bash
+   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+1. **Start the Docker Setup**
+
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   The `-d` flag runs the containers in the background, so they keep running even after you close the terminal.
+
+1. **Open Formbricks in Your Browser**
+
+   Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
+
+## Update
+
+Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
+
+1. Pull the latest Formbricks image
+
+   ```bash
+   docker compose pull
+   ```
+
+1. Stop the Formbricks stack
+
+   ```bash
+   docker compose down
+   ```
+
+1. Re-start the Formbricks stack with the updated image
+
+   ```bash
+   docker compose up -d
+   ```
+
+## Debug
+
+If you encounter any issues, you can check the logs of the container with this command:
+
+```bash
+docker compose logs -f
+```
+
+In an ideal case, you should see this:
+
+```bash
+[+] Running 9/16
+⠹ formbricks 15 layers [⣿⣤⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀] 29.78MB/47.76MB Pulling                                                           13.3s
+✔ 7264a8db6415 Already exists                                                                                                 0.0s
+⠋ 751194035c36 Downloading    [===============================>                   ]  29.78MB/47.76...                         8.1s
+✔ eff5dce73b38 Download complete                                                                                              1.7s
+✔ c8ce5be43019 Download complete                                                                                              1.2s
+✔ a2f33c630af5 Download complete                                                                                              5.1s
+✔ e3b64e437860 Download complete                                                                                              3.3s
+✔ a6551ac5f976 Download complete                                                                                              4.9s
+✔ 4f4fb700ef54 Download complete                                                                                              6.0s
+✔ 22163889e16b Download complete                                                                                              6.7s
+✔ dc647bb9eb13 Download complete                                                                                              7.8s
+⠋ 49c2ad494720 Waiting                                                                                                        8.1s
+⠋ 5c797a842dcb Waiting                                                                                                        8.1s
+⠋ 1f231213db04 Waiting                                                                                                        8.1s
+⠋ e407294bdcda Waiting                                                                                                        8.1s
+⠋ 6fd8358dca47 Pulling fs layer                                                                                               8.1s
+
+[+] Running 2/2
+✔ Container formbricks-quickstart-postgres-1    Created                                                                       0.0s
+✔ Container formbricks-quickstart-formbricks-1  Created                                                                       0.0s
+```
+
+And at the tail of the output, you should see this:
+
+```bash
+formbricks-quickstart-formbricks-1  | All migrations have been successfully applied.
+formbricks-quickstart-formbricks-1  |
+formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/web/.env
+formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
+```
+
+You can close the logs again by hitting `CTRL + C`.
+
+<Note>
+  **Customizing environment variables**
+
+To edit any of the available environment variables, check out our [Configuration](/self-hosting/configuration/environment-variables) section!
+
+</Note>
+
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

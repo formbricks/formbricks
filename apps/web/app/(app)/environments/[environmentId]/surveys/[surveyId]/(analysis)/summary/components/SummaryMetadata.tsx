@@ -1,6 +1,8 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryMetadataProps {
@@ -68,7 +70,9 @@ export const SummaryMetadata = ({
     totalResponses,
     ttcAverage,
   } = surveySummary;
-  const t = useTranslations();
+  const { t } = useTranslate();
+  const displayCountValue = dropOffCount === 0 ? <span>-</span> : dropOffCount;
+
   return (
     <div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-4">
@@ -96,10 +100,8 @@ export const SummaryMetadata = ({
 
         <TooltipProvider delayDuration={50}>
           <Tooltip>
-            <TooltipTrigger>
-              <div
-                onClick={() => setShowDropOffs(!showDropOffs)}
-                className="group flex h-full w-full cursor-pointer flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+            <TooltipTrigger onClick={() => setShowDropOffs(!showDropOffs)} data-testid="dropoffs-toggle">
+              <div className="flex h-full cursor-pointer flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
                 <span className="text-sm text-slate-600">
                   {t("environments.surveys.summary.drop_offs")}
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && !isLoading && (
@@ -110,10 +112,8 @@ export const SummaryMetadata = ({
                   <span className="text-2xl font-bold text-slate-800">
                     {isLoading ? (
                       <div className="h-6 w-12 animate-pulse rounded-full bg-slate-200"></div>
-                    ) : dropOffCount === 0 ? (
-                      <span>-</span>
                     ) : (
-                      dropOffCount
+                      displayCountValue
                     )}
                   </span>
                   {!isLoading && (
@@ -133,6 +133,7 @@ export const SummaryMetadata = ({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
         <StatCard
           label={t("environments.surveys.summary.time_to_complete")}
           percentage={null}

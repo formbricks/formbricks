@@ -1,0 +1,61 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Build & Deployment Best Practices
+
+## Build Process
+
+### Running Builds
+- Use `pnpm build` from project root for full build
+- Monitor for React hooks warnings and fix them immediately
+- Ensure all TypeScript errors are resolved before deployment
+
+### Common Build Issues & Fixes
+
+#### React Hooks Warnings
+- Capture ref values in variables within useEffect cleanup
+- Avoid accessing `.current` directly in cleanup functions
+- Pattern for fixing ref cleanup warnings:
+```typescript
+useEffect(() => {
+  const currentRef = myRef.current;
+  return () => {
+    if (currentRef) {
+      currentRef.cleanup();
+    }
+  };
+}, []);
+```
+
+#### Test Failures During Build
+- Ensure all test mocks include required constants like `SESSION_MAX_AGE`
+- Mock Next.js navigation hooks properly: `useParams`, `useRouter`, `useSearchParams`
+- Remove unused imports and constants from test files
+- Use literal values instead of imported constants when the constant isn't actually needed
+
+### Test Execution
+- Run `pnpm test` to execute all tests
+- Use `pnpm test -- --run filename.test.tsx` for specific test files
+- Fix test failures before merging code
+- Ensure 100% test coverage for new components
+
+### Performance Monitoring
+- Monitor build times and optimize if necessary
+- Watch for memory usage during builds
+- Use proper caching strategies for faster rebuilds
+
+### Deployment Checklist
+1. All tests passing
+2. Build completes without warnings
+3. TypeScript compilation successful
+4. No linter errors
+5. Database migrations applied (if any)
+6. Environment variables configured
+
+### EKS Deployment Considerations
+- Ensure latest code is deployed to all pods
+- Monitor AWS RDS Performance Insights for database issues
+- Verify environment-specific configurations
+- Check pod health and resource usage

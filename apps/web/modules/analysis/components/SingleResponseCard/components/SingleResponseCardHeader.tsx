@@ -1,13 +1,15 @@
+"use client";
+
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { LanguagesIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ReactNode } from "react";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -45,7 +47,7 @@ export const SingleResponseCardHeader = ({
     ? getContactIdentifier(response.contact, response.contactAttributes)
     : null;
 
-  const t = useTranslations();
+  const { t } = useTranslate();
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished
     ? true

@@ -1,9 +1,9 @@
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { type TI18nString } from "@formbricks/types/surveys/types";
@@ -139,7 +139,7 @@ export function WelcomeCard({
           {fileUrl ? (
             <img
               src={fileUrl}
-              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-rounded-lg fb-object-contain"
               alt="Company Logo"
             />
           ) : null}

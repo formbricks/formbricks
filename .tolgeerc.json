@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.tolgee.io/cli-schema.json",
+  "format": "JSON_TOLGEE",
+  "patterns": ["./apps/web/**/*.ts?(x)"],
+  "projectId": 10304,
+  "pull": {
+    "path": "./apps/web/locales"
+  },
+  "push": {
+    "files": [
+      {
+        "language": "en-US",
+        "path": "./apps/web/locales/en-US.json"
+      },
+      {
+        "language": "de-DE",
+        "path": "./apps/web/locales/de-DE.json"
+      },
+      {
+        "language": "fr-FR",
+        "path": "./apps/web/locales/fr-FR.json"
+      },
+      {
+        "language": "pt-BR",
+        "path": "./apps/web/locales/pt-BR.json"
+      },
+      {
+        "language": "zh-Hant-TW",
+        "path": "./apps/web/locales/zh-Hant-TW.json"
+      },
+      {
+        "language": "pt-PT",
+        "path": "./apps/web/locales/pt-PT.json"
+      }
+    ],
+    "forceMode": "OVERRIDE"
+  },
+  "strictNamespace": false
+}

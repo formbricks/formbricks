@@ -1,21 +1,29 @@
+import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
+import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 
 const createContainerId = () => `formbricks-survey-container`;
 declare global {
   interface Window {
     formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps) => void;
-      renderSurveyModal: (props: SurveyModalProps) => void;
+      renderSurveyInline: (props: SurveyContainerProps) => void;
+      renderSurveyModal: (props: SurveyContainerProps) => void;
+      renderSurvey: (props: SurveyContainerProps) => void;
+      onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
     };
   }
 }
 
-export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
+export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
+  const getRecaptchaToken = useCallback(
+    () => executeRecaptcha(props.recaptchaSiteKey),
+    [props.recaptchaSiteKey]
+  );
+
   const renderInline = useCallback(
-    () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
-    [containerId, props]
+    () => window.formbricksSurveys.renderSurvey({ ...props, containerId, getRecaptchaToken, mode: "inline" }),
+    [containerId, props, getRecaptchaToken]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
@@ -43,6 +51,9 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
     const loadScript = async () => {
       if (!window.formbricksSurveys) {
         try {
+          if (props.isSpamProtectionEnabled && props.recaptchaSiteKey) {
+            await loadRecaptchaScript(props.recaptchaSiteKey);
+          }
           await loadSurveyScript();
         } catch (error) {
           console.error("Failed to load the surveys package: ", error);

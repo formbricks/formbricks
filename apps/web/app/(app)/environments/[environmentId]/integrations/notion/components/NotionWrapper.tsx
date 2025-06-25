@@ -5,7 +5,6 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import notionLogo from "@/images/notion.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
@@ -23,7 +22,6 @@ interface NotionWrapperProps {
   webAppUrl: string;
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -34,7 +32,6 @@ export const NotionWrapper = ({
   webAppUrl,
   surveys,
   databasesArray,
-  contactAttributeKeys,
   locale,
 }: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -65,8 +62,6 @@ export const NotionWrapper = ({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
-            contactAttributeKeys={contactAttributeKeys}
-            locale={locale}
           />
           <ManageIntegration
             environment={environment}
@@ -75,6 +70,7 @@ export const NotionWrapper = ({
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}
+            handleNotionAuthorization={handleNotionAuthorization}
           />
         </>
       ) : (

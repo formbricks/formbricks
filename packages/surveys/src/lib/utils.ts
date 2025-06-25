@@ -1,3 +1,7 @@
+import { ApiResponse, ApiSuccessResponse } from "@/types/api";
+import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
+import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type TShuffleOption,
@@ -11,9 +15,15 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
+export const getSecureRandom = (): number => {
+  const u32 = new Uint32Array(1);
+  crypto.getRandomValues(u32);
+  return u32[0] / 2 ** 32; // Normalized to [0, 1)
+};
+
 const shuffle = (array: unknown[]) => {
-  for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -26,7 +36,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
     shuffle(array);
   } else if (shuffleOption === "exceptLast") {
     const lastElement = array.pop();
-    if (lastElement) {
+    if (lastElement !== undefined) {
       shuffle(array);
       array.push(lastElement);
     }
@@ -41,22 +51,23 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+
   const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
-  } else if (shuffleOption === "exceptLast") {
-    if (otherOption) {
+  }
+  if (shuffleOption === "exceptLast") {
+    const lastElement = shuffledChoices.pop();
+    if (lastElement) {
       shuffle(shuffledChoices);
-    } else {
-      const lastElement = shuffledChoices.pop();
-      if (lastElement) {
-        shuffle(shuffledChoices);
-        shuffledChoices.push(lastElement);
-      }
+      shuffledChoices.push(lastElement);
     }
   }
-  if (otherOption) shuffledChoices.push(otherOption);
+
+  if (otherOption) {
+    shuffledChoices.push(otherOption);
+  }
 
   return shuffledChoices.map((choice) => choice.id);
 };
@@ -78,7 +89,7 @@ export const calculateElementIdx = (
     return survey.questions.findIndex((e) => e.id === lastQuestion?.id);
   };
 
-  let elementIdx = currentQustionIdx || 0.5;
+  let elementIdx = currentQustionIdx + 1;
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
@@ -101,3 +112,68 @@ const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
 
   return possibleDestinations;
 };
+
+export const isFulfilled = <T>(val: PromiseSettledResult<T>): val is PromiseFulfilledResult<T> => {
+  return val.status === "fulfilled";
+};
+
+export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejectedResult => {
+  return val.status === "rejected";
+};
+
+export const makeRequest = async <T>(
+  appUrl: string,
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  data?: unknown
+): Promise<Result<T, ApiErrorResponse>> => {
+  const url = new URL(appUrl + endpoint);
+  const body = data ? JSON.stringify(data) : undefined;
+
+  const res = await wrapThrowsAsync(fetch)(url.toString(), {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body,
+  });
+
+  // TODO: Only return api error response relevant keys
+  if (!res.ok) return err(res.error as unknown as ApiErrorResponse);
+
+  const response = res.data;
+  const json = (await response.json()) as ApiResponse;
+
+  if (!response.ok) {
+    const errorResponse = json as ApiErrorResponse;
+    return err({
+      code: errorResponse.code === "forbidden" ? "forbidden" : "network_error",
+      status: response.status,
+      message: errorResponse.message || "Something went wrong",
+      url,
+      ...(Object.keys(errorResponse.details ?? {}).length > 0 && { details: errorResponse.details }),
+    });
+  }
+
+  const successResponse = json as ApiSuccessResponse<T>;
+  return ok(successResponse.data);
+};
+
+export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
+  const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
+    return surveyLanguage.default;
+  });
+  if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
+};
+
+// Function to convert file extension to its MIME type
+export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
+
+/**
+ * Returns true if the string contains any RTL character.
+ * @param text The input string to test
+ */
+export function isRTL(text: string): boolean {
+  const rtlCharRegex = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+  return rtlCharRegex.test(text);
+}

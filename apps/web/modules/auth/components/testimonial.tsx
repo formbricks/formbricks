@@ -1,11 +1,11 @@
 import CalComLogo from "@/images/cal-logo-light.svg";
 import Peer from "@/images/peer.webp";
+import { getTranslate } from "@/tolgee/server";
 import { CheckCircle2Icon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 
 export const Testimonial = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-300">
       <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20">

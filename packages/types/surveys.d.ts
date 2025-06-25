@@ -1,10 +1,12 @@
-import { SurveyInlineProps, SurveyModalProps } from "./formbricksSurveys";
+import { SurveyContainerProps } from "./formbricks-surveys";
 
 declare global {
   interface Window {
     formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps) => void;
-      renderSurveyModal: (props: SurveyModalProps) => void;
+      renderSurveyInline: (props: SurveyContainerProps) => void;
+      renderSurveyModal: (props: SurveyContainerProps) => void;
+      renderSurvey: (props: SurveyContainerProps) => void;
+      onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
     };
   }
 }

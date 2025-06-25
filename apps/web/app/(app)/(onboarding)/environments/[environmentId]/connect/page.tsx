@@ -1,12 +1,12 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
+import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
 interface ConnectPageProps {
   params: Promise<{
@@ -16,7 +16,7 @@ interface ConnectPageProps {
 
 const Page = async (props: ConnectPageProps) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
@@ -30,6 +30,8 @@ const Page = async (props: ConnectPageProps) => {
 
   const channel = project.config.channel || null;
 
+  const publicDomain = getPublicDomain();
+
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
       <Header title={t("environments.connect.headline")} subtitle={t("environments.connect.subtitle")} />
@@ -39,7 +41,7 @@ const Page = async (props: ConnectPageProps) => {
       </div>
       <ConnectWithFormbricks
         environment={environment}
-        webAppUrl={WEBAPP_URL}
+        publicDomain={publicDomain}
         widgetSetupCompleted={environment.appSetupCompleted}
         channel={channel}
       />

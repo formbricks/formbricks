@@ -5,7 +5,6 @@ import { debounce } from "lodash";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import React from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -24,7 +23,6 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
-  refreshContacts: () => Promise<void>;
 }
 
 export const ContactDataView = ({
@@ -34,7 +32,6 @@ export const ContactDataView = ({
   isReadOnly,
   hasMore: initialHasMore,
   initialContacts,
-  refreshContacts,
 }: ContactDataViewProps) => {
   const router = useRouter();
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([...initialContacts]);
@@ -152,7 +149,6 @@ export const ContactDataView = ({
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
-      refreshContacts={refreshContacts}
     />
   );
 };

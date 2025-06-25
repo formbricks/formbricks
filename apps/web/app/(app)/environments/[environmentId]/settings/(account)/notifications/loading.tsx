@@ -1,11 +1,13 @@
+"use client";
+
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const cards = [
     {
       title: t("environments.settings.notifications.email_alerts_surveys"),

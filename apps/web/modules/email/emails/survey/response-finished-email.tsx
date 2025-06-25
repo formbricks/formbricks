@@ -1,75 +1,13 @@
-import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
+import { getQuestionResponseMapping } from "@/lib/responses";
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
+import { getTranslate } from "@/tolgee/server";
+import { Column, Container, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
-import { getQuestionResponseMapping } from "@formbricks/lib/responses";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
-import {
-  type TSurvey,
-  type TSurveyQuestionType,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../../components/email-button";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
-
-export const renderEmailResponseValue = (
-  response: string | string[],
-  questionType: TSurveyQuestionType
-): React.JSX.Element => {
-  switch (questionType) {
-    case TSurveyQuestionTypeEnum.FileUpload:
-      return (
-        <Container>
-          {Array.isArray(response) &&
-            response.map((responseItem) => (
-              <Link
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-sm"
-                href={responseItem}
-                key={responseItem}>
-                <FileIcon />
-                <Text className="mx-auto mb-0 truncate">{getOriginalFileNameFromUrl(responseItem)}</Text>
-              </Link>
-            ))}
-        </Container>
-      );
-
-    case TSurveyQuestionTypeEnum.PictureSelection:
-      return (
-        <Container>
-          <Row>
-            {Array.isArray(response) &&
-              response.map((responseItem) => (
-                <Column key={responseItem}>
-                  <Img alt={responseItem.split("/").pop()} className="m-2 h-28" src={responseItem} />
-                </Column>
-              ))}
-          </Row>
-        </Container>
-      );
-
-    case TSurveyQuestionTypeEnum.Ranking:
-      return (
-        <Container>
-          <Row className="my-1 font-semibold text-slate-700" dir="auto">
-            {Array.isArray(response) &&
-              response.map(
-                (item, index) =>
-                  item && (
-                    <Row key={item} className="mb-1 flex items-center">
-                      <Column className="w-6 text-slate-400">#{index + 1}</Column>
-                      <Column className="rounded bg-slate-100 px-2 py-1">{item}</Column>
-                    </Row>
-                  )
-              )}
-          </Row>
-        </Container>
-      );
-
-    default:
-      return <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{response}</Text>;
-  }
-};
 
 interface ResponseFinishedEmailProps {
   survey: TSurvey;
@@ -78,30 +16,27 @@ interface ResponseFinishedEmailProps {
   WEBAPP_URL: string;
   environmentId: string;
   organization: TOrganization;
-  locale: string;
 }
 
-export function ResponseFinishedEmail({
+export async function ResponseFinishedEmail({
   survey,
   responseCount,
   response,
   WEBAPP_URL,
   environmentId,
   organization,
-  locale,
-}: ResponseFinishedEmailProps): React.JSX.Element {
+}: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
   const questions = getQuestionResponseMapping(survey, response);
+  const t = await getTranslate();
 
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
         <Row>
           <Column>
-            <Text className="mb-4 text-3xl font-bold">
-              {translateEmailText("survey_response_finished_email_hey", locale)}
-            </Text>
-            <Text className="mb-4">
-              {translateEmailText("survey_response_finished_email_congrats", locale, {
+            <Text className="mb-4 text-xl font-bold"> {t("emails.survey_response_finished_email_hey")}</Text>
+            <Text className="mb-4 font-normal">
+              {t("emails.survey_response_finished_email_congrats", {
                 surveyName: survey.name,
               })}
             </Text>
@@ -112,7 +47,7 @@ export function ResponseFinishedEmail({
                 <Row key={question.question}>
                   <Column className="w-full">
                     <Text className="mb-2 font-medium">{question.question}</Text>
-                    {renderEmailResponseValue(question.response, question.type)}
+                    {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
                 </Row>
               );
@@ -162,33 +97,29 @@ export function ResponseFinishedEmail({
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
-                  ? translateEmailText("survey_response_finished_email_view_more_responses", locale, {
+                  ? t("emails.survey_response_finished_email_view_more_responses", {
                       responseCount: String(responseCount - 1),
                     })
-                  : translateEmailText("survey_response_finished_email_view_survey_summary", locale)
+                  : t("emails.survey_response_finished_email_view_survey_summary")
               }
             />
             <Hr />
             <Section className="mt-4 text-center text-sm">
               <Text className="font-bold">
-                {translateEmailText("survey_response_finished_email_dont_want_notifications", locale)}
+                {t("emails.survey_response_finished_email_dont_want_notifications")}
               </Text>
               <Text className="mb-0">
-                {translateEmailText("survey_response_finished_email_turn_off_notifications", locale)}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
-                  {translateEmailText("survey_response_finished_email_this_form", locale)}
+                  {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
-                  {translateEmailText(
-                    "survey_response_finished_email_turn_off_notifications_for_all_new_forms",
-                    locale
-                  )}
+                  {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
               </Text>
             </Section>
@@ -196,25 +127,6 @@ export function ResponseFinishedEmail({
         </Row>
       </Container>
     </EmailTemplate>
-  );
-}
-
-function FileIcon(): React.JSX.Element {
-  return (
-    <svg
-      className="lucide lucide-file"
-      fill="none"
-      height="24"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      width="24"
-      xmlns="http://www.w3.org/2000/svg">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    </svg>
   );
 }
 

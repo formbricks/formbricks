@@ -1,7 +1,9 @@
+"use client";
+
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isValidValue } from "../util";
@@ -23,7 +25,7 @@ export const SingleResponseCardBody = ({
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
     const regex = /#\/(.*?)\\#/g;
@@ -78,7 +80,6 @@ export const SingleResponseCardBody = ({
                     {formatTextWithSlashes(
                       parseRecallInfo(
                         getLocalizedValue(question.headline, "default"),
-                        {},
                         response.data,
                         response.variables,
                         true

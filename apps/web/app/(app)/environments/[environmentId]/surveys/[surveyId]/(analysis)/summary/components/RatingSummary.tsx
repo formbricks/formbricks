@@ -1,10 +1,11 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -12,13 +13,11 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -26,17 +25,10 @@ interface RatingSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const RatingSummary = ({
-  questionSummary,
-  survey,
-  contactAttributeKeys,
-  setFilter,
-  locale,
-}: RatingSummaryProps) => {
-  const t = useTranslations();
+export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
+  const { t } = useTranslate();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
@@ -49,8 +41,6 @@ export const RatingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
@@ -62,8 +52,8 @@ export const RatingSummary = ({
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {questionSummary.choices.map((result) => (
-          <div
-            className="cursor-pointer hover:opacity-80"
+          <button
+            className="w-full cursor-pointer hover:opacity-80"
             key={result.rating}
             onClick={() =>
               setFilter(
@@ -95,7 +85,7 @@ export const RatingSummary = ({
               </p>
             </div>
             <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
-          </div>
+          </button>
         ))}
       </div>
       {questionSummary.dismissed && questionSummary.dismissed.count > 0 && (

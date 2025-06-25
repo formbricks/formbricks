@@ -5,13 +5,13 @@ import { LanguageLabels } from "@/modules/ee/multi-language-surveys/components/l
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 export const LanguagesLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard

@@ -5,7 +5,7 @@ import { updateProjectBrandingAction } from "@/modules/ee/whitelabel/remove-bran
 import { TProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -17,7 +17,7 @@ interface EditBrandingProps {
 }
 
 export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBrandingProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(isEnabled);
   const [updatingBranding, setUpdatingBranding] = useState(false);
 

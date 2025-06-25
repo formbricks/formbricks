@@ -39,7 +39,18 @@ export const createUserFixture = (
 
 export type UserFixture = ReturnType<typeof createUserFixture>;
 
-export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
+export type UsersFixture = {
+  create: (params?: {
+    name?: string;
+    email?: string;
+    organizationName?: string;
+    projectName?: string;
+    withoutProject?: boolean;
+  }) => Promise<UserFixture>;
+  get: () => UserFixture[];
+};
+
+export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixture => {
   const store: { users: UserFixture[] } = {
     users: [],
   };
@@ -82,15 +93,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                           create: [
                             {
                               type: "development",
-                              actionClasses: {
-                                create: [
-                                  {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
-                                  },
-                                ],
-                              },
                               attributeKeys: {
                                 create: [
                                   {
@@ -104,15 +106,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                             },
                             {
                               type: "production",
-                              actionClasses: {
-                                create: [
-                                  {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
-                                  },
-                                ],
-                              },
                               attributeKeys: {
                                 create: [
                                   {

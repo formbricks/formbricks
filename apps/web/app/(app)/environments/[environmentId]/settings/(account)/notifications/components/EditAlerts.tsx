@@ -1,6 +1,8 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
 import { Membership } from "../types";
@@ -21,11 +23,11 @@ export const EditAlerts = ({
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       {memberships.map((membership) => (
-        <>
+        <div key={membership.organization.id}>
           <div className="mb-5 grid grid-cols-6 items-center space-x-3">
             <div className="col-span-3 flex items-center space-x-3">
               <UsersIcon className="h-6 w-7 text-slate-600" />
@@ -108,7 +110,7 @@ export const EditAlerts = ({
               </Link>
             </p>
           </div>
-        </>
+        </div>
       ))}
     </>
   );

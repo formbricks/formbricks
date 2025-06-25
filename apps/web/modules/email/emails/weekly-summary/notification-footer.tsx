@@ -1,31 +1,31 @@
+import { WEBAPP_URL } from "@/lib/constants";
+import { getTranslate } from "@/tolgee/server";
 import { Container, Link, Tailwind, Text } from "@react-email/components";
 import React from "react";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { translateEmailText } from "../../lib/utils";
 
 interface NotificatonFooterProps {
   environmentId: string;
-  locale: string;
 }
-export function NotificationFooter({ environmentId, locale }: NotificatonFooterProps): React.JSX.Element {
+export async function NotificationFooter({
+  environmentId,
+}: NotificatonFooterProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
     <Tailwind>
       <Container className="w-full">
-        <Text className="mb-0 pt-4 font-medium">
-          {translateEmailText("notification_footer_all_the_best", locale)}
-        </Text>
-        <Text className="mt-0">{translateEmailText("notification_footer_the_formbricks_team", locale)}</Text>
+        <Text className="mb-0 pt-4 font-medium">{t("emails.notification_footer_all_the_best")}</Text>
+        <Text className="mt-0">{t("emails.notification_footer_the_formbricks_team")}</Text>
         <Container
           className="mt-0 w-full rounded-md bg-slate-100 px-4 text-center text-xs leading-5"
           style={{ fontStyle: "italic" }}>
           <Text>
-            {translateEmailText("notification_footer_to_halt_weekly_updates", locale)}
+            {t("emails.notification_footer_to_halt_weekly_updates")}
             <Link
               className="text-black underline"
               href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications`}>
-              {translateEmailText("notification_footer_please_turn_them_off", locale)}
+              {t("emails.notification_footer_please_turn_them_off")}
             </Link>{" "}
-            {translateEmailText("notification_footer_in_your_settings", locale)} 🙏
+            {t("emails.notification_footer_in_your_settings")} 🙏
           </Text>
         </Container>
       </Container>

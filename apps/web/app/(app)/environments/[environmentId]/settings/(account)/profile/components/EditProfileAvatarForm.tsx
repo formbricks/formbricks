@@ -9,8 +9,8 @@ import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { Session } from "next-auth";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -27,7 +27,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const fileSchema =
     typeof window !== "undefined"
       ? z
@@ -144,7 +144,6 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                       id="hiddenFileInput"
                       ref={(e) => {
                         field.ref(e);
-                        // @ts-expect-error
                         inputRef.current = e;
                       }}
                       className="hidden"

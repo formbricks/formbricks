@@ -1,9 +1,11 @@
+"use client";
+
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
+import { useTranslate } from "@tolgee/react";
 import { InfoIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { CssSelector } from "./components/css-selector";
@@ -17,7 +19,7 @@ interface NoCodeActionFormProps {
 
 export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) => {
   const { control, watch } = form;
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       <FormField

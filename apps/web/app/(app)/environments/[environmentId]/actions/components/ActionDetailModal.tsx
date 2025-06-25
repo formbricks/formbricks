@@ -1,6 +1,8 @@
+"use client";
+
+import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
-import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { ActionActivityTab } from "./ActionActivityTab";
@@ -29,7 +31,7 @@ export const ActionDetailModal = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs = [
     {
       title: t("common.activity"),
@@ -63,15 +65,7 @@ export const ActionDetailModal = ({
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        icon={
-          actionClass.type === "code" ? (
-            <Code2Icon className="h-5 w-5" />
-          ) : actionClass.type === "noCode" ? (
-            <MousePointerClickIcon className="h-5 w-5" />
-          ) : actionClass.type === "automatic" ? (
-            <SparklesIcon className="h-5 w-5" />
-          ) : null
-        }
+        icon={ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
         label={actionClass.name}
         description={actionClass.description || ""}
       />

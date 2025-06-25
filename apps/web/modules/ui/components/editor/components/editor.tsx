@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
@@ -6,7 +7,7 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import { TRANSFORMERS } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
@@ -14,7 +15,6 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { type Dispatch, type SetStateAction, useRef } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { exampleTheme } from "../lib/example-theme";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";
@@ -94,7 +94,7 @@ export const Editor = (props: TextEditorProps) => {
             <RichTextPlugin
               contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
               placeholder={
-                <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">{props.placeholder || ""}</div>
+                <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">{props.placeholder ?? ""}</div>
               }
               ErrorBoundary={LexicalErrorBoundary}
             />

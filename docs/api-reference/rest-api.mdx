@@ -1,0 +1,47 @@
+---
+title: "REST API"
+icon: "code"
+description: "
+Formbricks provides two APIs: the Public Client API for frontend survey interactions and the Management API for backend management tasks."
+---
+
+Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has *different* authentication requirements, and provides access to different data and settings.
+
+
+## Public Client API
+
+The **Public Client API** is used by our SDKs and doesn’t require authentication, making it ideal for client-side interactions without exposing sensitive data.
+
+We currently have the following Client API methods exposed and below is their documentation attached in Postman:
+
+- [Displays API](/api-reference/client-api->-display/create-display) - Mark a survey as displayed or link a display to a response for a person.
+
+- [Contacts API](/api-reference/client-api->-contacts/update-contact-attributes) - Update contact attributes.
+
+- [Responses API](/api-reference/client-api->-response/create-response) - Create & Update a Response for a Survey.
+
+## Management API
+
+The **Management API** gives full access to all data and settings available in your Formbricks account. It requires a personal API Key for authentication, which you can generate and manage in the Settings section of the Formbricks app.
+
+We currently have the following Management API methods exposed and below is their documentation attached in Postman:
+
+- [Action Class API](/api-reference/management-api->-action-class/get-all-action-classes) - Create, List, and Delete Action Classes
+
+- [Attribute Class API ](/api-reference/management-api->-attribute-class/get-all-attribute-classes)- Create, List, and Delete Attribute Classes
+
+- [Me API](/api-reference/management-api->-me/me) - Retrieve Account Information
+
+- [People API](/api-reference/management-api->-people/get-all-persons) - List and Delete People
+
+- [Response API](/api-reference/management-api->-response/get-survey-responses) - List, List by Survey, Update, and Delete Responses
+
+- [Survey API](/api-reference/management-api->-survey/get-all-surveys) - List, Create, Update, generate multiple suId, and Delete Surveys
+
+- [Webhook API](/api-reference/management-api->-webhook/get-all-webhooks) - List, Create, and Delete Webhooks
+
+
+
+---
+
+**Need help?** Reach out in [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).

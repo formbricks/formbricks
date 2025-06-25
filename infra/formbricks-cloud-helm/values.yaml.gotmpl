@@ -1,0 +1,166 @@
+cronJob:
+  enabled: true
+  jobs:
+    ping:
+      args:
+        - /bin/sh
+        - -c
+        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
+        "$WEBAPP_URL/api/cron/ping"'
+      env:
+        CRON_SECRET:
+          valueFrom:
+            secretKeyRef:
+              key: CRON_SECRET
+              name: formbricks-app-env
+        WEBAPP_URL:
+          valueFrom:
+            secretKeyRef:
+              key: WEBAPP_URL
+              name: formbricks-app-env
+      image:
+        imagePullPolicy: IfNotPresent
+        repository: quay.io/curl/curl
+        tag: latest
+      schedule: 0 9 * * *
+      successfulJobsHistoryLimit: 0
+    survey-status:
+      args:
+        - /bin/sh
+        - -c
+        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
+        "$WEBAPP_URL/api/cron/survey-status"'
+      env:
+        CRON_SECRET:
+          valueFrom:
+            secretKeyRef:
+              key: CRON_SECRET
+              name: formbricks-app-env
+        WEBAPP_URL:
+          valueFrom:
+            secretKeyRef:
+              key: WEBAPP_URL
+              name: formbricks-app-env
+      image:
+        imagePullPolicy: IfNotPresent
+        repository: quay.io/curl/curl
+        tag: latest
+      schedule: 0 0 * * *
+      successfulJobsHistoryLimit: 0
+    weekely-summary:
+      args:
+        - /bin/sh
+        - -c
+        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
+        "$WEBAPP_URL/api/cron/weekly-summary"'
+      env:
+        CRON_SECRET:
+          valueFrom:
+            secretKeyRef:
+              key: CRON_SECRET
+              name: formbricks-app-env
+        WEBAPP_URL:
+          valueFrom:
+            secretKeyRef:
+              key: WEBAPP_URL
+              name: formbricks-app-env
+      image:
+        imagePullPolicy: IfNotPresent
+        repository: quay.io/curl/curl
+        tag: latest
+      schedule: 0 8 * * 1
+      successfulJobsHistoryLimit: 0
+
+## Deployment & Autoscaling
+deployment:
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+  env:
+    DOCKER_CRON_ENABLED:
+      value: "0"
+  envFrom:
+    app-env:
+      nameSuffix: app-env
+      type: secret
+  nodeSelector:
+    karpenter.sh/capacity-type: on-demand
+  reloadOnChange: true
+autoscaling:
+  enabled: true
+  maxReplicas: 95
+  minReplicas: 3
+  metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 60
+          type: Utilization
+      type: Resource
+    - resource:
+        name: memory
+        target:
+          averageUtilization: 60
+          type: Utilization
+      type: Resource
+
+### Secrets
+secret:
+  enabled: false
+externalSecret:
+  enabled: true
+  files:
+    app-env:
+      dataFrom:
+        key: prod/formbricks/environment
+    app-secrets:
+      dataFrom:
+        key: prod/formbricks/secrets
+  refreshInterval: 1m
+  secretStore:
+    kind: ClusterSecretStore
+    name: aws-secrets-manager
+
+## Ingress
+ingress:
+  annotations:
+    alb.ingress.kubernetes.io/certificate-arn: {{ requiredEnv "FORMBRICKS_INGRESS_CERT_ARN" }}
+    alb.ingress.kubernetes.io/group.name: formbricks
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/target-type: ip
+  enabled: true
+  hosts:
+    - host: app.k8s.formbricks.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: formbricks
+    - host: app.formbricks.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: formbricks
+  ingressClassName: alb
+
+## RBAC
+rbac:
+  enabled: true
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: {{ requiredEnv "FORMBRICKS_ROLE_ARN" }}
+    additionalLabels: {}
+    enabled: true
+    name: formbricks
+
+## Dependencies
+postgresql:
+  enabled: false
+redis:
+  enabled: false

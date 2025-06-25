@@ -1,14 +1,14 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslations } from "next-intl/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { TProject } from "@formbricks/types/project";
+import { getTranslate } from "@/tolgee/server";
+import { Project } from "@prisma/client";
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
-  project: TProject;
+  project: Project;
   environmentId: string;
   isReadOnly: boolean;
 }
@@ -19,11 +19,11 @@ export const BrandingSettingsCard = async ({
   environmentId,
   isReadOnly,
 }: BrandingSettingsCardProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: t("common.start_free_trial"),
+      text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
@@ -58,7 +58,7 @@ export const BrandingSettingsCard = async ({
       ) : (
         <UpgradePrompt
           title={t("environments.project.look.remove_branding_with_a_higher_plan")}
-          description={t("environments.project.look.eliminate_branding_with_whitelabel")}
+          description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
           buttons={buttons}
         />
       )}

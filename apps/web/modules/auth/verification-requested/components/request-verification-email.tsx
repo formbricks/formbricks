@@ -2,7 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { resendVerificationEmailAction } from "../actions";
@@ -12,7 +12,7 @@ interface RequestVerificationEmailProps {
 }
 
 export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -31,7 +31,7 @@ export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProp
     if (!email) return toast.error(t("auth.verification-requested.no_email_provided"));
     const response = await resendVerificationEmailAction({ email });
     if (response?.data) {
-      toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
+      toast.success(t("auth.verification-requested.verification_email_resent_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(response);
       toast.error(errorMessage);

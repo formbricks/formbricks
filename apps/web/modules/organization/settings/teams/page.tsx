@@ -1,31 +1,25 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getTranslate } from "@/tolgee/server";
 
 export const TeamsPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
-  const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  const t = await getTranslate();
 
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
+  const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+  const hasUserManagementAccess = getUserManagementAccess(
+    currentUserMembership?.role,
+    USER_MANAGEMENT_MINIMUM_ROLE
+  );
 
   return (
     <PageContentWrapper>
@@ -43,6 +37,7 @@ export const TeamsPage = async (props) => {
         currentUserId={session.user.id}
         environmentId={params.environmentId}
         canDoRoleManagement={canDoRoleManagement}
+        isUserManagementDisabledFromUi={!hasUserManagementAccess}
       />
       <TeamsView
         organizationId={organization.id}

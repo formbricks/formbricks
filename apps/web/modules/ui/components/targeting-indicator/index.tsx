@@ -1,9 +1,11 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { FilterIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TSegment } from "@formbricks/types/segment";
 
 export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const doFiltersExist = !!segment?.filters?.length;
 
   return (

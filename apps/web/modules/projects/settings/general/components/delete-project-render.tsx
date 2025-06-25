@@ -1,38 +1,51 @@
 "use client";
 
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { truncate } from "@/lib/utils/strings";
 import { deleteProjectAction } from "@/modules/projects/settings/general/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
-import { truncate } from "@formbricks/lib/utils/strings";
 import { TProject } from "@formbricks/types/project";
 
 interface DeleteProjectRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
-  project: TProject;
+  currentProject: TProject;
+  organizationProjects: TProject[];
 }
 
 export const DeleteProjectRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
-  project,
+  currentProject,
+  organizationProjects,
 }: DeleteProjectRenderProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const handleDeleteProject = async () => {
     setIsDeleting(true);
-    const deleteProjectResponse = await deleteProjectAction({ projectId: project.id });
+    const deleteProjectResponse = await deleteProjectAction({ projectId: currentProject.id });
     if (deleteProjectResponse?.data) {
-      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      if (organizationProjects.length === 1) {
+        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      } else if (organizationProjects.length > 1) {
+        // prevents changing of organization when deleting project
+        const remainingProjects = organizationProjects.filter((project) => project.id !== currentProject.id);
+        const productionEnvironment = remainingProjects[0].environments.find(
+          (environment) => environment.type === "production"
+        );
+        if (productionEnvironment) {
+          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, productionEnvironment.id);
+        }
+      }
       toast.success(t("environments.project.general.project_deleted_successfully"));
       router.push("/");
     } else {
@@ -51,7 +64,7 @@ export const DeleteProjectRender = ({
             {t(
               "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more",
               {
-                projectName: truncate(project.name, 30),
+                projectName: truncate(currentProject.name, 30),
               }
             )}{" "}
             <strong>{t("environments.project.general.this_action_cannot_be_undone")}</strong>
@@ -81,7 +94,7 @@ export const DeleteProjectRender = ({
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProject}
         text={t("environments.project.general.delete_project_confirmation", {
-          projectName: truncate(project.name, 30),
+          projectName: truncate(currentProject.name, 30),
         })}
         isDeleting={isDeleting}
       />

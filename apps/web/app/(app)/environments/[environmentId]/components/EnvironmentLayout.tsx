@@ -1,24 +1,25 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
-import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
-import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
-import type { Session } from "next-auth";
-import { getTranslations } from "next-intl/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getEnvironment, getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
-} from "@formbricks/lib/organization/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
+} from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
+import { getUser } from "@/lib/user/service";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
+import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
+import { getTranslate } from "@/tolgee/server";
+import type { Session } from "next-auth";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -27,7 +28,7 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
     getEnvironment(environmentId),
@@ -80,7 +81,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -111,6 +112,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           organizationProjectsLimit={organizationProjectsLimit}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          isDevelopment={IS_DEVELOPMENT}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isLicenseActive={active}

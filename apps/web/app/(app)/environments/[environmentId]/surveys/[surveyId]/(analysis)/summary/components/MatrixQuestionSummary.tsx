@@ -1,6 +1,7 @@
+"use client";
+
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslations } from "next-intl";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -8,13 +9,11 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -22,17 +21,10 @@ interface MatrixQuestionSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const MatrixQuestionSummary = ({
-  questionSummary,
-  survey,
-  contactAttributeKeys,
-  setFilter,
-  locale,
-}: MatrixQuestionSummaryProps) => {
-  const t = useTranslations();
+export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: MatrixQuestionSummaryProps) => {
+  const { t } = useTranslate();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -54,12 +46,7 @@ export const MatrixQuestionSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">
@@ -94,7 +81,7 @@ export const MatrixQuestionSummary = ({
                         percentage,
                         questionSummary.data[rowIndex].totalResponsesForRow
                       )}>
-                      <div
+                      <button
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
                         className="hover:outline-brand-dark m-1 flex h-full w-40 cursor-pointer items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline"
                         onClick={() =>
@@ -107,7 +94,7 @@ export const MatrixQuestionSummary = ({
                           )
                         }>
                         {percentage}
-                      </div>
+                      </button>
                     </TooltipRenderer>
                   </td>
                 ))}

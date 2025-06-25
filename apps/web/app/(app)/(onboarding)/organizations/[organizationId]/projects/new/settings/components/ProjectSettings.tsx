@@ -1,6 +1,8 @@
 "use client";
 
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { previewSurvey } from "@/app/lib/templates";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
@@ -19,14 +21,12 @@ import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
-import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import {
   TProjectConfigChannel,
   TProjectConfigIndustry,
@@ -43,7 +43,6 @@ interface ProjectSettingsProps {
   defaultBrandColor: string;
   organizationTeams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
-  locale: string;
   userProjectsCount: number;
 }
 
@@ -55,13 +54,12 @@ export const ProjectSettings = ({
   defaultBrandColor,
   organizationTeams,
   canDoRoleManagement = false,
-  locale,
   userProjectsCount,
 }: ProjectSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const addProject = async (data: TProjectUpdateInput) => {
     try {
       const createProjectResponse = await createProjectAction({
@@ -233,7 +231,8 @@ export const ProjectSettings = ({
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
-            survey={getPreviewSurvey(locale, projectName || "my Product")}
+            isPreviewMode={true}
+            survey={previewSurvey(projectName || "my Product", t)}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}
             languageCode="default"

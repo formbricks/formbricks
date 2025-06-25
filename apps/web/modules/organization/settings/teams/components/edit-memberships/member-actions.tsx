@@ -8,15 +8,15 @@ import {
   resendInviteAction,
 } from "@/modules/organization/settings/teams/actions";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
+import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -29,7 +29,7 @@ interface MemberActionsProps {
 
 export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
@@ -56,7 +56,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       setIsDeleting(false);
       router.refresh();
     } catch (err) {
-      console.log({ err });
       setIsDeleting(false);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
@@ -111,47 +110,46 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
 
   return (
     <div className="flex gap-2">
-      {showDeleteButton && (
-        <>
-          <TooltipRenderer tooltipContent={t("common.delete")}>
-            <Button
-              variant="secondary"
-              size="icon"
-              id="deleteMemberButton"
-              onClick={() => setDeleteMemberModalOpen(true)}>
-              <TrashIcon />
-            </Button>
-          </TooltipRenderer>
-        </>
-      )}
+      <TooltipRenderer tooltipContent={t("common.delete")} shouldRender={!!showDeleteButton}>
+        <Button
+          variant="destructive"
+          size="icon"
+          id="deleteMemberButton"
+          disabled={!showDeleteButton}
+          onClick={() => setDeleteMemberModalOpen(true)}>
+          <TrashIcon />
+        </Button>
+      </TooltipRenderer>
 
-      {invite && (
-        <>
-          <TooltipRenderer tooltipContent={t("environments.settings.general.share_invite_link")}>
-            <Button
-              variant="secondary"
-              size="icon"
-              id="shareInviteButton"
-              onClick={() => {
-                handleShareInvite();
-              }}>
-              <ShareIcon />
-            </Button>
-          </TooltipRenderer>
+      <TooltipRenderer
+        tooltipContent={t("environments.settings.general.share_invite_link")}
+        shouldRender={!!invite}>
+        <Button
+          variant="secondary"
+          size="icon"
+          id="shareInviteButton"
+          disabled={!invite}
+          onClick={() => {
+            handleShareInvite();
+          }}>
+          <ShareIcon />
+        </Button>
+      </TooltipRenderer>
 
-          <TooltipRenderer tooltipContent={t("environments.settings.general.resend_invitation_email")}>
-            <Button
-              variant="secondary"
-              size="icon"
-              id="resendInviteButton"
-              onClick={() => {
-                handleResendInvite();
-              }}>
-              <SendHorizonalIcon />
-            </Button>
-          </TooltipRenderer>
-        </>
-      )}
+      <TooltipRenderer
+        tooltipContent={t("environments.settings.general.resend_invitation_email")}
+        shouldRender={!!invite}>
+        <Button
+          variant="secondary"
+          size="icon"
+          id="resendInviteButton"
+          disabled={!invite}
+          onClick={() => {
+            handleResendInvite();
+          }}>
+          <SendHorizonalIcon />
+        </Button>
+      </TooltipRenderer>
 
       <DeleteDialog
         open={isDeleteMemberModalOpen}

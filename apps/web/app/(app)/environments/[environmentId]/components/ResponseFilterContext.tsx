@@ -6,7 +6,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
-import { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 export interface FilterValue {
   questionType: Partial<QuestionOption>;

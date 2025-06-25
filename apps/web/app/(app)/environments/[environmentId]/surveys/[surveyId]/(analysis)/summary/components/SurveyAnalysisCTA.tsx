@@ -3,10 +3,15 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
+import { copySurveyLink } from "@/modules/survey/lib/client-utils";
+import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { IconBar } from "@/modules/ui/components/iconbar";
+import { useTranslate } from "@tolgee/react";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -18,8 +23,9 @@ interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
   isReadOnly: boolean;
-  webAppUrl: string;
   user: TUser;
+  publicDomain: string;
+  responseCount: number;
 }
 
 interface ModalState {
@@ -33,13 +39,15 @@ export const SurveyAnalysisCTA = ({
   survey,
   environment,
   isReadOnly,
-  webAppUrl,
   user,
+  publicDomain,
+  responseCount,
 }: SurveyAnalysisCTAProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -48,7 +56,8 @@ export const SurveyAnalysisCTA = ({
     dropdown: false,
   });
 
-  const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
+  const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
+  const { refreshSingleUseId } = useSingleUseId(survey);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -71,8 +80,11 @@ export const SurveyAnalysisCTA = ({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard
-      .writeText(surveyUrl)
+    refreshSingleUseId()
+      .then((newId) => {
+        const linkToCopy = copySurveyLink(surveyUrl, newId);
+        return navigator.clipboard.writeText(linkToCopy);
+      })
       .then(() => {
         toast.success(t("common.copied_to_clipboard"));
       })
@@ -81,6 +93,24 @@ export const SurveyAnalysisCTA = ({
         console.error(err);
       });
     setModalState((prev) => ({ ...prev, dropdown: false }));
+  };
+
+  const duplicateSurveyAndRoute = async (surveyId: string) => {
+    setLoading(true);
+    const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+      environmentId: environment.id,
+      surveyId: surveyId,
+      targetEnvironmentId: environment.id,
+    });
+    if (duplicatedSurveyResponse?.data) {
+      toast.success(t("environments.surveys.survey_duplicated_successfully"));
+      router.push(`/environments/${environment.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
+      toast.error(errorMessage);
+    }
+    setIsCautionDialogOpen(false);
+    setLoading(false);
   };
 
   const getPreviewUrl = () => {
@@ -100,6 +130,8 @@ export const SurveyAnalysisCTA = ({
     { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
+
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   const iconActions = [
     {
@@ -138,7 +170,11 @@ export const SurveyAnalysisCTA = ({
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
-      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      onClick: () => {
+        responseCount > 0
+          ? setIsCautionDialogOpen(true)
+          : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+      },
       isVisible: !isReadOnly,
     },
   ];
@@ -166,15 +202,29 @@ export const SurveyAnalysisCTA = ({
             <ShareEmbedSurvey
               key={key}
               survey={survey}
+              publicDomain={publicDomain}
               open={modalState[key as keyof ModalState]}
               setOpen={setOpen}
-              webAppUrl={webAppUrl}
               user={user}
               modalView={modalView}
             />
           ))}
           <SuccessMessage environment={environment} survey={survey} />
         </>
+      )}
+
+      {responseCount > 0 && (
+        <EditPublicSurveyAlertDialog
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          isLoading={loading}
+          primaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
+          primaryButtonText={t("environments.surveys.edit.caution_edit_duplicate")}
+          secondaryButtonAction={() =>
+            router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
+          }
+          secondaryButtonText={t("common.edit")}
+        />
       )}
     </div>
   );

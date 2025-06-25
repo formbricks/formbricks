@@ -3,8 +3,8 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -45,7 +45,7 @@ export const SaveAsNewSegmentModal = ({
   } = useForm<SaveAsNewSegmentModalForm>();
 
   const [isLoading, setIsLoading] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleReset = () => {
     setValue("title", "");
     setValue("description", "");

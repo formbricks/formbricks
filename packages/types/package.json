@@ -8,11 +8,12 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "clean": "rimraf node_modules .turbo"
   },
+  "dependencies": {
+    "@prisma/client": "6.7.0",
+    "zod": "3.24.4"
+  },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/database": "workspace:*"
-  },
-  "dependencies": {
-    "zod": "3.24.1"
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -9,12 +10,11 @@ import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { cn } from "@formbricks/lib/cn";
-import { TProject } from "@formbricks/types/project";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },
@@ -25,7 +25,7 @@ const placements = [
 ];
 
 interface EditPlacementProps {
-  project: TProject;
+  project: Project;
   environmentId: string;
   isReadOnly: boolean;
 }
@@ -39,7 +39,7 @@ const ZProjectPlacementInput = z.object({
 type EditPlacementFormValues = z.infer<typeof ZProjectPlacementInput>;
 
 export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: project.placement,

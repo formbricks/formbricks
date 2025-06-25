@@ -1,14 +1,15 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { DEFAULT_LOCALE } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 
 type Params = Promise<{
   sharingKey: string;
@@ -19,7 +20,7 @@ interface SummaryPageProps {
 }
 
 const Page = async (props: SummaryPageProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
@@ -47,29 +48,25 @@ const Page = async (props: SummaryPageProps) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+  // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
+  const initialSurveySummary = await getSurveySummary(surveyId);
+
+  const publicDomain = getPublicDomain();
 
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
         <PageHeader pageTitle={survey.name}>
-          <SurveyAnalysisNavigation
-            survey={survey}
-            environmentId={environment.id}
-            activeId="summary"
-            initialTotalResponseCount={totalResponseCount}
-          />
+          <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="summary" />
         </PageHeader>
         <SummaryPage
           environment={environment}
           survey={survey}
           surveyId={survey.id}
-          webAppUrl={WEBAPP_URL}
-          totalResponseCount={totalResponseCount}
-          contactAttributeKeys={[]} // not showing any attributes for the sharing page
-          isAIEnabled={false} // Disable AI for sharing page for now
+          publicDomain={publicDomain}
           isReadOnly={true}
           locale={DEFAULT_LOCALE}
+          initialSurveySummary={initialSurveySummary}
         />
       </PageContentWrapper>
     </div>

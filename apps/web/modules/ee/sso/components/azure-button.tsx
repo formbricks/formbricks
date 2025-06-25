@@ -1,30 +1,33 @@
 "use client";
 
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { MicrosoftIcon } from "@/modules/ui/components/icons";
+import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface AzureButtonProps {
-  inviteUrl?: string | null;
+  inviteUrl?: string;
   directRedirect?: boolean;
   lastUsed?: boolean;
+  source: "signin" | "signup";
 }
 
-export const AzureButton = ({ inviteUrl, directRedirect = false, lastUsed }: AzureButtonProps) => {
-  const t = useTranslations();
+export const AzureButton = ({ inviteUrl, directRedirect = false, lastUsed, source }: AzureButtonProps) => {
+  const { t } = useTranslate();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Azure");
     }
+    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
 
     await signIn("azure-ad", {
       redirect: true,
-      callbackUrl: inviteUrl ? inviteUrl : "/",
+      callbackUrl: callbackUrlWithSource,
     });
-  }, [inviteUrl]);
+  }, [inviteUrl, source]);
 
   useEffect(() => {
     if (directRedirect) {

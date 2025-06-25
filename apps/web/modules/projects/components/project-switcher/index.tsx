@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import {
   DropdownMenu,
@@ -11,12 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import { useTranslate } from "@tolgee/react";
 import { BlendIcon, ChevronRightIcon, GlobeIcon, GlobeLockIcon, LinkIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 
@@ -49,7 +49,7 @@ export const ProjectSwitcher = ({
 
   const router = useRouter();
 
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const handleEnvironmentChangeByProject = (projectId: string) => {
     router.push(`/projects/${projectId}/`);

@@ -1,7 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
+import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { createDisplay } from "./lib/display";
@@ -13,7 +14,13 @@ interface Context {
 }
 
 export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse({}, true);
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
+  );
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
@@ -48,7 +55,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error);
+      logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/displays");
       return responses.internalServerErrorResponse(error.message);
     }
   }

@@ -1,6 +1,7 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -8,14 +9,12 @@ import {
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummaryConsent;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -23,17 +22,10 @@ interface ConsentSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const ConsentSummary = ({
-  questionSummary,
-  survey,
-  contactAttributeKeys,
-  setFilter,
-  locale,
-}: ConsentSummaryProps) => {
-  const t = useTranslations();
+export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSummaryProps) => {
+  const { t } = useTranslate();
   const summaryItems = [
     {
       title: t("common.accepted"),
@@ -48,17 +40,12 @@ export const ConsentSummary = ({
   ];
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (
-            <div
-              className="group cursor-pointer"
+            <button
+              className="group w-full cursor-pointer"
               key={summaryItem.title}
               onClick={() =>
                 setFilter(
@@ -87,7 +74,7 @@ export const ConsentSummary = ({
               <div className="group-hover:opacity-80">
                 <ProgressBar barColor="bg-brand-dark" progress={summaryItem.percentage / 100} />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

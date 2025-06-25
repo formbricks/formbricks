@@ -1,0 +1,142 @@
+name: Formbricks Cloud Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: "The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0."
+        required: true
+        type: string
+      REPOSITORY:
+        description: "The repository to use for the Docker image"
+        required: false
+        type: string
+        default: "ghcr.io/formbricks/formbricks"
+      ENVIRONMENT:
+        description: "The environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
+  workflow_call:
+    inputs:
+      VERSION:
+        description: "The version of the Docker image to release"
+        required: true
+        type: string
+      REPOSITORY:
+        description: "The repository to use for the Docker image"
+        required: false
+        type: string
+        default: "ghcr.io/formbricks/formbricks"
+      ENVIRONMENT:
+        description: "The environment to deploy to"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  helmfile-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # v4.2.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: "eu-central-1"
+
+      - name: Setup Cluster Access
+        run: |
+          aws eks update-kubeconfig --name formbricks-prod-eks --region eu-central-1
+        env:
+          AWS_REGION: eu-central-1
+
+      - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Prod
+        if: inputs.ENVIRONMENT == 'prod'
+        env:
+          VERSION: ${{ inputs.VERSION }}
+          REPOSITORY: ${{ inputs.REPOSITORY }}
+          FORMBRICKS_S3_BUCKET: ${{ secrets.FORMBRICKS_S3_BUCKET }}
+          FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.FORMBRICKS_INGRESS_CERT_ARN }}
+          FORMBRICKS_ROLE_ARN: ${{ secrets.FORMBRICKS_ROLE_ARN }}
+        with:
+          helmfile-version: "v1.0.0"
+          helm-plugins: >
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
+          helmfile-args: apply -l environment=prod
+          helmfile-auto-init: "false"
+          helmfile-workdirectory: infra/formbricks-cloud-helm
+
+      - uses: helmfile/helmfile-action@v2
+        name: Deploy Formbricks Cloud Stage
+        if: inputs.ENVIRONMENT == 'stage'
+        env:
+          VERSION: ${{ inputs.VERSION }}
+          REPOSITORY: ${{ inputs.REPOSITORY }}
+          FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.STAGE_FORMBRICKS_INGRESS_CERT_ARN }}
+          FORMBRICKS_ROLE_ARN: ${{ secrets.STAGE_FORMBRICKS_ROLE_ARN }}
+        with:
+          helmfile-version: "v1.0.0"
+          helm-plugins: >
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
+          helmfile-args: apply -l environment=stage
+          helmfile-auto-init: "false"
+          helmfile-workdirectory: infra/formbricks-cloud-helm
+
+      - name: Purge Cloudflare Cache
+        if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
+        env:
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # Set hostname based on environment
+          if [[ "${{ inputs.ENVIRONMENT }}" == "prod" ]]; then
+            PURGE_HOST="app.formbricks.com"
+          else
+            PURGE_HOST="stage.app.formbricks.com"
+          fi
+
+          echo "Purging Cloudflare cache for host: $PURGE_HOST (environment: ${{ inputs.ENVIRONMENT }}, zone: $CF_ZONE_ID)"
+
+          # Prepare JSON payload for selective cache purge
+          json_payload=$(cat << EOF
+          {
+            "hosts": ["$PURGE_HOST"]
+          }
+          EOF
+          )
+
+          # Make API call to Cloudflare
+          response=$(curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$json_payload")
+
+          echo "Cloudflare API response: $response"
+
+          # Verify the operation was successful
+          if [[ "$(echo "$response" | jq -r .success)" == "true" ]]; then
+            echo "✅ Successfully purged cache for $PURGE_HOST"
+          else
+            echo "❌ Cloudflare cache purge failed"
+            echo "Error details: $(echo "$response" | jq -r .errors)"
+            exit 1
+          fi

@@ -1,16 +1,16 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
-import { CLOUD_PRICING_DATA } from "../api/lib/constants";
+import { getCloudPricingData } from "../api/lib/constants";
 import { BillingSlider } from "./billing-slider";
 import { PricingCard } from "./pricing-card";
 
@@ -45,7 +45,7 @@ export const PricingTable = ({
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );
@@ -73,7 +73,7 @@ export const PricingTable = ({
     const manageSubscriptionResponse = await manageSubscriptionAction({
       environmentId,
     });
-    if (manageSubscriptionResponse?.data) {
+    if (manageSubscriptionResponse?.data && typeof manageSubscriptionResponse.data === "string") {
       router.push(manageSubscriptionResponse.data);
     }
   };
@@ -102,7 +102,6 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      console.log({ err });
       toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
     }
   };
@@ -155,7 +154,17 @@ export const PricingTable = ({
                   className="mx-2"
                   size="normal"
                   type="warning"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                  text={`Cancelling: ${
+                    cancellingOn
+                      ? cancellingOn.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })
+                      : ""
+                  }`}
                 />
               )}
             </h2>
@@ -253,14 +262,16 @@ export const PricingTable = ({
           <div className="mx-auto mb-12">
             <div className="gap-x-2">
               <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-                <div
+                <button
+                  aria-pressed={planPeriod === "monthly"}
                   className={`flex-1 rounded-md px-4 py-0.5 text-center ${
                     planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("monthly")}>
                   {t("environments.settings.billing.monthly")}
-                </div>
-                <div
+                </button>
+                <button
+                  aria-pressed={planPeriod === "yearly"}
                   className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
@@ -269,14 +280,14 @@ export const PricingTable = ({
                   <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                     {t("environments.settings.billing.get_2_months_free")} 🔥
                   </span>
-                </div>
+                </button>
               </div>
               <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
                 <div
                   className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"
                 />
-                {CLOUD_PRICING_DATA.plans.map((plan) => (
+                {getCloudPricingData(t).plans.map((plan) => (
                   <PricingCard
                     planPeriod={planPeriod}
                     key={plan.id}

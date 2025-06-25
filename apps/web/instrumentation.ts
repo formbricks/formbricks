@@ -1,25 +1,17 @@
-import { registerOTel } from "@vercel/otel";
-import { LangfuseExporter } from "langfuse-vercel";
-import { env } from "@formbricks/lib/env";
+import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
+import * as Sentry from "@sentry/nextjs";
 
-export async function register() {
-  if (env.LANGFUSE_SECRET_KEY && env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_BASEURL) {
-    registerOTel({
-      serviceName: "formbricks-cloud-dev",
-      traceExporter: new LangfuseExporter({
-        debug: false,
-        secretKey: env.LANGFUSE_SECRET_KEY,
-        publicKey: env.LANGFUSE_PUBLIC_KEY,
-        baseUrl: env.LANGFUSE_BASEURL,
-      }),
-    });
+export const onRequestError = Sentry.captureRequestError;
+
+// instrumentation.ts
+export const register = async () => {
+  if (process.env.NEXT_RUNTIME === "nodejs" && PROMETHEUS_ENABLED) {
+    await import("./instrumentation-node");
   }
-
-  if (process.env.NEXT_RUNTIME === "nodejs") {
+  if (process.env.NEXT_RUNTIME === "nodejs" && IS_PRODUCTION && SENTRY_DSN) {
     await import("./sentry.server.config");
   }
-
-  if (process.env.NEXT_RUNTIME === "edge") {
+  if (process.env.NEXT_RUNTIME === "edge" && IS_PRODUCTION && SENTRY_DSN) {
     await import("./sentry.edge.config");
   }
-}
+};

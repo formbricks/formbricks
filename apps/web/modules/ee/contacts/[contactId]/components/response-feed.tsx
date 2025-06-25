@@ -1,14 +1,13 @@
 "use client";
 
+import { useMembershipRole } from "@/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useEffect, useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -21,7 +20,6 @@ interface ResponseTimelineProps {
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
 }
@@ -32,7 +30,6 @@ export const ResponseFeed = ({
   surveys,
   user,
   environmentTags,
-  contactAttributeKeys,
   locale,
   projectPermission,
 }: ResponseTimelineProps) => {
@@ -67,7 +64,6 @@ export const ResponseFeed = ({
             environment={environment}
             deleteResponses={deleteResponses}
             updateResponse={updateResponse}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
             projectPermission={projectPermission}
           />
@@ -85,7 +81,6 @@ const ResponseSurveyCard = ({
   environment,
   deleteResponses,
   updateResponse,
-  contactAttributeKeys,
   locale,
   projectPermission,
 }: {
@@ -96,7 +91,6 @@ const ResponseSurveyCard = ({
   environment: TEnvironment;
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
 }) => {
@@ -116,7 +110,7 @@ const ResponseSurveyCard = ({
       {survey && (
         <SingleResponseCard
           response={response}
-          survey={replaceHeadlineRecall(survey, "default", contactAttributeKeys)}
+          survey={replaceHeadlineRecall(survey, "default")}
           user={user}
           pageType="people"
           environmentTags={environmentTags}

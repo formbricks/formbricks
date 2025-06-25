@@ -1,7 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { TriangleAlertIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,7 +19,7 @@ export const PendingDowngradeBanner = ({
   environmentId,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isLastCheckedWithin72Hours = lastChecked
     ? new Date().getTime() - lastChecked.getTime() < threeDaysInMillis
     : false;

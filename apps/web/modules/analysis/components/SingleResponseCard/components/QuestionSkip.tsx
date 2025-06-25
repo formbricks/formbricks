@@ -1,8 +1,10 @@
+"use client";
+
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
@@ -21,7 +23,7 @@ export const QuestionSkip = ({
   isFirstQuestionAnswered,
   responseData,
 }: QuestionSkipProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       {skippedQuestions && (
@@ -58,28 +60,28 @@ export const QuestionSkip = ({
                         <ChevronsDownIcon className="w-[1.25rem] min-w-[1.25rem] rounded-full bg-slate-400 p-0.5 text-white" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{t("environments.surveys.responses.respondent_skipped_questions")}</p>
+                        <p data-testid="tooltip-respondent_skipped_questions">
+                          {t("environments.surveys.responses.respondent_skipped_questions")}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
               </div>
               <div className="ml-6 flex flex-col">
-                {skippedQuestions &&
-                  skippedQuestions.map((questionId) => {
-                    return (
-                      <p className="my-2" key={questionId}>
-                        {parseRecallInfo(
-                          getLocalizedValue(
-                            questions.find((question) => question.id === questionId)!.headline,
-                            "default"
-                          ),
-                          {},
-                          responseData
-                        )}
-                      </p>
-                    );
-                  })}
+                {skippedQuestions?.map((questionId) => {
+                  return (
+                    <p className="my-2" key={questionId}>
+                      {parseRecallInfo(
+                        getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "default"
+                        ),
+                        responseData
+                      )}
+                    </p>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -96,7 +98,9 @@ export const QuestionSkip = ({
                 </div>
               </div>
               <div className="mb-2 ml-4 flex flex-col">
-                <p className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
+                <p
+                  data-testid="tooltip-survey_closed"
+                  className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
                   {t("environments.surveys.responses.survey_closed")}
                 </p>
                 {skippedQuestions &&
@@ -108,7 +112,6 @@ export const QuestionSkip = ({
                             questions.find((question) => question.id === questionId)!.headline,
                             "default"
                           ),
-                          {},
                           responseData
                         )}
                       </p>

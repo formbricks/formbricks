@@ -1,6 +1,8 @@
+"use client";
+
+import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
-import { useTranslations } from "next-intl";
-import { cn } from "@formbricks/lib/cn";
+import { useTranslate } from "@tolgee/react";
 
 export const SettingsCard = ({
   title,
@@ -19,7 +21,7 @@ export const SettingsCard = ({
   beta?: boolean;
   className?: string;
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div
       className={cn(

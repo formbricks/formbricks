@@ -1,19 +1,10 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
-import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { ToasterClient } from "@/modules/ui/components/toaster-client";
-import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { FormbricksClient } from "../../components/FormbricksClient";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
+import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
+import { redirect } from "next/navigation";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
-import { PosthogIdentify } from "./components/PosthogIdentify";
 
 const EnvLayout = async (props: {
   params: Promise<{ environmentId: string }>;
@@ -23,53 +14,38 @@ const EnvLayout = async (props: {
 
   const { children } = props;
 
-  const t = await getTranslations();
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+  const { t, session, user, organization } = await environmentIdLayoutChecks(params.environmentId);
+
+  if (!session) {
     return redirect(`/auth/login`);
   }
 
-  const user = await getUser(session.user.id);
   if (!user) {
-    return redirect(`/auth/login`);
+    throw new Error(t("common.user_not_found"));
   }
 
-  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
-  }
-
-  const organization = await getOrganizationByEnvironmentId(params.environmentId);
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
     throw new Error(t("common.project_not_found"));
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership) return notFound();
+
+  if (!membership) {
+    throw new Error(t("common.membership_not_found"));
+  }
 
   return (
-    <>
-      <ResponseFilterProvider>
-        <PosthogIdentify
-          session={session}
-          user={user}
-          environmentId={params.environmentId}
-          organizationId={organization.id}
-          organizationName={organization.name}
-          organizationBilling={organization.billing}
-        />
-        <FormbricksClient userId={user.id} email={user.email} />
-        <ToasterClient />
-        <EnvironmentStorageHandler environmentId={params.environmentId} />
-        <EnvironmentLayout environmentId={params.environmentId} session={session}>
-          {children}
-        </EnvironmentLayout>
-      </ResponseFilterProvider>
-    </>
+    <EnvironmentIdBaseLayout
+      environmentId={params.environmentId}
+      session={session}
+      user={user}
+      organization={organization}>
+      <EnvironmentStorageHandler environmentId={params.environmentId} />
+      <EnvironmentLayout environmentId={params.environmentId} session={session}>
+        {children}
+      </EnvironmentLayout>
+    </EnvironmentIdBaseLayout>
   );
 };
 

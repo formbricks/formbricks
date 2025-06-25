@@ -30,7 +30,7 @@ export function StackedCardsContainer({
   setQuestionId,
   shouldResetQuestionId = true,
   fullSizeCards = false,
-}: StackedCardsContainerProps) {
+}: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.highlightBorderColor?.light
@@ -98,24 +98,36 @@ export function StackedCardsContainer({
 
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+
+    const handleDebouncedResize = (entries: ResizeObserverEntry[]) => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        for (const entry of entries) {
+          setCardHeight(`${entry.contentRect.height.toString()}px`);
+          setCardWidth(entry.contentRect.width);
+        }
+      }, 50); // 50ms debounce
+    };
+
     const timer = setTimeout(() => {
       const currentElement = cardRefs.current[questionIdxTemp];
       if (currentElement) {
         if (resizeObserver.current) {
           resizeObserver.current.disconnect();
         }
+
         resizeObserver.current = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            setCardHeight(`${entry.contentRect.height.toString()}px`);
-            setCardWidth(entry.contentRect.width);
-          }
+          handleDebouncedResize(entries);
         });
         resizeObserver.current.observe(currentElement);
       }
     }, 0);
+
     return () => {
       resizeObserver.current?.disconnect();
       clearTimeout(timer);
+      clearTimeout(resizeTimeout);
     };
   }, [questionIdxTemp, cardArrangement, cardRefs]);
 
@@ -129,6 +141,7 @@ export function StackedCardsContainer({
 
   return (
     <div
+      data-testid="stacked-cards-container"
       className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
       onMouseEnter={() => {
         setHovered(true);
@@ -140,10 +153,9 @@ export function StackedCardsContainer({
       {cardArrangement === "simple" ? (
         <div
           id={`questionCard-${questionIdxTemp.toString()}`}
-          className={cn("fb-w-full fb-bg-survey-bg", fullSizeCards ? "fb-h-full" : "")}
-          style={{
-            ...borderStyles,
-          }}>
+          data-testid={`questionCard-${questionIdxTemp.toString()}`}
+          className={cn("fb-w-full fb-bg-survey-bg fb-overflow-hidden", fullSizeCards ? "fb-h-full" : "")}
+          style={borderStyles}>
           {getCardContent(questionIdxTemp, 0)}
         </div>
       ) : (

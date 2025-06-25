@@ -1,0 +1,62 @@
+---
+title: "Variables"
+description: "Variables are a powerful feature in Formbricks that allows you to keep track of data variables when user fills a form. This feature is especially useful when you want to use your survey as a quiz."
+icon: "x"
+---
+
+## Types of Variables
+
+There are two types of variables you can add to your survey:
+
+1. **Text**: You can add text variables to your survey to capture text data.
+
+2. **Number**: You can add number variables to your survey to capture number data.
+
+## How to Add Variables
+
+1. Edit the survey you want to add variables to & switch to the Questions tab and scroll down to the bottom of the page. You will see a section called **Variables**.
+
+![Variables card](/images/xm-and-surveys/surveys/general-features/variables/variables-card.webp)
+
+
+1. Now click on it to add a new variable ID. You can add as many variables as you want. You can also choose the type of variable you want to add along with the default value.
+
+![add variables](/images/xm-and-surveys/surveys/general-features/variables/input-variables.webp)
+
+
+![created variables](/images/xm-and-surveys/surveys/general-features/variables/created-variables.webp)
+
+## Use cases
+
+- **Quiz**: You can use variables to create a quiz. For example, you can add a variable `score` and update it every time a user answers a question. You can also use the variable for recall to show the final score to the user.
+
+- **Personalisation**: You can use variables to store user data and personalise the survey experience. For example, you can add a variable `full_name` and update it every time a user fills in their first name and last name. You can use the variable to personalise the survey experience by addressing the user with their full name.
+
+## How is it different from Hidden Fields?
+
+Variables are different from hidden fields in the following ways:
+
+1. **Setting**: Hidden fields can be set through query parameters or `formbricks.init`, but the variables can only be set either during creation or dynamically by using logic actions.
+
+2. **Updating**: Hidden fields cannot be set again, but the value of variables can be updated while the user fills the survey.
+
+3. **Type**: Hidden fields can only store text data, but variables can store both text and number data.
+
+## How to use Variables
+
+1. Once you have added the variables to your survey, you'll be able to access them in the logic editor. You can use the variables to create logic actions and conditions.
+
+![Variables usage](/images/xm-and-surveys/surveys/general-features/variables/variables-usage.webp)
+
+1. You can create logic based on the variables and questions in your survey and can update the variables based on the user's response.
+
+![Logic with variables](/images/xm-and-surveys/surveys/general-features/variables/logic-with-variables.webp)
+
+### Recalling Variables in the Survey
+
+You can recall show the variable value to the respondent by using the [Recall Data](/xm-and-surveys/surveys/general-features/recall) function.
+
+<Note>
+  To know more about how to use logic in Formbricks, check out the [Conditional
+  Logic](/xm-and-surveys/surveys/general-features/conditional-logic).
+</Note>

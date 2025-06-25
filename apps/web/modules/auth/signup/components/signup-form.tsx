@@ -10,31 +10,23 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
-import { env } from "@formbricks/lib/env";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TUserLocale, ZUserName } from "@formbricks/types/user";
+import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
   name: ZUserName,
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
+  password: ZUserPassword,
 });
-
-const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
 
@@ -51,10 +43,12 @@ interface SignupFormProps {
   userLocale: TUserLocale;
   emailFromSearchParams?: string;
   emailVerificationDisabled: boolean;
-  defaultOrganizationId?: string;
-  defaultOrganizationRole?: TOrganizationRole;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
+  samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
+  samlTenant: string;
+  samlProduct: string;
+  turnstileSiteKey?: string;
 }
 
 export const SignupForm = ({
@@ -70,14 +64,16 @@ export const SignupForm = ({
   userLocale,
   emailFromSearchParams,
   emailVerificationDisabled,
-  defaultOrganizationId,
-  defaultOrganizationRole,
-  isSSOEnabled,
+  isSsoEnabled,
+  samlSsoEnabled,
   isTurnstileConfigured,
+  samlTenant,
+  samlProduct,
+  turnstileSiteKey,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();
@@ -112,23 +108,22 @@ export const SignupForm = ({
         email: data.email,
         password: data.password,
         userLocale,
-        inviteToken: inviteToken || "",
+        inviteToken: inviteToken ?? "",
         emailVerificationDisabled,
-        defaultOrganizationId,
-        defaultOrganizationRole,
         turnstileToken,
       });
 
-      if (createUserResponse?.data) {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.data) {
-          const token = emailTokenActionResponse?.data;
-          const url = emailVerificationDisabled
-            ? `/auth/signup-without-verification-success`
-            : `/auth/verification-requested?token=${token}`;
+      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      const token = emailTokenActionResponse?.data;
 
-          router.push(url);
-        } else {
+      const url = emailVerificationDisabled
+        ? `/auth/signup-without-verification-success?token=${token}`
+        : `/auth/verification-requested?token=${token}`;
+
+      if (createUserResponse?.data) {
+        router.push(url);
+
+        if (!emailTokenActionResponse?.data) {
           if (isTurnstileConfigured) {
             setTurnstileToken(undefined);
             turnstile.reset();
@@ -168,10 +163,11 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <Input
+                              data-testid="signup-name"
                               value={field.value}
                               name="name"
                               autoFocus
-                              onChange={(name) => field.onChange(name)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               placeholder="Full name"
                               className="bg-white"
                             />
@@ -189,9 +185,10 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <Input
+                              data-testid="signup-email"
                               value={field.value}
                               name="email"
-                              onChange={(email) => field.onChange(email)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               placeholder="work@email.com"
                               className="bg-white"
                             />
@@ -209,10 +206,11 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <PasswordInput
+                              data-testid="signup-password"
                               id="password"
                               name="password"
                               value={field.value}
-                              onChange={(password) => field.onChange(password)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               autoComplete="current-password"
                               placeholder="*******"
                               aria-placeholder="password"
@@ -245,6 +243,7 @@ export const SignupForm = ({
 
             {showLogin && (
               <Button
+                data-testid="signup-submit"
                 type="submit"
                 className="h-10 w-full justify-center"
                 loading={form.formState.isSubmitting}
@@ -255,6 +254,7 @@ export const SignupForm = ({
 
             {!showLogin && (
               <Button
+                data-testid="signup-show-login"
                 type="button"
                 onClick={() => {
                   setShowLogin(true);
@@ -266,14 +266,18 @@ export const SignupForm = ({
           </form>
         </FormProvider>
       )}
-      {isSSOEnabled && (
+      {isSsoEnabled && (
         <SSOOptions
           googleOAuthEnabled={googleOAuthEnabled}
           githubOAuthEnabled={githubOAuthEnabled}
           azureOAuthEnabled={azureOAuthEnabled}
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
+          samlSsoEnabled={samlSsoEnabled}
+          samlTenant={samlTenant}
+          samlProduct={samlProduct}
           callbackUrl={callbackUrl}
+          source="signup"
         />
       )}
       <TermsPrivacyLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />

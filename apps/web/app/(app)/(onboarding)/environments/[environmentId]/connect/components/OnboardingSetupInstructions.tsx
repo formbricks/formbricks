@@ -4,7 +4,7 @@ import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
@@ -18,26 +18,25 @@ const tabs = [
 
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
-  webAppUrl: string;
+  publicDomain: string;
   channel: TProjectConfigChannel;
   widgetSetupCompleted: boolean;
 }
 
 export const OnboardingSetupInstructions = ({
   environmentId,
-  webAppUrl,
+  publicDomain,
   channel,
   widgetSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-      var apiHost = "${webAppUrl}";
+      var appUrl = "${publicDomain}";
       var environmentId = "${environmentId}";
-      var userId = "testUser";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -45,9 +44,9 @@ export const OnboardingSetupInstructions = ({
   const htmlSnippetForWebsiteSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-    var apiHost = "${webAppUrl}";
+    var appUrl = "${publicDomain}";
     var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -56,10 +55,9 @@ export const OnboardingSetupInstructions = ({
   import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "${environmentId}",
-      apiHost: "${webAppUrl}",
-      userId: "testUser",
+      appUrl: "${publicDomain}",
     });
   }
   
@@ -75,9 +73,9 @@ export const OnboardingSetupInstructions = ({
   import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "${environmentId}",
-      apiHost: "${webAppUrl}",
+      appUrl: "${publicDomain}",
     });
   }
   

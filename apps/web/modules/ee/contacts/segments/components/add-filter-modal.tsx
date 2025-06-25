@@ -1,13 +1,13 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { type JSX, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -15,6 +15,8 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
+import AttributeTabContent from "./attribute-tab-content";
+import FilterButton from "./filter-button";
 
 interface TAddFilterModalProps {
   open: boolean;
@@ -26,7 +28,7 @@ interface TAddFilterModalProps {
 
 type TFilterType = "attribute" | "segment" | "device" | "person";
 
-const handleAddFilter = ({
+export const handleAddFilter = ({
   type,
   onAddFilter,
   setOpen,
@@ -132,78 +134,8 @@ const handleAddFilter = ({
   }
 };
 
-interface AttributeTabContentProps {
-  contactAttributeKeys: TContactAttributeKey[];
-  onAddFilter: (filter: TBaseFilter) => void;
-  setOpen: (open: boolean) => void;
-}
-
-function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) {
-  const t = useTranslations();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div>
-        <h2 className="text-base font-medium">{t("common.person")}</h2>
-        <div>
-          <div
-            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-            onClick={() => {
-              handleAddFilter({
-                type: "person",
-                onAddFilter,
-                setOpen,
-              });
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleAddFilter({
-                  type: "person",
-                  onAddFilter,
-                  setOpen,
-                });
-              }
-            }}>
-            <FingerprintIcon className="h-4 w-4" />
-            <p>{t("common.user_id")}</p>
-          </div>
-        </div>
-      </div>
-
-      <hr className="my-2" />
-
-      <div>
-        <h2 className="text-base font-medium">{t("common.attributes")}</h2>
-      </div>
-      {contactAttributeKeys.length === 0 && (
-        <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-          <p>{t("environments.segments.no_attributes_yet")}</p>
-        </div>
-      )}
-      {contactAttributeKeys.map((attributeKey) => {
-        return (
-          <div
-            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-            key={attributeKey.id}
-            onClick={() => {
-              handleAddFilter({
-                type: "attribute",
-                onAddFilter,
-                setOpen,
-                contactAttributeKey: attributeKey.name ?? attributeKey.key,
-              });
-            }}>
-            <TagIcon className="h-4 w-4" />
-            <p>{attributeKey.name ?? attributeKey.key}</p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export function AddFilterModal({
+  // NOSONAR // the read-only attribute doesn't work as expected yet
   onAddFilter,
   open,
   setOpen,
@@ -212,7 +144,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs: {
     id: string;
     label: string;
@@ -301,81 +233,119 @@ export function AddFilterModal({
           </div>
         ) : null}
 
-        {allFiltersFiltered.map((filters, index) => {
-          return (
-            <div key={index}>
-              {filters.attributes.map((attributeKey) => {
-                return (
-                  <div
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                    onClick={() => {
-                      handleAddFilter({
-                        type: "attribute",
-                        onAddFilter,
-                        setOpen,
-                        contactAttributeKey: attributeKey.key,
-                      });
-                    }}>
-                    <TagIcon className="h-4 w-4" />
-                    <p>{attributeKey.name ?? attributeKey.key}</p>
-                  </div>
-                );
-              })}
+        {allFiltersFiltered.map((filters, index) => (
+          <div key={index}>
+            {filters.attributes.map((attributeKey) => (
+              <FilterButton
+                key={attributeKey.id}
+                data-testid={`filter-btn-attribute-${attributeKey.key}`}
+                icon={<TagIcon className="h-4 w-4" />}
+                label={attributeKey.name ?? attributeKey.key}
+                onClick={() => {
+                  handleAddFilter({
+                    type: "attribute",
+                    onAddFilter,
+                    setOpen,
+                    contactAttributeKey: attributeKey.key,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAddFilter({
+                      type: "attribute",
+                      onAddFilter,
+                      setOpen,
+                      contactAttributeKey: attributeKey.key,
+                    });
+                  }
+                }}
+              />
+            ))}
 
-              {filters.contactAttributeFiltered.map((personAttribute) => {
-                return (
-                  <div
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                    onClick={() => {
-                      handleAddFilter({
-                        type: "person",
-                        onAddFilter,
-                        setOpen,
-                      });
-                    }}>
-                    <FingerprintIcon className="h-4 w-4" />
-                    <p>{personAttribute.name}</p>
-                  </div>
-                );
-              })}
+            {filters.contactAttributeFiltered.map((personAttribute) => (
+              <FilterButton
+                key={personAttribute.name}
+                data-testid={`filter-btn-person-${personAttribute.name}`}
+                icon={<FingerprintIcon className="h-4 w-4" />}
+                label={personAttribute.name}
+                onClick={() => {
+                  handleAddFilter({
+                    type: "person",
+                    onAddFilter,
+                    setOpen,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAddFilter({
+                      type: "person",
+                      onAddFilter,
+                      setOpen,
+                    });
+                  }
+                }}
+              />
+            ))}
 
-              {filters.segments.map((segment) => {
-                return (
-                  <div
-                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                    onClick={() => {
-                      handleAddFilter({
-                        type: "segment",
-                        onAddFilter,
-                        setOpen,
-                        segmentId: segment.id,
-                      });
-                    }}>
-                    <Users2Icon className="h-4 w-4" />
-                    <p>{segment.title}</p>
-                  </div>
-                );
-              })}
+            {filters.segments.map((segment) => (
+              <FilterButton
+                key={segment.id}
+                data-testid={`filter-btn-segment-${segment.id}`}
+                icon={<Users2Icon className="h-4 w-4" />}
+                label={segment.title}
+                onClick={() => {
+                  handleAddFilter({
+                    type: "segment",
+                    onAddFilter,
+                    setOpen,
+                    segmentId: segment.id,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAddFilter({
+                      type: "segment",
+                      onAddFilter,
+                      setOpen,
+                      segmentId: segment.id,
+                    });
+                  }
+                }}
+              />
+            ))}
 
-              {filters.devices.map((deviceType) => (
-                <div
-                  className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                  key={deviceType.id}
-                  onClick={() => {
+            {filters.devices.map((deviceType) => (
+              <FilterButton
+                key={deviceType.id}
+                data-testid={`filter-btn-device-${deviceType.id}`}
+                icon={<MonitorSmartphoneIcon className="h-4 w-4" />}
+                label={deviceType.name}
+                onClick={() => {
+                  handleAddFilter({
+                    type: "device",
+                    onAddFilter,
+                    setOpen,
+                    deviceType: deviceType.id,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     handleAddFilter({
                       type: "device",
                       onAddFilter,
                       setOpen,
                       deviceType: deviceType.id,
                     });
-                  }}>
-                  <MonitorSmartphoneIcon className="h-4 w-4" />
-                  <span>{deviceType.name}</span>
-                </div>
-              ))}
-            </div>
-          );
-        })}
+                  }
+                }}
+              />
+            ))}
+          </div>
+        ))}
       </>
     );
   };
@@ -386,6 +356,7 @@ export function AddFilterModal({
         contactAttributeKeys={contactAttributeKeysFiltered}
         onAddFilter={onAddFilter}
         setOpen={setOpen}
+        handleAddFilter={handleAddFilter}
       />
     );
   };
@@ -400,23 +371,33 @@ export function AddFilterModal({
         )}
         {segmentsFiltered
           .filter((segment) => !segment.isPrivate)
-          .map((segment) => {
-            return (
-              <div
-                className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                onClick={() => {
+          .map((segment) => (
+            <FilterButton
+              key={segment.id}
+              data-testid={`filter-btn-segment-${segment.id}`}
+              icon={<Users2Icon className="h-4 w-4" />}
+              label={segment.title}
+              onClick={() => {
+                handleAddFilter({
+                  type: "segment",
+                  onAddFilter,
+                  setOpen,
+                  segmentId: segment.id,
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
                   handleAddFilter({
                     type: "segment",
                     onAddFilter,
                     setOpen,
                     segmentId: segment.id,
                   });
-                }}>
-                <Users2Icon className="h-4 w-4" />
-                <p>{segment.title}</p>
-              </div>
-            );
-          })}
+                }
+              }}
+            />
+          ))}
       </>
     );
   };
@@ -425,9 +406,11 @@ export function AddFilterModal({
     return (
       <div className="flex flex-col">
         {deviceTypesFiltered.map((deviceType) => (
-          <div
-            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+          <FilterButton
             key={deviceType.id}
+            data-testid={`filter-btn-device-${deviceType.id}`}
+            icon={<MonitorSmartphoneIcon className="h-4 w-4" />}
+            label={deviceType.name}
             onClick={() => {
               handleAddFilter({
                 type: "device",
@@ -435,10 +418,19 @@ export function AddFilterModal({
                 setOpen,
                 deviceType: deviceType.id,
               });
-            }}>
-            <MonitorSmartphoneIcon className="h-4 w-4" />
-            <span>{deviceType.name}</span>
-          </div>
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleAddFilter({
+                  type: "device",
+                  onAddFilter,
+                  setOpen,
+                  deviceType: deviceType.id,
+                });
+              }
+            }}
+          />
         ))}
       </div>
     );

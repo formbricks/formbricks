@@ -1,20 +1,17 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
-interface PasswordResetNotifyEmailProps {
-  locale: string;
-}
-
-export function PasswordResetNotifyEmail({ locale }: PasswordResetNotifyEmailProps): React.JSX.Element {
+export async function PasswordResetNotifyEmail(): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
-        <Heading>{translateEmailText("password_changed_email_heading", locale)}</Heading>
-        <Text>{translateEmailText("password_changed_email_text", locale)}</Text>
-        <EmailFooter />
+        <Heading>{t("emails.password_changed_email_heading")}</Heading>
+        <Text>{t("emails.password_changed_email_text")}</Text>
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

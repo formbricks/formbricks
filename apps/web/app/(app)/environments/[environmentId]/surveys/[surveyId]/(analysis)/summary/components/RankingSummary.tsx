@@ -1,7 +1,5 @@
-import { useTranslations } from "next-intl";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { useTranslate } from "@tolgee/react";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -9,31 +7,18 @@ interface RankingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRanking;
   surveyType: TSurveyType;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
-  locale: TUserLocale;
 }
 
-export const RankingSummary = ({
-  questionSummary,
-  surveyType,
-  survey,
-  contactAttributeKeys,
-  locale,
-}: RankingSummaryProps) => {
+export const RankingSummary = ({ questionSummary, surveyType, survey }: RankingSummaryProps) => {
   // sort by count and transform to array
-  const t = useTranslations();
+  const { t } = useTranslate();
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div key={result.value} className="group cursor-pointer">

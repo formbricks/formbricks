@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
+import { CRON_SECRET } from "@/lib/constants";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@/modules/email";
 import { headers } from "next/headers";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
 import { getProjectsByOrganizationId } from "./lib/project";
@@ -47,11 +47,7 @@ export const POST = async (): Promise<Response> => {
           for (const organizationMember of organizationMembersWithNotificationEnabled) {
             if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
               emailSendingPromises.push(
-                sendNoLiveSurveyNotificationEmail(
-                  organizationMember.user.email,
-                  notificationResponse,
-                  organizationMember.user.locale
-                )
+                sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
               );
             }
           }
@@ -61,11 +57,7 @@ export const POST = async (): Promise<Response> => {
         for (const organizationMember of organizationMembersWithNotificationEnabled) {
           if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
             emailSendingPromises.push(
-              sendWeeklySummaryNotificationEmail(
-                organizationMember.user.email,
-                notificationResponse,
-                organizationMember.user.locale
-              )
+              sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
             );
           }
         }

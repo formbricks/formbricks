@@ -2,7 +2,7 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,7 +11,7 @@ interface ConfirmationPageProps {
 }
 
 export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     setShowConfetti(true);

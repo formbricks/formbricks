@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -22,7 +24,7 @@ export const ConnectIntegration = ({
   handleAuthorization,
   integrationLogoSrc,
 }: ConnectIntegrationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
   const integrationDetails = getIntegrationDetails(integrationType, t);
@@ -39,7 +41,7 @@ export const ConnectIntegration = ({
   useEffect(() => {
     const error = searchParams?.get("error");
     if (error) {
-      toast.error(t("environments.surveys.integrations.connecting_integration_failed_please_try_again"));
+      toast.error(t("environments.integrations.connecting_integration_failed_please_try_again"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,5 +1,5 @@
+import { cn } from "@/lib/cn";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface ResponseBadgesProps {
   items: string[] | number[];

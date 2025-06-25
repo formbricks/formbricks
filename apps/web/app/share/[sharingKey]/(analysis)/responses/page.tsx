@@ -1,16 +1,16 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getEnvironment } from "@/lib/environment/service";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 type Params = Promise<{
   sharingKey: string;
@@ -21,7 +21,7 @@ interface ResponsesPageProps {
 }
 
 const Page = async (props: ResponsesPageProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
@@ -46,30 +46,24 @@ const Page = async (props: ResponsesPageProps) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const totalResponseCount = await getResponseCountBySurveyId(surveyId);
   const locale = await findMatchingLocale();
+  const publicDomain = getPublicDomain();
 
   return (
     <div className="flex w-full justify-center">
       <PageContentWrapper className="w-full">
         <PageHeader pageTitle={survey.name}>
-          <SurveyAnalysisNavigation
-            survey={survey}
-            environmentId={environment.id}
-            activeId="responses"
-            initialTotalResponseCount={totalResponseCount}
-          />
+          <SurveyAnalysisNavigation survey={survey} environmentId={environment.id} activeId="responses" />
         </PageHeader>
         <ResponsePage
           environment={environment}
           survey={survey}
           surveyId={surveyId}
-          webAppUrl={WEBAPP_URL}
+          publicDomain={publicDomain}
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
           locale={locale}
           isReadOnly={true}
-          contactAttributeKeys={[]}
         />
       </PageContentWrapper>
     </div>

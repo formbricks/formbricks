@@ -1,7 +1,8 @@
 "use client";
 
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/action";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { ManageTeamButton } from "@/modules/ee/teams/team-list/components/manage-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
@@ -15,10 +16,9 @@ import {
 } from "@/modules/ee/teams/team-list/types/team";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamsTableProps {
@@ -38,7 +38,7 @@ export const TeamsTable = ({
   membershipRole,
   currentUserId,
 }: TeamsTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TTeamDetails>();
   const [userTeamRole, setUserTeamRole] = useState<TTeamRole | undefined>();

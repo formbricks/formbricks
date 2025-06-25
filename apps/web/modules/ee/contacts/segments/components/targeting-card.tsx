@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   cloneSegmentAction,
   createSegmentAction,
@@ -15,14 +17,12 @@ import { SaveAsNewSegmentModal } from "@/modules/ui/components/save-as-new-segme
 import { SegmentTitle } from "@/modules/ui/components/segment-title";
 import { TargetingIndicator } from "@/modules/ui/components/targeting-indicator";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -51,7 +51,7 @@ export function TargetingCard({
   segments,
   initialSegment,
 }: TargetingCardProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);

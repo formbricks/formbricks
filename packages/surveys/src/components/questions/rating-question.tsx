@@ -3,11 +3,11 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 import type { JSX } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import {
@@ -37,6 +37,7 @@ interface RatingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function RatingQuestion({
@@ -51,6 +52,7 @@ export function RatingQuestion({
   ttc,
   setTtc,
   currentQuestionId,
+  isBackButtonHidden,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -246,7 +248,7 @@ export function RatingQuestion({
                   </span>
                 ))}
               </div>
-              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
                 <p className="fb-w-1/2 fb-text-left" dir="auto">
                   {getLocalizedValue(question.lowerLabel, languageCode)}
                 </p>
@@ -259,7 +261,9 @@ export function RatingQuestion({
         </div>
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {!question.required && (
+        {question.required ? (
+          <div></div>
+        ) : (
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
@@ -267,7 +271,7 @@ export function RatingQuestion({
           />
         )}
         <div />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
@@ -349,6 +353,7 @@ export const RatingSmiley = ({ active, idx, range, addColors = false }: RatingSm
   let iconsIdx: number[] = [];
   if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
+  else if (range === 6) iconsIdx = [0, 2, 4, 5, 7, 9];
   else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
   else if (range === 4) iconsIdx = [4, 5, 6, 7];
   else if (range === 3) iconsIdx = [4, 5, 7];

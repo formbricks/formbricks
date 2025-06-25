@@ -1,8 +1,9 @@
+import { FILE_PICK_EVENT } from "@/lib/constants";
+import { getOriginalFileNameFromUrl } from "@/lib/storage";
+import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
-import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
 import { type TAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -29,10 +30,108 @@ export function FileInput({
   maxSizeInMB,
   allowMultipleFiles,
   htmlFor = "",
-}: FileInputProps) {
+}: Readonly<FileInputProps>) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
+
+  // Helper function to filter duplicate files
+  const filterDuplicateFiles = <T extends { name: string }>(
+    files: T[],
+    checkAgainstSelected: boolean = true
+  ): {
+    filteredFiles: T[];
+    duplicateFiles: T[];
+  } => {
+    const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
+
+    const duplicateFiles = files.filter(
+      (file) =>
+        existingFileNames.includes(file.name) ||
+        (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+    );
+
+    const filteredFiles = files.filter(
+      (file) =>
+        !existingFileNames.includes(file.name) &&
+        (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+    );
+
+    if (duplicateFiles.length > 0) {
+      const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
+      alert(`The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`);
+    }
+
+    return { filteredFiles, duplicateFiles };
+  };
+
+  // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
+  useEffect(() => {
+    const handleNativeFileUpload = async (
+      event: CustomEvent<{ name: string; type: string; base64: string }[]>
+    ) => {
+      const filesFromNative = event.detail;
+
+      try {
+        setIsUploading(true);
+
+        // Filter out files that exceed the maximum size
+        let filteredFiles: typeof filesFromNative = [];
+        const rejectedFiles: string[] = [];
+
+        if (maxSizeInMB) {
+          for (const file of filesFromNative) {
+            // Calculate file size from base64 string
+            // Base64 size in bytes is roughly 3/4 of the string length
+            const base64SizeInKB = (file.base64.length * 0.75) / 1024;
+
+            if (base64SizeInKB > maxSizeInMB * 1024) {
+              rejectedFiles.push(file.name);
+            } else {
+              filteredFiles.push(file);
+            }
+          }
+        } else {
+          // If no size limit is specified, use all files
+          filteredFiles.push(...filesFromNative);
+        }
+
+        // Check for duplicate files - native uploads don't need to check against selectedFiles
+        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(filteredFiles, false);
+        filteredFiles = nonDuplicateFiles;
+
+        // Display alert for rejected files
+        if (rejectedFiles.length > 0) {
+          const fileNames = rejectedFiles.join(", ");
+          alert(
+            `The following file(s) exceed the maximum size of ${maxSizeInMB} MB and were removed: ${fileNames}`
+          );
+        }
+
+        // If no files remain after filtering, exit early
+        if (filteredFiles.length === 0) {
+          return;
+        }
+
+        const uploadedUrls = await Promise.all(
+          filteredFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
+        );
+
+        // Update file URLs by appending the new URL
+        onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
+      } catch (err) {
+        console.error(`Error uploading native file.`);
+        alert(`Upload failed! Please try again.`);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    window.addEventListener(FILE_PICK_EVENT, handleNativeFileUpload as unknown as EventListener);
+    return () => {
+      window.removeEventListener(FILE_PICK_EVENT, handleNativeFileUpload as unknown as EventListener);
+    };
+  }, [allowedFileExtensions, fileUrls, maxSizeInMB, onFileUpload, onUploadCallback, surveyId]);
 
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
@@ -47,7 +146,7 @@ export function FileInput({
   };
 
   const handleFileSelection = async (files: FileList) => {
-    const fileArray = Array.from(files);
+    let fileArray = Array.from(files);
 
     if (!allowMultipleFiles && fileArray.length > 1) {
       alert("Only one file can be uploaded at a time.");
@@ -59,14 +158,28 @@ export function FileInput({
       return;
     }
 
+    // Check for duplicate files
+    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
+
+    if (nonDuplicateFiles.length === 0) {
+      return; // No non-duplicate files to process
+    }
+
+    fileArray = nonDuplicateFiles;
+
     // filter out files that are not allowed
-    const validFiles = Array.from(files).filter((file) => {
+    const validFiles = fileArray.filter((file) => {
       const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
       if (allowedFileExtensions) {
         return allowedFileExtensions.includes(fileExtension);
       }
       return true;
     });
+
+    if (!validFiles.length) {
+      alert("No valid file types selected. Please select a valid file type.");
+      return;
+    }
 
     const filteredFiles: File[] = [];
 
@@ -157,17 +270,26 @@ export function FileInput({
 
   const uniqueHtmlFor = useMemo(() => `selectedFile-${htmlFor}`, [htmlFor]);
 
+  const mimeTypeForAllowedFileExtensions = useMemo(() => {
+    return allowedFileExtensions?.map((ext) => getMimeType(ext)).join(",");
+  }, [allowedFileExtensions]);
+
   return (
-    <div className="fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
+    <div className="fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-items-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
       <div ref={parent}>
         {fileUrls?.map((fileUrl, index) => {
           const fileName = getOriginalFileNameFromUrl(fileUrl);
           return (
             <div
               key={index}
+              aria-label={`You've successfully uploaded the file ${fileName}`}
+              tabIndex={0}
               className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
-                <div className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
+                <button
+                  type="button"
+                  aria-label={`Delete file ${fileName}`}
+                  className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -180,7 +302,7 @@ export function FileInput({
                     }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
-                </div>
+                </button>
               </div>
               <div className="fb-flex fb-flex-col fb-items-center fb-justify-center fb-p-2">
                 <svg
@@ -193,7 +315,8 @@ export function FileInput({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="fb-text-heading fb-h-6">
+                  className="fb-text-heading fb-h-6"
+                  aria-hidden="true">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
@@ -217,38 +340,35 @@ export function FileInput({
 
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
-            <div
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
-              tabIndex={1}
-              onKeyDown={(e) => {
-                // Accessibility: if spacebar was pressed pass this down to the input
-                if (e.key === " ") {
-                  e.preventDefault();
-                  document.getElementById(uniqueHtmlFor)?.click();
-                  document.getElementById(uniqueHtmlFor)?.focus();
-                }
-              }}>
+            <button
+              type="button"
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              aria-label="Upload files by clicking or dragging them here"
+              onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="fb-text-placeholder fb-h-6">
+                className="fb-text-placeholder fb-h-6"
+                aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <p className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
-                <span className="fb-font-medium">Click or drag to upload files.</span>
-              </p>
+              <label
+                className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
+                id={`${uniqueHtmlFor}-label`}>
+                Click or drag to upload files.
+              </label>
               <input
                 type="file"
                 id={uniqueHtmlFor}
                 name={uniqueHtmlFor}
-                accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
+                accept={mimeTypeForAllowedFileExtensions}
                 className="fb-hidden"
                 onChange={async (e) => {
                   const inputElement = e.target as HTMLInputElement;
@@ -257,8 +377,12 @@ export function FileInput({
                   }
                 }}
                 multiple={allowMultipleFiles}
+                aria-label="File upload"
+                aria-describedby={`${uniqueHtmlFor}-label`}
+                data-accept-multiple={allowMultipleFiles}
+                data-accept-extensions={mimeTypeForAllowedFileExtensions}
               />
-            </div>
+            </button>
           ) : null}
         </label>
       </div>

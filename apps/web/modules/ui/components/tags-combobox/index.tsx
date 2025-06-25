@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo } from "react";
 
 interface ITagsComboboxProps {
@@ -38,7 +38,7 @@ export const TagsCombobox = ({
   open,
   setOpen,
 }: ITagsComboboxProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {

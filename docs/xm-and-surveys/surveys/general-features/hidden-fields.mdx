@@ -1,0 +1,52 @@
+---
+title: "Hidden Fields"
+description: "Add data to a submission without asking the user to type it in. This feature is especially useful when you already have information about a user that you want to use in the analysis of the survey results (e.g. `payment plan` or `email`)."
+icon: "eye-slash"
+---
+
+## How to Add Hidden Fields
+
+### Enable Hidden Fields
+
+1. Edit the survey you want to add hidden fields to & switch to the Questions tab and scroll down to the bottom of the page. You will see a section called **Hidden Fields**. Make sure to enable it by toggling the switch.
+
+![Enable Hidden Fields](/images/xm-and-surveys/surveys/general-features/hidden-fields/hidden-fields.webp)
+
+### Add Hidden Field IDs
+
+1. Now click on it to add a new hidden field ID. You can add as many hidden fields as you want.
+
+![Add Hidden Fields](/images/xm-and-surveys/surveys/general-features/hidden-fields/input-hidden-fields.webp)
+
+![Filled Hidden Fields](/images/xm-and-surveys/surveys/general-features/hidden-fields/filled-hidden-fields.webp)
+
+### Set Hidden Field in Link Surveys
+
+Single Hidden Field:
+
+```
+  sh https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=pricing
+```
+
+Multiple Hidden Fields:
+
+```
+  sh https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
+```
+
+### Website & App Surveys
+We're reworking our approach to setting hidden fields in Website & App Surveys.
+
+## View Hidden Fields in Responses
+
+These hidden fields will now be visible in the responses tab just like other fields in the Summary as well as the Response Cards, and you can use them to filter and analyze your responses.
+
+![Hidden Field Responses](/images/xm-and-surveys/surveys/general-features/hidden-fields/hidden-field-responses.webp)
+
+## Use Cases
+
+- **Tracking Source**: You can add a hidden field to track the source of the survey. For a detailed guide on Source Tracking, check out the [Source Tracking](/xm-and-surveys/surveys/link-surveys/source-tracking) guide.
+
+- **User Metadata**: You can add hidden fields to capture user metadata such as user ID, email, or any other user-specific information.
+
+- **Survey Metadata**: You can add hidden fields to capture other metadata, e.g. the screen from which the survey was filled, or any other app specific information.

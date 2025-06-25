@@ -1,0 +1,154 @@
+---
+title: "Actions"
+description: "Actions are predefined events within your app that prompt Formbricks to display a survey when triggered. These are detected by the Formbricks widget, which then presents the appropriate survey based on your predefined settings."
+icon: "code"
+---
+
+## **How Do Actions Work?**
+
+<Steps>
+  <Step title="User performs action">
+    The user performs an action in your application.
+  </Step>
+
+<Step title="Formbricks widget detects action">
+  The embedded widget (SDK) detects the action, if you set up a [No Code
+  Action](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions) or a [Code
+  Action](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions) to do so.
+</Step>
+
+<Step title="Check for survey trigger">
+  If a survey is set to trigger on that action, Formbricks checks if the user or visitor qualifies.
+</Step>
+
+  <Step title="Check for user or visitor qualification">
+    If the user or visitor already filled out a survey in the past couple of days (see [Global Waiting Time](/xm-and-surveys/surveys/website-app-surveys/recontact#project-wide-global-waiting-time)), the survey will not be shown to prevent survey fatigue.
+
+    Also, if this user or visitor has seen this specific survey before, Formbricks might not show it as this is dependent on the [Recontact Options](/xm-and-surveys/surveys/website-app-surveys/recontact).
+
+  </Step>
+
+  <Step title="Show survey">
+    If all conditions match, the survey is shown.
+  </Step>
+</Steps>
+
+<Tip>
+  Tying surveys to specific user actions enables **context-aware surveying**: You make sure that your user
+  research is relevant to the current user context which leads to sign**ificantly higher response and
+  completions rates** as well as lower survey fatigue.
+</Tip>
+
+<Note>
+  **Important**: Any changes to actions, surveys, or environment configuration will take up to 5 minutes to
+  reflect in your app/website running the formbricks sdk with debug mode enabled due to server-side caching.
+  This includes new actions, modified action configurations, and survey trigger updates. For quick updates
+  during development and testing, you can enable [Debug
+  Mode](/xm-and-surveys/surveys/website-app-surveys/framework-guides#activate-debug-mode) in your SDK
+  configuration.
+</Note>
+
+## **Setting Up No-Code Actions**
+
+Formbricks offers an intuitive No-Code interface that allows you to configure actions without needing to write any code.
+
+<Note>
+  No Code Actions are **not available for surveys in mobile apps**. No Code Action tracking are heavily
+  dependent on JavaScript and most mobile apps are compiled into a different programming language. To track
+  user actions in mobile apps use [Code
+  Actions.](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions)
+</Note>
+
+<Steps>
+  <Step title="Visit the Actions tab via the main navigation">
+    ![Action overview on Formbricks Open Source Survey Solution](/images/xm-and-surveys/surveys/website-app-surveys/actions/actions-view.webp "Action overview on Formbricks Open Source Survey Solution")
+  </Step>
+
+  <Step title="Click on 'Add Action' in the top right corner to see the following:">
+    ![Add action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/i2.webp "Add action to open source in app survey")
+  </Step>
+</Steps>
+
+There are four types of No-Code actions:
+
+### **1. Click Action**
+
+![Add click action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/click-action.webp "Add click action to open source in app survey")
+
+A Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text, CSS selector or both to trigger the survey.
+
+- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
+
+- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
+
+- **Both**: Only if both is true, the action is triggered
+
+### **2. Page View Action**
+
+![Add page view action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/page-view.webp "Add page view action to open source in app survey")
+
+This action is triggered when a user visits a page within your application.
+
+### **3. Exit Intent Action**
+
+![Add exit intent action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/exit-intent.webp "Add exit intent action to open source in app survey")
+
+This action is triggered when a user is about to leave your application. It helps capture user feedback before they exit, providing valuable insights into user experiences and potential improvements.
+
+### **4. 50% Scroll Action**
+
+![Add 50% scroll action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/scroll.webp "Add 50% scroll action to open source in app survey")
+
+This action is triggered when a user scrolls through 50% of a page within your application. It helps capture user feedback at a specific point in their journey, enabling you to gather insights based on user interactions.
+
+This action is triggered when a user visits a specific page within your application. You can define the URL match conditions as follows:
+
+You can combine the url filters with any of the no-code actions to trigger the survey based on the URL match conditions.
+
+### **Page Filter**
+
+You can limit action tracking to specific subpages of your website or web app by using the Page Filter. Here you can use a variety of URL filter settings:
+
+- **exactMatch**: Triggers the action when the URL exactly matches the specified string.
+
+- **contains**: Activates when the URL contains the specified substring.
+
+- **startsWith**: Fires when the URL starts with the specified string.
+
+- **endsWith**: Executes when the URL ends with the specified string.
+
+- **notMatch**: Triggers when the URL does not match the specified condition.
+
+- **notContains**: Activates when the URL does not contain the specified substring.
+
+## **Setting Up Code Actions**
+
+For more granular control, you can implement actions directly in your code:
+
+<Steps>
+  <Step title="Configure action in Formbricks">
+    First, add the action via the Formbricks web interface to make it available for survey configuration:
+
+![Add a code action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/code-action.webp "Add a code action to open source in app survey")
+
+  </Step>
+
+  <Step title="Add action tracking to your code">
+    Use formbricks.track() to send an action event to Formbricks:
+
+    ```
+    formbricks.track("action");
+    ```
+
+    Here is an example of how to fire an action when a user clicks a button:
+
+    ```javascript
+    const handleClick = () => {
+      formbricks.track("Button Clicked");
+    };
+
+    return <button onClick={handleClick}>Click Me</button>;
+    ```
+
+  </Step>
+</Steps>

@@ -1,0 +1,67 @@
+---
+title: "Generate API Key"
+icon: "key"
+description: "Here is how you can generate an API key which gives you full access to the Formbricks Management API. Keep it safe!"
+---
+
+## Generate API Key
+
+<Steps>
+  <Step title="Navigate to 'Organization Settings'">
+    Go to the Organization Settings page via the menu in the lower left corner.
+
+![Access organization settings](/images/api-reference/organization-settings.webp)
+
+  </Step>
+  
+  
+  <Step title="Access 'API Keys' tab">
+    Click on the **API Keys** tab in the Organization Settings navigation.
+    ![Access API Keys tab](/images/api-reference/api-keys.webp)
+  </Step>
+  
+  <Step title="Add a new API key">
+    Click on the "Add API Key" button to open the creation modal.
+    ![Add API Key button](/images/api-reference/add-api-key.webp)
+  </Step>
+  
+  <Step title="Configure your API key">
+    1. Give your API key a descriptive label (e.g., "GitHub Integration", "PostHog", "Slack")
+    2. Configure Project Access:
+       - Select which projects and environments this key should have access to
+       - Choose the permission level for each (read, write, or manage)
+       - You can add access to multiple projects by clicking "Add Permission"
+    3. Configure Organization Access:
+       - Set appropriate read/write permissions for organization-level access
+  
+  ![Access API Keys tab](/images/api-reference/create-api-key.webp)
+  </Step>
+
+  <Step title="Copy your key">
+    After creating the key, you'll see the API key value displayed once. Copy it immediately and store it in a secure location. For security reasons, you won't be able to view the complete API key again.
+    ![Copy API Key](/images/api-reference/copy-api-key.webp)
+    <Note>
+      Store your API key safely! Anyone who has your API key has access based on the permissions you've granted. For security reasons, the complete API key value cannot be viewed again after creation.
+    </Note>
+  </Step>
+</Steps>
+
+## Delete API Key
+
+If you need to revoke access for an API key:
+
+1. Go to **Organization Settings** > **API Keys** page
+2. Find the key you wish to revoke and click the trash icon
+3. Confirm the deletion in the dialog that appears
+
+Your API key will stop working immediately after deletion.
+
+## API Key Permission Levels
+
+API Keys have three permission levels that can be assigned per project/environment:
+
+- **Read**: Can only perform read operations (GET requests)
+- **Write**: Can perform read and write operations (GET, POST, PUT, PATCH requests)
+- **Manage**: Has full access including delete operations (all request types)
+
+Additionally, organization-level access controls can be configured for broader permissions.

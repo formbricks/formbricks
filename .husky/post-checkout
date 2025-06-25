@@ -1,0 +1,2 @@
+echo "{\"branchName\": \"$(git rev-parse --abbrev-ref HEAD)\"}" > ./branch.json
+prettier --write ./branch.json

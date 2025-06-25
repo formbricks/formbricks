@@ -4,10 +4,10 @@ import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 export const GeneralSettingsLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const cards = [
     {
       title: t("common.project_name"),
@@ -28,7 +28,7 @@ export const GeneralSettingsLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

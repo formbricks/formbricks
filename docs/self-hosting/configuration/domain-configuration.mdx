@@ -1,0 +1,148 @@
+---
+title: "Domain Configuration"
+description: "Configuring your domain for Formbricks."
+icon: "globe"
+---
+
+Formbricks supports both single domain and dual domain configurations with Public/Private Domain Split feature. This guide will help you set up your domains correctly for enhanced security and organization.
+
+## Single Domain Setup
+
+For a single domain setup, you need to configure two essential environment variables:
+
+1. `WEBAPP_URL`: The base URL of your Formbricks instance (serves both admin and public content)
+2. `NEXTAUTH_URL`: The authentication URL (should be the same as WEBAPP_URL)
+
+### Example Configuration
+
+```bash
+WEBAPP_URL=https://formbricks.example.com
+NEXTAUTH_URL=https://formbricks.example.com
+```
+
+### Important Notes
+
+- Both URLs must be the same for authentication to work properly
+- The URLs should be the full URL including the protocol (http:// or https://)
+- Make sure your domain is properly configured in your DNS settings
+- If you're using HTTPS (recommended), ensure you have valid SSL certificates installed
+
+## Public / Private Domain Split
+
+Formbricks supports a powerful domain separation feature that allows you to serve public content (surveys, public APIs) from a different domain than your private admin interface. This provides enhanced security and better organization. It enables you to:
+
+- Serve public content (surveys, public APIs) from a different domain than your private admin interface
+- Restrict admin functionality to the private domain
+- Ensure authentication and sensitive operations only occur on the private domain
+
+### Why Use Domain Split?
+
+- **Enhanced Security**: Separate public-facing surveys from your admin interface
+- **Better Organization**: Use dedicated domains for different purposes (e.g., `admin.company.com` for management, `surveys.company.com` for public surveys)
+
+### Configuration
+
+To set up Public/Private Domain Split:
+
+1. **Private Domain (WEBAPP_URL)**: Your admin/management interface
+2. **Public Domain (PUBLIC_URL)**: For surveys and public-facing content
+
+**Important Security Note**: Formbricks handles application-level domain restrictions to ensure each domain
+can only access specific resources within the application. However, all domain configuration (DNS, SSL
+certificates, reverse proxy setup) and firewall configuration that comes with this feature to enhance
+security must be configured by you. Formbricks does not manage your infrastructure-level security settings.
+
+### Example Configuration
+
+```bash
+# Private admin domain
+WEBAPP_URL=https://admin.formbricks.example.com
+NEXTAUTH_URL=https://admin.formbricks.example.com
+
+# Public domain for surveys
+PUBLIC_URL=https://surveys.example.com
+```
+
+### How It Works
+
+When PUBLIC_URL is configured:
+
+- **Admin Interface**: All admin/management functions are served from `WEBAPP_URL`
+- **Public Surveys**: All survey links and public APIs use `PUBLIC_URL`
+- **SDK Integration**: The public domain is used for all client-side SDK connections
+- **Email Links**: Survey invitation emails use the public domain
+- **Sharing Features**: Survey sharing uses the public domain
+
+### Routes Available on the Public Domain
+
+When PUBLIC_URL is configured, the following routes are automatically served from the public domain:
+
+#### Survey Routes
+
+- `/s/{surveyId}` - Individual survey access
+- `/c/{jwt}` - Personalized link survey access (JWT-based access)
+- Embedded survey endpoints
+
+#### API Routes
+
+- `/api/v1/client/{environmentId}/*` - Client API endpoints (v1)
+- `/api/v2/client/{environmentId}/*` - Client API endpoints (v2)
+
+#### Static Assets & Next.js Routes
+
+- `/favicon.ico` - Favicon
+- `/_next/*` - Next.js static assets and build files
+- `/js/*` - JavaScript files
+- `/css/*` - CSS stylesheets
+- `/images/*` - Image assets
+- `/fonts/*` - Font files
+- `/icons/*` - Icon assets
+- `/public/*` - Public static files
+
+#### Storage Routes
+
+- `/storage/{environmentId}/{accessType}/{fileName}` - Public file storage access
+
+#### Health & Monitoring
+
+- `/health` - Health check endpoint
+
+#### Sharing & Embed Routes
+
+- Survey sharing endpoints
+- Embed widget routes
+- Social sharing endpoints
+
+All other routes are restricted to the private domain (`WEBAPP_URL`) for security purposes. The admin domain can access the health endpoint (/health) and public file storage (`/storage/{environmentId}/{accessType}/{fileName}`), while all other public routes are exclusively accessible on the public domain (`PUBLIC_URL`) and will return a 404 error if accessed from the admin domain.
+
+### App URL SDK Configuration
+
+#### Multi-Domain Setup SDK Configuration
+
+When using PUBLIC_URL (multi-domain setup), all SDK configurations must use the **public domain**:
+
+```js
+Formbricks.setup({
+  environmentId: "your-environment-id",
+  appUrl: "https://surveys.example.com", // Use PUBLIC_URL domain
+});
+```
+
+Please refer to the [Framework Guides](/xm-and-surveys/surveys/website-app-surveys/framework-guides) for step-by-step instructions specific to your platform.
+
+### DNS and SSL Configuration
+
+1. **Set up DNS records** for both domains
+2. **Configure SSL certificates** for both domains
+3. **Update your reverse proxy** (nginx, Apache, Cloudflare, etc.) to route both domains to your Formbricks instance
+4. **Firewall rules**: Ensure both domains can reach your Formbricks instance
+
+### Fallback Behavior
+
+If `PUBLIC_URL` is not set:
+
+- All content (admin and public) is served from `WEBAPP_URL`
+- The system behaves as a single domain setup
+- No domain separation occurs
+
+If you have any questions or require help, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).

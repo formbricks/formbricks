@@ -1,6 +1,7 @@
 "use client";
 
 import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -14,11 +15,10 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 
@@ -32,7 +32,7 @@ const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
 type EditOrganizationNameForm = z.infer<typeof ZEditOrganizationNameFormSchema>;
 
 export const EditOrganizationNameForm = ({ organization, membershipRole }: EditOrganizationNameProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<EditOrganizationNameForm>({
     defaultValues: {
       name: organization.name,

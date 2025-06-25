@@ -3,8 +3,8 @@
 import ProlificLogo from "@/images/prolific-logo.webp";
 import ProlificUI from "@/images/prolific-screenshot.webp";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,7 +14,7 @@ interface PanelInfoViewProps {
 }
 
 export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInfoViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="h-full overflow-hidden text-slate-900">
       {!disableBack && (
@@ -30,7 +30,7 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
           <Image src={ProlificUI} alt="Prolific panel selection UI" className="rounded-lg shadow-lg" />
           <div>
             <p className="text-md font-semibold">{t("environments.surveys.summary.what_is_a_panel")}</p>
-            <p className="text-slate-600">{t("environments.surveys.summary.what_is_a_pannel_answer")}</p>
+            <p className="text-slate-600">{t("environments.surveys.summary.what_is_a_panel_answer")}</p>
           </div>
           <div>
             <p className="text-md font-semibold">{t("environments.surveys.summary.when_do_i_need_it")}</p>
@@ -85,8 +85,10 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
             </p>
           </div>
           <Button className="justify-center" asChild>
-            <Link href="https://formbricks.com/docs/link-surveys/market-research-panel" target="_blank">
-              {t("common.get_started")}
+            <Link
+              href="https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/market-research-panel"
+              target="_blank">
+              {t("common.learn_more")}
             </Link>
           </Button>
         </div>

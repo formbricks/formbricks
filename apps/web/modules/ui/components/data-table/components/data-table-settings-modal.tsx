@@ -1,3 +1,5 @@
+"use client";
+
 import { Modal } from "@/modules/ui/components/modal";
 import {
   DndContext,
@@ -9,8 +11,8 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
 import { SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
@@ -32,7 +34,7 @@ export const DataTableSettingsModal = <T,>({
   handleDragEnd,
   survey,
 }: DataTableSettingsModalProps<T>) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

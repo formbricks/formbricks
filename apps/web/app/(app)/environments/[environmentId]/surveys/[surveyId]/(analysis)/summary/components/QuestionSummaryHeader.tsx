@@ -1,19 +1,19 @@
+"use client";
+
+import { recallToHeadline } from "@/lib/utils/recall";
+import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { SettingsId } from "@/modules/ui/components/settings-id";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
-import { getQuestionTypes } from "@formbricks/lib/utils/questions";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
   showResponses?: boolean;
   additionalInfo?: JSX.Element;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
-  locale: TUserLocale;
 }
 
 export const QuestionSummaryHeader = ({
@@ -21,42 +21,18 @@ export const QuestionSummaryHeader = ({
   additionalInfo,
   showResponses = true,
   survey,
-  contactAttributeKeys,
-  locale,
 }: HeadProps) => {
-  const questionType = getQuestionTypes(locale).find((type) => type.id === questionSummary.question.type);
-  const t = useTranslations();
-  // formats the text to highlight specific parts of the text with slashes
-  const formatTextWithSlashes = (text: string): (string | JSX.Element)[] => {
-    const regex = /\/(.*?)\\/g;
-    const parts = text.split(regex);
-
-    return parts.map((part, index) => {
-      // Check if the part was inside slashes
-      if (index % 2 !== 0) {
-        return (
-          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-lg">
-            @{part}
-          </span>
-        );
-      } else {
-        return part;
-      }
-    });
-  };
+  const { t } = useTranslate();
+  const questionType = getQuestionTypes(t).find((type) => type.id === questionSummary.question.type);
 
   return (
     <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
-            recallToHeadline(
-              questionSummary.question.headline,
-              survey,
-              true,
-              "default",
-              contactAttributeKeys
-            )["default"]
+            recallToHeadline(questionSummary.question.headline, survey, true, "default")["default"],
+            "@",
+            ["text-lg"]
           )}
         </h3>
       </div>
@@ -79,6 +55,7 @@ export const QuestionSummaryHeader = ({
           </div>
         )}
       </div>
+      <SettingsId title={t("common.question_id")} id={questionSummary.question.id}></SettingsId>
     </div>
   );
 };

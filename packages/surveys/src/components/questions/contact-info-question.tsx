@@ -2,12 +2,13 @@ import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
+import { Label } from "@/components/general/label";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -25,6 +26,7 @@ interface ContactInfoQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
+  isBackButtonHidden: boolean;
 }
 
 export function ContactInfoQuestion({
@@ -40,7 +42,8 @@ export function ContactInfoQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: ContactInfoQuestionProps) {
+  isBackButtonHidden,
+}: Readonly<ContactInfoQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,27 +57,27 @@ export function ContactInfoQuestion({
     {
       id: "firstName",
       ...question.firstName,
-      placeholder: question.firstName.placeholder[languageCode],
+      label: question.firstName.placeholder[languageCode],
     },
     {
       id: "lastName",
       ...question.lastName,
-      placeholder: question.lastName.placeholder[languageCode],
+      label: question.lastName.placeholder[languageCode],
     },
     {
       id: "email",
       ...question.email,
-      placeholder: question.email.placeholder[languageCode],
+      label: question.email.placeholder[languageCode],
     },
     {
       id: "phone",
       ...question.phone,
-      placeholder: question.phone.placeholder[languageCode],
+      label: question.phone.placeholder[languageCode],
     },
     {
       id: "company",
       ...question.company,
-      placeholder: question.company.placeholder[languageCode],
+      label: question.company.placeholder[languageCode],
     },
   ];
 
@@ -155,19 +158,22 @@ export function ContactInfoQuestion({
 
               return (
                 field.show && (
-                  <Input
-                    ref={index === 0 ? contactInfoRef : null}
-                    key={field.id}
-                    placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
-                    required={isFieldRequired()}
-                    value={safeValue[index] || ""}
-                    className="fb-py-3"
-                    type={inputType}
-                    onChange={(e) => {
-                      handleChange(field.id, e.currentTarget.value);
-                    }}
-                    tabIndex={isCurrent ? 0 : -1}
-                  />
+                  <div className="fb-space-y-1">
+                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                    <Input
+                      id={field.id}
+                      ref={index === 0 ? contactInfoRef : null}
+                      key={field.id}
+                      required={isFieldRequired()}
+                      value={safeValue[index] || ""}
+                      type={inputType}
+                      onChange={(e) => {
+                        handleChange(field.id, e.currentTarget.value);
+                      }}
+                      tabIndex={isCurrent ? 0 : -1}
+                      aria-label={field.label}
+                    />
+                  </div>
                 )
               );
             })}
@@ -181,7 +187,7 @@ export function ContactInfoQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

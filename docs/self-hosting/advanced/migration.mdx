@@ -1,0 +1,1086 @@
+---
+title: "Migration"
+description: "Formbricks Self-hosted version migration"
+icon: "arrow-right"
+---
+
+### v3.3
+
+<Info>
+  With Formbricks 3.0, we introduced an automatic data migration system. If you're using a version older than
+  **v2.7**, you must upgrade step-by-step through earlier versions (e.g. **2.4 → 2.5 → 2.6 → 2.7**). Once you
+  reach **v2.7**, you can upgrade directly to **any v3.x or future release** without needing intermediate
+  migrations.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are **self-hosting Formbricks** using the **one-click setup**. If you have a different setup, you may need to adjust the commands accordingly.
+
+Before running these steps, **navigate to the `formbricks` directory** where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: Backing up your database is crucial before upgrading. Use the following command to create a backup:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v3.3_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “**No such container**”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
+
+1. Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+1. Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+1. Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+When you start the latest version of **Formbricks**, it will **automatically detect and apply any required data migrations** during startup. You don’t need to run any manual migration steps or download separate migration images.
+
+- Access your updated instance
+
+Once the containers are running, simply go to the **same URL** as before to access your updated **Formbricks** instance.
+
+That’s it! This new process ensures your **Formbricks** setup stays up to date with the latest schema changes as soon as you run the updated container.
+
+### v3.2
+
+<Info>
+  With Formbricks 3.0, we introduced an automatic data migration system. If you're using a version older than
+  **v2.7**, you must upgrade step-by-step through earlier versions (e.g. **2.4 → 2.5 → 2.6 → 2.7**). Once you
+  reach **v2.7**, you can upgrade directly to **any v3.x or future release** without needing intermediate
+  migrations.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are **self-hosting Formbricks** using the **one-click setup**. If you have a different setup, you may need to adjust the commands accordingly.
+
+Before running these steps, **navigate to the `formbricks` directory** where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: Backing up your database is crucial before upgrading. Use the following command to create a backup:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v3.2_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “**No such container**”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
+
+1. Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+1. Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+1. Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+When you start the latest version of **Formbricks**, it will **automatically detect and apply any required data migrations** during startup. You don’t need to run any manual migration steps or download separate migration images.
+
+- Access your updated instance
+
+Once the containers are running, simply go to the **same URL** as before to access your updated **Formbricks** instance.
+
+That’s it! This new process ensures your **Formbricks** setup stays up to date with the latest schema changes as soon as you run the updated container.
+
+### v3.1
+
+<Info>
+  With Formbricks 3.0, we introduced an automatic data migration system. If you're using a version older than
+  **v2.7**, you must upgrade step-by-step through earlier versions (e.g. **2.4 → 2.5 → 2.6 → 2.7**). Once you
+  reach **v2.7**, you can upgrade directly to **any v3.x or future release** without needing intermediate
+  migrations.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are **self-hosting Formbricks** using the **one-click setup**. If you have a different setup, you may need to adjust the commands accordingly.
+
+Before running these steps, **navigate to the `formbricks` directory** where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: Backing up your database is crucial before upgrading. Use the following command to create a backup:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v3.1_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “**No such container**”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
+
+1. Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+1. Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+1. Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+When you start the latest version of **Formbricks**, it will **automatically detect and apply any required data migrations** during startup. You don’t need to run any manual migration steps or download separate migration images.
+
+- Access your updated instance
+
+Once the containers are running, simply go to the **same URL** as before to access your updated **Formbricks** instance.
+
+That’s it! This new process ensures your **Formbricks** setup stays up to date with the latest schema changes as soon as you run the updated container.
+
+## v3.0
+
+<Warning>
+  **Important: Do Not Upgrade to 3.0 If You Need SSO, User Identification, or Cluster Support**
+
+With **Formbricks 3.0**, we're making changes to ensure long-term sustainability while still supporting open source. While the **Community Edition** has gained [new features](https://formbricks.com/blog/formbricks-3-0), some [advanced capabilities](https://formbricks.com/docs/self-hosting/license) are now part of the **Enterprise Edition**.
+
+⚠️ **No Downgrade Option:** If you upgrade to **3.0** and run the data migration, **you cannot revert to 2.7.2**. If you rely on **SSO, user identification, or cluster support**, either **stay on version 2.7.x** or reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions) **for a custom quote**.
+
+</Warning>
+
+This major release brings a better approach to **data migrations**.
+
+- If you're using **Formbricks v2.7 or later**, you can upgrade **directly** to **v3.x** and future versions.
+
+- If you're on a version **older than v2.7**, you **must upgrade step-by-step** (e.g. **2.4 → 2.5 → 2.6 → 2.7**) before moving to v3.x.
+
+### Steps to Migrate
+
+This guide is for users **self-hosting** Formbricks with the **one-click setup**. If you're using a different setup, you may need to adjust the commands.
+
+- &#x20;Navigate to the Formbricks Directory
+
+Before running any steps, go to the directory where your `docker-compose.yml` file is located.
+
+- Backup Your Database
+
+Backing up your database is **crucial** before upgrading. Use the following command to create a backup:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v3.0_$(date +%Y%m%d_%H%M%S).dump
+
+```
+
+<Info>
+  **Note:** If you see a “No such container” error, run `docker ps` to find your actual container name (e.g.
+  `formbricks_postgres_1`).
+</Info>
+
+<Info>
+  Tip: If you want to store the backup as a `.sql` file, remove the `-Fc` (custom format) option. If you need
+  to restore it later, use `psql` with an empty Formbricks database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+When you start the latest version of Formbricks, it will automatically detect and run any necessary data migrations during startup. There is no need to run any manual migration steps or pull any separate migration images.
+
+- Access your updated instance
+
+That’s it! Once the containers are up and running, simply navigate to the same URL as before to access your fully migrated Formbricks instance.
+
+## v2.7
+
+<Info>
+  AI Features & Database Update: This release lays the groundwork for upcoming AI features, now in private beta. Formbricks requires the `pgvector` extension in PostgreSQL.
+
+One-Click Setup Users: Use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine` to ensure compatibility.
+
+</Info>
+
+Formbricks v2.7 includes all the features and improvements developed by the community during Hacktoberfest 2024. Additionally, this release introduces an advanced team-based access control system, which is available in the Formbricks Enterprise Edition.
+
+### Additional Updates
+
+If you previously used organisation-based access control (an enterprise feature) and the `DEFAULT_ORGANIZATION_ROLE` environment variable, update its value to one of these roles: `owner`, `manager`, or `member`. Read more about the new roles in the [documentation](/xm-and-surveys/core-features/user-management).
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
+
+To run all these steps, please navigate to the Formbricks folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database:** This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database.&#x20;
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.7_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Note>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Note>
+
+<Note>
+  If you want to store the backup as an \*.sql file, remove the `-Fc` option. To restore, use `psql` with an
+  empty Formbricks database.
+</Note>
+
+- If you use an older `docker-compose.yml` file from the one-click setup, modify it to use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine`:
+
+```yaml
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+```
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance and remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Tip>To find the Docker network name for your Postgres database, run `docker network ls`.</Tip>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.7" \
+  ghcr.io/formbricks/data-migrations:v2.7.0
+
+```
+
+The command above will migrate your data to the latest schema. This step is important to update your existing data to the new structure. The changes will only be made if the script runs successfully. You can run the script multiple times safely.
+
+- That's it! Once the migration is finished, you can **access your Formbricks instance** at the same URL as before.
+
+## v2.6
+
+Formbricks v2.6 introduces advanced logic jumps for surveys, allowing more complex branching logic, including variables, conditions, and more. This release also includes numerous bug fixes, significant performance improvements for website and app surveys, and enhanced stability.
+
+<Info>
+  This release includes the final step of deprecating server-side action tracking (previously used for segment
+  filtering by performed actions). The migrations will delete all tracked actions from the database. If you
+  still need these action records, ensure you export them before upgrading.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you're using a different setup, you might need to adjust the commands accordingly.
+
+To run these steps, navigate to the folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database:** This is an important step. Make sure to back up your database before proceeding with the upgrade. You can use this command to back up your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.6_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you get a "No such container" error, run `docker ps` to find your container name, for example,
+  `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario, you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find the Docker network name for your Postgres database, run the command:</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.6" \
+  ghcr.io/formbricks/data-migrations:v2.6.0
+```
+
+The command above will migrate your data to the latest schema. This is an important step to update your existing data to the new structure. Changes will only be made if the script runs successfully. You can run the script multiple times without issues.
+
+- Once the migration is complete, **you can access your Formbricks instance** at the same URL as before.
+
+## v2.5
+
+Formbricks v2.5 lets you visualise responses in a data table format. This release also brings a few bug fixes and performance improvements.
+
+<Info>
+  This release fixes the inconsistency of CTA and consent question values when a question is skipped. The
+  value will now be set to an empty string instead of "dismissed" to maintain consistency with other
+  questions.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users self-hosting Formbricks with our one-click setup. If you're using a different setup, you may need to adjust the commands.
+
+To begin, navigate to the folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database**: This step is important. Please make sure to back up your database before upgrading. You can use the following command to back up your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.5_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g.`formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.5" \
+  ghcr.io/formbricks/data-migrations:v2.5.3
+```
+
+The command will migrate your data to the latest schema, ensuring your existing data is updated to the new structure. Changes will only be made if the script runs successfully, and you can safely run the script multiple times.
+
+- Once the migration is complete, **you can access your Formbricks instance** at the same URL as before.
+
+## v2.4
+
+Formbricks v2.4 lets you create multiple endings for your surveys and choose which one users see based on logic jumps. This version also includes bug fixes and performance improvements.
+
+<Info>
+  This release will remove support for advanced targeting (enterprise targeting for app surveys) using actions
+  (e.g. targeting users who triggered action x 3 times in the last month). Actions can still be used as
+  triggers, but they will no longer be stored on the server to improve Formbricks' overall performance.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks with our one-click setup. If you're using a different setup, you may need to adjust the commands accordingly.
+
+To follow these steps, go to the folder where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: This step is important. Please make sure to back up your database before upgrading. You can use the following command to back up your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.4_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as a `*.sql` file, remove the `-Fc` (custom format) option. In case of a
+  restore scenario, you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+Now let's migrate the data to the latest schema:
+
+To find your Docker Network name for your Postgres Database, find it using `docker network ls`
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:v2.4.3 && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.4" \
+  ghcr.io/formbricks/data-migrations:v2.4.3
+```
+
+The command above will migrate your data to the latest schema. This is an important step to update your data structure. Changes are only applied if the script runs successfully. You can run the script multiple times without issues.
+
+- That's it! Once the migration is done, you can access your Formbricks instance at the same URL as before.
+
+### Additional Updates
+
+- The `CRON_SECRET` environment variable is now required to enhance the security of the internal cron APIs. Please ensure that this variable is set in your environment or `docker-compose.yml`. You can generate a secure secret using `openssl rand -hex 32`
+
+## v2.3
+
+Formbricks v2.3 introduces new colour options for rating questions, enhanced multi-language support for Chinese (Simplified & Traditional), and includes several bug fixes and performance improvements.
+
+### Steps to Migrate
+
+<Info>
+  You only need to run the data migration if you have surveys set up in Chinese (`zh`). If you don't have any
+  surveys in Chinese, you can skip the migration step.
+</Info>
+
+This guide is for users self-hosting Formbricks with our one-click setup. If you're using a different setup, adjust the commands as needed.
+
+To proceed, go to the folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.3_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “**No such containe**r”, use `docker ps` to find your container name, e.g.
+  `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:v2.3.0 && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.3" \
+  ghcr.io/formbricks/data-migrations:v2.3.0
+
+```
+
+The command above will migrate your data to the latest schema, which is essential for updating your data structure. Changes will only be made if the script runs successfully. You can safely run the script multiple times.
+
+- Once the migration is complete, **you can access your Formbricks instance** at the same URL as before.
+
+### Additional Updates
+
+The feature to create short URLs in Formbricks is now deprecated. Existing short URLs will continue to work for now, but it is recommended to use long URLs instead. Support for short URL redirects will be removed in a future release.
+
+## v2.2
+
+Formbricks v2.2 introduces XM research presets, providing a brand-new product onboarding experience. Our goal is to make user research "obviously easy" across different industries, starting with Software-as-a-Service and E-Commerce.
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks with our one-click setup. If you're using a different setup, you may need to adjust the commands accordingly.
+
+To run all these steps, please navigate to the `formbricks` folder where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.2_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name, e.g.
+  `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:v2.2 && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.2" \
+  ghcr.io/formbricks/data-migrations:v2.2
+```
+
+The command above will migrate your data to the latest schema. This is an important step to update your existing data. Changes will only be made if the script runs successfully. You can safely run the script multiple times.
+
+- Once the migration is complete, **you can access your Formbricks instance** at the same URL as before.
+
+### Changes in Environment Variables
+
+- The `ONBOARDING_DISABLED` environment variable is now deprecated. We have replaced the user onboarding with a product onboarding process that only runs when creating a new product.
+
+## v2.1
+
+Formbricks v2.1 introduces more options for creating No-Code Actions and improves the self-hosting experience with a new onboarding process for fresh instances.
+
+<Info>
+  To improve the user experience and simplify setup for self-hosting instances, we are transitioning to a single organization model. This change allows self-hosts to manage their instance centrally and more easily control access. A new permissions system will also be introduced soon, providing more granular control over projects and resources within an organization.
+
+If you've previously created multiple organizations, you can still switch between them in the UI, but creating new organizations will no longer be possible.
+
+</Info>
+
+### Steps to Migrate
+
+This guide is for users self-hosting Formbricks using our one-click setup. If you are using a different setup, you may need to adjust the commands accordingly.
+
+To follow these steps, please navigate to the Formbricks folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database**: This is an essential step. Please ensure that you back up your database before proceeding with the upgrade. You can use the following command to back it up:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.1_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name, e.g.
+  `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as a `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers.
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker network name for the Postgres database, run the following `docker network ls`</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:v2.1.0 && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.1" \
+  ghcr.io/formbricks/data-migrations:v2.1.0
+```
+
+Once the migration script runs successfully, your data will be migrated to the latest schema. The script is designed to run safely multiple times, so you don’t need to worry if it’s executed more than once. After completing the migration, you can continue to access your Formbricks instance at the same URL as before.
+
+- That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+
+### Changes in Environment Variables
+
+- **SIGNUP_DISABLED** is now deprecated. Self-hosting instances have signup disabled by default, and new users can only be invited by the organization owner or admin.
+
+- **DEFAULT_TEAM_ID** has been renamed to **DEFAULT_ORGANIZATION_ID**.
+
+- **DEFAULT_TEAM_ROLE** has been renamed to **DEFAULT_ORGANIZATION_ROLE**.
+
+## v2.0
+
+Formbricks v2.0 introduces significant features such as **Multi-Language Surveys** and **Advanced Styling for Surveys**, aimed at improving the flexibility and appearance of your surveys. Additionally, the release includes several optimisations, bug fixes, and smaller improvements to ensure a smoother user experience.
+
+If you are upgrading to Formbricks v2.0, follow this guide to ensure a smooth migration of your existing Formbricks instance without encountering issues or build errors.
+
+<Info>
+  This upgrade requires a **data migration**. Please make sure to back up your database before proceeding.
+  Follow the steps below to upgrade your Formbricks instance to v2.0.
+</Info>
+
+<Info>
+  If you've used the Formbricks Enterprise Edition with a free beta license key, your instance will be
+  downgraded to the Community Edition 2.0. You can find all license details on the [license
+  page](https://formbricks.com/docs/self-hosting/license).
+</Info>
+
+<Warning>
+  We are moving from DockerHub to GitHub Packages for our images. If you are still pulling the images from
+  DockerHub please change `image:
+  formbricks/formbricks:latest` to `image:ghcr.io/formbricks/formbricks:latest` in
+  your `docker-compose.yml` file.
+</Warning>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
+
+To run all these steps, please navigate to the `formbricks` folder where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: This is an essential step. Please ensure that you back up your database before proceeding with the upgrade. You can use the following command to back it up:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.0_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:v2.0.3 && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.0" \
+  ghcr.io/formbricks/data-migrations:v2.0.3
+```
+
+The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
+
+- That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+
+### App Surveys with @formbricks/js
+
+With this upgrade, we now dynamically fetch the package from our API endpoint and have updated the package entry points to support both app and website surveys. This ensures that you always have the latest version of the package (v2.0.0+).
+
+**Old approach:** (v1.6.5)
+
+```ts
+import formbricks from "@formbricks/js";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>", // optional
+});
+```
+
+**New approach:** (v2.0.0)
+
+Website surveys:
+
+```ts
+import formbricks from "@formbricks/js/website";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  // userId is not supported here
+});
+```
+
+App surveys:
+
+```ts
+import formbricks from "@formbricks/js/app";
+
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>", // required
+});
+```
+
+## v1.6
+
+Formbricks v1.6 introduces key features like Advanced Targeting, Segmentation, on-the-fly survey triggers, and stability improvements. This update also changes some environment variables. Follow this guide to upgrade your Formbricks instance to v1.6 smoothly.
+
+<Info>
+  This upgrade requires a data migration. Ensure you back up your database before proceeding. Follow the steps
+  below to upgrade your Formbricks instance to v1.6.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users self-hosting Formbricks with our one-click setup. If you're using a different setup, adjust the commands accordingly.
+
+Navigate to the Formbricks folder containing your `docker-compose.yml` file to run the steps.
+
+- **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+```bash
+docker exec formbricks-quickstart-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v1.6_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as a `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers will automatically pull the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find your Docker Network name for your Postgres Database, find it using `docker network ps`</Info>
+
+```bash
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v1.6" \
+  ghcr.io/formbricks/data-migrations:v1.6.1
+
+```
+
+The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
+
+1. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+
+#### Restoring the database after a failed upgrade
+
+```bash
+docker exec -i formbricks-quickstart-postgres-1 pg_restore --clean -U postgres -v -d formbricks < formbricks_pre_v1.6_<timestamp_of_your_dump_file>.dump
+```
+
+<Info>
+  Replace the path to `formbricks_pre_v1.6_<timestamp_of_your_dump_file>.dump` with the exact path to your `.dump` file.
+</Info>
+
+<Info>This will wipe the database and restore from the `.dump` file.</Info>
+
+### App Surveys with `@formbricks/js`
+
+If you're using the `@formbricks/js` package, update it to version \~1.6.5 to access the latest features and improvements.
+
+<Info>
+  Currently, the package needs to be pinned to `~1.6.5`, see [this
+  issue](https://github.com/formbricks/formbricks/issues/2273).
+</Info>
+
+### Upgrade and pin the client package
+
+```bash
+npm install @formbricks/js@~1.6.5
+```
+
+### Deprecated Environment Variables
+
+| Environment Variable   | Comments                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GITHUB_AUTH_ENABLED`  | Was used to enable GitHub OAuth, but from v1.6, you can just set the `GITHUB_ID` and `GITHUB_SECRET` environment variables.                                     |
+| `GOOGLE_AUTH_ENABLED`  | Was used to enable Google OAuth, but from v1.6, you can just set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables.                       |
+| `AZUREAD_AUTH_ENABLED` | Was used to enable AzureAD OAuth, but from v1.6, you can just set the `AZUREAD_CLIENT_ID`, `AZUREAD_CLIENT_SECRET` & `AZUREAD_TENANT_ID` environment variables. |
+
+## v1.2
+
+Formbricks v1.2 introduces new features for Link Surveys and enhances security. However, there are some breaking changes related to environment variables. This guide will help you upgrade your Formbricks instance to v1.2 smoothly.
+
+### New Environment Variables
+
+| Environment Variable | Required | Recommended Generation | Comments                           |
+| -------------------- | -------- | ---------------------- | ---------------------------------- |
+| `ENCRYPTION_KEY`     | true     | `openssl rand -hex 32` | Needed for 2 Factor Authentication |
+
+### Deprecated / Removed Environment Variables
+
+| Environment Variable | Comments                                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| `SURVEY_BASE_URL`    | The `WEBAPP_URL` is now used to determine the survey base URL in all places |
+
+## v1.1
+
+Formbricks v1.1 introduces new features and improvements but includes breaking changes with environment variables. This guide will help you upgrade your Formbricks instance to v1.1 without data loss.
+
+### Renamed Environment Variables
+
+| till v1.0                                 | v1.1                          |
+| ----------------------------------------- | ----------------------------- |
+| `NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED` | `EMAIL_VERIFICATION_DISABLED` |
+| `NEXT_PUBLIC_PASSWORD_RESET_DISABLED`     | `PASSWORD_RESET_DISABLED`     |
+| `NEXT_PUBLIC_SIGNUP_DISABLED`             | `SIGNUP_DISABLED`             |
+| `NEXT_PUBLIC_INVITE_DISABLED`             | `INVITE_DISABLED`             |
+| `NEXT_PUBLIC_PRIVACY_URL`                 | `PRIVACY_URL`                 |
+| `NEXT_PUBLIC_TERMS_URL`                   | `TERMS_URL`                   |
+| `NEXT_PUBLIC_IMPRINT_URL`                 | `IMPRINT_URL`                 |
+| `NEXT_PUBLIC_GITHUB_AUTH_ENABLED`         | `GITHUB_AUTH_ENABLED`         |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`         | `GOOGLE_AUTH_ENABLED`         |
+| `NEXT_PUBLIC_WEBAPP_URL`                  | `WEBAPP_URL`                  |
+| `NEXT_PUBLIC_IS_FORMBRICKS_CLOUD`         | `IS_FORMBRICKS_CLOUD`         |
+| `NEXT_PUBLIC_SURVEY_BASE_URL`             | `SURVEY_BASE_URL`             |
+
+Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
+
+### Deprecated Environment Variables
+
+- **`NEXT_PUBLIC_VERCEL_URL`**: Was used as Vercel URL (used instead of `WEBAPP_URL)`, but from v1.1, you can just set the `WEBAPP_URL` environment variable to your Vercel URL.
+
+- **`RAILWAY_STATIC_URL`**: Was used as Railway Static URL (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`RENDER_EXTERNAL_URL`**: Was used as an external URL to Render (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`HEROKU_APP_NAME`**: Was used to build the App name on a Heroku hosted webapp, but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`NEXT_PUBLIC_WEBAPP_URL`**: Was used for the same purpose as `WEBAPP_URL`, but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`PRISMA_GENERATE_DATAPROXY`**: Was used to tell Prisma that it should generate the runtime for Dataproxy usage. But its officially deprecated now.
+
+### Helper Shell Script
+
+For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
+
+### Docker & Single Script Setup
+
+Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
+For a more detailed guide on these environment variables, please refer to the [Important Runtime Variables](/self-hosting/setup/docker#important-run-time-variables) section.
+
+```yaml docker-compose.yml
+version: "3.3"
+x-environment: &environment
+  environment:
+    # The url of your Formbricks instance used in the admin panel
+    WEBAPP_URL:
+
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
+    # PostgreSQL DB for Formbricks to connect to
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
+    # NextJS Auth
+    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # You can use: `openssl rand -hex 32` to generate one
+    NEXTAUTH_SECRET:
+
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
+    # Email Configuration
+    MAIL_FROM:
+    MAIL_FROM_NAME:
+    SMTP_HOST:
+    SMTP_PORT:
+    SMTP_SECURE_ENABLED:
+    SMTP_USER:
+    SMTP_PASSWORD:
+
+    # Uncomment the below and set it to 1 to disable Email Verification for new signups
+    # EMAIL_VERIFICATION_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Password Reset
+    # PASSWORD_RESET_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Signups
+    # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable loging in with email
+    # EMAIL_AUTH_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Invites
+    # INVITE_DISABLED:
+
+    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # PRIVACY_URL:
+
+    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # TERMS_URL:
+
+    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # IMPRINT_URL:
+
+    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    # GITHUB_AUTH_ENABLED:
+    # GITHUB_ID:
+    # GITHUB_SECRET:
+
+    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # GOOGLE_AUTH_ENABLED:
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+```
+
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
+](https://formbricks.com/docs/developer-docs/rest-api)

@@ -1,15 +1,15 @@
 "use client";
 
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { ZInvitees } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface BulkInviteTabProps {
@@ -25,7 +25,7 @@ export const BulkInviteTab = ({
   canDoRoleManagement,
   isFormbricksCloud,
 }: BulkInviteTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -39,19 +39,23 @@ export const BulkInviteTab = ({
     }
     Papa.parse(csvFile, {
       skipEmptyLines: true,
-      comments: "Full Name,Email Address,Role",
-      complete: (results: ParseResult<string[]>) => {
+      header: true,
+      transformHeader: (header) => {
+        if (header === "Full Name") return "name";
+        if (header === "Email Address") return "email";
+        if (header === "Role") return "role";
+        return header;
+      },
+      complete: (results: ParseResult<{ name: string; email: string; role: string }>) => {
         const members = results.data.map((csv) => {
-          const [name, email, role] = csv;
-
-          let orgRole = canDoRoleManagement ? role.trim().toLowerCase() : "owner";
+          let orgRole = canDoRoleManagement ? csv.role.trim().toLowerCase() : "owner";
           if (!isFormbricksCloud) {
             orgRole = orgRole === "billing" ? "owner" : orgRole;
           }
 
           return {
-            name: name.trim(),
-            email: email.trim(),
+            name: csv.name.trim(),
+            email: csv.email.trim(),
             role: orgRole as TOrganizationRole,
             teamIds: [],
           };
@@ -60,7 +64,6 @@ export const BulkInviteTab = ({
           ZInvitees.parse(members);
           onSubmit(members);
         } catch (err) {
-          console.error(err.message);
           toast.error(t("environments.settings.general.please_check_csv_file"));
         }
         setOpen(false);

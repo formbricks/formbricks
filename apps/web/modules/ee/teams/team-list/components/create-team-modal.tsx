@@ -1,14 +1,14 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createTeamAction } from "@/modules/ee/teams/team-list/action";
+import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
 import { H4 } from "@/modules/ui/components/typography";
+import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -23,7 +23,7 @@ interface CreateTeamModalProps {
 export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: CreateTeamModalProps) => {
   const [teamName, setTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const handleTeamCreation = async (e) => {

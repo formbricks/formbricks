@@ -39,17 +39,23 @@ export const ActionClassesTable = ({
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {TableHeading}
         <div id="actionClassesWrapper" className="flex flex-col">
-          {actionClasses.map((actionClass, index) => (
-            <button
-              onClick={(e) => {
-                handleOpenActionDetailModalClick(e, actionClass);
-              }}
-              className="w-full"
-              title={actionClass.name}
-              key={actionClass.id}>
-              {actionRows[index]}
-            </button>
-          ))}
+          {actionClasses.length > 0 ? (
+            actionClasses.map((actionClass, index) => (
+              <button
+                onClick={(e) => {
+                  handleOpenActionDetailModalClick(e, actionClass);
+                }}
+                className="w-full"
+                title={actionClass.name}
+                key={actionClass.id}>
+                {actionRows[index]}
+              </button>
+            ))
+          ) : (
+            <div className="py-8 text-center">
+              <span className="text-sm text-slate-500">No actions found</span>
+            </div>
+          )}
         </div>
       </div>
       {activeActionClass && (

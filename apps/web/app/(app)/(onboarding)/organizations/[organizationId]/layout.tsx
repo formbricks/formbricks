@@ -1,12 +1,13 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
+import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
+import { canUserAccessOrganization } from "@/lib/organization/auth";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const ProjectOnboardingLayout = async (props) => {
@@ -14,9 +15,10 @@ const ProjectOnboardingLayout = async (props) => {
 
   const { children } = props;
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 
@@ -26,8 +28,9 @@ const ProjectOnboardingLayout = async (props) => {
   }
 
   const isAuthorized = await canUserAccessOrganization(session.user.id, params.organizationId);
+
   if (!isAuthorized) {
-    throw AuthorizationError;
+    throw new AuthorizationError(t("common.not_authorized"));
   }
 
   const organization = await getOrganization(params.organizationId);
@@ -43,6 +46,7 @@ const ProjectOnboardingLayout = async (props) => {
         organizationId={organization.id}
         organizationName={organization.name}
         organizationBilling={organization.billing}
+        isPosthogEnabled={IS_POSTHOG_CONFIGURED}
       />
       <ToasterClient />
       {children}

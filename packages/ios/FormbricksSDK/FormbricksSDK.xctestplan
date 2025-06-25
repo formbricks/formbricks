@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "D4DB88DE-0147-42DF-9922-C35A888B21CD",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:FormbricksSDK.xcodeproj",
+        "identifier" : "4DDAED672D50D49B00A19B1F",
+        "name" : "FormbricksSDKTests"
+      }
+    }
+  ],
+  "version" : 1
+}

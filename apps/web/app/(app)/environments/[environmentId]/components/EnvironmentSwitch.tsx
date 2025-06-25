@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
 interface EnvironmentSwitchProps {
@@ -14,7 +14,7 @@ interface EnvironmentSwitchProps {
 }
 
 export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwitchProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [isEnvSwitchChecked, setIsEnvSwitchChecked] = useState(environment?.type === "development");
   const [isLoading, setIsLoading] = useState(false);

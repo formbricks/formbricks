@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 
 type Key = {
@@ -38,7 +38,7 @@ export const UploadContactsAttributeCombobox = ({
   setOpen,
   currentKey,
 }: ITagsComboboxProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     // reset search value and value when closing the combobox
     if (!open) {

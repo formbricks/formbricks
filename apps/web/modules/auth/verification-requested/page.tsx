@@ -1,13 +1,15 @@
+import { getEmailFromEmailToken } from "@/lib/jwt";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
-import { getTranslations } from "next-intl/server";
-import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
+import { T, getTranslate } from "@/tolgee/server";
+import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
+  const { token } = await searchParams;
   try {
-    const email = getEmailFromEmailToken(searchParams.token);
+    const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);
     if (parsedEmail.success) {
       return (
@@ -17,10 +19,10 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
               {t("auth.verification-requested.please_confirm_your_email_address")}
             </h1>
             <p className="text-center text-sm text-slate-700">
-              {t.rich("auth.verification-requested.we_sent_an_email_to", {
-                email: () => <span className="font-semibold italic">{email}</span>,
-              })}
-              {t("auth.verification-requested.please_click_the_link_in_the_email_to_activate_your_account")}
+              <T
+                keyName="auth.verification-requested.verification_email_successfully_sent_info"
+                params={{ email, span: <span /> }}
+              />
             </p>
             <hr className="my-4" />
             <p className="text-center text-xs text-slate-500">
@@ -40,6 +42,7 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
       );
     }
   } catch (error) {
+    logger.error(error, "Invalid token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>

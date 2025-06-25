@@ -7,25 +7,29 @@ import {
   syncUserIdentificationLimiter,
   verifyEmailLimiter,
 } from "@/app/middleware/bucket";
+import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
+  isRouteAllowedForDomain,
   isShareUrlRoute,
   isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { ipAddress } from "@vercel/functions";
+import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { isValidCallbackUrl } from "@/lib/utils/url";
+import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
-import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
+import { NextRequest, NextResponse } from "next/server";
+import { v4 as uuidv4 } from "uuid";
+import { logger } from "@formbricks/logger";
 
-export const middleware = async (request: NextRequest) => {
-  // issue with next auth types; let's review when new fixes are available
+const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   const token = await getToken({ req: request as any });
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
@@ -34,65 +38,117 @@ export const middleware = async (request: NextRequest) => {
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+
   if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
-    return NextResponse.json({ error: "Invalid callback URL" });
-  }
-  if (token && callbackUrl) {
-    return NextResponse.redirect(WEBAPP_URL + callbackUrl);
-  }
-  if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
-    return NextResponse.next();
+    return NextResponse.json({ error: "Invalid callback URL" }, { status: 400 });
   }
 
-  let ip =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    ipAddress(request);
+  if (token && callbackUrl) {
+    return NextResponse.redirect(callbackUrl);
+  }
+
+  return null;
+};
+
+const applyRateLimiting = async (request: NextRequest, ip: string) => {
+  if (isLoginRoute(request.nextUrl.pathname)) {
+    await loginLimiter(`login-${ip}`);
+  } else if (isSignupRoute(request.nextUrl.pathname)) {
+    await signupLimiter(`signup-${ip}`);
+  } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
+    await verifyEmailLimiter(`verify-email-${ip}`);
+  } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
+    await forgotPasswordLimiter(`forgot-password-${ip}`);
+  } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
+    await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
+    const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
+    if (envIdAndUserId) {
+      const { environmentId, userId } = envIdAndUserId;
+      await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
+    }
+  } else if (isShareUrlRoute(request.nextUrl.pathname)) {
+    await shareUrlLimiter(`share-${ip}`);
+  }
+};
+
+/**
+ * Handle domain-aware routing based on PUBLIC_URL and WEBAPP_URL
+ */
+const handleDomainAwareRouting = (request: NextRequest): Response | null => {
+  try {
+    const publicDomainConfigured = isPublicDomainConfigured();
+
+    // When PUBLIC_URL is not configured, admin domain allows all routes (backward compatibility)
+    if (!publicDomainConfigured) return null;
+
+    const isPublicDomain = isRequestFromPublicDomain(request);
+
+    const pathname = request.nextUrl.pathname;
+
+    // Check if the route is allowed for the current domain
+    const isAllowed = isRouteAllowedForDomain(pathname, isPublicDomain);
+
+    if (!isAllowed) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    return null; // Allow the request to continue
+  } catch (error) {
+    logger.error(error, "Error handling domain-aware routing");
+    return new NextResponse(null, { status: 404 });
+  }
+};
+
+export const middleware = async (originalRequest: NextRequest) => {
+  // Handle domain-aware routing first
+  const domainResponse = handleDomainAwareRouting(originalRequest);
+  if (domainResponse) return domainResponse;
+
+  // Create a new Request object to override headers and add a unique request ID header
+  const request = new NextRequest(originalRequest, {
+    headers: new Headers(originalRequest.headers),
+  });
+
+  request.headers.set("x-request-id", uuidv4());
+  request.headers.set("x-start-time", Date.now().toString());
+
+  // Create a new NextResponse object to forward the new request with headers
+  const nextResponseWithCustomHeader = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  // Handle authentication
+  const authResponse = await handleAuth(request);
+  if (authResponse) return authResponse;
+
+  const ip = await getClientIpFromHeaders();
+
+  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
+    return nextResponseWithCustomHeader;
+  }
 
   if (ip) {
     try {
-      if (isLoginRoute(request.nextUrl.pathname)) {
-        await loginLimiter(`login-${ip}`);
-      } else if (isSignupRoute(request.nextUrl.pathname)) {
-        await signupLimiter(`signup-${ip}`);
-      } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
-        await verifyEmailLimiter(`verify-email-${ip}`);
-      } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
-        await forgotPasswordLimiter(`forgot-password-${ip}`);
-      } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
-        await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
-
-        const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
-        if (envIdAndUserId) {
-          const { environmentId, userId } = envIdAndUserId;
-          await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
-        }
-      } else if (isShareUrlRoute(request.nextUrl.pathname)) {
-        await shareUrlLimiter(`share-${ip}`);
-      }
-      return NextResponse.next();
+      await applyRateLimiting(request, ip);
+      return nextResponseWithCustomHeader;
     } catch (e) {
-      console.log(`Rate Limiting IP: ${ip}`);
-      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
+      // NOSONAR - This is a catch all for rate limiting errors
+      const apiError: ApiErrorResponseV2 = {
+        type: "too_many_requests",
+        details: [{ field: "", issue: "Too many requests. Please try again later." }],
+      };
+      logApiErrorEdge(request, apiError);
+      return NextResponse.json(apiError, { status: 429 });
     }
   }
-  return NextResponse.next();
+
+  return nextResponseWithCustomHeader;
 };
 
 export const config = {
   matcher: [
-    "/api/auth/callback/credentials",
-    "/api/(.*)/client/:path*",
-    "/api/v1/js/actions",
-    "/api/v1/client/storage",
-    "/share/(.*)/:path",
-    "/environments/:path*",
-    "/setup/organization/:path*",
-    "/api/auth/signout",
-    "/auth/login",
-    "/auth/signup",
-    "/api/packages/:path*",
-    "/auth/verification-requested",
-    "/auth/forgot-password",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public).*)",
   ],
 };

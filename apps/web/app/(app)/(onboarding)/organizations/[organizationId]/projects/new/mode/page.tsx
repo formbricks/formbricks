@@ -1,13 +1,12 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getUserProjects } from "@/lib/project/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
+import { getTranslate } from "@/tolgee/server";
 import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
-import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getUserProjects } from "@formbricks/lib/project/service";
 
 interface ModePageProps {
   params: Promise<{
@@ -17,12 +16,14 @@ interface ModePageProps {
 
 const Page = async (props: ModePageProps) => {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+
+  const { session } = await getOrganizationAuth(params.organizationId);
+
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const channelOptions = [
     {
       title: t("organizations.projects.new.mode.formbricks_surveys"),

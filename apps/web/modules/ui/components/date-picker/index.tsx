@@ -1,13 +1,13 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useTranslate } from "@tolgee/react";
 import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import Calendar from "react-calendar";
-import { cn } from "@formbricks/lib/cn";
 import "./styles.css";
 
 const getOrdinalSuffix = (day: number) => {
@@ -30,7 +30,7 @@ interface DatePickerProps {
 }
 
 export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
   const [formattedDate, setFormattedDate] = useState<string | undefined>(
     date ? format(new Date(date), "do MMM, yyyy") : undefined

@@ -4,11 +4,11 @@ import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -24,6 +24,7 @@ interface MatrixQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function MatrixQuestion({
@@ -38,7 +39,8 @@ export function MatrixQuestion({
   ttc,
   setTtc,
   currentQuestionId,
-}: MatrixQuestionProps) {
+  isBackButtonHidden,
+}: Readonly<MatrixQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -107,6 +109,7 @@ export function MatrixQuestion({
       question.columns.map((column, index) => (
         <th
           key={index}
+          scope="col"
           className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
           dir="auto">
           {getLocalizedValue(column, languageCode)}
@@ -141,13 +144,15 @@ export function MatrixQuestion({
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
-                  // Table rows
-                  <tr className={rowIndex % 2 === 0 ? "bg-input-bg" : ""} key={`row-${rowIndex.toString()}`}>
-                    <td
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
+                  <tr
+                    key={`row-${rowIndex.toString()}`}
+                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+                    <th
+                      scope="row"
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
-                    </td>
+                    </th>
                     {question.columns.map((column, columnIndex) => (
                       <td
                         key={`column-${columnIndex.toString()}`}
@@ -170,7 +175,6 @@ export function MatrixQuestion({
                         }}
                         dir="auto">
                         <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
-                          {/* radio input  */}
                           <input
                             dir="auto"
                             type="radio"
@@ -185,6 +189,13 @@ export function MatrixQuestion({
                                   getLocalizedValue(column, languageCode)
                                 : false
                             }
+                            aria-label={`${getLocalizedValue(
+                              question.headline,
+                              languageCode
+                            )}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(
+                              column,
+                              languageCode
+                            )}`}
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           />
                         </div>
@@ -203,7 +214,7 @@ export function MatrixQuestion({
           isLastQuestion={isLastQuestion}
           tabIndex={isCurrent ? 0 : -1}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={handleBackButtonClick}

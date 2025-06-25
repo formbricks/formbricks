@@ -3,8 +3,8 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -17,7 +17,7 @@ interface DeleteContactButtonProps {
 
 export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: DeleteContactButtonProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
 

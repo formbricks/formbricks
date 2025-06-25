@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -23,7 +23,7 @@ export const NotificationSwitch = ({
   autoDisableNotificationElementId,
 }: NotificationSwitchProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)

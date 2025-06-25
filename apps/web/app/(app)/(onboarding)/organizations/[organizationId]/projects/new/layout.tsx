@@ -1,18 +1,18 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganization } from "@/lib/organization/service";
+import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 
 const OnboardingLayout = async (props) => {
   const params = await props.params;
 
   const { children } = props;
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
@@ -28,7 +28,7 @@ const OnboardingLayout = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
   const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
 
   if (organizationProjectsCount >= organizationProjectsLimit) {

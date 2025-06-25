@@ -1,0 +1,110 @@
+---
+title: "Setup SAML with Identity Providers"
+description: "This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and use it to configure SAML in Formbricks."
+---
+
+### SAML Registration with Identity Providers
+
+This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and use it to configure SAML in Formbricks.
+
+> **Note:** Please do not add a trailing slash at the end of the URLs. Create them exactly as shown below.
+
+**Assertion consumer service URL / Single Sign-On URL / Destination URL:** [https://app.formbricks.com/api/auth/saml/callback](https://app.formbricks.com/api/auth/saml/callback)
+
+**Entity ID / Identifier / Audience URI / Audience Restriction:** [https://saml.formbricks.com](https://saml.formbricks.com)
+
+**Response:** Signed
+
+**Assertion Signature:** Signed
+
+**Signature Algorithm:** RSA-SHA256
+
+**Assertion Encryption:** Unencrypted
+
+**NameID Format:** EmailAddress
+
+**Application username:** email
+
+**Mapping Attributes / Attribute Statements:**
+
+- Name claim:
+
+  If your IdP has a `name` claim, set the following claims to populate the name field:
+
+  | Name | Name Format | Value     |
+  | ---- | ----------- | --------- |
+  | name | Basic       | user.name |
+
+  Many IdPs do not have a `name` claim. If not, you can use different claims to populate the name field. The order of precedence is `name` -> **other options** -> `email`.
+
+  **Other options:**
+
+  | Name      | Name Format | Value                     |
+  | --------- | ----------- | ------------------------- |
+  | firstName | Basic       | **FIRST_NAME_EQUIVALENT** |
+  | lastName  | Basic       | **LAST_NAME_EQUIVALENT**  |
+
+  Refer to the table below for the different claims you can use for each IdP.
+
+  | IdP                           | FIRST_NAME_EQUIVALENT            | LAST_NAME_EQUIVALENT             |
+  | ----------------------------- | -------------------------------- | -------------------------------- |
+  | Okta                          | user.firstName                   | user.lastName                    |
+  | Microsoft Entra ID (Azure AD) | user.givenName                   | user.surname                     |
+  | Google Workspace              | user.given_name / user.firstName | user.family_name / user.lastName |
+  | OneLogin                      | user.FirstName / user.first_name | user.LastName / user.last_name   |
+  | Auth0                         | user.given_name                  | user.family_name                 |
+  | JumpCloud                     | user.firstname                   | user.lastname                    |
+
+  Above provided claims may differ based on your configuration and the IdP you are using. Please refer to the documentation of your IdP for the correct claims.
+
+### SAML With Okta
+
+<Steps>
+  <Step title="Create an application with your SAML provider">
+    For example, in Okta, once you create an account, you can click on Applications on the sidebar menu:
+
+    <img src="/images/development/guides/auth-and-provision/okta/okta-applications.webp" />
+
+  </Step>
+  <Step title="Click on Create App Integration">
+  <img src="/images/development/guides/auth-and-provision/okta/create-app-integration.webp" />
+  </Step>
+  <Step title="Select SAML 2.0 in the modal form, and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/select-saml-2.0.webp" />
+  </Step>
+  <Step title="Fill the general settings as shown and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/general-settings.webp" />
+  </Step>
+  <Step title="Enter the SAML Integration Settings as shown and click Next">
+    - **Single Sign-On URL**: `https://<your-formbricks-instance>/api/auth/saml/callback` or `http://localhost:3000/api/auth/saml/callback` (if you are running Formbricks locally)
+    - **Audience URI (SP Entity ID)**: `https://saml.formbricks.com`
+    <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
+  </Step>
+  <Step title="Fill the fields mapping as shown and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/fields-mapping.webp" />
+  </Step>
+  <Step title="Check the internal app checkbox and click Finish">
+    <img src="/images/development/guides/auth-and-provision/okta/internal-app.webp" />
+  </Step>
+  <Step title="Check that the app is created successfully">
+    <img src="/images/development/guides/auth-and-provision/okta/app-created.webp" />
+  </Step>
+  <Step title="Click on the app and head over to the Assignments tab">
+    <img src="/images/development/guides/auth-and-provision/okta/assignments-tab.webp" />
+  </Step>
+  <Step title="Click on Assign button and select Assign to People">
+    <img src="/images/development/guides/auth-and-provision/okta/assign-to-people.webp" />
+  </Step>
+  <Step title="Select the users you want to assign the app to and click Assign">
+    <img src="/images/development/guides/auth-and-provision/okta/select-users.webp" />
+  </Step>
+  <Step title="Head over to the Sign On tab and click on the 'view SAML setup instructions' button">
+    <img src="/images/development/guides/auth-and-provision/okta/view-saml-instructions.webp" />
+  </Step>
+  <Step title="Scroll to the bottom and copy the IDP metadata">
+    <img src="/images/development/guides/auth-and-provision/okta/idp-metadata.webp" />
+  </Step>
+  <Step title="Copy the IDP metadata and paste it in the `connection.xml` file in the `formbricks/saml-connection` directory" />
+</Steps>
+
+That's it. Now when you try to login with SSO, your application on Okta will handle the authentication.

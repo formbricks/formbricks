@@ -4,10 +4,10 @@ import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 export const AppConnectionLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const cards = [
     {
       title: t("environments.project.app-connection.app_connection"),
@@ -35,7 +35,7 @@ export const AppConnectionLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="app-connection" loading />
       </PageHeader>
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>

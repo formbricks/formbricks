@@ -1,10 +1,12 @@
+"use client";
+
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -17,7 +19,7 @@ interface HiddenFieldsSummaryProps {
 
 export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: HiddenFieldsSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
@@ -49,9 +51,9 @@ export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: Hi
           <div className="col-span-2 pl-4 md:pl-6">{t("common.response")}</div>
           <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
-        {questionSummary.samples.slice(0, visibleResponses).map((response) => (
+        {questionSummary.samples.slice(0, visibleResponses).map((response, idx) => (
           <div
-            key={response.value}
+            key={`${response.value}-${idx}`}
             className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
             <div className="pl-4 md:pl-6">
               {response.contact ? (

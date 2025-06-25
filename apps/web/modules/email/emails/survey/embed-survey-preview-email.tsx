@@ -1,33 +1,32 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface EmbedSurveyPreviewEmailProps {
   html: string;
   environmentId: string;
-  locale: string;
   logoUrl?: string;
 }
 
-export function EmbedSurveyPreviewEmail({
+export async function EmbedSurveyPreviewEmail({
   html,
   environmentId,
-  locale,
   logoUrl,
-}: EmbedSurveyPreviewEmailProps): React.JSX.Element {
+}: EmbedSurveyPreviewEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading>{translateEmailText("embed_survey_preview_email_heading", locale)}</Heading>
-        <Text>{translateEmailText("embed_survey_preview_email_text", locale)}</Text>
-        <Text className="text-sm">
-          <b>{translateEmailText("embed_survey_preview_email_didnt_request", locale)}</b>{" "}
-          {translateEmailText("embed_survey_preview_email_fight_spam", locale)}
+        <Heading className="text-xl">{t("emails.embed_survey_preview_email_heading")}</Heading>
+        <Text className="font-normal">{t("emails.embed_survey_preview_email_text")}</Text>
+        <Text className="text-sm font-normal">
+          <b>{t("emails.embed_survey_preview_email_didnt_request")}</b>{" "}
+          {t("emails.embed_survey_preview_email_fight_spam")}
         </Text>
         <div dangerouslySetInnerHTML={{ __html: html }} />
         <Text className="text-center text-sm text-slate-700">
-          {translateEmailText("embed_survey_preview_email_environment_id", locale)}: {environmentId}
+          {t("emails.embed_survey_preview_email_environment_id")}: {environmentId}
         </Text>
       </Container>
     </EmailTemplate>

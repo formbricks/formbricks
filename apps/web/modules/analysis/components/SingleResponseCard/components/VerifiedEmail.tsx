@@ -1,12 +1,14 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { MailIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TResponseData } from "@formbricks/types/responses";
 
 interface VerifiedEmailProps {
   responseData: TResponseData;
 }
 export const VerifiedEmail = ({ responseData }: VerifiedEmailProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <p className="flex items-center space-x-2 text-sm text-slate-500">

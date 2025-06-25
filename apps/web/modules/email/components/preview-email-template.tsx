@@ -1,3 +1,9 @@
+import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
@@ -11,53 +17,80 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
+import { TFnType } from "@tolgee/react";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
-import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
+import { QuestionHeader } from "./email-question-header";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
   styling: TSurveyStyling;
+  locale: string;
+  t: TFnType;
 }
 
 export const getPreviewEmailTemplateHtml = async (
   survey: TSurvey,
   surveyUrl: string,
-  styling: TSurveyStyling
+  styling: TSurveyStyling,
+  locale: string,
+  t: TFnType
 ): Promise<string> => {
-  return render(<PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} />, {
-    pretty: true,
-  });
+  return render(
+    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,
+    {
+      pretty: true,
+    }
+  );
 };
 
-export function PreviewEmailTemplate({
+const getRatingContent = (scale: string, i: number, range: number, isColorCodingEnabled: boolean) => {
+  if (scale === "smiley") {
+    return (
+      <RatingSmiley
+        active={false}
+        idx={i}
+        range={range}
+        addColors={isColorCodingEnabled}
+        baseUrl={WEBAPP_URL}
+      />
+    );
+  }
+  if (scale === "number") {
+    return (
+      <Text className="m-0 h-[44px] text-center text-[14px] leading-[44px]">
+        {i + 1}
+      </Text>
+    );
+  }
+  if (scale === "star") {
+    return <Text className="m-auto text-3xl">⭐</Text>;
+  }
+  return null;
+};
+
+export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
   styling,
-}: PreviewEmailTemplateProps): React.JSX.Element {
+  t,
+}: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
-
+  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
+  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
     case TSurveyQuestionTypeEnum.OpenText:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
           <EmailFooter />
         </EmailTemplateWrapper>
@@ -65,9 +98,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
           <Container className="text-question-color m-0 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
@@ -87,7 +118,7 @@ export function PreviewEmailTemplate({
               <EmailButton
                 className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black"
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}>
-                Reject
+                {t("emails.reject")}
               </EmailButton>
             )}
             <EmailButton
@@ -96,7 +127,7 @@ export function PreviewEmailTemplate({
                 isLight(brandColor) ? "text-black" : "text-white"
               )}
               href={`${urlWithPrefilling}${firstQuestion.id}=accepted`}>
-              Accept
+              {t("emails.accept")}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -106,12 +137,7 @@ export function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full justify-center">
-            <Text className="text-question-color m-0 block w-full text-base font-semibold leading-6">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-            </Text>
-            <Text className="text-question-color m-0 block w-full p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-            </Text>
+            <QuestionHeader headline={headline} subheader={subheader} />
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
                 className={cn("w-full overflow-hidden", {
@@ -124,16 +150,13 @@ export function PreviewEmailTemplate({
                         href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
                         key={i}
                         className={cn(
-                          firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
+                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                            ? `h-[46px] border border-t-[6px] border-t-${getNPSOptionColor(i + 1).replace("bg-", "")}`
+                            : "h-10",
                           "relative m-0 w-full overflow-hidden border border-l-0 border-solid border-slate-200 p-0 text-center align-middle leading-10 text-slate-800",
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === 10 }
                         )}>
-                        {firstQuestion.isColorCodingEnabled ? (
-                          <Section
-                            className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`}
-                          />
-                        ) : null}
                         {i}
                       </EmailButton>
                     ))}
@@ -162,9 +185,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
           <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
@@ -198,12 +219,7 @@ export function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full">
-            <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-            </Text>
-            <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-            </Text>
+            <QuestionHeader headline={headline} subheader={subheader} />
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section className="w-full overflow-hidden">
                 <Row>
@@ -211,36 +227,23 @@ export function PreviewEmailTemplate({
                     {Array.from({ length: firstQuestion.range }, (_, i) => (
                       <EmailButton
                         className={cn(
-                          "relative m-0 flex w-full items-center justify-center overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
+                          "relative m-0 h-[48px] w-full overflow-hidden border border-l-0 border-solid border-gray-200 p-0 text-center align-middle leading-10 text-slate-800",
 
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
-                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                            ? "h-[46px]"
-                            : "h-10",
-                          firstQuestion.scale === "star" ? "h-12" : "h-10"
+                          firstQuestion.isColorCodingEnabled &&
+                          firstQuestion.scale === "number" &&
+                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                          firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
                         key={i}>
-                        {firstQuestion.scale === "smiley" && (
-                          <RatingSmiley
-                            active={false}
-                            idx={i}
-                            range={firstQuestion.range}
-                            addColors={firstQuestion.isColorCodingEnabled}
-                          />
+                        {getRatingContent(
+                          firstQuestion.scale,
+                          i,
+                          firstQuestion.range,
+                          firstQuestion.isColorCodingEnabled
                         )}
-                        {firstQuestion.scale === "number" && (
-                          <>
-                            {firstQuestion.isColorCodingEnabled ? (
-                              <Section
-                                className={`absolute left-0 top-0 h-[6px] w-full ${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`}
-                              />
-                            ) : null}
-                            <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
-                          </>
-                        )}
-                        {firstQuestion.scale === "star" && <Text className="m-0 text-3xl">⭐</Text>}
                       </EmailButton>
                     ))}
                   </Column>
@@ -268,12 +271,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
@@ -289,12 +287,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Ranking:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
@@ -310,12 +303,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Link
@@ -332,12 +320,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.PictureSelection:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Section className="mx-0">
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
@@ -364,18 +347,13 @@ export function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Container>
-            <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-            </Text>
-            <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-              You have been invited to schedule a meet via cal.com.
-            </Text>
+            <QuestionHeader headline={headline} subheader={subheader} />
             <EmailButton
               className={cn(
                 "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
-              Schedule your meeting
+              {t("emails.schedule_your_meeting")}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -384,15 +362,12 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Date:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Section className="border-input-border-color bg-input-color rounded-custom mt-4 flex h-12 w-full items-center justify-center border border-solid">
             <CalendarDaysIcon className="text-question-color inline h-4 w-4" />
-            <Text className="text-question-color inline text-sm font-medium">Select a date</Text>
+            <Text className="text-question-color inline text-sm font-medium">
+              {t("emails.select_a_date")}
+            </Text>
           </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
@@ -400,12 +375,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Matrix:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, "default")}
-          </Text>
-          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, "default")}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
@@ -449,12 +419,7 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.ContactInfo:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           {["First Name", "Last Name", "Email", "Phone", "Company"].map((label) => (
             <Section
               className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid py-2 pl-2 text-slate-400"
@@ -469,16 +434,11 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.FileUpload:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Section className="border-input-border-color rounded-custom mt-4 flex h-24 w-full items-center justify-center border border-dashed bg-slate-50">
             <Container className="mx-auto flex items-center text-center">
               <UploadIcon className="mt-6 inline h-5 w-5 text-slate-400" />
-              <Text className="text-slate-400">Click or drag to upload files.</Text>
+              <Text className="text-slate-400">{t("emails.click_or_drag_to_upload_files")}</Text>
             </Container>
           </Section>
           <EmailFooter />

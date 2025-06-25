@@ -1,8 +1,8 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ClockIcon, PauseIcon, PencilIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyStatusIndicatorProps {
@@ -11,7 +11,7 @@ interface SurveyStatusIndicatorProps {
 }
 
 export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicatorProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   if (tooltip) {
     return (
       <TooltipProvider>

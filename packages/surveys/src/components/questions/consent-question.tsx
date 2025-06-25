@@ -4,9 +4,9 @@ import { Headline } from "@/components/general/headline";
 import { HtmlBody } from "@/components/general/html-body";
 import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -23,6 +23,7 @@ interface ConsentQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function ConsentQuestion({
@@ -38,7 +39,8 @@ export function ConsentQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: ConsentQuestionProps) {
+  isBackButtonHidden,
+}: Readonly<ConsentQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
@@ -126,14 +128,13 @@ export function ConsentQuestion({
           isLastQuestion={isLastQuestion}
         />
         <div />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
-              onSubmit({ [question.id]: value }, updatedTtcObj);
               onBack();
             }}
           />

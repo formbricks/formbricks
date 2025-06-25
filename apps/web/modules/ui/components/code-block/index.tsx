@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import "./style.css";
 
 interface CodeBlockProps {
@@ -24,7 +24,7 @@ export const CodeBlock = ({
   customCodeClass = "",
   showCopyToClipboard = true,
 }: CodeBlockProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     Prism.highlightAll();
   }, [children]);
@@ -34,6 +34,7 @@ export const CodeBlock = ({
       {showCopyToClipboard && (
         <div className="absolute right-2 top-2 z-20 flex cursor-pointer items-center justify-center p-1.5 text-slate-500 hover:text-slate-900">
           <CopyIcon
+            data-testid="copy-icon"
             onClick={() => {
               const childText = children?.toString() || "";
               navigator.clipboard.writeText(childText);

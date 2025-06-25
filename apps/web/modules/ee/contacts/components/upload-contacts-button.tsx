@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
@@ -8,12 +9,11 @@ import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
+import { useTranslate } from "@tolgee/react";
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
 interface UploadContactsCSVButtonProps {
@@ -25,7 +25,7 @@ export const UploadContactsCSVButton = ({
   environmentId,
   contactAttributeKeys,
 }: UploadContactsCSVButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const errorContainerRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +74,13 @@ export const UploadContactsCSVButton = ({
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
           setErrror(parsedRecords.error.errors[0].message);
+          return;
+        }
+
+        if (!parsedRecords.data.length) {
+          setErrror(
+            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
+          );
           return;
         }
 
@@ -189,8 +196,12 @@ export const UploadContactsCSVButton = ({
     }
 
     if (result?.validationErrors) {
-      if (result.validationErrors.csvData?._errors?.[0]) {
-        setErrror(result.validationErrors.csvData._errors?.[0]);
+      const csvDataErrors = Array.isArray(result.validationErrors.csvData)
+        ? result.validationErrors.csvData[0]?._errors?.[0]
+        : result.validationErrors.csvData?._errors?.[0];
+
+      if (csvDataErrors) {
+        setErrror(csvDataErrors);
       } else {
         setErrror("An error occurred while uploading the contacts. Please try again later.");
       }
@@ -360,13 +371,11 @@ export const UploadContactsCSVButton = ({
               )}
             </div>
             {!csvResponse.length && (
-              <p>
-                <a
-                  onClick={handleDownloadExampleCSV}
-                  className="cursor-pointer text-right text-sm text-slate-500">
-                  {t("environments.contacts.upload_contacts_modal_download_example_csv")}{" "}
-                </a>
-              </p>
+              <div className="flex justify-start">
+                <Button onClick={handleDownloadExampleCSV} variant="secondary">
+                  {t("environments.contacts.upload_contacts_modal_download_example_csv")}
+                </Button>
+              </div>
             )}
           </div>
 

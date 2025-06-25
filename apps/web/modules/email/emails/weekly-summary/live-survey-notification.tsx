@@ -1,31 +1,32 @@
+import { WEBAPP_URL } from "@/lib/constants";
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import React, { type JSX } from "react";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weekly-summary";
 import { EmailButton } from "../../components/email-button";
-import { translateEmailText } from "../../lib/utils";
-import { renderEmailResponseValue } from "../survey/response-finished-email";
 
-const getButtonLabel = (count: number, locale: string): string => {
+const getButtonLabel = (count: number, t: TFnType): string => {
   if (count === 1) {
-    return translateEmailText("live_survey_notification_view_response", locale);
+    return t("emails.live_survey_notification_view_response");
   }
-  return translateEmailText("live_survey_notification_view_more_responses", locale, {
+  return t("emails.live_survey_notification_view_more_responses", {
     responseCount: count > 2 ? (count - 1).toString() : "1",
   });
 };
 
-const convertSurveyStatus = (status: TSurveyStatus, locale: string): string => {
+const convertSurveyStatus = (status: TSurveyStatus, t: TFnType): string => {
   const statusMap = {
-    inProgress: translateEmailText("live_survey_notification_in_progress", locale),
-    paused: translateEmailText("live_survey_notification_paused", locale),
-    completed: translateEmailText("live_survey_notification_completed", locale),
-    draft: translateEmailText("live_survey_notification_draft", locale),
-    scheduled: translateEmailText("live_survey_notification_scheduled", locale),
+    inProgress: t("emails.live_survey_notification_in_progress"),
+    paused: t("emails.live_survey_notification_paused"),
+    completed: t("emails.live_survey_notification_completed"),
+    draft: t("emails.live_survey_notification_draft"),
+    scheduled: t("emails.live_survey_notification_scheduled"),
   };
 
   return statusMap[status] || status;
@@ -34,23 +35,20 @@ const convertSurveyStatus = (status: TSurveyStatus, locale: string): string => {
 interface LiveSurveyNotificationProps {
   environmentId: string;
   surveys: TWeeklySummaryNotificationDataSurvey[];
-  locale: string;
 }
 
-export const LiveSurveyNotification = ({
+export async function LiveSurveyNotification({
   environmentId,
   surveys,
-  locale,
-}: LiveSurveyNotificationProps): React.JSX.Element[] => {
+}: LiveSurveyNotificationProps): Promise<React.JSX.Element[]> {
+  const t = await getTranslate();
   const createSurveyFields = (
     surveyResponses: TWeeklySummarySurveyResponseData[]
   ): React.JSX.Element | React.JSX.Element[] => {
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
-          <Text className="m-0 font-bold">
-            {translateEmailText("live_survey_notification_no_responses_yet", locale)}
-          </Text>
+          <Text className="m-0 font-bold">{t("emails.live_survey_notification_no_responses_yet")}</Text>
         </Container>
       );
     }
@@ -65,7 +63,7 @@ export const LiveSurveyNotification = ({
       surveyFields.push(
         <Container className="mt-4" key={`${index.toString()}-${surveyResponse.headline}`}>
           <Text className="m-0">{surveyResponse.headline}</Text>
-          {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType)}
+          {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType, t)}
         </Container>
       );
 
@@ -81,7 +79,7 @@ export const LiveSurveyNotification = ({
   if (!surveys.length) return [];
 
   return surveys.map((survey) => {
-    const displayStatus = convertSurveyStatus(survey.status, locale);
+    const displayStatus = convertSurveyStatus(survey.status, t);
     const isInProgress = displayStatus === "In Progress";
     const noResponseLastWeek = isInProgress && survey.responses.length === 0;
     return (
@@ -100,18 +98,18 @@ export const LiveSurveyNotification = ({
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (
-            <Text>{translateEmailText("live_survey_notification_no_new_response", locale)}</Text>
+            <Text>{t("emails.live_survey_notification_no_new_response")}</Text>
           ) : (
             createSurveyFields(survey.responses)
           )}
           {survey.responseCount > 0 && (
-            <Container className="mt-4 block">
+            <Container className="mt-4 block text-sm">
               <EmailButton
                 href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
                 label={
                   noResponseLastWeek
-                    ? translateEmailText("live_survey_notification_view_previous_responses", locale)
-                    : getButtonLabel(survey.responseCount, locale)
+                    ? t("emails.live_survey_notification_view_previous_responses")
+                    : getButtonLabel(survey.responseCount, t)
                 }
               />
             </Container>
@@ -120,4 +118,4 @@ export const LiveSurveyNotification = ({
       </Tailwind>
     );
   });
-};
+}

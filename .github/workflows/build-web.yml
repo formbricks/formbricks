@@ -4,7 +4,7 @@ on:
 
 permissions:
   contents: read
-  
+
 jobs:
   build:
     name: Build Formbricks-web
@@ -12,7 +12,12 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Build & Cache Web Binaries
@@ -20,3 +25,5 @@ jobs:
         id: cache-build-web
         with:
           e2e_testing_mode: "0"
+          turbo_token: ${{ secrets.TURBO_TOKEN }}
+          turbo_team: ${{ vars.TURBO_TEAM }}

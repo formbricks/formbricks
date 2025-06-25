@@ -2,7 +2,7 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 
 interface ManageTeamProps {
@@ -11,7 +11,7 @@ interface ManageTeamProps {
 }
 
 export const ManageTeam = ({ environmentId, isOwnerOrManager }: ManageTeamProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const router = useRouter();
 

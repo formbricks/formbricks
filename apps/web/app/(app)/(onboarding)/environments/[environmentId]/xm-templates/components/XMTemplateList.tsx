@@ -4,9 +4,9 @@ import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments
 import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/surveys/components/TemplateList/actions";
+import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
+import { useTranslate } from "@tolgee/react";
 import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -23,7 +23,7 @@ interface XMTemplateListProps {
 
 export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListProps) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const createSurvey = async (activeTemplate: TXMTemplate) => {
@@ -47,7 +47,7 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
 
   const handleTemplateClick = (templateIdx: number) => {
     setActiveTemplateId(templateIdx);
-    const template = getXMTemplates(user.locale)[templateIdx];
+    const template = getXMTemplates(t)[templateIdx];
     const newTemplate = replacePresetPlaceholders(template, project);
     createSurvey(newTemplate);
   };

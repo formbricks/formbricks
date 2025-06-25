@@ -1,23 +1,25 @@
 "use client";
 
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
+import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
+import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TInvitee } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface OrganizationActionsProps {
   role: TOrganizationRole;
-  isOwnerOrManager: boolean;
+  membershipRole?: TOrganizationRole;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   teams: TOrganizationTeam[];
@@ -26,12 +28,13 @@ interface OrganizationActionsProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
+  isUserManagementDisabledFromUi: boolean;
 }
 
 export const OrganizationActions = ({
-  isOwnerOrManager,
   role,
   organization,
+  membershipRole,
   teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
@@ -39,12 +42,16 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
+  isUserManagementDisabledFromUi,
 }: OrganizationActionsProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isOwner || isManager;
 
   const handleLeaveOrganization = async () => {
     setLoading(true);
@@ -53,6 +60,7 @@ export const OrganizationActions = ({
       toast.success(t("environments.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
       toast.error(`Error: ${err.message}`);
@@ -71,6 +79,7 @@ export const OrganizationActions = ({
         teamIds: data[0].teamIds,
       });
       if (inviteUserActionResult?.data) {
+        router.refresh();
         toast.success(t("environments.settings.general.member_invited_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
@@ -84,7 +93,7 @@ export const OrganizationActions = ({
             email: email.toLowerCase(),
             name,
             role,
-            teamIds: teamIds,
+            teamIds,
           });
           return {
             email,
@@ -122,7 +131,7 @@ export const OrganizationActions = ({
           </Button>
         )}
 
-        {!isInviteDisabled && isOwnerOrManager && (
+        {!isInviteDisabled && isOwnerOrManager && !isUserManagementDisabledFromUi && (
           <Button
             size="sm"
             variant="secondary"
@@ -137,6 +146,7 @@ export const OrganizationActions = ({
         open={isInviteMemberModalOpen}
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
+        membershipRole={membershipRole}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}

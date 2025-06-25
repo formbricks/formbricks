@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { formatDate, timeSinceDate } from "@/lib/time";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { Loader2, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { formatDate, timeSinceDate } from "@formbricks/lib/time";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -73,10 +73,10 @@ const SegmentDetail = ({
   };
 
   return (
-    <div
+    <button
       key={segment.id}
       className={cn(
-        "relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
+        "relative mt-1 grid h-16 w-full cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
         currentSegment.id === segment.id && "pointer-events-none bg-slate-100 opacity-60"
       )}
       onClick={async () => {
@@ -112,7 +112,7 @@ const SegmentDetail = ({
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
         <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt)}</div>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -140,7 +140,7 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-  const t = useTranslations();
+  const { t } = useTranslate();
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
@@ -169,6 +169,7 @@ export const LoadSegmentModal = ({
 
               {segmentsArray.map((segment) => (
                 <SegmentDetail
+                  key={segment.id}
                   segment={segment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                   setOpen={setOpen}

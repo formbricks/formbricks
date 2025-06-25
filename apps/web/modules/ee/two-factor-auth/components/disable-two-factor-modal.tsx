@@ -9,9 +9,9 @@ import { Modal } from "@/modules/ui/components/modal";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -45,7 +45,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
     },
     resolver: zodResolver(ZDisableTwoFactorFormState),
   });
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
 
   const onSubmit: SubmitHandler<TDisableTwoFactorFormState> = async (data) => {

@@ -1,6 +1,6 @@
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { useCallback, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 
 interface PopoverPickerProps {
   color: string;
@@ -17,11 +17,12 @@ export const PopoverPicker = ({ color, onChange, disabled = false }: PopoverPick
 
   return (
     <div className="picker relative">
-      <div
+      <button
         id="color-picker"
         className="h-6 w-10 cursor-pointer rounded border border-slate-200"
         style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
           if (!disabled) {
             toggle(!isOpen);
           }

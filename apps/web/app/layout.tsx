@@ -1,8 +1,11 @@
-import { PHProvider } from "@/modules/ui/components/post-hog-client";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SentryProvider } from "@/app/sentry/SentryProvider";
+import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { TolgeeNextProvider } from "@/tolgee/client";
+import { getLocale } from "@/tolgee/language";
+import { getTolgee } from "@/tolgee/server";
+import { TolgeeStaticData } from "@tolgee/react";
 import { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import React from "react";
 import "../modules/ui/globals.css";
 
 export const metadata: Metadata = {
@@ -15,15 +18,18 @@ export const metadata: Metadata = {
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   const locale = await getLocale();
-  const messages = await getMessages();
+  const tolgee = await getTolgee();
+  // serializable data that are passed to client components
+  const staticData = await tolgee.loadRequired();
 
   return (
     <html lang={locale} translate="no">
-      {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
       <body className="flex h-dvh flex-col transition-all ease-in-out">
-        <PHProvider>
-          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
-        </PHProvider>
+        <SentryProvider sentryDsn={SENTRY_DSN} isEnabled={IS_PRODUCTION}>
+          <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
+            {children}
+          </TolgeeNextProvider>
+        </SentryProvider>
       </body>
     </html>
   );

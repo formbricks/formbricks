@@ -1,29 +1,29 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
-  webAppUrl: string;
+  publicDomain: string;
   widgetSetupCompleted: boolean;
   channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
   environment,
-  webAppUrl,
+  publicDomain,
   widgetSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const handleFinishOnboarding = async () => {
     router.push(`/environments/${environment.id}/surveys`);
@@ -49,7 +49,7 @@ export const ConnectWithFormbricks = ({
         <div className="flex w-1/2 flex-col space-y-4">
           <OnboardingSetupInstructions
             environmentId={environment.id}
-            webAppUrl={webAppUrl}
+            publicDomain={publicDomain}
             channel={channel}
             widgetSetupCompleted={widgetSetupCompleted}
           />

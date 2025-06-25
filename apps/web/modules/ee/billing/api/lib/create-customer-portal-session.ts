@@ -1,6 +1,6 @@
+import { STRIPE_API_VERSION } from "@/lib/constants";
+import { env } from "@/lib/env";
 import Stripe from "stripe";
-import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env";
 
 export const createCustomerPortalSession = async (stripeCustomerId: string, returnUrl: string) => {
   if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");

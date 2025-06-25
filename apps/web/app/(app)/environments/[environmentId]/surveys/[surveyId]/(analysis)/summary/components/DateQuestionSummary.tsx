@@ -1,12 +1,13 @@
+"use client";
+
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
-import { timeSince } from "@formbricks/lib/time";
-import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -15,7 +16,6 @@ interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummaryDate;
   environmentId: string;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -23,10 +23,9 @@ export const DateQuestionSummary = ({
   questionSummary,
   environmentId,
   survey,
-  contactAttributeKeys,
   locale,
 }: DateQuestionSummary) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
   const handleLoadMore = () => {
@@ -36,14 +35,19 @@ export const DateQuestionSummary = ({
     );
   };
 
+  const renderResponseValue = (value: string) => {
+    const parsedDate = new Date(value);
+
+    const formattedDate = isNaN(parsedDate.getTime())
+      ? `${t("common.invalid_date")}(${value})`
+      : formatDateWithOrdinal(parsedDate);
+
+    return formattedDate;
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">{t("common.user")}</div>
@@ -77,7 +81,7 @@ export const DateQuestionSummary = ({
                 )}
               </div>
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
-                {formatDateWithOrdinal(new Date(response.value as string))}
+                {renderResponseValue(response.value)}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
                 {timeSince(new Date(response.updatedAt).toISOString(), locale)}

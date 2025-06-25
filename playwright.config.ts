@@ -1,7 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// import os from "os";
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -19,10 +17,14 @@ export default defineConfig({
   retries: 0,
   /* Timeout for each test */
   timeout: 120000,
+  /* Fail the test run after the first failure */
+  maxFailures: 1, // Stop execution after the first failed test
   /* Opt out of parallel tests on CI. */
   // workers: os.cpus().length,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  reporter:  [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

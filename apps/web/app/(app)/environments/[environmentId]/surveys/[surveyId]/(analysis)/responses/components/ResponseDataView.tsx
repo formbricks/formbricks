@@ -1,5 +1,7 @@
+"use client";
+
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { useTranslations } from "next-intl";
+import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
@@ -22,7 +24,8 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
 }
 
-const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
+// Export for testing
+export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   return Array.isArray(responseValue)
     ? responseValue.reduce((acc, curr, index) => {
@@ -32,7 +35,8 @@ const formatAddressData = (responseValue: TResponseDataValue): Record<string, st
     : {};
 };
 
-const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
+// Export for testing
+export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["firstName", "lastName", "email", "phone", "company"];
   return Array.isArray(responseValue)
     ? responseValue.reduce((acc, curr, index) => {
@@ -42,7 +46,8 @@ const formatContactInfoData = (responseValue: TResponseDataValue): Record<string
     : {};
 };
 
-const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
+// Export for testing
+export const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
   let responseData: Record<string, any> = {};
 
   survey.questions.forEach((question) => {
@@ -71,10 +76,11 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
   return responseData;
 };
 
-const mapResponsesToTableData = (
+// Export for testing
+export const mapResponsesToTableData = (
   responses: TResponse[],
   survey: TSurvey,
-  t: (key: string) => string
+  t: TFnType
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
@@ -112,7 +118,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   isFetchingFirstPage,
   locale,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const data = mapResponsesToTableData(responses, survey, t);
 
   return (

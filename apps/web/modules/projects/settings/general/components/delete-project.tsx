@@ -1,19 +1,25 @@
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { DeleteProjectRender } from "@/modules/projects/settings/general/components/delete-project-render";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
 interface DeleteProjectProps {
   environmentId: string;
-  project: TProject;
+  currentProject: TProject;
+  organizationProjects: TProject[];
   isOwnerOrManager: boolean;
 }
 
-export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }: DeleteProjectProps) => {
-  const t = await getTranslations();
+export const DeleteProject = async ({
+  environmentId,
+  currentProject,
+  organizationProjects,
+  isOwnerOrManager,
+}: DeleteProjectProps) => {
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -31,7 +37,8 @@ export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }
     <DeleteProjectRender
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
-      project={project}
+      currentProject={currentProject}
+      organizationProjects={organizationProjects}
     />
   );
 };

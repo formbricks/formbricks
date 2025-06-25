@@ -1,8 +1,10 @@
+"use client";
+
 import { CasualCardArrangementIcon } from "@/modules/ui/components/icons/casual-card-arrangement-icon";
 import { SimpleCardsArrangementIcon } from "@/modules/ui/components/icons/simple-card-arrangement-icon";
 import { StraightCardArrangementIcon } from "@/modules/ui/components/icons/straight-card-arrangement-icon";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys/types";
 
@@ -19,7 +21,7 @@ export const CardArrangementTabs = ({
   setActiveCardArrangement,
   disabled = false,
 }: CardArrangementTabsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);

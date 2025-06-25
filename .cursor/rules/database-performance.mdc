@@ -1,0 +1,41 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Database Performance & Prisma Best Practices
+
+## Critical Performance Rules
+
+### Response Count Queries
+- **NEVER** use `skip`/`offset` with `prisma.response.count()` - this causes expensive subqueries with OFFSET
+- Always use only `where` clauses for count operations: `prisma.response.count({ where: { ... } })`
+- For pagination, separate count queries from data queries
+- Reference: [apps/web/lib/response/service.ts](mdc:apps/web/lib/response/service.ts) line 654-686
+
+### Prisma Query Optimization
+- Use proper indexes defined in [packages/database/schema.prisma](mdc:packages/database/schema.prisma)
+- Leverage existing indexes: `@@index([surveyId, createdAt])`, `@@index([createdAt])`
+- Use cursor-based pagination for large datasets instead of offset-based
+- Cache frequently accessed data using React Cache and custom cache tags
+
+### Date Range Filtering
+- When filtering by `createdAt`, always use indexed queries
+- Combine with `surveyId` for optimal performance: `{ surveyId, createdAt: { gte: start, lt: end } }`
+- Avoid complex WHERE clauses that can't utilize indexes
+
+### Count vs Data Separation
+- Always separate count queries from data fetching queries
+- Use `Promise.all()` to run count and data queries in parallel
+- Example pattern from [apps/web/modules/api/v2/management/responses/lib/response.ts](mdc:apps/web/modules/api/v2/management/responses/lib/response.ts):
+```typescript
+const [responses, totalCount] = await Promise.all([
+  prisma.response.findMany(query),
+  prisma.response.count({ where: whereClause }),
+]);
+```
+
+### Monitoring & Debugging
+- Monitor AWS RDS Performance Insights for problematic queries
+- Look for queries with OFFSET in count operations - these indicate performance issues
+- Use proper error handling with `DatabaseError` for Prisma exceptions

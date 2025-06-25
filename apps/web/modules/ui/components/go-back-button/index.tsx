@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 export const GoBackButton = ({ url }: { url?: string }) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Button
       size="sm"

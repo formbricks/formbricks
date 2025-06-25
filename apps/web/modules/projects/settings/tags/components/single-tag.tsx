@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteTagAction,
@@ -11,12 +12,11 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { TTag } from "@formbricks/types/tags";
 
 interface SingleTagProps {
@@ -38,7 +38,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
   environmentTags,
   isReadOnly = false,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
@@ -78,7 +78,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
                     if (
-                      errorMessage.includes(
+                      errorMessage?.includes(
                         t("environments.project.tags.unique_constraint_failed_on_the_fields")
                       )
                     ) {

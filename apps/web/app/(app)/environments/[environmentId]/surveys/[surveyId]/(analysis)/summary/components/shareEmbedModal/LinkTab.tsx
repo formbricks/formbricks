@@ -1,25 +1,23 @@
+"use client";
+
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface LinkTabProps {
   survey: TSurvey;
-  webAppUrl: string;
   surveyUrl: string;
+  publicDomain: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
 }
 
-export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
-  const t = useTranslations();
+export const LinkTab = ({ survey, surveyUrl, publicDomain, setSurveyUrl, locale }: LinkTabProps) => {
+  const { t } = useTranslate();
+
   const docsLinks = [
-    {
-      title: t("environments.surveys.summary.identify_users"),
-      description: t("environments.surveys.summary.identify_users_description"),
-      link: "https://formbricks.com/docs/link-surveys/user-identification",
-    },
     {
       title: t("environments.surveys.summary.data_prefilling"),
       description: t("environments.surveys.summary.data_prefilling_description"),
@@ -45,12 +43,13 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
         </p>
         <ShareSurveyLink
           survey={survey}
-          webAppUrl={webAppUrl}
           surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
           setSurveyUrl={setSurveyUrl}
           locale={locale}
         />
       </div>
+
       <div className="flex flex-wrap justify-between gap-2">
         <p className="pt-2 font-semibold text-slate-700">
           {t("environments.surveys.summary.you_can_do_a_lot_more_with_links_surveys")} 💡

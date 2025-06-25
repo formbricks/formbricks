@@ -1,0 +1,129 @@
+---
+title: "Testing Methodology"
+description: "How we test Formbricks to ensure reliability, performance, and high-quality code."
+icon: magnifying-glass
+---
+
+## Overview
+
+At Formbricks, we maintain a rigorous testing strategy to ensure high-quality code and reliable functionality. Our testing approach is standardized and integrated into our development workflow.
+
+## Testing Structure
+
+### Unit Testing with Vitest
+
+We use Vitest as our primary testing framework. All unit tests follow these conventions:
+
+1. **File Location and Naming**
+
+   - Test files are co-located with the source files they test
+   - Test files use the `.test.ts` extension (e.g., `utils.test.ts` tests `utils.ts`)
+
+2. **Test Organization**
+
+   ```typescript
+   import { describe, expect, test } from "vitest";
+
+   describe("ComponentName or FeatureName", () => {
+     describe("functionName or scenario", () => {
+       // We use the `test` function instead of `it` throught our test suite
+       test("should describe expected behavior", () => {
+         // test implementation
+       });
+     });
+   });
+   ```
+
+3. **Coverage Requirements**
+   - Minimum 85% code coverage requirement 
+   - Coverage is tracked using V8 provider
+   - Coverage reports include:
+     - Text summaries
+     - HTML reports
+     - LCOV reports
+
+### End-to-End Testing with Playwright
+
+E2E tests are located in `apps/web/playwright/` and focus on critical user workflows.
+
+## Testing Setup
+
+### Configuration
+
+Our Vitest configuration (`vite.config.ts`) includes:
+
+```typescript
+test: {
+exclude: ['playwright/', 'node_modules/'],
+setupFiles: ['../../packages/lib/vitestSetup.ts'],
+coverage: {
+provider: 'v8',
+reporter: ['text', 'html', 'lcov'],
+reportsDirectory: './coverage',
+},
+}
+
+```
+
+### Test Utilities
+
+Common test utilities are available in `vitestSetup.ts`:
+
+- Mock implementations for commonly used functions
+- Test lifecycle hooks (beforeEach, afterEach)
+- Validation test helpers
+
+## Best Practices
+
+1. **Test Independence**
+
+   ```typescript
+   beforeEach(() => {
+     vi.resetModules();
+     vi.resetAllMocks();
+   });
+
+   afterEach(() => {
+     vi.clearAllMocks();
+   });
+   ```
+
+2. **Mocking**
+
+   - Use Vitest's built-in mocking utilities
+   - Mock external dependencies and services
+   - Example:
+
+   ```typescript
+   vi.mock("@formbricks/database", () => ({
+     prisma: {
+       user: {
+         create: vi.fn(),
+         findUnique: vi.fn(),
+       },
+     },
+   }));
+   ```
+
+3. **Assertions**
+   - Write clear, specific assertions
+   - Test both success and error cases
+   - Example:
+   ```typescript
+   expect(result.ok).toBe(true);
+   expect(result.data).toEqual(expectedData);
+   expect(async () => await invalidCall()).rejects.toThrow(ValidationError);
+   ```
+
+## Quality Assurance Process
+
+1. **Continuous Integration**
+
+   - Automated test suite execution on pull requests
+   - Coverage reports generation
+   - Test results reporting
+
+2. **New Features**
+   - Must include corresponding unit tests
+   - Must maintain or improve coverage metrics
+   - Must include relevant E2E tests for user-facing features

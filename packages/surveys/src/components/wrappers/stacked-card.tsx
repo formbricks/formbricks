@@ -1,5 +1,6 @@
 import { MutableRef } from "preact/hooks";
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { JSX } from "preact/jsx-runtime";
 import React from "react";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
@@ -97,6 +98,7 @@ export const StackedCard = ({
     <div
       ref={(el) => (cardRefs.current[dynamicQuestionIndex] = el)}
       id={`questionCard-${dynamicQuestionIndex}`}
+      data-testid={`questionCard-${dynamicQuestionIndex}`}
       key={dynamicQuestionIndex}
       style={{
         zIndex: 1000 - dynamicQuestionIndex,
@@ -109,7 +111,7 @@ export const StackedCard = ({
         ...straightCardArrangementStyles,
         ...getBottomStyles(),
       }}
-      className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out">
+      className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out fb-overflow-hidden">
       <div
         style={{
           opacity: contentOpacity,

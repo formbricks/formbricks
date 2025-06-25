@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -8,7 +10,7 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 
 interface MergeTagsComboboxProps {
@@ -22,7 +24,7 @@ type Tag = {
 };
 
 export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 

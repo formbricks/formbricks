@@ -1,11 +1,13 @@
+"use client";
+
+import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
+import { md } from "@/lib/markdownIt";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { Editor } from "@/modules/ui/components/editor";
+import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
-import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
-import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
-import { md } from "@formbricks/lib/markdownIt";
-import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageIndicator } from "./language-indicator";
@@ -49,7 +51,7 @@ export function LocalizedEditor({
   setFirstRender,
   locale,
 }: LocalizedEditorProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
@@ -69,16 +71,18 @@ export function LocalizedEditor({
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          const translatedHtml = {
-            ...value,
-            [selectedLanguageCode]: v,
-          };
-          if (questionIdx === -1) {
-            // welcome card
-            updateQuestion({ html: translatedHtml });
-            return;
+          if (localSurvey.questions[questionIdx] || questionIdx === -1) {
+            const translatedHtml = {
+              ...value,
+              [selectedLanguageCode]: v,
+            };
+            if (questionIdx === -1) {
+              // welcome card
+              updateQuestion({ html: translatedHtml });
+              return;
+            }
+            updateQuestion(questionIdx, { html: translatedHtml });
           }
-          updateQuestion(questionIdx, { html: translatedHtml });
         }}
       />
       {localSurvey.languages.length > 1 && (
@@ -98,7 +102,7 @@ export function LocalizedEditor({
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, "default", []).default ?? ""
+                    recallToHeadline(value, localSurvey, false, "default").default ?? ""
                   ),
                 }}
               />

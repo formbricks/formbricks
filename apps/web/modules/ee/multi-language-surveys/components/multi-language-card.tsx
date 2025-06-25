@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -7,15 +9,13 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Language } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight, Languages } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
@@ -23,7 +23,7 @@ import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
-  project: TProject;
+  projectLanguages: Language[];
   setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
@@ -44,16 +44,16 @@ export interface ConfirmationModalProps {
 
 export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   activeQuestionId,
-  project,
   localSurvey,
   setActiveQuestionId,
   setLocalSurvey,
+  projectLanguages,
   isMultiLanguageAllowed,
   isFormbricksCloud,
   setSelectedLanguageCode,
   locale,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
@@ -91,7 +91,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     setLocalSurvey(updatedSurvey as TSurvey);
   };
 
-  const updateSurveyLanguages = (language: TLanguage) => {
+  const updateSurveyLanguages = (language: Language) => {
     let updatedLanguages = localSurvey.languages;
     const languageIndex = localSurvey.languages.findIndex(
       (surveyLanguage) => surveyLanguage.language.code === language.code
@@ -120,7 +120,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const handleDefaultLanguageChange = (languageCode: string) => {
-    const language = project.languages.find((lang) => lang.code === languageCode);
+    const language = projectLanguages.find((lang) => lang.code === languageCode);
     if (language) {
       let languageExists = false;
 
@@ -213,7 +213,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
               <Switch
                 checked={isMultiLanguageActivated}
-                disabled={!isMultiLanguageAllowed || project.languages.length === 0}
+                disabled={!isMultiLanguageAllowed || projectLanguages.length === 0}
                 id="multi-lang-toggle"
                 onClick={() => {
                   handleActivationSwitchLogic();
@@ -230,7 +230,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 description={t("environments.surveys.edit.upgrade_notice_description")}
                 buttons={[
                   {
-                    text: t("common.start_free_trial"),
+                    text: isFormbricksCloud
+                      ? t("common.start_free_trial")
+                      : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
                       : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
@@ -245,16 +247,16 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               />
             ) : (
               <>
-                {project.languages.length <= 1 && (
+                {projectLanguages.length <= 1 && (
                   <div className="mb-4 text-sm italic text-slate-500">
-                    {project.languages.length === 0
+                    {projectLanguages.length === 0
                       ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
                       : t(
                           "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations"
                         )}
                   </div>
                 )}
-                {project.languages.length > 1 && (
+                {projectLanguages.length > 1 && (
                   <div className="my-4 space-y-4">
                     <div>
                       {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
@@ -269,7 +271,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                         <DefaultLanguageSelect
                           defaultLanguage={defaultLanguage}
                           handleDefaultLanguageChange={handleDefaultLanguageChange}
-                          project={project}
+                          projectLanguages={projectLanguages}
                           setConfirmationModalInfo={setConfirmationModalInfo}
                           locale={locale}
                         />
@@ -277,7 +279,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           <SecondaryLanguageSelect
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
-                            project={project}
+                            projectLanguages={projectLanguages}
                             setActiveQuestionId={setActiveQuestionId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
                             updateSurveyLanguages={updateSurveyLanguages}

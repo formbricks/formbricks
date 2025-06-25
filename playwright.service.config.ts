@@ -7,7 +7,7 @@ export default defineConfig(
   config,
   getServiceConfig(config, {
     exposeNetwork: "<loopback>",
-    timeout: 30000,
+    timeout: 33000,
     os: ServiceOS.LINUX,
     useCloudHostedBrowsers: true, // Set to false if you want to only use reporting and not cloud hosted browsers
   }),

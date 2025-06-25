@@ -12,8 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -21,11 +21,11 @@ import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurvey
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  webAppUrl: string;
+  publicDomain: string;
 }
 
-export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
-  const t = useTranslations();
+export const ResultsShareButton = ({ survey, publicDomain }: ResultsShareButtonProps) => {
+  const { t } = useTranslate();
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -34,7 +34,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
   const handlePublish = async () => {
     const resultShareKeyResponse = await generateResultShareUrlAction({ surveyId: survey.id });
     if (resultShareKeyResponse?.data) {
-      setSurveyUrl(webAppUrl + "/share/" + resultShareKeyResponse.data);
+      setSurveyUrl(publicDomain + "/share/" + resultShareKeyResponse.data);
       setShowPublishModal(true);
     } else {
       const errorMessage = getFormattedErrorMessage(resultShareKeyResponse);
@@ -58,13 +58,13 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
     const fetchSharingKey = async () => {
       const resultShareUrlResponse = await getResultShareUrlAction({ surveyId: survey.id });
       if (resultShareUrlResponse?.data) {
-        setSurveyUrl(webAppUrl + "/share/" + resultShareUrlResponse.data);
+        setSurveyUrl(publicDomain + "/share/" + resultShareUrlResponse.data);
         setShowPublishModal(true);
       }
     };
 
     fetchSharingKey();
-  }, [survey.id, webAppUrl]);
+  }, [survey.id, publicDomain]);
 
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
@@ -72,7 +72,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       navigator.clipboard
         .writeText(currentUrl)
         .then(() => {
-          toast.success(t("common.link_copied_to_clipboard"));
+          toast.success(t("common.copied_to_clipboard"));
         })
         .catch(() => {
           toast.error(t("environments.surveys.failed_to_copy_link_to_results"));

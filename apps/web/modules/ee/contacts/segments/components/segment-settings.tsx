@@ -1,16 +1,17 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
 import { FilterIcon, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -35,7 +36,7 @@ export function SegmentSettings({
   isReadOnly,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 
@@ -73,7 +74,7 @@ export function SegmentSettings({
 
     try {
       setIsUpdatingSegment(true);
-      await updateSegmentAction({
+      const data = await updateSegmentAction({
         environmentId,
         segmentId: segment.id,
         data: {
@@ -84,15 +85,18 @@ export function SegmentSettings({
         },
       });
 
+      if (!data?.data) {
+        const errorMessage = getFormattedErrorMessage(data);
+
+        toast.error(errorMessage);
+        setIsUpdatingSegment(false);
+        return;
+      }
+
       setIsUpdatingSegment(false);
       toast.success("Segment updated successfully!");
     } catch (err: any) {
-      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-      if (!parsedFilters.success) {
-        toast.error(t("environments.segments.invalid_segment_filters"));
-      } else {
-        toast.error(t("common.something_went_wrong_please_try_again"));
-      }
+      toast.error(t("common.something_went_wrong_please_try_again"));
       setIsUpdatingSegment(false);
       return;
     }

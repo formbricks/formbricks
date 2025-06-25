@@ -11,8 +11,9 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -25,6 +26,7 @@ interface IndividualInviteTabProps {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  membershipRole?: TOrganizationRole;
 }
 
 export const IndividualInviteTab = ({
@@ -34,6 +36,7 @@ export const IndividualInviteTab = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  membershipRole,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
@@ -42,12 +45,14 @@ export const IndividualInviteTab = ({
     teamIds: z.array(z.string()),
   });
 
+  const router = useRouter();
+
   type TFormData = z.infer<typeof ZFormSchema>;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: "owner",
+      role: canDoRoleManagement ? "member" : "owner",
       teamIds: [],
     },
   });
@@ -66,6 +71,7 @@ export const IndividualInviteTab = ({
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
     onSubmit([data]);
+    router.refresh();
     setOpen(false);
     reset();
   };
@@ -102,6 +108,7 @@ export const IndividualInviteTab = ({
             control={control}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={isFormbricksCloud}
+            membershipRole={membershipRole}
           />
           {watch("role") === "member" && (
             <Alert className="mt-2" variant="info">

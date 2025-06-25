@@ -1,22 +1,15 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import {
-  getResponseCountAction,
-  getResponsesAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import {
-  getResponseCountBySurveySharingKeyAction,
-  getResponsesBySurveySharingKeyAction,
-} from "@/app/share/[sharingKey]/actions";
+import { getResponsesBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -27,9 +20,8 @@ interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  webAppUrl: string;
+  publicDomain: string;
   user?: TUser;
-  contactAttributeKeys: TContactAttributeKey[];
   environmentTags: TTag[];
   responsesPerPage: number;
   locale: TUserLocale;
@@ -40,9 +32,8 @@ export const ResponsePage = ({
   environment,
   survey,
   surveyId,
-  webAppUrl,
+  publicDomain,
   user,
-  contactAttributeKeys,
   environmentTags,
   responsesPerPage,
   locale,
@@ -52,7 +43,6 @@ export const ResponsePage = ({
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
-  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -100,9 +90,6 @@ export const ResponsePage = ({
 
   const deleteResponses = (responseIds: string[]) => {
     setResponses(responses.filter((response) => !responseIds.includes(response.id)));
-    if (responseCount) {
-      setResponseCount(responseCount - responseIds.length);
-    }
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
@@ -112,37 +99,14 @@ export const ResponsePage = ({
   };
 
   const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
-  }, [contactAttributeKeys, survey]);
+    return replaceHeadlineRecall(survey, "default");
+  }, [survey]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
     }
   }, [searchParams, resetState]);
-
-  useEffect(() => {
-    const handleResponsesCount = async () => {
-      let responseCount = 0;
-
-      if (isSharingPage) {
-        const responseCountActionResponse = await getResponseCountBySurveySharingKeyAction({
-          sharingKey,
-          filterCriteria: filters,
-        });
-        responseCount = responseCountActionResponse?.data || 0;
-      } else {
-        const responseCountActionResponse = await getResponseCountAction({
-          surveyId,
-          filterCriteria: filters,
-        });
-        responseCount = responseCountActionResponse?.data || 0;
-      }
-
-      setResponseCount(responseCount);
-    };
-    handleResponsesCount();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
@@ -191,7 +155,7 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} publicDomain={publicDomain} />}
       </div>
       <ResponseDataView
         survey={survey}

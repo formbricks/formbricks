@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import {
   ERRORS,
@@ -5,21 +7,20 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { getQuestionTypes } from "@formbricks/lib/utils/questions";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -27,7 +28,6 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -37,8 +37,6 @@ interface AddIntegrationModalProps {
   notionIntegration: TIntegrationNotion;
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
-  contactAttributeKeys: TContactAttributeKey[];
-  locale: TUserLocale;
 }
 
 export const AddIntegrationModal = ({
@@ -49,10 +47,8 @@ export const AddIntegrationModal = ({
   notionIntegration,
   databases,
   selectedIntegration,
-  contactAttributeKeys,
-  locale,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -116,7 +112,7 @@ export const AddIntegrationModal = ({
 
   const questionItems = useMemo(() => {
     const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default", contactAttributeKeys)?.questions.map((q) => ({
+      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
           name: getLocalizedValue(q.headline, "default"),
           type: q.type,
@@ -298,7 +294,7 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
-            const question = getQuestionTypes(locale).find((qt) => qt.id === ques.type);
+            const question = getQuestionTypes(t).find((qt) => qt.id === ques.type);
             if (!question) return null;
             return (
               <>

@@ -1,7 +1,3 @@
-import type { IdentityProvider } from "@prisma/client";
-import AzureAD from "next-auth/providers/azure-ad";
-import GitHubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -15,7 +11,12 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
-} from "@formbricks/lib/constants";
+  WEBAPP_URL,
+} from "@/lib/constants";
+import type { IdentityProvider } from "@prisma/client";
+import AzureAD from "next-auth/providers/azure-ad";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 
 export const getSSOProviders = () => [
   GitHubProvider({
@@ -53,6 +54,36 @@ export const getSSOProviders = () => [
         image: profile.picture,
       };
     },
+  },
+  {
+    id: "saml",
+    name: "BoxyHQ SAML",
+    type: "oauth" as const,
+    version: "2.0",
+    checks: ["pkce" as const, "state" as const],
+    authorization: {
+      url: `${WEBAPP_URL}/api/auth/saml/authorize`,
+      params: {
+        scope: "",
+        response_type: "code",
+        provider: "saml",
+      },
+    },
+    token: `${WEBAPP_URL}/api/auth/saml/token`,
+    userinfo: `${WEBAPP_URL}/api/auth/saml/userinfo`,
+    profile(profile) {
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+        image: null,
+      };
+    },
+    options: {
+      clientId: "dummy",
+      clientSecret: "dummy",
+    },
+    allowDangerousEmailAccountLinking: true,
   },
 ];
 

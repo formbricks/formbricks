@@ -1,8 +1,10 @@
 "use client";
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
+import { useTranslate } from "@tolgee/react";
 import {
   BellRing,
   BlocksIcon,
@@ -12,7 +14,6 @@ import {
   SmartphoneIcon,
   UsersRound,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -23,26 +24,26 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
+  publicDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  webAppUrl: string;
   user: TUser;
 }
 
 export const ShareEmbedSurvey = ({
   survey,
+  publicDomain,
   open,
   modalView,
   setOpen,
-  webAppUrl,
   user,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs = useMemo(
     () =>
       [
@@ -60,7 +61,21 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
+  const [surveyUrl, setSurveyUrl] = useState("");
+
+  useEffect(() => {
+    const fetchSurveyUrl = async () => {
+      try {
+        const url = await getSurveyUrl(survey, publicDomain, "default");
+        setSurveyUrl(url);
+      } catch (error) {
+        console.error("Failed to fetch survey URL:", error);
+        // Fallback to a default URL if fetching fails
+        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
+      }
+    };
+    fetchSurveyUrl();
+  }, [survey, publicDomain]);
 
   useEffect(() => {
     if (survey.type !== "link") {
@@ -86,13 +101,12 @@ export const ShareEmbedSurvey = ({
   };
 
   const handleInitialPageButton = () => {
-    setOpen(false);
+    setShowView("start");
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTitle className="sr-only" />
-      <DialogContent className="w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
+      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide">
         {showView === "start" ? (
           <div className="h-full max-w-full overflow-hidden">
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
@@ -104,8 +118,8 @@ export const ShareEmbedSurvey = ({
               <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
-                webAppUrl={webAppUrl}
                 surveyUrl={surveyUrl}
+                publicDomain={publicDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -159,8 +173,8 @@ export const ShareEmbedSurvey = ({
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
+            publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
-            webAppUrl={webAppUrl}
             locale={user.locale}
           />
         ) : showView === "panel" ? (

@@ -1,0 +1,129 @@
+---
+title: "Documentation"
+description: "Standards for documenting code and features in the Formbricks codebase"
+icon: "book"
+---
+
+## Overview
+
+At Formbricks, we maintain strict documentation standards to ensure code clarity, maintainability, and ease of use for both internal developers and external contributors.
+
+### Contribute to Documentation
+
+We use Mintlify to maintain our documentation. You can find more information about how to contribute to the documentation in the [README](https://github.com/formbricks/formbricks/blob/main/docs/README.md) file.
+
+## Code Documentation
+
+### Function Documentation
+
+1. **Complex Logic Documentation**
+   - All functions with complex logic must include JSDoc comments
+   - Document parameters, return types, and potential side effects
+   - Example:
+
+```typescript
+/**
+Creates a new user and initializes their preferences
+@param {string} name - User's full name
+@param {UserOptions} options - Configuration options for user creation
+@returns {Promise<User>} The created user object
+@throws {ValidationError} If name is invalid
+*/
+async function createUser(name: string, options: UserOptions): Promise<User> {
+  // implementation
+}
+```
+
+2. **TypeScript Ignore Comments**
+   - When using `@ts-ignore` or `@ts-expect-error`, always include a comment explaining why
+   - Example:
+
+```typescript
+// @ts-expect-error -- Required for dynamic function calls
+void window.formbricks.setup(...args);
+```
+
+### API Documentation
+
+1. **API Endpoints**
+
+   - All new API endpoints must be documented in the OpenAPI specification
+   - Include request/response schemas, authentication requirements, and examples
+   - Document both Client API and Management API endpoints
+   - Place API documentation in the `docs/api-reference` directory
+
+2. **Authentication**
+   - Clearly specify authentication requirements
+   - Document API key usage and permissions
+   - Include error scenarios and handling
+
+### Feature Documentation
+
+- All new features must include a feature documentation file
+- Document the feature's purpose, usage, and implementation details
+- Include code examples and best practices
+
+## Working with Mintlify
+
+We use Mintlify to write our documentation.
+
+### File Structure
+
+1. **MDX Files**
+   - All documentation files must use the `.mdx` extension
+   - Include frontmatter with required metadata:
+
+```markdown
+---
+title: "Document Title"
+description: "Brief description of the content"
+icon: "appropriate-icon"
+---
+```
+
+2. **Navigation**
+   - Add new pages to the appropriate section in `docs/mint.json`
+   - Follow the existing navigation structure
+   - Include proper redirects if URLs change
+
+### Content Guidelines
+
+1. **Writing Style**
+   - Use clear, concise language
+   - Break content into logical sections with proper headings
+   - Include practical examples and code snippets
+   - Use Mintlify components for notes, warnings, and callouts:
+
+```markdown
+<Note>
+Important information goes here
+</Note>
+```
+
+2. **Media and Assets**
+
+   - Store images in the appropriate `/images` subdirectory
+   - Use descriptive alt text for all images
+   - Optimize images for web delivery
+   - Use relative paths for internal links
+
+3. **Code Examples**
+   - Specify the language for all code blocks
+   - Include comments for complex code snippets
+   - Use proper indentation and formatting
+
+## Validation
+
+1. **Local Testing**
+   - Test documentation locally using Mintlify CLI:
+
+```bash
+mintlify dev
+```
+
+2. **Review Process**
+   - Documentation changes require peer review
+   - Verify all links and references work
+   - Ensure proper formatting and rendering
+
+These documentation requirements ensure that our codebase remains maintainable, accessible, and well-documented for both current and future developers.

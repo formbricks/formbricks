@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/modules/ui/components/skeleton";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -18,7 +18,7 @@ export const EmptySpaceFiller = ({
   noWidgetRequired,
   emptyMessage,
 }: EmptySpaceFillerProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   if (type === "table") {
     return (
       <div className="shadow-xs group rounded-xl border border-slate-100 bg-white p-4">

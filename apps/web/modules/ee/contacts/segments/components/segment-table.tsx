@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { getTranslate } from "@/tolgee/server";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
@@ -10,13 +10,13 @@ type TSegmentTableProps = {
   isReadOnly: boolean;
 };
 
-export const SegmentTable = ({
+export const SegmentTable = async ({
   segments,
   contactAttributeKeys,
   isContactsEnabled,
   isReadOnly,
 }: TSegmentTableProps) => {
-  const t = useTranslations();
+  const t = await getTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">

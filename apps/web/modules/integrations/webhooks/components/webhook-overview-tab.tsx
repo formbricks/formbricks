@@ -1,8 +1,10 @@
+"use client";
+
+import { convertDateTimeStringShort } from "@/lib/time";
+import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Label } from "@/modules/ui/components/label";
 import { Webhook } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface ActivityTabProps {
@@ -21,7 +23,7 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
   }
 };
 
-const convertTriggerIdToName = (triggerId: string, t: (key: string) => string): string => {
+const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
   switch (triggerId) {
     case "responseCreated":
       return t("environments.integrations.webhooks.response_created");
@@ -35,7 +37,7 @@ const convertTriggerIdToName = (triggerId: string, t: (key: string) => string): 
 };
 
 export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">

@@ -1,6 +1,6 @@
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { convertResponseValue } from "@formbricks/lib/responses";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { convertResponseValue } from "@/lib/responses";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   TWeeklyEmailResponseData,
@@ -25,11 +25,9 @@ export const getNotificationResponse = (
   const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
-    const parsedSurvey = replaceHeadlineRecall(
-      survey as unknown as TSurvey,
-      "default",
-      environment.attributeKeys
-    ) as TSurvey & { responses: TWeeklyEmailResponseData[] };
+    const parsedSurvey = replaceHeadlineRecall(survey as unknown as TSurvey, "default") as TSurvey & {
+      responses: TWeeklyEmailResponseData[];
+    };
     const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,

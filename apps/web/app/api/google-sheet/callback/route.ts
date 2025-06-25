@@ -1,12 +1,12 @@
 import { responses } from "@/app/lib/api/response";
-import { google } from "googleapis";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
-} from "@formbricks/lib/constants";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
+} from "@/lib/constants";
+import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { google } from "googleapis";
 
 export const GET = async (req: Request) => {
   const url = req.url;

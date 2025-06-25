@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { Webhook } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,7 +14,7 @@ interface AddWebhookButtonProps {
 }
 
 export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
   return (
     <>
