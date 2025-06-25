@@ -76,22 +76,103 @@ export const ZId = z.string().cuid2();
 
 export const ZUuid = z.string().uuid();
 
-export const getZSafeUrl = (message: string): z.ZodEffects<z.ZodString, string, string> =>
-  z
-    .string()
-    .url({ message })
-    .superRefine((url, ctx) => {
-      if (url.includes(" ")) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "URL must not contain spaces",
-        });
-      }
+export const getZSafeUrl = z.string().superRefine((url, ctx) => {
+  safeUrlRefinement(url, ctx);
+});
 
-      if (!url.startsWith("https://")) {
+export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
+  if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL must not contain spaces",
+    });
+  }
+
+  // early recall check for better user feedback
+  if (url.startsWith("#recall:")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL must not start with a recall value",
+    });
+  }
+
+  if (!url.startsWith("https://")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL must start with https://",
+    });
+  }
+
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+
+    // Check if recall information appears in the hostname (not allowed)
+    if (hostname.includes("#recall:")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recall value is not allow in the hostname",
+      });
+      return;
+    }
+
+    // Validate domain structure
+    if (hostname) {
+      const addIssue = (): void => {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "URL must start with https://",
+          message: "URL is not valid",
         });
+      };
+
+      // Check if hostname contains at least one dot (for top-level domain, for example: formbricks.com)
+      if (!hostname.includes(".")) {
+        addIssue();
+      } else {
+        // Check if it has a valid top-level domain (at least 2 characters after the last dot, for example: .com, .uk, .de, etc.)
+        const parts = hostname.split(".");
+        const tld = parts[parts.length - 1];
+
+        // TLD validation: must be at least 2 characters and contain only letters
+        // Also limit length to 6 chars to catch fake long TLDs
+        if (tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+          addIssue();
+          return;
+        }
+
+        // Special case: if we have www.something, ensure "something" is not just a single part
+        // www.domain should be www.domain.tld (at least 3 parts total)
+        if (parts[0].toLowerCase() === "www" && parts.length < 3) {
+          addIssue();
+          return;
+        }
+
+        // Check if all parts are valid (no empty parts between dots)
+        if (parts.some((part) => part.length === 0)) {
+          addIssue();
+          return;
+        }
+
+        // Ensure we have at least a domain name + TLD (minimum 2 parts)
+        if (parts.length < 2) {
+          addIssue();
+          return;
+        }
+
+        // Validate each part contains only valid domain characters
+        const domainRegex = /^[a-zA-Z0-9-]+$/;
+        for (const part of parts) {
+          if (!domainRegex.test(part) || part.startsWith("-") || part.endsWith("-")) {
+            addIssue();
+            return;
+          }
+        }
       }
+    }
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL is not valid",
     });
+  }
+};
