@@ -214,9 +214,9 @@ export const AddIntegrationModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="h-4 w-4">
+            <div className="size-6">
               <Image
-                className="w-4"
+                className="w-6"
                 src={GoogleSheetLogo}
                 alt={t("environments.integrations.google_sheets.google_sheet_logo")}
               />
