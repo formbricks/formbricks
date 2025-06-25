@@ -1,4 +1,5 @@
 #!/bin/sh
++set -euo pipefail
 if [ -f "/run/secrets/database_url" ]; then
   export DATABASE_URL=$(cat /run/secrets/database_url)
 else

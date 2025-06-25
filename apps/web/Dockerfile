@@ -26,7 +26,7 @@ RUN corepack prepare pnpm@9.15.9 --activate
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # Copy the secrets handling script
-COPY apps/web/read-secrets.sh /tmp/read-secrets.sh
+COPY apps/web/scripts/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
@@ -125,7 +125,7 @@ RUN npm install --ignore-scripts -g pino-pretty
 RUN npm install -g prisma
 
 # Create a startup script to handle the conditional logic
-COPY --from=installer /app/apps/web/next-start.sh /home/nextjs/start.sh
+COPY --from=installer /app/apps/web/scripts/next-start.sh /home/nextjs/start.sh
 RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 
 EXPOSE 3000
