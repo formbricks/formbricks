@@ -52,7 +52,7 @@ export const updateSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateSurvey",
   summary: "Update a survey",
   description: "Updates a survey in the database.",
-  tags: ["Management API -  Surveys"],
+  tags: ["Management API - Surveys"],
   requestParams: {
     path: z.object({
       id: surveyIdSchema,

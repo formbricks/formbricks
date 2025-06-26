@@ -78,8 +78,8 @@ const document = createDocument({
       description: "Operations for managing contact attributes.",
     },
     {
-      name: "Management API - Contact Attributes Keys",
-      description: "Operations for managing contact attributes keys.",
+      name: "Management API - Contact Attribute Keys",
+      description: "Operations for managing contact attribute keys.",
     },
     {
       name: "Management API - Surveys",
