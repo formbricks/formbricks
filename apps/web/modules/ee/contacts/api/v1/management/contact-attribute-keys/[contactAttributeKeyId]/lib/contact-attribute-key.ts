@@ -110,6 +110,7 @@ export const updateContactAttributeKey = async (
       },
       data: {
         description: data.description,
+        name: data.name,
       },
     });
 
