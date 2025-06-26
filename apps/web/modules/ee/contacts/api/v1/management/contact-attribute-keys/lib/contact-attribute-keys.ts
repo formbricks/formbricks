@@ -3,6 +3,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   TContactAttributeKey,
@@ -64,7 +65,7 @@ export const createContactAttributeKey = async (
     return contactAttributeKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw new DatabaseError("Attribute key already exists");
       }
 
