@@ -214,14 +214,15 @@ export const AddIntegrationModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="size-6">
+            <div className="relative size-8">
               <Image
-                className="w-6"
+                fill
+                className="object-contain object-center"
                 src={GoogleSheetLogo}
-                alt={t("environments.integrations.google_sheets.google_sheet_logo")}
+                alt={t("environments.integrations.notion.notion_logo")}
               />
             </div>
-            <div>
+            <div className="space-y-0.5">
               <DialogTitle>{t("environments.integrations.google_sheets.link_google_sheet")}</DialogTitle>
               <DialogDescription>
                 {t("environments.integrations.google_sheets.google_sheets_integration_description")}

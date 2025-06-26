@@ -201,10 +201,15 @@ export const AddChannelMappingModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="size-6">
-              <Image className="w-6" src={SlackLogo} alt="Slack logo" />
+            <div className="relative size-8">
+              <Image
+                fill
+                className="object-contain object-center"
+                src={SlackLogo}
+                alt={t("environments.integrations.notion.notion_logo")}
+              />
             </div>
-            <div>
+            <div className="space-y-0.5">
               <DialogTitle>{t("environments.integrations.slack.link_slack_channel")}</DialogTitle>
               <DialogDescription>
                 {t("environments.integrations.slack.slack_integration_description")}

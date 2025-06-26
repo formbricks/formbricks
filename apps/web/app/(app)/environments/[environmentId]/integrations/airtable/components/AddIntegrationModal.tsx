@@ -222,10 +222,15 @@ export const AddIntegrationModal = ({
       <DialogContent className="overflow-visible md:overflow-visible">
         <DialogHeader>
           <div className="flex items-center space-x-2">
-            <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <Image className="w-12" src={AirtableLogo} alt="Airtable logo" />
+            <div className="relative size-8">
+              <Image
+                fill
+                className="object-contain object-center"
+                src={AirtableLogo}
+                alt={t("environments.integrations.notion.notion_logo")}
+              />
             </div>
-            <div>
+            <div className="space-y-0.5">
               <DialogTitle>{t("environments.integrations.airtable.link_airtable_table")}</DialogTitle>
               <DialogDescription>
                 {t("environments.integrations.airtable.sync_responses_with_airtable")}

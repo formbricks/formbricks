@@ -16,6 +16,7 @@ import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -455,14 +456,20 @@ export const AddIntegrationModal = ({
       <DialogContent>
         <DialogHeader>
           <div className="mb-4 flex items-start space-x-2">
-            <div className="text-primary size-6">
+            <div className="relative size-8">
               <Image
-                className="w-12"
+                fill
+                className="object-contain object-center"
                 src={NotionLogo}
                 alt={t("environments.integrations.notion.notion_logo")}
               />
             </div>
-            <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
+            <div className="space-y-0.5">
+              <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
+              <DialogDescription>
+                {t("environments.integrations.notion.notion_integration_description")}
+              </DialogDescription>
+            </div>
           </div>
         </DialogHeader>
 
