@@ -110,7 +110,7 @@ export const ShareEmbedSurvey = ({
         {showView === "start" ? (
           <div className="flex h-full max-w-full flex-col overflow-hidden">
             {survey.type === "link" && (
-              <div className="flex w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
+              <div className="flex h-2/5 w-full flex-col items-center justify-center space-y-6 p-8 text-center">
                 <DialogTitle>
                   <p className="pt-2 text-xl font-semibold text-slate-800">
                     {t("environments.surveys.summary.your_survey_is_public")} 🎉
@@ -126,8 +126,8 @@ export const ShareEmbedSurvey = ({
                 />
               </div>
             )}
-            <div className="flex h-full flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8">
-              <p className="-mt-8 text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
+            <div className="flex h-full flex-col items-center justify-center gap-4 rounded-b-lg bg-slate-50 px-8">
+              <p className="text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
