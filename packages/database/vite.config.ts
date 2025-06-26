@@ -62,6 +62,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
           "zod",
           "zod-openapi",
           "@paralleldrive/cuid2",
+          "@formbricks/logger",
         ],
       },
       emptyOutDir: true,

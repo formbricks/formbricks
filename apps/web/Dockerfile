@@ -26,7 +26,7 @@ RUN corepack prepare pnpm@9.15.9 --activate
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # Copy the secrets handling script
-COPY apps/web/scripts/read-secrets.sh /tmp/read-secrets.sh
+COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
@@ -115,17 +115,19 @@ RUN chmod -R 755 /app/docker/cronjobs
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 
+COPY --from=installer /app/node_modules/@formbricks/logger ./node_modules/@formbricks/logger
+RUN chmod -R 755 ./node_modules/@formbricks/logger
+
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes
 
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install --ignore-scripts -g pino-pretty 
 RUN npm install -g prisma
 
 # Create a startup script to handle the conditional logic
-COPY --from=installer /app/apps/web/scripts/next-start.sh /home/nextjs/start.sh
+COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
 RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 
 EXPOSE 3000
