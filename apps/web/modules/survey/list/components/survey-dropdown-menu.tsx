@@ -43,6 +43,7 @@ interface SurveyDropDownMenuProps {
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  onSurveysCopied?: () => void;
 }
 
 export const SurveyDropDownMenu = ({
@@ -54,6 +55,7 @@ export const SurveyDropDownMenu = ({
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
   duplicateSurvey,
+  onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslate();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -264,7 +266,12 @@ export const SurveyDropDownMenu = ({
       )}
 
       {isCopyFormOpen && (
-        <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
+        <CopySurveyModal
+          open={isCopyFormOpen}
+          setOpen={setIsCopyFormOpen}
+          survey={survey}
+          onSurveysCopied={onSurveysCopied}
+        />
       )}
     </div>
   );

@@ -131,6 +131,25 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
+  const refreshSurveysList = useCallback(async () => {
+    setIsFetching(true);
+    const res = await getSurveysAction({
+      environmentId,
+      limit: surveysLimit,
+      offset: undefined,
+      filterCriteria: filters,
+    });
+    if (res?.data) {
+      if (res.data.length < surveysLimit) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+      setSurveys(res.data);
+      setIsFetching(false);
+    }
+  }, [environmentId, surveysLimit, filters]);
+
   return (
     <div className="space-y-6">
       <SurveyFilters
@@ -161,6 +180,7 @@ export const SurveysList = ({
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}
+                  onSurveysCopied={refreshSurveysList}
                 />
               );
             })}

@@ -20,6 +20,7 @@ interface SurveyCardProps {
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   locale: TUserLocale;
+  onSurveysCopied?: () => void;
 }
 export const SurveyCard = ({
   survey,
@@ -29,6 +30,7 @@ export const SurveyCard = ({
   deleteSurvey,
   duplicateSurvey,
   locale,
+  onSurveysCopied,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
   const surveyStatusLabel = (() => {
@@ -108,6 +110,7 @@ export const SurveyCard = ({
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
+          onSurveysCopied={onSurveysCopied}
         />
       </button>
     </>

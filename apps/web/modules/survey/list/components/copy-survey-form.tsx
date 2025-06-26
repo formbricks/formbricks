@@ -18,9 +18,16 @@ interface ICopySurveyFormProps {
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
+  onSurveysCopied?: () => void;
 }
 
-export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: ICopySurveyFormProps) => {
+export const CopySurveyForm = ({
+  defaultProjects,
+  survey,
+  onCancel,
+  setOpen,
+  onSurveysCopied,
+}: ICopySurveyFormProps) => {
   const { t } = useTranslate();
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
@@ -41,22 +48,41 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
-      filteredData.forEach(async (project) => {
-        project.environments.forEach(async (environment) => {
-          const result = await copySurveyToOtherEnvironmentAction({
+      // Collect all copy operations into a single array
+      const copyOperations = filteredData.flatMap((project) =>
+        project.environments.map((environment) =>
+          copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,
             targetEnvironmentId: environment,
-          });
+          })
+        )
+      );
 
-          if (result?.data) {
-            toast.success(t("environments.surveys.copy_survey_success"));
-          } else {
-            const errorMessage = getFormattedErrorMessage(result);
-            toast.error(errorMessage);
-          }
-        });
-      });
+      // Get all target environment IDs for router refresh check
+      const targetEnvironmentIds = filteredData.flatMap((project) => project.environments);
+      const shouldRefresh = targetEnvironmentIds.includes(survey.environmentId);
+
+      // Execute all operations in parallel
+      const results = await Promise.all(copyOperations);
+
+      // Check if all operations were successful
+      const allSuccessful = results.every((result) => result?.data);
+      const hasErrors = results.some((result) => !result?.data);
+
+      if (allSuccessful) {
+        toast.success(t("environments.surveys.copy_survey_success"));
+      } else if (hasErrors) {
+        // Get the first error message for display
+        const firstError = results.find((result) => !result?.data);
+        const errorMessage = getFormattedErrorMessage(firstError);
+        toast.error(errorMessage);
+      }
+
+      // Refresh survey list if current environment is also a target
+      if (shouldRefresh && onSurveysCopied) {
+        onSurveysCopied();
+      }
     } catch (error) {
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
