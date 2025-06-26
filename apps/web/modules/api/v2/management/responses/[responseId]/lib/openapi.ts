@@ -14,7 +14,7 @@ export const getResponseEndpoint: ZodOpenApiOperationObject = {
       id: ZResponseIdSchema,
     }),
   },
-  tags: ["Management API > Responses"],
+  tags: ["Management API - Responses"],
   responses: {
     "200": {
       description: "Response retrieved successfully.",
@@ -31,7 +31,7 @@ export const deleteResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "deleteResponse",
   summary: "Delete a response",
   description: "Deletes a response from the database.",
-  tags: ["Management API > Responses"],
+  tags: ["Management API - Responses"],
   requestParams: {
     path: z.object({
       id: ZResponseIdSchema,
@@ -53,7 +53,7 @@ export const updateResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateResponse",
   summary: "Update a response",
   description: "Updates a response in the database.",
-  tags: ["Management API > Responses"],
+  tags: ["Management API - Responses"],
   requestParams: {
     path: z.object({
       id: ZResponseIdSchema,
