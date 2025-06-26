@@ -115,8 +115,8 @@ RUN chmod -R 755 /app/docker/cronjobs
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 
-COPY --from=installer /app/node_modules/@formbricks/logger ./node_modules/@formbricks/logger
-RUN chmod -R 755 ./node_modules/@formbricks/logger
+# COPY --from=installer /app/node_modules/@formbricks/logger ./node_modules/@formbricks/logger
+# RUN chmod -R 755 ./node_modules/@formbricks/logger
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes
@@ -124,6 +124,7 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
+# RUN npm install --ignore-scripts -g pino-pretty
 RUN npm install -g prisma
 
 # Create a startup script to handle the conditional logic
