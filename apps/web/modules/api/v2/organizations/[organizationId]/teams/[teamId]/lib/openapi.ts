@@ -16,7 +16,7 @@ export const getTeamEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Teams"],
+  tags: ["Organizations API - Teams"],
   responses: {
     "200": {
       description: "Team retrieved successfully.",
@@ -33,7 +33,7 @@ export const deleteTeamEndpoint: ZodOpenApiOperationObject = {
   operationId: "deleteTeam",
   summary: "Delete a team",
   description: "Deletes a team from the database.",
-  tags: ["Organizations API > Teams"],
+  tags: ["Organizations API - Teams"],
   requestParams: {
     path: z.object({
       id: ZTeamIdSchema,
@@ -56,7 +56,7 @@ export const updateTeamEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateTeam",
   summary: "Update a team",
   description: "Updates a team in the database.",
-  tags: ["Organizations API > Teams"],
+  tags: ["Organizations API - Teams"],
   requestParams: {
     path: z.object({
       id: ZTeamIdSchema,
