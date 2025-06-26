@@ -2336,13 +2336,8 @@
                 "example": {
                   "description": "From API Docs (optional)",
                   "environmentId": "{{environmentId}}",
+                  "key": "my-action",
                   "name": "My Action from Postman",
-                  "noCodeConfig": {
-                    "innerHtml": {
-                      "value": "sign-up"
-                    },
-                    "type": "innerHtml"
-                  },
                   "type": "code"
                 },
                 "type": "object"

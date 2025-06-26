@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "./common";
 
 export const ZActionClassMatchType = z.union([
   z.literal("exactMatch"),
@@ -91,11 +92,8 @@ const ZActionClassInputBase = z.object({
     .string({ message: "Name is required" })
     .trim()
     .min(1, { message: "Name must be at least 1 character long" }),
-  description: z.string().nullable().optional(),
-  environmentId: z
-    .string({ message: "Environment ID is required" })
-    .cuid2()
-    .min(1, { message: "Environment ID cannot be empty" }),
+  description: z.string().nullish(),
+  environmentId: ZId.min(1, { message: "Environment ID cannot be empty" }),
   type: ZActionClassType,
 });
 
