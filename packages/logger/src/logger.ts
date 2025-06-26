@@ -1,5 +1,4 @@
 import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
-import pretty from "pino-pretty";
 import { type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
@@ -44,42 +43,26 @@ const baseLoggerConfig: LoggerOptions = {
   name: "formbricks",
 };
 
-// const developmentConfig: LoggerOptions = {
-//   ...baseLoggerConfig,
-//   transport: {
-//     target: "pino-pretty",
-//     options: {
-//       colorize: true,
-//       levelFirst: true,
-//       translateTime: "SYS:standard",
-//       ignore: "pid,hostname,ip,requestId",
-//       customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
-//       useOnlyCustomProps: true,
-//     },
-//   },
-// };
+const developmentConfig: LoggerOptions = {
+  ...baseLoggerConfig,
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+      levelFirst: true,
+      translateTime: "SYS:standard",
+      ignore: "pid,hostname,ip,requestId",
+      customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
+      useOnlyCustomProps: true,
+    },
+  },
+};
 
 const productionConfig: LoggerOptions = {
   ...baseLoggerConfig,
 };
 
-const stream = pretty({
-  colorize: true,
-  levelFirst: true,
-  translateTime: "SYS:standard",
-  ignore: "pid,hostname,ip,requestId",
-  customLevels: "trace:10,debug:20,info:30,audit:35,warn:40,error:50,fatal:60",
-  useOnlyCustomProps: true,
-});
-
-const pinoLogger: Logger = IS_PRODUCTION
-  ? Pino(productionConfig)
-  : Pino(
-      {
-        ...baseLoggerConfig,
-      },
-      stream
-    );
+const pinoLogger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
 
 // Ensure all log levels are properly bound
 const boundLogger = {
