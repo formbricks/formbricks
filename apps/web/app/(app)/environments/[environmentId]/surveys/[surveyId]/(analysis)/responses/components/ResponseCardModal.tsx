@@ -64,11 +64,18 @@ export const ResponseCardModal = ({
     }
   };
 
+  const handleClose = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      setSelectedResponseId(null);
+    }
+  };
+
   // If no response is selected or currentIndex is null, do not render the modal
   if (selectedResponseId === null || currentIndex === null) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent width="wide">
         <DialogBody>
           <SingleResponseCard
