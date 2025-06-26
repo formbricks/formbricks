@@ -80,11 +80,24 @@ When PUBLIC_URL is configured, the following routes are automatically served fro
 #### Survey Routes
 
 - `/s/{surveyId}` - Individual survey access
+- `/c/{jwt}` - Personalized link survey access (JWT-based access)
 - Embedded survey endpoints
 
 #### API Routes
 
-- `/api/v1/client/{environmentId}/*` - Client API endpoints
+- `/api/v1/client/{environmentId}/*` - Client API endpoints (v1)
+- `/api/v2/client/{environmentId}/*` - Client API endpoints (v2)
+
+#### Static Assets & Next.js Routes
+
+- `/favicon.ico` - Favicon
+- `/_next/*` - Next.js static assets and build files
+- `/js/*` - JavaScript files
+- `/css/*` - CSS stylesheets
+- `/images/*` - Image assets
+- `/fonts/*` - Font files
+- `/icons/*` - Icon assets
+- `/public/*` - Public static files
 
 #### Storage Routes
 

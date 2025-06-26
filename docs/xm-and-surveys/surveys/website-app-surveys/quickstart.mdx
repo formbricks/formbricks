@@ -16,33 +16,37 @@ sidebarTitle: "Quickstart"
     You can create In-product and Link Surveys with both options, but the onboarding will prompt you to connect your app/website to Formbricks.
 
     ![three options](/images/xm-and-surveys/surveys/website-app-surveys/quickstart/survey-type.webp)
+
   </Step>
 
-  <Step title="Connect your App/Website">
- Follow the instructions to connect your app or website:
-    ![connect product to formbricks](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738114328/image_tv0jmj.png)
-  </Step>
+<Step title="Connect your App/Website">
+  Follow the instructions to connect your app or website: ![connect product to
+  formbricks](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738114328/image_tv0jmj.png)
+</Step>
 
   <Step title="Confirm setup">
     As soon as Formbricks receives the first data point, you will see a message in the onboarding:
 
     ![congrats](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738114793/image_lij7kw.png)
-    
+
     Onboarding is complete! Now let's create our first survey as you should see templates to choose from after clicking on **Next**:
 
     ![first survey](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738115025/image_yyuuzn.jpg)
+
   </Step>
 
   <Step title="Create your first survey">
     To be able to see a survey in your app, you need to create one. We'll choose one of the templates and head over to the survey settings:
 
     Pick the Survey Type as **Website & App Survey**.
+
   </Step>
 
   <Step title="Create trigger to show survey">
     Scroll to **Survey Trigger**, click **+ Add Action**, and select **Page View**. This ensures the survey appears when the Formbricks Widget detects any page load.
 
     ![page view action](/images/xm-and-surveys/surveys/website-app-surveys/quickstart/page-view-action.webp)
+
   </Step>
 
   <Step title="Set Recontact Options right">
@@ -52,17 +56,22 @@ sidebarTitle: "Quickstart"
     <Note>
       Please change this setting after testing your survey to avoid user fatigue.
     </Note>
-  </Step>
 
+  </Step>
 
   <Step title="Publish the survey">
   Publish the survey to make it available for the SDK to pull into the website or app where you want to show it.
   </Step>
-    <Step title="Enable debug mode in website / app">
-  For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks on websites with millions of visitors without high hosting cost. On the downside, there can be **up to a 10 minute delay** until the SDK pulls the newest surveys from the server.
+
+  <Step title="Enable debug mode in website / app">
+    For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks on websites with millions of visitors without high hosting cost. On the downside, there can be **up to a 5 minute delay** until the SDK pulls the newest surveys from the server.
   
-  To avoid the delay, please switch on the [Debug Mode.](/xm-and-surveys/surveys/website-app-surveys/framework-guides#activate-debug-mode)
+    <Note>
+      **Important**: Any changes to surveys, action classes, project settings, or environment configuration will take up to 5 minutes to reflect in debug mode in your app/website due to server-side caching. This includes survey modifications, new triggers, styling changes, and other updates.
+    </Note>
+  
+    To avoid the delay during development and testing, please switch on the [Debug Mode.](/xm-and-surveys/surveys/website-app-surveys/framework-guides#activate-debug-mode)
   </Step>
 </Steps>
 
-Need help? Join us in [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions), and we’ll be happy to assist!
+Need help? Join us in [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions), and we'll be happy to assist!

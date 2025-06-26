@@ -220,7 +220,8 @@ const v1ClientEndpoints = {
   "/client/{environmentId}/environment": {
     get: {
       security: [],
-      description: "Retrieves the environment state to be used in Formbricks SDKs",
+      description:
+        "Retrieves the environment state to be used in Formbricks SDKs. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, project settings, or other environment data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
       parameters: [
         {
           in: "path",
