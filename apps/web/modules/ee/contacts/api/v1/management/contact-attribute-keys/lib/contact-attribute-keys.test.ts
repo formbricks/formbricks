@@ -1,4 +1,5 @@
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -27,8 +28,28 @@ describe("getContactAttributeKeys", () => {
   test("should return contact attribute keys when found", async () => {
     const mockEnvironmentIds = ["env1", "env2"];
     const mockAttributeKeys = [
-      { id: "key1", environmentId: "env1", name: "Key One", key: "keyOne", type: "custom" },
-      { id: "key2", environmentId: "env2", name: "Key Two", key: "keyTwo", type: "custom" },
+      {
+        id: "key1",
+        environmentId: "env1",
+        name: "Key One",
+        key: "keyOne",
+        type: "custom" as TContactAttributeKeyType,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: null,
+        isUnique: false,
+      },
+      {
+        id: "key2",
+        environmentId: "env2",
+        name: "Key Two",
+        key: "keyTwo",
+        type: "custom" as TContactAttributeKeyType,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: null,
+        isUnique: false,
+      },
     ];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockAttributeKeys);
 
@@ -79,25 +100,31 @@ describe("createContactAttributeKey", () => {
     description: null,
   };
 
+  const createInput: TContactAttributeKeyCreateInput = {
+    key,
+    type,
+    environmentId,
+    name: key,
+    description: "",
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("should create and return a new contact attribute key", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
-    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue({
-      ...mockCreatedAttributeKey,
-      description: null, // ensure description is explicitly null if that's the case
-    });
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
 
-    const result = await createContactAttributeKey(environmentId, key, type);
+    const result = await createContactAttributeKey(environmentId, createInput);
 
     expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { environmentId } });
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
-        key,
-        name: key,
-        type,
+        key: createInput.key,
+        name: createInput.name || createInput.key,
+        type: createInput.type,
+        description: createInput.description || "",
         environment: { connect: { id: environmentId } },
       },
     });
@@ -107,7 +134,7 @@ describe("createContactAttributeKey", () => {
   test("should throw OperationNotAllowedError if max attribute classes reached", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT);
 
-    await expect(createContactAttributeKey(environmentId, key, type)).rejects.toThrow(
+    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(
       OperationNotAllowedError
     );
     expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { environmentId } });
@@ -121,8 +148,8 @@ describe("createContactAttributeKey", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P2000", clientVersion: "test" })
     );
 
-    await expect(createContactAttributeKey(environmentId, key, type)).rejects.toThrow(DatabaseError);
-    await expect(createContactAttributeKey(environmentId, key, type)).rejects.toThrow(errorMessage);
+    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(DatabaseError);
+    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(errorMessage);
   });
 
   test("should throw generic error if non-Prisma error occurs during create", async () => {
@@ -130,7 +157,7 @@ describe("createContactAttributeKey", () => {
     const errorMessage = "Some other create error";
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(new Error(errorMessage));
 
-    await expect(createContactAttributeKey(environmentId, key, type)).rejects.toThrow(Error);
-    await expect(createContactAttributeKey(environmentId, key, type)).rejects.toThrow(errorMessage);
+    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(Error);
+    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(errorMessage);
   });
 });
