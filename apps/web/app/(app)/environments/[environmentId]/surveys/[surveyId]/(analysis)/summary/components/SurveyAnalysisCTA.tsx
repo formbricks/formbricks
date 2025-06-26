@@ -5,13 +5,12 @@ import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
-import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
-import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
-import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
+import { BellRing, Eye, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -57,7 +56,6 @@ export const SurveyAnalysisCTA = ({
   });
 
   const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
-  const { refreshSingleUseId } = useSingleUseId(survey);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -77,22 +75,6 @@ export const SurveyAnalysisCTA = ({
     }
     router.push(`${pathname}?${params.toString()}`);
     setModalState((prev) => ({ ...prev, share: open }));
-  };
-
-  const handleCopyLink = () => {
-    refreshSingleUseId()
-      .then((newId) => {
-        const linkToCopy = copySurveyLink(surveyUrl, newId);
-        return navigator.clipboard.writeText(linkToCopy);
-      })
-      .then(() => {
-        toast.success(t("common.copied_to_clipboard"));
-      })
-      .catch((err) => {
-        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
-        console.error(err);
-      });
-    setModalState((prev) => ({ ...prev, dropdown: false }));
   };
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
@@ -135,37 +117,16 @@ export const SurveyAnalysisCTA = ({
 
   const iconActions = [
     {
-      icon: Eye,
-      tooltip: t("common.preview"),
-      onClick: () => window.open(getPreviewUrl(), "_blank"),
-      isVisible: survey.type === "link",
-    },
-    {
-      icon: LinkIcon,
-      tooltip: t("common.copy_link"),
-      onClick: handleCopyLink,
-      isVisible: survey.type === "link",
-    },
-    {
-      icon: Code2Icon,
-      tooltip: t("common.embed"),
-      onClick: () => handleModalState("embed")(true),
-      isVisible: !isReadOnly,
-    },
-    {
       icon: BellRing,
       tooltip: t("environments.surveys.summary.configure_alerts"),
       onClick: () => router.push(`/environments/${survey.environmentId}/settings/notifications`),
       isVisible: !isReadOnly,
     },
     {
-      icon: UsersRound,
-      tooltip: t("environments.surveys.summary.send_to_panel"),
-      onClick: () => {
-        handleModalState("panel")(true);
-        setModalState((prev) => ({ ...prev, dropdown: false }));
-      },
-      isVisible: !isReadOnly,
+      icon: Eye,
+      tooltip: t("common.preview"),
+      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      isVisible: survey.type === "link",
     },
     {
       icon: SquarePenIcon,
@@ -195,6 +156,9 @@ export const SurveyAnalysisCTA = ({
       )}
 
       <IconBar actions={iconActions} />
+      <Button className="h-10" onClick={() => handleShareModalToggle(true)}>
+        {t("environments.surveys.summary.share_survey")}
+      </Button>
 
       {user && (
         <>
