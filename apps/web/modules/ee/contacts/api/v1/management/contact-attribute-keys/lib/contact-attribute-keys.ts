@@ -64,6 +64,10 @@ export const createContactAttributeKey = async (
     return contactAttributeKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        throw new DatabaseError("Attribute key already exists");
+      }
+
       throw new DatabaseError(error.message);
     }
     throw error;
