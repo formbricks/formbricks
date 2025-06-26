@@ -52,14 +52,6 @@ export const POST = withApiLogging(
       }
 
       const inputValidation = ZActionClassInput.safeParse(actionClassInput);
-      const environmentId = actionClassInput.environmentId;
-
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
-      }
-
       if (!inputValidation.success) {
         return {
           response: responses.badRequestResponse(
@@ -67,6 +59,14 @@ export const POST = withApiLogging(
             transformErrorToDetails(inputValidation.error),
             true
           ),
+        };
+      }
+
+      const environmentId = inputValidation.data.environmentId;
+
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+        return {
+          response: responses.unauthorizedResponse(),
         };
       }
 
