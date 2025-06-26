@@ -1,4 +1,5 @@
 import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
+import "pino-pretty";
 import { type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
