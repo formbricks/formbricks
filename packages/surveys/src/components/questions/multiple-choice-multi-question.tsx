@@ -207,7 +207,7 @@ export function MultipleChoiceMultiQuestion({
                           name={question.id}
                           tabIndex={-1}
                           value={getLocalizedValue(choice.label, languageCode)}
-                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={(e) => {
                             if ((e.target as HTMLInputElement).checked) {
@@ -251,7 +251,7 @@ export function MultipleChoiceMultiQuestion({
                         id={otherOption.id}
                         name={question.id}
                         value={getLocalizedValue(otherOption.label, languageCode)}
-                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${otherOption.id}-label`}
                         onChange={() => {
                           if (otherSelected) {
