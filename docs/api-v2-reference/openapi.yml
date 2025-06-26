@@ -227,7 +227,12 @@ paths:
   /client/{environmentId}/environment:
     get:
       security: []
-      description: Retrieves the environment state to be used in Formbricks SDKs
+      description: "Retrieves the environment state to be used in Formbricks SDKs.
+        **Cache Behavior**: This endpoint uses server-side caching with a
+        **5-minute TTL (Time To Live)**. Any changes to surveys, action classes,
+        project settings, or other environment data will take up to 5 minutes to
+        reflect in the API response. This caching is implemented to improve
+        performance for high-frequency SDK requests."
       parameters:
         - in: path
           name: environmentId
@@ -1525,13 +1530,15 @@ paths:
       summary: Upload Bulk Contacts
       description: Uploads contacts in bulk. Each contact in the payload must have an
         'email' attribute present in their attributes array. The email attribute
-        is mandatory and must be a valid email format.
+        is mandatory and must be a valid email format. Without a valid email,
+        the contact will be skipped during processing.
       tags:
         - Management API > Contacts
       requestBody:
         required: true
-        description: The contacts to upload. Each contact **must include an 'email'
-          attribute** in their attributes array.
+        description: The contacts to upload. Each contact must include an 'email'
+          attribute in their attributes array. The email is used as the unique
+          identifier for the contact.
         content:
           application/json:
             schema:
