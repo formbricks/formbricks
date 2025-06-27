@@ -16,7 +16,7 @@ export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetWebhooksFilter.sourceType(),
   },
-  tags: ["Management API > Webhooks"],
+  tags: ["Management API - Webhooks"],
   responses: {
     "200": {
       description: "Webhooks retrieved successfully.",
@@ -33,7 +33,7 @@ export const createWebhookEndpoint: ZodOpenApiOperationObject = {
   operationId: "createWebhook",
   summary: "Create a webhook",
   description: "Creates a webhook in the database.",
-  tags: ["Management API > Webhooks"],
+  tags: ["Management API - Webhooks"],
   requestBody: {
     required: true,
     description: "The webhook to create",
