@@ -20,7 +20,7 @@ vi.mock("@/modules/ui/components/switch", () => ({
 }));
 
 vi.mock("../actions", () => ({
-  updateNotificationSettingsAction: vi.fn(() => Promise.resolve()),
+  updateNotificationSettingsAction: vi.fn(() => Promise.resolve({ data: true })),
 }));
 
 const surveyId = "survey1";
