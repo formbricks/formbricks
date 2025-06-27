@@ -53,6 +53,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    const email = data.verifiedEmail as string;
 
     const prismaData: Prisma.ResponseCreateInput = {
       survey: {
@@ -77,6 +78,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
       singleUseId,
       ...(variables && { variables }),
       ttc: ttc,
+      email,
       createdAt,
       updatedAt,
     };

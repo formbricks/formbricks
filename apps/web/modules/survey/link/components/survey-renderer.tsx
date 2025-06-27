@@ -9,11 +9,12 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
+import { getResponseCountBySurveyId, getSurveyResponseCountByEmail } from "@/modules/survey/lib/response";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
+import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { type Response } from "@prisma/client";
@@ -73,6 +74,7 @@ export const renderSurvey = async ({
   // verify email: Check if the survey requires email verification
   let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
+  let hasExistingResponseForEmail = false;
 
   if (survey.isVerifyEmailEnabled) {
     const token = searchParams.verify;
@@ -81,6 +83,13 @@ export const renderSurvey = async ({
       const emailVerificationDetails = await getEmailVerificationDetails(survey.id, token);
       emailVerificationStatus = emailVerificationDetails.status;
       verifiedEmail = emailVerificationDetails.email;
+    }
+
+    if (verifiedEmail) {
+      const existingResponse = await getSurveyResponseCountByEmail(survey.id, verifiedEmail);
+      if (existingResponse > 0) {
+        hasExistingResponseForEmail = true;
+      }
     }
   }
 
@@ -118,6 +127,7 @@ export const renderSurvey = async ({
         publicDomain={publicDomain}
         project={project}
         emailVerificationStatus={emailVerificationStatus}
+        hasExistingResponseForEmail={hasExistingResponseForEmail}
         singleUseId={singleUseId}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
@@ -141,6 +151,7 @@ export const renderSurvey = async ({
       project={project}
       publicDomain={publicDomain}
       emailVerificationStatus={emailVerificationStatus}
+      hasExistingResponseForEmail={hasExistingResponseForEmail}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}

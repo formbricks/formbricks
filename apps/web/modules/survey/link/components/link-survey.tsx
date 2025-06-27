@@ -33,12 +33,14 @@ interface LinkSurveyProps {
   contactId?: string;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
+  hasExistingResponseForEmail?: boolean;
 }
 
 export const LinkSurvey = ({
   survey,
   project,
   emailVerificationStatus,
+  hasExistingResponseForEmail,
   singleUseId,
   singleUseResponse,
   publicDomain,
@@ -143,6 +145,10 @@ export const LinkSurvey = ({
         locale={locale}
       />
     );
+  }
+
+  if (survey.isVerifyEmailEnabled && hasExistingResponseForEmail) {
+    return <h1>There is an existing response for this email</h1>;
   }
 
   const determineStyling = () => {

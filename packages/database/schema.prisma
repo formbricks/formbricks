@@ -1,12 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector")]
-}
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
@@ -16,18 +7,10 @@ generator json {
   provider = "prisma-json-types-generator"
 }
 
-enum PipelineTriggers {
-  responseCreated
-  responseUpdated
-  responseFinished
-}
-
-enum WebhookSource {
-  user
-  zapier
-  make
-  n8n
-  activepieces
+datasource db {
+  provider   = "postgresql"
+  url        = "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
+  extensions = [vector]
 }
 
 /// Represents a webhook endpoint for receiving survey-related events.
@@ -42,15 +25,15 @@ enum WebhookSource {
 /// @property surveyIds - List of surveys this webhook is monitoring
 model Webhook {
   id            String             @id @default(cuid())
-  name          String?
-  createdAt     DateTime           @default(now()) @map(name: "created_at")
-  updatedAt     DateTime           @default(now()) @updatedAt @map(name: "updated_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
   url           String
-  source        WebhookSource      @default(user)
-  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   triggers      PipelineTriggers[]
   surveyIds     String[]
+  name          String?
+  source        WebhookSource      @default(user)
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
   @@index([environmentId])
 }
@@ -64,21 +47,16 @@ model Webhook {
 /// @property value - The actual value of the attribute
 model ContactAttribute {
   id             String              @id @default(cuid())
-  createdAt      DateTime            @default(now()) @map(name: "created_at")
-  updatedAt      DateTime            @updatedAt @map(name: "updated_at")
-  attributeKey   ContactAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
   attributeKeyId String
-  contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId      String
   value          String
+  attributeKey   ContactAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([contactId, attributeKeyId])
   @@index([attributeKeyId, value])
-}
-
-enum ContactAttributeType {
-  default
-  custom
 }
 
 /// Defines the possible attributes that can be assigned to contacts.
@@ -92,16 +70,16 @@ enum ContactAttributeType {
 /// @property environment - The environment this attribute belongs to
 model ContactAttributeKey {
   id               String                  @id @default(cuid())
-  createdAt        DateTime                @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  isUnique         Boolean                 @default(false)
-  key              String
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
   name             String?
   description      String?
-  type             ContactAttributeType    @default(custom)
-  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
+  type             ContactAttributeType    @default(custom)
+  key              String
+  isUnique         Boolean                 @default(false)
   attributes       ContactAttribute[]
+  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   attributeFilters SurveyAttributeFilter[]
 
   @@unique([key, environmentId])
@@ -119,14 +97,14 @@ model ContactAttributeKey {
 /// @property displays - Record of surveys shown to this contact
 model Contact {
   id            String             @id @default(cuid())
-  userId        String?
-  createdAt     DateTime           @default(now()) @map(name: "created_at")
-  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
-  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
   environmentId String
-  responses     Response[]
+  userId        String?
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   attributes    ContactAttribute[]
   displays      Display[]
+  responses     Response[]
 
   @@index([environmentId])
 }
@@ -144,37 +122,38 @@ model Contact {
 /// @property meta - Additional metadata about the response
 model Response {
   id                String            @id @default(cuid())
-  createdAt         DateTime          @default(now()) @map(name: "created_at")
-  updatedAt         DateTime          @default(now()) @updatedAt @map(name: "updated_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
   finished          Boolean           @default(false)
-  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId          String
-  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId         String?
-  endingId          String?
-  notes             ResponseNote[]
   /// [ResponseData]
   data              Json              @default("{}")
-  /// [ResponseVariables]
-  variables         Json              @default("{}")
-  /// [ResponseTtc]
-  ttc               Json              @default("{}")
   /// [ResponseMeta]
   meta              Json              @default("{}")
-  tags              TagsOnResponses[]
   /// [ResponseContactAttributes]
   contactAttributes Json?
-  // singleUseId, used to prevent multiple responses
   singleUseId       String?
+  /// [ResponseTtc]
+  ttc               Json              @default("{}")
   language          String?
-  documents         Document[]
+  /// [ResponseVariables]
+  variables         Json              @default("{}")
   displayId         String?           @unique
+  endingId          String?
+  email             String?
+  documents         Document[]
+  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
   display           Display?          @relation(fields: [displayId], references: [id])
+  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  notes             ResponseNote[]
+  tags              TagsOnResponses[]
 
   @@unique([surveyId, singleUseId])
+  @@index([surveyId, email])
   @@index([createdAt])
-  @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
+  @@index([surveyId, createdAt])
+  @@index([contactId, createdAt])
   @@index([surveyId])
 }
 
@@ -189,15 +168,15 @@ model Response {
 /// @property isEdited - Whether the note has been modified
 model ResponseNote {
   id         String   @id @default(cuid())
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @updatedAt @map(name: "updated_at")
-  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
   responseId String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   text       String
-  isResolved Boolean  @default(false)
   isEdited   Boolean  @default(false)
+  isResolved Boolean  @default(false)
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([responseId])
 }
@@ -211,12 +190,12 @@ model ResponseNote {
 /// @property environment - The environment this tag belongs to
 model Tag {
   id            String            @id @default(cuid())
-  createdAt     DateTime          @default(now()) @map(name: "created_at")
-  updatedAt     DateTime          @updatedAt @map(name: "updated_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
   name          String
-  responses     TagsOnResponses[]
   environmentId String
   environment   Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  responses     TagsOnResponses[]
 
   @@unique([environmentId, name])
   @@index([environmentId])
@@ -229,25 +208,12 @@ model Tag {
 /// @property tag - The tag applied to the response
 model TagsOnResponses {
   responseId String
-  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
   tagId      String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([responseId, tagId])
   @@index([responseId])
-}
-
-enum SurveyStatus {
-  draft
-  scheduled
-  inProgress
-  paused
-  completed
-}
-
-enum DisplayStatus {
-  seen
-  responded
 }
 
 /// Records when a survey is shown to a user.
@@ -260,14 +226,14 @@ enum DisplayStatus {
 /// @property response - The associated response if one exists
 model Display {
   id         String         @id @default(cuid())
-  createdAt  DateTime       @default(now()) @map(name: "created_at")
-  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
-  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
   surveyId   String
-  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId  String?
-  responseId String?        @unique //deprecated
   status     DisplayStatus?
+  responseId String?        @unique
+  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   response   Response?
 
   @@index([surveyId])
@@ -286,20 +252,15 @@ model Display {
 /// @property updatedAt - When the trigger was last modified
 model SurveyTrigger {
   id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
-  survey        Survey      @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
   surveyId      String
-  actionClass   ActionClass @relation(fields: [actionClassId], references: [id], onDelete: Cascade)
   actionClassId String
+  actionClass   ActionClass @relation(fields: [actionClassId], references: [id], onDelete: Cascade)
+  survey        Survey      @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 
   @@unique([surveyId, actionClassId])
   @@index([surveyId])
-}
-
-enum SurveyAttributeFilterCondition {
-  equals
-  notEquals
 }
 
 /// Defines targeting rules for surveys based on contact attributes.
@@ -312,32 +273,18 @@ enum SurveyAttributeFilterCondition {
 /// @property value - The value to compare against
 model SurveyAttributeFilter {
   id             String                         @id @default(cuid())
-  createdAt      DateTime                       @default(now()) @map(name: "created_at")
-  updatedAt      DateTime                       @updatedAt @map(name: "updated_at")
-  attributeKey   ContactAttributeKey            @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  createdAt      DateTime                       @default(now()) @map("created_at")
+  updatedAt      DateTime                       @updatedAt @map("updated_at")
   attributeKeyId String
-  survey         Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId       String
   condition      SurveyAttributeFilterCondition
   value          String
+  attributeKey   ContactAttributeKey            @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  survey         Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 
   @@unique([surveyId, attributeKeyId])
   @@index([surveyId])
   @@index([attributeKeyId])
-}
-
-enum SurveyType {
-  link
-  web
-  website
-  app
-}
-
-enum displayOptions {
-  displayOnce
-  displayMultiple
-  displaySome
-  respondMultiple
 }
 
 /// Represents a complete survey configuration including questions, styling, and display rules.
@@ -353,70 +300,66 @@ enum displayOptions {
 /// @property triggers - Actions that can trigger this survey
 /// @property attributeFilters - Rules for targeting specific contacts
 model Survey {
-  id                  String                  @id @default(cuid())
-  createdAt           DateTime                @default(now()) @map(name: "created_at")
-  updatedAt           DateTime                @updatedAt @map(name: "updated_at")
-  name                String
-  redirectUrl         String?
-  type                SurveyType              @default(web)
-  environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId       String
-  creator             User?                   @relation(fields: [createdBy], references: [id])
-  createdBy           String?
-  status              SurveyStatus            @default(draft)
-  /// [SurveyWelcomeCard]
-  welcomeCard         Json                    @default("{\"enabled\": false}")
+  id                              String                  @id @default(cuid())
+  createdAt                       DateTime                @default(now()) @map("created_at")
+  updatedAt                       DateTime                @updatedAt @map("updated_at")
+  name                            String
+  environmentId                   String
+  status                          SurveyStatus            @default(draft)
   /// [SurveyQuestions]
-  questions           Json                    @default("[]")
-  /// [SurveyEnding]
-  endings             Json[]                  @default([])
-  thankYouCard        Json? //deprecated            
-  /// [SurveyHiddenFields]
-  hiddenFields        Json                    @default("{\"enabled\": false}")
-  /// [SurveyVariables]
-  variables           Json                    @default("[]")
-  responses           Response[]
-  displayOption       displayOptions          @default(displayOnce)
-  recontactDays       Int?
-  displayLimit        Int?
-  triggers            SurveyTrigger[]
-  /// [SurveyInlineTriggers]
-  inlineTriggers      Json?
-  attributeFilters    SurveyAttributeFilter[]
-  displays            Display[]
-  autoClose           Int?
-  autoComplete        Int?
-  delay               Int                     @default(0)
-  runOnDate           DateTime?
-  closeOnDate         DateTime?
+  questions                       Json                    @default("[]")
+  displayOption                   displayOptions          @default(displayOnce)
+  recontactDays                   Int?
+  thankYouCard                    Json?
+  type                            SurveyType              @default(web)
+  autoClose                       Int?
+  delay                           Int                     @default(0)
+  autoComplete                    Int?
+  redirectUrl                     String?
+  closeOnDate                     DateTime?
   /// [SurveyClosedMessage]
-  surveyClosedMessage Json?
-  segmentId           String?
-  segment             Segment?                @relation(fields: [segmentId], references: [id])
-
-  /// [SurveyProjectOverwrites]
-  projectOverwrites Json?
-
-  /// [SurveyStyling]
-  styling Json?
-
-  /// [SurveySingleUse]
-  singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
-
+  surveyClosedMessage             Json?
   /// [SurveyVerifyEmail]
-  verifyEmail                     Json? // deprecated
-  isVerifyEmailEnabled            Boolean          @default(false)
-  isSingleResponsePerEmailEnabled Boolean          @default(false)
-  isBackButtonHidden              Boolean          @default(false)
+  verifyEmail                     Json?
+  /// [SurveySingleUse]
+  singleUse                       Json?                   @default("{\"enabled\": false, \"isEncrypted\": true}")
+  /// [SurveyProjectOverwrites]
+  projectOverwrites               Json?
+  /// [SurveyHiddenFields]
+  hiddenFields                    Json                    @default("{\"enabled\": false}")
   pin                             String?
-  resultShareKey                  String?          @unique
+  /// [SurveyWelcomeCard]
+  welcomeCard                     Json                    @default("{\"enabled\": false}")
+  /// [SurveyStyling]
+  styling                         Json?
+  resultShareKey                  String?                 @unique
   displayPercentage               Decimal?
-  languages                       SurveyLanguage[]
+  createdBy                       String?
+  segmentId                       String?
+  /// [SurveyInlineTriggers]
+  inlineTriggers                  Json?
+  runOnDate                       DateTime?
+  displayLimit                    Int?
   showLanguageSwitch              Boolean?
-  documents                       Document[]
-  followUps                       SurveyFollowUp[]
+  isVerifyEmailEnabled            Boolean                 @default(false)
+  /// [SurveyEnding]
+  endings                         Json[]                  @default([])
+  /// [SurveyVariables]
+  variables                       Json                    @default("[]")
+  isSingleResponsePerEmailEnabled Boolean                 @default(false)
+  isBackButtonHidden              Boolean                 @default(false)
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?                   @default("{\"enabled\": false, \"threshold\": 0.1}")
+  displays                        Display[]
+  documents                       Document[]
+  responses                       Response[]
+  creator                         User?                   @relation(fields: [createdBy], references: [id])
+  environment                     Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  segment                         Segment?                @relation(fields: [segmentId], references: [id])
+  attributeFilters                SurveyAttributeFilter[]
+  followUps                       SurveyFollowUp[]
+  languages                       SurveyLanguage[]
+  triggers                        SurveyTrigger[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
@@ -432,20 +375,15 @@ model Survey {
 /// @property action - Actions to take when triggered
 model SurveyFollowUp {
   id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
   surveyId  String
   name      String
   /// [SurveyFollowUpTrigger]
   trigger   Json
   /// [SurveyFollowUpAction]
   action    Json
-}
-
-enum ActionType {
-  code
-  noCode
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 }
 
 /// Represents a user action that can trigger surveys.
@@ -459,33 +397,21 @@ enum ActionType {
 /// @property environment - The environment this action belongs to
 model ActionClass {
   id             String          @id @default(cuid())
-  createdAt      DateTime        @default(now()) @map(name: "created_at")
-  updatedAt      DateTime        @updatedAt @map(name: "updated_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
   name           String
   description    String?
   type           ActionType
-  key            String?
   /// [ActionClassNoCodeConfig]
   noCodeConfig   Json?
-  environment    Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId  String
+  key            String?
+  environment    Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   surveyTriggers SurveyTrigger[]
 
   @@unique([key, environmentId])
   @@unique([name, environmentId])
   @@index([environmentId, createdAt])
-}
-
-enum EnvironmentType {
-  production
-  development
-}
-
-enum IntegrationType {
-  googleSheets
-  notion
-  airtable
-  slack
 }
 
 /// Represents third-party service integrations.
@@ -507,12 +433,6 @@ model Integration {
   @@index([environmentId])
 }
 
-enum DataMigrationStatus {
-  pending
-  applied
-  failed
-}
-
 /// Tracks database schema migrations.
 /// Used to manage and track the state of data structure changes.
 ///
@@ -523,10 +443,10 @@ enum DataMigrationStatus {
 /// @property finishedAt - When the migration completed
 model DataMigration {
   id         String              @id @default(cuid())
-  startedAt  DateTime            @default(now()) @map(name: "started_at")
-  finishedAt DateTime?           @map(name: "finished_at")
-  name       String              @unique
+  startedAt  DateTime            @default(now()) @map("started_at")
+  finishedAt DateTime?           @map("finished_at")
   status     DataMigrationStatus
+  name       String              @unique
 }
 
 /// Represents either a production or development environment within a project.
@@ -543,34 +463,26 @@ model DataMigration {
 /// @property attributeKeys - Custom attributes configuration
 model Environment {
   id                   String                @id @default(cuid())
-  createdAt            DateTime              @default(now()) @map(name: "created_at")
-  updatedAt            DateTime              @updatedAt @map(name: "updated_at")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
   type                 EnvironmentType
-  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId            String
   widgetSetupCompleted Boolean               @default(false)
   appSetupCompleted    Boolean               @default(false)
-  surveys              Survey[]
-  contacts             Contact[]
   actionClasses        ActionClass[]
-  attributeKeys        ContactAttributeKey[]
-  webhooks             Webhook[]
-  tags                 Tag[]
-  segments             Segment[]
-  integration          Integration[]
-  documents            Document[]
-  insights             Insight[]
   ApiKeyEnvironment    ApiKeyEnvironment[]
+  contacts             Contact[]
+  attributeKeys        ContactAttributeKey[]
+  documents            Document[]
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  insights             Insight[]
+  integration          Integration[]
+  segments             Segment[]
+  surveys              Survey[]
+  tags                 Tag[]
+  webhooks             Webhook[]
 
   @@index([projectId])
-}
-
-enum WidgetPlacement {
-  bottomLeft
-  bottomRight
-  topLeft
-  topRight
-  center
 }
 
 /// Main grouping mechanism for resources in Formbricks.
@@ -586,27 +498,27 @@ enum WidgetPlacement {
 /// @property placement - Default widget placement for in-app surveys
 model Project {
   id                   String          @id @default(cuid())
-  createdAt            DateTime        @default(now()) @map(name: "created_at")
-  updatedAt            DateTime        @updatedAt @map(name: "updated_at")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
   name                 String
-  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId       String
-  environments         Environment[]
-  brandColor           String? // deprecated; use styling.brandColor instead
-  highlightBorderColor String? // deprecated
-  /// [Styling]
-  styling              Json            @default("{\"allowStyleOverwrite\":true}")
-  /// [ProjectConfig]
-  config               Json            @default("{}")
+  brandColor           String?
   recontactDays        Int             @default(7)
-  linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement            WidgetPlacement @default(bottomRight)
+  linkSurveyBranding   Boolean         @default(true)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
-  languages            Language[]
+  placement            WidgetPlacement @default(bottomRight)
+  highlightBorderColor String?
+  inAppSurveyBranding  Boolean         @default(true)
+  /// [Styling]
+  styling              Json            @default("{\"allowStyleOverwrite\": true}")
   /// [Logo]
   logo                 Json?
+  /// [ProjectConfig]
+  config               Json            @default("{}")
+  environments         Environment[]
+  languages            Language[]
+  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   projectTeams         ProjectTeam[]
 
   @@unique([organizationId, name])
@@ -626,34 +538,19 @@ model Project {
 /// @property isAIEnabled - Controls access to AI-powered features
 model Organization {
   id          String       @id @default(cuid())
-  createdAt   DateTime     @default(now()) @map(name: "created_at")
-  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   name        String
-  memberships Membership[]
-  projects    Project[]
   /// [OrganizationBilling]
   billing     Json
+  isAIEnabled Boolean      @default(false)
   /// [OrganizationWhitelabel]
   whitelabel  Json         @default("{}")
-  invites     Invite[]
-  isAIEnabled Boolean      @default(false)
-  teams       Team[]
   apiKeys     ApiKey[]
-}
-
-enum OrganizationRole {
-  owner
-  manager
-  member
-  billing
-}
-
-enum MembershipRole {
-  owner
-  admin
-  editor
-  developer
-  viewer
+  invites     Invite[]
+  memberships Membership[]
+  projects    Project[]
+  teams       Team[]
 }
 
 /// Links users to organizations with specific roles.
@@ -665,13 +562,13 @@ enum MembershipRole {
 /// @property accepted - Whether the user has accepted the membership
 /// @property role - User's role within the organization (owner, manager, member, billing)
 model Membership {
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
   accepted       Boolean          @default(false)
-  deprecatedRole MembershipRole? //deprecated
+  deprecatedRole MembershipRole?
   role           OrganizationRole @default(member)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, organizationId])
   @@index([userId])
@@ -695,17 +592,17 @@ model Invite {
   id             String           @id @default(uuid())
   email          String
   name           String?
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
   creatorId      String
-  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
   acceptorId     String?
   createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  deprecatedRole MembershipRole? //deprecated
+  deprecatedRole MembershipRole?
   role           OrganizationRole @default(member)
   teamIds        String[]         @default([])
+  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([email, organizationId])
   @@index([organizationId])
@@ -729,20 +626,12 @@ model ApiKey {
   label              String
   hashedKey          String              @unique
   organizationId     String
-  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyEnvironments ApiKeyEnvironment[]
   /// [OrganizationAccess]
   organizationAccess Json                @default("{}")
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyEnvironments ApiKeyEnvironment[]
 
   @@index([organizationId])
-}
-
-/// Defines permission levels for API keys.
-/// Controls what operations an API key can perform.
-enum ApiKeyPermission {
-  read
-  write
-  manage
 }
 
 /// Links API keys to environments with specific permissions.
@@ -757,22 +646,13 @@ model ApiKeyEnvironment {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   apiKeyId      String
-  apiKey        ApiKey           @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
   environmentId String
-  environment   Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   permission    ApiKeyPermission
+  apiKey        ApiKey           @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  environment   Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
   @@unique([apiKeyId, environmentId])
   @@index([environmentId])
-}
-
-enum IdentityProvider {
-  email
-  github
-  google
-  azuread
-  openid
-  saml
 }
 
 /// Stores third-party authentication account information.
@@ -786,24 +666,385 @@ enum IdentityProvider {
 /// @property refresh_token - OAuth refresh token
 model Account {
   id                String   @id @default(cuid())
-  createdAt         DateTime @default(now()) @map(name: "created_at")
-  updatedAt         DateTime @updatedAt @map(name: "updated_at")
-  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
   userId            String
   type              String
   provider          String
   providerAccountId String
-  access_token      String?  @db.Text
-  refresh_token     String?  @db.Text
+  access_token      String?
+  refresh_token     String?
   expires_at        Int?
-  ext_expires_in    Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String?
   session_state     String?
+  ext_expires_in    Int?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+}
+
+/// Represents a user in the Formbricks system.
+/// Central model for user authentication and profile management.
+///
+/// @property id - Unique identifier for the user
+/// @property name - Display name of the user
+/// @property email - User's email address
+/// @property role - User's professional role
+/// @property objective - User's main goal with Formbricks
+/// @property twoFactorEnabled - Whether 2FA is active
+/// @property memberships - Organizations the user belongs to
+/// @property notificationSettings - User's notification preferences
+model User {
+  id                        String           @id @default(cuid())
+  createdAt                 DateTime         @default(now()) @map("created_at")
+  updatedAt                 DateTime         @updatedAt @map("updated_at")
+  name                      String
+  email                     String           @unique
+  emailVerified             DateTime?        @map("email_verified")
+  password                  String?
+  identityProvider          IdentityProvider @default(email)
+  identityProviderAccountId String?
+  groupId                   String?
+  objective                 Objective?
+  role                      Role?
+  /// [UserNotificationSettings]
+  notificationSettings      Json             @default("{}")
+  backupCodes               String?
+  twoFactorEnabled          Boolean          @default(false)
+  twoFactorSecret           String?
+  imageUrl                  String?
+  /// [Locale]
+  locale                    String           @default("en-US")
+  isActive                  Boolean          @default(true)
+  lastLoginAt               DateTime?
+  accounts                  Account[]
+  invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
+  invitesCreated            Invite[]         @relation("inviteCreatedBy")
+  memberships               Membership[]
+  responseNotes             ResponseNote[]
+  surveys                   Survey[]
+  teamUsers                 TeamUser[]
+
+  @@index([email])
+}
+
+/// Maps a short URL to its full destination.
+/// Used for creating memorable, shortened URLs for surveys.
+///
+/// @property id - Short identifier/slug for the URL
+/// @property url - The full destination URL
+model ShortUrl {
+  id        String   @id
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  url       String   @unique
+}
+
+/// Defines a segment of contacts based on attributes.
+/// Used for targeting surveys to specific user groups.
+///
+/// @property id - Unique identifier for the segment
+/// @property title - Display name of the segment
+/// @property filters - Rules defining the segment
+/// @property isPrivate - Whether the segment is private
+/// @property environment - The environment this segment belongs to
+model Segment {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  title         String
+  description   String?
+  isPrivate     Boolean     @default(true)
+  /// [SegmentFilter]
+  filters       Json        @default("[]")
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveys       Survey[]
+
+  @@unique([environmentId, title])
+  @@index([environmentId])
+}
+
+/// Represents a supported language in the system.
+/// Used for multilingual survey support.
+///
+/// @property id - Unique identifier for the language
+/// @property code - Language code (e.g., 'en-US')
+/// @property alias - Optional friendly name
+/// @property project - The project this language is enabled for
+model Language {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  code            String
+  alias           String?
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  surveyLanguages SurveyLanguage[]
+
+  @@unique([projectId, code])
+}
+
+/// Links surveys to their supported languages.
+/// Manages which languages are available for each survey.
+///
+/// @property language - The supported language
+/// @property survey - The associated survey
+/// @property default - Whether this is the default language
+/// @property enabled - Whether this language is currently active
+model SurveyLanguage {
+  languageId String
+  surveyId   String
+  default    Boolean  @default(false)
+  enabled    Boolean  @default(true)
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@id([languageId, surveyId])
+  @@index([surveyId])
+  @@index([languageId])
+}
+
+/// Stores analyzed insights from survey responses.
+/// Used for tracking patterns and extracting meaningful information.
+///
+/// @property id - Unique identifier for the insight
+/// @property category - Type of insight (feature request, complaint, etc.)
+/// @property title - Summary of the insight
+/// @property description - Detailed explanation
+/// @property vector - Embedding vector for similarity search
+model Insight {
+  id               String                 @id @default(cuid())
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  environmentId    String
+  category         InsightCategory
+  title            String
+  description      String
+  vector           Unsupported("vector")?
+  documentInsights DocumentInsight[]
+  environment      Environment            @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+}
+
+/// Links insights to source documents.
+/// Enables tracing insights back to original responses.
+///
+/// @property document - The source document
+/// @property insight - The derived insight
+model DocumentInsight {
+  documentId String
+  insightId  String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  insight    Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, insightId])
+  @@index([insightId])
+}
+
+/// Represents a processed text document from survey responses.
+/// Used for analysis and insight generation.
+///
+/// @property id - Unique identifier for the document
+/// @property survey - The associated survey
+/// @property response - The source response
+/// @property sentiment - Analyzed sentiment (positive, negative, neutral)
+/// @property text - The document content
+/// @property vector - Embedding vector for similarity search
+model Document {
+  id               String                 @id @default(cuid())
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  environmentId    String
+  surveyId         String?
+  responseId       String?
+  questionId       String?
+  sentiment        Sentiment
+  isSpam           Boolean
+  text             String
+  vector           Unsupported("vector")?
+  environment      Environment            @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  response         Response?              @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  survey           Survey?                @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  documentInsights DocumentInsight[]
+
+  @@unique([responseId, questionId])
+  @@index([createdAt])
+}
+
+/// Represents a team within an organization.
+/// Enables group-based access control and collaboration.
+///
+/// @property id - Unique identifier for the team
+/// @property name - Display name of the team
+/// @property organization - The parent organization
+/// @property teamUsers - Users who are part of this team
+/// @property projectTeams - Projects this team has access to
+model Team {
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  name           String
+  organizationId String
+  projectTeams   ProjectTeam[]
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers      TeamUser[]
+
+  @@unique([organizationId, name])
+}
+
+/// Links users to teams with specific roles.
+/// Manages team membership and permissions.
+///
+/// @property team - The associated team
+/// @property user - The team member
+/// @property role - User's role within the team
+model TeamUser {
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  teamId    String
+  userId    String
+  role      TeamUserRole
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
+}
+
+/// Defines team access to specific projects.
+/// Manages project-level permissions for teams.
+///
+/// @property project - The accessed project
+/// @property team - The team receiving access
+/// @property permission - Level of access granted
+model ProjectTeam {
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
+  projectId  String
+  teamId     String
+  permission ProjectTeamPermission @default(read)
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, teamId])
+  @@index([teamId])
+}
+
+enum PipelineTriggers {
+  responseCreated
+  responseUpdated
+  responseFinished
+}
+
+enum WebhookSource {
+  user
+  zapier
+  make
+  n8n
+  activepieces
+}
+
+enum ContactAttributeType {
+  default
+  custom
+}
+
+enum SurveyStatus {
+  draft
+  inProgress
+  paused
+  completed
+  scheduled
+}
+
+enum DisplayStatus {
+  seen
+  responded
+}
+
+enum SurveyAttributeFilterCondition {
+  equals
+  notEquals
+}
+
+enum SurveyType {
+  link
+  web
+  website
+  app
+}
+
+enum displayOptions {
+  displayOnce
+  displayMultiple
+  respondMultiple
+  displaySome
+}
+
+enum ActionType {
+  code
+  noCode
+}
+
+enum EnvironmentType {
+  production
+  development
+}
+
+enum IntegrationType {
+  googleSheets
+  airtable
+  notion
+  slack
+}
+
+enum DataMigrationStatus {
+  pending
+  applied
+  failed
+}
+
+enum WidgetPlacement {
+  bottomLeft
+  bottomRight
+  topLeft
+  topRight
+  center
+}
+
+enum OrganizationRole {
+  owner
+  manager
+  member
+  billing
+}
+
+enum MembershipRole {
+  owner
+  admin
+  editor
+  developer
+  viewer
+}
+
+/// Defines permission levels for API keys.
+/// Controls what operations an API key can perform.
+enum ApiKeyPermission {
+  read
+  write
+  manage
+}
+
+enum IdentityProvider {
+  email
+  github
+  google
+  azuread
+  openid
+  saml
 }
 
 enum Role {
@@ -831,170 +1072,11 @@ enum Intention {
   other
 }
 
-/// Represents a user in the Formbricks system.
-/// Central model for user authentication and profile management.
-///
-/// @property id - Unique identifier for the user
-/// @property name - Display name of the user
-/// @property email - User's email address
-/// @property role - User's professional role
-/// @property objective - User's main goal with Formbricks
-/// @property twoFactorEnabled - Whether 2FA is active
-/// @property memberships - Organizations the user belongs to
-/// @property notificationSettings - User's notification preferences
-model User {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  name          String
-  email         String    @unique
-  emailVerified DateTime? @map(name: "email_verified")
-
-  imageUrl                  String?
-  twoFactorSecret           String?
-  twoFactorEnabled          Boolean          @default(false)
-  backupCodes               String?
-  password                  String?
-  identityProvider          IdentityProvider @default(email)
-  identityProviderAccountId String?
-  memberships               Membership[]
-  accounts                  Account[]
-  responseNotes             ResponseNote[]
-  groupId                   String?
-  invitesCreated            Invite[]         @relation("inviteCreatedBy")
-  invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
-  role                      Role?
-  objective                 Objective?
-  /// [UserNotificationSettings]
-  notificationSettings      Json             @default("{}")
-  /// [Locale]
-  locale                    String           @default("en-US")
-  surveys                   Survey[]
-  teamUsers                 TeamUser[]
-  lastLoginAt               DateTime?
-  isActive                  Boolean          @default(true)
-
-  @@index([email])
-}
-
-/// Maps a short URL to its full destination.
-/// Used for creating memorable, shortened URLs for surveys.
-///
-/// @property id - Short identifier/slug for the URL
-/// @property url - The full destination URL
-model ShortUrl {
-  id        String   @id // generate nanoId in service
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  url       String   @unique
-}
-
-/// Defines a segment of contacts based on attributes.
-/// Used for targeting surveys to specific user groups.
-///
-/// @property id - Unique identifier for the segment
-/// @property title - Display name of the segment
-/// @property filters - Rules defining the segment
-/// @property isPrivate - Whether the segment is private
-/// @property environment - The environment this segment belongs to
-model Segment {
-  id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
-  title         String
-  description   String?
-  isPrivate     Boolean     @default(true)
-  /// [SegmentFilter]
-  filters       Json        @default("[]")
-  environmentId String
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  surveys       Survey[]
-
-  @@unique([environmentId, title])
-  @@index([environmentId])
-}
-
-/// Represents a supported language in the system.
-/// Used for multilingual survey support.
-///
-/// @property id - Unique identifier for the language
-/// @property code - Language code (e.g., 'en-US')
-/// @property alias - Optional friendly name
-/// @property project - The project this language is enabled for
-model Language {
-  id              String           @id @default(cuid())
-  createdAt       DateTime         @default(now()) @map(name: "created_at")
-  updatedAt       DateTime         @updatedAt @map(name: "updated_at")
-  code            String
-  alias           String?
-  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
-  surveyLanguages SurveyLanguage[]
-
-  @@unique([projectId, code])
-}
-
-/// Links surveys to their supported languages.
-/// Manages which languages are available for each survey.
-///
-/// @property language - The supported language
-/// @property survey - The associated survey
-/// @property default - Whether this is the default language
-/// @property enabled - Whether this language is currently active
-model SurveyLanguage {
-  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
-  languageId String
-  surveyId   String
-  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  default    Boolean  @default(false)
-  enabled    Boolean  @default(true)
-
-  @@id([languageId, surveyId])
-  @@index([surveyId])
-  @@index([languageId])
-}
-
 enum InsightCategory {
   featureRequest
   complaint
   praise
   other
-}
-
-/// Stores analyzed insights from survey responses.
-/// Used for tracking patterns and extracting meaningful information.
-///
-/// @property id - Unique identifier for the insight
-/// @property category - Type of insight (feature request, complaint, etc.)
-/// @property title - Summary of the insight
-/// @property description - Detailed explanation
-/// @property vector - Embedding vector for similarity search
-model Insight {
-  id               String                      @id @default(cuid())
-  createdAt        DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId    String
-  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  category         InsightCategory
-  title            String
-  description      String
-  vector           Unsupported("vector(512)")?
-  documentInsights DocumentInsight[]
-}
-
-/// Links insights to source documents.
-/// Enables tracing insights back to original responses.
-///
-/// @property document - The source document
-/// @property insight - The derived insight
-model DocumentInsight {
-  documentId String
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  insightId  String
-  insight    Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
-
-  @@id([documentId, insightId])
-  @@index([insightId])
 }
 
 enum Sentiment {
@@ -1003,102 +1085,13 @@ enum Sentiment {
   neutral
 }
 
-/// Represents a processed text document from survey responses.
-/// Used for analysis and insight generation.
-///
-/// @property id - Unique identifier for the document
-/// @property survey - The associated survey
-/// @property response - The source response
-/// @property sentiment - Analyzed sentiment (positive, negative, neutral)
-/// @property text - The document content
-/// @property vector - Embedding vector for similarity search
-model Document {
-  id               String                      @id @default(cuid())
-  createdAt        DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId    String
-  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  surveyId         String?
-  survey           Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  responseId       String?
-  response         Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  questionId       String?
-  sentiment        Sentiment
-  isSpam           Boolean
-  text             String
-  vector           Unsupported("vector(512)")?
-  documentInsights DocumentInsight[]
-
-  @@unique([responseId, questionId])
-  @@index([createdAt])
-}
-
-/// Represents a team within an organization.
-/// Enables group-based access control and collaboration.
-///
-/// @property id - Unique identifier for the team
-/// @property name - Display name of the team
-/// @property organization - The parent organization
-/// @property teamUsers - Users who are part of this team
-/// @property projectTeams - Projects this team has access to
-model Team {
-  id             String        @id @default(cuid())
-  createdAt      DateTime      @default(now()) @map(name: "created_at")
-  updatedAt      DateTime      @updatedAt @map(name: "updated_at")
-  name           String
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  teamUsers      TeamUser[]
-  projectTeams   ProjectTeam[]
-
-  @@unique([organizationId, name])
-}
-
 enum TeamUserRole {
   admin
   contributor
-}
-
-/// Links users to teams with specific roles.
-/// Manages team membership and permissions.
-///
-/// @property team - The associated team
-/// @property user - The team member
-/// @property role - User's role within the team
-model TeamUser {
-  createdAt DateTime     @default(now()) @map(name: "created_at")
-  updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  teamId    String
-  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      TeamUserRole
-
-  @@id([teamId, userId])
-  @@index([userId])
 }
 
 enum ProjectTeamPermission {
   read
   readWrite
   manage
-}
-
-/// Defines team access to specific projects.
-/// Manages project-level permissions for teams.
-///
-/// @property project - The accessed project
-/// @property team - The team receiving access
-/// @property permission - Level of access granted
-model ProjectTeam {
-  createdAt  DateTime              @default(now()) @map(name: "created_at")
-  updatedAt  DateTime              @updatedAt @map(name: "updated_at")
-  projectId  String
-  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  teamId     String
-  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permission ProjectTeamPermission @default(read)
-
-  @@id([projectId, teamId])
-  @@index([teamId])
 }

@@ -19,3 +19,23 @@ export const getResponseCountBySurveyId = reactCache(async (surveyId: string): P
     throw error;
   }
 });
+
+export const getSurveyResponseCountByEmail = reactCache(
+  async (surveyId: string, email: string): Promise<number> => {
+    try {
+      const responseCount = await prisma.response.count({
+        where: {
+          surveyId,
+          email,
+        },
+      });
+      return responseCount;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
