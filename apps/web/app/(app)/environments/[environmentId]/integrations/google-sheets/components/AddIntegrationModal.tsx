@@ -219,7 +219,7 @@ export const AddIntegrationModal = ({
                 fill
                 className="object-contain object-center"
                 src={GoogleSheetLogo}
-                alt={t("environments.integrations.notion.notion_logo")}
+                alt={t("environments.integrations.google_sheets.google_sheet_logo")}
               />
             </div>
             <div className="space-y-0.5">

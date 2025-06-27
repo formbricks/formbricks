@@ -248,7 +248,7 @@ export const TeamSettingsModal = ({
                   name={`members`}
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
-                      <div className="max-h-40 space-y-2 overflow-y-auto">
+                      <div className="space-y-2 overflow-y-auto">
                         {watchMembers.map((member, index) => {
                           const memberOpts = getMemberOptionsForIndex(index);
                           return (
@@ -484,7 +484,7 @@ export const TeamSettingsModal = ({
                       !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
                     }>
                     <PlusIcon className="h-4 w-4" />
-                    <span>Add project</span>
+                    {t("common.add_project")}
                   </Button>
                 </TooltipRenderer>
               </div>

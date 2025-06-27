@@ -12,7 +12,6 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useRef } from "react";
 import toast from "react-hot-toast";
 
 interface ShareInviteModalProps {
@@ -22,7 +21,6 @@ interface ShareInviteModalProps {
 }
 
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
-  const linkTextRef = useRef(null);
   const { t } = useTranslate();
 
   return (
@@ -45,7 +43,6 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
             <Input
               readOnly
               id="inviteLinkText"
-              ref={linkTextRef}
               value={`${window.location.protocol}//${window.location.host}/invite?token=${inviteToken}`}></Input>
             <Button
               variant="secondary"
