@@ -16,7 +16,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetResponsesFilter.sourceType(),
   },
-  tags: ["Management API > Responses"],
+  tags: ["Management API - Responses"],
   responses: {
     "200": {
       description: "Responses retrieved successfully.",
@@ -33,7 +33,7 @@ export const createResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "createResponse",
   summary: "Create a response",
   description: "Creates a response in the database.",
-  tags: ["Management API > Responses"],
+  tags: ["Management API - Responses"],
   requestBody: {
     required: true,
     description: "The response to create",

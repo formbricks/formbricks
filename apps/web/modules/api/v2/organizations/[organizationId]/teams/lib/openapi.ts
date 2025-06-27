@@ -24,7 +24,7 @@ export const getTeamsEndpoint: ZodOpenApiOperationObject = {
     }),
     query: ZGetTeamsFilter.sourceType(),
   },
-  tags: ["Organizations API > Teams"],
+  tags: ["Organizations API - Teams"],
   responses: {
     "200": {
       description: "Teams retrieved successfully.",
@@ -46,7 +46,7 @@ export const createTeamEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Teams"],
+  tags: ["Organizations API - Teams"],
   requestBody: {
     required: true,
     description: "The team to create",

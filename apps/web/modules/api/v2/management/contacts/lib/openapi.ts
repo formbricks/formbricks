@@ -16,7 +16,7 @@ export const getContactsEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetContactsFilter,
   },
-  tags: ["Management API > Contacts"],
+  tags: ["Management API - Contacts"],
   responses: {
     "200": {
       description: "Contacts retrieved successfully.",
@@ -33,7 +33,7 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContact",
   summary: "Create a contact",
   description: "Creates a contact in the database.",
-  tags: ["Management API > Contacts"],
+  tags: ["Management API - Contacts"],
   requestBody: {
     required: true,
     description: "The contact to create",
