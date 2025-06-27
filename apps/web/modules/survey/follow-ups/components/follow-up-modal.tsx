@@ -366,9 +366,11 @@ export const FollowUpModal = ({
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
 
-  const handleModalClose = () => {
-    form.reset();
-    setOpen(false);
+  const handleModalClose = (open: boolean) => {
+    if (!open) {
+      form.reset();
+    }
+    setOpen(open);
   };
 
   const emailSendToQuestionOptions = emailSendToOptions.filter(

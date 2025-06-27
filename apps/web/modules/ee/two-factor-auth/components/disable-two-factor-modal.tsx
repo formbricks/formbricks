@@ -73,9 +73,11 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
   return (
     <Dialog
       open={open}
-      onOpenChange={() => {
-        form.reset();
-        setOpen(false);
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset();
+        }
+        setOpen(open);
       }}>
       <DialogContent>
         <DialogHeader>
