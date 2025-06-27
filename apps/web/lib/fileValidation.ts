@@ -66,6 +66,7 @@ export const validateSingleFile = (
 };
 
 export const validateFileUploads = (data: TResponseData, questions?: TSurveyQuestion[]): boolean => {
+  if (!data) return true;
   for (const key of Object.keys(data)) {
     const question = questions?.find((q) => q.id === key);
     if (!question || question.type !== TSurveyQuestionTypeEnum.FileUpload) continue;
