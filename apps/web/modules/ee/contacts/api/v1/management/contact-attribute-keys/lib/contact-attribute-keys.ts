@@ -44,7 +44,7 @@ export const createContactAttributeKey = async (
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
-        name: data.name ? data.name : data.key,
+        name: data.name ?? data.key,
         type: data.type,
         description: data.description ?? "",
         environment: {
