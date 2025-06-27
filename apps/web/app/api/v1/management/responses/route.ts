@@ -6,9 +6,7 @@ import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -147,12 +145,11 @@ export const POST = withApiLogging(
           response: responses.successResponse(response, true),
         };
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-            throw new DatabaseError("Invalid display ID");
-          }
-          throw new DatabaseError("An unexpected error occurred while creating the response");
-        } else if (error instanceof InvalidInputError) {
+        if (error instanceof InvalidInputError) {
+          return {
+            response: responses.badRequestResponse(error.message),
+          };
+        } else if (error instanceof DatabaseError) {
           return {
             response: responses.badRequestResponse(error.message),
           };
@@ -165,7 +162,7 @@ export const POST = withApiLogging(
     } catch (error) {
       if (error instanceof DatabaseError) {
         return {
-          response: responses.badRequestResponse(error.message),
+          response: responses.badRequestResponse("An unexpected error occurred while creating the response"),
         };
       }
       throw error;
