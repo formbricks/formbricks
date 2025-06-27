@@ -246,4 +246,204 @@ describe("NotificationSwitch", () => {
     });
     expect(updateNotificationSettingsAction).not.toHaveBeenCalled();
   });
+
+  test("shows error toast when updateNotificationSettingsAction fails for 'alert' type", async () => {
+    const mockErrorResponse = { serverError: "Failed to update notification settings" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("Failed to update notification settings", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction fails for 'weeklySummary' type", async () => {
+    const mockErrorResponse = { serverError: "Database connection failed" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, weeklySummary: { [projectId]: true } };
+    renderSwitch({
+      surveyOrProjectOrOrganizationId: projectId,
+      notificationSettings: initialSettings,
+      notificationType: "weeklySummary",
+    });
+    const switchInput = screen.getByLabelText("toggle notification settings for weeklySummary");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, weeklySummary: { [projectId]: false } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("Database connection failed", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction fails for 'unsubscribedOrganizationIds' type", async () => {
+    const mockErrorResponse = { serverError: "Permission denied" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, unsubscribedOrganizationIds: [] };
+    renderSwitch({
+      surveyOrProjectOrOrganizationId: organizationId,
+      notificationSettings: initialSettings,
+      notificationType: "unsubscribedOrganizationIds",
+    });
+    const switchInput = screen.getByLabelText("toggle notification settings for unsubscribedOrganizationIds");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, unsubscribedOrganizationIds: [organizationId] },
+    });
+    expect(toast.error).toHaveBeenCalledWith("Permission denied", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction returns null", async () => {
+    const mockErrorResponse = { serverError: "An error occurred" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("An error occurred", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction returns undefined", async () => {
+    const mockErrorResponse = { serverError: "An error occurred" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("An error occurred", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction returns response without data property", async () => {
+    const mockErrorResponse = { validationErrors: { _errors: ["Invalid input"] } };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("Invalid input", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("shows error toast when updateNotificationSettingsAction throws an exception", async () => {
+    const mockErrorResponse = { serverError: "Network error" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("Network error", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test("switch remains enabled after error occurs", async () => {
+    const mockErrorResponse = { serverError: "Failed to update" };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(toast.error).toHaveBeenCalledWith("Failed to update", {
+      id: "notification-switch",
+    });
+    expect(switchInput).toBeEnabled(); // Switch should be re-enabled after error
+  });
+
+  test("shows error toast with validation errors for specific fields", async () => {
+    const mockErrorResponse = {
+      validationErrors: {
+        notificationSettings: {
+          _errors: ["Invalid notification settings"],
+        },
+      },
+    };
+    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
+
+    const initialSettings = { ...baseNotificationSettings, alert: { [surveyId]: false } };
+    renderSwitch({ notificationSettings: initialSettings, notificationType: "alert" });
+    const switchInput = screen.getByLabelText("toggle notification settings for alert");
+
+    await act(async () => {
+      await user.click(switchInput);
+    });
+
+    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
+      notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
+    });
+    expect(toast.error).toHaveBeenCalledWith("notificationSettingsInvalid notification settings", {
+      id: "notification-switch",
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
 });
