@@ -44,12 +44,12 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   }: {
     children: React.ReactNode;
     open: boolean;
-    onOpenChange: () => void;
+    onOpenChange: (open: boolean) => void;
   }) =>
     open ? (
       <div data-testid="dialog">
         {children}
-        <button data-testid="dialog-close" onClick={onOpenChange}>
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
           Close
         </button>
       </div>
