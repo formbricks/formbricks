@@ -149,6 +149,12 @@ export const POST = withApiLogging(
           return {
             response: responses.badRequestResponse(error.message),
           };
+        } else if (error instanceof DatabaseError) {
+          return {
+            response: responses.badRequestResponse(
+              "An unexpected error occurred while creating the response"
+            ),
+          };
         }
         logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
         return {
@@ -158,7 +164,7 @@ export const POST = withApiLogging(
     } catch (error) {
       if (error instanceof DatabaseError) {
         return {
-          response: responses.badRequestResponse(error.message),
+          response: responses.badRequestResponse("An unexpected error occurred while creating the response"),
         };
       }
       throw error;
