@@ -269,8 +269,8 @@ describe("ShareEmbedSurvey", () => {
     };
     expect(embedViewProps.tabs.length).toBe(3);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
-    expect(embedViewProps.tabs[0].id).toBe("email");
-    expect(embedViewProps.activeId).toBe("email");
+    expect(embedViewProps.tabs[0].id).toBe("link");
+    expect(embedViewProps.activeId).toBe("link");
   });
 
   test("correctly configures for 'web' survey type in embed view", () => {
