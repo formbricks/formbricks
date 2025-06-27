@@ -97,7 +97,7 @@ type DialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      "bottom-0 z-10 flex flex-shrink-0 flex-col-reverse bg-white md:sticky md:flex-row md:justify-end md:space-x-2",
+      "bottom-0 z-10 flex flex-shrink-0 flex-col-reverse gap-2 bg-white md:sticky md:flex-row md:justify-end",
       className
     )}
     {...props}
