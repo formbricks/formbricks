@@ -439,9 +439,11 @@ export const AddIntegrationModal = ({
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
-              <TrashIcon />
-            </Button>
+            {mapping.length > 1 && (
+              <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
+                <TrashIcon />
+              </Button>
+            )}
             <Button variant="secondary" size="icon" className="size-10" onClick={addRow}>
               <PlusIcon />
             </Button>
