@@ -160,4 +160,52 @@ describe("createContactAttributeKey", () => {
     await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(Error);
     await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(errorMessage);
   });
+
+  test("should use key as name when name is not provided", async () => {
+    vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
+
+    const inputWithoutName: TContactAttributeKeyCreateInput = {
+      key,
+      type,
+      environmentId,
+      description: "",
+    };
+
+    await createContactAttributeKey(environmentId, inputWithoutName);
+
+    expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
+      data: {
+        key: inputWithoutName.key,
+        name: inputWithoutName.key, // Should fall back to key when name is not provided
+        type: inputWithoutName.type,
+        description: inputWithoutName.description || "",
+        environment: { connect: { id: environmentId } },
+      },
+    });
+  });
+
+  test("should use empty string for description when description is not provided", async () => {
+    vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
+
+    const inputWithoutDescription: TContactAttributeKeyCreateInput = {
+      key,
+      type,
+      environmentId,
+      name: "Test Name",
+    };
+
+    await createContactAttributeKey(environmentId, inputWithoutDescription);
+
+    expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
+      data: {
+        key: inputWithoutDescription.key,
+        name: inputWithoutDescription.name,
+        type: inputWithoutDescription.type,
+        description: "", // Should fall back to empty string when description is not provided
+        environment: { connect: { id: environmentId } },
+      },
+    });
+  });
 });
