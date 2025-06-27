@@ -47,13 +47,14 @@ export const ShareEmbedSurvey = ({
   const tabs = useMemo(
     () =>
       [
-        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
-        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
         {
           id: "link",
           label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
           icon: LinkIcon,
         },
+        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
+        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
+
         { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
       ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
     [t, isSingleUseLinkSurvey, survey.type]

@@ -156,7 +156,11 @@ export const SurveyAnalysisCTA = ({
       )}
 
       <IconBar actions={iconActions} />
-      <Button className="h-10" onClick={() => handleShareModalToggle(true)}>
+      <Button
+        className="h-10"
+        onClick={() => {
+          setModalState((prev) => ({ ...prev, embed: true }));
+        }}>
         {t("environments.surveys.summary.share_survey")}
       </Button>
 
