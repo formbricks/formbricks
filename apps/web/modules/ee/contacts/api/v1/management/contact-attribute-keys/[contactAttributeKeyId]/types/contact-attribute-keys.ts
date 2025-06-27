@@ -12,6 +12,7 @@ export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKe
 export const ZContactAttributeKeyUpdateInput = z.object({
   description: z.string().optional(),
   name: z.string().optional(),
+  key: z.string().optional(),
 });
 
 export type TContactAttributeKeyUpdateInput = z.infer<typeof ZContactAttributeKeyUpdateInput>;
