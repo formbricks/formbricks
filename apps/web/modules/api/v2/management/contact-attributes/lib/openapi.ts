@@ -16,7 +16,7 @@ export const getContactAttributesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactAttributes",
   summary: "Get contact attributes",
   description: "Gets contact attributes from the database.",
-  tags: ["Management API > Contact Attributes"],
+  tags: ["Management API - Contact Attributes"],
   requestParams: {
     query: ZGetContactAttributesFilter,
   },
@@ -36,7 +36,7 @@ export const createContactAttributeEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContactAttribute",
   summary: "Create a contact attribute",
   description: "Creates a contact attribute in the database.",
-  tags: ["Management API > Contact Attributes"],
+  tags: ["Management API - Contact Attributes"],
   requestBody: {
     required: true,
     description: "The contact attribute to create",

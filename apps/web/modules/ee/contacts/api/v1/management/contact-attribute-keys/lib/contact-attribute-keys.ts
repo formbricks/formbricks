@@ -3,6 +3,7 @@ import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/ma
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
@@ -57,6 +58,10 @@ export const createContactAttributeKey = async (
     return contactAttributeKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new DatabaseError("Attribute key already exists");
+      }
+
       throw new DatabaseError(error.message);
     }
     throw error;
