@@ -127,8 +127,10 @@ export const SaveAsNewSegmentModal = ({
   return (
     <Dialog
       open={open}
-      onOpenChange={() => {
-        handleReset();
+      onOpenChange={(open) => {
+        if (!open) {
+          handleReset();
+        }
       }}>
       <DialogContent>
         <DialogHeader>

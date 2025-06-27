@@ -146,8 +146,10 @@ export const LoadSegmentModal = ({
   return (
     <Dialog
       open={open}
-      onOpenChange={() => {
-        handleResetState();
+      onOpenChange={(open) => {
+        if (!open) {
+          handleResetState();
+        }
       }}>
       <DialogContent>
         <DialogHeader>

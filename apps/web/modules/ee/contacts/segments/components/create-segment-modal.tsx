@@ -142,8 +142,10 @@ export function CreateSegmentModal({
 
       <Dialog
         open={open}
-        onOpenChange={() => {
-          handleResetState();
+        onOpenChange={(open) => {
+          if (!open) {
+            handleResetState();
+          }
         }}>
         <DialogContent className="sm:max-w-4xl" disableCloseOnOutsideClick>
           <DialogHeader>
