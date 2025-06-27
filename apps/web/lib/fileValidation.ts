@@ -65,7 +65,7 @@ export const validateSingleFile = (
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
 
-export const validateFileUploads = (data: TResponseData, questions?: TSurveyQuestion[]): boolean => {
+export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQuestion[]): boolean => {
   if (!data) return true;
   for (const key of Object.keys(data)) {
     const question = questions?.find((q) => q.id === key);
