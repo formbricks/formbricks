@@ -96,7 +96,8 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     });
   }
 
-  if (!url.startsWith("https://")) {
+  // Allow localhost for easy recall testing on self-hosted environments
+  if (!url.startsWith("https://") && !url.startsWith("http://localhost")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "URL must start with https://",
@@ -125,7 +126,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
         });
       };
 
-      // Check if it's localhost (allow for testing)
+      // Check if it's localhost (allow for easy recall testing on self-hosted environments)
       if (hostname === "localhost") {
         return; // localhost is valid
       }
