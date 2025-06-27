@@ -1,5 +1,5 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
@@ -19,7 +19,7 @@ export const deleteDisplay = async (displayId: string): Promise<Result<boolean, 
 
     return ok(true);
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist
