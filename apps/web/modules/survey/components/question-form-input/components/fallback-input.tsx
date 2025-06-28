@@ -27,7 +27,7 @@ export const FallbackInput = ({
     );
   };
   return (
-    <div className="absolute top-10 z-30 mt-1 rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
+    <div className="absolute top-10 z-10 mt-1 rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
       <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
       {filteredRecallItems.map((recallItem) => {
         if (!recallItem) return;
