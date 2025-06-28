@@ -13,7 +13,8 @@ import {
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
-import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
+import { delay } from "../utils/promises";
 import { truncateText } from "../utils/strings";
 
 export const getBases = async (key: string) => {
@@ -99,7 +100,11 @@ export const getAirtableToken = async (environmentId: string) => {
       });
 
       if (!newToken) {
-        throw new Error("Failed to create new token");
+        logger.error("Failed to fetch new Airtable token", {
+          environmentId,
+          airtableIntegration,
+        });
+        throw new Error("Failed to fetch new Airtable token");
       }
 
       await createOrUpdateIntegration(environmentId, {
@@ -116,9 +121,11 @@ export const getAirtableToken = async (environmentId: string) => {
 
     return access_token;
   } catch (error) {
-    await deleteIntegration(environmentId);
-
-    throw new Error("invalid token");
+    logger.error("Failed to get Airtable token", {
+      environmentId,
+      error,
+    });
+    throw new Error("Failed to get Airtable token");
   }
 };
 
@@ -178,6 +185,18 @@ const addField = async (
   return await req.json();
 };
 
+const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: string, tableId: string) => {
+  const req = await tableFetcher(key, baseId);
+  const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
+  const currentTable = tables.find((t) => t.id === tableId);
+
+  if (!currentTable) {
+    throw new Error(`Table with ID ${tableId} not found`);
+  }
+
+  return new Set(currentTable.fields.map((f) => f.name));
+};
+
 export const writeData = async (
   key: TIntegrationAirtableCredential,
   configData: TIntegrationAirtableConfigData,
@@ -186,6 +205,7 @@ export const writeData = async (
   const responses = values[0];
   const questions = values[1];
 
+  // 1) Build the record payload
   const data: Record<string, string> = {};
   for (let i = 0; i < questions.length; i++) {
     data[questions[i]] =
@@ -194,34 +214,73 @@ export const writeData = async (
         : responses[i];
   }
 
-  const req = await tableFetcher(key, configData.baseId);
-  const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
+  // 2) Figure out which fields need creating
+  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+  const fieldsToCreate = questions.filter((q) => !existingFields.has(q));
 
-  const currentTable = tables.find((table) => table.id === configData.tableId);
-  if (currentTable) {
-    const currentFields = new Set(currentTable.fields.map((field) => field.name));
-    const fieldsToCreate = new Set<string>();
-    for (const field of questions) {
-      const hasField = currentFields.has(field);
-      if (!hasField) {
-        fieldsToCreate.add(field);
+  // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
+  if (fieldsToCreate.length > 0) {
+    // Sequential processing with delays
+    const DELAY_BETWEEN_REQUESTS = 250; // 250ms = 4 requests per second (staying under 5/sec limit)
+
+    for (let i = 0; i < fieldsToCreate.length; i++) {
+      const fieldName = fieldsToCreate[i];
+
+      const createRes = await addField(key, configData.baseId, configData.tableId, {
+        name: fieldName,
+        type: "singleLineText",
+      });
+
+      if (createRes?.error) {
+        throw new Error(`Failed to create field "${fieldName}": ${JSON.stringify(createRes)}`);
+      }
+
+      // Add delay between requests (except for the last one)
+      if (i < fieldsToCreate.length - 1) {
+        await delay(DELAY_BETWEEN_REQUESTS);
       }
     }
 
-    if (fieldsToCreate.size > 0) {
-      const createFieldPromise: Promise<any>[] = [];
-      fieldsToCreate.forEach((fieldName) => {
-        createFieldPromise.push(
-          addField(key, configData.baseId, configData.tableId, {
-            name: fieldName,
-            type: "singleLineText",
-          })
-        );
-      });
+    // 4) Wait for the new fields to show up
+    await waitForFieldsToExist(key, configData, fieldsToCreate);
+  }
 
-      await Promise.all(createFieldPromise);
+  // 5) Finally, add the records
+  await addRecords(key, configData.baseId, configData.tableId, data);
+};
+
+async function waitForFieldsToExist(
+  key: TIntegrationAirtableCredential,
+  configData: TIntegrationAirtableConfigData,
+  fieldNames: string[],
+  maxRetries = 5,
+  intervalMs = 2000
+) {
+  let existingFields: Set<string> = new Set(),
+    missingFields: string[] = [];
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+    missingFields = fieldNames.filter((f) => !existingFields.has(f));
+
+    if (missingFields.length === 0) {
+      return;
+    }
+
+    if (attempt < maxRetries) {
+      logger.error(
+        `Attempt ${attempt}/${maxRetries}: ${missingFields.length} field(s) still missing [${missingFields.join(
+          ", "
+        )}], retrying in ${intervalMs / 1000}s…`
+      );
+
+      await new Promise((r) => setTimeout(r, intervalMs));
     }
   }
 
-  await addRecords(key, configData.baseId, configData.tableId, data);
-};
+  throw new Error(
+    `Timed out waiting for ${missingFields.length} field(s) [${missingFields.join(
+      ", "
+    )}] to become available. Available fields: [${Array.from(existingFields).join(", ")}]`
+  );
+}

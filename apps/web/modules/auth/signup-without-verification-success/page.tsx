@@ -1,7 +1,7 @@
+import { getEmailFromEmailToken } from "@/lib/jwt";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { getTranslate, T } from "@/tolgee/server";
-import { getEmailFromEmailToken } from "@/lib/jwt";
+import { T, getTranslate } from "@/tolgee/server";
 
 export const SignupWithoutVerificationSuccessPage = async ({ searchParams }) => {
   const t = await getTranslate();

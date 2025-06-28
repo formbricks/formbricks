@@ -20,7 +20,7 @@ export const getProjectTeamsEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Project Teams"],
+  tags: ["Organizations API - Project Teams"],
   responses: {
     "200": {
       description: "Project teams retrieved successfully.",
@@ -42,7 +42,7 @@ export const createProjectTeamEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Project Teams"],
+  tags: ["Organizations API - Project Teams"],
   requestBody: {
     required: true,
     description: "The project team to create",
@@ -68,7 +68,7 @@ export const deleteProjectTeamEndpoint: ZodOpenApiOperationObject = {
   operationId: "deleteProjectTeam",
   summary: "Delete a project team",
   description: "Deletes a project team from the database.",
-  tags: ["Organizations API > Project Teams"],
+  tags: ["Organizations API - Project Teams"],
   requestParams: {
     query: ZGetProjectTeamUpdateFilter.required(),
     path: z.object({
@@ -91,7 +91,7 @@ export const updateProjectTeamEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateProjectTeam",
   summary: "Update a project team",
   description: "Updates a project team in the database.",
-  tags: ["Organizations API > Project Teams"],
+  tags: ["Organizations API - Project Teams"],
   requestParams: {
     path: z.object({
       organizationId: ZOrganizationIdSchema,

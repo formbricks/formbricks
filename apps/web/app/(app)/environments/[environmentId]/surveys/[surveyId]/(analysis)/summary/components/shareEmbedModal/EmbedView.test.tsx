@@ -64,7 +64,7 @@ const defaultProps = {
   survey: mockSurveyLink,
   email: "test@example.com",
   surveyUrl: "http://example.com/survey1",
-  surveyDomain: "http://example.com",
+  publicDomain: "http://example.com",
   setSurveyUrl: vi.fn(),
   locale: "en" as any,
   disableBack: false,

@@ -86,7 +86,9 @@ describe("VerificationRequestedPage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/test@example\.com/)).toHaveLength(2);
     expect(
-      screen.getByText("auth.verification-requested.verification_email_successfully_sent_info test@example.com")
+      screen.getByText(
+        "auth.verification-requested.verification_email_successfully_sent_info test@example.com"
+      )
     ).toBeInTheDocument();
     expect(
       screen.getByText(`Mocked RequestVerificationEmail: ${mockEmail.toLowerCase()}`)

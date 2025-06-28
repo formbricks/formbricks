@@ -40,7 +40,7 @@ export function NPSQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
-}: NPSQuestionProps) {
+}: Readonly<NPSQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;

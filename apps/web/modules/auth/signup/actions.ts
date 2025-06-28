@@ -90,7 +90,11 @@ async function createUserSafely(
   return { user, userAlreadyExisted };
 }
 
-async function handleInviteAcceptance(ctx: ActionClientCtx, inviteToken: string, user: TCreatedUser): Promise<void> {
+async function handleInviteAcceptance(
+  ctx: ActionClientCtx,
+  inviteToken: string,
+  user: TCreatedUser
+): Promise<void> {
   const inviteTokenData = verifyInviteToken(inviteToken);
   const invite = await getInvite(inviteTokenData.inviteId);
 
@@ -98,7 +102,6 @@ async function handleInviteAcceptance(ctx: ActionClientCtx, inviteToken: string,
     throw new Error("Invalid invite ID");
   }
   ctx.auditLoggingCtx.organizationId = invite.organizationId;
-
 
   await createMembership(invite.organizationId, user.id, {
     accepted: true,
@@ -126,7 +129,6 @@ async function handleInviteAcceptance(ctx: ActionClientCtx, inviteToken: string,
 
   await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
   await deleteInvite(invite.id);
-
 }
 
 async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {
@@ -186,7 +188,12 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(
       );
 
       if (!userAlreadyExisted && user) {
-        await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
+        await handlePostUserCreation(
+          ctx,
+          user,
+          parsedInput.inviteToken,
+          parsedInput.emailVerificationDisabled
+        );
       }
 
       if (user) {

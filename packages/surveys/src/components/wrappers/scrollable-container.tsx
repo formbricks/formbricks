@@ -6,7 +6,7 @@ interface ScrollableContainerProps {
   children: JSX.Element;
 }
 
-export function ScrollableContainer({ children }: ScrollableContainerProps) {
+export function ScrollableContainer({ children }: Readonly<ScrollableContainerProps>) {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

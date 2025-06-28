@@ -1,10 +1,16 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
+import { OrganizationRole, Prisma, WidgetPlacement } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
-import { getProject, getProjectByEnvironmentId, getProjects, getUserProjects } from "./service";
+import {
+  getProject,
+  getProjectByEnvironmentId,
+  getProjects,
+  getUserProjectEnvironmentsByOrganizationIds,
+  getUserProjects,
+} from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -15,6 +21,7 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -35,13 +42,20 @@ describe("Project Service", () => {
       recontactDays: 0,
       linkSurveyBranding: true,
       inAppSurveyBranding: true,
-      config: {},
-      placement: "bottomRight",
+      config: {
+        channel: null,
+        industry: null,
+      },
+      placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
       darkOverlay: false,
       environments: [],
-      styling: {},
+      styling: {
+        allowStyleOverwrite: true,
+      },
       logo: null,
+      brandColor: null,
+      highlightBorderColor: null,
     };
 
     vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject);
@@ -86,13 +100,20 @@ describe("Project Service", () => {
       recontactDays: 0,
       linkSurveyBranding: true,
       inAppSurveyBranding: true,
-      config: {},
-      placement: "bottomRight",
+      config: {
+        channel: null,
+        industry: null,
+      },
+      placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
       darkOverlay: false,
       environments: [],
-      styling: {},
+      styling: {
+        allowStyleOverwrite: true,
+      },
       logo: null,
+      brandColor: null,
+      highlightBorderColor: null,
     };
 
     vi.mocked(prisma.project.findFirst).mockResolvedValue(mockProject);
@@ -144,13 +165,20 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
       {
         id: createId(),
@@ -162,23 +190,29 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
     ];
 
     vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      id: createId(),
       userId,
       organizationId,
-      role: "admin",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      role: OrganizationRole.owner,
+      accepted: true,
+      deprecatedRole: null,
     });
 
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
@@ -210,23 +244,29 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
     ];
 
     vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      id: createId(),
       userId,
       organizationId,
-      role: "member",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      role: OrganizationRole.member,
+      accepted: true,
+      deprecatedRole: null,
     });
 
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
@@ -278,23 +318,29 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
     ];
 
     vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      id: createId(),
       userId,
       organizationId,
-      role: "admin",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      role: OrganizationRole.owner,
+      accepted: true,
+      deprecatedRole: null,
     });
 
     vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
@@ -326,13 +372,20 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
       {
         id: createId(),
@@ -344,13 +397,20 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
     ];
 
@@ -382,13 +442,20 @@ describe("Project Service", () => {
         recontactDays: 0,
         linkSurveyBranding: true,
         inAppSurveyBranding: true,
-        config: {},
-        placement: "bottomRight",
+        config: {
+          channel: null,
+          industry: null,
+        },
+        placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         darkOverlay: false,
         environments: [],
-        styling: {},
+        styling: {
+          allowStyleOverwrite: true,
+        },
         logo: null,
+        brandColor: null,
+        highlightBorderColor: null,
       },
     ];
 
@@ -417,5 +484,200 @@ describe("Project Service", () => {
     vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
 
     await expect(getProjects(organizationId)).rejects.toThrow(DatabaseError);
+  });
+
+  test("getProjectsByOrganizationIds should return projects for given organization IDs", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+    const mockProjects = [
+      {
+        environments: [],
+      },
+      {
+        environments: [],
+      },
+    ];
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+      {
+        userId,
+        organizationId: organizationId2,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual(mockProjects);
+    expect(prisma.project.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
+      },
+      select: { environments: true },
+    });
+  });
+
+  test("getProjectsByOrganizationIds should return empty array when no projects are found", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+      {
+        userId,
+        organizationId: organizationId2,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
+    vi.mocked(prisma.project.findMany).mockResolvedValue([]);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual([]);
+    expect(prisma.project.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
+      },
+      select: { environments: true },
+    });
+  });
+
+  test("getProjectsByOrganizationIds should throw DatabaseError when prisma throws", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+      code: "P2002",
+      clientVersion: "5.0.0",
+    });
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "owner" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
+    vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
+
+    await expect(
+      getUserProjectEnvironmentsByOrganizationIds([organizationId1, organizationId2], userId)
+    ).rejects.toThrow(DatabaseError);
+  });
+
+  test("getProjectsByOrganizationIds should throw ValidationError with wrong input", async () => {
+    const userId = createId();
+    await expect(getUserProjectEnvironmentsByOrganizationIds(["wrong-id"], userId)).rejects.toThrow(
+      ValidationError
+    );
+  });
+
+  test("getProjectsByOrganizationIds should return empty array when user has no memberships", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+
+    // Mock no memberships found
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual([]);
+    expect(prisma.membership.findMany).toHaveBeenCalledWith({
+      where: {
+        userId,
+        organizationId: {
+          in: [organizationId1, organizationId2],
+        },
+      },
+    });
+    // Should not call project.findMany when no memberships
+    expect(prisma.project.findMany).not.toHaveBeenCalled();
+  });
+
+  test("getProjectsByOrganizationIds should handle member role with team access", async () => {
+    const organizationId1 = createId();
+    const organizationId2 = createId();
+    const userId = createId();
+    const mockProjects = [
+      {
+        environments: [],
+      },
+    ];
+
+    // Mock membership where user is a member
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      {
+        userId,
+        organizationId: organizationId1,
+        role: "member" as any,
+        accepted: true,
+        deprecatedRole: null,
+      },
+    ]);
+
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
+
+    const result = await getUserProjectEnvironmentsByOrganizationIds(
+      [organizationId1, organizationId2],
+      userId
+    );
+
+    expect(result).toEqual(mockProjects);
+    expect(prisma.project.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          {
+            organizationId: organizationId1,
+            projectTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { environments: true },
+    });
   });
 });

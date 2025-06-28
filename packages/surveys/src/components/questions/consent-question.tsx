@@ -40,7 +40,7 @@ export function ConsentQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
-}: ConsentQuestionProps) {
+}: Readonly<ConsentQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;

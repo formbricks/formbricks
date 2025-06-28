@@ -1,6 +1,7 @@
 // headers -> "Content-Type" should be present and set to a valid MIME type
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
+import { checkAuth, checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@/lib/constants";
 import { validateLocalSignedUrl } from "@/lib/crypto";
@@ -10,7 +11,6 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { checkAuth, checkForRequiredFields } from "@/app/api/v1/management/storage/lib/utils";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   if (!ENCRYPTION_KEY) {

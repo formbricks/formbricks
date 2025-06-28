@@ -6,6 +6,15 @@ icon: "book"
 
 Integrate the **Formbricks App Survey SDK** into your app using multiple options. Explore the available choices below. If you need something else, open a [**GitHub Discussion**](https://github.com/formbricks/formbricks/discussions), and we’ll be happy to help!
 
+<Info>
+  **Important for Self-Hosted Setups:**
+
+**Multi-Domain Setup:** If you are using the multi-domain setup, the `appUrl` parameter in all SDK configurations should point to your **public domain** (PUBLIC_URL environment variable). This is the domain where surveys and public-facing content are served, which may be different from your admin interface domain (WEBAPP_URL).
+
+**Single Domain Setup:** If you are using the single domain setup, the `appUrl` parameter in all SDK configurations should point to your **admin domain** (WEBAPP_URL environment variable).
+
+  </Info>
+
 <CardGroup cols={2}>
   <Card title="HTML" icon="html5" color="orange" href="#html">
     [All you need to do is add three lines of code to your HTML script, and that's it!](https://formbricks.com/docs/app-surveys/framework-guides#html)
@@ -25,17 +34,20 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   Learn how to use Formbricks' React Native SDK to integrate your surveys into React Native applications.
 </Card>
 
-  <Card title="React Native" icon="react" color="lightblue" href="#react-native">
-    [Easily integrate our SDK with your React Native app for seamless survey support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
-  </Card>
+<Card title="React Native" icon="react" color="lightblue" href="#react-native">
+  [Easily integrate our SDK with your React Native app for seamless survey
+  support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
+</Card>
 
-  <Card title="Swift" icon="swift" color="orange" href="#swift">
-  [Use our iOS SDK to quickly integrate surveys into your iOS applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
-  </Card>
+<Card title="Swift" icon="swift" color="orange" href="#swift">
+  [Use our iOS SDK to quickly integrate surveys into your iOS
+  applications.](https://formbricks.com/docs/app-surveys/framework-guides#swift)
+</Card>
 
-  <Card title="Android" icon="android" color="green" href="#android">
-  [Integrate surveys into your Android applications using our native Kotlin SDK.](https://formbricks.com/docs/app-surveys/framework-guides#android)
-  </Card>
+<Card title="Android" icon="android" color="green" href="#android">
+  [Integrate surveys into your Android applications using our native Kotlin
+  SDK.](https://formbricks.com/docs/app-surveys/framework-guides#android)
+</Card>
 
 </CardGroup>
 
@@ -49,15 +61,15 @@ Before getting started, make sure you have:
 
 ## HTML
 
-All you need to do is copy a `<script>` tag to your HTML head:
+All you need to do is copy a `<script>` tag to your HTML head:
 
 ```javascript
 <!-- START Formbricks Surveys -->
 <script type="text/javascript">
 !function(){
-    var appUrl = "https://app.formbricks.com";
+    var appUrl = "https://app.formbricks.com"; // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
     var environmentId = "<your-environment-id>";
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
+var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -97,7 +109,7 @@ import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.setup({
     environmentId: "<environment-id>",
-    appUrl: "<app-url>",
+    appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
 
@@ -155,7 +167,7 @@ export default function FormbricksProvider() {
   useEffect(() => {
     formbricks.setup({
       environmentId: "<environment-id>",
-      appUrl: "<app-url>",
+      appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
     });
   }, []);
 
@@ -199,7 +211,7 @@ import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.setup({
     environmentId: "<environment-id>",
-    appUrl: "<app-url>",
+    appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
 
@@ -232,7 +244,7 @@ Next, go to the [**Validate Your Setup**](#validate-your-setup) section to verif
 
 ## Vue.js
 
-Integrating the Formbricks SDK with Vue.js is easy. We’ll ensure the SDK is only loaded and used on the client side, as it’s not meant for server-side use.
+Integrating the Formbricks SDK with Vue.js is easy. We'll ensure the SDK is only loaded and used on the client side, as it's not meant for server-side use.
 
 ```bash npm
 npm install @formbricks/js
@@ -252,7 +264,7 @@ import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.setup({
     environmentId: "<environment-id>",
-    appUrl: "<app-url>",
+    appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
 
@@ -309,7 +321,7 @@ import Formbricks from "@formbricks/react-native";
 
 const config = {
   environmentId: "<environment-id>",
-  appUrl: "<app-url>",
+  appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
 };
 
 export default function App() {
@@ -372,7 +384,7 @@ import FormbricksSDK
 
 // 1. Build your config (you can also inject userId + attributes here)
 let config = FormbricksConfig.Builder(
-        appUrl: "https://your‑app.bricks.com",
+        appUrl: "https://your‑app.bricks.com", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
         environmentId: "YOUR_ENV_ID"
     )
     .setLogLevel(.debug)
@@ -412,7 +424,6 @@ Formbricks.cleanup(waitForOperations: true) {
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
 | app-url        | string | URL of the hosted Formbricks instance. |
-
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -486,7 +497,7 @@ Formbricks.logout()
 
 ## Validate your setup
 
-Once you’ve completed the steps above, validate your setup by checking the Setup Checklist in the Settings. The widget status indicator should change from this:
+Once you've completed the steps above, validate your setup by checking the Setup Checklist in the Settings. The widget status indicator should change from this:
 
 ![first validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122589/image_ecaovs.jpg)
 To this:
@@ -496,18 +507,19 @@ To this:
 ## Debugging Formbricks Integration
 
 <Note>
-  The debug mode is only available in the JavaScript SDK and works exclusively in the browser. It is not supported in mobile SDKs such as React Native, iOS, or Android.
+  The debug mode is only available in the JavaScript SDK and works exclusively in the browser. It is not
+  supported in mobile SDKs such as React Native, iOS, or Android.
 </Note>
 
-Enabling debug mode in your browser can help troubleshoot issues with Formbricks. Here’s how to activate it and what to look for in the logs.
+Enabling debug mode in your browser can help troubleshoot issues with Formbricks. Here's how to activate it and what to look for in the logs.
 
 ### Activate Debug Mode
 
-To enable debug mode, add `?formbricksDebug=true` to your app’s URL (e.g., [`https://example.com?formbricksDebug=true)`](<https://example.com?formbricksDebug=true)>).&#x20;
+To enable debug mode, add `?formbricksDebug=true` to your app's URL (e.g., [`https://example.com?formbricksDebug=true)`](<https://example.com?formbricksDebug=true)>).&#x20;
 
 #### View Debug Logs
 
-1. Open your browser’s developer tools:
+1. Open your browser's developer tools:
 
 - **Google Chrome/Edge**: Press `F12` or right-click and select "**Inspect" > "Console**".
 

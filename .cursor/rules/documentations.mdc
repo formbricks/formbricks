@@ -1,0 +1,23 @@
+---
+description: Guideline for writing end-user facing documentation in the apps/docs folder
+globs: 
+alwaysApply: false
+---
+Follow these instructions and guidelines when asked to write documentation in the apps/docs folder
+
+Follow this structure to write the title, describtion and pick a matching icon and insert it at the top of the MDX file:
+
+---
+title: "FEATURE NAME"
+description: "1 concise sentence to describe WHEN the feature is being used and FOR WHAT BENEFIT."
+icon: "link"
+---
+
+- Description: 1 concise sentence to describe WHEN the feature is being used and FOR WHAT BENEFIT.
+- Make ample use of the Mintlify components you can find here https://mintlify.com/docs/llms.txt
+- In all Headlines, only capitalize the current feature and nothing else, to Camel Case
+- If a feature is part of the Enterprise Edition, use this note:
+
+<Note>
+  FEATURE NAME is part of the @Enterprise Edition. 
+</Note>
