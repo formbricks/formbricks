@@ -1,7 +1,10 @@
 import "server-only";
 import { validateInputs } from "@/lib/utils/validate";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZString } from "@formbricks/types/common";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TTag } from "@formbricks/types/tags";
 
 export const deleteTag = async (id: string): Promise<TTag> => {
@@ -35,6 +38,12 @@ export const updateTagName = async (id: string, name: string): Promise<TTag> => 
 
     return tag;
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
+      throw new InvalidInputError(error.message);
+    }
     throw error;
   }
 };
