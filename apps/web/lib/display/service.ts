@@ -62,3 +62,19 @@ export const deleteDisplay = async (displayId: string): Promise<TDisplay> => {
     throw error;
   }
 };
+
+export const checkDisplayExists = reactCache(async (displayId: string): Promise<{ id: string } | null> => {
+  validateInputs([displayId, ZId]);
+  try {
+    const display = await prisma.display.findUnique({
+      where: { id: displayId },
+      select: { id: true },
+    });
+    return display;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+});
