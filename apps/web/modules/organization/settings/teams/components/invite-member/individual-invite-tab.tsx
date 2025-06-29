@@ -133,7 +133,7 @@ export const IndividualInviteTab = ({
                     onChange={(val) => field.onChange(val)}
                   />
                   {!teamOptions.length && (
-                    <Small className="italic">
+                    <Small className="font-normal text-amber-600">
                       {t("environments.settings.teams.create_first_team_message")}
                     </Small>
                   )}
