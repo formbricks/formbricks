@@ -6,6 +6,27 @@ import { EditPublicSurveyAlertDialog } from "./index";
 // Mock translation to return keys as text
 vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t: (key: string) => key }) }));
 
+// Mock Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
+}));
+
 describe("EditPublicSurveyAlertDialog", () => {
   afterEach(() => {
     cleanup();
@@ -15,6 +36,14 @@ describe("EditPublicSurveyAlertDialog", () => {
   test("renders with all expected content", () => {
     const setOpen = vi.fn();
     render(<EditPublicSurveyAlertDialog open={true} setOpen={setOpen} />);
+
+    // Check dialog structure
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
 
     // Title
     expect(screen.getByText("environments.surveys.edit.caution_edit_published_survey")).toBeInTheDocument();
@@ -110,7 +139,7 @@ describe("EditPublicSurveyAlertDialog", () => {
       />
     );
 
-    // Modal has a close button by default plus our two action buttons
+    // Dialog has our two action buttons
     const allButtons = screen.getAllByRole("button");
     // Verify our two action buttons by their text content
     const actionButtons = allButtons.filter(

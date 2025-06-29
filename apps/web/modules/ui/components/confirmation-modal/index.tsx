@@ -1,7 +1,14 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import React from "react";
 
@@ -39,28 +46,31 @@ export const ConfirmationModal = ({
   };
 
   return (
-    <Modal
-      open={open}
-      setOpen={setOpen}
-      title={title}
-      hideCloseButton={hideCloseButton}
-      closeOnOutsideClick={closeOnOutsideClick}>
-      <div className="text-slate-900">
-        <p className="mt-2 whitespace-pre-wrap">{text}</p>
-      </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        hideCloseButton={hideCloseButton}
+        disableCloseOnOutsideClick={!closeOnOutsideClick}
+        className="max-w-[540px]">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="text-slate-900">
+            <span className="mt-2 whitespace-pre-wrap">{text}</span>
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="mt-4 space-x-2 text-right">
-        <Button variant="ghost" onClick={() => setOpen(false)}>
-          {t("common.cancel")}
-        </Button>
-        <Button
-          loading={buttonLoading}
-          disabled={isButtonDisabled}
-          variant={buttonVariant}
-          onClick={handleButtonAction}>
-          {buttonText}
-        </Button>
-      </div>
-    </Modal>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            loading={buttonLoading}
+            disabled={isButtonDisabled}
+            variant={buttonVariant}
+            onClick={handleButtonAction}>
+            {buttonText}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
