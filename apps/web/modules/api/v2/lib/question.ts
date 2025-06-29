@@ -33,10 +33,11 @@ export const validateOtherOptionLengthForMultipleChoice = ({
   surveyQuestions,
   responseLanguage,
 }: {
-  responseData: TResponseData;
+  responseData?: TResponseData;
   surveyQuestions: TSurveyQuestion[];
   responseLanguage?: string;
 }): string | undefined => {
+  if (!responseData) return undefined;
   for (const [questionId, answer] of Object.entries(responseData)) {
     const question = surveyQuestions.find((q) => q.id === questionId);
     if (!question) continue;
