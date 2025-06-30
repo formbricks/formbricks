@@ -5,7 +5,7 @@ import { actionClient } from "@/lib/utils/action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendForgotPasswordEmail } from "@/modules/email";
 import { z } from "zod";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 
 const ZForgotPasswordAction = z.object({
@@ -21,15 +21,9 @@ export const forgotPasswordAction = actionClient
 
     const user = await getUserByEmail(parsedInput.email);
 
-    if (!user) {
-      throw new ResourceNotFoundError("user", parsedInput.email);
-    }
-
-    if (user.identityProvider !== "email") {
-      throw new OperationNotAllowedError("Password reset is not allowed for SSO users");
+    if (!user || user.identityProvider !== "email") {
+      return;
     }
 
     await sendForgotPasswordEmail(user);
-
-    return { success: true };
   });

@@ -19,7 +19,6 @@ import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -135,15 +134,15 @@ export const EditProfileDetailsForm = ({
 
     setIsResettingPassword(true);
 
-    const resetPasswordResponse = await forgotPasswordAction({ email: user.email });
+    await forgotPasswordAction({ email: user.email });
 
-    if (!resetPasswordResponse?.data) {
-      const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
-      toast.error(errorMessage);
-    } else {
-      toast.success(t("auth.forgot-password.email-sent.heading"));
-      await signOut({ callbackUrl: "/auth/login" });
-    }
+    toast.success(t("auth.forgot-password.email-sent.heading"));
+    await signOutWithAudit({
+      reason: "password_reset",
+      redirectUrl: "/auth/login",
+      redirect: true,
+      callbackUrl: "/auth/login",
+    });
 
     setIsResettingPassword(false);
   };

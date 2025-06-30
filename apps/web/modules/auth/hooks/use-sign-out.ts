@@ -3,7 +3,13 @@ import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
 
 interface UseSignOutOptions {
-  reason?: "user_initiated" | "account_deletion" | "email_change" | "session_timeout" | "forced_logout";
+  reason?:
+    | "user_initiated"
+    | "account_deletion"
+    | "email_change"
+    | "session_timeout"
+    | "forced_logout"
+    | "password_reset";
   redirectUrl?: string;
   organizationId?: string;
   redirect?: boolean;
