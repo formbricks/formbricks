@@ -94,7 +94,7 @@ export function DateQuestion({
   ttc,
   currentQuestionId,
   isBackButtonHidden,
-}: DateQuestionProps) {
+}: Readonly<DateQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;

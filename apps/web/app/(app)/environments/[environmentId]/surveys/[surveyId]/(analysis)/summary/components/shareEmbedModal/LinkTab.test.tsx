@@ -6,12 +6,12 @@ import { LinkTab } from "./LinkTab";
 
 // Mock ShareSurveyLink
 vi.mock("@/modules/analysis/components/ShareSurveyLink", () => ({
-  ShareSurveyLink: vi.fn(({ survey, surveyUrl, surveyDomain, locale }) => (
+  ShareSurveyLink: vi.fn(({ survey, surveyUrl, publicDomain, locale }) => (
     <div data-testid="share-survey-link">
       Mocked ShareSurveyLink
       <span data-testid="survey-id">{survey.id}</span>
       <span data-testid="survey-url">{surveyUrl}</span>
-      <span data-testid="survey-domain">{surveyDomain}</span>
+      <span data-testid="public-domain">{publicDomain}</span>
       <span data-testid="locale">{locale}</span>
     </div>
   )),
@@ -49,7 +49,7 @@ const mockSurvey: TSurvey = {
 } as unknown as TSurvey;
 
 const mockSurveyUrl = "https://app.formbricks.com/s/survey1";
-const mockSurveyDomain = "https://app.formbricks.com";
+const mockPublicDomain = "https://app.formbricks.com";
 const mockSetSurveyUrl = vi.fn();
 const mockLocale: TUserLocale = "en-US";
 
@@ -82,7 +82,7 @@ describe("LinkTab", () => {
       <LinkTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
-        surveyDomain={mockSurveyDomain}
+        publicDomain={mockPublicDomain}
         setSurveyUrl={mockSetSurveyUrl}
         locale={mockLocale}
       />
@@ -97,7 +97,7 @@ describe("LinkTab", () => {
       <LinkTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
-        surveyDomain={mockSurveyDomain}
+        publicDomain={mockPublicDomain}
         setSurveyUrl={mockSetSurveyUrl}
         locale={mockLocale}
       />
@@ -105,7 +105,7 @@ describe("LinkTab", () => {
     expect(screen.getByTestId("share-survey-link")).toBeInTheDocument();
     expect(screen.getByTestId("survey-id")).toHaveTextContent(mockSurvey.id);
     expect(screen.getByTestId("survey-url")).toHaveTextContent(mockSurveyUrl);
-    expect(screen.getByTestId("survey-domain")).toHaveTextContent(mockSurveyDomain);
+    expect(screen.getByTestId("public-domain")).toHaveTextContent(mockPublicDomain);
     expect(screen.getByTestId("locale")).toHaveTextContent(mockLocale);
   });
 
@@ -114,7 +114,7 @@ describe("LinkTab", () => {
       <LinkTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
-        surveyDomain={mockSurveyDomain}
+        publicDomain={mockPublicDomain}
         setSurveyUrl={mockSetSurveyUrl}
         locale={mockLocale}
       />
@@ -129,7 +129,7 @@ describe("LinkTab", () => {
       <LinkTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
-        surveyDomain={mockSurveyDomain}
+        publicDomain={mockPublicDomain}
         setSurveyUrl={mockSetSurveyUrl}
         locale={mockLocale}
       />

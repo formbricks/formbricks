@@ -1,13 +1,12 @@
-import { displayCache } from "@/lib/display/cache";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const deleteDisplay = async (displayId: string): Promise<Result<boolean, ApiErrorResponseV2>> => {
   try {
-    const display = await prisma.display.delete({
+    await prisma.display.delete({
       where: {
         id: displayId,
       },
@@ -18,15 +17,9 @@ export const deleteDisplay = async (displayId: string): Promise<Result<boolean, 
       },
     });
 
-    displayCache.revalidate({
-      id: display.id,
-      contactId: display.contactId,
-      surveyId: display.surveyId,
-    });
-
     return ok(true);
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist

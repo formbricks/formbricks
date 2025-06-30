@@ -57,7 +57,10 @@ describe("Template Component", () => {
 
     render(<Template {...defaultProps} noPreview={true} />);
 
-    await user.click(screen.getByText("Test Template").closest("div")!);
+    const cardButton = screen.getByRole("button", {
+      name: /Test Template.*Test Description/,
+    });
+    await user.click(cardButton);
 
     expect(replacePresetPlaceholders).toHaveBeenCalledWith(mockTemplate, mockProject);
     expect(defaultProps.createSurvey).toHaveBeenCalledTimes(1);
@@ -70,7 +73,10 @@ describe("Template Component", () => {
 
     render(<Template {...defaultProps} />);
 
-    await user.click(screen.getByText("Test Template").closest("div")!);
+    const cardButton = screen.getByRole("button", {
+      name: /Test Template.*Test Description/,
+    });
+    await user.click(cardButton);
 
     expect(replacePresetPlaceholders).toHaveBeenCalledWith(mockTemplate, mockProject);
     expect(defaultProps.onTemplateClick).toHaveBeenCalledTimes(1);
@@ -88,7 +94,8 @@ describe("Template Component", () => {
 
     render(<Template {...defaultProps} activeTemplate={mockTemplate} />);
 
-    await user.click(screen.getByText("environments.surveys.templates.use_this_template"));
+    const useButton = screen.getByText("environments.surveys.templates.use_this_template");
+    await user.click(useButton);
 
     expect(defaultProps.createSurvey).toHaveBeenCalledWith(mockTemplate);
   });

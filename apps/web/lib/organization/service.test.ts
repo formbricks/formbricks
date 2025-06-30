@@ -1,10 +1,16 @@
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { updateUser } from "@/lib/user/service";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { organizationCache } from "./cache";
-import { createOrganization, getOrganization, getOrganizationsByUserId, updateOrganization } from "./service";
+import { DatabaseError } from "@formbricks/types/errors";
+import {
+  createOrganization,
+  getOrganization,
+  getOrganizationsByUserId,
+  subscribeOrganizationMembersToSurveyResponses,
+  updateOrganization,
+} from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -14,17 +20,14 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
-vi.mock("./cache", () => ({
-  organizationCache: {
-    tag: {
-      byId: vi.fn(),
-      byUserId: vi.fn(),
-    },
-    revalidate: vi.fn(),
-  },
+vi.mock("@/lib/user/service", () => ({
+  updateUser: vi.fn(),
 }));
 
 describe("Organization Service", () => {
@@ -188,10 +191,6 @@ describe("Organization Service", () => {
         },
         select: expect.any(Object),
       });
-      expect(organizationCache.revalidate).toHaveBeenCalledWith({
-        id: mockOrganization.id,
-        count: true,
-      });
     });
 
     test("should throw DatabaseError on prisma error", async () => {
@@ -265,9 +264,64 @@ describe("Organization Service", () => {
         data: { name: "Updated Org" },
         select: expect.any(Object),
       });
-      expect(organizationCache.revalidate).toHaveBeenCalledWith({
-        id: "org1",
+    });
+  });
+
+  describe("subscribeOrganizationMembersToSurveyResponses", () => {
+    test("should subscribe user to survey responses when not unsubscribed", async () => {
+      const mockUser = {
+        id: "user-123",
+        notificationSettings: {
+          alert: { "existing-survey-id": true },
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [], // User is subscribed to all organizations
+        },
+      } as any;
+
+      const surveyId = "survey-123";
+      const userId = "user-123";
+      const organizationId = "org-123";
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+      vi.mocked(updateUser).mockResolvedValueOnce({} as any);
+
+      await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
       });
+      expect(updateUser).toHaveBeenCalledWith(userId, {
+        notificationSettings: {
+          alert: {
+            "existing-survey-id": true,
+            "survey-123": true,
+          },
+          weeklySummary: {},
+          unsubscribedOrganizationIds: [],
+        },
+      });
+    });
+
+    test("should not subscribe user when unsubscribed from organization", async () => {
+      const mockUser = {
+        id: "user-123",
+        notificationSettings: {
+          alert: { "existing-survey-id": true },
+          weeklySummary: {},
+          unsubscribedOrganizationIds: ["org-123"], // User has unsubscribed from this organization
+        },
+      } as any;
+
+      const surveyId = "survey-123";
+      const userId = "user-123";
+      const organizationId = "org-123";
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+
+      await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
+
+      // Should not call updateUser because user is unsubscribed from this organization
+      expect(updateUser).not.toHaveBeenCalled();
     });
   });
 });

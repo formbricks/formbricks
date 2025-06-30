@@ -42,7 +42,6 @@ interface ContactsTableProps {
   searchValue: string;
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
-  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({
@@ -55,7 +54,6 @@ export const ContactsTable = ({
   searchValue,
   setSearchValue,
   isReadOnly,
-  refreshContacts,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -236,10 +234,9 @@ export const ContactsTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRows={deleteContacts}
+          deleteRowsAction={deleteContacts}
           type="contact"
           deleteAction={deleteContact}
-          refreshContacts={refreshContacts}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>

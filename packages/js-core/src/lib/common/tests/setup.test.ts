@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/unbound-method -- required for testing */
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
-import {
-  addCleanupEventListeners,
-  addEventListeners,
-  removeAllEventListeners,
-} from "@/lib/common/event-listeners";
+import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
-import { checkSetup, handleErrorOnFirstSetup, setIsSetup, setup, tearDown } from "@/lib/common/setup";
+import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
+import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, isNowExpired } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
@@ -287,24 +284,8 @@ describe("setup.ts", () => {
     });
   });
 
-  describe("checkSetup()", () => {
-    test("returns err if not setup", () => {
-      const res = checkSetup();
-      expect(res.ok).toBe(false);
-      if (!res.ok) {
-        expect(res.error.code).toBe("not_setup");
-      }
-    });
-
-    test("returns ok if setup", () => {
-      setIsSetup(true);
-      const res = checkSetup();
-      expect(res.ok).toBe(true);
-    });
-  });
-
   describe("tearDown()", () => {
-    test("resets user state to default and removes event listeners", () => {
+    test("resets user state to default", () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           user: { data: { userId: "XYZ" } },
@@ -321,7 +302,7 @@ describe("setup.ts", () => {
           user: DEFAULT_USER_STATE_NO_USER_ID,
         })
       );
-      expect(removeAllEventListeners).toHaveBeenCalled();
+      expect(filterSurveys).toHaveBeenCalled();
     });
   });
 

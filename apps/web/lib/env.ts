@@ -85,7 +85,23 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
-    SURVEY_URL: z.string().optional(),
+    PUBLIC_URL: z
+      .string()
+      .url()
+      .refine(
+        (url) => {
+          try {
+            const parsed = new URL(url);
+            return parsed.host && parsed.host.length > 0;
+          } catch {
+            return false;
+          }
+        },
+        {
+          message: "PUBLIC_URL must be a valid URL with a proper host (e.g., https://example.com)",
+        }
+      )
+      .optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     TERMS_URL: z
       .string()
@@ -104,7 +120,13 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
-    DISABLE_USER_MANAGEMENT: z.enum(["1", "0"]).optional(),
+    USER_MANAGEMENT_MINIMUM_ROLE: z.enum(["owner", "manager", "disabled"]).optional(),
+    AUDIT_LOG_ENABLED: z.enum(["1", "0"]).optional(),
+    AUDIT_LOG_GET_USER_IP: z.enum(["1", "0"]).optional(),
+    SESSION_MAX_AGE: z
+      .string()
+      .transform((val) => parseInt(val))
+      .optional(),
   },
 
   /*
@@ -184,7 +206,7 @@ export const env = createEnv({
     SMTP_AUTHENTICATED: process.env.SMTP_AUTHENTICATED,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    SURVEY_URL: process.env.SURVEY_URL,
+    PUBLIC_URL: process.env.PUBLIC_URL,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
@@ -199,6 +221,9 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
-    DISABLE_USER_MANAGEMENT: process.env.DISABLE_USER_MANAGEMENT,
+    USER_MANAGEMENT_MINIMUM_ROLE: process.env.USER_MANAGEMENT_MINIMUM_ROLE,
+    AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
+    AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
+    SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
   },
 });

@@ -1,6 +1,4 @@
-import { cache } from "@/lib/cache";
-import { contactCache } from "@/lib/cache/contact";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { getContactByUserId } from "./contact";
@@ -13,8 +11,6 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-
-vi.mock("@/lib/cache");
 
 const environmentId = "test-env-id";
 const userId = "test-user-id";
@@ -36,12 +32,6 @@ const expectedContactAttributes: TContactAttributes = {
 };
 
 describe("getContactByUserId", () => {
-  beforeEach(() => {
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
-  });
-
   test("should return contact with attributes when found", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData);
 
@@ -73,13 +63,6 @@ describe("getContactByUserId", () => {
       id: contactId,
       attributes: expectedContactAttributes,
     });
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function),
-      [`getContactByUserIdForResponsesApi-${environmentId}-${userId}`],
-      {
-        tags: [contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      }
-    );
   });
 
   test("should return null when contact is not found", async () => {
@@ -110,12 +93,5 @@ describe("getContactByUserId", () => {
       },
     });
     expect(contact).toBeNull();
-    expect(cache).toHaveBeenCalledWith(
-      expect.any(Function),
-      [`getContactByUserIdForResponsesApi-${environmentId}-${userId}`],
-      {
-        tags: [contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      }
-    );
   });
 });

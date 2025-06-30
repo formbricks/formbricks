@@ -37,6 +37,15 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: 587,
   SMTP_USERNAME: "user@example.com",
   SMTP_PASSWORD: "password",
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
 }));
 
 vi.mock("@/modules/survey/link/actions");

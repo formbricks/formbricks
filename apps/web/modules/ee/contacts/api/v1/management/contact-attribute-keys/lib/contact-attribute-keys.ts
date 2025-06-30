@@ -1,49 +1,33 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
-import { validateInputs } from "@/lib/utils/validate";
+import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZId, ZString } from "@formbricks/types/common";
-import {
-  TContactAttributeKey,
-  TContactAttributeKeyType,
-  ZContactAttributeKeyType,
-} from "@formbricks/types/contact-attribute-key";
+import { PrismaErrorType } from "@formbricks/database/types/error";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache(
-  (environmentIds: string[]): Promise<TContactAttributeKey[]> =>
-    cache(
-      async () => {
-        try {
-          const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-            where: { environmentId: { in: environmentIds } },
-          });
+  async (environmentIds: string[]): Promise<TContactAttributeKey[]> => {
+    try {
+      const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
+        where: { environmentId: { in: environmentIds } },
+      });
 
-          return contactAttributeKeys;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      environmentIds.map((id) => `getContactAttributeKeys-attribute-keys-management-api-${id}`),
-      {
-        tags: environmentIds.map((id) => contactAttributeKeyCache.tag.byEnvironmentId(id)),
+      return contactAttributeKeys;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+      throw error;
+    }
+  }
 );
 
 export const createContactAttributeKey = async (
   environmentId: string,
-  key: string,
-  type: TContactAttributeKeyType
+  data: TContactAttributeKeyCreateInput
 ): Promise<TContactAttributeKey | null> => {
-  validateInputs([environmentId, ZId], [key, ZString], [type, ZContactAttributeKeyType]);
-
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
     where: {
       environmentId,
@@ -59,9 +43,10 @@ export const createContactAttributeKey = async (
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
-        key,
-        name: key,
-        type,
+        key: data.key,
+        name: data.name ?? data.key,
+        type: data.type,
+        description: data.description ?? "",
         environment: {
           connect: {
             id: environmentId,
@@ -70,15 +55,13 @@ export const createContactAttributeKey = async (
       },
     });
 
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
-    });
-
     return contactAttributeKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new DatabaseError("Attribute key already exists");
+      }
+
       throw new DatabaseError(error.message);
     }
     throw error;

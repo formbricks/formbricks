@@ -23,7 +23,6 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
-  refreshContacts: () => Promise<void>;
 }
 
 export const ContactDataView = ({
@@ -33,7 +32,6 @@ export const ContactDataView = ({
   isReadOnly,
   hasMore: initialHasMore,
   initialContacts,
-  refreshContacts,
 }: ContactDataViewProps) => {
   const router = useRouter();
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([...initialContacts]);
@@ -151,7 +149,6 @@ export const ContactDataView = ({
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
-      refreshContacts={refreshContacts}
     />
   );
 };

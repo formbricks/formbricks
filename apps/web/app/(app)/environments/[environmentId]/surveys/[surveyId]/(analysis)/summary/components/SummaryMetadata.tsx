@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -100,8 +101,8 @@ export const SummaryMetadata = ({
 
         <TooltipProvider delayDuration={50}>
           <Tooltip>
-            <TooltipTrigger>
-              <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
+            <TooltipTrigger onClick={() => setShowDropOffs(!showDropOffs)} data-testid="dropoffs-toggle">
+              <div className="flex h-full cursor-pointer flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
                 <span className="text-sm text-slate-600">
                   {t("environments.surveys.summary.drop_offs")}
                   {`${Math.round(dropOffPercentage)}%` !== "NaN%" && !isLoading && (
@@ -117,15 +118,13 @@ export const SummaryMetadata = ({
                     )}
                   </span>
                   {!isLoading && (
-                    <button
-                      className="ml-1 flex items-center rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-50 group-hover:bg-slate-700"
-                      onClick={() => setShowDropOffs(!showDropOffs)}>
+                    <Button variant="secondary" className="h-6 w-6">
                       {showDropOffs ? (
                         <ChevronUpIcon className="h-4 w-4" />
                       ) : (
                         <ChevronDownIcon className="h-4 w-4" />
                       )}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

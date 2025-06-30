@@ -14,6 +14,7 @@ import Page from "./page";
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: 1,
   PASSWORD_RESET_DISABLED: 1,
+  EMAIL_VERIFICATION_DISABLED: true,
 }));
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),

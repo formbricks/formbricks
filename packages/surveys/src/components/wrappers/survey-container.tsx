@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { type TPlacement } from "@formbricks/types/common";
 
 interface SurveyContainerProps {
@@ -20,16 +20,10 @@ export function SurveyContainer({
   onClose,
   clickOutside,
   isOpen = true,
-}: SurveyContainerProps) {
-  const [show, setShow] = useState(false);
-
+}: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
   const isCenter = placement === "center";
   const isModal = mode === "modal";
-
-  useEffect(() => {
-    setShow(isOpen);
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isModal) return;
@@ -38,7 +32,7 @@ export function SurveyContainer({
     const handleClickOutside = (e: MouseEvent) => {
       if (
         clickOutside &&
-        show &&
+        isOpen &&
         modalRef.current &&
         !(modalRef.current as HTMLElement).contains(e.target as Node) &&
         onClose
@@ -50,7 +44,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, clickOutside, onClose, isCenter, isModal]);
+  }, [clickOutside, onClose, isCenter, isModal, isOpen]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -69,7 +63,7 @@ export function SurveyContainer({
     }
   };
 
-  if (!show) return null;
+  if (!isOpen) return null;
 
   if (!isModal) {
     return (
@@ -98,7 +92,7 @@ export function SurveyContainer({
             ref={modalRef}
             className={cn(
               getPlacementStyle(placement),
-              show ? "fb-opacity-100" : "fb-opacity-0",
+              isOpen ? "fb-opacity-100" : "fb-opacity-0",
               "fb-rounded-custom fb-pointer-events-auto fb-absolute fb-bottom-0 fb-h-fit fb-w-full fb-overflow-visible fb-bg-white fb-shadow-lg fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4 sm:fb-max-w-sm"
             )}>
             <div>{children}</div>

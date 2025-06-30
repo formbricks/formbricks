@@ -4,7 +4,9 @@ description: "Create surveys that support multiple languages using translations.
 icon: "language"
 ---
 
-<Note>Multi-language surveys are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license)</Note>
+<Note>
+  Multi-language surveys are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license)
+</Note>
 
 How to deliver a specific language depends on the survey type (app or link survey):
 
@@ -70,10 +72,10 @@ You can come back to this page anytime to add more languages or remove existing 
 
 1. After you setup the Formbricks SDK for your user, you can call the `setLanguage` function with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available.
 
-```js javascript
+```js
 Formbricks.setup({
   environmentId: "<environment-id>",
-  appUrl: "<app-url>",
+  appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
 });
 
 Formbricks.setLanguage("de"); // ISO identifier or Alias set when creating language
@@ -108,4 +110,29 @@ Without the `lang` parameter, Formbricks will show the survey in the default lan
 
 You can now start collecting responses in multiple languages!
 
-**Can’t figure it out?**: [Get help in Github Discussions](https://github.com/formbricks/formbricks/discussions)
+---
+
+## RTL Language Support
+
+Formbricks fully supports Right-to-Left (RTL) languages such as Arabic, Hebrew, Persian, and Urdu. When you add an RTL language to your survey, the survey interface automatically adjusts to display content from right to left.
+
+### How RTL Support Works
+
+- Text alignment automatically switches to right-to-left
+- Survey layout and UI elements adjust to RTL orientation
+- Button placement and navigation flow adapt to RTL reading direction
+- Form elements maintain proper RTL formatting
+
+### Setting Up RTL Languages
+
+No additional configuration is needed to enable RTL support. Simply:
+
+1. Add an RTL language (like Arabic or Hebrew) in the **Survey Languages** settings
+2. Create translations for your survey content in the RTL language
+3. The survey will automatically display in RTL format when that language is selected
+
+![RTL Language Support](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/rtl-support.webp)
+
+---
+
+**Need help?** [Reach out in Github Discussions](https://github.com/formbricks/formbricks/discussions)

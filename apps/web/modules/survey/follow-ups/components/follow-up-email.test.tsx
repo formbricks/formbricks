@@ -123,26 +123,46 @@ describe("FollowUpEmail", () => {
     expect(screen.getByText("Test HTML Content")).toBeInTheDocument();
   });
 
-  test("renders the imprint and privacy policy links if provided", async () => {
+  test("renders the footer with imprint and privacy policy links when using default logo", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
+      logoUrl: undefined, // Using default logo
     });
 
     render(followUpEmailElement);
 
     expect(screen.getByText("emails.imprint")).toBeInTheDocument();
     expect(screen.getByText("emails.privacy_policy")).toBeInTheDocument();
+    expect(screen.getByText("emails.email_template_text_1")).toBeInTheDocument();
+    expect(screen.getByText("Imprint Address")).toBeInTheDocument();
   });
 
-  test("renders the imprint address if provided", async () => {
+  test("renders the footer with imprint and privacy policy links when using FB_LOGO_URL", async () => {
     const followUpEmailElement = await FollowUpEmail({
       ...defaultProps,
+      logoUrl: "https://example.com/mock-logo.png", // Using FB_LOGO_URL
     });
 
     render(followUpEmailElement);
 
+    expect(screen.getByText("emails.imprint")).toBeInTheDocument();
+    expect(screen.getByText("emails.privacy_policy")).toBeInTheDocument();
     expect(screen.getByText("emails.email_template_text_1")).toBeInTheDocument();
     expect(screen.getByText("Imprint Address")).toBeInTheDocument();
+  });
+
+  test("does not render the footer when using custom logo (white labeling)", async () => {
+    const followUpEmailElement = await FollowUpEmail({
+      ...defaultProps,
+      logoUrl: "https://example.com/custom-logo.png", // Using custom logo
+    });
+
+    render(followUpEmailElement);
+
+    expect(screen.queryByText("emails.imprint")).not.toBeInTheDocument();
+    expect(screen.queryByText("emails.privacy_policy")).not.toBeInTheDocument();
+    expect(screen.queryByText("emails.email_template_text_1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Imprint Address")).not.toBeInTheDocument();
   });
 
   test("renders the response data if attachResponseData is true", async () => {

@@ -48,6 +48,9 @@ vi.mock("@/lib/constants", () => ({
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   SENTRY_DSN: "mock-sentry-dsn",
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 vi.mock("@/lib/integration/service");

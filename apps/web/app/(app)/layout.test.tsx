@@ -38,6 +38,9 @@ vi.mock("@/lib/constants", () => ({
   POSTHOG_API_KEY: "test-posthog-api-key",
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 vi.mock("@/app/intercom/IntercomClientWrapper", () => ({

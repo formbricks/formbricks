@@ -25,6 +25,15 @@ vi.mock("@/lib/constants", () => ({
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
   IS_POSTHOG_CONFIGURED: true,
+  SESSION_MAX_AGE: 1000,
+  AUDIT_LOG_ENABLED: 1,
+  REDIS_URL: "redis://localhost:6379",
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
 }));
 
 describe("Contact Page Re-export", () => {

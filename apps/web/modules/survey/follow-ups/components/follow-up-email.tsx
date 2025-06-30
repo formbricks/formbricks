@@ -38,6 +38,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
 
   const questions = props.attachResponseData ? getQuestionResponseMapping(props.survey, props.response) : [];
   const t = await getTranslate();
+  // If the logo is not set, we are not using white labeling
   const isDefaultLogo = !props.logoUrl || props.logoUrl === fbLogoUrl;
 
   return (
@@ -84,31 +85,42 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
             })}
           </Container>
 
-          <Section className="mt-4 text-center text-sm">
-            <Link
-              className="m-0 font-normal text-slate-500"
-              href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
-              target="_blank"
-              rel="noopener noreferrer">
-              {t("emails.email_template_text_1")}
-            </Link>
-            {IMPRINT_ADDRESS && (
-              <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
-            )}
-            <Text className="m-0 font-normal text-slate-500 opacity-50">
-              {IMPRINT_URL && (
-                <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {t("emails.imprint")}
-                </Link>
+          {/* If the logo is not set, we are not using white labeling */}
+          {isDefaultLogo ? (
+            <Section className="mt-4 text-center text-sm">
+              <Link
+                className="m-0 font-normal text-slate-500"
+                href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
+                target="_blank"
+                rel="noopener noreferrer">
+                {t("emails.email_template_text_1")}
+              </Link>
+              {IMPRINT_ADDRESS && (
+                <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
               )}
-              {IMPRINT_URL && PRIVACY_URL && " • "}
-              {PRIVACY_URL && (
-                <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {t("emails.privacy_policy")}
-                </Link>
-              )}
-            </Text>
-          </Section>
+              <Text className="m-0 font-normal text-slate-500 opacity-50">
+                {IMPRINT_URL && (
+                  <Link
+                    href={IMPRINT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500">
+                    {t("emails.imprint")}
+                  </Link>
+                )}
+                {IMPRINT_URL && PRIVACY_URL && " • "}
+                {PRIVACY_URL && (
+                  <Link
+                    href={PRIVACY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500">
+                    {t("emails.privacy_policy")}
+                  </Link>
+                )}
+              </Text>
+            </Section>
+          ) : null}
         </Body>
       </Tailwind>
     </Html>

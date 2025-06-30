@@ -1,6 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { apiKeyCache } from "@/lib/cache/api-key";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
@@ -17,99 +15,84 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getApiKeysWithEnvironmentPermissions = reactCache(
-  async (organizationId: string): Promise<TApiKeyWithEnvironmentPermission[]> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZId]);
+  async (organizationId: string): Promise<TApiKeyWithEnvironmentPermission[]> => {
+    validateInputs([organizationId, ZId]);
 
-        try {
-          const apiKeys = await prisma.apiKey.findMany({
-            where: {
-              organizationId,
-            },
+    try {
+      const apiKeys = await prisma.apiKey.findMany({
+        where: {
+          organizationId,
+        },
+        select: {
+          id: true,
+          label: true,
+          createdAt: true,
+          organizationAccess: true,
+          apiKeyEnvironments: {
             select: {
-              id: true,
-              label: true,
-              createdAt: true,
-              organizationAccess: true,
-              apiKeyEnvironments: {
-                select: {
-                  environmentId: true,
-                  permission: true,
-                },
-              },
+              environmentId: true,
+              permission: true,
             },
-          });
-          return apiKeys;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getApiKeysWithEnvironments-${organizationId}`],
-      {
-        tags: [apiKeyCache.tag.byOrganizationId(organizationId)],
+          },
+        },
+      });
+      return apiKeys;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
       }
-    )()
+      throw error;
+    }
+  }
 );
 
 // Get API key with its permissions from a raw API key
 export const getApiKeyWithPermissions = reactCache(async (apiKey: string) => {
   const hashedKey = hashApiKey(apiKey);
-  return cache(
-    async () => {
-      try {
-        // Look up the API key in the new structure
-        const apiKeyData = await prisma.apiKey.findUnique({
-          where: {
-            hashedKey,
-          },
+  try {
+    // Look up the API key in the new structure
+    const apiKeyData = await prisma.apiKey.findUnique({
+      where: {
+        hashedKey,
+      },
+      include: {
+        apiKeyEnvironments: {
           include: {
-            apiKeyEnvironments: {
+            environment: {
               include: {
-                environment: {
-                  include: {
-                    project: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
+                project: {
+                  select: {
+                    id: true,
+                    name: true,
                   },
                 },
               },
             },
           },
-        });
+        },
+      },
+    });
 
-        if (!apiKeyData) return null;
+    if (!apiKeyData) return null;
 
-        // Update the last used timestamp
-        await prisma.apiKey.update({
-          where: {
-            id: apiKeyData.id,
-          },
-          data: {
-            lastUsedAt: new Date(),
-          },
-        });
+    // Update the last used timestamp
+    await prisma.apiKey.update({
+      where: {
+        id: apiKeyData.id,
+      },
+      data: {
+        lastUsedAt: new Date(),
+      },
+    });
 
-        return apiKeyData;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getApiKeyWithPermissions-${apiKey}`],
-    {
-      tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
+    return apiKeyData;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
-  )();
+
+    throw error;
+  }
 });
 
 export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
@@ -120,12 +103,6 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
       where: {
         id: id,
       },
-    });
-
-    apiKeyCache.revalidate({
-      id: deletedApiKeyData.id,
-      hashedKey: deletedApiKeyData.hashedKey,
-      organizationId: deletedApiKeyData.organizationId,
     });
 
     return deletedApiKeyData;
@@ -180,12 +157,6 @@ export const createApiKey = async (
       },
     });
 
-    apiKeyCache.revalidate({
-      id: result.id,
-      hashedKey: result.hashedKey,
-      organizationId: result.organizationId,
-    });
-
     return { ...result, actualKey: key };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -204,12 +175,6 @@ export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): 
       data: {
         label: data.label,
       },
-    });
-
-    apiKeyCache.revalidate({
-      id: updatedApiKey.id,
-      hashedKey: updatedApiKey.hashedKey,
-      organizationId: updatedApiKey.organizationId,
     });
 
     return updatedApiKey;

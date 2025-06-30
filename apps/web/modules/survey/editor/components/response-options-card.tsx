@@ -35,7 +35,6 @@ export const ResponseOptionsCard = ({
   const autoComplete = localSurvey.autoComplete !== null;
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
-  useState;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);

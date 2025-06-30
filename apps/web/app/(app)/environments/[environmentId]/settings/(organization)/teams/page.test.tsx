@@ -29,6 +29,15 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: 587,
   SMTP_USER: "mock-smtp-user",
   SMTP_PASSWORD: "mock-smtp-password",
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "redis://localhost:6379",
+  AUDIT_LOG_ENABLED: 1,
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
 }));
 
 describe("TeamsPage re-export", () => {

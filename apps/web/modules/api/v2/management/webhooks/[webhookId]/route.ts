@@ -11,6 +11,7 @@ import {
   ZWebhookIdSchema,
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -35,7 +36,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "GET")) {
@@ -57,55 +58,78 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       body: ZWebhookUpdateSchema,
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params, body } = parsedInput;
+      if (auditLog) {
+        auditLog.targetId = params?.webhookId;
+      }
 
       if (!body || !params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: !body ? "body" : "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: !body ? "body" : "params", issue: "missing" }],
+          },
+          auditLog
+        );
       }
 
-      // get surveys environment
-      const surveysEnvironmentId = await getEnvironmentIdFromSurveyIds(body.surveyIds);
+      const surveysEnvironmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
 
-      if (!surveysEnvironmentId.ok) {
-        return handleApiError(request, surveysEnvironmentId.error);
+      if (!surveysEnvironmentIdResult.ok) {
+        return handleApiError(request, surveysEnvironmentIdResult.error, auditLog);
       }
+
+      const surveysEnvironmentId = surveysEnvironmentIdResult.data;
 
       // get webhook environment
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "PUT")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "webhook", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "webhook", issue: "unauthorized" }],
+          },
+          auditLog
+        );
       }
 
       // check if webhook environment matches the surveys environment
-      if (webhook.data.environmentId !== surveysEnvironmentId.data) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [
-            { field: "surveys id", issue: "webhook environment does not match the surveys environment" },
-          ],
-        });
+      if (surveysEnvironmentId && webhook.data.environmentId !== surveysEnvironmentId) {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [
+              { field: "surveys id", issue: "webhook environment does not match the surveys environment" },
+            ],
+          },
+          auditLog
+        );
       }
 
       const updatedWebhook = await updateWebhook(params.webhookId, body);
 
       if (!updatedWebhook.ok) {
-        return handleApiError(request, updatedWebhook.error);
+        return handleApiError(request, updatedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = webhook.data;
+        auditLog.newObject = updatedWebhook.data;
       }
 
       return responses.successResponse(updatedWebhook);
     },
+    action: "updated",
+    targetType: "webhook",
   });
 
 export const DELETE = async (request: NextRequest, props: { params: Promise<{ webhookId: string }> }) =>
@@ -115,35 +139,52 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       params: z.object({ webhookId: ZWebhookIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params } = parsedInput;
+      if (auditLog) {
+        auditLog.targetId = params?.webhookId;
+      }
 
       if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "params", issue: "missing" }],
+          },
+          auditLog
+        );
       }
 
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error);
+        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
       if (!hasPermission(authentication.environmentPermissions, webhook.data.environmentId, "DELETE")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "webhook", issue: "unauthorized" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+            details: [{ field: "webhook", issue: "unauthorized" }],
+          },
+          auditLog
+        );
       }
 
       const deletedWebhook = await deleteWebhook(params.webhookId);
 
       if (!deletedWebhook.ok) {
-        return handleApiError(request, deletedWebhook.error);
+        return handleApiError(request, deletedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+      }
+
+      if (auditLog) {
+        auditLog.oldObject = webhook.data;
       }
 
       return responses.successResponse(deletedWebhook);
     },
+    action: "deleted",
+    targetType: "webhook",
   });

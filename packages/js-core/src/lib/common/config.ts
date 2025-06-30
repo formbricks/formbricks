@@ -16,10 +16,7 @@ export class Config {
   }
 
   static getInstance(): Config {
-    if (!Config.instance) {
-      Config.instance = new Config();
-    }
-
+    Config.instance ??= new Config();
     return Config.instance;
   }
 

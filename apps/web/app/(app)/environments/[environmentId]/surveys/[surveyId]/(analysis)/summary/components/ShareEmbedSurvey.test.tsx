@@ -41,6 +41,36 @@ const mockSurveyWeb = {
   styling: null,
 } as unknown as TSurvey;
 
+vi.mock("@/lib/constants", () => ({
+  INTERCOM_SECRET_KEY: "test-secret-key",
+  IS_INTERCOM_CONFIGURED: true,
+  INTERCOM_APP_ID: "test-app-id",
+  ENCRYPTION_KEY: "test-encryption-key",
+  ENTERPRISE_LICENSE_KEY: "test-enterprise-license-key",
+  GITHUB_ID: "test-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_POSTHOG_CONFIGURED: true,
+  POSTHOG_API_HOST: "test-posthog-api-host",
+  POSTHOG_API_KEY: "test-posthog-api-key",
+  FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
+  IS_FORMBRICKS_ENABLED: true,
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
+  IS_FORMBRICKS_CLOUD: false,
+}));
+
 const mockSurveyLink = {
   ...mockSurveyWeb,
   id: "survey2",
@@ -119,7 +149,7 @@ describe("ShareEmbedSurvey", () => {
 
   const defaultProps = {
     survey: mockSurveyWeb,
-    surveyDomain: "test.com",
+    publicDomain: "https://public-domain.com",
     open: true,
     modalView: "start" as "start" | "embed" | "panel",
     setOpen: mockSetOpen,
@@ -128,7 +158,7 @@ describe("ShareEmbedSurvey", () => {
 
   beforeEach(() => {
     mockEmbedViewComponent.mockImplementation(
-      ({ handleInitialPageButton, tabs, activeId, survey, email, surveyUrl, surveyDomain, locale }) => (
+      ({ handleInitialPageButton, tabs, activeId, survey, email, surveyUrl, publicDomain, locale }) => (
         <div>
           <button onClick={() => handleInitialPageButton()}>EmbedViewMockContent</button>
           <div data-testid="embedview-tabs">{JSON.stringify(tabs)}</div>
@@ -136,7 +166,7 @@ describe("ShareEmbedSurvey", () => {
           <div data-testid="embedview-survey-id">{survey.id}</div>
           <div data-testid="embedview-email">{email}</div>
           <div data-testid="embedview-surveyUrl">{surveyUrl}</div>
-          <div data-testid="embedview-surveyDomain">{surveyDomain}</div>
+          <div data-testid="embedview-publicDomain">{publicDomain}</div>
           <div data-testid="embedview-locale">{locale}</div>
         </div>
       )
@@ -146,10 +176,22 @@ describe("ShareEmbedSurvey", () => {
     ));
   });
 
-  test("renders initial 'start' view correctly when open and modalView is 'start'", () => {
-    render(<ShareEmbedSurvey {...defaultProps} />);
+  test("renders initial 'start' view correctly when open and modalView is 'start' for link survey", () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} />);
     expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
     expect(screen.getByText("ShareSurveyLinkMock")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
+    expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
+  });
+
+  test("renders initial 'start' view correctly when open and modalView is 'start' for app survey", () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} />);
+    // For app surveys, ShareSurveyLink should not be rendered
+    expect(screen.queryByText("ShareSurveyLinkMock")).not.toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
@@ -174,20 +216,32 @@ describe("ShareEmbedSurvey", () => {
     expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
   });
 
-  test("calls setOpen(false) when handleInitialPageButton is triggered from EmbedView", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} modalView="embed" />);
+  test("returns to 'start' view when handleInitialPageButton is triggered from EmbedView", async () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
+    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument();
+
     const embedViewButton = screen.getByText("EmbedViewMockContent");
     await userEvent.click(embedViewButton);
-    expect(mockSetOpen).toHaveBeenCalledWith(false);
+
+    // Should go back to start view, not close the modal
+    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
+    expect(screen.queryByText("EmbedViewMockContent")).not.toBeInTheDocument();
+    expect(mockSetOpen).not.toHaveBeenCalled();
   });
 
-  test("calls setOpen(false) when handleInitialPageButton is triggered from PanelInfoView", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} modalView="panel" />);
+  test("returns to 'start' view when handleInitialPageButton is triggered from PanelInfoView", async () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="panel" />);
     expect(mockPanelInfoViewComponent).toHaveBeenCalled();
+    expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
+
     const panelInfoViewButton = screen.getByText("PanelInfoViewMockContent");
     await userEvent.click(panelInfoViewButton);
-    expect(mockSetOpen).toHaveBeenCalledWith(false);
+
+    // Should go back to start view, not close the modal
+    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
+    expect(screen.queryByText("PanelInfoViewMockContent")).not.toBeInTheDocument();
+    expect(mockSetOpen).not.toHaveBeenCalled();
   });
 
   test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
@@ -215,8 +269,8 @@ describe("ShareEmbedSurvey", () => {
     };
     expect(embedViewProps.tabs.length).toBe(3);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
-    expect(embedViewProps.tabs[0].id).toBe("email");
-    expect(embedViewProps.activeId).toBe("email");
+    expect(embedViewProps.tabs[0].id).toBe("link");
+    expect(embedViewProps.activeId).toBe("link");
   });
 
   test("correctly configures for 'web' survey type in embed view", () => {

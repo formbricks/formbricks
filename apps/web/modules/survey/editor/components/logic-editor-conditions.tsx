@@ -232,14 +232,14 @@ export function LogicEditorConditions({
           {index === 0 ? (
             <div>{t("environments.surveys.edit.when")}</div>
           ) : (
-            <div
+            <button
               className={cn("w-14", index === 1 && "cursor-pointer underline")}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);
               }}>
               {connector}
-            </div>
+            </button>
           )}
           <div className="rounded-lg border border-slate-400 p-3">
             <LogicEditorConditions
@@ -301,14 +301,14 @@ export function LogicEditorConditions({
           {index === 0 ? (
             t("environments.surveys.edit.when")
           ) : (
-            <div
+            <button
               className={cn("w-14", index === 1 && "cursor-pointer underline")}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);
               }}>
               {connector}
-            </div>
+            </button>
           )}
         </div>
         <InputCombobox

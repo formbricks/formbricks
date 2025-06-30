@@ -66,6 +66,8 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "AUDIT_LOG_ENABLED",
+        "AUDIT_LOG_GET_USER_IP",
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",
@@ -139,6 +141,7 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SESSION_MAX_AGE",
         "SENTRY_DSN",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
@@ -154,7 +157,7 @@
         "STRIPE_WEBHOOK_SECRET",
         "SURVEYS_PACKAGE_MODE",
         "SURVEYS_PACKAGE_BUILD",
-        "SURVEY_URL",
+        "PUBLIC_URL",
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
@@ -170,7 +173,7 @@
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "DISABLE_USER_MANAGEMENT"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

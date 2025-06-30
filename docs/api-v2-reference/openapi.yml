@@ -11,34 +11,41 @@ tags:
     description: Operations for managing roles.
   - name: Me
     description: Operations for managing your API key.
-  - name: Management API > Responses
+  - name: Management API - Responses
     description: Operations for managing responses.
-  - name: Management API > Contacts
+  - name: Management API - Contacts
     description: Operations for managing contacts.
-  - name: Management API > Contact Attributes
+  - name: Management API - Contact Attributes
     description: Operations for managing contact attributes.
-  - name: Management API > Contact Attributes Keys
-    description: Operations for managing contact attributes keys.
-  - name: Management API > Surveys
+  - name: Management API - Contact Attribute Keys
+    description: Operations for managing contact attribute keys.
+  - name: Management API - Surveys
     description: Operations for managing surveys.
-  - name: Management API > Surveys > Contact Links
+  - name: Management API - Surveys - Contact Links
     description: Operations for generating personalized survey links for contacts.
-  - name: Management API > Webhooks
+  - name: Management API - Webhooks
     description: Operations for managing webhooks.
-  - name: Organizations API > Teams
+  - name: Organizations API - Teams
     description: Operations for managing teams.
-  - name: Organizations API > Project Teams
+  - name: Organizations API - Project Teams
     description: Operations for managing project teams.
-  - name: Organizations API > Users
+  - name: Organizations API - Users
     description: Operations for managing users.
 security:
   - apiKeyAuth: []
 paths:
-  /responses/{responseId}:
+  /client/{environmentId}/responses/{responseId}:
     put:
+      security: []
       description: Update an existing response for example when you want to mark a
         response as finished or you want to change an existing response's value.
       parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
         - in: path
           name: responseId
           required: true
@@ -75,12 +82,13 @@ paths:
           description: Not Found
       summary: Update Response
       tags:
-        - Client API > Response
+        - Client API - Response
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/responses:
+  /client/{environmentId}/responses:
     post:
+      security: []
       description: Create a response for a survey and its fields with the user's
         responses. The userId & meta here is optional
       requestBody:
@@ -102,12 +110,13 @@ paths:
           description: Created
       summary: Create Response
       tags:
-        - Client API > Response
+        - Client API - Response
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/contacts/{userId}/attributes:
+  /client/{environmentId}/contacts/{userId}/attributes:
     put:
+      security: []
       description: Update a contact's attributes in Formbricks to keep them in sync
         with your app or when you want to set a custom attribute in Formbricks.
       parameters:
@@ -150,12 +159,13 @@ paths:
           description: Internal Server Error
       summary: Update Contact (Attributes)
       tags:
-        - Client API > Contacts
+        - Client API - Contacts
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/identify/contacts/{userId}:
+  /client/{environmentId}/identify/contacts/{userId}:
     get:
+      security: []
       description: Retrieves a contact's state including their segments, displays,
         responses and other tracking information. If the contact doesn't exist,
         it will be created.
@@ -182,12 +192,13 @@ paths:
           description: OK
       summary: Get Contact State
       tags:
-        - Client API > Contacts
+        - Client API - Contacts
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/displays:
+  /client/{environmentId}/displays:
     post:
+      security: []
       description: Create a new display for a valid survey ID. If a userId is passed,
         the display is linked to the user.
       requestBody:
@@ -209,45 +220,26 @@ paths:
           description: Created
       summary: Create Display
       tags:
-        - Client API > Display
+        - Client API - Display
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/displays/{displayId}:
-    put:
-      description: Update a Display for a user. A use case can be when a user submits
-        a response & you want to link it to an existing display.
+  /client/{environmentId}/environment:
+    get:
+      security: []
+      description: "Retrieves the environment state to be used in Formbricks SDKs.
+        **Cache Behavior**: This endpoint uses server-side caching with a
+        **5-minute TTL (Time To Live)**. Any changes to surveys, action classes,
+        project settings, or other environment data will take up to 5 minutes to
+        reflect in the API response. This caching is implemented to improve
+        performance for high-frequency SDK requests."
       parameters:
         - in: path
-          name: displayId
+          name: environmentId
           required: true
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                responseId: response123
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                displayId: display123
-              schema:
-                type: object
-          description: OK
-      summary: Update Display
-      tags:
-        - Client API > Display
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/environment:
-    get:
-      description: Retrieves the environment state to be used in Formbricks SDKs
+          description: The ID of the environment.
       responses:
         "200":
           content:
@@ -260,12 +252,13 @@ paths:
           description: OK
       summary: Get Environment State
       tags:
-        - Client API > Environment
+        - Client API - Environment
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/user:
+  /client/{environmentId}/user:
     post:
+      security: []
       description: Endpoint for creating or identifying a user within the specified
         environment. If the user already exists, this will identify them and
         potentially update user attributes. If they don't exist, it will create
@@ -290,12 +283,13 @@ paths:
           description: OK
       summary: Create or Identify User
       tags:
-        - Client API > User
+        - Client API - User
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /{environmentId}/storage:
+  /client/{environmentId}/storage:
     post:
+      security: []
       summary: Upload Private File
       description: API endpoint for uploading private files. Uploaded files are kept
         private so that only users with access to the specified environment can
@@ -303,7 +297,7 @@ paths:
         type from the request body, and returns a signed URL for S3 uploads
         along with a local upload URL.
       tags:
-        - Client API > File Upload
+        - Client API - File Upload
       parameters:
         - in: path
           name: environmentId
@@ -402,10 +396,11 @@ paths:
                 example:
                   error: Survey survey123 not found
       servers:
-        - url: https://app.formbricks.com/api/v2/client
+        - url: https://app.formbricks.com/api/v2
           description: Formbricks API Server
-  /{environmentId}/storage/local:
+  /client/{environmentId}/storage/local:
     post:
+      security: []
       summary: Upload Private File to Local Storage
       description: API endpoint for uploading private files to local storage. The
         request must include a valid signature, UUID, and timestamp to verify
@@ -413,7 +408,7 @@ paths:
         request body. The "Content-Type" header must be set to a valid MIME
         type, and the file data must be a valid file object (buffer).
       tags:
-        - Client API > File Upload
+        - Client API - File Upload
       parameters:
         - in: path
           name: environmentId
@@ -433,7 +428,9 @@ paths:
                   description: The ID of the survey associated with the file.
                 fileName:
                   type: string
-                  description: The URI encoded file name.
+                  description: This must be the `fileName` returned from the [Upload Private
+                    File](/api-v2-reference/client-api--file-upload/upload-private-file)
+                    endpoint (Step 1).
                 fileType:
                   type: string
                   description: The MIME type of the file.
@@ -630,7 +627,7 @@ paths:
       summary: Get responses
       description: Gets responses from the database.
       tags:
-        - Management API > Responses
+        - Management API - Responses
       parameters:
         - in: query
           name: limit
@@ -843,7 +840,7 @@ paths:
       summary: Create a response
       description: Creates a response in the database.
       tags:
-        - Management API > Responses
+        - Management API - Responses
       requestBody:
         required: true
         description: The response to create
@@ -1067,7 +1064,7 @@ paths:
       summary: Get a response
       description: Gets a response from the database.
       tags:
-        - Management API > Responses
+        - Management API - Responses
       parameters:
         - in: path
           name: id
@@ -1194,7 +1191,7 @@ paths:
       summary: Update a response
       description: Updates a response in the database.
       tags:
-        - Management API > Responses
+        - Management API - Responses
       parameters:
         - in: path
           name: id
@@ -1404,7 +1401,7 @@ paths:
       summary: Delete a response
       description: Deletes a response from the database.
       tags:
-        - Management API > Responses
+        - Management API - Responses
       parameters:
         - in: path
           name: id
@@ -1531,12 +1528,17 @@ paths:
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
-      description: Uploads contacts in bulk
+      description: Uploads contacts in bulk. Each contact in the payload must have an
+        'email' attribute present in their attributes array. The email attribute
+        is mandatory and must be a valid email format. Without a valid email,
+        the contact will be skipped during processing.
       tags:
-        - Management API > Contacts
+        - Management API - Contacts
       requestBody:
         required: true
-        description: The contacts to upload
+        description: The contacts to upload. Each contact must include an 'email'
+          attribute in their attributes array. The email is used as the unique
+          identifier for the contact.
         content:
           application/json:
             schema:
@@ -1571,10 +1573,39 @@ paths:
                             - value
                     required:
                       - attributes
-                  maxItems: 1000
+                  maxItems: 250
               required:
                 - environmentId
                 - contacts
+            example:
+              environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
+              contacts:
+                - attributes:
+                    - attributeKey:
+                        key: email
+                        name: Email Address
+                      value: john.doe@example.com
+                    - attributeKey:
+                        key: firstName
+                        name: First Name
+                      value: John
+                    - attributeKey:
+                        key: lastName
+                        name: Last Name
+                      value: Doe
+                - attributes:
+                    - attributeKey:
+                        key: email
+                        name: Email Address
+                      value: jane.smith@example.com
+                    - attributeKey:
+                        key: firstName
+                        name: First Name
+                      value: Jane
+                    - attributeKey:
+                        key: lastName
+                        name: Last Name
+                      value: Smith
       responses:
         "200":
           description: Contacts uploaded successfully.
@@ -1634,7 +1665,7 @@ paths:
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
       tags:
-        - Management API > Contact Attribute Keys
+        - Management API - Contact Attribute Keys
       parameters:
         - in: query
           name: limit
@@ -1755,7 +1786,7 @@ paths:
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
       tags:
-        - Management API > Contact Attribute Keys
+        - Management API - Contact Attribute Keys
       requestBody:
         required: true
         description: The contact attribute key to create
@@ -1819,7 +1850,7 @@ paths:
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
       tags:
-        - Management API > Contact Attribute Keys
+        - Management API - Contact Attribute Keys
       parameters:
         - in: path
           name: id
@@ -1881,7 +1912,7 @@ paths:
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
       tags:
-        - Management API > Contact Attribute Keys
+        - Management API - Contact Attribute Keys
       parameters:
         - in: path
           name: id
@@ -1950,7 +1981,7 @@ paths:
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
       tags:
-        - Management API > Contact Attribute Keys
+        - Management API - Contact Attribute Keys
       parameters:
         - in: path
           name: id
@@ -2014,7 +2045,7 @@ paths:
       summary: Get personalized survey link for a contact
       description: Retrieves a personalized link for a specific survey.
       tags:
-        - Management API > Surveys > Contact Links
+        - Management API - Surveys - Contact Links
       parameters:
         - in: path
           name: surveyId
@@ -2053,7 +2084,7 @@ paths:
       summary: Get survey links for contacts in a segment
       description: Generates personalized survey links for contacts in a segment.
       tags:
-        - Management API > Surveys > Contact Links
+        - Management API - Surveys - Contact Links
       parameters:
         - in: path
           name: surveyId
@@ -2152,7 +2183,7 @@ paths:
       summary: Get webhooks
       description: Gets webhooks from the database.
       tags:
-        - Management API > Webhooks
+        - Management API - Webhooks
       parameters:
         - in: query
           name: limit
@@ -2257,6 +2288,7 @@ paths:
                               - responseFinished
                               - responseCreated
                               - responseUpdated
+                          minItems: 1
                           description: The triggers of the webhook
                         surveyIds:
                           type: array
@@ -2277,7 +2309,7 @@ paths:
       summary: Create a webhook
       description: Creates a webhook in the database.
       tags:
-        - Management API > Webhooks
+        - Management API - Webhooks
       requestBody:
         required: true
         description: The webhook to create
@@ -2307,6 +2339,7 @@ paths:
                   items:
                     type: string
                     enum: *a10
+                  minItems: 1
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2360,6 +2393,7 @@ paths:
                     items:
                       type: string
                       enum: *a10
+                    minItems: 1
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2373,7 +2407,7 @@ paths:
       summary: Get a webhook
       description: Gets a webhook from the database.
       tags:
-        - Management API > Webhooks
+        - Management API - Webhooks
       parameters:
         - in: path
           name: id
@@ -2421,6 +2455,7 @@ paths:
                     items:
                       type: string
                       enum: *a10
+                    minItems: 1
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2432,7 +2467,7 @@ paths:
       summary: Update a webhook
       description: Updates a webhook in the database.
       tags:
-        - Management API > Webhooks
+        - Management API - Webhooks
       parameters:
         - in: path
           name: id
@@ -2469,6 +2504,7 @@ paths:
                   items:
                     type: string
                     enum: *a10
+                  minItems: 1
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2522,6 +2558,7 @@ paths:
                     items:
                       type: string
                       enum: *a10
+                    minItems: 1
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2533,7 +2570,7 @@ paths:
       summary: Delete a webhook
       description: Deletes a webhook from the database.
       tags:
-        - Management API > Webhooks
+        - Management API - Webhooks
       parameters:
         - in: path
           name: id
@@ -2581,6 +2618,7 @@ paths:
                     items:
                       type: string
                       enum: *a10
+                    minItems: 1
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2596,7 +2634,7 @@ paths:
       summary: Get teams
       description: Gets teams from the database.
       tags:
-        - Organizations API > Teams
+        - Organizations API - Teams
       parameters:
         - in: path
           name: organizationId
@@ -2694,7 +2732,7 @@ paths:
       summary: Create a team
       description: Creates a team in the database.
       tags:
-        - Organizations API > Teams
+        - Organizations API - Teams
       parameters:
         - in: path
           name: organizationId
@@ -2749,7 +2787,7 @@ paths:
       summary: Get a team
       description: Gets a team from the database.
       tags:
-        - Organizations API > Teams
+        - Organizations API - Teams
       parameters:
         - in: path
           name: id
@@ -2794,7 +2832,7 @@ paths:
       summary: Update a team
       description: Updates a team in the database.
       tags:
-        - Organizations API > Teams
+        - Organizations API - Teams
       parameters:
         - in: path
           name: id
@@ -2853,7 +2891,7 @@ paths:
       summary: Delete a team
       description: Deletes a team from the database.
       tags:
-        - Organizations API > Teams
+        - Organizations API - Teams
       parameters:
         - in: path
           name: id
@@ -2900,7 +2938,7 @@ paths:
       summary: Get project teams
       description: Gets projectTeams from the database.
       tags:
-        - Organizations API > Project Teams
+        - Organizations API - Project Teams
       parameters:
         - in: path
           name: organizationId
@@ -3009,7 +3047,7 @@ paths:
       summary: Create a projectTeam
       description: Creates a project team in the database.
       tags:
-        - Organizations API > Project Teams
+        - Organizations API - Project Teams
       parameters:
         - in: path
           name: organizationId
@@ -3076,7 +3114,7 @@ paths:
       summary: Update a project team
       description: Updates a project team in the database.
       tags:
-        - Organizations API > Project Teams
+        - Organizations API - Project Teams
       parameters:
         - in: path
           name: organizationId
@@ -3143,7 +3181,7 @@ paths:
       summary: Delete a project team
       description: Deletes a project team from the database.
       tags:
-        - Organizations API > Project Teams
+        - Organizations API - Project Teams
       parameters:
         - in: path
           name: organizationId
@@ -3198,7 +3236,7 @@ paths:
       description: Gets users from the database.<br />Only available for self-hosted
         Formbricks.
       tags:
-        - Organizations API > Users
+        - Organizations API - Users
       parameters:
         - in: path
           name: organizationId
@@ -3334,7 +3372,7 @@ paths:
       description: Create a new user in the database.<br />Only available for
         self-hosted Formbricks.
       tags:
-        - Organizations API > Users
+        - Organizations API - Users
       parameters:
         - in: path
           name: organizationId
@@ -3437,7 +3475,7 @@ paths:
       description: Updates an existing user in the database.<br />Only available for
         self-hosted Formbricks.
       tags:
-        - Organizations API > Users
+        - Organizations API - Users
       parameters:
         - in: path
           name: organizationId
@@ -4383,6 +4421,22 @@ components:
             - enabled
             - message
           description: Email verification configuration (deprecated)
+        recaptcha:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            threshold:
+              type: number
+              multipleOf: 0.1
+              minimum: 0.1
+              maximum: 0.9
+          required:
+            - enabled
+            - threshold
+          description: Google reCAPTCHA configuration
         displayPercentage:
           type:
             - number
@@ -4431,6 +4485,7 @@ components:
         - inlineTriggers
         - isBackButtonHidden
         - verifyEmail
+        - recaptcha
         - displayPercentage
         - questions
     webhook:
@@ -4468,6 +4523,7 @@ components:
           items:
             type: string
             enum: *a10
+          minItems: 1
           description: The triggers of the webhook
         surveyIds:
           type: array

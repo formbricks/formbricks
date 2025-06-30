@@ -1,95 +1,33 @@
-import { cache } from "@/lib/cache";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZId, ZString } from "@formbricks/types/common";
-import {
-  TContactAttributeKey,
-  TContactAttributeKeyType,
-  ZContactAttributeKeyType,
-} from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/common";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { DatabaseError } from "@formbricks/types/errors";
 import {
   TContactAttributeKeyUpdateInput,
   ZContactAttributeKeyUpdateInput,
 } from "../types/contact-attribute-keys";
 
 export const getContactAttributeKey = reactCache(
-  (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> =>
-    cache(
-      async () => {
-        try {
-          const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
-            where: {
-              id: contactAttributeKeyId,
-            },
-          });
-
-          return contactAttributeKey;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getContactAttributeKey-attribute-keys-management-api-${contactAttributeKeyId}`],
-      {
-        tags: [contactAttributeKeyCache.tag.byId(contactAttributeKeyId)],
-      }
-    )()
-);
-
-export const createContactAttributeKey = async (
-  environmentId: string,
-  key: string,
-  type: TContactAttributeKeyType
-): Promise<TContactAttributeKey | null> => {
-  validateInputs([environmentId, ZId], [key, ZString], [type, ZContactAttributeKeyType]);
-
-  const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
-    where: {
-      environmentId,
-    },
-  });
-
-  if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-    throw new OperationNotAllowedError(
-      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for environment ${environmentId}`
-    );
-  }
-
-  try {
-    const contactAttributeKey = await prisma.contactAttributeKey.create({
-      data: {
-        key,
-        name: key,
-        type,
-        environment: {
-          connect: {
-            id: environmentId,
-          },
+  async (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> => {
+    try {
+      const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
+        where: {
+          id: contactAttributeKeyId,
         },
-      },
-    });
+      });
 
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
-    });
-
-    return contactAttributeKey;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+      return contactAttributeKey;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-};
+);
 
 export const deleteContactAttributeKey = async (
   contactAttributeKeyId: string
@@ -101,12 +39,6 @@ export const deleteContactAttributeKey = async (
       where: {
         id: contactAttributeKeyId,
       },
-    });
-
-    contactAttributeKeyCache.revalidate({
-      id: deletedContactAttributeKey.id,
-      environmentId: deletedContactAttributeKey.environmentId,
-      key: deletedContactAttributeKey.key,
     });
 
     return deletedContactAttributeKey;
@@ -131,13 +63,9 @@ export const updateContactAttributeKey = async (
       },
       data: {
         description: data.description,
+        name: data.name,
+        key: data.key,
       },
-    });
-
-    contactAttributeKeyCache.revalidate({
-      id: contactAttributeKey.id,
-      environmentId: contactAttributeKey.environmentId,
-      key: contactAttributeKey.key,
     });
 
     return contactAttributeKey;

@@ -1,13 +1,10 @@
-import { cache } from "@/lib/cache";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { Organization, Prisma, Response as ResponsePrisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -99,7 +96,6 @@ const mockResponsesPrisma = [mockResponsePrisma, { ...mockResponsePrisma, id: "r
 const mockTransformedResponses = [mockResponse, { ...mockResponse, id: "response-2" }];
 
 // Mock dependencies
-vi.mock("@/lib/cache");
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   POSTHOG_API_KEY: "mock-posthog-api-key",
@@ -125,10 +121,8 @@ vi.mock("@/lib/constants", () => ({
 }));
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/posthogServer");
-vi.mock("@/lib/response/cache");
 vi.mock("@/lib/response/service");
 vi.mock("@/lib/response/utils");
-vi.mock("@/lib/responseNote/cache");
 vi.mock("@/lib/telemetry");
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
@@ -145,10 +139,6 @@ vi.mock("./contact");
 describe("Response Lib Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // No need to mock IS_FORMBRICKS_CLOUD here anymore unless specifically changing it from the default
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
   });
 
   describe("createResponse", () => {
@@ -174,13 +164,6 @@ describe("Response Lib Tests", () => {
           }),
         })
       );
-      expect(responseCache.revalidate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contactId: mockContact.id,
-          userId: mockUserId,
-        })
-      );
-      expect(responseNoteCache.revalidate).toHaveBeenCalled();
       expect(response.contact).toEqual({ id: mockContact.id, userId: mockUserId });
     });
 
@@ -201,6 +184,18 @@ describe("Response Lib Tests", () => {
 
       await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
+    });
+
+    test("should handle RelatedRecordDoesNotExist error with specific message", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Related record does not exist", {
+        code: "P2025", // PrismaErrorType.RelatedRecordDoesNotExist
+        clientVersion: "2.0",
+      });
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
+
+      await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
+      await expect(createResponse(mockResponseInput)).rejects.toThrow("Display ID does not exist");
     });
 
     test("should handle generic errors", async () => {
@@ -296,7 +291,6 @@ describe("Response Lib Tests", () => {
       );
       expect(getResponseContact).toHaveBeenCalledTimes(mockResponsesPrisma.length);
       expect(responses).toEqual(mockTransformedResponses);
-      expect(cache).toHaveBeenCalled();
     });
 
     test("should return responses with limit and offset", async () => {
@@ -311,7 +305,6 @@ describe("Response Lib Tests", () => {
           skip: mockOffset,
         })
       );
-      expect(cache).toHaveBeenCalled();
     });
 
     test("should return empty array if no responses found", async () => {
@@ -322,7 +315,6 @@ describe("Response Lib Tests", () => {
       expect(responses).toEqual([]);
       expect(prisma.response.findMany).toHaveBeenCalled();
       expect(getResponseContact).not.toHaveBeenCalled();
-      expect(cache).toHaveBeenCalled();
     });
 
     test("should handle PrismaClientKnownRequestError", async () => {
@@ -333,7 +325,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(prisma.response.findMany).mockRejectedValue(prismaError);
 
       await expect(getResponsesByEnvironmentIds(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
-      expect(cache).toHaveBeenCalled();
     });
 
     test("should handle generic errors", async () => {
@@ -341,7 +332,6 @@ describe("Response Lib Tests", () => {
       vi.mocked(prisma.response.findMany).mockRejectedValue(genericError);
 
       await expect(getResponsesByEnvironmentIds(mockEnvironmentIds)).rejects.toThrow(genericError);
-      expect(cache).toHaveBeenCalled();
     });
   });
 });

@@ -162,7 +162,6 @@ describe("ResponsePage", () => {
       expect(screen.getByTestId("results-share-button")).toBeInTheDocument();
       expect(screen.getByTestId("response-data-view")).toBeInTheDocument();
     });
-    expect(mockGetResponseCountAction).toHaveBeenCalled();
     expect(mockGetResponsesAction).toHaveBeenCalled();
   });
 
@@ -179,7 +178,6 @@ describe("ResponsePage", () => {
     await waitFor(() => {
       expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
     });
-    expect(mockGetResponseCountBySurveySharingKeyAction).toHaveBeenCalled();
     expect(mockGetResponsesBySurveySharingKeyAction).toHaveBeenCalled();
   });
 
@@ -297,8 +295,7 @@ describe("ResponsePage", () => {
     rerender(<ResponsePage {...defaultProps} />);
 
     await waitFor(() => {
-      // Should fetch count and responses again due to filter change
-      expect(mockGetResponseCountAction).toHaveBeenCalledTimes(2);
+      // Should fetch responses again due to filter change
       expect(mockGetResponsesAction).toHaveBeenCalledTimes(2);
       // Check if it fetches with offset 0 (first page)
       expect(mockGetResponsesAction).toHaveBeenLastCalledWith(

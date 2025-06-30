@@ -54,6 +54,7 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 export const QuestionFormInput = ({
@@ -74,6 +75,7 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   locale,
+  onKeyDown,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -243,6 +245,13 @@ export const QuestionFormInput = ({
     ]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (onKeyDown) onKeyDown(e);
+    },
+    [onKeyDown]
+  );
+
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
@@ -300,7 +309,7 @@ export const QuestionFormInput = ({
               onAddFallback={() => {
                 inputRef.current?.focus();
               }}
-              isRecallAllowed={!isWelcomeCard && (id === "headline" || id === "subheader")}
+              isRecallAllowed={id === "headline" || id === "subheader"}
               usedLanguageCode={usedLanguageCode}
               render={({
                 value,
@@ -382,6 +391,7 @@ export const QuestionFormInput = ({
                           }
                           autoComplete={isRecallSelectVisible ? "off" : "on"}
                           autoFocus={id === "headline"}
+                          onKeyDown={handleKeyDown}
                         />
                         {recallComponents}
                       </div>

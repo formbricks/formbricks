@@ -6,7 +6,7 @@ import * as React from "react";
 const DialogPortal = DialogPrimitive.Portal;
 
 const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & { blur?: boolean }
 >(({ className, blur, ...props }, ref) => (
   <DialogPrimitive.Overlay
@@ -35,7 +35,7 @@ const sizeClassName = {
 };
 
 const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
 >(
   (

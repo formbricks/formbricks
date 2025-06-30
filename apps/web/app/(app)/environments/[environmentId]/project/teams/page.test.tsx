@@ -24,6 +24,9 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "test-redis-url",
+  AUDIT_LOG_ENABLED: true,
 }));
 
 describe("ProjectTeams re-export", () => {

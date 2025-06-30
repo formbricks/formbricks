@@ -1,4 +1,3 @@
-import { cache } from "@/lib/cache";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
@@ -25,23 +24,6 @@ import {
 } from "./surveySummary";
 // Ensure this path is correct
 import { convertFloatTo2Decimal } from "./utils";
-
-// Mock dependencies
-vi.mock("@/lib/cache", async () => {
-  const actual = await vi.importActual("@/lib/cache");
-  return {
-    ...(actual as any),
-    cache: vi.fn((fn) => fn()), // Mock cache function to just execute the passed function
-  };
-});
-
-vi.mock("react", async () => {
-  const actual = await vi.importActual("react");
-  return {
-    ...actual,
-    cache: vi.fn().mockImplementation((fn) => fn),
-  };
-});
 
 vi.mock("@/lib/display/service", () => ({
   getDisplayCountBySurveyId: vi.fn(),
@@ -162,10 +144,6 @@ describe("getSurveySummaryMeta", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
   });
 
   test("calculates meta correctly", () => {
@@ -225,9 +203,6 @@ describe("getSurveySummaryDropOff", () => {
       jumpTarget: undefined,
       requiredQuestionIds: [],
       calculations: {},
-    });
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
     });
   });
 
@@ -367,9 +342,7 @@ describe("getQuestionSummary", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("summarizes OpenText questions", async () => {
@@ -746,9 +719,7 @@ describe("getSurveySummary", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("returns survey summary successfully", async () => {
@@ -758,7 +729,6 @@ describe("getSurveySummary", () => {
     expect(summary.dropOff).toBeDefined();
     expect(summary.summary).toBeDefined();
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
-    expect(getResponseCountBySurveyId).toHaveBeenCalledWith(mockSurveyId, undefined);
     expect(prisma.response.findMany).toHaveBeenCalled(); // Check if getResponsesForSummary was effectively called
     expect(getDisplayCountBySurveyId).toHaveBeenCalled();
   });
@@ -770,7 +740,6 @@ describe("getSurveySummary", () => {
 
   test("handles filterCriteria", async () => {
     const filterCriteria: TResponseFilterCriteria = { finished: true };
-    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(2); // Assume 2 finished responses
     const finishedResponses = mockResponses
       .filter((r) => r.finished)
       .map((r) => ({ ...r, contactId: null, personAttributes: {} }));
@@ -778,7 +747,6 @@ describe("getSurveySummary", () => {
 
     await getSurveySummary(mockSurveyId, filterCriteria);
 
-    expect(getResponseCountBySurveyId).toHaveBeenCalledWith(mockSurveyId, filterCriteria);
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ surveyId: mockSurveyId }), // buildWhereClause is mocked
@@ -798,9 +766,7 @@ describe("getResponsesForSummary", () => {
     vi.mocked(prisma.response.findMany).mockResolvedValue(
       mockResponses.map((r) => ({ ...r, contactId: null, personAttributes: {} })) as any
     );
-    vi.mocked(cache).mockImplementation((fn) => async () => {
-      return fn();
-    });
+    // React cache is already mocked globally - no need to mock it again
   });
 
   test("fetches and transforms responses", async () => {
@@ -843,6 +809,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: null,
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
@@ -876,6 +852,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: "contact-1",
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
@@ -904,6 +890,16 @@ describe("getResponsesForSummary", () => {
       language: "en",
       ttc: {},
       finished: true,
+      createdAt: new Date(),
+      meta: {},
+      variables: {},
+      surveyId: "survey-1",
+      contactId: "contact-1",
+      personAttributes: {},
+      singleUseId: null,
+      isFinished: true,
+      displayId: "display-1",
+      endingId: null,
     };
 
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);

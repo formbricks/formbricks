@@ -46,7 +46,7 @@ export function RankingQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: RankingQuestionProps) {
+}: Readonly<RankingQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
@@ -171,22 +171,26 @@ export function RankingQuestion({
                   return (
                     <div
                       key={item.id}
-                      tabIndex={isCurrent ? 0 : -1}
-                      onKeyDown={(e) => {
-                        if (e.key === " ") {
-                          handleItemClick(item);
-                        }
-                      }}
                       className={cn(
-                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
+                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
                         isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
-                      )}
-                      autoFocus={idx === 0 && autoFocusEnabled}>
-                      <div
-                        className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group"
-                        onClick={() => {
+                      )}>
+                      <button
+                        autoFocus={idx === 0 && autoFocusEnabled}
+                        tabIndex={isCurrent ? 0 : -1}
+                        onKeyDown={(e) => {
+                          if (e.key === " ") {
+                            e.preventDefault();
+                            handleItemClick(item);
+                          }
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
                           handleItemClick(item);
-                        }}>
+                        }}
+                        type="button"
+                        aria-label={`Select ${getLocalizedValue(item.label, languageCode)} for ranking`}
+                        className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
                         <span
                           className={cn(
                             "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
@@ -196,18 +200,20 @@ export function RankingQuestion({
                           )}>
                           {(idx + 1).toString()}
                         </span>
-                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm">
+                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
                           {getLocalizedValue(item.label, languageCode)}
                         </div>
-                      </div>
+                      </button>
                       {isSorted ? (
                         <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
                           <button
-                            tabIndex={-1}
+                            tabIndex={isFirst ? -1 : 0}
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
                               handleMove(item.id, "up");
                             }}
+                            aria-label={`Move ${getLocalizedValue(item.label, languageCode)} up`}
                             className={cn(
                               "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
                               isFirst
@@ -230,9 +236,10 @@ export function RankingQuestion({
                             </svg>
                           </button>
                           <button
-                            tabIndex={-1}
+                            tabIndex={isLast ? -1 : 0}
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
                               handleMove(item.id, "down");
                             }}
                             className={cn(
@@ -241,6 +248,7 @@ export function RankingQuestion({
                                 ? "fb-opacity-30 fb-cursor-not-allowed"
                                 : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
                             )}
+                            aria-label={`Move ${getLocalizedValue(item.label, languageCode)} down`}
                             disabled={isLast}>
                             <svg
                               xmlns="http://www.w3.org/2000/svg"

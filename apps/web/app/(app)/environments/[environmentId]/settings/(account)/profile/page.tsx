@@ -1,6 +1,6 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -44,7 +44,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           <SettingsCard
             title={t("environments.settings.profile.personal_information")}
             description={t("environments.settings.profile.update_personal_info")}>
-            <EditProfileDetailsForm user={user} isPasswordResetEnabled={isPasswordResetEnabled} />
+            <EditProfileDetailsForm
+              user={user}
+              emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+              isPasswordResetEnabled={isPasswordResetEnabled}
+            />
           </SettingsCard>
           <SettingsCard
             title={t("common.avatar")}

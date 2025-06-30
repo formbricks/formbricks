@@ -2,7 +2,6 @@ import { EnvironmentType, Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { environmentCache } from "./cache";
 import { getEnvironment, getEnvironments, updateEnvironment } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -19,20 +18,6 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("../utils/validate", () => ({
   validateInputs: vi.fn(),
-}));
-
-vi.mock("../cache", () => ({
-  cache: vi.fn((fn) => fn),
-}));
-
-vi.mock("./cache", () => ({
-  environmentCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byId: vi.fn(),
-      byProjectId: vi.fn(),
-    },
-  },
 }));
 
 describe("Environment Service", () => {
@@ -53,7 +38,6 @@ describe("Environment Service", () => {
       };
 
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironment);
-      vi.mocked(environmentCache.tag.byId).mockReturnValue("mock-tag");
 
       const result = await getEnvironment("clh6pzwx90000e9ogjr0mf7sx");
 
@@ -67,7 +51,6 @@ describe("Environment Service", () => {
 
     test("should return null when environment not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-      vi.mocked(environmentCache.tag.byId).mockReturnValue("mock-tag");
 
       const result = await getEnvironment("clh6pzwx90000e9ogjr0mf7sx");
 
@@ -80,7 +63,6 @@ describe("Environment Service", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.environment.findUnique).mockRejectedValue(prismaError);
-      vi.mocked(environmentCache.tag.byId).mockReturnValue("mock-tag");
 
       await expect(getEnvironment("clh6pzwx90000e9ogjr0mf7sx")).rejects.toThrow(DatabaseError);
     });
@@ -121,7 +103,6 @@ describe("Environment Service", () => {
           },
         ],
       });
-      vi.mocked(environmentCache.tag.byProjectId).mockReturnValue("mock-tag");
 
       const result = await getEnvironments("clh6pzwx90000e9ogjr0mf7sy");
 
@@ -138,7 +119,6 @@ describe("Environment Service", () => {
 
     test("should throw ResourceNotFoundError when project not found", async () => {
       vi.mocked(prisma.project.findFirst).mockResolvedValue(null);
-      vi.mocked(environmentCache.tag.byProjectId).mockReturnValue("mock-tag");
 
       await expect(getEnvironments("clh6pzwx90000e9ogjr0mf7sy")).rejects.toThrow(ResourceNotFoundError);
     });
@@ -149,7 +129,6 @@ describe("Environment Service", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.project.findFirst).mockRejectedValue(prismaError);
-      vi.mocked(environmentCache.tag.byProjectId).mockReturnValue("mock-tag");
 
       await expect(getEnvironments("clh6pzwx90000e9ogjr0mf7sy")).rejects.toThrow(DatabaseError);
     });
@@ -184,10 +163,6 @@ describe("Environment Service", () => {
           appSetupCompleted: true,
           updatedAt: expect.any(Date),
         }),
-      });
-      expect(environmentCache.revalidate).toHaveBeenCalledWith({
-        id: "clh6pzwx90000e9ogjr0mf7sx",
-        projectId: "clh6pzwx90000e9ogjr0mf7sy",
       });
     });
 

@@ -87,21 +87,6 @@ export const CTAQuestionForm = ({
 
       <div className="mt-2 flex justify-between gap-8">
         <div className="flex w-full space-x-2">
-          <QuestionFormInput
-            id="buttonLabel"
-            value={question.buttonLabel}
-            label={t("environments.surveys.edit.next_button_label")}
-            localSurvey={localSurvey}
-            questionIdx={questionIdx}
-            maxLength={48}
-            placeholder={lastQuestion ? t("common.finish") : t("common.next")}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
-          />
-
           {questionIdx !== 0 && (
             <QuestionFormInput
               id="backButtonLabel"
@@ -118,6 +103,20 @@ export const CTAQuestionForm = ({
               locale={locale}
             />
           )}
+          <QuestionFormInput
+            id="buttonLabel"
+            value={question.buttonLabel}
+            label={t("environments.surveys.edit.next_button_label")}
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            maxLength={48}
+            placeholder={lastQuestion ? t("common.finish") : t("common.next")}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            locale={locale}
+          />
         </div>
       </div>
 

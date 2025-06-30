@@ -1,10 +1,8 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import {
   TContactAttributeKeyInput,
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
-import { ContactAttributeKey } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -17,14 +15,6 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
-    },
-  },
-}));
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    revalidate: vi.fn(),
-    tag: {
-      byEnvironmentId: vi.fn(),
     },
   },
 }));
@@ -96,10 +86,6 @@ describe("createContactAttributeKey", () => {
 
     const result = await createContactAttributeKey(inputContactAttributeKey);
     expect(prisma.contactAttributeKey.create).toHaveBeenCalled();
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: createdContactAttributeKey.environmentId,
-      key: createdContactAttributeKey.key,
-    });
     expect(result.ok).toBe(true);
 
     if (result.ok) {
@@ -119,7 +105,7 @@ describe("createContactAttributeKey", () => {
   });
 
   test("returns conflict error when key already exists", async () => {
-    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
+    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.UniqueConstraintViolation,
       clientVersion: "0.0.1",
     });
@@ -142,7 +128,7 @@ describe("createContactAttributeKey", () => {
   });
 
   test("returns not found error when related record does not exist", async () => {
-    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
+    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.RelatedRecordDoesNotExist,
       clientVersion: "0.0.1",
     });

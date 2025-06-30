@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
+import { ComponentChildren } from "preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
 import { MultipleChoiceMultiQuestion } from "./multiple-choice-multi-question";
@@ -31,11 +32,13 @@ vi.mock("@/components/general/subheader", () => ({
 }));
 
 vi.mock("@/components/general/question-media", () => ({
-  QuestionMedia: () => <div data-testid="question-media" />,
+  QuestionMedia: ({ imgUrl, videoUrl }: { imgUrl?: string; videoUrl?: string }) => (
+    <div data-testid="question-media" data-img-url={imgUrl} data-video-url={videoUrl} />
+  ),
 }));
 
 vi.mock("@/components/wrappers/scrollable-container", () => ({
-  ScrollableContainer: ({ children }: { children: React.ReactNode }) => (
+  ScrollableContainer: ({ children }: { children: ComponentChildren }) => (
     <div data-testid="scrollable-container">{children}</div>
   ),
 }));
@@ -50,6 +53,19 @@ vi.mock("@/lib/i18n", () => ({
     if (typeof _value === "string") return _value;
     return _value?.["en"] ?? _value?.default ?? "";
   },
+}));
+
+// Mock the utils for shuffling
+vi.mock("@/lib/utils", () => ({
+  cn: (...args: any[]) => args.filter(Boolean).join(" "),
+  getShuffledChoicesIds: vi.fn((choices: Array<{ id: string }>, option: string) => {
+    if (option === "all") {
+      // Return in reverse to simulate shuffling
+      return choices.map((choice: { id: string }) => choice.id).reverse();
+    }
+    return choices.map((choice: { id: string }) => choice.id);
+  }),
+  isRTL: vi.fn((text) => text.includes("rtl")),
 }));
 
 describe("MultipleChoiceMultiQuestion", () => {
@@ -149,46 +165,6 @@ describe("MultipleChoiceMultiQuestion", () => {
     expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
   });
 
-  test("filters out invalid values during submission", async () => {
-    const onSubmit = vi.fn();
-    const { container } = render(
-      <MultipleChoiceMultiQuestion
-        {...defaultProps}
-        // Add an invalid value that should be filtered out
-        value={["Option 1", "Invalid Option"]}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Submit the form
-    const form = container.querySelector("form");
-    fireEvent.submit(form!);
-
-    // Check that onSubmit was called with only valid values
-    expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
-  });
-
-  test("calls onChange with updated values during submission", async () => {
-    const onChange = vi.fn();
-    const onSubmit = vi.fn();
-    const { container } = render(
-      <MultipleChoiceMultiQuestion
-        {...defaultProps}
-        value={["Option 1", "Invalid Option"]}
-        onChange={onChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Submit the form
-    const form = container.querySelector("form");
-    fireEvent.submit(form!);
-
-    // Check that onChange was called with filtered values
-    expect(onChange).toHaveBeenCalledWith({ q1: ["Option 1"] });
-    expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1"] }, { questionId: "ttc-value" });
-  });
-
   test("calls onBack when back button is clicked", async () => {
     const onBack = vi.fn();
     render(<MultipleChoiceMultiQuestion {...defaultProps} onBack={onBack} />);
@@ -207,25 +183,159 @@ describe("MultipleChoiceMultiQuestion", () => {
     expect(screen.queryByTestId("back-button")).not.toBeInTheDocument();
   });
 
-  test("renders media when available", () => {
-    const questionWithMedia = {
+  test("renders image media when available", () => {
+    const questionWithImage = {
       ...defaultProps.question,
       imageUrl: "https://example.com/image.jpg",
     };
 
-    render(<MultipleChoiceMultiQuestion {...defaultProps} question={questionWithMedia} />);
+    render(<MultipleChoiceMultiQuestion {...defaultProps} question={questionWithImage} />);
     expect(screen.getByTestId("question-media")).toBeInTheDocument();
+    expect(screen.getByTestId("question-media")).toHaveAttribute(
+      "data-img-url",
+      "https://example.com/image.jpg"
+    );
   });
 
-  test("handles shuffled choices correctly", () => {
+  test("renders video media when available", () => {
+    const questionWithVideo = {
+      ...defaultProps.question,
+      videoUrl: "https://example.com/video.mp4",
+    };
+
+    render(<MultipleChoiceMultiQuestion {...defaultProps} question={questionWithVideo} />);
+    expect(screen.getByTestId("question-media")).toBeInTheDocument();
+    expect(screen.getByTestId("question-media")).toHaveAttribute(
+      "data-video-url",
+      "https://example.com/video.mp4"
+    );
+  });
+
+  test("handles shuffled choices correctly with 'all' option", () => {
     const shuffledQuestion = {
       ...defaultProps.question,
       shuffleOption: "all",
     } as TSurveyMultipleChoiceQuestion;
 
     render(<MultipleChoiceMultiQuestion {...defaultProps} question={shuffledQuestion} />);
+
+    // All options should still be rendered regardless of shuffle
     expect(screen.getByLabelText("Option 1")).toBeInTheDocument();
     expect(screen.getByLabelText("Option 2")).toBeInTheDocument();
     expect(screen.getByLabelText("Option 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Other")).toBeInTheDocument();
+  });
+
+  test("handles keyboard accessibility with spacebar", async () => {
+    render(<MultipleChoiceMultiQuestion {...defaultProps} />);
+
+    // Find the label for the first option
+    const option1Label = screen.getByText("Option 1").closest("label");
+    expect(option1Label).toBeInTheDocument();
+
+    // Simulate pressing spacebar on the label
+    fireEvent.keyDown(option1Label!, { key: " " });
+
+    // Check if onChange was called with the correct value
+    expect(defaultProps.onChange).toHaveBeenCalledWith({ q1: ["Option 1"] });
+  });
+
+  test("handles deselecting 'Other' option", async () => {
+    const onChange = vi.fn();
+    // Initial render with 'Other' already selected and a custom value
+    const { rerender } = render(
+      <MultipleChoiceMultiQuestion {...defaultProps} value={["Custom response"]} onChange={onChange} />
+    );
+
+    // Verify 'Other' is checked using id
+    const otherCheckbox = screen.getByRole("checkbox", { name: "Other" });
+    expect(otherCheckbox).toBeInTheDocument();
+    expect(otherCheckbox).toBeChecked();
+
+    // Also verify the input has the custom value
+    expect(screen.getByDisplayValue("Custom response")).toBeInTheDocument();
+
+    // Click to deselect the 'Other' option
+    await userEvent.click(otherCheckbox);
+
+    // Check if onChange was called with empty array
+    expect(onChange).toHaveBeenCalledWith({ q1: [] });
+
+    // Rerender to update the component with new value
+    rerender(<MultipleChoiceMultiQuestion {...defaultProps} value={[]} onChange={onChange} />);
+
+    // Verify the input field is not displayed anymore
+    expect(screen.queryByPlaceholderText("Please specify")).not.toBeInTheDocument();
+  });
+
+  test("initializes with 'Other' selected when value doesn't match any choice", () => {
+    render(<MultipleChoiceMultiQuestion {...defaultProps} value={["Custom answer"]} />);
+
+    // Verify 'Other' is checked
+    const otherCheckbox = screen.getByRole("checkbox", { name: "Other" });
+    expect(otherCheckbox).toBeChecked();
+
+    // Verify the input has the custom value
+    expect(screen.getByDisplayValue("Custom answer")).toBeInTheDocument();
+  });
+
+  test("combines regular choices and 'Other' value on submission", async () => {
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        value={["Option 1", "Custom answer"]}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Verify both Option 1 and Other are checked
+    const option1Checkbox = screen.getByRole("checkbox", { name: "Option 1" });
+    const otherCheckbox = screen.getByRole("checkbox", { name: "Other" });
+    expect(option1Checkbox).toBeChecked();
+    expect(otherCheckbox).toBeChecked();
+
+    // Get the form and submit it
+    const form = container.querySelector("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
+
+    // Check if onSubmit was called with both values
+    expect(onSubmit).toHaveBeenCalledWith({ q1: ["Option 1", "Custom answer"] }, { questionId: "ttc-value" });
+  });
+
+  test("handles required validation correctly", async () => {
+    const onSubmit = vi.fn();
+    // Create a non-required question
+    const nonRequiredQuestion = {
+      ...defaultProps.question,
+      required: false,
+    };
+
+    const { container, rerender } = render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        question={nonRequiredQuestion}
+        value={[]}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Get the form and submit it with empty selection
+    const form = container.querySelector("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
+
+    // Check if onSubmit was called even with empty value
+    expect(onSubmit).toHaveBeenCalledWith({ q1: [] }, { questionId: "ttc-value" });
+
+    // Now test with required=true
+    vi.clearAllMocks();
+    rerender(<MultipleChoiceMultiQuestion {...defaultProps} value={[]} onSubmit={onSubmit} />);
+
+    // Check if at least one checkbox has the required attribute
+    const checkboxes = screen.getAllByRole("checkbox");
+    const hasRequiredCheckbox = checkboxes.some((checkbox) => checkbox.hasAttribute("required"));
+    expect(hasRequiredCheckbox).toBe(true);
   });
 });

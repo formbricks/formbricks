@@ -99,7 +99,7 @@ export const FileUploadQuestionForm = ({
   const removeExtension = (event, index: number) => {
     event.preventDefault();
     if (question.allowedFileExtensions) {
-      const updatedExtensions = [...question?.allowedFileExtensions];
+      const updatedExtensions = [...(question.allowedFileExtensions || [])];
       updatedExtensions.splice(index, 1);
       // Ensure array is set to undefined if empty, matching toggle behavior
       updateQuestion(questionIdx, {

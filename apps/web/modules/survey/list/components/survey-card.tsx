@@ -16,7 +16,7 @@ interface SurveyCardProps {
   survey: TSurvey;
   environmentId: string;
   isReadOnly: boolean;
-  surveyDomain: string;
+  publicDomain: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   locale: TUserLocale;
@@ -25,7 +25,7 @@ export const SurveyCard = ({
   survey,
   environmentId,
   isReadOnly,
-  surveyDomain,
+  publicDomain,
   deleteSurvey,
   duplicateSurvey,
   locale,
@@ -97,19 +97,19 @@ export const SurveyCard = ({
           {survey.creator ? survey.creator.name : "-"}
         </div>
       </div>
-      <div className="absolute right-3 top-3.5">
+      <button className="absolute right-3 top-3.5" onClick={(e) => e.stopPropagation()}>
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
           environmentId={environmentId}
-          surveyDomain={surveyDomain}
+          publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           refreshSingleUseId={refreshSingleUseId}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
         />
-      </div>
+      </button>
     </>
   );
 

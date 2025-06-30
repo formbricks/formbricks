@@ -56,17 +56,17 @@ export const buildMultipleChoiceQuestion = ({
   return {
     id: id ?? createId(),
     type,
-    subheader: subheader ? { default: subheader } : undefined,
-    headline: { default: headline },
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
     choices: choices.map((choice, index) => {
       const isLastIndex = index === choices.length - 1;
       const id = containsOther && isLastIndex ? "other" : choiceIds ? choiceIds[index] : createId();
-      return { id, label: { default: choice } };
+      return { id, label: createI18nString(choice, []) };
     }),
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
     shuffleOption: shuffleOption || "none",
-    required: required ?? true,
+    required: required ?? false,
     logic,
   };
 };
@@ -100,12 +100,12 @@ export const buildOpenTextQuestion = ({
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.OpenText,
     inputType,
-    subheader: subheader ? { default: subheader } : undefined,
-    placeholder: placeholder ? { default: placeholder } : undefined,
-    headline: { default: headline },
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    placeholder: placeholder ? createI18nString(placeholder, []) : undefined,
+    headline: createI18nString(headline, []),
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    required: required ?? false,
     longAnswer,
     logic,
     charLimit: {
@@ -147,16 +147,16 @@ export const buildRatingQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.Rating,
-    subheader: subheader ? { default: subheader } : undefined,
-    headline: { default: headline },
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
     scale,
     range,
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    required: required ?? false,
     isColorCodingEnabled,
-    lowerLabel: lowerLabel ? { default: lowerLabel } : undefined,
-    upperLabel: upperLabel ? { default: upperLabel } : undefined,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
     logic,
   };
 };
@@ -190,14 +190,14 @@ export const buildNPSQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.NPS,
-    subheader: subheader ? { default: subheader } : undefined,
-    headline: { default: headline },
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    required: required ?? false,
     isColorCodingEnabled,
-    lowerLabel: lowerLabel ? { default: lowerLabel } : undefined,
-    upperLabel: upperLabel ? { default: upperLabel } : undefined,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
     logic,
   };
 };
@@ -226,12 +226,12 @@ export const buildConsentQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.Consent,
-    subheader: subheader ? { default: subheader } : undefined,
-    headline: { default: headline },
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    required: required ?? true,
-    label: { default: label },
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    required: required ?? false,
+    label: createI18nString(label, []),
     logic,
   };
 };
@@ -264,12 +264,12 @@ export const buildCTAQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.CTA,
-    html: html ? { default: html } : undefined,
-    headline: { default: headline },
-    buttonLabel: { default: buttonLabel || t(defaultButtonLabel) },
-    backButtonLabel: { default: backButtonLabel || t(defaultBackButtonLabel) },
-    dismissButtonLabel: dismissButtonLabel ? { default: dismissButtonLabel } : undefined,
-    required: required ?? true,
+    html: html ? createI18nString(html, []) : undefined,
+    headline: createI18nString(headline, []),
+    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    dismissButtonLabel: dismissButtonLabel ? createI18nString(dismissButtonLabel, []) : undefined,
+    required: required ?? false,
     buttonExternal,
     buttonUrl,
     logic,
@@ -309,7 +309,7 @@ export const createJumpLogic = (
 // Helper function to create jump logic based on choice selection
 export const createChoiceJumpLogic = (
   sourceQuestionId: string,
-  choiceId: string,
+  choiceId: string | number,
   targetId: string
 ): TSurveyLogic => ({
   id: createId(),
@@ -360,9 +360,9 @@ export const hiddenFieldsDefault: TSurveyHiddenFields = {
 export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
   return {
     enabled: false,
-    headline: { default: t("templates.default_welcome_card_headline") },
-    html: { default: t("templates.default_welcome_card_html") },
-    buttonLabel: { default: t("templates.default_welcome_card_button_label") },
+    headline: createI18nString(t("templates.default_welcome_card_headline"), []),
+    html: createI18nString(t("templates.default_welcome_card_html"), []),
+    buttonLabel: createI18nString(t("templates.default_welcome_card_button_label"), []),
     timeToFinish: false,
     showResponseCount: false,
   };

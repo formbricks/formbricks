@@ -37,7 +37,7 @@ import { CopySurveyModal } from "./copy-survey-modal";
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  surveyDomain: string;
+  publicDomain: string;
   refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
@@ -48,7 +48,7 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  surveyDomain,
+  publicDomain,
   refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
@@ -64,20 +64,20 @@ export const SurveyDropDownMenu = ({
 
   const router = useRouter();
 
-  const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
+  const surveyLink = useMemo(() => publicDomain + "/s/" + survey.id, [survey.id, publicDomain]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
     try {
       await deleteSurveyAction({ surveyId });
       deleteSurvey(surveyId);
-      router.refresh();
-      setDeleteDialogOpen(false);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
+      router.refresh();
     } catch (error) {
       toast.error(t("environments.surveys.error_deleting_survey"));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -129,8 +129,7 @@ export const SurveyDropDownMenu = ({
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
-      data-testid="survey-dropdown-menu"
-      onClick={(e) => e.stopPropagation()}>
+      data-testid="survey-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
           <div
@@ -142,7 +141,7 @@ export const SurveyDropDownMenu = ({
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-40">
+        <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
             {!isSurveyCreationDeletionDisabled && (
               <>
@@ -172,40 +171,37 @@ export const SurveyDropDownMenu = ({
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (
-              <>
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    disabled={loading}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      setIsCopyFormOpen(true);
-                    }}>
-                    <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                    {t("common.copy")}...
-                  </button>
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  className="flex w-full items-center"
+                  disabled={loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
+                    setIsCopyFormOpen(true);
+                  }}>
+                  <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
+                  {t("common.copy")}...
+                </button>
+              </DropdownMenuItem>
             )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
-                  <div
+                  <button
                     className="flex w-full cursor-pointer items-center"
                     onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
                       const newId = await refreshSingleUseId();
-                      const previewUrl = newId
-                        ? `/s/${survey.id}?suId=${newId}&preview=true`
-                        : `/s/${survey.id}?preview=true`;
+                      const previewUrl =
+                        surveyLink + (newId ? `?suId=${newId}&preview=true` : "?preview=true");
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
                     {t("common.preview_survey")}
-                  </div>
+                  </button>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
@@ -245,6 +241,7 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+          isDeleting={loading}
         />
       )}
 

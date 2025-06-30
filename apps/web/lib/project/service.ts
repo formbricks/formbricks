@@ -1,5 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -9,7 +8,6 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProject } from "@formbricks/types/project";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { projectCache } from "./cache";
 
 const selectProject = {
   id: true,
@@ -31,26 +29,177 @@ const selectProject = {
 };
 
 export const getUserProjects = reactCache(
-  async (userId: string, organizationId: string, page?: number): Promise<TProject[]> =>
-    cache(
-      async () => {
-        validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
+  async (userId: string, organizationId: string, page?: number): Promise<TProject[]> => {
+    validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
 
-        const orgMembership = await prisma.membership.findFirst({
-          where: {
-            userId,
-            organizationId,
+    const orgMembership = await prisma.membership.findFirst({
+      where: {
+        userId,
+        organizationId,
+      },
+    });
+
+    if (!orgMembership) {
+      throw new ValidationError("User is not a member of this organization");
+    }
+
+    let projectWhereClause: Prisma.ProjectWhereInput = {};
+
+    if (orgMembership.role === "member") {
+      projectWhereClause = {
+        projectTeams: {
+          some: {
+            team: {
+              teamUsers: {
+                some: {
+                  userId,
+                },
+              },
+            },
           },
-        });
+        },
+      };
+    }
 
-        if (!orgMembership) {
-          throw new ValidationError("User is not a member of this organization");
-        }
+    try {
+      const projects = await prisma.project.findMany({
+        where: {
+          organizationId,
+          ...projectWhereClause,
+        },
+        select: selectProject,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
+      return projects;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
 
-        let projectWhereClause: Prisma.ProjectWhereInput = {};
+      throw error;
+    }
+  }
+);
 
-        if (orgMembership.role === "member") {
+export const getProjects = reactCache(async (organizationId: string, page?: number): Promise<TProject[]> => {
+  validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
+
+  try {
+    const projects = await prisma.project.findMany({
+      where: {
+        organizationId,
+      },
+      select: selectProject,
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
+    return projects;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
+
+export const getProjectByEnvironmentId = reactCache(
+  async (environmentId: string): Promise<TProject | null> => {
+    validateInputs([environmentId, ZId]);
+
+    let projectPrisma;
+
+    try {
+      projectPrisma = await prisma.project.findFirst({
+        where: {
+          environments: {
+            some: {
+              id: environmentId,
+            },
+          },
+        },
+        select: selectProject,
+      });
+
+      return projectPrisma;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting project by environment id");
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+export const getProject = reactCache(async (projectId: string): Promise<TProject | null> => {
+  let projectPrisma;
+  try {
+    projectPrisma = await prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      select: selectProject,
+    });
+
+    return projectPrisma;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+});
+
+export const getOrganizationProjectsCount = reactCache(async (organizationId: string): Promise<number> => {
+  validateInputs([organizationId, ZId]);
+
+  try {
+    const projects = await prisma.project.count({
+      where: {
+        organizationId,
+      },
+    });
+    return projects;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
+
+export const getUserProjectEnvironmentsByOrganizationIds = reactCache(
+  async (organizationIds: string[], userId: string): Promise<Pick<TProject, "environments">[]> => {
+    validateInputs([organizationIds, ZId.array()], [userId, ZId]);
+    try {
+      if (organizationIds.length === 0) {
+        return [];
+      }
+
+      const memberships = await prisma.membership.findMany({
+        where: {
+          userId,
+          organizationId: {
+            in: organizationIds,
+          },
+        },
+      });
+
+      if (memberships.length === 0) {
+        return [];
+      }
+
+      const whereConditions: Prisma.ProjectWhereInput[] = memberships.map((membership) => {
+        let projectWhereClause: Prisma.ProjectWhereInput = {
+          organizationId: membership.organizationId,
+        };
+
+        if (membership.role === "member") {
           projectWhereClause = {
+            ...projectWhereClause,
             projectTeams: {
               some: {
                 team: {
@@ -65,152 +214,23 @@ export const getUserProjects = reactCache(
           };
         }
 
-        try {
-          const projects = await prisma.project.findMany({
-            where: {
-              organizationId,
-              ...projectWhereClause,
-            },
-            select: selectProject,
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          });
-          return projects;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
+        return projectWhereClause;
+      });
 
-          throw error;
-        }
-      },
-      [`getUserProjects-${userId}-${organizationId}-${page}`],
-      {
-        tags: [projectCache.tag.byUserId(userId), projectCache.tag.byOrganizationId(organizationId)],
+      const projects = await prisma.project.findMany({
+        where: {
+          OR: whereConditions,
+        },
+        select: { environments: true },
+      });
+
+      return projects;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(err.message);
       }
-    )()
-);
 
-export const getProjects = reactCache(
-  async (organizationId: string, page?: number): Promise<TProject[]> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
-
-        try {
-          const projects = await prisma.project.findMany({
-            where: {
-              organizationId,
-            },
-            select: selectProject,
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          });
-          return projects;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getProjects-${organizationId}-${page}`],
-      {
-        tags: [projectCache.tag.byOrganizationId(organizationId)],
-      }
-    )()
-);
-
-export const getProjectByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TProject | null> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
-
-        let projectPrisma;
-
-        try {
-          projectPrisma = await prisma.project.findFirst({
-            where: {
-              environments: {
-                some: {
-                  id: environmentId,
-                },
-              },
-            },
-            select: selectProject,
-          });
-
-          return projectPrisma;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting project by environment id");
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getProjectByEnvironmentId-${environmentId}`],
-      {
-        tags: [projectCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
-
-export const getProject = reactCache(
-  async (projectId: string): Promise<TProject | null> =>
-    cache(
-      async () => {
-        let projectPrisma;
-        try {
-          projectPrisma = await prisma.project.findUnique({
-            where: {
-              id: projectId,
-            },
-            select: selectProject,
-          });
-
-          return projectPrisma;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getProject-${projectId}`],
-      {
-        tags: [projectCache.tag.byId(projectId)],
-      }
-    )()
-);
-
-export const getOrganizationProjectsCount = reactCache(
-  async (organizationId: string): Promise<number> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZId]);
-
-        try {
-          const projects = await prisma.project.count({
-            where: {
-              organizationId,
-            },
-          });
-          return projects;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getOrganizationProjectsCount-${organizationId}`],
-      {
-        revalidate: 60 * 60 * 2, // 2 hours
-        tags: [projectCache.tag.byOrganizationId(organizationId)],
-      }
-    )()
+      throw err;
+    }
+  }
 );

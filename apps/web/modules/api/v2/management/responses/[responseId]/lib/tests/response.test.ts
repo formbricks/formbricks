@@ -1,5 +1,5 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -154,7 +154,7 @@ describe("Response Lib", () => {
 
     test("handle prisma client error code P2025", async () => {
       vi.mocked(prisma.response.delete).mockRejectedValue(
-        new PrismaClientKnownRequestError("Response not found", {
+        new Prisma.PrismaClientKnownRequestError("Response not found", {
           code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {
@@ -175,7 +175,7 @@ describe("Response Lib", () => {
   });
 
   describe("updateResponse", () => {
-    test("update the response and revalidate caches", async () => {
+    test("update the response and revalidate caches including singleUseId", async () => {
       vi.mocked(prisma.response.update).mockResolvedValue(response);
 
       const result = await updateResponse(responseId, responseInput);
@@ -190,9 +190,25 @@ describe("Response Lib", () => {
       }
     });
 
+    test("update the response and revalidate caches", async () => {
+      const responseWithoutSingleUseId = { ...response, singleUseId: null };
+      vi.mocked(prisma.response.update).mockResolvedValue(responseWithoutSingleUseId);
+
+      const result = await updateResponse(responseId, responseInput);
+      expect(prisma.response.update).toHaveBeenCalledWith({
+        where: { id: responseId },
+        data: responseInput,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(responseWithoutSingleUseId);
+      }
+    });
+
     test("return a not_found error when the response is not found", async () => {
       vi.mocked(prisma.response.update).mockRejectedValue(
-        new PrismaClientKnownRequestError("Response not found", {
+        new Prisma.PrismaClientKnownRequestError("Response not found", {
           code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {

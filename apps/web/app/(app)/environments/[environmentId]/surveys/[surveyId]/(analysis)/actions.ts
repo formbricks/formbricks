@@ -2,7 +2,7 @@
 
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -75,7 +75,6 @@ export const getSurveySummaryAction = authenticatedActionClient
         },
       ],
     });
-
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
   });
 

@@ -6,8 +6,9 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { isRTL } from "@/lib/utils";
 import { type RefObject } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -42,7 +43,7 @@ export function OpenTextQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
-}: OpenTextQuestionProps) {
+}: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -58,29 +59,36 @@ export function OpenTextQuestion({
   }, [isCurrent, autoFocusEnabled]);
 
   const handleInputChange = (inputValue: string) => {
+    inputRef.current?.setCustomValidity("");
     setCurrentLength(inputValue.length);
     onChange({ [question.id]: inputValue });
   };
 
-  const handleInputResize = (event: { target: any }) => {
-    const maxHeight = 160; // 8 lines
-    const textarea = event.target;
-    textarea.style.height = "auto";
-    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
-    textarea.style.height = `${newHeight}px`;
-    textarea.style.overflow = newHeight >= maxHeight ? "auto" : "hidden";
+  const handleOnSubmit = (e: Event) => {
+    e.preventDefault();
+    const input = inputRef.current;
+    input?.setCustomValidity("");
+
+    if (question.required && (!value || value.trim() === "")) {
+      input?.setCustomValidity("Please fill out this field.");
+      input?.reportValidity();
+      return;
+    }
+
+    // at this point, validity is clean
+    const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtc);
+    onSubmit({ [question.id]: value }, updatedTtc);
   };
 
+  const dir = useMemo(() => {
+    const placeholder = getLocalizedValue(question.placeholder, languageCode);
+    if (!value) return isRTL(placeholder) ? "rtl" : "ltr";
+    return "auto";
+  }, [value, languageCode, question.placeholder]);
+
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedttc);
-        onSubmit({ [question.id]: value }, updatedttc);
-      }}
-      className="fb-w-full">
+    <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
@@ -104,7 +112,7 @@ export function OpenTextQuestion({
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
-                dir="auto"
+                dir={dir}
                 step="any"
                 required={question.required}
                 value={value ? value : ""}
@@ -115,8 +123,8 @@ export function OpenTextQuestion({
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={
                   question.inputType === "text"
                     ? question.charLimit?.max
                     : question.inputType === "phone"
@@ -134,17 +142,16 @@ export function OpenTextQuestion({
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
-                dir="auto"
+                dir={dir}
                 required={question.required}
                 value={value}
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
-                  handleInputResize(e);
                 }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={question.inputType === "text" ? question.charLimit?.max : undefined}
+                minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
+                maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
               />
             )}
             {question.inputType === "text" && question.charLimit?.max !== undefined && (

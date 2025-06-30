@@ -1,7 +1,5 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
-import { ContactAttributeKey } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -26,15 +24,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/contact-attribute-key", () => ({
-  contactAttributeKeyCache: {
-    tag: {
-      byId: () => "mockTag",
-    },
-    revalidate: vi.fn(),
-  },
-}));
-
 // Mock data
 const mockContactAttributeKey: ContactAttributeKey = {
   id: "cak123",
@@ -54,12 +43,12 @@ const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
   description: "User's verified email address",
 };
 
-const prismaNotFoundError = new PrismaClientKnownRequestError("Mock error message", {
+const prismaNotFoundError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.RelatedRecordDoesNotExist,
   clientVersion: "0.0.1",
 });
 
-const prismaUniqueConstraintError = new PrismaClientKnownRequestError("Mock error message", {
+const prismaUniqueConstraintError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.UniqueConstraintViolation,
   clientVersion: "0.0.1",
 });
@@ -118,12 +107,6 @@ describe("updateContactAttributeKey", () => {
     if (result.ok) {
       expect(result.data).toEqual(updatedKey);
     }
-
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: "cak123",
-      environmentId: mockContactAttributeKey.environmentId,
-      key: mockUpdateInput.key,
-    });
   });
 
   test("returns not_found if record does not exist", async () => {
@@ -184,12 +167,6 @@ describe("deleteContactAttributeKey", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockContactAttributeKey);
     }
-
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      id: "cak123",
-      environmentId: mockContactAttributeKey.environmentId,
-      key: mockContactAttributeKey.key,
-    });
   });
 
   test("returns not_found if record does not exist", async () => {

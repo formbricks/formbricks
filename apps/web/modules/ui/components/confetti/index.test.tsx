@@ -12,6 +12,7 @@ vi.mock("react-confetti", () => ({
       data-colors={JSON.stringify(props.colors)}
       data-number-of-pieces={props.numberOfPieces}
       data-recycle={props.recycle}
+      style={props.style}
     />
   )),
 }));
@@ -36,6 +37,10 @@ describe("Confetti", () => {
     expect(confettiElement).toHaveAttribute("data-colors", JSON.stringify(["#00C4B8", "#eee"]));
     expect(confettiElement).toHaveAttribute("data-number-of-pieces", "400");
     expect(confettiElement).toHaveAttribute("data-recycle", "false");
+    expect(confettiElement).toHaveAttribute(
+      "style",
+      "position: fixed; top: 0px; left: 0px; z-index: 9999; pointer-events: none;"
+    );
   });
 
   test("renders with custom colors", () => {

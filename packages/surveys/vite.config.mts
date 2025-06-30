@@ -1,10 +1,11 @@
 import preact from "@preact/preset-vite";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
-import { defineConfig, loadEnv } from "vite";
+import { loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
+import { defineConfig } from "vitest/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,7 +30,7 @@ const config = ({ mode }) => {
       },
     },
     define: {
-      "process.env": env,
+      "process.env.NODE_ENV": JSON.stringify(mode),
     },
     build: {
       emptyOutDir: false,

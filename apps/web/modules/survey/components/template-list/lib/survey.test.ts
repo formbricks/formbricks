@@ -1,9 +1,9 @@
-import { segmentCache } from "@/lib/cache/segment";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { surveyCache } from "@/lib/survey/cache";
-import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { ActionClass, Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
@@ -15,37 +15,21 @@ import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { createSurvey, handleTriggerUpdates } from "./survey";
 
 // Mock dependencies
-vi.mock("@/lib/cache/segment", () => ({
-  segmentCache: {
-    revalidate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/posthogServer", () => ({
   capturePosthogEnvironmentEvent: vi.fn(),
-}));
-
-vi.mock("@/lib/survey/cache", () => ({
-  surveyCache: {
-    revalidate: vi.fn(),
-  },
 }));
 
 vi.mock("@/lib/survey/utils", () => ({
   checkForInvalidImagesInQuestions: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/components/template-list/lib/organization", () => ({
+vi.mock("@/lib/organization/service", () => ({
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
+  getOrganizationByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/action-class", () => ({
   getActionClasses: vi.fn(),
-}));
-
-vi.mock("@/modules/survey/lib/organization", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn(),
-  getOrganizationAIKeys: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/survey", () => ({
@@ -100,8 +84,7 @@ describe("survey module", () => {
       // Mock dependencies
       const mockActionClasses: ActionClass[] = [];
       vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("org-123");
-      vi.mocked(getOrganizationAIKeys).mockResolvedValue({ id: "org-123", name: "Org" } as any);
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123", name: "Org" } as any);
 
       const mockCreatedSurvey = {
         id: "survey-123",
@@ -123,8 +106,7 @@ describe("survey module", () => {
 
       // Verify results
       expect(getActionClasses).toHaveBeenCalledWith(environmentId);
-      expect(getOrganizationIdFromEnvironmentId).toHaveBeenCalledWith(environmentId);
-      expect(getOrganizationAIKeys).toHaveBeenCalledWith("org-123");
+      expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
       expect(prisma.survey.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: surveyBody.name,
@@ -136,9 +118,11 @@ describe("survey module", () => {
       });
       expect(prisma.segment.create).toHaveBeenCalled();
       expect(prisma.survey.update).toHaveBeenCalled();
-      expect(segmentCache.revalidate).toHaveBeenCalled();
-      expect(surveyCache.revalidate).toHaveBeenCalled();
-      expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalledWith("survey-123", "user-123");
+      expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalledWith(
+        "survey-123",
+        "user-123",
+        "org-123"
+      );
       expect(capturePosthogEnvironmentEvent).toHaveBeenCalledWith(
         environmentId,
         "survey created",
@@ -159,8 +143,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("org-123");
-      vi.mocked(getOrganizationAIKeys).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
       vi.mocked(prisma.survey.create).mockResolvedValue({
         id: "survey-123",
         environmentId,
@@ -188,8 +171,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("org-123");
-      vi.mocked(getOrganizationAIKeys).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
       vi.mocked(prisma.survey.create).mockResolvedValue({
         id: "survey-123",
         environmentId,
@@ -220,8 +202,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("org-123");
-      vi.mocked(getOrganizationAIKeys).mockResolvedValue(null);
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
 
       await expect(createSurvey(environmentId, surveyBody)).rejects.toThrow(ResourceNotFoundError);
     });
@@ -236,12 +217,11 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("org-123");
-      vi.mocked(getOrganizationAIKeys).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
 
       const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: "P2002",
-        clientVersion: "4.8.0",
+        clientVersion: "5.0.0",
       });
       vi.mocked(prisma.survey.create).mockRejectedValue(prismaError);
 
@@ -269,7 +249,6 @@ describe("survey module", () => {
       expect(result).toEqual({
         create: [{ actionClassId: "action-1" }, { actionClassId: "action-2" }],
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
     });
 
     test("removes triggers", () => {
@@ -289,7 +268,6 @@ describe("survey module", () => {
           },
         },
       });
-      expect(surveyCache.revalidate).toHaveBeenCalledTimes(2);
     });
 
     test("throws error for invalid trigger", () => {

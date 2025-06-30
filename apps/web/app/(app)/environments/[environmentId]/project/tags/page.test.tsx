@@ -24,6 +24,9 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
+  SESSION_MAX_AGE: 1000,
+  REDIS_URL: "redis://localhost:6379",
+  AUDIT_LOG_ENABLED: 1,
 }));
 
 describe("TagsPage re-export", () => {

@@ -84,7 +84,7 @@ vi.mock("@tolgee/react", () => ({
 
 // Mock QuestionFormInput component
 vi.mock("@/modules/survey/components/question-form-input", () => ({
-  QuestionFormInput: vi.fn(({ id, updateMatrixLabel, value, updateQuestion }) => (
+  QuestionFormInput: vi.fn(({ id, updateMatrixLabel, value, updateQuestion, onKeyDown }) => (
     <div data-testid={`question-input-${id}`}>
       <input
         data-testid={`input-${id}`}
@@ -98,6 +98,7 @@ vi.mock("@/modules/survey/components/question-form-input", () => ({
           }
         }}
         value={value?.default || ""}
+        onKeyDown={onKeyDown}
       />
     </div>
   )),
@@ -175,7 +176,6 @@ const defaultProps = {
   question: mockMatrixQuestion,
   questionIdx: 0,
   updateQuestion: mockUpdateQuestion,
-  lastQuestion: false,
   selectedLanguageCode: "en",
   setSelectedLanguageCode: vi.fn(),
   isInvalid: false,
@@ -323,7 +323,7 @@ describe("MatrixQuestionForm", () => {
     expect(mockUpdateQuestion).toHaveBeenCalled();
   });
 
-  test("handles Enter key to add a new row", async () => {
+  test("handles Enter key to add a new row from row input", async () => {
     const user = userEvent.setup();
     const { getByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
 
@@ -336,6 +336,24 @@ describe("MatrixQuestionForm", () => {
         mockMatrixQuestion.rows[0],
         mockMatrixQuestion.rows[1],
         mockMatrixQuestion.rows[2],
+        expect.any(Object),
+      ],
+    });
+  });
+
+  test("handles Enter key to add a new column from column input", async () => {
+    const user = userEvent.setup();
+    const { getByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
+
+    const columnInput = getByTestId("input-column-0");
+    await user.click(columnInput);
+    await user.keyboard("{Enter}");
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, {
+      columns: [
+        mockMatrixQuestion.columns[0],
+        mockMatrixQuestion.columns[1],
+        mockMatrixQuestion.columns[2],
         expect.any(Object),
       ],
     });

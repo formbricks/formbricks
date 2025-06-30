@@ -4,9 +4,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { responseCache } from "@/lib/response/cache";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { responseNoteCache } from "@/lib/responseNote/cache";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
@@ -50,9 +48,7 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/posthogServer");
-vi.mock("@/lib/response/cache");
 vi.mock("@/lib/response/utils");
-vi.mock("@/lib/responseNote/cache");
 vi.mock("@/lib/telemetry");
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
@@ -138,8 +134,6 @@ describe("createResponse V2", () => {
       ...ttc,
       _total: Object.values(ttc).reduce((a, b) => a + b, 0),
     }));
-    vi.mocked(responseCache.revalidate).mockResolvedValue(undefined);
-    vi.mocked(responseNoteCache.revalidate).mockResolvedValue(undefined);
     vi.mocked(captureTelemetry).mockResolvedValue(undefined);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
     vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockResolvedValue(undefined);

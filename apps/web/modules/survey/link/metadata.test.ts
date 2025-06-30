@@ -1,11 +1,11 @@
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
+import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getBrandColorForURL, getNameForURL, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
-vi.mock("@/modules/survey/link/lib/survey", () => ({
+vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyMetadata: vi.fn(),
 }));
 
@@ -25,7 +25,7 @@ describe("getMetadataForLinkSurvey", () => {
   const mockBrandColor = "#123456";
   const mockEncodedBrandColor = "123456";
   const mockEncodedName = "Test-Survey";
-  const mockOgImageUrl = `/api/v1/og?brandColor=${mockEncodedBrandColor}&name=${mockEncodedName}`;
+  const mockOgImageUrl = `/api/v1/client/og?brandColor=${mockEncodedBrandColor}&name=${mockEncodedName}`;
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -74,6 +74,18 @@ describe("getMetadataForLinkSurvey", () => {
       twitter: {
         title: mockSurveyName,
         images: [mockOgImageUrl],
+      },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });
@@ -147,6 +159,18 @@ describe("getMetadataForLinkSurvey", () => {
         title: mockSurveyName,
         images: [mockOgImageUrl],
       },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
+      },
     });
   });
 
@@ -173,6 +197,18 @@ describe("getMetadataForLinkSurvey", () => {
       openGraph: {
         title: mockSurveyName,
         images: [mockOgImageUrl],
+      },
+      alternates: {
+        canonical: `/s/${mockSurveyId}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+          noimageindex: true,
+        },
       },
     });
   });

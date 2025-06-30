@@ -1,4 +1,3 @@
-import { projectCache } from "@/lib/project/cache";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -54,14 +53,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/project/cache", () => ({
-  projectCache: {
-    tag: {
-      byOrganizationId: vi.fn(),
-    },
-  },
-}));
-
 describe("Projects Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,7 +61,6 @@ describe("Projects Management", () => {
   describe("getProjectsByOrganizationId", () => {
     test("retrieves projects by organization ID successfully", async () => {
       vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
-      vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       const result = await getProjectsByOrganizationId("org123");
 
@@ -89,7 +79,6 @@ describe("Projects Management", () => {
 
     test("returns empty array when no projects exist", async () => {
       vi.mocked(prisma.project.findMany).mockResolvedValueOnce([]);
-      vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       const result = await getProjectsByOrganizationId("org123");
 
@@ -112,7 +101,6 @@ describe("Projects Management", () => {
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(errToThrow);
-      vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       await expect(getProjectsByOrganizationId("org123")).rejects.toThrow(DatabaseError);
     });
@@ -120,7 +108,6 @@ describe("Projects Management", () => {
     test("bubbles up unexpected errors", async () => {
       const unexpectedError = new Error("Unexpected error");
       vi.mocked(prisma.project.findMany).mockRejectedValueOnce(unexpectedError);
-      vi.mocked(projectCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       await expect(getProjectsByOrganizationId("org123")).rejects.toThrow(unexpectedError);
     });
