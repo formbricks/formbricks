@@ -241,7 +241,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
                 <div
                   className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                  key={`${s.questionType.id}-${i}`}>
+                  key={`${s.questionType.id ?? ""}-${i}`}>
                   <QuestionsComboBox
                     key={`${s.questionType.label}-${i}`}
                     options={questionComboBoxOptions}
@@ -249,7 +249,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                     onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
                   />
                   <QuestionFilterComboBox
-                    key={`${s.questionType.id}-${i}`}
+                    key={`${s.questionType.id ?? ""}-${i}`}
                     filterOptions={
                       selectedOptions.questionFilterOptions.find(
                         (q) =>
