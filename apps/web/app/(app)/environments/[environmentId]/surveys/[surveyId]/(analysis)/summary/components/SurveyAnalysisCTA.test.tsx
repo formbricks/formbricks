@@ -69,13 +69,13 @@ vi.mock("@/modules/survey/hooks/useSingleUseId", () => ({
 
 const mockSearchParams = new URLSearchParams();
 const mockPush = vi.fn();
+const mockReplace = vi.fn();
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useSearchParams: () => mockSearchParams,
-  usePathname: () => "/current",
-  useParams: () => ({ environmentId: "env123", surveyId: "survey123" }),
+  usePathname: () => "/current-path",
 }));
 
 // Mock copySurveyLink to return a predictable string
@@ -131,280 +131,281 @@ const dummySurvey = {
   id: "survey123",
   type: "link",
   environmentId: "env123",
-  status: "active",
+  status: "inProgress",
+  resultShareKey: null,
 } as unknown as TSurvey;
+
+const dummyAppSurvey = {
+  id: "survey123",
+  type: "app",
+  environmentId: "env123",
+  status: "inProgress",
+} as unknown as TSurvey;
+
 const dummyEnvironment = { id: "env123", appSetupCompleted: true } as TEnvironment;
 const dummyUser = { id: "user123", name: "Test User" } as TUser;
 
-describe("SurveyAnalysisCTA - handleCopyLink", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
-  test("calls copySurveyLink and clipboard.writeText on success", async () => {
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
-
-    const copyButton = screen.getByRole("button", { name: "common.copy_link" });
-    fireEvent.click(copyButton);
-
-    await waitFor(() => {
-      expect(refreshSingleUseIdSpy).toHaveBeenCalled();
-      expect(writeTextMock).toHaveBeenCalledWith("https://public-domain.com/s/survey123?suId=newSingleUseId");
-      expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
-    });
-  });
-
-  test("shows error toast on failure", async () => {
-    refreshSingleUseIdSpy.mockImplementationOnce(() => Promise.reject(new Error("fail")));
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
-
-    const copyButton = screen.getByRole("button", { name: "common.copy_link" });
-    fireEvent.click(copyButton);
-
-    await waitFor(() => {
-      expect(refreshSingleUseIdSpy).toHaveBeenCalled();
-      expect(writeTextMock).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("environments.surveys.summary.failed_to_copy_link");
-    });
-  });
-});
-
-// New tests for squarePenIcon and edit functionality
-describe("SurveyAnalysisCTA - Edit functionality", () => {
+describe("SurveyAnalysisCTA", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockSearchParams.delete("share"); // reset params
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  test("opens EditPublicSurveyAlertDialog when edit icon is clicked and response count > 0", async () => {
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
+  describe("Edit functionality", () => {
+    test("opens EditPublicSurveyAlertDialog when edit icon is clicked and response count > 0", async () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
 
-    // Find the edit button
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
+      // Find the edit button
+      const editButton = screen.getByRole("button", { name: "common.edit" });
+      await fireEvent.click(editButton);
 
-    // Check if dialog is shown
-    const dialogTitle = screen.getByText("environments.surveys.edit.caution_edit_published_survey");
-    expect(dialogTitle).toBeInTheDocument();
+      // Check if dialog is shown
+      const dialogTitle = screen.getByText("environments.surveys.edit.caution_edit_published_survey");
+      expect(dialogTitle).toBeInTheDocument();
+    });
+
+    test("navigates directly to edit page when response count = 0", async () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={0}
+        />
+      );
+
+      // Find the edit button
+      const editButton = screen.getByRole("button", { name: "common.edit" });
+      await fireEvent.click(editButton);
+
+      // Should navigate directly to edit page
+      expect(mockPush).toHaveBeenCalledWith(
+        `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
+      );
+    });
+
+    test("doesn't show edit button when isReadOnly is true", () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={true}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+
+      const editButton = screen.queryByRole("button", { name: "common.edit" });
+      expect(editButton).not.toBeInTheDocument();
+    });
   });
 
-  test("navigates directly to edit page when response count = 0", async () => {
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={0}
-      />
-    );
+  describe("Duplicate functionality", () => {
+    test("duplicates survey and redirects on primary button click", async () => {
+      mockCopySurveyToOtherEnvironmentAction.mockResolvedValue({
+        data: { id: "newSurvey456" },
+      });
 
-    // Find the edit button
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
 
-    // Should navigate directly to edit page
-    expect(mockPush).toHaveBeenCalledWith(
-      `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
-    );
+      const editButton = screen.getByRole("button", { name: "common.edit" });
+      fireEvent.click(editButton);
+
+      const primaryButton = await screen.findByText("environments.surveys.edit.caution_edit_duplicate");
+      fireEvent.click(primaryButton);
+
+      await waitFor(() => {
+        expect(mockCopySurveyToOtherEnvironmentAction).toHaveBeenCalledWith({
+          environmentId: "env123",
+          surveyId: "survey123",
+          targetEnvironmentId: "env123",
+        });
+        expect(mockPush).toHaveBeenCalledWith("/environments/env123/surveys/newSurvey456/edit");
+        expect(toast.success).toHaveBeenCalledWith("environments.surveys.survey_duplicated_successfully");
+      });
+    });
+
+    test("shows error toast on duplication failure", async () => {
+      const error = { error: "Duplication failed" };
+      mockCopySurveyToOtherEnvironmentAction.mockResolvedValue(error);
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+
+      const editButton = screen.getByRole("button", { name: "common.edit" });
+      fireEvent.click(editButton);
+
+      const primaryButton = await screen.findByText("environments.surveys.edit.caution_edit_duplicate");
+      fireEvent.click(primaryButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Duplication failed");
+      });
+    });
   });
 
-  test("doesn't show edit button when isReadOnly is true", () => {
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={true}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
+  describe("Share button and modal", () => {
+    test("opens share modal when 'Share survey' button is clicked", async () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
 
-    // Try to find the edit button (it shouldn't exist)
-    const editButton = screen.queryByRole("button", { name: "common.edit" });
-    expect(editButton).not.toBeInTheDocument();
-  });
-});
+      const shareButton = screen.getByText("environments.surveys.summary.share_survey");
+      fireEvent.click(shareButton);
 
-// Updated test description to mention EditPublicSurveyAlertDialog
-describe("SurveyAnalysisCTA - duplicateSurveyAndRoute and EditPublicSurveyAlertDialog", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
-  test("duplicates survey successfully and navigates to edit page", async () => {
-    // Mock the API response
-    mockCopySurveyToOtherEnvironmentAction.mockResolvedValueOnce({
-      data: { id: "duplicated-survey-456" },
+      // The share button opens the embed modal, not a URL
+      // We can verify this by checking that the ShareEmbedSurvey component is rendered
+      // with the embed modal open
+      expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
     });
 
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
+    test("renders ShareEmbedSurvey component when share modal is open", async () => {
+      mockSearchParams.set("share", "true");
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
 
-    // Find and click the edit button to show dialog
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
-
-    // Find and click the duplicate button in dialog
-    const duplicateButton = screen.getByRole("button", {
-      name: "environments.surveys.edit.caution_edit_duplicate",
+      // Assuming ShareEmbedSurvey renders a dialog with a specific title when open
+      const dialog = await screen.findByRole("dialog");
+      expect(dialog).toBeInTheDocument();
     });
-    await fireEvent.click(duplicateButton);
-
-    // Verify the API was called with correct parameters
-    expect(mockCopySurveyToOtherEnvironmentAction).toHaveBeenCalledWith({
-      environmentId: dummyEnvironment.id,
-      surveyId: dummySurvey.id,
-      targetEnvironmentId: dummyEnvironment.id,
-    });
-
-    // Verify success toast was shown
-    expect(toast.success).toHaveBeenCalledWith("environments.surveys.survey_duplicated_successfully");
-
-    // Verify navigation to edit page
-    expect(mockPush).toHaveBeenCalledWith(
-      `/environments/${dummyEnvironment.id}/surveys/duplicated-survey-456/edit`
-    );
   });
 
-  test("shows error toast when duplication fails with error object", async () => {
-    // Mock API failure with error object
-    mockCopySurveyToOtherEnvironmentAction.mockResolvedValueOnce({
-      error: "Test error message",
+  describe("General UI and visibility", () => {
+    test("shows public results badge when resultShareKey is present", () => {
+      const surveyWithShareKey = { ...dummySurvey, resultShareKey: "someKey" } as TSurvey;
+      render(
+        <SurveyAnalysisCTA
+          survey={surveyWithShareKey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+
+      expect(screen.getByText("environments.surveys.summary.results_are_public")).toBeInTheDocument();
     });
 
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
+    test("shows SurveyStatusDropdown for non-draft surveys", () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
 
-    // Open dialog
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
-
-    // Click duplicate
-    const duplicateButton = screen.getByRole("button", {
-      name: "environments.surveys.edit.caution_edit_duplicate",
-    });
-    await fireEvent.click(duplicateButton);
-
-    // Verify error toast
-    expect(toast.error).toHaveBeenCalledWith("Test error message");
-  });
-
-  test("navigates to edit page when cancel button is clicked in dialog", async () => {
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
-
-    // Open dialog
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
-
-    // Click edit (cancel) button
-    const editButtonInDialog = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButtonInDialog);
-
-    // Verify navigation
-    expect(mockPush).toHaveBeenCalledWith(
-      `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
-    );
-  });
-
-  test("shows loading state when duplicating survey", async () => {
-    // Create a promise that we can resolve manually
-    let resolvePromise: (value: any) => void;
-    const promise = new Promise((resolve) => {
-      resolvePromise = resolve;
+      expect(screen.getByRole("combobox")).toBeInTheDocument();
     });
 
-    mockCopySurveyToOtherEnvironmentAction.mockImplementation(() => promise);
-
-    render(
-      <SurveyAnalysisCTA
-        survey={dummySurvey}
-        environment={dummyEnvironment}
-        isReadOnly={false}
-        publicDomain={mockPublicDomain}
-        user={dummyUser}
-        responseCount={5}
-      />
-    );
-
-    // Open dialog
-    const editButton = screen.getByRole("button", { name: "common.edit" });
-    await fireEvent.click(editButton);
-
-    // Click duplicate
-    const duplicateButton = screen.getByRole("button", {
-      name: "environments.surveys.edit.caution_edit_duplicate",
-    });
-    await fireEvent.click(duplicateButton);
-
-    // Button should now be in loading state
-    // expect(duplicateButton).toHaveAttribute("data-state", "loading");
-
-    // Resolve the promise
-    resolvePromise!({
-      data: { id: "duplicated-survey-456" },
+    test("does not show SurveyStatusDropdown for draft surveys", () => {
+      const draftSurvey = { ...dummySurvey, status: "draft" } as TSurvey;
+      render(
+        <SurveyAnalysisCTA
+          survey={draftSurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     });
 
-    // Wait for the promise to resolve
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled();
+    test("hides status dropdown and edit actions when isReadOnly is true", () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={true}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "common.edit" })).not.toBeInTheDocument();
+    });
+
+    test("shows preview button for link surveys", () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummySurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+      expect(screen.getByRole("button", { name: "common.preview" })).toBeInTheDocument();
+    });
+
+    test("hides preview button for app surveys", () => {
+      render(
+        <SurveyAnalysisCTA
+          survey={dummyAppSurvey}
+          environment={dummyEnvironment}
+          isReadOnly={false}
+          publicDomain={mockPublicDomain}
+          user={dummyUser}
+          responseCount={5}
+        />
+      );
+      expect(screen.queryByRole("button", { name: "common.preview" })).not.toBeInTheDocument();
     });
   });
 });

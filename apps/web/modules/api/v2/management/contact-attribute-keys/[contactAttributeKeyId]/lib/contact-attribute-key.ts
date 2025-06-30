@@ -1,7 +1,6 @@
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ContactAttributeKey } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -55,7 +54,7 @@ export const updateContactAttributeKey = async (
 
     return ok(updatedKey);
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist
@@ -106,7 +105,7 @@ export const deleteContactAttributeKey = async (
 
     return ok(deletedKey);
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist

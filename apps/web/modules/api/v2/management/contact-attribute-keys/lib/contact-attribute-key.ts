@@ -5,7 +5,6 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ContactAttributeKey, Prisma } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -58,7 +57,7 @@ export const createContactAttributeKey = async (
 
     return ok(createdContactAttributeKey);
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist
