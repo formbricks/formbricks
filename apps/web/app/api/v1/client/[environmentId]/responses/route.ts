@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { checkDisplayExists } from "@/lib/display/service";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
@@ -95,6 +96,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   if (!validateFileUploads(responseInputData.data, survey.questions)) {
     return responses.badRequestResponse("Invalid file upload response");
+  }
+
+  // check display
+  if (responseInputData.displayId) {
+    const display = await checkDisplayExists(responseInputData.displayId);
+    if (!display) {
+      return responses.notFoundResponse("Display", responseInputData.displayId, true);
+    }
   }
 
   let response: TResponse;
