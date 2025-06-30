@@ -16,7 +16,7 @@ import { RecallItemSelect } from "@/modules/survey/components/question-form-inpu
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { PencilIcon } from "lucide-react";
-import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState, useMemo } from "react";
+import React, { JSX, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
@@ -64,7 +64,7 @@ export const RecallWrapper = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
 
   const hasRecallItems = useMemo(() => {
-    return recallItems.length > 0 || (value && value.includes("recall:"));
+    return recallItems.length > 0 || value?.includes("recall:");
   }, [recallItems.length, value]);
 
   useEffect(() => {
