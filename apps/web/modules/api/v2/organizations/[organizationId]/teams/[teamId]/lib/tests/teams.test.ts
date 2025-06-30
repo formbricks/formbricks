@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -74,7 +74,7 @@ describe("Teams Lib", () => {
 
     test("returns not_found error on known prisma error", async () => {
       (prisma.team.delete as any).mockRejectedValueOnce(
-        new PrismaClientKnownRequestError("Not found", {
+        new Prisma.PrismaClientKnownRequestError("Not found", {
           code: PrismaErrorType.RecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {},
@@ -120,7 +120,7 @@ describe("Teams Lib", () => {
 
     test("returns not_found error when update fails due to missing team", async () => {
       (prisma.team.update as any).mockRejectedValueOnce(
-        new PrismaClientKnownRequestError("Not found", {
+        new Prisma.PrismaClientKnownRequestError("Not found", {
           code: PrismaErrorType.RecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {},

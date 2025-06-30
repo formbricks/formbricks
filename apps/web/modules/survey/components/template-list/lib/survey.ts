@@ -1,9 +1,11 @@
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
@@ -43,8 +45,7 @@ export const createSurvey = async (
       };
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-    const organization = await getOrganizationAIKeys(organizationId);
+    const organization = await getOrganizationByEnvironmentId(environmentId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -118,7 +119,7 @@ export const createSurvey = async (
     };
 
     if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
     }
 
     await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {

@@ -225,7 +225,7 @@
           }
         },
         "summary": "Update Contact (Attributes)",
-        "tags": ["Client API > Contacts"]
+        "tags": ["Client API - Contacts"]
       }
     },
     "/api/v1/client/{environmentId}/displays": {
@@ -423,7 +423,7 @@
           }
         },
         "summary": "Create Display",
-        "tags": ["Client API > Display"]
+        "tags": ["Client API - Display"]
       }
     },
     "/api/v1/client/{environmentId}/displays/{displayId}": {
@@ -627,7 +627,7 @@
           }
         },
         "summary": "Update Display",
-        "tags": ["Client API > Display"]
+        "tags": ["Client API - Display"]
       }
     },
     "/api/v1/client/{environmentId}/environment": {
@@ -1045,7 +1045,7 @@
           }
         },
         "summary": "Get Environment State",
-        "tags": ["Client API > Environment"]
+        "tags": ["Client API - Environment"]
       }
     },
     "/api/v1/client/{environmentId}/identify/contacts/{userId}": {
@@ -1219,7 +1219,7 @@
           }
         },
         "summary": "Get Contact State",
-        "tags": ["Client API > Contacts"]
+        "tags": ["Client API - Contacts"]
       }
     },
     "/api/v1/client/{environmentId}/responses": {
@@ -1509,7 +1509,7 @@
           }
         },
         "summary": "Create Response",
-        "tags": ["Client API > Response"]
+        "tags": ["Client API - Response"]
       }
     },
     "/api/v1/client/{environmentId}/responses/{responseId}": {
@@ -1711,7 +1711,7 @@
           }
         },
         "summary": "Update Response",
-        "tags": ["Client API > Response"]
+        "tags": ["Client API - Response"]
       }
     },
     "/api/v1/client/{environmentId}/user": {
@@ -2121,7 +2121,7 @@
           }
         },
         "summary": "Create or Identify User",
-        "tags": ["Client API > User"]
+        "tags": ["Client API - User"]
       }
     },
     "/api/v1/management/action-classes": {
@@ -2314,7 +2314,7 @@
           }
         },
         "summary": "Get All Action Classes",
-        "tags": ["Management API > Action Class"]
+        "tags": ["Management API - Action Class"]
       },
       "post": {
         "description": "Create Action Class from the UI or from the API! You can read more about them [here](https://formbricks.com/docs/in-app-surveys/actions).",
@@ -2467,7 +2467,7 @@
           }
         },
         "summary": "Create Action Class",
-        "tags": ["Management API > Action Class"]
+        "tags": ["Management API - Action Class"]
       }
     },
     "/api/v1/management/action-classes/{actionClassId}": {
@@ -2676,7 +2676,7 @@
           }
         },
         "summary": "Delete Action Class",
-        "tags": ["Management API > Action Class"]
+        "tags": ["Management API - Action Class"]
       },
       "get": {
         "description": "Fetch an Action Class by it's ID",
@@ -2830,7 +2830,7 @@
           }
         },
         "summary": "Get Action Class by ID",
-        "tags": ["Management API > Action Class"]
+        "tags": ["Management API - Action Class"]
       }
     },
     "/api/v1/management/attribute-classes": {
@@ -2968,7 +2968,7 @@
           }
         },
         "summary": "Get All Attribute Classes",
-        "tags": ["Management API > Attribute Class"]
+        "tags": ["Management API - Attribute Class"]
       },
       "post": {
         "description": "Create a new Attribute Class by passing in its type as well as the name! Now just use them in your app and pass this value with a user & it'll be associated with it.",
@@ -3119,7 +3119,7 @@
           }
         },
         "summary": "Create Attribute Class",
-        "tags": ["Management API > Attribute Class"]
+        "tags": ["Management API - Attribute Class"]
       }
     },
     "/api/v1/management/attribute-classes/{attributeClassId}": {
@@ -3328,7 +3328,7 @@
           }
         },
         "summary": "Delete Attribute Class",
-        "tags": ["Management API > Attribute Class"]
+        "tags": ["Management API - Attribute Class"]
       },
       "get": {
         "description": "Fetches an Attribute Class by its ID",
@@ -3541,7 +3541,7 @@
           }
         },
         "summary": "Get Attribute Class by ID",
-        "tags": ["Management API > Attribute Class"]
+        "tags": ["Management API - Attribute Class"]
       }
     },
     "/api/v1/management/contact-attribute-keys": {
@@ -3624,7 +3624,7 @@
           }
         },
         "summary": "Get All Contact Attribute Keys",
-        "tags": ["Management API > Contact Attribute Keys"]
+        "tags": ["Management API - Contact Attribute Keys"]
       }
     },
     "/api/v1/management/contact-attribute-keys/{contactAttributeKeyId}": {
@@ -3775,7 +3775,7 @@
           }
         },
         "summary": "Get Contact Attribute Key by ID",
-        "tags": ["Management API > Contact Attribute Keys"]
+        "tags": ["Management API - Contact Attribute Keys"]
       }
     },
     "/api/v1/management/contact-attributes": {
@@ -3855,7 +3855,7 @@
           }
         },
         "summary": "Get All Contact Attributes",
-        "tags": ["Management API > Contact Attributes"]
+        "tags": ["Management API - Contact Attributes"]
       }
     },
     "/api/v1/management/contacts": {
@@ -3941,7 +3941,7 @@
           }
         },
         "summary": "Get All Contacts",
-        "tags": ["Management API > Contacts"]
+        "tags": ["Management API - Contacts"]
       }
     },
     "/api/v1/management/contacts/{contactId}": {
@@ -4045,7 +4045,7 @@
           }
         },
         "summary": "Get Contact by ID",
-        "tags": ["Management API > Contacts"]
+        "tags": ["Management API - Contacts"]
       }
     },
     "/api/v1/management/me": {
@@ -4124,7 +4124,7 @@
           }
         },
         "summary": "Me",
-        "tags": ["Management API > Me"]
+        "tags": ["Management API - Me"]
       }
     },
     "/api/v1/management/people": {
@@ -4251,7 +4251,7 @@
           }
         },
         "summary": "Get All Persons",
-        "tags": ["Management API > People"]
+        "tags": ["Management API - People"]
       }
     },
     "/api/v1/management/people/{personId}": {
@@ -4400,7 +4400,7 @@
           }
         },
         "summary": "Delete Person",
-        "tags": ["Management API > People"]
+        "tags": ["Management API - People"]
       },
       "get": {
         "description": "Get a person by their internal ID on Formbricks. This internal ID can be found from the Get All Person endpoint.",
@@ -4493,7 +4493,7 @@
           }
         },
         "summary": "Get Person by ID",
-        "tags": ["Management API > People"]
+        "tags": ["Management API - People"]
       }
     },
     "/api/v1/management/responses": {
@@ -4926,7 +4926,7 @@
           }
         },
         "summary": "Get Survey Responses",
-        "tags": ["Management API > Response"]
+        "tags": ["Management API - Response"]
       },
       "post": {
         "description": "Create a user response using the management API",
@@ -5114,7 +5114,7 @@
           }
         },
         "summary": "Create Response",
-        "tags": ["Management API > Response"]
+        "tags": ["Management API - Response"]
       }
     },
     "/api/v1/management/responses/{responseId}": {
@@ -5291,7 +5291,7 @@
           }
         },
         "summary": "Delete Response",
-        "tags": ["Management API > Response"]
+        "tags": ["Management API - Response"]
       },
       "get": {
         "description": "Fetch the entire response object based on its ID",
@@ -5466,7 +5466,7 @@
           }
         },
         "summary": "Get Response by ID",
-        "tags": ["Management API > Response"]
+        "tags": ["Management API - Response"]
       },
       "put": {
         "description": "Update an existing user response with new data",
@@ -5664,7 +5664,7 @@
           }
         },
         "summary": "Update Response",
-        "tags": ["Management API > Response"]
+        "tags": ["Management API - Response"]
       }
     },
     "/api/v1/management/storage": {
@@ -5820,7 +5820,7 @@
           }
         },
         "summary": "Upload Public File",
-        "tags": ["Management API > Storage"]
+        "tags": ["Management API - Storage"]
       }
     },
     "/api/v1/management/storage/local": {
@@ -6001,7 +6001,7 @@
           }
         ],
         "summary": "Upload Public File to Local Storage",
-        "tags": ["Management API > Storage"]
+        "tags": ["Management API - Storage"]
       }
     },
     "/api/v1/management/surveys": {
@@ -6191,7 +6191,7 @@
           }
         },
         "summary": "Get All Surveys",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       },
       "post": {
         "description": "Create a survey with granular settings, questions, their types, welcomeCard, thankYouCard, languages, etc right from this API. We'd however recommend you to do this via our Formbricks App with the UI for a better visual experience.",
@@ -6568,7 +6568,7 @@
           }
         },
         "summary": "Create Survey",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/management/surveys/{surveyId}": {
@@ -6826,7 +6826,7 @@
           }
         },
         "summary": "Delete Survey",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       },
       "get": {
         "description": "Fetch a survey object based on its ID",
@@ -7020,7 +7020,7 @@
           }
         },
         "summary": "Get Survey by ID",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       },
       "put": {
         "description": "Update an existing survey with new properties. This is also what we'd recommend you to do from the UI for a better visual feedback.",
@@ -7279,7 +7279,7 @@
           }
         },
         "summary": "Update Survey",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/management/surveys/{surveyId}/singleUseIds": {
@@ -7461,7 +7461,7 @@
           }
         },
         "summary": "Get SingleUse Links",
-        "tags": ["Management API > Survey"]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/webhooks": {
@@ -7566,7 +7566,7 @@
           }
         },
         "summary": "Get All Webhooks",
-        "tags": ["Management API > Webhook"]
+        "tags": ["Management API - Webhook"]
       },
       "post": {
         "description": "Create a new webhook right from the API and see it active right away!",
@@ -7664,7 +7664,7 @@
           }
         },
         "summary": "Create Webhook",
-        "tags": ["Management API > Webhook"]
+        "tags": ["Management API - Webhook"]
       }
     },
     "/api/v1/webhooks/{webhookId}": {
@@ -7821,7 +7821,7 @@
           }
         },
         "summary": "Delete Webhook",
-        "tags": ["Management API > Webhook"]
+        "tags": ["Management API - Webhook"]
       },
       "get": {
         "description": "Get a specific webhook object based on its ID",
@@ -7914,7 +7914,7 @@
           }
         },
         "summary": "Get Webhook",
-        "tags": ["Management API > Webhook"]
+        "tags": ["Management API - Webhook"]
       }
     },
     "/health": {
@@ -8078,23 +8078,23 @@
     },
     {
       "description": "Displays are metrics used to measure the number of times a survey was viewed both by unidentified or identified users.",
-      "name": "Client API > Display"
+      "name": "Client API - Display"
     },
     {
       "description": "Responses are captured whenever a user fills in your survey either partially or completely.",
-      "name": "Client API > Response"
+      "name": "Client API - Response"
     },
     {
       "description": "Get the environment state to be used in Formbricks SDKs",
-      "name": "Client API > Environment"
+      "name": "Client API - Environment"
     },
     {
       "description": "Contacts are the identified users on Formbricks app that get initated when you pass a userId and have user activation enabled. This now allows you to track & show them targeted surveys based on their attributes, device type, etc.",
-      "name": "Client API > Contacts"
+      "name": "Client API - Contacts"
     },
     {
       "description": "Users are the identified users on Formbricks app that get initated when you pass a userId and have user activation enabled. This now allows you to track & show them targeted surveys based on their attributes, device type, etc. Currently, this api is only being used in the react-native sdk.",
-      "name": "Client API > User"
+      "name": "Client API - User"
     },
     {
       "description": "The Management API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the Management API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.\n\n> **For Auth:** we use the `x-api-key` header \n  \n\nAPI requests made to the Management API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at formbricks.com. It's essential to keep your API key secure and not share it with others.\n\nTo generate, store, or delete an API key, follow the instructions provided on the following page [API Key](https://formbricks.com/docs/api/management/api-key-setup).",
@@ -8102,43 +8102,43 @@
     },
     {
       "description": "Action Classes allow you to set behaviour methods such as when a user clicks on a buy now button, or when a user leaves the page, etc. These allow you to trigger specific surveys to these users.\n\nMethods: Get All, Get, Create, Update, and Delete Action Classes",
-      "name": "Management API > Action Class"
+      "name": "Management API - Action Class"
     },
     {
       "description": "Attribute Classes help you categorize attributes so that you can target users based on specific values of their attributes. They are associated with a Person. Read more [here](https://formbricks.com/docs/in-app-surveys/attributes)",
-      "name": "Management API > Attribute Class"
+      "name": "Management API - Attribute Class"
     },
     {
       "description": "The Contacts API allows you to retrieve information about contacts in your environment. Contacts represent users who have interacted with your surveys or forms.",
-      "name": "Management API > Contacts"
+      "name": "Management API - Contacts"
     },
     {
       "description": "The Contact Attributes API allows you to retrieve information about attributes associated with contacts in your environment. These attributes can include custom properties and values assigned to your contacts.",
-      "name": "Management API > Contact Attributes"
+      "name": "Management API - Contact Attributes"
     },
     {
       "description": "The Contact Attribute Keys API allows you to retrieve information about the defined attribute keys in your environment. These keys define the structure and properties that can be assigned to contacts, such as email, name, or custom attributes.",
-      "name": "Management API > Contact Attribute Keys"
+      "name": "Management API - Contact Attribute Keys"
     },
     {
       "description": "Retrieve Account Information",
-      "name": "Management API > Me"
+      "name": "Management API - Me"
     },
     {
       "description": "Enable User Identification in Formbricks to granularly target users to show surveys to without spraying across them. This API will help you utilise Formbricks User Identification to its maximum.\n\nMethods: Get All, Get, and Delete Persons",
-      "name": "Management API > People"
+      "name": "Management API - People"
     },
     {
       "description": "Responses are what your users fill in as answers to a survey. Use this cautiosly and make sure you handle this data carefully.\n\nMethods allowed: Get All, Get by Survey, Get, Update, and Delete Responses",
-      "name": "Management API > Response"
+      "name": "Management API - Response"
     },
     {
       "description": "Surveys are the core of user data & feedback collection. We have various types of surveys to cater to you:\n\n- In-App Surveys\n    \n- Website Surveys\n    \n- Link Surveys\n    \n\nCreate surveys & then trigger them as per your actions & attribute filterings that you have set to make the most of them.\n\nMethods allowed: Get All, Get, Create, Update, and Delete Surveys",
-      "name": "Management API > Survey"
+      "name": "Management API - Survey"
     },
     {
       "description": "Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.\n\nThe behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include:\n\n- \"responseCreated\"\n    \n- \"responseUpdated\", and\n    \n- \"responseFinished\".\n    \n\nThese APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks environment.\n\n  \n\nMethods allowed: Get All, Get ,Create, and Delete Webhooks",
-      "name": "Management API > Webhook"
+      "name": "Management API - Webhook"
     }
   ]
 }

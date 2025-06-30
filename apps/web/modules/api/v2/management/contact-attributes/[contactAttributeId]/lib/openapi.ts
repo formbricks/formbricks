@@ -12,7 +12,7 @@ export const getContactAttributeEndpoint: ZodOpenApiOperationObject = {
       contactAttributeId: z.string().cuid2(),
     }),
   },
-  tags: ["Management API > Contact Attributes"],
+  tags: ["Management API - Contact Attributes"],
   responses: {
     "200": {
       description: "Contact retrieved successfully.",
@@ -29,7 +29,7 @@ export const deleteContactAttributeEndpoint: ZodOpenApiOperationObject = {
   operationId: "deleteContactAttribute",
   summary: "Delete a contact attribute",
   description: "Deletes a contact attribute from the database.",
-  tags: ["Management API > Contact Attributes"],
+  tags: ["Management API - Contact Attributes"],
   requestParams: {
     path: z.object({
       contactAttributeId: z.string().cuid2(),
@@ -51,7 +51,7 @@ export const updateContactAttributeEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateContactAttribute",
   summary: "Update a contact attribute",
   description: "Updates a contact attribute in the database.",
-  tags: ["Management API > Contact Attributes"],
+  tags: ["Management API - Contact Attributes"],
   requestParams: {
     path: z.object({
       contactAttributeId: z.string().cuid2(),
