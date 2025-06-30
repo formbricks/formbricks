@@ -1,0 +1,82 @@
+name: 'Upload Sentry Sourcemaps'
+description: 'Extract sourcemaps from Docker image and upload to Sentry'
+
+inputs:
+  docker_image:
+    description: 'Docker image to extract sourcemaps from'
+    required: true
+  release_version:
+    description: 'Sentry release version (e.g., v1.2.3)'
+    required: true
+  environment:
+    description: 'Deployment environment (stage, prod)'
+    required: true
+  sentry_auth_token:
+    description: 'Sentry authentication token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Extract sourcemaps from Docker image
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
+        
+        # Set up trap to ensure container cleanup on exit while preserving exit status
+        cleanup_container() {
+          local exit_code=$?
+          if docker ps -a --format '{{.Names}}' | grep -q "sentry-sourcemap-container"; then
+            echo "🧹 Cleaning up Docker container..."
+            docker rm -f sentry-sourcemap-container
+          fi
+          exit $exit_code
+        }
+        trap cleanup_container EXIT
+        
+        # Create temporary container from the image
+        docker create --name sentry-sourcemap-container "${{ inputs.docker_image }}"
+        
+        # Extract .next directory containing sourcemaps
+        docker cp sentry-sourcemap-container:/home/nextjs/apps/web/.next ./extracted-next
+        
+        # Verify sourcemaps exist
+        if [ ! -d "./extracted-next/static/chunks" ]; then
+          echo "❌ Error: .next/static/chunks directory not found in Docker image"
+          echo "Expected structure: /home/nextjs/apps/web/.next/static/chunks/"
+          exit 1
+        fi
+        
+        sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
+        echo "✅ Found $sourcemap_count sourcemap files"
+        
+        if [ "$sourcemap_count" -eq 0 ]; then
+          echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
+          exit 1
+        fi
+
+    - name: Create Sentry release and upload sourcemaps
+      uses: getsentry/action-release@v3
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+        SENTRY_ORG: formbricks
+        SENTRY_PROJECT: formbricks-cloud
+      with:
+        environment: ${{ inputs.environment }}
+        version: ${{ inputs.release_version }}
+        sourcemaps: './extracted-next/'
+
+    - name: Clean up extracted files
+      shell: bash
+      if: always()
+      run: |
+        set -euo pipefail
+        # Clean up extracted files
+        rm -rf ./extracted-next
+        echo "🧹 Cleaned up extracted files" 
