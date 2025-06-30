@@ -21,25 +21,17 @@ export const OptionsSwitch = ({
   const [highlightStyle, setHighlightStyle] = useState({});
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const updateHighlight = () => {
-      if (containerRef.current) {
-        const activeElement = containerRef.current.querySelector(`[data-value="${currentOption}"]`);
-        if (activeElement) {
-          const { offsetLeft, offsetWidth } = activeElement as HTMLElement;
-          setHighlightStyle({
-            left: `${offsetLeft}px`,
-            width: `${offsetWidth}px`,
-          });
-        }
+    if (containerRef.current) {
+      const activeElement = containerRef.current.querySelector(`[data-value="${currentOption}"]`);
+      if (activeElement) {
+        const { offsetLeft, offsetWidth } = activeElement as HTMLElement;
+        setHighlightStyle({
+          left: `${offsetLeft}px`,
+          width: `${offsetWidth}px`,
+        });
       }
     }
-    // Initial call
-    updateHighlight();
-
-    // Listen to resize
-    window.addEventListener("resize", updateHighlight);
-    return () => window.removeEventListener("resize", updateHighlight);
-  }, [currentOption, containerRef]);
+  }, [currentOption]);
 
   return (
     <div
