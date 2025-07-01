@@ -67,15 +67,33 @@ describe("tag lib", () => {
   });
 
   describe("updateTagName", () => {
-    test("updates tag name and revalidates cache", async () => {
+    test("returns ok on successful update", async () => {
       vi.mocked(prisma.tag.update).mockResolvedValueOnce(baseTag);
+
       const result = await updateTagName(baseTag.id, "Tag1");
-      expect(result).toEqual(baseTag);
-      expect(prisma.tag.update).toHaveBeenCalledWith({ where: { id: baseTag.id }, data: { name: "Tag1" } });
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toEqual(baseTag);
+      }
+
+      expect(prisma.tag.update).toHaveBeenCalledWith({
+        where: { id: baseTag.id },
+        data: { name: "Tag1" },
+      });
     });
-    test("throws error on prisma error", async () => {
+    test("returns internal_server_error on unknown error", async () => {
       vi.mocked(prisma.tag.update).mockRejectedValueOnce(new Error("fail"));
-      await expect(updateTagName(baseTag.id, "Tag1")).rejects.toThrow("fail");
+
+      const result = await updateTagName(baseTag.id, "Tag1");
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          type: "internal_server_error",
+          details: [{ field: "tag", issue: "fail" }],
+        });
+      }
     });
   });
 

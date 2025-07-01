@@ -72,10 +72,11 @@ export const SingleTag: React.FC<SingleTagProps> = ({
               defaultValue={tagName}
               onBlur={(e) => {
                 updateTagNameAction({ tagId, name: e.target.value.trim() }).then((res) => {
-                  if (res?.data.ok) {
+                  const result = res?.data;
+                  if (result?.ok) {
                     setUpdateTagError(false);
                     toast.success(t("environments.project.tags.tag_updated"));
-                  } else if (res?.data.error?.type === "conflict") {
+                  } else if (result?.error?.type === "conflict") {
                     toast.error(t("environments.project.tags.tag_already_exists"), {
                       duration: 2000,
                       icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
@@ -83,7 +84,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                     setUpdateTagError(true);
                   } else {
                     toast.error(
-                      getFormattedErrorMessage(res) ?? t("common.something_went_wrong_please_try_again"),
+                      getFormattedErrorMessage(result) ?? t("common.something_went_wrong_please_try_again"),
                       { duration: 2000 }
                     );
                     setUpdateTagError(true);
