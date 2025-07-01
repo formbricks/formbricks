@@ -52,7 +52,7 @@ export const DeleteDialog = ({
         </DialogHeader>
 
         <DialogBody>
-          <p>{text || t("common.are_you_sure_this_action_cannot_be_undone")}</p>
+          <p>{text}</p>
           {children && <div>{children}</div>}
         </DialogBody>
 
