@@ -34,7 +34,8 @@
           "text": "Pode agora iniciar sessão com a sua nova palavra-passe"
         }
       },
-      "reset_password": "Redefinir palavra-passe"
+      "reset_password": "Redefinir palavra-passe",
+      "reset_password_description": "Será desconectado para redefinir a sua palavra-passe."
     },
     "invite": {
       "create_account": "Criar uma conta",
@@ -63,9 +64,6 @@
       "lost_access": "Perdeu o acesso?",
       "new_to_formbricks": "Novo no Formbricks?",
       "use_a_backup_code": "Use um código de backup"
-    },
-    "reset-password": {
-      "not-allowed": "A reposição da palavra-passe não é permitida para este utilizador."
     },
     "saml_connection_error": "Algo correu mal. Por favor, verifique a consola da aplicação para mais detalhes.",
     "signup": {

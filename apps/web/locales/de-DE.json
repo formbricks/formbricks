@@ -34,7 +34,8 @@
           "text": "Du kannst Dich jetzt mit deinem neuen Passwort einloggen"
         }
       },
-      "reset_password": "Passwort zurücksetzen"
+      "reset_password": "Passwort zurücksetzen",
+      "reset_password_description": "Du wirst abgemeldet, um dein Passwort zurückzusetzen."
     },
     "invite": {
       "create_account": "Konto erstellen",
@@ -63,9 +64,6 @@
       "lost_access": "Zugang verloren?",
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
-    },
-    "reset-password": {
-      "not-allowed": "Passwortzurücksetzung ist für diesen Benutzer nicht erlaubt."
     },
     "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {

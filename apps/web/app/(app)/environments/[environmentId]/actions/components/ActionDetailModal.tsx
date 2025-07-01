@@ -62,7 +62,7 @@ export const ActionDetailModal = ({
   const typeDescription =
     actionClass.type && actionClass.type === "noCode"
       ? t("common.no_code") + " " + t("common.action").toLowerCase()
-      : t("common.no_code") + " " + t("common.action").toLowerCase();
+      : t("common.code") + " " + t("common.action").toLowerCase();
 
   return (
     <>

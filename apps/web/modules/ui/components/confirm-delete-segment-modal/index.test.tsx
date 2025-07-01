@@ -32,6 +32,9 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   DialogTitle: ({ children }: { children: React.ReactNode }) => (
     <h2 data-testid="dialog-title">{children}</h2>
   ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
   DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="dialog-body" className={className}>
       {children}
@@ -61,7 +64,8 @@ vi.mock("@tolgee/react", () => ({
           "Cannot delete segment used in surveys",
         "environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it":
           "Please remove the segment from these surveys in order to delete it",
-        "common.are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
+        "environments.project.general.this_action_cannot_be_undone":
+          "Are you sure? This action cannot be undone.",
         "common.cancel": "Cancel",
         "common.delete": "Delete",
       };

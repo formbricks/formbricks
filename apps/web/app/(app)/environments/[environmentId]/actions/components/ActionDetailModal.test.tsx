@@ -197,7 +197,7 @@ describe("ActionDetailModal", () => {
     render(<ActionDetailModal {...defaultProps} actionClass={actionWithoutDescription} />);
 
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Action");
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent("common.no_code common.action");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("common.code common.action");
   });
 
   test("passes correct props to ActionActivityTab", () => {

@@ -48,7 +48,10 @@ describe("EmailChangeSignIn", () => {
       expect(screen.getByText("auth.email-change.email_change_success_description")).toBeInTheDocument();
     });
 
-    expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    // Wait for the second useEffect that calls signOut to execute
+    await waitFor(() => {
+      expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    });
   });
 
   test("handles failed email change verification", async () => {

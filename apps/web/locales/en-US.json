@@ -34,7 +34,8 @@
           "text": "You can now log in with your new password"
         }
       },
-      "reset_password": "Reset password"
+      "reset_password": "Reset password",
+      "reset_password_description": "You will be logged out to reset your password."
     },
     "invite": {
       "create_account": "Create an account",
@@ -63,9 +64,6 @@
       "lost_access": "Lost Access?",
       "new_to_formbricks": "New to Formbricks?",
       "use_a_backup_code": "Use a backup code"
-    },
-    "reset-password": {
-      "not-allowed": "Password reset is not allowed for this user."
     },
     "saml_connection_error": "Something went wrong. Please check your app console for more details.",
     "signup": {

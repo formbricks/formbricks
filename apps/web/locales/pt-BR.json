@@ -34,7 +34,8 @@
           "text": "Agora você pode fazer login com sua nova senha"
         }
       },
-      "reset_password": "Redefinir senha"
+      "reset_password": "Redefinir senha",
+      "reset_password_description": "Você será desconectado para redefinir sua senha."
     },
     "invite": {
       "create_account": "Cria uma conta",
@@ -63,9 +64,6 @@
       "lost_access": "Perdeu o acesso?",
       "new_to_formbricks": "Novo no Formbricks?",
       "use_a_backup_code": "Usar um código de backup"
-    },
-    "reset-password": {
-      "not-allowed": "Redefinição de senha não é permitida para este usuário."
     },
     "saml_connection_error": "Algo deu errado. Por favor, verifica o console do app para mais detalhes.",
     "signup": {
