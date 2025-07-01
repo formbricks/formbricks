@@ -34,7 +34,8 @@
           "text": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
         }
       },
-      "reset_password": "Réinitialiser le mot de passe"
+      "reset_password": "Réinitialiser le mot de passe",
+      "reset_password_description": "Vous serez déconnecté pour réinitialiser votre mot de passe."
     },
     "invite": {
       "create_account": "Créer un compte",

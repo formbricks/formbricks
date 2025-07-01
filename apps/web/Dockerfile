@@ -129,7 +129,6 @@ RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
 
 EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
-ENV NODE_ENV="production"
 USER nextjs
 
 # Prepare volume for uploads
