@@ -1230,7 +1230,7 @@
       "copy_survey_error": "Falha ao copiar pesquisa",
       "copy_survey_link_to_clipboard": "Copiar link da pesquisa para a área de transferência",
       "copy_survey_success": "Pesquisa copiada com sucesso!",
-      "delete_survey_and_responses_warning": "Você tem certeza de que quer deletar essa pesquisa e todas as suas respostas? Essa ação não pode ser desfeita.",
+      "delete_survey_and_responses_warning": "Você tem certeza de que quer deletar essa pesquisa e todas as suas respostas?",
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Escolha o idioma padrão para essa pesquisa:",
         "2_activate_translation_for_specific_languages": "2. Ativar tradução para idiomas específicos:",
