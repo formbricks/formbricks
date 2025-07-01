@@ -11,6 +11,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 
 interface ITagsComboboxProps {
   tags: Tag[];
@@ -91,13 +92,16 @@ export const TagsCombobox = ({
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchValue !== "") {
-                  if (
-                    !tagsToSearch?.find((tag) =>
-                      tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
-                    )
-                  ) {
-                    createTag?.(searchValue);
+                  const alreadyExists =
+                    currentTags.some((tag) => tag.label.toLowerCase() === searchValue.toLowerCase()) ||
+                    tagsToSearch.some((tag) => tag.label.toLowerCase() === searchValue.toLowerCase());
+
+                  if (alreadyExists) {
+                    toast.error(t("environments.project.tags.tag_already_exists"));
+                    return;
                   }
+
+                  createTag?.(searchValue);
                 }
               }}
             />

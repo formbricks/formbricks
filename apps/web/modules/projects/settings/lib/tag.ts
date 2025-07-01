@@ -1,10 +1,11 @@
 import "server-only";
 import { validateInputs } from "@/lib/utils/validate";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { ZId, ZString } from "@formbricks/types/common";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/common";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 
 export const deleteTag = async (id: string): Promise<TTag> => {
@@ -23,28 +24,28 @@ export const deleteTag = async (id: string): Promise<TTag> => {
   }
 };
 
-export const updateTagName = async (id: string, name: string): Promise<TTag> => {
-  validateInputs([id, ZId], [name, ZString]);
-
+export const updateTagName = async (id: string, name: string): Promise<Result<TTag, ApiErrorResponseV2>> => {
   try {
     const tag = await prisma.tag.update({
-      where: {
-        id,
-      },
-      data: {
-        name,
-      },
+      where: { id },
+      data: { name },
     });
 
-    return tag;
+    return ok(tag);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
-      throw new InvalidInputError(error.message);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        return err({
+          type: "conflict",
+          details: [{ field: "tag", issue: "Tag with this name already exists" }],
+        });
+      }
     }
-    throw error;
+
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "tag", issue: error.message }],
+    });
   }
 };
 
