@@ -161,11 +161,11 @@ export const IndividualInviteTab = ({
           </Alert>
         )}
 
-        <div className="flex justify-between">
+        <div className="flex items-end justify-end gap-x-2">
           <Button
             size="default"
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => {
               setOpen(false);
             }}>
