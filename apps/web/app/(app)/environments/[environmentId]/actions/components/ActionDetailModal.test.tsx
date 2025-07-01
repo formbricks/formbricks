@@ -68,6 +68,9 @@ vi.mock("@tolgee/react", () => ({
       const translations = {
         "common.activity": "Activity",
         "common.settings": "Settings",
+        "common.no_code": "No Code",
+        "common.action": "Action",
+        "common.code": "Code",
       };
       return translations[key] || key;
     },
@@ -197,7 +200,7 @@ describe("ActionDetailModal", () => {
     render(<ActionDetailModal {...defaultProps} actionClass={actionWithoutDescription} />);
 
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Action");
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent("common.code common.action");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("Code action");
   });
 
   test("passes correct props to ActionActivityTab", () => {
