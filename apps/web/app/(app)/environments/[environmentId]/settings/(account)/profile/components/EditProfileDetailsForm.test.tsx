@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
-import { updateUserAction } from "../actions";
+import { resetPasswordAction, updateUserAction } from "../actions";
 import { EditProfileDetailsForm } from "./EditProfileDetailsForm";
 
 const mockUser = {
@@ -24,6 +24,8 @@ const mockUser = {
   objective: "other",
 } as unknown as TUser;
 
+vi.mock("next-auth/react", () => ({ signOut: vi.fn() }));
+
 // Mock window.location.reload
 const originalLocation = window.location;
 beforeEach(() => {
@@ -35,6 +37,11 @@ beforeEach(() => {
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions", () => ({
   updateUserAction: vi.fn(),
+  resetPasswordAction: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/forgot-password/actions", () => ({
+  forgotPasswordAction: vi.fn(),
 }));
 
 afterEach(() => {
@@ -50,7 +57,13 @@ describe("EditProfileDetailsForm", () => {
   test("renders with initial user data and updates successfully", async () => {
     vi.mocked(updateUserAction).mockResolvedValue({ ...mockUser, name: "New Name" } as any);
 
-    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={true} />);
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={true}
+        isPasswordResetEnabled={false}
+      />
+    );
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     expect(nameInput).toHaveValue(mockUser.name);
@@ -91,7 +104,13 @@ describe("EditProfileDetailsForm", () => {
     const errorMessage = "Update failed";
     vi.mocked(updateUserAction).mockRejectedValue(new Error(errorMessage));
 
-    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={false} />);
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={false}
+        isPasswordResetEnabled={false}
+      />
+    );
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     await userEvent.clear(nameInput);
@@ -109,12 +128,82 @@ describe("EditProfileDetailsForm", () => {
   });
 
   test("update button is disabled initially and enables on change", async () => {
-    render(<EditProfileDetailsForm user={mockUser} emailVerificationDisabled={false} />);
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={false}
+        isPasswordResetEnabled={false}
+      />
+    );
     const updateButton = screen.getByText("common.update");
     expect(updateButton).toBeDisabled();
 
     const nameInput = screen.getByPlaceholderText("common.full_name");
     await userEvent.type(nameInput, " updated");
     expect(updateButton).toBeEnabled();
+  });
+
+  test("reset password button works", async () => {
+    vi.mocked(resetPasswordAction).mockResolvedValue({ data: { success: true } });
+
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={false}
+        isPasswordResetEnabled={true}
+      />
+    );
+
+    const resetButton = screen.getByRole("button", { name: "auth.forgot-password.reset_password" });
+    await userEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(resetPasswordAction).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("auth.forgot-password.email-sent.heading");
+    });
+  });
+
+  test("reset password button handles error correctly", async () => {
+    const errorMessage = "Reset failed";
+    vi.mocked(resetPasswordAction).mockResolvedValue({ serverError: errorMessage });
+
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={false}
+        isPasswordResetEnabled={true}
+      />
+    );
+
+    const resetButton = screen.getByRole("button", { name: "auth.forgot-password.reset_password" });
+    await userEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(resetPasswordAction).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(errorMessage);
+    });
+  });
+
+  test("reset password button shows loading state", async () => {
+    vi.mocked(resetPasswordAction).mockImplementation(() => new Promise(() => {})); // Never resolves
+
+    render(
+      <EditProfileDetailsForm
+        user={mockUser}
+        emailVerificationDisabled={false}
+        isPasswordResetEnabled={true}
+      />
+    );
+
+    const resetButton = screen.getByRole("button", { name: "auth.forgot-password.reset_password" });
+    await userEvent.click(resetButton);
+
+    expect(resetButton).toBeDisabled();
   });
 });

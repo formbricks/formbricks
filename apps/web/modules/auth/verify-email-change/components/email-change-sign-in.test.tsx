@@ -48,7 +48,6 @@ describe("EmailChangeSignIn", () => {
       expect(screen.getByText("auth.email-change.email_change_success_description")).toBeInTheDocument();
     });
 
-    // Wait for the second useEffect that calls signOut to execute
     await waitFor(() => {
       expect(signOut).toHaveBeenCalledWith({ redirect: false });
     });
