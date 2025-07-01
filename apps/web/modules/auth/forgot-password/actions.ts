@@ -21,9 +21,9 @@ export const forgotPasswordAction = actionClient
 
     const user = await getUserByEmail(parsedInput.email);
 
-    if (!user || user.identityProvider !== "email") {
-      return;
+    if (user && user.identityProvider === "email") {
+      await sendForgotPasswordEmail(user);
     }
 
-    await sendForgotPasswordEmail(user);
+    return { success: true };
   });

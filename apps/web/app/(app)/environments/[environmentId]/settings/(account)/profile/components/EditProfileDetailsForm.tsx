@@ -3,7 +3,6 @@
 import { PasswordConfirmationModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/password-confirmation-modal";
 import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -24,7 +23,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
-import { updateUserAction } from "../actions";
+import { resetPasswordAction, updateUserAction } from "../actions";
 
 // Schema & types
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true }).extend({
@@ -98,6 +97,7 @@ export const EditProfileDetailsForm = ({
           redirectUrl: "/email-change-without-verification-success",
           redirect: true,
           callbackUrl: "/email-change-without-verification-success",
+          clearEnvironmentId: true,
         });
         return;
       }
@@ -130,19 +130,24 @@ export const EditProfileDetailsForm = ({
   };
 
   const handleResetPassword = async () => {
-    if (!user.email) return;
-
     setIsResettingPassword(true);
 
-    await forgotPasswordAction({ email: user.email });
+    const result = await resetPasswordAction();
 
-    toast.success(t("auth.forgot-password.email-sent.heading"));
-    await signOutWithAudit({
-      reason: "password_reset",
-      redirectUrl: "/auth/login",
-      redirect: true,
-      callbackUrl: "/auth/login",
-    });
+    if (result?.data) {
+      toast.success(t("auth.forgot-password.email-sent.heading"));
+
+      await signOutWithAudit({
+        reason: "password_reset",
+        redirectUrl: "/auth/login",
+        redirect: true,
+        callbackUrl: "/auth/login",
+        clearEnvironmentId: true,
+      });
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage);
+    }
 
     setIsResettingPassword(false);
   };

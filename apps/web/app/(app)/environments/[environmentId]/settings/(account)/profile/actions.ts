@@ -13,7 +13,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { sendVerificationNewEmail } from "@/modules/email";
+import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -162,3 +162,13 @@ export const removeAvatarAction = authenticatedActionClient.schema(ZRemoveAvatar
     }
   )
 );
+
+export const resetPasswordAction = authenticatedActionClient.action(async ({ ctx }) => {
+  if (ctx.user.identityProvider !== "email") {
+    throw new OperationNotAllowedError("Password reset is not allowed for SSO users");
+  }
+
+  await sendForgotPasswordEmail(ctx.user);
+
+  return { success: true };
+});
