@@ -50,3 +50,23 @@ export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): str
   const year = date.getFullYear();
   return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
+
+export const formatDate = (date: Date, format: "M-d-y" | "d-M-y" | "y-M-d") => {
+  const dateFormat = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const formattedDate = dateFormat.format(date);
+  const [month, day, year] = formattedDate.split("/");
+
+  switch (format) {
+    case "M-d-y":
+      return `${month}-${day}-${year}`;
+    case "d-M-y":
+      return `${day}-${month}-${year}`;
+    case "y-M-d":
+      return `${year}-${month}-${day}`;
+  }
+};

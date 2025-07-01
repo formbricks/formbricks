@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/date-time";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
@@ -21,6 +22,10 @@ vi.mock("react-date-picker", () => ({
 vi.mock("@/lib/ttc", () => ({
   useTtc: vi.fn(),
   getUpdatedTtc: vi.fn().mockReturnValue({ mockUpdatedTtc: true }),
+}));
+
+vi.mock("@/lib/date-time", () => ({
+  formatDate: vi.fn(),
 }));
 
 describe("DateQuestion", () => {
@@ -135,14 +140,38 @@ describe("DateQuestion", () => {
     expect(screen.getByTestId("date-picker-mock")).toBeInTheDocument();
   });
 
-  test("displays formatted date when a date is selected", async () => {
+  test("displays date in format M-d-y when a date is selected", async () => {
     const dateValue = "2023-01-15";
-    const props = { ...defaultProps, value: dateValue };
+
+    const props = {
+      ...{ ...defaultProps, question: { ...mockQuestion, format: "M-d-y" } },
+      value: dateValue,
+    };
+
+    vi.mocked(formatDate).mockReturnValue("01-15-2023");
 
     render(<DateQuestion {...props} />);
 
     // Handle timezone differences by allowing either 14th or 15th
-    const dateRegex = /(14th|15th) of January, 2023/;
+    const dateRegex = /01-(14|15)-2023/;
+    const dateElement = screen.getByText(dateRegex);
+    expect(dateElement).toBeInTheDocument();
+  });
+
+  test("displays date in format d-M-y when a date is selected", async () => {
+    const dateValue = "2023-01-15";
+
+    const props = {
+      ...{ ...defaultProps, question: { ...mockQuestion, format: "d-M-y" } },
+      value: dateValue,
+    };
+
+    vi.mocked(formatDate).mockReturnValue("15-01-2023");
+
+    render(<DateQuestion {...props} />);
+
+    // Handle timezone differences by allowing either 14th or 15th
+    const dateRegex = /(14|15)-01-2023/;
     const dateElement = screen.getByText(dateRegex);
     expect(dateElement).toBeInTheDocument();
   });
