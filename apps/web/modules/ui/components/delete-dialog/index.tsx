@@ -5,11 +5,13 @@ import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
+import { TrashIcon } from "lucide-react";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -41,9 +43,12 @@ export const DeleteDialog = ({
   const { t } = useTranslate();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
+      <DialogContent className="max-w-lg" hideCloseButton={true} disableCloseOnOutsideClick={true}>
         <DialogHeader>
           <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
+          <DialogDescription>
+            {t("environments.project.general.this_action_cannot_be_undone")}
+          </DialogDescription>
         </DialogHeader>
 
         <DialogBody>
@@ -64,6 +69,7 @@ export const DeleteDialog = ({
             {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
           </Button>
           <Button variant="destructive" onClick={onDelete} loading={isDeleting} disabled={disabled}>
+            <TrashIcon />
             {t("common.delete")}
           </Button>
         </DialogFooter>
