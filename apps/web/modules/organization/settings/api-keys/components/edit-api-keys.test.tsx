@@ -51,6 +51,7 @@ vi.mock("@/modules/ui/components/dialog", () => ({
       {children}
     </h2>
   ),
+  DialogDescription: ({ children }: any) => <p data-testid="dialog-description">{children}</p>,
   DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
   DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
 }));

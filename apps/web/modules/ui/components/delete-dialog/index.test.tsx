@@ -3,6 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DeleteDialog } from "./index";
 
+// Mock the translation function
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "common.delete": "Delete",
+        "common.cancel": "Cancel",
+        "common.save": "Save",
+        "environments.project.general.this_action_cannot_be_undone": "This action cannot be undone.",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
@@ -14,6 +29,9 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   ),
   DialogTitle: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
   ),
   DialogBody: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-body">{children}</div>
@@ -48,12 +66,12 @@ describe("DeleteDialog", () => {
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent("common.delete Item");
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Delete Item");
     expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
-    expect(screen.getByText("common.are_you_sure_this_action_cannot_be_undone")).toBeInTheDocument();
-    expect(screen.getByTestId("button-secondary")).toHaveTextContent("common.cancel");
-    expect(screen.getByTestId("button-destructive")).toHaveTextContent("common.delete");
+    expect(screen.getByText("This action cannot be undone.")).toBeInTheDocument();
+    expect(screen.getByTestId("button-secondary")).toHaveTextContent("Cancel");
+    expect(screen.getByTestId("button-destructive")).toHaveTextContent("Delete");
   });
 
   test("doesn't render when closed", () => {
@@ -139,7 +157,7 @@ describe("DeleteDialog", () => {
       />
     );
 
-    expect(screen.getByTestId("button-secondary")).toHaveTextContent("common.save");
+    expect(screen.getByTestId("button-secondary")).toHaveTextContent("Save");
   });
 
   test("calls onSave when save button is clicked with useSaveInsteadOfCancel", async () => {
