@@ -1,9 +1,14 @@
 import "server-only";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
+import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
+import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
+import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -14,6 +19,72 @@ import {
   ZContactCSVUploadResponse,
 } from "../types/contact";
 import { transformPrismaContact } from "./utils";
+
+export const getContactsInSegment = reactCache(async (segmentId: string) => {
+  try {
+    const segmentResult = await getSegment(segmentId);
+    if (!segmentResult.ok) {
+      return null;
+    }
+
+    const segment = segmentResult.data;
+
+    const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
+      segment.id,
+      segment.filters,
+      segment.environmentId
+    );
+
+    if (!segmentFilterToPrismaQueryResult.ok) {
+      return null;
+    }
+
+    const { whereClause } = segmentFilterToPrismaQueryResult.data;
+
+    const contactAttributeKeysResult = await getContactAttributeKeys(segment.environmentId);
+    if (!contactAttributeKeysResult.ok) {
+      return null;
+    }
+
+    const contacts = await prisma.contact.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        attributes: {
+          select: {
+            attributeKey: {
+              select: {
+                key: true,
+              },
+            },
+            value: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const contactsWithAttributes = contacts.map((contact) => {
+      const attributes = contact.attributes.reduce(
+        (acc, attr) => {
+          acc[attr.attributeKey.key] = attr.value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+      return {
+        contactId: contact.id,
+        attributes,
+      };
+    });
+
+    return contactsWithAttributes;
+  } catch (error) {
+    console.error(error);
+  }
+});
 
 const selectContact = {
   id: true,
@@ -417,4 +488,46 @@ export const createContactsFromCSV = async (
     }
     throw error;
   }
+};
+
+export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays: number) => {
+  const contactsResult = await getContactsInSegment(segmentId);
+
+  if (!contactsResult) {
+    return null;
+  }
+
+  // Calculate expiration date based on expirationDays
+  let expireDays: number | null = null;
+  if (expirationDays) {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + expirationDays);
+    expireDays = expirationDays;
+  }
+
+  // Generate survey links for each contact
+  const contactLinks = contactsResult
+    .map((contact) => {
+      const { contactId, attributes } = contact;
+
+      const surveyUrlResult = getContactSurveyLink(contactId, surveyId, expireDays || undefined);
+
+      if (!surveyUrlResult.ok) {
+        logger.error(
+          { error: surveyUrlResult.error, contactId: contactId, surveyId: surveyId },
+          "Failed to generate survey URL for contact"
+        );
+        return null;
+      }
+
+      return {
+        contactId,
+        attributes,
+        surveyUrl: surveyUrlResult.data,
+        expireDays,
+      };
+    })
+    .filter(Boolean);
+
+  return contactLinks;
 };

@@ -4,11 +4,13 @@ import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
+import { TSegment } from "@formbricks/types/segment";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
 import { WebsiteTab } from "./WebsiteTab";
+import { PersonalLinksTab } from "./personal-links-tab";
 
 interface EmbedViewProps {
   handleInitialPageButton: () => void;
@@ -23,6 +25,7 @@ interface EmbedViewProps {
   publicDomain: string;
   setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
   locale: TUserLocale;
+  segments: TSegment[];
 }
 
 export const EmbedView = ({
@@ -38,6 +41,7 @@ export const EmbedView = ({
   publicDomain,
   setSurveyUrl,
   locale,
+  segments,
 }: EmbedViewProps) => {
   const { t } = useTranslate();
   return (
@@ -89,6 +93,8 @@ export const EmbedView = ({
             />
           ) : activeId === "app" ? (
             <AppTab />
+          ) : activeId === "personal-links" ? (
+            <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />
           ) : null}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (

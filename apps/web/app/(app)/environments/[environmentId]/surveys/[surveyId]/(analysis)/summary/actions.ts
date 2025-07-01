@@ -1,12 +1,16 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { WEBAPP_URL } from "@/lib/constants";
+import { putFile } from "@/lib/storage/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
@@ -221,4 +225,85 @@ export const getEmailHtmlAction = authenticatedActionClient
     });
 
     return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
+  });
+
+const ZGeneratePersonalLinksAction = z.object({
+  surveyId: ZId,
+  segmentId: ZId,
+  environmentId: ZId,
+  expirationDays: z.number().optional(),
+});
+
+export const generatePersonalLinksAction = authenticatedActionClient
+  .schema(ZGeneratePersonalLinksAction)
+  .action(async ({ ctx, parsedInput }) => {
+    try {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            minPermission: "readWrite",
+          },
+        ],
+      });
+
+      // Get contacts and generate personal links
+      const contactsResult = await generatePersonalLinks(
+        parsedInput.surveyId,
+        parsedInput.segmentId,
+        parsedInput.expirationDays || 7
+      );
+
+      if (!contactsResult || contactsResult.length === 0) {
+        throw new Error("No contacts found for the selected segment");
+      }
+
+      // Prepare CSV data with the specified headers and order
+      const csvHeaders = [
+        "Formbricks Contact ID",
+        "User ID",
+        "First Name",
+        "Last Name",
+        "Email",
+        "Personal Link",
+      ];
+
+      const csvData = contactsResult.map((contact: any) => {
+        const attributes = contact.attributes || {};
+        return {
+          "Formbricks Contact ID": contact.contactId,
+          "User ID": attributes.userId || "",
+          "First Name": attributes.firstName || "",
+          "Last Name": attributes.lastName || "",
+          Email: attributes.email || "",
+          "Personal Link": contact.surveyUrl,
+        };
+      });
+
+      // Convert to CSV using the file conversion utility
+      const csvContent = await convertToCsv(csvHeaders, csvData);
+      const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
+
+      // Store file temporarily and return download URL
+      const fileBuffer = Buffer.from(csvContent);
+      await putFile(fileName, fileBuffer, "private", parsedInput.environmentId);
+
+      const downloadUrl = `${WEBAPP_URL}/storage/${parsedInput.environmentId}/private/${fileName}`;
+
+      return {
+        downloadUrl,
+        fileName,
+        count: csvData.length,
+      };
+    } catch (error) {
+      console.error("Error generating personal links:", error);
+      throw new Error("Failed to generate personal links");
+    }
   });

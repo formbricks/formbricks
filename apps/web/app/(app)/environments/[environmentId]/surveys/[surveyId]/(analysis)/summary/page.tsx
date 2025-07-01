@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
+import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -37,6 +38,8 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     throw new Error(t("common.user_not_found"));
   }
 
+  const segments = await getSegments(environment.id);
+
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);
 
@@ -54,6 +57,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             user={user}
             publicDomain={publicDomain}
             responseCount={initialSurveySummary?.meta.totalResponses ?? 0}
+            segments={segments}
           />
         }>
         <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="summary" />

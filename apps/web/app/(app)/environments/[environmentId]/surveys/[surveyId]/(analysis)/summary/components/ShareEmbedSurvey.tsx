@@ -12,11 +12,13 @@ import {
   LinkIcon,
   MailIcon,
   SmartphoneIcon,
+  UserIcon,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -29,6 +31,7 @@ interface ShareEmbedSurveyProps {
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
+  segments: TSegment[];
 }
 
 export const ShareEmbedSurvey = ({
@@ -38,6 +41,7 @@ export const ShareEmbedSurvey = ({
   modalView,
   setOpen,
   user,
+  segments,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
@@ -52,6 +56,7 @@ export const ShareEmbedSurvey = ({
           label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
           icon: LinkIcon,
         },
+        { id: "personal-links", label: t("environments.surveys.summary.personal_links"), icon: UserIcon },
         { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
         { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
 
@@ -61,7 +66,7 @@ export const ShareEmbedSurvey = ({
   );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
-  const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
+  const [showView, setShowView] = useState<"start" | "embed" | "panel" | "personal-links">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
@@ -179,6 +184,7 @@ export const ShareEmbedSurvey = ({
             publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
+            segments={segments}
           />
         ) : showView === "panel" ? (
           <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />

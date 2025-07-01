@@ -27,9 +27,10 @@ const getOrdinalSuffix = (day: number) => {
 interface DatePickerProps {
   date: Date | null;
   updateSurveyDate: (date: Date) => void;
+  minDate?: Date;
 }
 
-export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
+export const DatePicker = ({ date, updateSurveyDate, minDate }: DatePickerProps) => {
   const { t } = useTranslate();
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
   const [formattedDate, setFormattedDate] = useState<string | undefined>(
@@ -83,7 +84,7 @@ export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
         <Calendar
           value={value}
           onChange={(date) => onDateChange(date as Date)}
-          minDate={new Date()}
+          minDate={minDate || new Date()}
           className="!border-0"
           tileClassName={({ date }: { date: Date }) => {
             const baseClass =
