@@ -47,13 +47,14 @@ export const ShareEmbedSurvey = ({
   const tabs = useMemo(
     () =>
       [
-        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
-        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
         {
           id: "link",
           label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
           icon: LinkIcon,
         },
+        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
+        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
+
         { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
       ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
     [t, isSingleUseLinkSurvey, survey.type]
@@ -108,24 +109,26 @@ export const ShareEmbedSurvey = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide">
         {showView === "start" ? (
-          <div className="h-full max-w-full overflow-hidden">
-            <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
-              <DialogTitle>
-                <p className="pt-2 text-xl font-semibold text-slate-800">
-                  {t("environments.surveys.summary.your_survey_is_public")} 🎉
-                </p>
-              </DialogTitle>
-              <DialogDescription className="hidden" />
-              <ShareSurveyLink
-                survey={survey}
-                surveyUrl={surveyUrl}
-                publicDomain={publicDomain}
-                setSurveyUrl={setSurveyUrl}
-                locale={user.locale}
-              />
-            </div>
-            <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
-              <p className="-mt-8 text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
+          <div className="flex h-full max-w-full flex-col overflow-hidden">
+            {survey.type === "link" && (
+              <div className="flex h-2/5 w-full flex-col items-center justify-center space-y-6 p-8 text-center">
+                <DialogTitle>
+                  <p className="pt-2 text-xl font-semibold text-slate-800">
+                    {t("environments.surveys.summary.your_survey_is_public")} 🎉
+                  </p>
+                </DialogTitle>
+                <DialogDescription className="hidden" />
+                <ShareSurveyLink
+                  survey={survey}
+                  surveyUrl={surveyUrl}
+                  publicDomain={publicDomain}
+                  setSurveyUrl={setSurveyUrl}
+                  locale={user.locale}
+                />
+              </div>
+            )}
+            <div className="flex h-full flex-col items-center justify-center gap-4 rounded-b-lg bg-slate-50 px-8">
+              <p className="text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"

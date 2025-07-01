@@ -28,9 +28,14 @@ export const ZWebhook = z.object({
   environmentId: z.string().cuid2().openapi({
     description: "The ID of the environment",
   }),
-  triggers: z.array(z.enum(["responseFinished", "responseCreated", "responseUpdated"])).openapi({
-    description: "The triggers of the webhook",
-  }),
+  triggers: z
+    .array(z.enum(["responseFinished", "responseCreated", "responseUpdated"]))
+    .openapi({
+      description: "The triggers of the webhook",
+    })
+    .min(1, {
+      message: "At least one trigger is required",
+    }),
   surveyIds: z.array(z.string().cuid2()).openapi({
     description: "The IDs of the surveys ",
   }),

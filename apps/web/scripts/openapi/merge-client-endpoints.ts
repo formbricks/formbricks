@@ -62,7 +62,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Update Response",
-      tags: ["Client API > Response"],
+      tags: ["Client API - Response"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -95,7 +95,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Create Response",
-      tags: ["Client API > Response"],
+      tags: ["Client API - Response"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -145,7 +145,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Update Contact (Attributes)",
-      tags: ["Client API > Contacts"],
+      tags: ["Client API - Contacts"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -175,7 +175,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Get Contact State",
-      tags: ["Client API > Contacts"],
+      tags: ["Client API - Contacts"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -208,7 +208,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Create Display",
-      tags: ["Client API > Display"],
+      tags: ["Client API - Display"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -220,7 +220,8 @@ const v1ClientEndpoints = {
   "/client/{environmentId}/environment": {
     get: {
       security: [],
-      description: "Retrieves the environment state to be used in Formbricks SDKs",
+      description:
+        "Retrieves the environment state to be used in Formbricks SDKs. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, project settings, or other environment data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
       parameters: [
         {
           in: "path",
@@ -242,7 +243,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Get Environment State",
-      tags: ["Client API > Environment"],
+      tags: ["Client API - Environment"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -275,7 +276,7 @@ const v1ClientEndpoints = {
         },
       },
       summary: "Create or Identify User",
-      tags: ["Client API > User"],
+      tags: ["Client API - User"],
       servers: [
         {
           url: "https://app.formbricks.com/api/v2",
@@ -290,7 +291,7 @@ const v1ClientEndpoints = {
       summary: "Upload Private File",
       description:
         "API endpoint for uploading private files. Uploaded files are kept private so that only users with access to the specified environment can retrieve them. The endpoint validates the survey ID, file name, and file type from the request body, and returns a signed URL for S3 uploads along with a local upload URL.",
-      tags: ["Client API > File Upload"],
+      tags: ["Client API - File Upload"],
       parameters: [
         {
           in: "path",
@@ -445,7 +446,7 @@ const v1ClientEndpoints = {
       summary: "Upload Private File to Local Storage",
       description:
         'API endpoint for uploading private files to local storage. The request must include a valid signature, UUID, and timestamp to verify the upload. The file is provided as a Base64 encoded string in the request body. The "Content-Type" header must be set to a valid MIME type, and the file data must be a valid file object (buffer).',
-      tags: ["Client API > File Upload"],
+      tags: ["Client API - File Upload"],
       parameters: [
         {
           in: "path",
@@ -471,7 +472,7 @@ const v1ClientEndpoints = {
                 fileName: {
                   type: "string",
                   description:
-                    "This must be the `fileName` returned from the [Upload Private File](/api-v2-reference/client-api->-file-upload/upload-private-file) endpoint (Step 1).",
+                    "This must be the `fileName` returned from the [Upload Private File](/api-v2-reference/client-api--file-upload/upload-private-file) endpoint (Step 1).",
                 },
                 fileType: {
                   type: "string",

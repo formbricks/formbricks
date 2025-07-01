@@ -71,13 +71,13 @@ export const SurveyDropDownMenu = ({
     try {
       await deleteSurveyAction({ surveyId });
       deleteSurvey(surveyId);
-      router.refresh();
-      setDeleteDialogOpen(false);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
+      router.refresh();
     } catch (error) {
       toast.error(t("environments.surveys.error_deleting_survey"));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -195,9 +195,8 @@ export const SurveyDropDownMenu = ({
                       e.preventDefault();
                       setIsDropDownOpen(false);
                       const newId = await refreshSingleUseId();
-                      const previewUrl = newId
-                        ? `/s/${survey.id}?suId=${newId}&preview=true`
-                        : `/s/${survey.id}?preview=true`;
+                      const previewUrl =
+                        surveyLink + (newId ? `?suId=${newId}&preview=true` : "?preview=true");
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
@@ -242,6 +241,7 @@ export const SurveyDropDownMenu = ({
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
+          isDeleting={loading}
         />
       )}
 

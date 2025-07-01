@@ -75,7 +75,7 @@ export const POST = withApiLogging(
           ),
         };
       }
-      const environmentId = contactAttibuteKeyInput.environmentId;
+      const environmentId = inputValidation.data.environmentId;
       auditLog.organizationId = authentication.organizationId;
 
       if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
@@ -84,11 +84,7 @@ export const POST = withApiLogging(
         };
       }
 
-      const contactAttributeKey = await createContactAttributeKey(
-        environmentId,
-        inputValidation.data.key,
-        inputValidation.data.type
-      );
+      const contactAttributeKey = await createContactAttributeKey(environmentId, inputValidation.data);
 
       if (!contactAttributeKey) {
         return {

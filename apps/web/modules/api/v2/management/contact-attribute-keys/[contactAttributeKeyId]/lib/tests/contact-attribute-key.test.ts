@@ -1,6 +1,5 @@
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
-import { ContactAttributeKey } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -44,12 +43,12 @@ const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
   description: "User's verified email address",
 };
 
-const prismaNotFoundError = new PrismaClientKnownRequestError("Mock error message", {
+const prismaNotFoundError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.RelatedRecordDoesNotExist,
   clientVersion: "0.0.1",
 });
 
-const prismaUniqueConstraintError = new PrismaClientKnownRequestError("Mock error message", {
+const prismaUniqueConstraintError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
   code: PrismaErrorType.UniqueConstraintViolation,
   clientVersion: "0.0.1",
 });
