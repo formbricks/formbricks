@@ -138,7 +138,7 @@ export function SegmentSettings({
   }, [segment]);
 
   return (
-    <div className="mb-4">
+    <div>
       <div className="rounded-lg bg-slate-50">
         <div className="flex flex-col overflow-auto rounded-lg bg-white">
           <div className="flex w-full items-center gap-4">

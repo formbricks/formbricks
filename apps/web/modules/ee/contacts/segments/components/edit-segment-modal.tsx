@@ -101,7 +101,7 @@ export const EditSegmentModal = ({
               </button>
             ))}
           </div>
-          <div className="flex-1 py-4">{tabs[activeTab].children}</div>
+          <div className="flex-1 pt-4">{tabs[activeTab].children}</div>
         </DialogBody>
       </DialogContent>
     </Dialog>
