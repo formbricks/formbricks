@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
-import { updateUserAction } from "../actions";
+import { resetPasswordAction, updateUserAction } from "../actions";
 import { EditProfileDetailsForm } from "./EditProfileDetailsForm";
 
 const mockUser = {
@@ -38,6 +38,7 @@ beforeEach(() => {
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions", () => ({
   updateUserAction: vi.fn(),
+  resetPasswordAction: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/forgot-password/actions", () => ({
@@ -144,7 +145,7 @@ describe("EditProfileDetailsForm", () => {
   });
 
   test("reset password button works", async () => {
-    vi.mocked(forgotPasswordAction).mockResolvedValue(undefined);
+    vi.mocked(resetPasswordAction).mockResolvedValue({ data: { success: true } });
 
     render(
       <EditProfileDetailsForm
@@ -158,8 +159,9 @@ describe("EditProfileDetailsForm", () => {
     await userEvent.click(resetButton);
 
     await waitFor(() => {
-      expect(forgotPasswordAction).toHaveBeenCalledWith({ email: mockUser.email });
+      expect(resetPasswordAction).toHaveBeenCalled();
     });
+
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("auth.forgot-password.email-sent.heading");
     });
@@ -167,7 +169,7 @@ describe("EditProfileDetailsForm", () => {
 
   test("reset password button handles error correctly", async () => {
     const errorMessage = "Reset failed";
-    vi.mocked(forgotPasswordAction).mockRejectedValue(new Error(errorMessage));
+    vi.mocked(resetPasswordAction).mockResolvedValue({ serverError: errorMessage });
 
     render(
       <EditProfileDetailsForm
@@ -181,12 +183,16 @@ describe("EditProfileDetailsForm", () => {
     await userEvent.click(resetButton);
 
     await waitFor(() => {
-      expect(forgotPasswordAction).toHaveBeenCalledWith({ email: mockUser.email });
+      expect(resetPasswordAction).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(errorMessage);
     });
   });
 
   test("reset password button shows loading state", async () => {
-    vi.mocked(forgotPasswordAction).mockImplementation(() => new Promise(() => {})); // Never resolves
+    vi.mocked(resetPasswordAction).mockImplementation(() => new Promise(() => {})); // Never resolves
 
     render(
       <EditProfileDetailsForm

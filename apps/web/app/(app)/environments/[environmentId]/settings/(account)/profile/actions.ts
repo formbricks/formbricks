@@ -163,12 +163,26 @@ export const removeAvatarAction = authenticatedActionClient.schema(ZRemoveAvatar
   )
 );
 
-export const resetPasswordAction = authenticatedActionClient.action(async ({ ctx }) => {
-  if (ctx.user.identityProvider !== "email") {
-    throw new OperationNotAllowedError("Password reset is not allowed for SSO users");
-  }
+export const resetPasswordAction = authenticatedActionClient.schema(z.object({})).action(
+  withAuditLogging(
+    "passwordReset",
+    "user",
+    async ({
+      ctx,
+      parsedInput: _,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: Record<string, any>;
+    }) => {
+      if (ctx.user.identityProvider !== "email") {
+        throw new OperationNotAllowedError("Password reset is not allowed for SSO users");
+      }
 
-  await sendForgotPasswordEmail(ctx.user);
+      await sendForgotPasswordEmail(ctx.user);
 
-  return { success: true };
-});
+      ctx.auditLoggingCtx.userId = ctx.user.id;
+
+      return { success: true };
+    }
+  )
+);
