@@ -11,13 +11,6 @@ on:
         description: "Release version (e.g., v1.2.3)"
         required: true
         type: string
-      environment:
-        description: "Environment to deploy to"
-        required: true
-        type: choice
-        options:
-          - prod
-          - stage
       tag_version:
         description: "Docker image tag (leave empty to use release_version)"
         required: false
@@ -50,5 +43,4 @@ jobs:
         with:
           docker_image: ${{ env.DOCKER_IMAGE }}
           release_version: ${{ inputs.release_version }}
-          environment: ${{ inputs.environment }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }} 

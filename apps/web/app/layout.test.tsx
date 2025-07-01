@@ -32,6 +32,7 @@ vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
   SENTRY_RELEASE: "mock-sentry-release",
+  SENTRY_ENVIRONMENT: "mock-sentry-environment",
 }));
 
 vi.mock("@/tolgee/language", () => ({

@@ -425,6 +425,7 @@ const sentryOptions = {
 
   org: "formbricks",
   project: "formbricks-cloud",
+  environment: process.env.SENTRY_ENVIRONMENT,
 
   // Only print logs for uploading source maps in CI
   silent: true,

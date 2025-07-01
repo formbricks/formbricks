@@ -8,9 +8,6 @@ inputs:
   release_version:
     description: 'Sentry release version (e.g., v1.2.3)'
     required: true
-  environment:
-    description: 'Deployment environment (stage, prod)'
-    required: true
   sentry_auth_token:
     description: 'Sentry authentication token'
     required: true
@@ -68,7 +65,7 @@ runs:
         SENTRY_ORG: formbricks
         SENTRY_PROJECT: formbricks-cloud
       with:
-        environment: ${{ inputs.environment }}
+        environment: production
         version: ${{ inputs.release_version }}
         sourcemaps: './extracted-next/'
 
