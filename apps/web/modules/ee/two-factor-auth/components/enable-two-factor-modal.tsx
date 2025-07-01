@@ -4,7 +4,15 @@ import { ConfirmPasswordForm } from "@/modules/ee/two-factor-auth/components/con
 import { DisplayBackupCodes } from "@/modules/ee/two-factor-auth/components/display-backup-codes";
 import { EnterCode } from "@/modules/ee/two-factor-auth/components/enter-code";
 import { ScanQRCode } from "@/modules/ee/two-factor-auth/components/scan-qr-code";
-import { Dialog, DialogBody, DialogContent } from "@/modules/ui/components/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,6 +34,8 @@ export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProp
     router.refresh();
   };
 
+  const { t } = useTranslate();
+
   const resetState = () => {
     setCurrentStep("confirmPassword");
     setBackupCodes([]);
@@ -37,6 +47,12 @@ export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProp
   return (
     <Dialog open={open} onOpenChange={() => resetState()}>
       <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("environments.settings.profile.two_factor_authentication")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.settings.profile.confirm_your_current_password_to_get_started")}
+          </DialogDescription>
+        </DialogHeader>
         <DialogBody>
           {currentStep === "confirmPassword" && (
             <ConfirmPasswordForm

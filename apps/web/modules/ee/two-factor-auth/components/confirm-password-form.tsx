@@ -57,16 +57,8 @@ export const ConfirmPasswordForm = ({
 
   return (
     <FormProvider {...form}>
-      <div className="p-6">
-        <h1 className="text-lg font-semibold">
-          {t("environments.settings.profile.two_factor_authentication")}
-        </h1>
-        <h3 className="text-sm text-slate-700">
-          {t("environments.settings.profile.confirm_your_current_password_to_get_started")}
-        </h3>
-      </div>
-      <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-2 px-6">
+      <form className="flex flex-col space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div className="flex flex-col gap-2">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
             {t("common.password")}
           </label>
@@ -95,7 +87,7 @@ export const ConfirmPasswordForm = ({
           />
         </div>
 
-        <div className="flex w-full items-center justify-end space-x-4">
+        <div className="flex w-full items-center justify-end space-x-2">
           <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>

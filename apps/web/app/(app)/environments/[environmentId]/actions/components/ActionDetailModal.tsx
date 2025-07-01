@@ -59,6 +59,11 @@ export const ActionDetailModal = ({
     },
   ];
 
+  const typeDescription =
+    actionClass.type && actionClass.type === "noCode"
+      ? t("common.no_code") + " " + t("common.action").toLowerCase()
+      : t("common.no_code") + " " + t("common.action").toLowerCase();
+
   return (
     <>
       <ModalWithTabs
@@ -67,7 +72,7 @@ export const ActionDetailModal = ({
         tabs={tabs}
         icon={ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
         label={actionClass.name}
-        description={actionClass.description || ""}
+        description={actionClass.description || typeDescription}
       />
     </>
   );
