@@ -132,7 +132,7 @@ export const EditProfileDetailsForm = ({
   const handleResetPassword = async () => {
     setIsResettingPassword(true);
 
-    const result = await resetPasswordAction({});
+    const result = await resetPasswordAction();
     if (result?.data) {
       toast.success(t("auth.forgot-password.email-sent.heading"));
 
@@ -145,7 +145,7 @@ export const EditProfileDetailsForm = ({
       });
     } else {
       const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage);
+      toast.error(t(errorMessage));
     }
 
     setIsResettingPassword(false);

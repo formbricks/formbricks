@@ -1,4 +1,3 @@
-import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
