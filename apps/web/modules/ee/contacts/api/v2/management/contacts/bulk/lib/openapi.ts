@@ -73,7 +73,7 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
       },
     },
   },
-  tags: ["Management API > Contacts"],
+  tags: ["Management API - Contacts"],
   responses: {
     "200": {
       description: "Contacts uploaded successfully.",
