@@ -1,13 +1,21 @@
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
 
 interface UseSignOutOptions {
-  reason?: "user_initiated" | "account_deletion" | "email_change" | "session_timeout" | "forced_logout";
+  reason?:
+    | "user_initiated"
+    | "account_deletion"
+    | "email_change"
+    | "session_timeout"
+    | "forced_logout"
+    | "password_reset";
   redirectUrl?: string;
   organizationId?: string;
   redirect?: boolean;
   callbackUrl?: string;
+  clearEnvironmentId?: boolean;
 }
 
 interface SessionUser {
@@ -34,6 +42,10 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
         // Don't block signOut if audit logging fails
         logger.error("Failed to log signOut event:", error);
       }
+    }
+
+    if (options?.clearEnvironmentId) {
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 
     // Call NextAuth signOut

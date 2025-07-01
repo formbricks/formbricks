@@ -34,7 +34,8 @@
           "text": "You can now log in with your new password"
         }
       },
-      "reset_password": "Reset password"
+      "reset_password": "Reset password",
+      "reset_password_description": "You will be logged out to reset your password."
     },
     "invite": {
       "create_account": "Create an account",
