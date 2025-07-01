@@ -48,39 +48,67 @@ export const CopySurveyForm = ({
     const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
-      // Collect all copy operations into a single array
-      const copyOperations = filteredData.flatMap((project) =>
-        project.environments.map((environment) =>
-          copySurveyToOtherEnvironmentAction({
-            environmentId: survey.environmentId,
-            surveyId: survey.id,
-            targetEnvironmentId: environment,
-          })
-        )
-      );
+      const copyOperationsWithMetadata = filteredData.flatMap((projectData) => {
+        const project = defaultProjects.find((p) => p.id === projectData.project);
+        return projectData.environments.map((environmentId) => {
+          const environment = project?.environments.find((env) => env.id === environmentId);
+          return {
+            operation: copySurveyToOtherEnvironmentAction({
+              environmentId: survey.environmentId,
+              surveyId: survey.id,
+              targetEnvironmentId: environmentId,
+            }),
+            projectName: project?.name || "Unknown Project",
+            environmentType: environment?.type || "unknown",
+            environmentId,
+          };
+        });
+      });
 
-      // Get all target environment IDs for router refresh check
-      const targetEnvironmentIds = filteredData.flatMap((project) => project.environments);
-      const shouldRefresh = targetEnvironmentIds.includes(survey.environmentId);
+      const targetEnvironmentIds = copyOperationsWithMetadata.map((item) => item.environmentId);
+      const shouldRefetch = targetEnvironmentIds.includes(survey.environmentId);
 
-      // Execute all operations in parallel
-      const results = await Promise.all(copyOperations);
+      const results = await Promise.allSettled(copyOperationsWithMetadata.map((item) => item.operation));
 
-      // Check if all operations were successful
-      const allSuccessful = results.every((result) => result?.data);
-      const hasErrors = results.some((result) => !result?.data);
+      let successCount = 0;
+      let errorCount = 0;
+      const errorsIndexes: number[] = [];
 
-      if (allSuccessful) {
-        toast.success(t("environments.surveys.copy_survey_success"));
-      } else if (hasErrors) {
-        // Get the first error message for display
-        const firstError = results.find((result) => !result?.data);
-        const errorMessage = getFormattedErrorMessage(firstError);
-        toast.error(errorMessage);
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          successCount++;
+        } else {
+          errorsIndexes.push(index);
+          errorCount++;
+        }
+      });
+
+      if (successCount > 0) {
+        if (errorCount === 0) {
+          toast.success(t("environments.surveys.copy_survey_success"));
+        } else {
+          toast.error(
+            t("environments.surveys.copy_survey_partially_success", {
+              success: successCount,
+              error: errorCount,
+            })
+          );
+        }
       }
 
-      // Refresh survey list if current environment is also a target
-      if (shouldRefresh && onSurveysCopied) {
+      if (errorsIndexes.length > 0) {
+        errorsIndexes.forEach((index) => {
+          const { projectName, environmentType } = copyOperationsWithMetadata[index];
+          const result = results[index] as PromiseRejectedResult;
+
+          const errorMessage = getFormattedErrorMessage(result.reason);
+          toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
+            duration: 2000 + 2000 * errorCount,
+          });
+        });
+      }
+
+      if (shouldRefetch && onSurveysCopied) {
         onSurveysCopied();
       }
     } catch (error) {
