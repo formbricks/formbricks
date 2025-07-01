@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,13 +38,16 @@ export const ConfirmDeleteSegmentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("environments.segments.delete_segment")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.project.general.this_action_cannot_be_undone")}
+          </DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="text-slate-900">
-          {segmentHasSurveys && (
+        {segmentHasSurveys && (
+          <DialogBody>
             <div className="space-y-2">
               <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
               <ol className="my-2 ml-4 list-decimal">
@@ -55,13 +59,11 @@ export const ConfirmDeleteSegmentModal = ({
                 ))}
               </ol>
             </div>
-          )}
-          <p className="mt-2">
-            {segmentHasSurveys
-              ? t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")
-              : t("common.are_you_sure_this_action_cannot_be_undone")}
-          </p>
-        </DialogBody>
+            <p className="mt-2">
+              {t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")}
+            </p>
+          </DialogBody>
+        )}
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => setOpen(false)}>
