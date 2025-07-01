@@ -35,6 +35,7 @@ interface DialogContentProps {
   hideCloseButton?: boolean;
   disableCloseOnOutsideClick?: boolean;
   width?: "default" | "wide";
+  unconstrained?: boolean;
 }
 
 const DialogContent = React.forwardRef<
@@ -42,7 +43,15 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
 >(
   (
-    { className, children, hideCloseButton, disableCloseOnOutsideClick, width = "default", ...props },
+    {
+      className,
+      children,
+      hideCloseButton,
+      disableCloseOnOutsideClick,
+      width = "default",
+      unconstrained = false,
+      ...props
+    },
     ref
   ) => (
     <DialogPortal>
@@ -50,7 +59,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:overflow-hidden md:rounded-lg",
+          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:rounded-lg",
+          !unconstrained && "md:overflow-hidden",
           width === "default" ? "md:w-[720px]" : "md:w-[720px] lg:w-[960px]",
           className
         )}
@@ -106,9 +116,13 @@ const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
 
 DialogFooter.displayName = "DialogFooter";
 
-const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
+const DialogBody = ({
+  className,
+  unconstrained = false,
+  ...props
+}: React.HTMLAttributes<HTMLElement> & { unconstrained?: boolean }) => (
   <section
-    className={cn("flex-1 overflow-y-auto text-sm", className)}
+    className={cn("flex-1 text-sm", !unconstrained && "overflow-y-auto", className)}
     aria-label="Dialog content"
     {...props}
   />

@@ -65,13 +65,13 @@ export const InviteMemberModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick>
+      <DialogContent disableCloseOnOutsideClick unconstrained>
         <DialogHeader>
           <DialogTitle>{t("environments.settings.teams.invite_member")}</DialogTitle>
           <DialogDescription>{t("environments.settings.teams.invite_member_description")}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="flex flex-col gap-6">
+        <DialogBody className="flex flex-col gap-6" unconstrained>
           <TabToggle
             id="type"
             options={[
