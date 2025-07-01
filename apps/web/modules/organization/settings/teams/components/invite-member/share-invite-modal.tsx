@@ -28,9 +28,7 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
       <DialogContent>
         <DialogHeader>
           <CheckIcon />
-          <DialogTitle className="mt-3">
-            {t("environments.settings.general.organization_invite_link_ready")}
-          </DialogTitle>
+          <DialogTitle>{t("environments.settings.general.organization_invite_link_ready")}</DialogTitle>
           <DialogDescription>
             {t(
               "environments.settings.general.share_this_link_to_let_your_organization_member_join_your_organization"

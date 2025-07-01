@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -41,7 +42,7 @@ export const EditPublicSurveyAlertDialog = ({
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
       disabled: isLoading,
-      variant: "outline",
+      variant: "secondary",
     });
   }
   if (primaryButtonAction) {
@@ -64,11 +65,11 @@ export const EditPublicSurveyAlertDialog = ({
       <DialogContent className="max-w-[540px]">
         <DialogHeader>
           <DialogTitle>{t("environments.surveys.edit.caution_edit_published_survey")}</DialogTitle>
+          <DialogDescription>{t("environments.surveys.edit.caution_recommendation")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody>
-          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <p>{t("environments.surveys.edit.caution_explanation_intro")}</p>
           <ul className="mt-3 list-disc space-y-0.5 pl-5">
             <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
             <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>

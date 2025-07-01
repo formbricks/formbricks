@@ -65,7 +65,7 @@ export const InviteMemberModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick className="overflow-visible">
+      <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("environments.settings.teams.invite_member")}</DialogTitle>
           <DialogDescription>{t("environments.settings.teams.invite_member_description")}</DialogDescription>
