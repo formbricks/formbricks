@@ -64,6 +64,9 @@
       "new_to_formbricks": "Novo no Formbricks?",
       "use_a_backup_code": "Usar um código de backup"
     },
+    "reset-password": {
+      "not-allowed": "Redefinição de senha não é permitida para este usuário."
+    },
     "saml_connection_error": "Algo deu errado. Por favor, verifica o console do app para mais detalhes.",
     "signup": {
       "captcha_failed": "reCAPTCHA falhou",

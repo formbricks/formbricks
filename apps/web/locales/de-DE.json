@@ -64,6 +64,9 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
+    "reset-password": {
+      "not-allowed": "Passwortzurücksetzung ist für diesen Benutzer nicht erlaubt."
+    },
     "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
