@@ -1,7 +1,9 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -24,6 +26,7 @@ export const NotificationSwitch = ({
 }: NotificationSwitchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslate();
+  const router = useRouter();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)
@@ -50,7 +53,20 @@ export const NotificationSwitch = ({
         !updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId];
     }
 
-    await updateNotificationSettingsAction({ notificationSettings: updatedNotificationSettings });
+    const updatedNotificationSettingsActionResponse = await updateNotificationSettingsAction({
+      notificationSettings: updatedNotificationSettings,
+    });
+    if (updatedNotificationSettingsActionResponse?.data) {
+      toast.success(t("environments.settings.notifications.notification_settings_updated"), {
+        id: "notification-switch",
+      });
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(updatedNotificationSettingsActionResponse);
+      toast.error(errorMessage, {
+        id: "notification-switch",
+      });
+    }
     setIsLoading(false);
   };
 
@@ -104,9 +120,6 @@ export const NotificationSwitch = ({
       disabled={isLoading}
       onCheckedChange={async () => {
         await handleSwitchChange();
-        toast.success(t("environments.settings.notifications.notification_settings_updated"), {
-          id: "notification-switch",
-        });
       }}
     />
   );
