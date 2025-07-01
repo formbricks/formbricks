@@ -458,13 +458,13 @@ export function AddFilterModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick>
+      <DialogContent className="max-w-lg" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("common.add_filter")}</DialogTitle>
         </DialogHeader>
 
         <DialogBody>
-          <div className="flex h-[50dvh] flex-col">
+          <div className="flex flex-col">
             <div className="flex w-auto flex-col">
               <Input
                 autoFocus
