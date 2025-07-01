@@ -204,8 +204,8 @@ export const TeamSettingsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="flex flex-col overflow-visible">
-        <DialogHeader className="relative">
+      <DialogContent>
+        <DialogHeader className="pb-4">
           <DialogTitle>
             {t("environments.settings.teams.team_name_settings_title", {
               teamName: team.name,
@@ -215,7 +215,7 @@ export const TeamSettingsModal = ({
         </DialogHeader>
         <FormProvider {...form}>
           <form className="contents space-y-4" onSubmit={handleSubmit(handleUpdateTeam)}>
-            <DialogBody className="flex-grow space-y-6 overflow-y-auto pb-4">
+            <DialogBody className="flex-grow space-y-6 overflow-y-auto">
               <FormField
                 control={control}
                 name="name"
