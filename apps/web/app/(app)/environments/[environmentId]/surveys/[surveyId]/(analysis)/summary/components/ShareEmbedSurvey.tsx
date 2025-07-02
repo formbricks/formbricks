@@ -69,7 +69,7 @@ export const ShareEmbedSurvey = ({
     [t, isSingleUseLinkSurvey, survey.type]
   );
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
+  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel" | "personal-links">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -89,7 +89,7 @@ export const ShareEmbedSurvey = ({
 
   useEffect(() => {
     if (survey.type !== "link") {
-      setActiveId(tabs[3].id);
+      setActiveId(tabs[4].id);
     }
   }, [survey.type, tabs]);
 
@@ -102,7 +102,7 @@ export const ShareEmbedSurvey = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? tabs[0].id : tabs[3].id);
+    setActiveId(survey.type === "link" ? tabs[0].id : tabs[4].id);
     setOpen(open);
     if (!open) {
       setShowView("start");
