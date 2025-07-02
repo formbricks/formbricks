@@ -1,6 +1,6 @@
 import "server-only";
 import { validateInputs } from "@/lib/utils/validate";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -8,7 +8,9 @@ import { ZId } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 
-export const deleteTag = async (id: string): Promise<TTag> => {
+export const deleteTag = async (
+  id: string
+): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
   validateInputs([id, ZId]);
 
   try {
@@ -18,13 +20,28 @@ export const deleteTag = async (id: string): Promise<TTag> => {
       },
     });
 
-    return tag;
+    return ok(tag);
   } catch (error) {
-    throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        return err({
+          code: TagError.TAG_NOT_FOUND,
+          message: "Tag not found",
+        });
+      }
+    }
+
+    return err({
+      code: TagError.UNEXPECTED_ERROR,
+      message: error.message,
+    });
   }
 };
 
-export const updateTagName = async (id: string, name: string): Promise<Result<TTag, ApiErrorResponseV2>> => {
+export const updateTagName = async (
+  id: string,
+  name: string
+): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
   try {
     const tag = await prisma.tag.update({
       where: { id },
@@ -36,20 +53,23 @@ export const updateTagName = async (id: string, name: string): Promise<Result<TT
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         return err({
-          type: "conflict",
-          details: [{ field: "tag", issue: "Tag with this name already exists" }],
+          code: TagError.TAG_NAME_ALREADY_EXISTS,
+          message: "Tag with this name already exists",
         });
       }
     }
 
     return err({
-      type: "internal_server_error",
-      details: [{ field: "tag", issue: error.message }],
+      code: TagError.UNEXPECTED_ERROR,
+      message: error.message,
     });
   }
 };
 
-export const mergeTags = async (originalTagId: string, newTagId: string): Promise<TTag | undefined> => {
+export const mergeTags = async (
+  originalTagId: string,
+  newTagId: string
+): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
   validateInputs([originalTagId, ZId], [newTagId, ZId]);
 
   try {
@@ -62,7 +82,10 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
     });
 
     if (!originalTag) {
-      throw new Error("Tag not found");
+      return err({
+        code: TagError.TAG_NOT_FOUND,
+        message: "Tag not found",
+      });
     }
 
     let newTag: TTag | null;
@@ -74,7 +97,10 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
     });
 
     if (!newTag) {
-      throw new Error("Tag not found");
+      return err({
+        code: TagError.TAG_NOT_FOUND,
+        message: "Tag not found",
+      });
     }
 
     // finds all the responses that have both the tags
@@ -143,7 +169,7 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
         }),
       ]);
 
-      return newTag;
+      return ok(newTag);
     }
 
     await prisma.$transaction([
@@ -163,8 +189,11 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
       }),
     ]);
 
-    return newTag;
+    return ok(newTag);
   } catch (error) {
-    throw error;
+    return err({
+      code: TagError.UNEXPECTED_ERROR,
+      message: error.message,
+    });
   }
 };

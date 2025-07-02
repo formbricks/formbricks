@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 import { deleteTag, mergeTags, updateTagName } from "./tag";
 
@@ -57,12 +58,20 @@ describe("tag lib", () => {
     test("deletes tag and revalidates cache", async () => {
       vi.mocked(prisma.tag.delete).mockResolvedValueOnce(baseTag);
       const result = await deleteTag(baseTag.id);
-      expect(result).toEqual(baseTag);
+      expect(result).toEqual(ok(baseTag));
       expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: baseTag.id } });
     });
     test("throws error on prisma error", async () => {
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(new Error("fail"));
-      await expect(deleteTag(baseTag.id)).rejects.toThrow("fail");
+      const result = await deleteTag(baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "unexpected_error",
+          message: "fail",
+        });
+      }
     });
   });
 
@@ -90,8 +99,8 @@ describe("tag lib", () => {
 
       if (!result.ok) {
         expect(result.error).toStrictEqual({
-          type: "internal_server_error",
-          details: [{ field: "tag", issue: "fail" }],
+          code: "unexpected_error",
+          message: "fail",
         });
       }
     });
@@ -105,7 +114,7 @@ describe("tag lib", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
-      expect(result).toEqual(newTag);
+      expect(result).toEqual(ok(newTag));
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: baseTag.id } });
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: newTag.id } });
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -118,21 +127,45 @@ describe("tag lib", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
-      expect(result).toEqual(newTag);
+      expect(result).toEqual(ok(newTag));
     });
     test("throws if original tag not found", async () => {
       vi.mocked(prisma.tag.findUnique).mockResolvedValueOnce(null);
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("Tag not found");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "tag_not_found",
+          message: "Tag not found",
+        });
+      }
     });
     test("throws if new tag not found", async () => {
       vi.mocked(prisma.tag.findUnique)
         .mockResolvedValueOnce(baseTag as any)
         .mockResolvedValueOnce(null);
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("Tag not found");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "tag_not_found",
+          message: "Tag not found",
+        });
+      }
     });
     test("throws on prisma error", async () => {
       vi.mocked(prisma.tag.findUnique).mockRejectedValueOnce(new Error("fail"));
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("fail");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "unexpected_error",
+          message: "fail",
+        });
+      }
     });
   });
 });
