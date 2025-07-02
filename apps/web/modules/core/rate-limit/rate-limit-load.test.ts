@@ -4,6 +4,9 @@ import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
+// Check if Redis is actually available (not just client object exists)
+const isRedisAvailable = redis && process.env.REDIS_URL;
+
 /**
  * Rate Limiter Load Tests - Race Condition Detection
  *
@@ -13,13 +16,13 @@ import { TRateLimitConfig } from "./types/rate-limit";
  *
  * Prerequisites:
  * - Redis server must be running and accessible
- * - Environment variables should be set for Redis connection
+ * - REDIS_URL environment variable must be set
  * - Tests will be automatically skipped if Redis is not available (e.g., in CI environments)
  *
  * Running the tests:
  * cd apps/web && npx vitest run modules/core/rate-limit/rate-limit-load.test.ts
  *
- * Note: If Redis is not available, all tests in this suite will be skipped gracefully
+ * Note: If Redis is not available or REDIS_URL is not set, all tests in this suite will be skipped gracefully
  *
  * Test Scenarios:
  *
@@ -85,9 +88,16 @@ import { TRateLimitConfig } from "./types/rate-limit";
  */
 
 // Check Redis availability and log status
-if (!redis) {
+if (!isRedisAvailable) {
   console.log("🟡 Rate Limiter Load Tests: Redis not available - tests will be skipped");
-  console.log("   To run these tests, ensure Redis is running and accessible");
+  if (!process.env.REDIS_URL) {
+    console.log("   Reason: REDIS_URL environment variable not set");
+  } else if (!redis) {
+    console.log("   Reason: Redis client not initialized");
+  } else {
+    console.log("   Reason: Redis connection may not be available");
+  }
+  console.log("   To run these tests, ensure Redis is running and REDIS_URL is set");
 } else {
   console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
 }
@@ -116,23 +126,36 @@ const TEST_CONFIGS = {
   } as TRateLimitConfig,
 } as const;
 
-describe.skipIf(!redis)("Rate Limiter Load Tests - Race Conditions", () => {
+describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", () => {
   beforeAll(async () => {
     // This will only run if Redis is available
-    // Clear any existing test keys
-    const testKeys = await redis!.keys("fb:rate_limit:test:*");
-    if (testKeys.length > 0) {
-      await redis!.del(...testKeys);
+    try {
+      // Test Redis connection with a ping
+      await redis!.ping();
+
+      // Clear any existing test keys
+      const testKeys = await redis!.keys("fb:rate_limit:test:*");
+      if (testKeys.length > 0) {
+        await redis!.del(...testKeys);
+      }
+    } catch (error) {
+      throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-  });
+  }, 15000); // 15 second timeout for setup
 
   afterAll(async () => {
     // Clean up test keys
-    const testKeys = await redis!.keys("fb:rate_limit:test:*");
-    if (testKeys.length > 0) {
-      await redis!.del(...testKeys);
+    try {
+      const testKeys = await redis!.keys("fb:rate_limit:test:*");
+      if (testKeys.length > 0) {
+        await redis!.del(...testKeys);
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to cleanup test keys: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
-  });
+  }, 10000); // 10 second timeout for cleanup
 
   test("Race condition test: concurrent requests to same identifier", async () => {
     const config = TEST_CONFIGS.strict;
