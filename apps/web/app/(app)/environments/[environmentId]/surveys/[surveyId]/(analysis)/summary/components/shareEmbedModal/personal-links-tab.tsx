@@ -59,6 +59,16 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
   const [isGenerating, setIsGenerating] = useState(false);
   const publicSegments = segments.filter((segment) => !segment.isPrivate);
 
+  // Utility function for file downloads
+  const downloadFile = (url: string, filename: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleGenerateLinks = async () => {
     if (!selectedSegment || isGenerating) return;
 
@@ -80,14 +90,7 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
     });
 
     if (result?.data) {
-      // Trigger CSV download first
-      const link = document.createElement("a");
-      link.href = result.data.downloadUrl;
-      link.download = result.data.fileName || "personal-links.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
+      downloadFile(result.data.downloadUrl, result.data.fileName || "personal-links.csv");
       toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",

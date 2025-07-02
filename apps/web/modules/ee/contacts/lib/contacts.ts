@@ -21,6 +21,7 @@ import {
 import { transformPrismaContact } from "./utils";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
+  validateInputs([segmentId, ZId]);
   try {
     const segmentResult = await getSegment(segmentId);
     if (!segmentResult.ok) {
@@ -82,7 +83,8 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
 
     return contactsWithAttributes;
   } catch (error) {
-    console.error(error);
+    logger.error(error, "Failed to get contacts in segment");
+    return null;
   }
 });
 
@@ -491,6 +493,7 @@ export const createContactsFromCSV = async (
 };
 
 export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
+  validateInputs([surveyId, ZId], [segmentId, ZId], [expirationDays, ZOptionalNumber]);
   const contactsResult = await getContactsInSegment(segmentId);
 
   if (!contactsResult) {

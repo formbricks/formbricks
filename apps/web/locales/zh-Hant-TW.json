@@ -109,8 +109,8 @@
     "upgrade_successful": "升級成功"
   },
   "c": {
-    "link_expired": "您的 連結 已過期。",
-    "link_expired_description": "您 使用 的 連結 已不再 有效。"
+    "link_expired": "您 的 連結 已過期。",
+    "link_expired_description": "您 使用 的 連結 已無效。"
   },
   "common": {
     "accepted": "已接受",
