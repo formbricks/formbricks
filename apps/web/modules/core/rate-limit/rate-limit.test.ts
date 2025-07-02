@@ -9,6 +9,7 @@ vi.mock("@/modules/cache/redis");
 vi.mock("@/lib/constants", () => ({
   REDIS_URL: "redis://localhost:6379",
   RATE_LIMITING_DISABLED: false,
+  SENTRY_DSN: "https://test@sentry.io/test",
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -79,12 +80,16 @@ describe("checkRateLimit", () => {
   });
 
   test("should fail open when rate limiting is disabled", async () => {
+    vi.resetModules();
     vi.doMock("@/lib/constants", () => ({
       REDIS_URL: "redis://localhost:6379",
       RATE_LIMITING_DISABLED: true,
+      SENTRY_DSN: "https://test@sentry.io/test",
     }));
 
-    const result = await checkRateLimit(testConfig, "test-user");
+    // Dynamic import after mocking
+    const { checkRateLimit: checkRateLimitMocked } = await import("./rate-limit");
+    const result = await checkRateLimitMocked(testConfig, "test-user");
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -93,11 +98,14 @@ describe("checkRateLimit", () => {
   });
 
   test("should fail open when Redis is not configured", async () => {
+    vi.resetModules();
     vi.doMock("@/modules/cache/redis", () => ({
       default: null,
     }));
 
-    const result = await checkRateLimit(testConfig, "test-user");
+    // Dynamic import after mocking
+    const { checkRateLimit: checkRateLimitMocked } = await import("./rate-limit");
+    const result = await checkRateLimitMocked(testConfig, "test-user");
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -164,5 +172,151 @@ describe("checkRateLimit", () => {
     // Verify script structure for atomic increment and conditional expire
     expect(luaScript).toContain("redis.call('INCR', key)");
     expect(luaScript).toContain("return {current, current <= limit and 1 or 0}");
+  });
+
+  test("should not call Sentry when SENTRY_DSN is not configured", async () => {
+    vi.resetModules();
+
+    // Re-mock all dependencies after resetModules
+    vi.doMock("@/lib/constants", () => ({
+      REDIS_URL: "redis://localhost:6379",
+      RATE_LIMITING_DISABLED: false,
+      SENTRY_DSN: undefined,
+    }));
+
+    const mockAddBreadcrumb = vi.fn();
+    const mockCaptureException = vi.fn();
+    vi.doMock("@sentry/nextjs", () => ({
+      addBreadcrumb: mockAddBreadcrumb,
+      captureException: mockCaptureException,
+    }));
+
+    vi.doMock("@formbricks/logger", () => ({
+      logger: {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+    }));
+
+    vi.doMock("@/modules/cache/redis", () => ({
+      default: {
+        eval: vi.fn().mockResolvedValue([6, 0]),
+      },
+    }));
+
+    // Dynamic import after mocking
+    const { checkRateLimit: checkRateLimitMocked } = await import("./rate-limit");
+
+    await checkRateLimitMocked(testConfig, "test-user");
+
+    // Verify Sentry functions were not called
+    expect(mockAddBreadcrumb).not.toHaveBeenCalled();
+  });
+
+  test("should call Sentry when SENTRY_DSN is configured and rate limit exceeded", async () => {
+    vi.resetModules();
+
+    // Re-mock all dependencies after resetModules
+    vi.doMock("@/lib/constants", () => ({
+      REDIS_URL: "redis://localhost:6379",
+      RATE_LIMITING_DISABLED: false,
+      SENTRY_DSN: "https://test@sentry.io/test",
+    }));
+
+    const mockAddBreadcrumb = vi.fn();
+    const mockCaptureException = vi.fn();
+    vi.doMock("@sentry/nextjs", () => ({
+      addBreadcrumb: mockAddBreadcrumb,
+      captureException: mockCaptureException,
+    }));
+
+    vi.doMock("@formbricks/logger", () => ({
+      logger: {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+    }));
+
+    vi.doMock("@/modules/cache/redis", () => ({
+      default: {
+        eval: vi.fn().mockResolvedValue([6, 0]),
+      },
+    }));
+
+    // Dynamic import after mocking
+    const { checkRateLimit: checkRateLimitMocked } = await import("./rate-limit");
+
+    await checkRateLimitMocked(testConfig, "test-user");
+
+    // Verify Sentry breadcrumb was added
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith({
+      message: "Rate limit exceeded",
+      level: "warning",
+      data: expect.objectContaining({
+        identifier: "test-user",
+        currentCount: 6,
+        limit: 5,
+        namespace: "test",
+      }),
+    });
+  });
+
+  test("should call Sentry when SENTRY_DSN is configured and Redis error occurs", async () => {
+    vi.resetModules();
+
+    // Re-mock all dependencies after resetModules
+    vi.doMock("@/lib/constants", () => ({
+      REDIS_URL: "redis://localhost:6379",
+      RATE_LIMITING_DISABLED: false,
+      SENTRY_DSN: "https://test@sentry.io/test",
+    }));
+
+    const mockAddBreadcrumb = vi.fn();
+    const mockCaptureException = vi.fn();
+    vi.doMock("@sentry/nextjs", () => ({
+      addBreadcrumb: mockAddBreadcrumb,
+      captureException: mockCaptureException,
+    }));
+
+    vi.doMock("@formbricks/logger", () => ({
+      logger: {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+    }));
+
+    const redisError = new Error("Redis connection failed");
+    vi.doMock("@/modules/cache/redis", () => ({
+      default: {
+        eval: vi.fn().mockRejectedValue(redisError),
+      },
+    }));
+
+    // Dynamic import after mocking
+    const { checkRateLimit: checkRateLimitMocked } = await import("./rate-limit");
+
+    await checkRateLimitMocked(testConfig, "test-user");
+
+    // Verify Sentry exception was captured
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      redisError,
+      expect.objectContaining({
+        tags: {
+          component: "rate-limiter",
+          namespace: "test",
+        },
+        extra: expect.objectContaining({
+          error: redisError,
+          identifier: "test-user",
+          namespace: "test",
+        }),
+      })
+    );
   });
 });

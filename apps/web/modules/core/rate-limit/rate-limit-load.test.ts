@@ -14,9 +14,12 @@ import { TRateLimitConfig } from "./types/rate-limit";
  * Prerequisites:
  * - Redis server must be running and accessible
  * - Environment variables should be set for Redis connection
+ * - Tests will be automatically skipped if Redis is not available (e.g., in CI environments)
  *
  * Running the tests:
  * cd apps/web && npx vitest run modules/core/rate-limit/rate-limit-load.test.ts
+ *
+ * Note: If Redis is not available, all tests in this suite will be skipped gracefully
  *
  * Test Scenarios:
  *
@@ -81,6 +84,14 @@ import { TRateLimitConfig } from "./types/rate-limit";
  * ❌ Window boundary failures: TTL or timestamp calculation errors
  */
 
+// Check Redis availability and log status
+if (!redis) {
+  console.log("🟡 Rate Limiter Load Tests: Redis not available - tests will be skipped");
+  console.log("   To run these tests, ensure Redis is running and accessible");
+} else {
+  console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
+}
+
 // Test configurations
 const TEST_CONFIGS = {
   // Very restrictive for race condition testing
@@ -105,29 +116,21 @@ const TEST_CONFIGS = {
   } as TRateLimitConfig,
 } as const;
 
-describe("Rate Limiter Load Tests - Race Conditions", () => {
+describe.skipIf(!redis)("Rate Limiter Load Tests - Race Conditions", () => {
   beforeAll(async () => {
-    // Ensure Redis is available for testing
-    if (!redis) {
-      throw new Error("Redis is required for load testing. Please ensure Redis is running.");
-    }
-
+    // This will only run if Redis is available
     // Clear any existing test keys
-    if (redis) {
-      const testKeys = await redis.keys("fb:rate_limit:test:*");
-      if (testKeys.length > 0) {
-        await redis.del(...testKeys);
-      }
+    const testKeys = await redis!.keys("fb:rate_limit:test:*");
+    if (testKeys.length > 0) {
+      await redis!.del(...testKeys);
     }
   });
 
   afterAll(async () => {
     // Clean up test keys
-    if (redis) {
-      const testKeys = await redis.keys("fb:rate_limit:test:*");
-      if (testKeys.length > 0) {
-        await redis.del(...testKeys);
-      }
+    const testKeys = await redis!.keys("fb:rate_limit:test:*");
+    if (testKeys.length > 0) {
+      await redis!.del(...testKeys);
     }
   });
 
@@ -370,14 +373,10 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
 
     const identifier = "ttl-test-user";
 
-    if (!redis) {
-      throw new Error("Redis is required for TTL testing");
-    }
-
     // Clear any existing keys first
-    const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
+    const existingKeys = await redis!.keys(`fb:rate_limit:${config.namespace}:*`);
     if (existingKeys.length > 0) {
-      await redis.del(...existingKeys);
+      await redis!.del(...existingKeys);
     }
 
     console.log("Phase 1: Hitting rate limit...");
@@ -400,12 +399,12 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
     const expectedKey = `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
 
-    const keyExists = await redis.exists(expectedKey);
+    const keyExists = await redis!.exists(expectedKey);
     expect(keyExists).toBe(1);
     console.log(`Redis key exists: ${expectedKey}`);
 
     // Check the TTL
-    const ttl = await redis.ttl(expectedKey);
+    const ttl = await redis!.ttl(expectedKey);
     expect(ttl).toBeGreaterThan(0);
     expect(ttl).toBeLessThanOrEqual(config.interval);
     console.log(`Key TTL: ${ttl} seconds`);
@@ -415,7 +414,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     await new Promise((resolve) => setTimeout(resolve, (config.interval + 1) * 1000));
 
     // Verify key has been automatically deleted by Redis
-    const keyExistsAfterTTL = await redis.exists(expectedKey);
+    const keyExistsAfterTTL = await redis!.exists(expectedKey);
     expect(keyExistsAfterTTL).toBe(0);
     console.log("Key automatically deleted by Redis TTL ✅");
 
@@ -439,7 +438,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const newWindowStart = Math.floor(newNow / (config.interval * 1000)) * config.interval;
     const newKey = `fb:rate_limit:${config.namespace}:${identifier}:${newWindowStart}`;
 
-    const newKeyExists = await redis.exists(newKey);
+    const newKeyExists = await redis!.exists(newKey);
     expect(newKeyExists).toBe(1);
     console.log(`New Redis key created: ${newKey}`);
 

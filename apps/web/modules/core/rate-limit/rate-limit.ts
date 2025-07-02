@@ -1,4 +1,4 @@
-import { RATE_LIMITING_DISABLED } from "@/lib/constants";
+import { RATE_LIMITING_DISABLED, SENTRY_DSN } from "@/lib/constants";
 import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import redis from "@/modules/cache/redis";
 import * as Sentry from "@sentry/nextjs";
@@ -85,12 +85,14 @@ export const checkRateLimit = async (
 
       logger.error(`Rate limit exceeded`, violationContext);
 
-      // Breadcrumb because the exception will be captured in the error handler
-      Sentry.addBreadcrumb({
-        message: `Rate limit exceeded`,
-        level: "warning",
-        data: violationContext,
-      });
+      if (SENTRY_DSN) {
+        // Breadcrumb because the exception will be captured in the error handler
+        Sentry.addBreadcrumb({
+          message: `Rate limit exceeded`,
+          level: "warning",
+          data: violationContext,
+        });
+      }
     }
 
     return ok(response);
@@ -100,14 +102,16 @@ export const checkRateLimit = async (
 
     logger.error(errorMessage, errorContext);
 
-    // Log error to Sentry
-    Sentry.captureException(error, {
-      tags: {
-        component: "rate-limiter",
-        namespace: config.namespace,
-      },
-      extra: errorContext,
-    });
+    if (SENTRY_DSN) {
+      // Log error to Sentry
+      Sentry.captureException(error, {
+        tags: {
+          component: "rate-limiter",
+          namespace: config.namespace,
+        },
+        extra: errorContext,
+      });
+    }
 
     // Fail open - allow request if rate limiting fails
     // This ensures system availability over perfect rate limiting

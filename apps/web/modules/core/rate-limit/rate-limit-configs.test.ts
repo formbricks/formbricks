@@ -9,6 +9,7 @@ import { rateLimitConfigs } from "./rate-limit-configs";
 vi.mock("@/lib/constants", () => ({
   REDIS_URL: "redis://localhost:6379",
   RATE_LIMITING_DISABLED: false,
+  SENTRY_DSN: "https://test@sentry.io/test",
 }));
 
 vi.mock("@/modules/cache/redis", () => ({
