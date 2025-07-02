@@ -41,8 +41,7 @@ jobs:
           sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s|REDIS_URL=.*|REDIS_URL=|" .env
 
       - name: Test
         run: pnpm test
-        env:
-          REDIS_URL: "" # Explicitly disable Redis for unit tests (Redis tests run in E2E workflow)
