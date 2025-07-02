@@ -109,7 +109,7 @@ export const CopySurveyForm = ({
 
           const errorMessage = getFormattedErrorMessage(result);
           toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
-            duration: 2000 + 2000 * errorCount,
+            duration: 2000 + 2000 * index,
           });
         });
       }
