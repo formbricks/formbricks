@@ -20,7 +20,7 @@ export const getUsersEndpoint: ZodOpenApiOperationObject = {
     }),
     query: ZGetUsersFilter.sourceType(),
   },
-  tags: ["Organizations API > Users"],
+  tags: ["Organizations API - Users"],
   responses: {
     "200": {
       description: "Users retrieved successfully.",
@@ -42,7 +42,7 @@ export const createUserEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Users"],
+  tags: ["Organizations API - Users"],
   requestBody: {
     required: true,
     description: "The user to create",
@@ -73,7 +73,7 @@ export const updateUserEndpoint: ZodOpenApiOperationObject = {
       organizationId: ZOrganizationIdSchema,
     }),
   },
-  tags: ["Organizations API > Users"],
+  tags: ["Organizations API - Users"],
   requestBody: {
     required: true,
     description: "The user to update",

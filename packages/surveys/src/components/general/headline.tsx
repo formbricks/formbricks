@@ -14,7 +14,7 @@ export function Headline({ headline, questionId, required = true, alignTextCente
       <div
         className={`fb-flex fb-items-center ${alignTextCenter ? "fb-justify-center" : "fb-justify-between"}`}
         dir="auto">
-        {headline}
+        <p>{headline}</p>
         {!required && (
           <span
             className="fb-text-heading fb-mx-2 fb-self-start fb-text-sm fb-font-normal fb-leading-7 fb-opacity-60"

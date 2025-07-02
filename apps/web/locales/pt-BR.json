@@ -34,7 +34,8 @@
           "text": "Agora você pode fazer login com sua nova senha"
         }
       },
-      "reset_password": "Redefinir senha"
+      "reset_password": "Redefinir senha",
+      "reset_password_description": "Você será desconectado para redefinir sua senha."
     },
     "invite": {
       "create_account": "Cria uma conta",
@@ -191,7 +192,6 @@
     "e_commerce": "comércio eletrônico",
     "edit": "Editar",
     "email": "Email",
-    "embed": "incorporar",
     "enterprise_license": "Licença Empresarial",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
@@ -1231,7 +1231,7 @@
       "copy_survey_error": "Falha ao copiar pesquisa",
       "copy_survey_link_to_clipboard": "Copiar link da pesquisa para a área de transferência",
       "copy_survey_success": "Pesquisa copiada com sucesso!",
-      "delete_survey_and_responses_warning": "Você tem certeza de que quer deletar essa pesquisa e todas as suas respostas? Essa ação não pode ser desfeita.",
+      "delete_survey_and_responses_warning": "Você tem certeza de que quer deletar essa pesquisa e todas as suas respostas?",
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Escolha o idioma padrão para essa pesquisa:",
         "2_activate_translation_for_specific_languages": "2. Ativar tradução para idiomas específicos:",
@@ -1786,6 +1786,7 @@
         "setup_instructions": "Instruções de configuração",
         "setup_integrations": "Configurar integrações",
         "share_results": "Compartilhar resultados",
+        "share_survey": "Compartilhar pesquisa",
         "share_the_link": "Compartilha o link",
         "share_the_link_to_get_responses": "Compartilha o link pra receber respostas",
         "show_all_responses_that_match": "Mostrar todas as respostas que correspondem",

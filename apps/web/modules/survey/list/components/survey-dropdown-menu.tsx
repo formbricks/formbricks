@@ -197,9 +197,8 @@ export const SurveyDropDownMenu = ({
                       e.preventDefault();
                       setIsDropDownOpen(false);
                       const newId = await refreshSingleUseId();
-                      const previewUrl = newId
-                        ? `/s/${survey.id}?suId=${newId}&preview=true`
-                        : `/s/${survey.id}?preview=true`;
+                      const previewUrl =
+                        surveyLink + (newId ? `?suId=${newId}&preview=true` : "?preview=true");
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
