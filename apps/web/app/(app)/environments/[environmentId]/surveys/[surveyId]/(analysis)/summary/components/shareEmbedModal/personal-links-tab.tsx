@@ -89,13 +89,10 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
         link.click();
         document.body.removeChild(link);
 
-        // Show success toast after a short delay to let download start
-        setTimeout(() => {
-          toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
-            duration: 5000,
-            id: "generating-links",
-          });
-        }, 500);
+        toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
+          duration: 5000,
+          id: "generating-links",
+        });
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage, {
