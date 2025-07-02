@@ -10,6 +10,7 @@ import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/com
 import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
+import { AlertCircleIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -65,18 +66,20 @@ export const CopySurveyForm = ({
         });
       });
 
-      const targetEnvironmentIds = copyOperationsWithMetadata.map((item) => item.environmentId);
-      const shouldRefetch = targetEnvironmentIds.includes(survey.environmentId);
-
-      const results = await Promise.allSettled(copyOperationsWithMetadata.map((item) => item.operation));
+      const results = await Promise.all(copyOperationsWithMetadata.map((item) => item.operation));
 
       let successCount = 0;
       let errorCount = 0;
       const errorsIndexes: number[] = [];
 
+      let shouldRefetch = false;
+
       results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
+        if (result?.data) {
           successCount++;
+          if (!shouldRefetch && result.data.environmentId === survey.environmentId) {
+            shouldRefetch = true;
+          }
         } else {
           errorsIndexes.push(index);
           errorCount++;
@@ -91,7 +94,10 @@ export const CopySurveyForm = ({
             t("environments.surveys.copy_survey_partially_success", {
               success: successCount,
               error: errorCount,
-            })
+            }),
+            {
+              icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+            }
           );
         }
       }
@@ -99,9 +105,9 @@ export const CopySurveyForm = ({
       if (errorsIndexes.length > 0) {
         errorsIndexes.forEach((index) => {
           const { projectName, environmentType } = copyOperationsWithMetadata[index];
-          const result = results[index] as PromiseRejectedResult;
+          const result = results[index];
 
-          const errorMessage = getFormattedErrorMessage(result.reason);
+          const errorMessage = getFormattedErrorMessage(result);
           toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
             duration: 2000 + 2000 * errorCount,
           });
