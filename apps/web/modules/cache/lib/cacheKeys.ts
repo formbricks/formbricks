@@ -11,6 +11,7 @@ import "server-only";
  * - Predictable invalidation patterns
  * - Multi-tenant safe
  */
+
 export const createCacheKey = {
   // Environment-related keys
   environment: {
@@ -71,6 +72,8 @@ export const createCacheKey = {
   rateLimit: {
     api: (identifier: string, endpoint: string) => `fb:rate_limit:api:${identifier}:${endpoint}`,
     login: (identifier: string) => `fb:rate_limit:login:${identifier}`,
+    core: (namespace: string, identifier: string, windowStart: number) =>
+      `fb:rate_limit:${namespace}:${identifier}:${windowStart}`,
   },
 
   // Custom keys with validation

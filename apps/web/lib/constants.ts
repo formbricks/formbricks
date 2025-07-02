@@ -171,7 +171,6 @@ export const MANAGEMENT_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
 };
-
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 1, // 1 minutes
   allowedPerInterval: 30,
