@@ -58,6 +58,8 @@ export const TagsCombobox = ({
     }
   }, [open, setSearchValue]);
 
+  const trimmedSearchValue = useMemo(() => searchValue.trim(), [searchValue]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -90,13 +92,13 @@ export const TagsCombobox = ({
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && searchValue !== "") {
+                if (e.key === "Enter" && trimmedSearchValue !== "") {
                   const alreadyExists =
-                    currentTags.some((tag) => tag.label === searchValue) ||
-                    tagsToSearch.some((tag) => tag.label === searchValue);
+                    currentTags.some((tag) => tag.label === trimmedSearchValue) ||
+                    tagsToSearch.some((tag) => tag.label === trimmedSearchValue);
 
                   if (!alreadyExists) {
-                    createTag?.(searchValue);
+                    createTag?.(trimmedSearchValue);
                   }
                 }
               }}
@@ -118,15 +120,15 @@ export const TagsCombobox = ({
                   </CommandItem>
                 );
               })}
-              {searchValue !== "" &&
-                !currentTags.find((tag) => tag.label === searchValue) &&
-                !tagsToSearch.find((tag) => tag.label === searchValue) && (
+              {trimmedSearchValue !== "" &&
+                !currentTags.find((tag) => tag.label === trimmedSearchValue) &&
+                !tagsToSearch.find((tag) => tag.label === trimmedSearchValue) && (
                   <CommandItem value="_create">
                     <button
-                      onClick={() => createTag?.(searchValue)}
+                      onClick={() => createTag?.(trimmedSearchValue)}
                       className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
-                      + {t("environments.project.tags.add")} {searchValue}
+                      disabled={!!currentTags.find((tag) => tag.label === trimmedSearchValue)}>
+                      + {t("environments.project.tags.add")} {trimmedSearchValue}
                     </button>
                   </CommandItem>
                 )}

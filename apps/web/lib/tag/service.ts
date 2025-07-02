@@ -1,7 +1,10 @@
 import "server-only";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TTag } from "@formbricks/types/tags";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -55,6 +58,11 @@ export const createTag = async (environmentId: string, name: string): Promise<TT
 
     return tag;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError("Tag already exists");
+      }
+    }
     throw error;
   }
 };
