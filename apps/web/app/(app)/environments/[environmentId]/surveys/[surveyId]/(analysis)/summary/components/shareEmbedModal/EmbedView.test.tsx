@@ -29,6 +29,22 @@ vi.mock("./WebsiteTab", () => ({
   ),
 }));
 
+vi.mock("./personal-links-tab", () => ({
+  PersonalLinksTab: (props: { segments: any[]; surveyId: string; environmentId: string }) => (
+    <div data-testid="personal-links-tab">
+      PersonalLinksTab Content for {props.surveyId} in {props.environmentId}
+    </div>
+  ),
+}));
+
+vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
+  UpgradePrompt: (props: { title: string; description: string; buttons: any[] }) => (
+    <div data-testid="upgrade-prompt">
+      {props.title} - {props.description}
+    </div>
+  ),
+}));
+
 // Mock @tolgee/react
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
@@ -43,6 +59,21 @@ vi.mock("lucide-react", () => ({
   LinkIcon: () => <div data-testid="link-icon">LinkIcon</div>,
   GlobeIcon: () => <div data-testid="globe-icon">GlobeIcon</div>,
   SmartphoneIcon: () => <div data-testid="smartphone-icon">SmartphoneIcon</div>,
+  AlertCircle: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-circle">
+      AlertCircle
+    </div>
+  ),
+  AlertTriangle: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-triangle">
+      AlertTriangle
+    </div>
+  ),
+  Info: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="info">
+      Info
+    </div>
+  ),
 }));
 
 const mockTabs = [
@@ -68,6 +99,9 @@ const defaultProps = {
   setSurveyUrl: vi.fn(),
   locale: "en" as any,
   disableBack: false,
+  segments: [],
+  isContactsEnabled: true,
+  isFormbricksCloud: false,
 };
 
 describe("EmbedView", () => {

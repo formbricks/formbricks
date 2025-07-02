@@ -11,6 +11,7 @@ import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
@@ -238,6 +239,11 @@ export const generatePersonalLinksAction = authenticatedActionClient
   .schema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
     try {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        throw new Error("Contacts are not enabled for this environment");
+      }
+
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),

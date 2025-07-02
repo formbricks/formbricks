@@ -154,6 +154,9 @@ describe("ShareEmbedSurvey", () => {
     modalView: "start" as "start" | "embed" | "panel",
     setOpen: mockSetOpen,
     user: mockUser,
+    segments: [],
+    isContactsEnabled: true,
+    isFormbricksCloud: true,
   };
 
   beforeEach(() => {
@@ -267,7 +270,7 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(3);
+    expect(embedViewProps.tabs.length).toBe(4);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
     expect(embedViewProps.activeId).toBe("link");
@@ -280,18 +283,18 @@ describe("ShareEmbedSurvey", () => {
       activeId: string;
     };
     expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs[0].id).toBe("app");
-    expect(embedViewProps.activeId).toBe("app");
+    expect(embedViewProps.tabs[0].id).toBe("webpage");
+    expect(embedViewProps.activeId).toBe("webpage");
   });
 
   test("useEffect does not change activeId if survey.type changes from web to link (while in embed view)", () => {
     const { rerender } = render(
       <ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />
     );
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("app");
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("webpage");
 
     rerender(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("app"); // Current behavior
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("webpage"); // Current behavior
   });
 
   test("initial showView is set by modalView prop when open is true", () => {

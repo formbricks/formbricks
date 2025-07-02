@@ -6,9 +6,40 @@ import {
   buildContactWhereClause,
   createContactsFromCSV,
   deleteContact,
+  generatePersonalLinks,
   getContact,
   getContacts,
+  getContactsInSegment,
 } from "./contacts";
+
+// Mock additional dependencies for the new functions
+vi.mock(
+  "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment",
+  () => ({
+    getSegment: vi.fn(),
+  })
+);
+
+vi.mock(
+  "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key",
+  () => ({
+    getContactAttributeKeys: vi.fn(),
+  })
+);
+
+vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
+  segmentFilterToPrismaQuery: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/contacts/lib/contact-survey-link", () => ({
+  getContactSurveyLink: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -31,7 +62,10 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
+vi.mock("@/lib/constants", () => ({
+  ITEMS_PER_PAGE: 2,
+  ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
+}));
 
 const environmentId = "env1";
 const contactId = "contact1";
@@ -159,7 +193,7 @@ describe("createContactsFromCSV", () => {
       .mockResolvedValueOnce([
         { key: "email", id: "id-email" },
         { key: "name", id: "id-name" },
-      ]);
+      ] as any);
     vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 2 });
     vi.mocked(prisma.contact.create).mockResolvedValue({
       id: "c1",
@@ -183,12 +217,12 @@ describe("createContactsFromCSV", () => {
   test("skips duplicate contact with 'skip' action", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue([
       { id: "c1", attributes: [{ attributeKey: { key: "email" }, value: "john@example.com" }] },
-    ]);
+    ] as any);
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
       { key: "email", id: "id-email" },
       { key: "name", id: "id-name" },
-    ]);
+    ] as any);
     const csvData = [{ email: "john@example.com", name: "John" }];
     const result = await createContactsFromCSV(csvData, environmentId, "skip", {
       email: "email",
@@ -206,12 +240,12 @@ describe("createContactsFromCSV", () => {
           { attributeKey: { key: "name" }, value: "Old" },
         ],
       },
-    ]);
+    ] as any);
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
       { key: "email", id: "id-email" },
       { key: "name", id: "id-name" },
-    ]);
+    ] as any);
     vi.mocked(prisma.contact.update).mockResolvedValue({
       id: "c1",
       environmentId,
@@ -239,12 +273,12 @@ describe("createContactsFromCSV", () => {
           { attributeKey: { key: "name" }, value: "Old" },
         ],
       },
-    ]);
+    ] as any);
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
       { key: "email", id: "id-email" },
       { key: "name", id: "id-name" },
-    ]);
+    ] as any);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
     vi.mocked(prisma.contact.update).mockResolvedValue({
       id: "c1",
@@ -329,5 +363,376 @@ describe("buildContactWhereClause", () => {
     const environmentId = "env-1";
     const result = buildContactWhereClause(environmentId);
     expect(result).toEqual({ environmentId });
+  });
+});
+
+describe("getContactsInSegment", () => {
+  const mockSegmentId = "segment-123";
+  const mockEnvironmentId = "env-123";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("returns contacts when segment and filters are valid", async () => {
+    const mockSegment = {
+      id: mockSegmentId,
+      environmentId: mockEnvironmentId,
+      filters: [
+        {
+          id: "filter-1",
+          connector: null,
+          resource: {
+            id: "resource-1",
+            root: {
+              type: "attribute",
+              contactAttributeKey: "email",
+            },
+            value: "test@example.com",
+            qualifier: {
+              operator: "equals",
+            },
+          },
+        },
+      ],
+    };
+
+    const mockContacts = [
+      {
+        id: "contact-1",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "test@example.com" },
+          { attributeKey: { key: "name" }, value: "Test User" },
+        ],
+      },
+      {
+        id: "contact-2",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "another@example.com" },
+          { attributeKey: { key: "name" }, value: "Another User" },
+        ],
+      },
+    ] as any;
+
+    const mockWhereClause = {
+      environmentId: mockEnvironmentId,
+      attributes: {
+        some: {
+          attributeKey: { key: "email" },
+          value: "test@example.com",
+        },
+      },
+    };
+
+    // Mock the dependencies
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+    const { getContactAttributeKeys } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key"
+    );
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: mockSegment,
+    } as any);
+
+    vi.mocked(getContactAttributeKeys).mockResolvedValue({
+      ok: true,
+      data: ["email", "name"],
+    } as any);
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: { whereClause: mockWhereClause },
+    } as any);
+
+    vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
+
+    const result = await getContactsInSegment(mockSegmentId);
+
+    expect(result).toEqual([
+      {
+        contactId: "contact-1",
+        attributes: {
+          email: "test@example.com",
+          name: "Test User",
+        },
+      },
+      {
+        contactId: "contact-2",
+        attributes: {
+          email: "another@example.com",
+          name: "Another User",
+        },
+      },
+    ]);
+
+    expect(prisma.contact.findMany).toHaveBeenCalledWith({
+      where: mockWhereClause,
+      select: {
+        id: true,
+        attributes: {
+          select: {
+            attributeKey: {
+              select: {
+                key: true,
+              },
+            },
+            value: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  });
+
+  test("returns null when segment is not found", async () => {
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: false,
+      error: { type: "not_found" },
+    } as any);
+
+    const result = await getContactsInSegment(mockSegmentId);
+
+    expect(result).toBeNull();
+  });
+
+  test("returns null when segment filter to prisma query fails", async () => {
+    const mockSegment = {
+      id: mockSegmentId,
+      environmentId: mockEnvironmentId,
+      filters: [],
+    };
+
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: mockSegment,
+    } as any);
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: false,
+      error: { type: "bad_request" },
+    } as any);
+
+    const result = await getContactsInSegment(mockSegmentId);
+
+    expect(result).toBeNull();
+  });
+
+  test("returns null when contact attribute keys fails", async () => {
+    const mockSegment = {
+      id: mockSegmentId,
+      environmentId: mockEnvironmentId,
+      filters: [],
+    };
+
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+    const { getContactAttributeKeys } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key"
+    );
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: mockSegment,
+    } as any);
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: { whereClause: {} },
+    } as any);
+
+    vi.mocked(getContactAttributeKeys).mockResolvedValue({
+      ok: false,
+      error: { type: "internal_server_error" },
+    } as any);
+
+    const result = await getContactsInSegment(mockSegmentId);
+
+    expect(result).toBeNull();
+  });
+
+  test("handles errors gracefully", async () => {
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+
+    vi.mocked(getSegment).mockRejectedValue(new Error("Database error"));
+
+    const result = await getContactsInSegment(mockSegmentId);
+
+    expect(result).toBeUndefined(); // The function catches errors and console.error logs them
+  });
+});
+
+describe("generatePersonalLinks", () => {
+  const mockSurveyId = "survey-123";
+  const mockSegmentId = "segment-123";
+  const mockExpirationDays = 7;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("returns null when getContactsInSegment fails", async () => {
+    // Mock getSegment to fail which will cause getContactsInSegment to return null
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: false,
+      error: { type: "not_found" },
+    } as any);
+
+    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+
+    expect(result).toBeNull();
+  });
+
+  test("returns empty array when no contacts in segment", async () => {
+    // Mock successful segment retrieval but no contacts
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+    const { getContactAttributeKeys } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key"
+    );
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: {
+        id: mockSegmentId,
+        environmentId: "env-123",
+        filters: [],
+      },
+    } as any);
+
+    vi.mocked(getContactAttributeKeys).mockResolvedValue({
+      ok: true,
+      data: ["email", "name"],
+    } as any);
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: { whereClause: {} },
+    } as any);
+
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+
+    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+
+    expect(result).toEqual([]);
+  });
+
+  test("generates personal links for contacts successfully", async () => {
+    // Mock all the dependencies that getContactsInSegment needs
+    const { getSegment } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment"
+    );
+    const { getContactAttributeKeys } = await import(
+      "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key"
+    );
+    const { segmentFilterToPrismaQuery } = await import(
+      "@/modules/ee/contacts/segments/lib/filter/prisma-query"
+    );
+    const { getContactSurveyLink } = await import("@/modules/ee/contacts/lib/contact-survey-link");
+
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: {
+        id: mockSegmentId,
+        environmentId: "env-123",
+        filters: [],
+      },
+    } as any);
+
+    vi.mocked(getContactAttributeKeys).mockResolvedValue({
+      ok: true,
+      data: ["email", "name"],
+    } as any);
+
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: { whereClause: {} },
+    } as any);
+
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      {
+        id: "contact-1",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "test@example.com" },
+          { attributeKey: { key: "name" }, value: "Test User" },
+        ],
+      },
+      {
+        id: "contact-2",
+        attributes: [
+          { attributeKey: { key: "email" }, value: "another@example.com" },
+          { attributeKey: { key: "name" }, value: "Another User" },
+        ],
+      },
+    ] as any);
+
+    // Mock getContactSurveyLink to return successful results
+    vi.mocked(getContactSurveyLink)
+      .mockReturnValueOnce({
+        ok: true,
+        data: "https://example.com/survey/link1",
+      })
+      .mockReturnValueOnce({
+        ok: true,
+        data: "https://example.com/survey/link2",
+      });
+
+    const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, mockExpirationDays);
+
+    expect(result).toEqual([
+      {
+        contactId: "contact-1",
+        attributes: {
+          email: "test@example.com",
+          name: "Test User",
+        },
+        surveyUrl: "https://example.com/survey/link1",
+        expirationDays: mockExpirationDays,
+      },
+      {
+        contactId: "contact-2",
+        attributes: {
+          email: "another@example.com",
+          name: "Another User",
+        },
+        surveyUrl: "https://example.com/survey/link2",
+        expirationDays: mockExpirationDays,
+      },
+    ]);
+
+    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-1", mockSurveyId, mockExpirationDays);
+    expect(getContactSurveyLink).toHaveBeenCalledWith("contact-2", mockSurveyId, mockExpirationDays);
   });
 });
