@@ -63,7 +63,7 @@ export const deleteDisplay = async (displayId: string): Promise<TDisplay> => {
   }
 };
 
-export const checkDisplayExists = reactCache(async (displayId: string): Promise<{ id: string } | null> => {
+export const getDisplay = reactCache(async (displayId: string): Promise<{ id: string } | null> => {
   validateInputs([displayId, ZId]);
   try {
     const display = await prisma.display.findUnique({
