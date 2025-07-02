@@ -49,6 +49,58 @@ export const EmbedView = ({
   isFormbricksCloud,
 }: EmbedViewProps) => {
   const { t } = useTranslate();
+
+  const getPersonalLinksTab = () => {
+    if (isContactsEnabled) {
+      return <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />;
+    } else
+      return (
+        <UpgradePrompt
+          title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
+          description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
+          buttons={[
+            {
+              text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+              href: isFormbricksCloud
+                ? `/environments/${environmentId}/settings/billing`
+                : "https://formbricks.com/upgrade-self-hosting-license",
+            },
+            {
+              text: t("common.learn_more"),
+              href: isFormbricksCloud
+                ? `/environments/${environmentId}/settings/billing`
+                : "https://formbricks.com/learn-more-self-hosting-license",
+            },
+          ]}
+        />
+      );
+  };
+
+  const renderActiveTab = () => {
+    switch (activeId) {
+      case "email":
+        return <EmailTab surveyId={survey.id} email={email} />;
+      case "webpage":
+        return <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />;
+      case "link":
+        return (
+          <LinkTab
+            survey={survey}
+            surveyUrl={surveyUrl}
+            publicDomain={publicDomain}
+            setSurveyUrl={setSurveyUrl}
+            locale={locale}
+          />
+        );
+      case "app":
+        return <AppTab />;
+      case "personal-links":
+        return getPersonalLinksTab();
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="h-full overflow-hidden">
       {!disableBack && (
@@ -84,46 +136,7 @@ export const EmbedView = ({
         )}
         <div
           className={`col-span-4 h-full overflow-y-auto bg-slate-50 px-4 py-6 ${survey.type === "link" ? "lg:col-span-3" : ""} lg:p-6`}>
-          {activeId === "email" ? (
-            <EmailTab surveyId={survey.id} email={email} />
-          ) : activeId === "webpage" ? (
-            <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />
-          ) : activeId === "link" ? (
-            <LinkTab
-              survey={survey}
-              surveyUrl={surveyUrl}
-              publicDomain={publicDomain}
-              setSurveyUrl={setSurveyUrl}
-              locale={locale}
-            />
-          ) : activeId === "app" ? (
-            <AppTab />
-          ) : activeId === "personal-links" ? (
-            isContactsEnabled ? (
-              <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />
-            ) : (
-              <UpgradePrompt
-                title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
-                description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
-                buttons={[
-                  {
-                    text: isFormbricksCloud
-                      ? t("common.start_free_trial")
-                      : t("common.request_trial_license"),
-                    href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
-                      : "https://formbricks.com/upgrade-self-hosting-license",
-                  },
-                  {
-                    text: t("common.learn_more"),
-                    href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
-                      : "https://formbricks.com/learn-more-self-hosting-license",
-                  },
-                ]}
-              />
-            )
-          ) : null}
+          {renderActiveTab()}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (
               <Button

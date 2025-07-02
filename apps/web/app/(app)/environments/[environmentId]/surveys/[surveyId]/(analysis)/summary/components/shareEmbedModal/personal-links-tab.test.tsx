@@ -426,35 +426,6 @@ describe("PersonalLinksTab", () => {
     });
   });
 
-  test("handles exception during link generation", async () => {
-    mockGeneratePersonalLinksAction.mockRejectedValue(new Error("Network error"));
-
-    render(<PersonalLinksTab {...defaultProps} />);
-
-    // Select a segment
-    selectOption("segment1");
-
-    // Click generate button
-    const generateButton = screen.getByTestId("button");
-    fireEvent.click(generateButton);
-
-    // Wait for loading toast to be called first
-    await waitFor(() => {
-      expect(mockToast.loading).toHaveBeenCalledWith("environments.surveys.summary.generating_links_toast", {
-        duration: 5000,
-        id: "generating-links",
-      });
-    });
-
-    // Wait for error toast
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("common.something_went_wrong_please_try_again", {
-        duration: 5000,
-        id: "generating-links",
-      });
-    });
-  });
-
   test("shows generating state when triggered", async () => {
     // Mock a promise that resolves quickly
     const mockResult = { data: { downloadUrl: "test", fileName: "test.csv", count: 1 } };

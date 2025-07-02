@@ -70,42 +70,35 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
       id: "generating-links",
     });
 
-    try {
-      const result = await generatePersonalLinksAction({
-        surveyId: surveyId,
-        segmentId: selectedSegment,
-        environmentId: environmentId,
-        expirationDays: expiryDate
-          ? Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-          : undefined,
-      });
+    const result = await generatePersonalLinksAction({
+      surveyId: surveyId,
+      segmentId: selectedSegment,
+      environmentId: environmentId,
+      expirationDays: expiryDate
+        ? Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        : undefined,
+    });
 
-      if (result?.data) {
-        // Trigger CSV download first
-        const link = document.createElement("a");
-        link.href = result.data.downloadUrl;
-        link.download = result.data.fileName || "personal-links.csv";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    if (result?.data) {
+      // Trigger CSV download first
+      const link = document.createElement("a");
+      link.href = result.data.downloadUrl;
+      link.download = result.data.fileName || "personal-links.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
-          duration: 5000,
-          id: "generating-links",
-        });
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage, {
-          duration: 5000,
-          id: "generating-links",
-        });
-      }
-    } catch (error) {
-      toast.error(t("common.something_went_wrong_please_try_again"), {
+      toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",
       });
-    } finally {
+      setIsGenerating(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage, {
+        duration: 5000,
+        id: "generating-links",
+      });
       setIsGenerating(false);
     }
   };

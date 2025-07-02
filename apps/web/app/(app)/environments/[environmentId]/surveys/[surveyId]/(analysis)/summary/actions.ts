@@ -17,7 +17,7 @@ import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
   surveyId: ZId,
@@ -238,78 +238,78 @@ const ZGeneratePersonalLinksAction = z.object({
 export const generatePersonalLinksAction = authenticatedActionClient
   .schema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    try {
-      const isContactsEnabled = await getIsContactsEnabled();
-      if (!isContactsEnabled) {
-        throw new Error("Contacts are not enabled for this environment");
-      }
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      throw new OperationNotAllowedError("Contacts are not enabled for this environment");
+    }
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      // Get contacts and generate personal links
-      const contactsResult = await generatePersonalLinks(
-        parsedInput.surveyId,
-        parsedInput.segmentId,
-        parsedInput.expirationDays
-      );
+    // Get contacts and generate personal links
+    const contactsResult = await generatePersonalLinks(
+      parsedInput.surveyId,
+      parsedInput.segmentId,
+      parsedInput.expirationDays
+    );
 
-      if (!contactsResult || contactsResult.length === 0) {
-        throw new Error("No contacts found for the selected segment");
-      }
+    if (!contactsResult || contactsResult.length === 0) {
+      throw new UnknownError("No contacts found for the selected segment");
+    }
 
-      // Prepare CSV data with the specified headers and order
-      const csvHeaders = [
-        "Formbricks Contact ID",
-        "User ID",
-        "First Name",
-        "Last Name",
-        "Email",
-        "Personal Link",
-      ];
+    // Prepare CSV data with the specified headers and order
+    const csvHeaders = [
+      "Formbricks Contact ID",
+      "User ID",
+      "First Name",
+      "Last Name",
+      "Email",
+      "Personal Link",
+    ];
 
-      const csvData = contactsResult.map((contact: any) => {
-        const attributes = contact.attributes || {};
+    const csvData = contactsResult
+      .map((contact) => {
+        if (!contact) {
+          return null;
+        }
+        const attributes = contact.attributes ?? {};
         return {
           "Formbricks Contact ID": contact.contactId,
-          "User ID": attributes.userId || "",
-          "First Name": attributes.firstName || "",
-          "Last Name": attributes.lastName || "",
-          Email: attributes.email || "",
+          "User ID": attributes.userId ?? "",
+          "First Name": attributes.firstName ?? "",
+          "Last Name": attributes.lastName ?? "",
+          Email: attributes.email ?? "",
           "Personal Link": contact.surveyUrl,
         };
-      });
+      })
+      .filter((contact) => contact !== null);
 
-      // Convert to CSV using the file conversion utility
-      const csvContent = await convertToCsv(csvHeaders, csvData);
-      const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
+    // Convert to CSV using the file conversion utility
+    const csvContent = await convertToCsv(csvHeaders, csvData);
+    const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
 
-      // Store file temporarily and return download URL
-      const fileBuffer = Buffer.from(csvContent);
-      await putFile(fileName, fileBuffer, "private", parsedInput.environmentId);
+    // Store file temporarily and return download URL
+    const fileBuffer = Buffer.from(csvContent);
+    await putFile(fileName, fileBuffer, "private", parsedInput.environmentId);
 
-      const downloadUrl = `${WEBAPP_URL}/storage/${parsedInput.environmentId}/private/${fileName}`;
+    const downloadUrl = `${WEBAPP_URL}/storage/${parsedInput.environmentId}/private/${fileName}`;
 
-      return {
-        downloadUrl,
-        fileName,
-        count: csvData.length,
-      };
-    } catch (error) {
-      console.error("Error generating personal links:", error);
-      throw new Error("Failed to generate personal links");
-    }
+    return {
+      downloadUrl,
+      fileName,
+      count: csvData.length,
+    };
   });
