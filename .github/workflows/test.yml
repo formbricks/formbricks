@@ -44,3 +44,5 @@ jobs:
 
       - name: Test
         run: pnpm test
+        env:
+          REDIS_URL: "" # Explicitly disable Redis for unit tests (Redis tests run in E2E workflow)

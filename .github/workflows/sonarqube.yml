@@ -47,6 +47,8 @@ jobs:
       - name: Run tests with coverage
         run: |
           pnpm test:coverage
+        env:
+          REDIS_URL: "" # Explicitly disable Redis for unit tests (Redis tests run in E2E workflow)
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf
         env:
