@@ -110,7 +110,7 @@
   },
   "c": {
     "link_expired": "Your link is expired.",
-    "link_expired_description": "The link you used is not longer valid."
+    "link_expired_description": "The link you used is no longer valid."
   },
   "common": {
     "accepted": "Accepted",
