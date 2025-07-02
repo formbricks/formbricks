@@ -285,7 +285,7 @@ describe("CopySurveyForm", () => {
         expect(mockToastError).toHaveBeenCalledWith(
           "[Project 2] - [development] - Failed to copy",
           expect.objectContaining({
-            duration: 4000,
+            duration: 2000,
           })
         );
         expect(mockSetOpen).toHaveBeenCalledWith(false);

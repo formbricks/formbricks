@@ -59,8 +59,8 @@ export const CopySurveyForm = ({
               surveyId: survey.id,
               targetEnvironmentId: environmentId,
             }),
-            projectName: project?.name || "Unknown Project",
-            environmentType: environment?.type || "unknown",
+            projectName: project?.name ?? "Unknown Project",
+            environmentType: environment?.type ?? "unknown",
             environmentId,
           };
         });
@@ -103,13 +103,13 @@ export const CopySurveyForm = ({
       }
 
       if (errorsIndexes.length > 0) {
-        errorsIndexes.forEach((index) => {
+        errorsIndexes.forEach((index, idx) => {
           const { projectName, environmentType } = copyOperationsWithMetadata[index];
           const result = results[index];
 
           const errorMessage = getFormattedErrorMessage(result);
           toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
-            duration: 2000 + 2000 * index,
+            duration: 2000 + 2000 * idx,
           });
         });
       }
