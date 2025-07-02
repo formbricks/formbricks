@@ -27,6 +27,8 @@ interface SurveyAnalysisCTAProps {
   publicDomain: string;
   responseCount: number;
   segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 interface ModalState {
@@ -44,6 +46,8 @@ export const SurveyAnalysisCTA = ({
   publicDomain,
   responseCount,
   segments,
+  isContactsEnabled,
+  isFormbricksCloud,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
@@ -179,6 +183,8 @@ export const SurveyAnalysisCTA = ({
               user={user}
               modalView={modalView}
               segments={segments}
+              isContactsEnabled={isContactsEnabled}
+              isFormbricksCloud={isFormbricksCloud}
             />
           ))}
           <SuccessMessage environment={environment} survey={survey} />

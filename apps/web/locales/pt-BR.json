@@ -34,7 +34,8 @@
           "text": "Agora você pode fazer login com sua nova senha"
         }
       },
-      "reset_password": "Redefinir senha"
+      "reset_password": "Redefinir senha",
+      "reset_password_description": "Você será desconectado para redefinir sua senha."
     },
     "invite": {
       "create_account": "Cria uma conta",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "Voltar para visão geral de cobrança",
     "thanks_for_upgrading": "Valeu demais por atualizar sua assinatura do Formbricks.",
     "upgrade_successful": "Atualização bem-sucedida"
+  },
+  "c": {
+    "link_expired": "Seu link está expirado.",
+    "link_expired_description": "O link que você usou não é mais válido."
   },
   "common": {
     "accepted": "Aceito",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de pesquisa esteja definido como",
         "mobile_app": "app de celular",
         "no_responses_found": "Nenhuma resposta encontrada",
+        "no_segments_available": "Nenhum segmento disponível",
         "only_completed": "Somente concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "No geral",
         "personal_links": "Links pessoais",
+        "personal_links_upgrade_prompt_description": "Gerar links pessoais para um segmento e vincular respostas de pesquisa a cada contato.",
+        "personal_links_upgrade_prompt_title": "Use links pessoais com um plano superior",
         "personal_links_work_with_segments": "Links pessoais funcionam com segmentos.",
         "publish_to_web": "Publicar na web",
         "publish_to_web_warning": "Você está prestes a divulgar esses resultados da pesquisa para o público.",

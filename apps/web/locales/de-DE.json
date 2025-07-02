@@ -34,7 +34,8 @@
           "text": "Du kannst Dich jetzt mit deinem neuen Passwort einloggen"
         }
       },
-      "reset_password": "Passwort zurücksetzen"
+      "reset_password": "Passwort zurücksetzen",
+      "reset_password_description": "Du wirst abgemeldet, um dein Passwort zurückzusetzen."
     },
     "invite": {
       "create_account": "Konto erstellen",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "Zurück zur Abrechnungsübersicht",
     "thanks_for_upgrading": "Vielen Dank, dass Du dein Formbricks-Abonnement aktualisiert hast.",
     "upgrade_successful": "Upgrade erfolgreich"
+  },
+  "c": {
+    "link_expired": "Dein Link ist abgelaufen.",
+    "link_expired_description": "Der von dir verwendete Link ist nicht mehr gültig."
   },
   "common": {
     "accepted": "Akzeptiert",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "Stelle sicher, dass der Umfragetyp richtig eingestellt ist",
         "mobile_app": "Mobile App",
         "no_responses_found": "Keine Antworten gefunden",
+        "no_segments_available": "Keine Segmente verfügbar",
         "only_completed": "Nur vollständige Antworten",
         "other_values_found": "Andere Werte gefunden",
         "overall": "Insgesamt",
         "personal_links": "Persönliche Links",
+        "personal_links_upgrade_prompt_description": "Erstellen Sie persönliche Links für ein Segment und verknüpfen Sie Umfrageantworten mit jedem Kontakt.",
+        "personal_links_upgrade_prompt_title": "Verwende persönliche Links mit einem höheren Plan",
         "personal_links_work_with_segments": "Persönliche Links funktionieren mit Segmenten.",
         "publish_to_web": "Im Web veröffentlichen",
         "publish_to_web_warning": "Du bist dabei, diese Umfrageergebnisse öffentlich zugänglich zu machen.",

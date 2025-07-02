@@ -32,6 +32,8 @@ interface ShareEmbedSurveyProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
   segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export const ShareEmbedSurvey = ({
@@ -42,6 +44,8 @@ export const ShareEmbedSurvey = ({
   setOpen,
   user,
   segments,
+  isContactsEnabled,
+  isFormbricksCloud,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
@@ -185,6 +189,8 @@ export const ShareEmbedSurvey = ({
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
             segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={isFormbricksCloud}
           />
         ) : showView === "panel" ? (
           <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />

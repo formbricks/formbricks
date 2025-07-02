@@ -34,7 +34,8 @@
           "text": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
         }
       },
-      "reset_password": "Réinitialiser le mot de passe"
+      "reset_password": "Réinitialiser le mot de passe",
+      "reset_password_description": "Vous serez déconnecté pour réinitialiser votre mot de passe."
     },
     "invite": {
       "create_account": "Créer un compte",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "Retour à l'aperçu de la facturation",
     "thanks_for_upgrading": "Merci beaucoup d'avoir mis à niveau votre abonnement Formbricks.",
     "upgrade_successful": "Mise à niveau réussie"
+  },
+  "c": {
+    "link_expired": "Votre lien est expiré.",
+    "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
     "accepted": "Accepté",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "Assurez-vous que le type d'enquête est défini sur",
         "mobile_app": "Application mobile",
         "no_responses_found": "Aucune réponse trouvée",
+        "no_segments_available": "Aucun segment disponible",
         "only_completed": "Uniquement terminé",
         "other_values_found": "D'autres valeurs trouvées",
         "overall": "Globalement",
         "personal_links": "Liens personnels",
+        "personal_links_upgrade_prompt_description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact.",
+        "personal_links_upgrade_prompt_title": "Utilisez des liens personnels avec un plan supérieur",
         "personal_links_work_with_segments": "Les liens personnels fonctionnent avec les segments.",
         "publish_to_web": "Publier sur le web",
         "publish_to_web_warning": "Vous êtes sur le point de rendre ces résultats d'enquête publics.",

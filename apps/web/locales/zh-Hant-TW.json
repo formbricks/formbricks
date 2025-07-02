@@ -34,7 +34,8 @@
           "text": "您現在可以使用新密碼登入"
         }
       },
-      "reset_password": "重設密碼"
+      "reset_password": "重設密碼",
+      "reset_password_description": "您將被登出以重設您的密碼。"
     },
     "invite": {
       "create_account": "建立帳戶",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "返回帳單概覽",
     "thanks_for_upgrading": "非常感謝您升級您的 Formbricks 訂閱。",
     "upgrade_successful": "升級成功"
+  },
+  "c": {
+    "link_expired": "您的 連結 已過期。",
+    "link_expired_description": "您 使用 的 連結 不再 有效。"
   },
   "common": {
     "accepted": "已接受",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "請確保問卷類型設定為",
         "mobile_app": "行動應用程式",
         "no_responses_found": "找不到回應",
+        "no_segments_available": "沒有可用的區段",
         "only_completed": "僅已完成",
         "other_values_found": "找到其他值",
         "overall": "整體",
         "personal_links": "個人 連結",
+        "personal_links_upgrade_prompt_description": "為一個群組生成個人連結，並將調查回應連結到每個聯絡人。",
+        "personal_links_upgrade_prompt_title": "使用 個人 連結 與 更高 的 計劃",
         "personal_links_work_with_segments": "個人 連結 可 與 分段 一起 使用",
         "publish_to_web": "發布至網站",
         "publish_to_web_warning": "您即將將這些問卷結果發布到公共領域。",

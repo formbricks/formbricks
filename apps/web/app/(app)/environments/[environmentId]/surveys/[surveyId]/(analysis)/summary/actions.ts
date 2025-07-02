@@ -258,7 +258,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
       const contactsResult = await generatePersonalLinks(
         parsedInput.surveyId,
         parsedInput.segmentId,
-        parsedInput.expirationDays || 7
+        parsedInput.expirationDays
       );
 
       if (!contactsResult || contactsResult.length === 0) {

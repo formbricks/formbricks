@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
@@ -30,14 +31,25 @@ const RestrictedDatePicker = ({
   updateSurveyDate,
 }: {
   date: Date | null;
-  updateSurveyDate: (date: Date) => void;
+  updateSurveyDate: (date: Date | null) => void;
 }) => {
   // Get tomorrow's date
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
 
-  return <DatePicker date={date} updateSurveyDate={updateSurveyDate} minDate={tomorrow} />;
+  const handleDateUpdate = (date: Date) => {
+    updateSurveyDate(date);
+  };
+
+  return (
+    <DatePicker
+      date={date}
+      updateSurveyDate={handleDateUpdate}
+      minDate={tomorrow}
+      onClearDate={() => updateSurveyDate(null)}
+    />
+  );
 };
 
 export const PersonalLinksTab = ({ environmentId, segments, surveyId }: PersonalLinksTabProps) => {
@@ -53,7 +65,7 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
     setIsGenerating(true);
 
     // Show initial toast
-    toast.success(t("environments.surveys.summary.generating_links_toast"), {
+    toast.loading(t("environments.surveys.summary.generating_links_toast"), {
       duration: 5000,
       id: "generating-links",
     });
@@ -67,40 +79,34 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
           ? Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
           : undefined,
       });
-      console.log(result);
 
       if (result?.data) {
-        // Success toast
-        toast.success(
-          t("environments.surveys.summary.links_generated_success_toast") ||
-            "Links generated successfully. Please check your Downloads directory.",
-          {
-            duration: 5000,
-            id: "links-generated",
-          }
-        );
-
-        // Trigger CSV download
+        // Trigger CSV download first
         const link = document.createElement("a");
         link.href = result.data.downloadUrl;
         link.download = result.data.fileName || "personal-links.csv";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Show success toast after a short delay to let download start
+        setTimeout(() => {
+          toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
+            duration: 5000,
+            id: "generating-links",
+          });
+        }, 500);
       } else {
-        // Error toast
-        toast.error(t("common.something_went_wrong_please_try_again"), {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage, {
           duration: 5000,
-          id: "links-error",
+          id: "generating-links",
         });
       }
     } catch (error) {
-      console.error("Error generating links:", error);
-
-      // Error toast
       toast.error(t("common.something_went_wrong_please_try_again"), {
         duration: 5000,
-        id: "links-error",
+        id: "generating-links",
       });
     } finally {
       setIsGenerating(false);
@@ -132,7 +138,7 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
             value={selectedSegment}
             onValueChange={setSelectedSegment}
             disabled={publicSegments.length === 0}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue
                 placeholder={
                   publicSegments.length === 0
@@ -159,7 +165,10 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
           <label className="mb-2 block text-sm font-medium text-slate-700">
             {t("environments.surveys.summary.expiry_date_optional")}
           </label>
-          <RestrictedDatePicker date={expiryDate} updateSurveyDate={setExpiryDate} />
+          <RestrictedDatePicker
+            date={expiryDate}
+            updateSurveyDate={(date: Date | null) => setExpiryDate(date)}
+          />
           <p className="mt-1 text-xs text-slate-500">
             {t("environments.surveys.summary.expiry_date_description")}
           </p>

@@ -34,7 +34,8 @@
           "text": "Pode agora iniciar sessão com a sua nova palavra-passe"
         }
       },
-      "reset_password": "Redefinir palavra-passe"
+      "reset_password": "Redefinir palavra-passe",
+      "reset_password_description": "Será desconectado para redefinir a sua palavra-passe."
     },
     "invite": {
       "create_account": "Criar uma conta",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "Voltar à visão geral de faturação",
     "thanks_for_upgrading": "Muito obrigado por atualizar a sua subscrição do Formbricks.",
     "upgrade_successful": "Atualização bem-sucedida"
+  },
+  "c": {
+    "link_expired": "O seu link expirou.",
+    "link_expired_description": "O link que utilizou já não é válido."
   },
   "common": {
     "accepted": "Aceite",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de inquérito está definido para",
         "mobile_app": "Aplicação móvel",
         "no_responses_found": "Nenhuma resposta encontrada",
+        "no_segments_available": "Sem segmentos disponíveis",
         "only_completed": "Apenas concluído",
         "other_values_found": "Outros valores encontrados",
         "overall": "Geral",
         "personal_links": "Links pessoais",
+        "personal_links_upgrade_prompt_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
+        "personal_links_upgrade_prompt_title": "Utilize links pessoais com um plano superior",
         "personal_links_work_with_segments": "Os links pessoais funcionam com segmentos.",
         "publish_to_web": "Publicar na web",
         "publish_to_web_warning": "Está prestes a divulgar estes resultados do inquérito ao público.",

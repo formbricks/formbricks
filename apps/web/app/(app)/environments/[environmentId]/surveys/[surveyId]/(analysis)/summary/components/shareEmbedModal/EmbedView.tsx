@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
 import { TSegment } from "@formbricks/types/segment";
@@ -26,6 +27,8 @@ interface EmbedViewProps {
   setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
   locale: TUserLocale;
   segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export const EmbedView = ({
@@ -42,6 +45,8 @@ export const EmbedView = ({
   setSurveyUrl,
   locale,
   segments,
+  isContactsEnabled,
+  isFormbricksCloud,
 }: EmbedViewProps) => {
   const { t } = useTranslate();
   return (
@@ -94,7 +99,30 @@ export const EmbedView = ({
           ) : activeId === "app" ? (
             <AppTab />
           ) : activeId === "personal-links" ? (
-            <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />
+            isContactsEnabled ? (
+              <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />
+            ) : (
+              <UpgradePrompt
+                title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
+                description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
+                buttons={[
+                  {
+                    text: isFormbricksCloud
+                      ? t("common.start_free_trial")
+                      : t("common.request_trial_license"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/upgrade-self-hosting-license",
+                  },
+                  {
+                    text: t("common.learn_more"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/learn-more-self-hosting-license",
+                  },
+                ]}
+              />
+            )
           ) : null}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (

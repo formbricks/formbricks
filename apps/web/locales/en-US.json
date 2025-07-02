@@ -34,7 +34,8 @@
           "text": "You can now log in with your new password"
         }
       },
-      "reset_password": "Reset password"
+      "reset_password": "Reset password",
+      "reset_password_description": "You will be logged out to reset your password."
     },
     "invite": {
       "create_account": "Create an account",
@@ -106,6 +107,10 @@
     "back_to_billing_overview": "Back to billing overview",
     "thanks_for_upgrading": "Thanks a lot for upgrading your Formbricks subscription.",
     "upgrade_successful": "Upgrade successful"
+  },
+  "c": {
+    "link_expired": "Your link is expired.",
+    "link_expired_description": "The link you used is not longer valid."
   },
   "common": {
     "accepted": "Accepted",
@@ -1777,10 +1782,13 @@
         "make_sure_the_survey_type_is_set_to": "Make sure the survey type is set to",
         "mobile_app": "Mobile app",
         "no_responses_found": "No responses found",
+        "no_segments_available": "No segments available",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
         "personal_links": "Personal links",
+        "personal_links_upgrade_prompt_description": "Generate personal links for a segment and link survey responses to each contact.",
+        "personal_links_upgrade_prompt_title": "Use personal links with a higher plan",
         "personal_links_work_with_segments": "Personal links work with segments.",
         "publish_to_web": "Publish to web",
         "publish_to_web_warning": "You are about to release these survey results to the public.",

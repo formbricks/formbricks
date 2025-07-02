@@ -490,19 +490,11 @@ export const createContactsFromCSV = async (
   }
 };
 
-export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays: number) => {
+export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
   const contactsResult = await getContactsInSegment(segmentId);
 
   if (!contactsResult) {
     return null;
-  }
-
-  // Calculate expiration date based on expirationDays
-  let expireDays: number | null = null;
-  if (expirationDays) {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + expirationDays);
-    expireDays = expirationDays;
   }
 
   // Generate survey links for each contact
@@ -510,7 +502,7 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
     .map((contact) => {
       const { contactId, attributes } = contact;
 
-      const surveyUrlResult = getContactSurveyLink(contactId, surveyId, expireDays || undefined);
+      const surveyUrlResult = getContactSurveyLink(contactId, surveyId, expirationDays);
 
       if (!surveyUrlResult.ok) {
         logger.error(
@@ -524,7 +516,7 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
         contactId,
         attributes,
         surveyUrl: surveyUrlResult.data,
-        expireDays,
+        expirationDays,
       };
     })
     .filter(Boolean);

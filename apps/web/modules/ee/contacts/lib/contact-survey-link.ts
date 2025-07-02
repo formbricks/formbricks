@@ -74,10 +74,21 @@ export const verifyContactSurveyToken = (
     });
   } catch (error) {
     console.error("Error verifying contact survey token:", error);
+
+    // Check if the error is specifically a JWT expiration error
+    if (error instanceof jwt.TokenExpiredError) {
+      return err({
+        type: "bad_request",
+        message: "Survey link has expired",
+        details: [{ field: "token", issue: "token_expired" }],
+      });
+    }
+
+    // Handle other JWT errors or general validation errors
     return err({
       type: "bad_request",
-      message: "Invalid or expired survey token",
-      details: [{ field: "token", issue: "Invalid or expired survey token" }],
+      message: "Invalid survey token",
+      details: [{ field: "token", issue: "invalid_token" }],
     });
   }
 };
