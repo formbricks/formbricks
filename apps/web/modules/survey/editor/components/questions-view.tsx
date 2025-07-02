@@ -4,7 +4,12 @@ import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recall";
+import {
+  checkForEmptyFallBackValue,
+  extractIds,
+  extractRecallInfo,
+  removeRecallFromText,
+} from "@/lib/utils/recall";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
@@ -406,11 +411,72 @@ export const QuestionsView = ({
     const newQuestions = Array.from(localSurvey.questions);
     const sourceIndex = newQuestions.findIndex((question) => question.id === active.id);
     const destinationIndex = newQuestions.findIndex((question) => question.id === over?.id);
-    const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
+    let [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
+
+    if (destinationIndex < sourceIndex)
+      reorderedQuestion = handleRecallsInPrevQuestions(reorderedQuestion, sourceIndex, destinationIndex);
+    else handleRecallInLtrQuestions(reorderedQuestion, sourceIndex, destinationIndex);
+
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
+
+  // in case the reordered question is crossing up the question it recalls
+  // we remove the recall component from the question heading.
+  function handleRecallsInPrevQuestions(
+    reorderedQuestion: TSurveyQuestion,
+    sourceIndex: number,
+    destinationIndex: number
+  ): TSurveyQuestion {
+    let headline = reorderedQuestion.headline;
+    const recallIdsInHeaders = extractIds(headline[selectedLanguageCode]);
+
+    if (recallIdsInHeaders.length < 1) return reorderedQuestion;
+
+    let updatedHeadlineText = headline[selectedLanguageCode];
+
+    localSurvey.questions.slice(destinationIndex, sourceIndex).forEach((question) => {
+      if (recallIdsInHeaders.includes(question.id))
+        updatedHeadlineText = removeRecallFromText(updatedHeadlineText, question.id);
+    });
+    delete headline[selectedLanguageCode];
+    headline[selectedLanguageCode] = updatedHeadlineText;
+    return {
+      ...reorderedQuestion,
+      headline,
+    };
+  }
+
+  // in case the reordered question is crossing down the questions that
+  // recall the question we remove the recall component from those questions.
+  function handleRecallInLtrQuestions(
+    reorderedQuestion: TSurveyQuestion,
+    sourceIndex: number,
+    destinationIndex: number
+  ): void {
+    let questionsWithoutReorderedRecall = localSurvey.questions.map((question, index) => {
+      if (index <= sourceIndex || index > destinationIndex) return question;
+
+      let headline = question.headline;
+      const recallIdsInHeaders = extractIds(headline[selectedLanguageCode]);
+
+      if (recallIdsInHeaders.length < 1 || !recallIdsInHeaders.includes(reorderedQuestion.id))
+        return question;
+
+      const updatedHeadlineText = removeRecallFromText(headline[selectedLanguageCode], reorderedQuestion.id);
+      delete headline[selectedLanguageCode];
+      headline[selectedLanguageCode] = updatedHeadlineText;
+
+      return {
+        ...question,
+        headline,
+      };
+    });
+
+    const updatedSurvey = { ...localSurvey, questions: questionsWithoutReorderedRecall };
+    setLocalSurvey(updatedSurvey);
+  }
 
   const onEndingCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
