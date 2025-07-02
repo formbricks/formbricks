@@ -25,21 +25,9 @@ RUN corepack prepare pnpm@9.15.9 --activate
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
-# BuildKit secret handling without hardcoded fallback values
-# This approach relies entirely on secrets passed from GitHub Actions
-RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
-    echo 'if [ -f "/run/secrets/database_url" ]; then' >> /tmp/read-secrets.sh && \
-    echo '  export DATABASE_URL=$(cat /run/secrets/database_url)' >> /tmp/read-secrets.sh && \
-    echo 'else' >> /tmp/read-secrets.sh && \
-    echo '  echo "DATABASE_URL secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
-    echo 'fi' >> /tmp/read-secrets.sh && \
-    echo 'if [ -f "/run/secrets/encryption_key" ]; then' >> /tmp/read-secrets.sh && \
-    echo '  export ENCRYPTION_KEY=$(cat /run/secrets/encryption_key)' >> /tmp/read-secrets.sh && \
-    echo 'else' >> /tmp/read-secrets.sh && \
-    echo '  echo "ENCRYPTION_KEY secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
-    echo 'fi' >> /tmp/read-secrets.sh && \
-    echo 'exec "$@"' >> /tmp/read-secrets.sh && \
-    chmod +x /tmp/read-secrets.sh
+# Copy the secrets handling script
+COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
+RUN chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
 ARG NODE_OPTIONS="--max_old_space_size=4096"
@@ -61,6 +49,9 @@ RUN touch apps/web/.env
 
 # Install the dependencies
 RUN pnpm install --ignore-scripts
+
+# Build the database package first
+RUN pnpm build --filter=@formbricks/database
 
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
@@ -106,20 +97,8 @@ RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
-COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
-RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
-
-COPY --from=installer /app/packages/database/migration ./packages/database/migration
-RUN chown -R nextjs:nextjs ./packages/database/migration && chmod -R 755 ./packages/database/migration
-
-COPY --from=installer /app/packages/database/src ./packages/database/src
-RUN chown -R nextjs:nextjs ./packages/database/src && chmod -R 755 ./packages/database/src
-
-COPY --from=installer /app/packages/database/node_modules ./packages/database/node_modules
-RUN chown -R nextjs:nextjs ./packages/database/node_modules && chmod -R 755 ./packages/database/node_modules
-
-COPY --from=installer /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
-RUN chown -R nextjs:nextjs ./packages/database/node_modules/@formbricks/logger/dist && chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
+COPY --from=installer /app/packages/database/dist ./packages/database/dist
+RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
 COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
 RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
@@ -142,12 +121,14 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
 
-RUN npm install --ignore-scripts -g tsx typescript pino-pretty 
 RUN npm install -g prisma
 
+# Create a startup script to handle the conditional logic
+COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
+RUN chown nextjs:nextjs /home/nextjs/start.sh && chmod +x /home/nextjs/start.sh
+
 EXPOSE 3000
-ENV HOSTNAME "0.0.0.0"
-ENV NODE_ENV="production"
+ENV HOSTNAME="0.0.0.0"
 USER nextjs
 
 # Prepare volume for uploads
@@ -158,12 +139,4 @@ VOLUME /home/nextjs/apps/web/uploads/
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
-CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
-      echo "Starting cron jobs..."; \
-      supercronic -quiet /app/docker/cronjobs & \
-    else \
-      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
-    fi; \
-    (cd packages/database && npm run db:migrate:deploy) && \
-    (cd packages/database && npm run db:create-saml-database:deploy) && \
-    exec node apps/web/server.js
+CMD ["/home/nextjs/start.sh"]
