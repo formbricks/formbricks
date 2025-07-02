@@ -130,6 +130,7 @@ export const LinkSurvey = ({
           languageCode={languageCode}
           styling={project.styling}
           locale={locale}
+          isPreview={isPreview}
         />
       );
     }
@@ -141,6 +142,7 @@ export const LinkSurvey = ({
         languageCode={languageCode}
         styling={project.styling}
         locale={locale}
+        isPreview={isPreview}
       />
     );
   }
