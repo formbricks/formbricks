@@ -50,31 +50,32 @@ export const EmbedView = ({
 }: EmbedViewProps) => {
   const { t } = useTranslate();
 
-  const getPersonalLinksTab = () => {
-    if (isContactsEnabled) {
-      return <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />;
-    } else
-      return (
-        <UpgradePrompt
-          title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
-          description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
-          buttons={[
-            {
-              text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
-              href: isFormbricksCloud
-                ? `/environments/${environmentId}/settings/billing`
-                : "https://formbricks.com/upgrade-self-hosting-license",
-            },
-            {
-              text: t("common.learn_more"),
-              href: isFormbricksCloud
-                ? `/environments/${environmentId}/settings/billing`
-                : "https://formbricks.com/learn-more-self-hosting-license",
-            },
-          ]}
-        />
-      );
-  };
+  const renderPersonalLinksTab = () => (
+    <PersonalLinksTab segments={segments} surveyId={survey.id} environmentId={environmentId} />
+  );
+
+  const renderUpgradePrompt = () => (
+    <UpgradePrompt
+      title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
+      description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
+      buttons={[
+        {
+          text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+          href: isFormbricksCloud
+            ? `/environments/${environmentId}/settings/billing`
+            : "https://formbricks.com/upgrade-self-hosting-license",
+        },
+        {
+          text: t("common.learn_more"),
+          href: isFormbricksCloud
+            ? `/environments/${environmentId}/settings/billing`
+            : "https://formbricks.com/learn-more-self-hosting-license",
+        },
+      ]}
+    />
+  );
+
+  const getPersonalLinksTab = () => (isContactsEnabled ? renderPersonalLinksTab() : renderUpgradePrompt());
 
   const renderActiveTab = () => {
     switch (activeId) {

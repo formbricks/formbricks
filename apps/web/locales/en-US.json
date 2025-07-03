@@ -1749,7 +1749,7 @@
         "filtered_responses_excel": "Filtered responses (Excel)",
         "formbricks_email_survey_preview": "Formbricks Email Survey Preview",
         "generate_and_download_links": "Generate & download links",
-        "generate_personal_links_description": "Generate personal links for a segment and link survey responses to each contact. A CSV of you personal links incl. relevant contact information will be downloaded automatically.",
+        "generate_personal_links_description": "Generate personal links for a segment and match survey responses to each contact. A CSV of you personal links incl. relevant contact information will be downloaded automatically.",
         "generate_personal_links_title": "Maximize insights with personal survey links",
         "generating_links": "Generating links",
         "generating_links_toast": "Generating links, download will start soon…",

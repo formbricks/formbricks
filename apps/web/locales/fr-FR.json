@@ -1749,7 +1749,7 @@
         "filtered_responses_excel": "Réponses filtrées (Excel)",
         "formbricks_email_survey_preview": "Aperçu de l'enquête par e-mail Formbricks",
         "generate_and_download_links": "Générer et télécharger les liens",
-        "generate_personal_links_description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact. Un fichier CSV de vos liens personnels, incluant les informations de contact pertinentes, sera téléchargé automatiquement.",
+        "generate_personal_links_description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact. Un fichier CSV de vos liens personnels incluant les informations de contact pertinentes sera téléchargé automatiquement.",
         "generate_personal_links_title": "Maximisez les insights avec des liens d'enquête personnels",
         "generating_links": "Génération de liens",
         "generating_links_toast": "Génération des liens, le téléchargement commencera bientôt…",

@@ -1749,7 +1749,7 @@
         "filtered_responses_excel": "Respostas filtradas (Excel)",
         "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
         "generate_and_download_links": "Gerar & descarregar links",
-        "generate_personal_links_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto. Um ficheiro CSV com os seus links pessoais, incluindo informações de contacto relevantes, será descarregado automaticamente.",
+        "generate_personal_links_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto. Um ficheiro CSV dos seus links pessoais, incluindo a informação relevante de contacto, será descarregado automaticamente.",
         "generate_personal_links_title": "Maximize os insights com links pessoais de inquérito",
         "generating_links": "Gerando links",
         "generating_links_toast": "A gerar links, o download começará em breve…",

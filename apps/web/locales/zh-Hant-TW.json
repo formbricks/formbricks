@@ -1749,7 +1749,7 @@
         "filtered_responses_excel": "篩選回應 (Excel)",
         "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",
         "generate_and_download_links": "生成 & 下載 連結",
-        "generate_personal_links_description": "為一個群組生成個人連結，並將調查回應連結到每個聯絡人。您個人連結的 CSV 檔案包含相關聯絡資訊，將自動下載。",
+        "generate_personal_links_description": "為 一個 群組 生成 個人 連結，並 將 調查 回應 對應 到 每個 聯絡人。含 有 相關 聯絡信息 的 個人 連結 CSV 會 自動 下載。",
         "generate_personal_links_title": "透過個人化調查連結最大化洞察",
         "generating_links": "生成 連結",
         "generating_links_toast": "生成 連結，下載 將 會 很快 開始…",

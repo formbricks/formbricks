@@ -126,12 +126,14 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
       <div className="space-y-6">
         {/* Recipients Section */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">{t("common.recipients")}</label>
+          <label htmlFor="segment-select" className="mb-2 block text-sm font-medium text-slate-700">
+            {t("common.recipients")}
+          </label>
           <Select
             value={selectedSegment}
             onValueChange={setSelectedSegment}
             disabled={publicSegments.length === 0}>
-            <SelectTrigger className="w-full bg-white">
+            <SelectTrigger id="segment-select" className="w-full bg-white">
               <SelectValue
                 placeholder={
                   publicSegments.length === 0
@@ -155,13 +157,15 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
 
         {/* Expiry Date Section */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
+          <label htmlFor="expiry-date-picker" className="mb-2 block text-sm font-medium text-slate-700">
             {t("environments.surveys.summary.expiry_date_optional")}
           </label>
-          <RestrictedDatePicker
-            date={expiryDate}
-            updateSurveyDate={(date: Date | null) => setExpiryDate(date)}
-          />
+          <div id="expiry-date-picker">
+            <RestrictedDatePicker
+              date={expiryDate}
+              updateSurveyDate={(date: Date | null) => setExpiryDate(date)}
+            />
+          </div>
           <p className="mt-1 text-xs text-slate-500">
             {t("environments.surveys.summary.expiry_date_description")}
           </p>
