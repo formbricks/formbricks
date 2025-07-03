@@ -1,5 +1,5 @@
 import { SentryProvider } from "@/app/sentry/SentryProvider";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { IS_PRODUCTION, SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
 import { TolgeeNextProvider } from "@/tolgee/client";
 import { getLocale } from "@/tolgee/language";
 import { getTolgee } from "@/tolgee/server";
@@ -25,7 +25,11 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
-        <SentryProvider sentryDsn={SENTRY_DSN} isEnabled={IS_PRODUCTION}>
+        <SentryProvider
+          sentryDsn={SENTRY_DSN}
+          sentryRelease={SENTRY_RELEASE}
+          sentryEnvironment={SENTRY_ENVIRONMENT}
+          isEnabled={IS_PRODUCTION}>
           <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
             {children}
           </TolgeeNextProvider>
