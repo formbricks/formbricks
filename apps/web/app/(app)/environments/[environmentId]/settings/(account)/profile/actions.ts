@@ -13,7 +13,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { sendVerificationNewEmail } from "@/modules/email";
+import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -159,6 +159,24 @@ export const removeAvatarAction = authenticatedActionClient.schema(ZRemoveAvatar
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = result;
       return result;
+    }
+  )
+);
+
+export const resetPasswordAction = authenticatedActionClient.action(
+  withAuditLogging(
+    "passwordReset",
+    "user",
+    async ({ ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: undefined }) => {
+      if (ctx.user.identityProvider !== "email") {
+        throw new OperationNotAllowedError("auth.reset-password.not-allowed");
+      }
+
+      await sendForgotPasswordEmail(ctx.user);
+
+      ctx.auditLoggingCtx.userId = ctx.user.id;
+
+      return { success: true };
     }
   )
 );
