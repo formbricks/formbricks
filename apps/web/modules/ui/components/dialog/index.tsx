@@ -38,6 +38,18 @@ interface DialogContentProps {
   unconstrained?: boolean;
 }
 
+const getDialogWidthClass = (width: "default" | "wide" | "narrow"): string => {
+  switch (width) {
+    case "wide":
+      return "md:w-[720px] lg:w-[960px]";
+    case "narrow":
+      return "md:w-[512px]";
+    case "default":
+    default:
+      return "md:w-[720px]";
+  }
+};
+
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
@@ -53,34 +65,34 @@ const DialogContent = React.forwardRef<
       ...props
     },
     ref
-  ) => (
-    <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:rounded-lg",
-          !unconstrained && "md:overflow-hidden",
-          width === "default"
-            ? "md:w-[720px]"
-            : width === "wide"
-              ? "md:w-[720px] lg:w-[960px]"
-              : "md:w-[512px]",
-          className
-        )}
-        onPointerDownOutside={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
-        onEscapeKeyDown={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
-        {...props}>
-        {children}
-        {!hideCloseButton && (
-          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent absolute right-3 top-[-0.25rem] z-10 rounded-sm bg-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:text-slate-500">
-            <X className="size-4 text-slate-500" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  )
+  ) => {
+    const widthClass = getDialogWidthClass(width);
+
+    return (
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:rounded-lg",
+            !unconstrained && "md:overflow-hidden",
+            widthClass,
+            className
+          )}
+          onPointerDownOutside={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
+          onEscapeKeyDown={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
+          {...props}>
+          {children}
+          {!hideCloseButton && (
+            <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent absolute right-3 top-[-0.25rem] z-10 rounded-sm bg-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:text-slate-500">
+              <X className="size-4 text-slate-500" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Content>
+      </DialogPortal>
+    );
+  }
 );
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
