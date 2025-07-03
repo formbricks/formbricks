@@ -1,5 +1,8 @@
+import { TagError } from "@/modules/projects/settings/types/tag";
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TTag } from "@formbricks/types/tags";
 import { createTag, getTag, getTagsByEnvironmentId } from "./service";
 
@@ -116,6 +119,31 @@ describe("Tag Service", () => {
           name: "New Tag",
           environmentId: "env1",
         },
+      });
+    });
+
+    test("should handle duplicate tag name error", async () => {
+      // const duplicateError = new Error("Unique constraint failed");
+      // (duplicateError as any).code = "P2002";
+      const duplicateError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "4.0.0",
+      });
+
+      vi.mocked(prisma.tag.create).mockRejectedValue(duplicateError);
+      const result = await createTag("env1", "Duplicate Tag");
+      expect(result).toEqual({
+        ok: false,
+        error: { message: "Tag with this name already exists", code: TagError.TAG_NAME_ALREADY_EXISTS },
+      });
+    });
+    test("should handle general database errors", async () => {
+      const generalError = new Error("Database connection failed");
+      vi.mocked(prisma.tag.create).mockRejectedValue(generalError);
+      const result = await createTag("env1", "New Tag");
+      expect(result).toStrictEqual({
+        ok: false,
+        error: { message: "Database connection failed", code: TagError.UNEXPECTED_ERROR },
       });
     });
   });

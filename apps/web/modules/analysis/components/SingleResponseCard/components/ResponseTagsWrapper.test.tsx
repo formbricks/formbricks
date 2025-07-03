@@ -1,4 +1,5 @@
 import { TagError } from "@/modules/projects/settings/types/tag";
+import "@testing-library/jest-dom/vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
