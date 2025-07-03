@@ -44,7 +44,6 @@ const getDialogWidthClass = (width: "default" | "wide" | "narrow"): string => {
       return "md:w-[720px] lg:w-[960px]";
     case "narrow":
       return "md:w-[512px]";
-    case "default":
     default:
       return "md:w-[720px]";
   }
