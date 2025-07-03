@@ -127,11 +127,6 @@ export const SurveysList = ({
     if (newSurveys.length === 0) setIsFetching(true);
   };
 
-  const handleDuplicateSurvey = async (survey: TSurvey) => {
-    const newSurveys = [survey, ...surveys];
-    setSurveys(newSurveys);
-  };
-
   const triggerRefresh = useCallback(() => {
     setRefreshTrigger((prev) => !prev);
   }, []);
@@ -163,7 +158,6 @@ export const SurveysList = ({
                   environmentId={environmentId}
                   isReadOnly={isReadOnly}
                   publicDomain={publicDomain}
-                  duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}
                   onSurveysCopied={triggerRefresh}

@@ -19,21 +19,19 @@ interface ICopySurveyFormProps {
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
-  onSurveysCopied?: () => void;
 }
 
-export const CopySurveyForm = ({
-  defaultProjects,
-  survey,
-  onCancel,
-  setOpen,
-  onSurveysCopied,
-}: ICopySurveyFormProps) => {
+export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: ICopySurveyFormProps) => {
   const { t } = useTranslate();
+  const filteredProjects = defaultProjects.map((project) => ({
+    ...project,
+    environments: project.environments.filter((env) => env.id !== survey.environmentId),
+  }));
+
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {
-      projects: defaultProjects.map((project) => ({
+      projects: filteredProjects.map((project) => ({
         project: project.id,
         environments: [],
       })),
@@ -50,7 +48,7 @@ export const CopySurveyForm = ({
 
     try {
       const copyOperationsWithMetadata = filteredData.flatMap((projectData) => {
-        const project = defaultProjects.find((p) => p.id === projectData.project);
+        const project = filteredProjects.find((p) => p.id === projectData.project);
         return projectData.environments.map((environmentId) => {
           const environment = project?.environments.find((env) => env.id === environmentId);
           return {
@@ -72,14 +70,9 @@ export const CopySurveyForm = ({
       let errorCount = 0;
       const errorsIndexes: number[] = [];
 
-      let shouldRefetch = false;
-
       results.forEach((result, index) => {
         if (result?.data) {
           successCount++;
-          if (!shouldRefetch && result.data.environmentId === survey.environmentId) {
-            shouldRefetch = true;
-          }
         } else {
           errorsIndexes.push(index);
           errorCount++;
@@ -113,10 +106,6 @@ export const CopySurveyForm = ({
           });
         });
       }
-
-      if (shouldRefetch && onSurveysCopied) {
-        onSurveysCopied();
-      }
     } catch (error) {
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
@@ -131,7 +120,7 @@ export const CopySurveyForm = ({
         className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white p-4">
         <div className="space-y-8 pb-12">
           {formFields.fields.map((field, projectIndex) => {
-            const project = defaultProjects.find((project) => project.id === field.project);
+            const project = filteredProjects.find((project) => project.id === field.project);
 
             return (
               <div key={project?.id}>

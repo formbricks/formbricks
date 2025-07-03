@@ -41,7 +41,6 @@ interface SurveyDropDownMenuProps {
   refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
-  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   onSurveysCopied?: () => void;
 }
@@ -54,7 +53,6 @@ export const SurveyDropDownMenu = ({
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
-  duplicateSurvey,
   onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslate();
@@ -104,13 +102,14 @@ export const SurveyDropDownMenu = ({
         surveyId,
         targetEnvironmentId: environmentId,
       });
-      router.refresh();
 
       if (duplicatedSurveyResponse?.data) {
         const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });
-        if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
+        if (transformedDuplicatedSurvey?.data) {
+          onSurveysCopied?.();
+        }
         toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
@@ -265,12 +264,7 @@ export const SurveyDropDownMenu = ({
       )}
 
       {isCopyFormOpen && (
-        <CopySurveyModal
-          open={isCopyFormOpen}
-          setOpen={setIsCopyFormOpen}
-          survey={survey}
-          onSurveysCopied={onSurveysCopied}
-        />
+        <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
       )}
     </div>
   );

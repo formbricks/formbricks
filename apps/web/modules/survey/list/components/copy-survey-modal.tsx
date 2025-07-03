@@ -10,10 +10,9 @@ interface CopySurveyModalProps {
   open: boolean;
   setOpen: (value: boolean) => void;
   survey: TSurvey;
-  onSurveysCopied?: () => void;
 }
 
-export const CopySurveyModal = ({ open, setOpen, survey, onSurveysCopied }: CopySurveyModalProps) => {
+export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps) => {
   const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} noPadding restrictOverflow>
@@ -40,7 +39,6 @@ export const CopySurveyModal = ({ open, setOpen, survey, onSurveysCopied }: Copy
             environmentId={survey.environmentId}
             onCancel={() => setOpen(false)}
             setOpen={setOpen}
-            onSurveysCopied={onSurveysCopied}
           />
         </div>
       </div>

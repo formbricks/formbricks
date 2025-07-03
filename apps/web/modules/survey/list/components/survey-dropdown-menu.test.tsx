@@ -86,7 +86,6 @@ describe("SurveyDropDownMenu", () => {
         survey={{ ...fakeSurvey, status: "completed" }}
         publicDomain="http://survey.test"
         refreshSingleUseId={mockRefresh}
-        duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
       />
     );
@@ -118,7 +117,6 @@ describe("SurveyDropDownMenu", () => {
         survey={fakeSurvey}
         publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
-        duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
         disabled={false}
         isSurveyCreationDeletionDisabled={false}
@@ -158,7 +156,6 @@ describe("SurveyDropDownMenu", () => {
         survey={fakeSurvey}
         publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
-        duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
       />
     );
@@ -181,7 +178,6 @@ describe("SurveyDropDownMenu", () => {
         survey={{ ...fakeSurvey, responseCount: 0 }}
         publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
-        duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
       />
     );
@@ -200,14 +196,12 @@ describe("SurveyDropDownMenu", () => {
   });
 
   test("<DropdownMenuItem> renders and triggers actions correctly", async () => {
-    const mockDuplicateSurvey = vi.fn();
     render(
       <SurveyDropDownMenu
         environmentId="env123"
         survey={fakeSurvey}
         publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
-        duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}
       />
     );
@@ -220,21 +214,15 @@ describe("SurveyDropDownMenu", () => {
     const duplicateButton = screen.getByText("common.duplicate");
     expect(duplicateButton).toBeInTheDocument();
     await userEvent.click(duplicateButton);
-
-    await waitFor(() => {
-      expect(mockDuplicateSurvey).toHaveBeenCalled();
-    });
   });
 
   test("<EditPublicSurveyAlertDialog> displays and handles actions correctly", async () => {
-    const mockDuplicateSurvey = vi.fn();
     render(
       <SurveyDropDownMenu
         environmentId="env123"
         survey={{ ...fakeSurvey, responseCount: 5 }}
         publicDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
-        duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={vi.fn()}
       />
     );
@@ -260,10 +248,6 @@ describe("SurveyDropDownMenu", () => {
     const duplicateButton = screen.getByRole("button", { name: "common.duplicate" });
     expect(duplicateButton).toBeInTheDocument();
     await userEvent.click(duplicateButton);
-
-    await waitFor(() => {
-      expect(mockDuplicateSurvey).toHaveBeenCalled();
-    });
   });
 
   describe("handleDeleteSurvey", () => {
@@ -281,7 +265,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );
@@ -317,7 +300,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );
@@ -354,7 +336,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );
@@ -391,7 +372,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );
@@ -429,7 +409,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );
@@ -484,7 +463,6 @@ describe("SurveyDropDownMenu", () => {
           survey={fakeSurvey}
           publicDomain="http://survey.test"
           refreshSingleUseId={vi.fn()}
-          duplicateSurvey={vi.fn()}
           deleteSurvey={mockDeleteSurvey}
         />
       );

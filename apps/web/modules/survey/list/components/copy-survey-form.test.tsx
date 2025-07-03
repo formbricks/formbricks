@@ -175,7 +175,7 @@ describe("CopySurveyForm", () => {
 
     expect(screen.getByText("Project 1")).toBeInTheDocument();
     expect(screen.getByText("Project 2")).toBeInTheDocument();
-    expect(screen.getAllByText("development").length).toBe(2);
+    expect(screen.getAllByText("development").length).toBe(1);
     expect(screen.getAllByText("production").length).toBe(2);
   });
 
@@ -208,7 +208,6 @@ describe("CopySurveyForm", () => {
           survey={mockSurvey}
           onCancel={mockOnCancel}
           setOpen={mockSetOpen}
-          onSurveysCopied={mockOnSurveysCopied}
         />
       );
 
@@ -256,7 +255,6 @@ describe("CopySurveyForm", () => {
           survey={mockSurvey}
           onCancel={mockOnCancel}
           setOpen={mockSetOpen}
-          onSurveysCopied={mockOnSurveysCopied}
         />
       );
 
@@ -350,7 +348,6 @@ describe("CopySurveyForm", () => {
           survey={mockSurvey}
           onCancel={mockOnCancel}
           setOpen={mockSetOpen}
-          onSurveysCopied={mockOnSurveysCopied}
         />
       );
 
@@ -366,7 +363,6 @@ describe("CopySurveyForm", () => {
       await mockSubmitHandler(mockFormData);
 
       await waitFor(() => {
-        expect(mockOnSurveysCopied).toHaveBeenCalledTimes(1);
         expect(mockSetOpen).toHaveBeenCalledWith(false);
       });
     });

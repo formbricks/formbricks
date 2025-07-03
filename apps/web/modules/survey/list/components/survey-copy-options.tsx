@@ -14,16 +14,9 @@ interface SurveyCopyOptionsProps {
   environmentId: string;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
-  onSurveysCopied?: () => void;
 }
 
-const SurveyCopyOptions = ({
-  environmentId,
-  survey,
-  onCancel,
-  setOpen,
-  onSurveysCopied,
-}: SurveyCopyOptionsProps) => {
+const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
   const [projects, setProjects] = useState<TUserProject[]>([]);
   const [projectLoading, setProjectLoading] = useState(true);
 
@@ -51,15 +44,7 @@ const SurveyCopyOptions = ({
     );
   }
 
-  return (
-    <CopySurveyForm
-      defaultProjects={projects}
-      survey={survey}
-      onCancel={onCancel}
-      setOpen={setOpen}
-      onSurveysCopied={onSurveysCopied}
-    />
-  );
+  return <CopySurveyForm defaultProjects={projects} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
 };
 
 export default SurveyCopyOptions;
