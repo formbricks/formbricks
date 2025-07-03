@@ -273,6 +273,24 @@ export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
 
+// Use the app version for Sentry release (updated during build in production)
+// Fallback to environment variable if package.json is not accessible
+export const SENTRY_RELEASE = (() => {
+  if (process.env.NODE_ENV !== "production") {
+    return undefined;
+  }
+
+  // Try to read from package.json with proper error handling
+  try {
+    const pkg = require("../package.json");
+    return pkg.version === "0.0.0" ? undefined : `v${pkg.version}`;
+  } catch {
+    // If package.json can't be read (e.g., in some deployment scenarios),
+    // return undefined and let Sentry work without release tracking
+    return undefined;
+  }
+})();
+export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
