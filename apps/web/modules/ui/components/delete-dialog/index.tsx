@@ -43,7 +43,7 @@ export const DeleteDialog = ({
   const { t } = useTranslate();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg" hideCloseButton={true} disableCloseOnOutsideClick={true}>
+      <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
         <DialogHeader>
           <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
           <DialogDescription>

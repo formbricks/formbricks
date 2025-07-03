@@ -458,7 +458,7 @@ export function AddFilterModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg" disableCloseOnOutsideClick>
+      <DialogContent width="narrow" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("common.add_filter")}</DialogTitle>
         </DialogHeader>
