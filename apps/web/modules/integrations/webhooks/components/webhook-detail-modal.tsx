@@ -66,6 +66,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
               {tabs.map((tab, index) => (
                 <button
                   key={tab.title}
+                  type="button"
                   className={`mr-4 px-1 pb-3 focus:outline-none ${
                     activeTab === index
                       ? "border-brand-dark border-b-2 font-semibold text-slate-900"
