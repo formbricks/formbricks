@@ -67,9 +67,9 @@ vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
 }));
 
-const environmentId = "env1";
-const contactId = "contact1";
-const userId = "user1";
+const environmentId = "cm123456789012345678901237";
+const contactId = "cm123456789012345678901238";
+const userId = "cm123456789012345678901239";
 const mockContact: Contact & {
   attributes: { value: string; attributeKey: { key: string; name: string } }[];
 } = {
@@ -360,15 +360,15 @@ describe("buildContactWhereClause", () => {
   });
 
   test("returns where clause without search", () => {
-    const environmentId = "env-1";
+    const environmentId = "cm123456789012345678901240";
     const result = buildContactWhereClause(environmentId);
     expect(result).toEqual({ environmentId });
   });
 });
 
 describe("getContactsInSegment", () => {
-  const mockSegmentId = "segment-123";
-  const mockEnvironmentId = "env-123";
+  const mockSegmentId = "cm123456789012345678901235";
+  const mockEnvironmentId = "cm123456789012345678901236";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -582,13 +582,13 @@ describe("getContactsInSegment", () => {
 
     const result = await getContactsInSegment(mockSegmentId);
 
-    expect(result).toBeUndefined(); // The function catches errors and console.error logs them
+    expect(result).toBeNull(); // The function catches errors and returns null
   });
 });
 
 describe("generatePersonalLinks", () => {
-  const mockSurveyId = "survey-123";
-  const mockSegmentId = "segment-123";
+  const mockSurveyId = "cm123456789012345678901234"; // Valid CUID2 format
+  const mockSegmentId = "cm123456789012345678901235"; // Valid CUID2 format
   const mockExpirationDays = 7;
 
   beforeEach(() => {

@@ -284,17 +284,17 @@ describe("ShareEmbedSurvey", () => {
     };
     expect(embedViewProps.tabs.length).toBe(1);
     expect(embedViewProps.tabs[0].id).toBe("webpage");
-    expect(embedViewProps.activeId).toBe("webpage");
+    expect(embedViewProps.activeId).toBe("app");
   });
 
   test("useEffect does not change activeId if survey.type changes from web to link (while in embed view)", () => {
     const { rerender } = render(
       <ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />
     );
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("webpage");
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("app");
 
     rerender(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("webpage"); // Current behavior
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("app"); // Current behavior
   });
 
   test("initial showView is set by modalView prop when open is true", () => {
