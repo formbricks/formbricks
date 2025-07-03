@@ -212,7 +212,7 @@ services:
     environment:
       # Postgres DB Super User Password
       # Replace the below with your own secure password & Make sure the password matches the password field in DATABASE_URL above
-      - POSTGRES_PASSWORD: postgres
+      - POSTGRES_PASSWORD=postgres
 
   formbricks:
     restart: always
