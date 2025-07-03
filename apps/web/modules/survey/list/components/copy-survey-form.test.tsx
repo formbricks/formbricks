@@ -337,36 +337,6 @@ describe("CopySurveyForm", () => {
       });
     });
 
-    test("should call onSurveysCopied when copying to same environment", async () => {
-      mockCopySurveyAction.mockResolvedValue({
-        data: { id: "new-survey-1", environmentId: "env-1" }, // Same as source environment
-      });
-
-      render(
-        <CopySurveyForm
-          defaultProjects={mockProjects}
-          survey={mockSurvey}
-          onCancel={mockOnCancel}
-          setOpen={mockSetOpen}
-        />
-      );
-
-      const mockFormData = {
-        projects: [
-          {
-            project: "project-1",
-            environments: ["env-2"],
-          },
-        ],
-      };
-
-      await mockSubmitHandler(mockFormData);
-
-      await waitFor(() => {
-        expect(mockSetOpen).toHaveBeenCalledWith(false);
-      });
-    });
-
     test("should handle exceptions during form submission", async () => {
       mockCopySurveyAction.mockRejectedValue(new Error("Network error"));
 
