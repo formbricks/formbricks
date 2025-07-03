@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
-import { RefObject } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
@@ -24,6 +24,21 @@ export const FallbackInput = ({
   fallbackInputRef,
   addFallback,
 }: FallbackInputProps) => {
+  const [open, setOpen] = useState(true);
+
+  // Prevent dropdown from closing when clicking outside
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      setOpen(true);
+    } else {
+      setOpen(isOpen);
+    }
+  };
+
+  useEffect(() => {
+    setOpen(true);
+  }, []);
+
   const containsEmptyFallback = () => {
     return (
       Object.values(fallbacks)
@@ -31,8 +46,9 @@ export const FallbackInput = ({
         .includes("") || Object.entries(fallbacks).length === 0
     );
   };
+
   return (
-    <DropdownMenu defaultOpen={true} modal={false}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
         <div className="flex h-0 w-full items-center justify-between overflow-hidden" />
       </DropdownMenuTrigger>
@@ -41,14 +57,14 @@ export const FallbackInput = ({
         align="start"
         side="bottom">
         <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
-        {filteredRecallItems.map((recallItem) => {
+        {filteredRecallItems.map((recallItem, idx) => {
           if (!recallItem) return;
           return (
             <div className="mt-2 flex flex-col" key={recallItem.id}>
               <div className="flex items-center">
                 <Input
                   className="placeholder:text-md h-full bg-white"
-                  ref={fallbackInputRef}
+                  ref={idx === 0 ? fallbackInputRef : undefined}
                   id="fallback"
                   value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
                   placeholder={"Fallback for " + recallItem.label}
@@ -60,6 +76,7 @@ export const FallbackInput = ({
                         return;
                       }
                       addFallback();
+                      setOpen(false);
                     }
                   }}
                   onChange={(e) => {
@@ -79,6 +96,7 @@ export const FallbackInput = ({
             onClick={(e) => {
               e.preventDefault();
               addFallback();
+              setOpen(false);
             }}>
             Add
           </Button>
