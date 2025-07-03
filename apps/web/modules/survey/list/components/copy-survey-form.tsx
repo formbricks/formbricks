@@ -15,10 +15,10 @@ import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 interface CopySurveyFormProps {
-  defaultProjects: TUserProject[];
-  survey: TSurvey;
-  onCancel: () => void;
-  setOpen: (value: boolean) => void;
+  readonly defaultProjects: TUserProject[];
+  readonly survey: TSurvey;
+  readonly onCancel: () => void;
+  readonly setOpen: (value: boolean) => void;
 }
 
 interface EnvironmentCheckboxProps {
@@ -65,9 +65,9 @@ function EnvironmentCheckbox({
 }
 
 interface EnvironmentCheckboxGroupProps {
-  project: TUserProject;
-  form: ReturnType<typeof useForm<TSurveyCopyFormData>>;
-  projectIndex: number;
+  readonly project: TUserProject;
+  readonly form: ReturnType<typeof useForm<TSurveyCopyFormData>>;
+  readonly projectIndex: number;
 }
 
 function EnvironmentCheckboxGroup({ project, form, projectIndex }: EnvironmentCheckboxGroupProps) {
@@ -122,7 +122,11 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
       const copyOperationsWithMetadata = filteredData.flatMap((projectData) => {
         const project = filteredProjects.find((p) => p.id === projectData.project);
         return projectData.environments.map((environmentId) => {
-          const environment = project?.environments.find((env) => env.id === environmentId);
+          const environment =
+            project?.environments[0]?.id === environmentId
+              ? project?.environments[0]
+              : project?.environments[1];
+
           return {
             operation: copySurveyToOtherEnvironmentAction({
               environmentId: survey.environmentId,
