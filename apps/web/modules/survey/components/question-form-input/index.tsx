@@ -129,9 +129,9 @@ export const QuestionFormInput = ({
       (question &&
         (id.includes(".")
           ? // Handle nested properties
-          (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
+            (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
           : // Original behavior
-          (question[id as keyof TSurveyQuestion] as TI18nString))) ||
+            (question[id as keyof TSurveyQuestion] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -351,8 +351,9 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            }`}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          }`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}
@@ -379,8 +380,9 @@ export const QuestionFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            } ${className}`}
+                          className={`absolute top-0 text-black caret-black ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          } ${className}`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&
