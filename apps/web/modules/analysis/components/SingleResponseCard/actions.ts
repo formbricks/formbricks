@@ -55,7 +55,7 @@ export const createTagAction = authenticatedActionClient.schema(ZCreateTagAction
         ctx.auditLoggingCtx.tagId = result.data.id;
         ctx.auditLoggingCtx.newObject = result.data;
       } else {
-        ctx.auditLoggingCtx.oldObject = null;
+        ctx.auditLoggingCtx.newObject = null;
       }
 
       return result;
