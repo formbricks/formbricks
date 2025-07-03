@@ -85,6 +85,9 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       if (createTagToResponseActionResponse?.data) {
         updateFetchedResponses();
         setSearchValue("");
+      } else {
+        const errorMessage = getFormattedErrorMessage(createTagToResponseActionResponse);
+        toast.error(errorMessage);
       }
 
       return;
