@@ -175,25 +175,31 @@ export const ShareEmbedSurvey = ({
             </div>
           </div>
         ) : showView === "embed" ? (
-          <EmbedView
-            handleInitialPageButton={handleInitialPageButton}
-            tabs={survey.type === "link" ? tabs : [tabs[3]]}
-            disableBack={false}
-            activeId={activeId}
-            environmentId={environmentId}
-            setActiveId={setActiveId}
-            survey={survey}
-            email={email}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={user.locale}
-            segments={segments}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
+          <>
+            <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
+            <EmbedView
+              handleInitialPageButton={handleInitialPageButton}
+              tabs={survey.type === "link" ? tabs : [tabs[3]]}
+              disableBack={false}
+              activeId={activeId}
+              environmentId={environmentId}
+              setActiveId={setActiveId}
+              survey={survey}
+              email={email}
+              surveyUrl={surveyUrl}
+              publicDomain={publicDomain}
+              setSurveyUrl={setSurveyUrl}
+              locale={user.locale}
+              segments={segments}
+              isContactsEnabled={isContactsEnabled}
+              isFormbricksCloud={isFormbricksCloud}
+            />
+          </>
         ) : showView === "panel" ? (
-          <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />
+          <>
+            <DialogTitle className="sr-only">{t("environments.surveys.summary.send_to_panel")}</DialogTitle>
+            <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />
+          </>
         ) : null}
       </DialogContent>
     </Dialog>
