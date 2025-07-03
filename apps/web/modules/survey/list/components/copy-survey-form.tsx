@@ -141,7 +141,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
                               <FormItem>
                                 <div className="flex items-center">
                                   <FormControl>
-                                    <>
+                                    <div className="flex items-center">
                                       <Checkbox
                                         {...field}
                                         type="button"
@@ -162,7 +162,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
                                           {environment.type}
                                         </p>
                                       </Label>
-                                    </>
+                                    </div>
                                   </FormControl>
                                 </div>
                               </FormItem>
