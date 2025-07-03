@@ -1,0 +1,121 @@
+name: 'Upload Sentry Sourcemaps'
+description: 'Extract sourcemaps from Docker image and upload to Sentry'
+
+inputs:
+  docker_image:
+    description: 'Docker image to extract sourcemaps from'
+    required: true
+  release_version:
+    description: 'Sentry release version (e.g., v1.2.3)'
+    required: true
+  sentry_auth_token:
+    description: 'Sentry authentication token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate Sentry auth token
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "🔐 Validating Sentry authentication token..."
+
+        # Assign token to local variable for secure handling
+        SENTRY_TOKEN="${{ inputs.sentry_auth_token }}"
+
+        # Test the token by making a simple API call to Sentry
+        response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
+          -H "Authorization: Bearer $SENTRY_TOKEN" \
+          "https://sentry.io/api/0/organizations/formbricks/")
+
+        http_code=$(echo "$response" | tail -n1)
+
+        if [ "$http_code" != "200" ]; then
+          echo "❌ Error: Invalid Sentry auth token (HTTP $http_code)"
+          echo "Please check your SENTRY_AUTH_TOKEN is correct and has the necessary permissions."
+          if [ -f /tmp/sentry_response.json ]; then
+            echo "Response body:"
+            cat /tmp/sentry_response.json
+          fi
+          exit 1
+        fi
+
+        echo "✅ Sentry auth token validated successfully"
+
+        # Clean up temp file
+        rm -f /tmp/sentry_response.json
+
+    - name: Extract sourcemaps from Docker image
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
+
+        # Create temporary container from the image and capture its ID
+        echo "Creating temporary container..."
+        CONTAINER_ID=$(docker create "${{ inputs.docker_image }}")
+        echo "Container created with ID: $CONTAINER_ID"
+
+        # Set up cleanup function to ensure container is removed on script exit
+        cleanup_container() {
+          # Capture the current exit code to preserve it
+          local original_exit_code=$?
+          
+          echo "🧹 Cleaning up Docker container..."
+          
+          # Remove the container if it exists (ignore errors if already removed)
+          if [ -n "$CONTAINER_ID" ]; then
+            docker rm -f "$CONTAINER_ID" 2>/dev/null || true
+            echo "Container $CONTAINER_ID removed"
+          fi
+          
+          # Exit with the original exit code to preserve script success/failure status
+          exit $original_exit_code
+        }
+        
+        # Register cleanup function to run on script exit (success or failure)
+        trap cleanup_container EXIT
+
+        # Extract .next directory containing sourcemaps
+        docker cp "$CONTAINER_ID:/home/nextjs/apps/web/.next" ./extracted-next
+
+        # Verify sourcemaps exist
+        if [ ! -d "./extracted-next/static/chunks" ]; then
+          echo "❌ Error: .next/static/chunks directory not found in Docker image"
+          echo "Expected structure: /home/nextjs/apps/web/.next/static/chunks/"
+          exit 1
+        fi
+
+        sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
+        echo "✅ Found $sourcemap_count sourcemap files"
+
+        if [ "$sourcemap_count" -eq 0 ]; then
+          echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
+          exit 1
+        fi
+
+    - name: Create Sentry release and upload sourcemaps
+      uses: getsentry/action-release@v3
+      env:
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+        SENTRY_ORG: formbricks
+        SENTRY_PROJECT: formbricks-cloud
+      with:
+        environment: production
+        version: ${{ inputs.release_version }}
+        sourcemaps: './extracted-next/'
+
+    - name: Clean up extracted files
+      shell: bash
+      if: always()
+      run: |
+        set -euo pipefail
+        # Clean up extracted files
+        rm -rf ./extracted-next
+        echo "🧹 Cleaned up extracted files"
