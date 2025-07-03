@@ -22,10 +22,10 @@ interface CopySurveyFormProps {
 }
 
 interface EnvironmentCheckboxProps {
-  environmentId: string;
-  environmentType: string;
-  fieldValue: string[];
-  onChange: (value: string[]) => void;
+  readonly environmentId: string;
+  readonly environmentType: string;
+  readonly fieldValue: string[];
+  readonly onChange: (value: string[]) => void;
 }
 
 function EnvironmentCheckbox({
