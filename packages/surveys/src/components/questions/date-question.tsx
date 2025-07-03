@@ -126,7 +126,12 @@ export function DateQuestion({
   const formattedDate = useMemo(() => {
     if (!selectedDate) return "";
 
-    return formatDate(selectedDate, question.format);
+    try {
+      return formatDate(selectedDate, question.format);
+    } catch (error) {
+      console.error(error);
+      return "";
+    }
   }, [selectedDate, question.format]);
 
   return (

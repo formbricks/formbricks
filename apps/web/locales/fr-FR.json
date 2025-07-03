@@ -34,7 +34,8 @@
           "text": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
         }
       },
-      "reset_password": "Réinitialiser le mot de passe"
+      "reset_password": "Réinitialiser le mot de passe",
+      "reset_password_description": "Vous serez déconnecté pour réinitialiser votre mot de passe."
     },
     "invite": {
       "create_account": "Créer un compte",
@@ -1230,7 +1231,7 @@
       "copy_survey_error": "Échec de la copie du sondage",
       "copy_survey_link_to_clipboard": "Copier le lien du sondage dans le presse-papiers",
       "copy_survey_success": "Enquête copiée avec succès !",
-      "delete_survey_and_responses_warning": "Êtes-vous sûr de vouloir supprimer cette enquête et toutes ses réponses ? Cette action ne peut pas être annulée.",
+      "delete_survey_and_responses_warning": "Êtes-vous sûr de vouloir supprimer cette enquête et toutes ses réponses?",
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Choisissez la langue par défaut pour ce sondage :",
         "2_activate_translation_for_specific_languages": "2. Activer la traduction pour des langues spécifiques :",

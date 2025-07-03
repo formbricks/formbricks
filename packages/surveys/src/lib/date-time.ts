@@ -52,6 +52,10 @@ export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): str
 };
 
 export const formatDate = (date: Date, format: "M-d-y" | "d-M-y" | "y-M-d") => {
+  if (!date || isNaN(date.getTime())) {
+    throw new Error("Invalid date provided");
+  }
+
   const dateFormat = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
@@ -68,5 +72,7 @@ export const formatDate = (date: Date, format: "M-d-y" | "d-M-y" | "y-M-d") => {
       return `${day}-${month}-${year}`;
     case "y-M-d":
       return `${year}-${month}-${day}`;
+    default:
+      return `${month}-${day}-${year}`;
   }
 };
