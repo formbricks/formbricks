@@ -14,15 +14,87 @@ import { AlertCircleIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-interface ICopySurveyFormProps {
+interface CopySurveyFormProps {
   defaultProjects: TUserProject[];
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }
 
-export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: ICopySurveyFormProps) => {
+interface EnvironmentCheckboxProps {
+  environmentId: string;
+  environmentType: string;
+  fieldValue: string[];
+  onChange: (value: string[]) => void;
+}
+
+function EnvironmentCheckbox({
+  environmentId,
+  environmentType,
+  fieldValue,
+  onChange,
+}: EnvironmentCheckboxProps) {
+  const handleCheckedChange = () => {
+    if (fieldValue.includes(environmentId)) {
+      onChange(fieldValue.filter((id) => id !== environmentId));
+    } else {
+      onChange([...fieldValue, environmentId]);
+    }
+  };
+
+  return (
+    <FormItem>
+      <div className="flex items-center">
+        <FormControl>
+          <div className="flex items-center">
+            <Checkbox
+              type="button"
+              checked={fieldValue.includes(environmentId)}
+              onCheckedChange={handleCheckedChange}
+              className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+              id={environmentId}
+            />
+            <Label htmlFor={environmentId}>
+              <p className="text-sm font-medium capitalize text-slate-900">{environmentType}</p>
+            </Label>
+          </div>
+        </FormControl>
+      </div>
+    </FormItem>
+  );
+}
+
+interface EnvironmentCheckboxGroupProps {
+  project: TUserProject;
+  form: ReturnType<typeof useForm<TSurveyCopyFormData>>;
+  projectIndex: number;
+}
+
+function EnvironmentCheckboxGroup({ project, form, projectIndex }: EnvironmentCheckboxGroupProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      {project.environments.map((environment) => (
+        <FormField
+          key={environment.id}
+          control={form.control}
+          name={`projects.${projectIndex}.environments`}
+          render={({ field }) => (
+            <EnvironmentCheckbox
+              environmentId={environment.id}
+              environmentType={environment.type}
+              fieldValue={field.value}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: CopySurveyFormProps) => {
   const { t } = useTranslate();
+
   const filteredProjects = defaultProjects.map((project) => ({
     ...project,
     environments: project.environments.filter((env) => env.id !== survey.environmentId),
@@ -43,7 +115,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     control: form.control,
   });
 
-  const onSubmit = async (data: TSurveyCopyFormData) => {
+  async function onSubmit(data: TSurveyCopyFormData) {
     const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
@@ -111,7 +183,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     } finally {
       setOpen(false);
     }
-  };
+  }
 
   return (
     <FormProvider {...form}>
@@ -121,57 +193,15 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
         <div className="space-y-8 pb-12">
           {formFields.fields.map((field, projectIndex) => {
             const project = filteredProjects.find((project) => project.id === field.project);
+            if (!project) return null;
 
             return (
-              <div key={project?.id}>
+              <div key={project.id}>
                 <div className="flex flex-col gap-4">
                   <div className="w-fit">
-                    <p className="text-base font-semibold text-slate-900">{project?.name}</p>
+                    <p className="text-base font-semibold text-slate-900">{project.name}</p>
                   </div>
-
-                  <div className="flex flex-col gap-4">
-                    {project?.environments.map((environment) => {
-                      return (
-                        <FormField
-                          key={environment.id}
-                          control={form.control}
-                          name={`projects.${projectIndex}.environments`}
-                          render={({ field }) => {
-                            return (
-                              <FormItem>
-                                <div className="flex items-center">
-                                  <FormControl>
-                                    <div className="flex items-center">
-                                      <Checkbox
-                                        {...field}
-                                        type="button"
-                                        onCheckedChange={() => {
-                                          if (field.value.includes(environment.id)) {
-                                            field.onChange(
-                                              field.value.filter((id: string) => id !== environment.id)
-                                            );
-                                          } else {
-                                            field.onChange([...field.value, environment.id]);
-                                          }
-                                        }}
-                                        className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
-                                        id={environment.id}
-                                      />
-                                      <Label htmlFor={environment.id}>
-                                        <p className="text-sm font-medium capitalize text-slate-900">
-                                          {environment.type}
-                                        </p>
-                                      </Label>
-                                    </div>
-                                  </FormControl>
-                                </div>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
+                  <EnvironmentCheckboxGroup project={project} form={form} projectIndex={projectIndex} />
                 </div>
               </div>
             );
@@ -182,7 +212,6 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
             <Button type="button" onClick={onCancel} variant="ghost">
               {t("common.cancel")}
             </Button>
-
             <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
           </div>
         </div>
