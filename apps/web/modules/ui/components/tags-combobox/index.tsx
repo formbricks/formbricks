@@ -125,6 +125,7 @@ export const TagsCombobox = ({
                 !tagsToSearch.find((tag) => tag.label === trimmedSearchValue) && (
                   <CommandItem value="_create">
                     <button
+                      type="button"
                       onClick={() => createTag?.(trimmedSearchValue)}
                       className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!!currentTags.find((tag) => tag.label === trimmedSearchValue)}>
