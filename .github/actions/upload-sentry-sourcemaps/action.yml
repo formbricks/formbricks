@@ -20,6 +20,34 @@ runs:
       with:
         fetch-depth: 0
 
+    - name: Validate Sentry auth token
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "🔐 Validating Sentry authentication token..."
+        
+        # Test the token by making a simple API call to Sentry
+        response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
+          -H "Authorization: Bearer ${{ inputs.sentry_auth_token }}" \
+          "https://sentry.io/api/0/organizations/formbricks/")
+        
+        http_code=$(echo "$response" | tail -n1)
+        
+        if [ "$http_code" != "200" ]; then
+          echo "❌ Error: Invalid Sentry auth token (HTTP $http_code)"
+          echo "Please check your SENTRY_AUTH_TOKEN is correct and has the necessary permissions."
+          if [ -f /tmp/sentry_response.json ]; then
+            echo "Response body:"
+            cat /tmp/sentry_response.json
+          fi
+          exit 1
+        fi
+        
+        echo "✅ Sentry auth token validated successfully"
+        
+        # Clean up temp file
+        rm -f /tmp/sentry_response.json
+
     - name: Extract sourcemaps from Docker image
       shell: bash
       run: |
