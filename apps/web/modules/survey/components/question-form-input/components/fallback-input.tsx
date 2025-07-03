@@ -37,7 +37,7 @@ export const FallbackInput = ({
         <div className="flex h-0 w-full items-center justify-between overflow-hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="z-[9999] w-auto border-slate-300 bg-slate-50 p-3 text-xs shadow-lg"
+        className="w-auto border-slate-300 bg-slate-50 p-3 text-xs shadow-lg"
         align="start"
         side="bottom">
         <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
