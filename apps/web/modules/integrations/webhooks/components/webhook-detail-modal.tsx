@@ -56,7 +56,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
       <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <WebhookIcon />
-          <DialogTitle>{webhook.name ? webhook.name : t("common.webhook")}</DialogTitle>
+          <DialogTitle>{webhook.name || t("common.webhook")}</DialogTitle>
           <DialogDescription>{webhook.url}</DialogDescription>
         </DialogHeader>
         <DialogBody>
@@ -64,7 +64,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
             <div className="flex w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
               {tabs.map((tab, index) => (
                 <button
-                  key={index}
+                  key={tab.title}
                   className={`mr-4 px-1 pb-3 focus:outline-none ${
                     activeTab === index
                       ? "border-brand-dark border-b-2 font-semibold text-slate-900"

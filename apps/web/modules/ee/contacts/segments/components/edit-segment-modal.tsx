@@ -90,7 +90,7 @@ export const EditSegmentModal = ({
           <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
             {tabs.map((tab, index) => (
               <button
-                key={index}
+                key={tab.title}
                 className={`mr-4 px-1 pb-3 focus:outline-none ${
                   activeTab === index
                     ? "border-brand-dark border-b-2 font-semibold text-slate-900"

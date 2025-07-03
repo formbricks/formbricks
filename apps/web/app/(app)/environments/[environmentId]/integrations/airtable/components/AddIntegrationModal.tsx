@@ -31,7 +31,7 @@ import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Control, Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
@@ -73,6 +73,80 @@ const NoBaseFoundError = () => {
       <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
       <AlertDescription>{t("environments.integrations.airtable.please_create_a_base")}</AlertDescription>
     </Alert>
+  );
+};
+
+const renderQuestionSelection = ({
+  t,
+  selectedSurvey,
+  control,
+  includeVariables,
+  setIncludeVariables,
+  includeHiddenFields,
+  includeMetadata,
+  setIncludeHiddenFields,
+  setIncludeMetadata,
+  includeCreatedAt,
+  setIncludeCreatedAt,
+}: {
+  t: any;
+  selectedSurvey: TSurvey;
+  control: Control<IntegrationModalInputs>;
+  includeVariables: boolean;
+  setIncludeVariables: (value: boolean) => void;
+  includeHiddenFields: boolean;
+  includeMetadata: boolean;
+  setIncludeHiddenFields: (value: boolean) => void;
+  setIncludeMetadata: (value: boolean) => void;
+  includeCreatedAt: boolean;
+  setIncludeCreatedAt: (value: boolean) => void;
+}) => {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="Surveys">{t("common.questions")}</Label>
+        <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
+          <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+            {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+              <Controller
+                key={question.id}
+                control={control}
+                name={"questions"}
+                render={({ field }) => (
+                  <div className="my-1 flex items-center space-x-2">
+                    <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                      <Checkbox
+                        type="button"
+                        id={question.id}
+                        value={question.id}
+                        className="bg-white"
+                        checked={field.value?.includes(question.id)}
+                        onCheckedChange={(checked) => {
+                          return checked
+                            ? field.onChange([...field.value, question.id])
+                            : field.onChange(field.value?.filter((value) => value !== question.id));
+                        }}
+                      />
+                      <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
+                    </label>
+                  </div>
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      <AdditionalIntegrationSettings
+        includeVariables={includeVariables}
+        setIncludeVariables={setIncludeVariables}
+        includeHiddenFields={includeHiddenFields}
+        includeMetadata={includeMetadata}
+        setIncludeHiddenFields={setIncludeHiddenFields}
+        setIncludeMetadata={setIncludeMetadata}
+        includeCreatedAt={includeCreatedAt}
+        setIncludeCreatedAt={setIncludeCreatedAt}
+      />
+    </div>
   );
 };
 
@@ -316,65 +390,27 @@ export const AddIntegrationModal = ({
                     />
                   </div>
                 </div>
-              ) : null}
-
-              {!surveys.length ? (
+              ) : (
                 <p className="m-1 text-xs text-slate-500">
                   {t("environments.integrations.create_survey_warning")}
                 </p>
-              ) : null}
-
-              {survey && selectedSurvey && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
-                      <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
-                          <Controller
-                            key={question.id}
-                            control={control}
-                            name={"questions"}
-                            render={({ field }) => (
-                              <div className="my-1 flex items-center space-x-2">
-                                <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                  <Checkbox
-                                    type="button"
-                                    id={question.id}
-                                    value={question.id}
-                                    className="bg-white"
-                                    checked={field.value?.includes(question.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, question.id])
-                                        : field.onChange(
-                                            field.value?.filter((value) => value !== question.id)
-                                          );
-                                    }}
-                                  />
-                                  <span className="ml-2">
-                                    {getLocalizedValue(question.headline, "default")}
-                                  </span>
-                                </label>
-                              </div>
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <AdditionalIntegrationSettings
-                    includeVariables={includeVariables}
-                    setIncludeVariables={setIncludeVariables}
-                    includeHiddenFields={includeHiddenFields}
-                    includeMetadata={includeMetadata}
-                    setIncludeHiddenFields={setIncludeHiddenFields}
-                    setIncludeMetadata={setIncludeMetadata}
-                    includeCreatedAt={includeCreatedAt}
-                    setIncludeCreatedAt={setIncludeCreatedAt}
-                  />
-                </div>
               )}
+
+              {survey &&
+                selectedSurvey &&
+                renderQuestionSelection({
+                  t,
+                  selectedSurvey,
+                  control,
+                  includeVariables,
+                  setIncludeVariables,
+                  includeHiddenFields,
+                  includeMetadata,
+                  setIncludeHiddenFields,
+                  setIncludeMetadata,
+                  includeCreatedAt,
+                  setIncludeCreatedAt,
+                })}
             </div>
           </DialogBody>
           <DialogFooter>

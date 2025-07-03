@@ -174,7 +174,7 @@ describe("WebhookModal", () => {
     expect(screen.queryByTestId("webhook-settings-tab")).not.toBeInTheDocument();
   });
 
-  test("uses webhook URL as title when name is not provided", () => {
+  test("uses webhook as title when name is not provided", () => {
     const setOpen = vi.fn();
     const webhookWithoutName = { ...mockWebhook, name: "" };
 
