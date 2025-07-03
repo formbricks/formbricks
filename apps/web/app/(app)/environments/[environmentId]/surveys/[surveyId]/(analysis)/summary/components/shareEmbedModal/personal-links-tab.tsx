@@ -85,7 +85,7 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
       segmentId: selectedSegment,
       environmentId: environmentId,
       expirationDays: expiryDate
-        ? Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
         : undefined,
     });
 
