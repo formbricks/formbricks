@@ -50,8 +50,14 @@ export const createTagAction = authenticatedActionClient.schema(ZCreateTagAction
       });
       ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
-      ctx.auditLoggingCtx.tagId = result.id;
-      ctx.auditLoggingCtx.newObject = result;
+
+      if (result.ok) {
+        ctx.auditLoggingCtx.tagId = result.data.id;
+        ctx.auditLoggingCtx.newObject = result.data;
+      } else {
+        ctx.auditLoggingCtx.oldObject = null;
+      }
+
       return result;
     }
   )

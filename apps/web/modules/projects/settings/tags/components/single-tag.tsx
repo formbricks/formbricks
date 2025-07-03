@@ -86,6 +86,26 @@ export const SingleTag: React.FC<SingleTagProps> = ({
     }
   };
 
+  const handleMergeTags = async (newTagId: string) => {
+    setIsMergingTags(true);
+    const mergeTagsResponse = await mergeTagsAction({ originalTagId: tagId, newTagId });
+
+    if (mergeTagsResponse?.data) {
+      if (mergeTagsResponse.data.ok) {
+        toast.success(t("environments.project.tags.tags_merged"));
+        updateTagsCount();
+        router.refresh();
+      } else {
+        const errorMessage = mergeTagsResponse.data?.error?.message;
+        toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+      }
+    } else {
+      const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
+      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+    }
+    setIsMergingTags(false);
+  };
+
   return (
     <div className="w-full" key={tagId}>
       <div className="grid h-16 grid-cols-4 content-center rounded-lg">
@@ -123,25 +143,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                       ?.filter((tag) => tag.id !== tagId)
                       ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
                   }
-                  onSelect={(newTagId) => {
-                    setIsMergingTags(true);
-                    mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
-                      if (mergeTagsResponse?.data) {
-                        if (mergeTagsResponse.data.ok) {
-                          toast.success(t("environments.project.tags.tags_merged"));
-                          updateTagsCount();
-                          router.refresh();
-                        } else {
-                          const errorMessage = mergeTagsResponse.data?.error?.message;
-                          toast.error(errorMessage);
-                        }
-                      } else {
-                        const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
-                        toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
-                      }
-                      setIsMergingTags(false);
-                    });
-                  }}
+                  onSelect={handleMergeTags}
                 />
               )}
             </div>

@@ -10,7 +10,7 @@ import { TTag } from "@formbricks/types/tags";
 
 export const deleteTag = async (
   id: string
-): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
+): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   validateInputs([id, ZId]);
 
   try {
@@ -41,7 +41,7 @@ export const deleteTag = async (
 export const updateTagName = async (
   id: string,
   name: string
-): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
+): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   try {
     const tag = await prisma.tag.update({
       where: { id },
@@ -69,7 +69,7 @@ export const updateTagName = async (
 export const mergeTags = async (
   originalTagId: string,
   newTagId: string
-): Promise<Result<TTag, { code: TagError; message: string; meta?: any }>> => {
+): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   validateInputs([originalTagId, ZId], [newTagId, ZId]);
 
   try {
