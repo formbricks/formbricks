@@ -23,7 +23,6 @@ module.exports = {
         "branding-text": "var(--fb-branding-text-color)",
         "survey-bg": "var(--fb-survey-background-color)",
         "survey-border": "var(--fb-survey-border-color)",
-        "survey-shadow": "var(--fb-survey-shadow-color)",
         "accent-bg": "var(--fb-accent-background-color)",
         "accent-selected-bg": "var(--fb-accent-background-color-selected)",
         "input-bg": "var(--fb-input-background-color)",

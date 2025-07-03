@@ -42,10 +42,6 @@ p.fb-editor-paragraph {
   overflow-wrap: break-word;
 }
 
-.fb-survey-shadow {
-  box-shadow: 0px 0px 90px -40px var(--fb-survey-shadow-color);
-}
-
 /* theming */
 :root {
   --brand-default: #64748b;
@@ -79,7 +75,6 @@ p.fb-editor-paragraph {
   --fb-branding-text-color: var(--slate-500);
   --fb-survey-background-color: white;
   --fb-survey-border-color: var(--slate-50);
-  --fb-survey-shadow-color: rgba(0, 0, 0, 0.4);
   --fb-accent-background-color: var(--slate-200);
   --fb-accent-background-color-selected: var(--slate-100);
   --fb-input-background-color: var(--slate-50);
