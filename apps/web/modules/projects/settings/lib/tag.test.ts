@@ -1,5 +1,8 @@
+import { TagError } from "@/modules/projects/settings/types/tag";
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 import { deleteTag, mergeTags, updateTagName } from "./tag";
@@ -61,6 +64,24 @@ describe("tag lib", () => {
       expect(result).toEqual(ok(baseTag));
       expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: baseTag.id } });
     });
+    test("returns tag_not_found on tag not found", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: PrismaErrorType.RecordDoesNotExist,
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.tag.delete).mockRejectedValueOnce(prismaError);
+
+      const result = await deleteTag(baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: TagError.TAG_NOT_FOUND,
+          message: "Tag not found",
+        });
+      }
+    });
+
     test("throws error on prisma error", async () => {
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(new Error("fail"));
       const result = await deleteTag(baseTag.id);
@@ -91,6 +112,25 @@ describe("tag lib", () => {
         data: { name: "Tag1" },
       });
     });
+
+    test("returns unique_constraint_failed on unique constraint violation", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.tag.update).mockRejectedValueOnce(prismaError);
+
+      const result = await updateTagName(baseTag.id, "Tag1");
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: TagError.TAG_NAME_ALREADY_EXISTS,
+          message: "Tag with this name already exists",
+        });
+      }
+    });
+
     test("returns internal_server_error on unknown error", async () => {
       vi.mocked(prisma.tag.update).mockRejectedValueOnce(new Error("fail"));
 
