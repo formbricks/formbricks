@@ -1,3 +1,4 @@
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -150,7 +151,9 @@ describe("ResponseTagsWrapper", () => {
   });
 
   test("creates a new tag via TagsCombobox and calls updateFetchedResponses on success", async () => {
-    vi.mocked(createTagAction).mockResolvedValueOnce({ data: { id: "newTagId", name: "NewTag" } } as any);
+    vi.mocked(createTagAction).mockResolvedValueOnce({
+      data: { ok: true, data: { id: "newTagId", name: "NewTag" } },
+    } as any);
     vi.mocked(createTagToResponseAction).mockResolvedValueOnce({ data: "tagAdded" } as any);
     render(
       <ResponseTagsWrapper
@@ -176,7 +179,10 @@ describe("ResponseTagsWrapper", () => {
 
   test("handles createTagAction failure and shows toast error", async () => {
     vi.mocked(createTagAction).mockResolvedValueOnce({
-      error: { details: [{ issue: "Unique constraint failed on the fields" }] },
+      data: {
+        ok: false,
+        error: { message: "Unique constraint failed on the fields", code: TagError.TAG_NAME_ALREADY_EXISTS },
+      },
     } as any);
     render(
       <ResponseTagsWrapper

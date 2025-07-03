@@ -110,7 +110,7 @@ describe("Tag Service", () => {
       vi.mocked(prisma.tag.create).mockResolvedValue(mockTag);
 
       const result = await createTag("env1", "New Tag");
-      expect(result).toEqual(mockTag);
+      expect(result).toEqual({ ok: true, data: mockTag });
       expect(prisma.tag.create).toHaveBeenCalledWith({
         data: {
           name: "New Tag",
