@@ -56,8 +56,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
       <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <WebhookIcon />
-          <DialogTitle>{webhook.name || t("common.webhook")}</DialogTitle>{" "}
-          {/* NOSONAR // We want to check for empty strings */}
+          <DialogTitle>{webhook.name || t("common.webhook")}</DialogTitle>{" "} {/* NOSONAR // We want to check for empty strings */}
           <DialogDescription>{webhook.url}</DialogDescription>
         </DialogHeader>
         <DialogBody>
