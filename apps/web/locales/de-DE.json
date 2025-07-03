@@ -34,7 +34,8 @@
           "text": "Du kannst Dich jetzt mit deinem neuen Passwort einloggen"
         }
       },
-      "reset_password": "Passwort zurücksetzen"
+      "reset_password": "Passwort zurücksetzen",
+      "reset_password_description": "Du wirst abgemeldet, um dein Passwort zurückzusetzen."
     },
     "invite": {
       "create_account": "Konto erstellen",
@@ -1230,7 +1231,7 @@
       "copy_survey_error": "Kopieren der Umfrage fehlgeschlagen",
       "copy_survey_link_to_clipboard": "Umfragelink in die Zwischenablage kopieren",
       "copy_survey_success": "Umfrage erfolgreich kopiert!",
-      "delete_survey_and_responses_warning": "Bist Du sicher, dass Du diese Umfrage und alle ihre Antworten löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "delete_survey_and_responses_warning": "Bist Du sicher, dass Du diese Umfrage und alle ihre Antworten löschen möchtest?",
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Wähle die Standardsprache für diese Umfrage:",
         "2_activate_translation_for_specific_languages": "2. Übersetzung für bestimmte Sprachen aktivieren:",
