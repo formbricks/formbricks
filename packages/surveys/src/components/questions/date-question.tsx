@@ -129,7 +129,7 @@ export function DateQuestion({
     try {
       return formatDate(selectedDate, question.format);
     } catch (error) {
-      console.error(error);
+      console.error("Error formatting date", error);
       return "";
     }
   }, [selectedDate, question.format]);
