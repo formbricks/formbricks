@@ -53,10 +53,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
-  if (styling.cardShadowColor?.light) {
-    // mix the shadow color with white to get a lighter shadow
-    appendCssVariable("survey-shadow-color", mixColor(styling.cardShadowColor.light, "#ffffff", 0.4));
-  }
+
 
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("subheading-color", styling.questionColor?.light);
