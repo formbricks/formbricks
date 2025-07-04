@@ -82,6 +82,8 @@ x-environment: &environment
     # SENTRY_DSN:
     # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
     # SENTRY_AUTH_TOKEN:
+    # The SENTRY_ENVIRONMENT is used to identify the environment in Sentry.
+    # SENTRY_ENVIRONMENT:
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
