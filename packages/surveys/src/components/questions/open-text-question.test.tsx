@@ -153,12 +153,15 @@ describe("OpenTextQuestion", () => {
 
   test("auto focuses input when enabled and is current question", () => {
     const focusMock = vi.fn();
-    // Mock the ref implementation for this test
-    window.HTMLElement.prototype.focus = focusMock;
+    // Mock the focus method using vi.spyOn
+    const focusSpy = vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(focusMock);
 
     render(<OpenTextQuestion {...defaultProps} autoFocusEnabled={true} currentQuestionId="q1" />);
 
     expect(focusMock).toHaveBeenCalled();
+
+    // Clean up the spy
+    focusSpy.mockRestore();
   });
 
   test("handles input change for textarea with resize functionality", async () => {
@@ -299,7 +302,8 @@ describe("OpenTextQuestion", () => {
 
   test("doesn't autofocus when not current question", () => {
     const focusMock = vi.fn();
-    window.HTMLElement.prototype.focus = focusMock;
+    // Mock the focus method using vi.spyOn
+    const focusSpy = vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(focusMock);
 
     render(
       <OpenTextQuestion
@@ -310,6 +314,9 @@ describe("OpenTextQuestion", () => {
     );
 
     expect(focusMock).not.toHaveBeenCalled();
+
+    // Clean up the spy
+    focusSpy.mockRestore();
   });
 
   test("handles input change for textarea", async () => {

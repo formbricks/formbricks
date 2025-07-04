@@ -1,6 +1,6 @@
 import { Button } from "@/modules/ui/components/button";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const meta = {
   title: "ui/PageHeader",
