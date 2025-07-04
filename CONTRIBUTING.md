@@ -14,17 +14,7 @@ Are you brimming with brilliant ideas? For new features that can elevate Formbri
 
 ## 🛠 Crafting Pull Requests
 
-Ready to dive into the code and make a real impact? Here's your path:
-
-1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/developer-docs/contributing/get-started) but will help you save hours 🤓
-
-1. **Fork the Repository:** Fork our repository or use [Gitpod](https://gitpod.io) or use [Github Codespaces](https://github.com/features/codespaces) to get started instantly.
-
-1. **Tweak and Transform:** Work your coding magic and apply your changes.
-
-1. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
-
-Would you prefer a chat before you dive into a lot of work? [Github Discussions](https://github.com/formbricks/formbricks/discussions) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
+For the time being, we don't have the capacity to properly facilitate community contributions. It's a lot of engineering attention often spent on issues which don't follow our prioritization, so we've decided to only facilitate community code contributions in rare exceptions in the coming months.
 
 ## 🚀 Aspiring Features
 
