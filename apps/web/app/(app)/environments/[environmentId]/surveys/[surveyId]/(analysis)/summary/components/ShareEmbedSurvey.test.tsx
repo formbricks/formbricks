@@ -283,7 +283,7 @@ describe("ShareEmbedSurvey", () => {
       activeId: string;
     };
     expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs[0].id).toBe("webpage");
+    expect(embedViewProps.tabs[0].id).toBe("app");
     expect(embedViewProps.activeId).toBe("app");
   });
 

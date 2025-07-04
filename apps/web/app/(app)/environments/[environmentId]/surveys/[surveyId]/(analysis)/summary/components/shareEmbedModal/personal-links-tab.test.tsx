@@ -114,6 +114,7 @@ vi.mock("@/modules/ui/components/select", () => {
 vi.mock("lucide-react", () => ({
   AlertCircleIcon: () => <div data-testid="alert-circle-icon" />,
   DownloadIcon: () => <div data-testid="download-icon" />,
+  KeyIcon: () => <div data-testid="key-icon" />,
 }));
 
 // Mock Next.js Link
@@ -170,6 +171,8 @@ const defaultProps = {
   environmentId: "test-env-id",
   surveyId: "test-survey-id",
   segments: mockSegments,
+  isContactsEnabled: true,
+  isFormbricksCloud: false,
 };
 
 // Helper function to trigger select change
