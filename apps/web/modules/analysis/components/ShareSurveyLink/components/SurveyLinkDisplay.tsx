@@ -12,7 +12,8 @@ export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
           data-testid="survey-url-input"
           autoFocus={true}
           className="mt-2 w-full min-w-96 text-ellipsis rounded-lg border bg-white px-4 py-2 text-slate-800 caret-transparent"
-          defaultValue={surveyUrl}
+          value={surveyUrl}
+          readOnly
         />
       ) : (
         //loading state
