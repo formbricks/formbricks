@@ -43,6 +43,9 @@ vi.mock("@/modules/ui/components/dialog", () => ({
       {children}
     </h2>
   ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p data-testid="dialog-description">{children}</p>
   ),
@@ -102,7 +105,7 @@ describe("AlertDialog Component", () => {
     expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Header");
-    expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
 
     // Verify main text is displayed
