@@ -907,8 +907,7 @@
         "tag_already_exists": "A etiqueta já existe",
         "tag_deleted": "Etiqueta eliminada",
         "tag_updated": "Etiqueta atualizada",
-        "tags_merged": "Etiquetas fundidas",
-        "unique_constraint_failed_on_the_fields": "A restrição de unicidade falhou nos campos"
+        "tags_merged": "Etiquetas fundidas"
       },
       "teams": {
         "manage_teams": "Gerir equipas",

@@ -907,8 +907,7 @@
         "tag_already_exists": "Tag already exists",
         "tag_deleted": "Tag deleted",
         "tag_updated": "Tag updated",
-        "tags_merged": "Tags merged",
-        "unique_constraint_failed_on_the_fields": "Unique constraint failed on the fields"
+        "tags_merged": "Tags merged"
       },
       "teams": {
         "manage_teams": "Manage teams",
@@ -1342,7 +1341,7 @@
         "concat": "Concat +",
         "conditional_logic": "Conditional Logic",
         "confirm_default_language": "Confirm default language",
-        "confirm_survey_changes": "Confirm survey changes",
+        "confirm_survey_changes": "Confirm Survey Changes",
         "contact_fields": "Contact Fields",
         "contains": "Contains",
         "continue_to_settings": "Continue to Settings",

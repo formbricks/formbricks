@@ -907,8 +907,7 @@
         "tag_already_exists": "Le tag existe déjà",
         "tag_deleted": "Tag supprimé",
         "tag_updated": "Étiquette mise à jour",
-        "tags_merged": "Étiquettes fusionnées",
-        "unique_constraint_failed_on_the_fields": "Échec de la contrainte unique sur les champs"
+        "tags_merged": "Étiquettes fusionnées"
       },
       "teams": {
         "manage_teams": "Gérer les équipes",

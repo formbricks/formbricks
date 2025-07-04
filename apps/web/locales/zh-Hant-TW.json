@@ -907,8 +907,7 @@
         "tag_already_exists": "標籤已存在",
         "tag_deleted": "標籤已刪除",
         "tag_updated": "標籤已更新",
-        "tags_merged": "標籤已合併",
-        "unique_constraint_failed_on_the_fields": "欄位上唯一性限制失敗"
+        "tags_merged": "標籤已合併"
       },
       "teams": {
         "manage_teams": "管理團隊",

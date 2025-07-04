@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
 
 interface AlertDialogProps {
   open: boolean;
@@ -34,7 +33,6 @@ export const AlertDialog = ({
   declineBtnVariant = "ghost",
   onConfirm,
 }: AlertDialogProps) => {
-  const { t } = useTranslate();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg" hideCloseButton={true}>

@@ -907,8 +907,7 @@
         "tag_already_exists": "Tag já existe",
         "tag_deleted": "Tag apagada",
         "tag_updated": "Tag atualizada",
-        "tags_merged": "Tags mescladas",
-        "unique_constraint_failed_on_the_fields": "Falha na restrição única nos campos"
+        "tags_merged": "Tags mescladas"
       },
       "teams": {
         "manage_teams": "Gerenciar Equipes",
