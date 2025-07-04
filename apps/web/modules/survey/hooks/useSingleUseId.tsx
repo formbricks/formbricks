@@ -7,7 +7,11 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
+export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolean) => {
+  if (isReadOnly) {
+    return { refreshSingleUseId: () => Promise.resolve(undefined) };
+  }
+
   const [singleUseId, setSingleUseId] = useState<string | undefined>(undefined);
 
   const refreshSingleUseId = useCallback(async () => {
