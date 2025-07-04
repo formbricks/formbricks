@@ -2,6 +2,7 @@ import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/respons
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getDisplay } from "@/lib/display/service";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
@@ -102,6 +103,24 @@ export const POST = async (request: Request, context: Context): Promise<Response
       },
       true
     );
+  }
+
+  // check display
+  if (responseInputData.displayId) {
+    const display = await getDisplay(responseInputData.displayId);
+    if (!display) {
+      return responses.notFoundResponse("Display", responseInputData.displayId, true);
+    }
+    if (display.surveyId !== responseInputData.surveyId) {
+      return responses.badRequestResponse(
+        "Display is part of another survey",
+        {
+          "display.surveyId": display.surveyId,
+          surveyId: responseInputData.surveyId,
+        },
+        true
+      );
+    }
   }
 
   let response: TResponse;
