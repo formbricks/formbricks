@@ -17,8 +17,6 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegment: vi.fn(),
 }));
 
-// Note: getContactAttributeKeys is not used in the actual implementation
-
 vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
   segmentFilterToPrismaQuery: vi.fn(),
 }));
