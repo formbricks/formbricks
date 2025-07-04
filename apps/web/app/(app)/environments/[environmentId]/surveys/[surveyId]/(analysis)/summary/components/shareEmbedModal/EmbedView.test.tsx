@@ -87,7 +87,6 @@ const mockSurveyLink = { id: "survey1", type: "link" };
 const mockSurveyWeb = { id: "survey2", type: "web" };
 
 const defaultProps = {
-  handleInitialPageButton: vi.fn(),
   tabs: mockTabs,
   activeId: "email",
   setActiveId: vi.fn(),
@@ -98,7 +97,6 @@ const defaultProps = {
   publicDomain: "http://example.com",
   setSurveyUrl: vi.fn(),
   locale: "en" as any,
-  disableBack: false,
   segments: [],
   isContactsEnabled: true,
   isFormbricksCloud: false,
@@ -108,11 +106,6 @@ describe("EmbedView", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
-  });
-
-  test("does not render back button when disableBack is true", () => {
-    render(<EmbedView {...defaultProps} disableBack={true} />);
-    expect(screen.queryByRole("button", { name: "common.back" })).not.toBeInTheDocument();
   });
 
   test("does not render desktop tabs for non-link survey type", () => {

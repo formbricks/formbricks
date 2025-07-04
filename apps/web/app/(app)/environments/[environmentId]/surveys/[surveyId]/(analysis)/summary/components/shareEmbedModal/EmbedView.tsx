@@ -2,8 +2,6 @@
 
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { ArrowLeftIcon } from "lucide-react";
 import { TSegment } from "@formbricks/types/segment";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
@@ -13,12 +11,10 @@ import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface EmbedViewProps {
-  handleInitialPageButton: () => void;
   tabs: Array<{ id: string; label: string; icon: any }>;
   activeId: string;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
   environmentId: string;
-  disableBack: boolean;
   survey: any;
   email: string;
   surveyUrl: string;
@@ -31,9 +27,7 @@ interface EmbedViewProps {
 }
 
 export const EmbedView = ({
-  handleInitialPageButton,
   tabs,
-  disableBack,
   activeId,
   setActiveId,
   environmentId,
@@ -47,8 +41,6 @@ export const EmbedView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: EmbedViewProps) => {
-  const { t } = useTranslate();
-
   const renderActiveTab = () => {
     switch (activeId) {
       case "email":
@@ -84,14 +76,6 @@ export const EmbedView = ({
 
   return (
     <div className="h-full overflow-hidden">
-      {!disableBack && (
-        <div className="border-b border-slate-200 py-2 pl-2">
-          <Button variant="ghost" className="focus:ring-0" onClick={handleInitialPageButton}>
-            <ArrowLeftIcon />
-            {t("common.back")}
-          </Button>
-        </div>
-      )}
       <div className="grid h-full grid-cols-4">
         {survey.type === "link" && (
           <div className={cn("col-span-1 hidden flex-col gap-3 border-r border-slate-200 p-4 lg:flex")}>

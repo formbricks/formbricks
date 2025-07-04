@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/modules/ui/components/select";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon, DownloadIcon } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -215,12 +215,8 @@ export const PersonalLinksTab = ({
       <hr />
 
       {/* Info Box */}
-      <Alert variant="default">
-        <AlertCircleIcon />
+      <Alert variant="info" size="small">
         <AlertTitle>{t("environments.surveys.summary.personal_links_work_with_segments")}</AlertTitle>
-        <AlertDescription>
-          {t("environments.surveys.summary.to_create_personal_links_segment_required")}
-        </AlertDescription>
         <AlertButton>
           <Link
             href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration"

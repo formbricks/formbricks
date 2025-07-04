@@ -22,7 +22,6 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
-import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
@@ -110,10 +109,6 @@ export const ShareEmbedSurvey = ({
     router.refresh();
   };
 
-  const handleInitialPageButton = () => {
-    setShowView("start");
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide">
@@ -178,9 +173,7 @@ export const ShareEmbedSurvey = ({
           <>
             <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
             <EmbedView
-              handleInitialPageButton={handleInitialPageButton}
               tabs={survey.type === "link" ? tabs : [tabs[4]]}
-              disableBack={false}
               activeId={activeId}
               environmentId={environmentId}
               setActiveId={setActiveId}
@@ -198,7 +191,6 @@ export const ShareEmbedSurvey = ({
         ) : showView === "panel" ? (
           <>
             <DialogTitle className="sr-only">{t("environments.surveys.summary.send_to_panel")}</DialogTitle>
-            <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />
           </>
         ) : null}
       </DialogContent>

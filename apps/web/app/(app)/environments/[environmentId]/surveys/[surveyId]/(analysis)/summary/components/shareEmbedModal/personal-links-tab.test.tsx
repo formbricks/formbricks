@@ -112,7 +112,6 @@ vi.mock("@/modules/ui/components/select", () => {
 
 // Mock icons
 vi.mock("lucide-react", () => ({
-  AlertCircleIcon: () => <div data-testid="alert-circle-icon" />,
   DownloadIcon: () => <div data-testid="download-icon" />,
   KeyIcon: () => <div data-testid="key-icon" />,
 }));
@@ -234,12 +233,8 @@ describe("PersonalLinksTab", () => {
     render(<PersonalLinksTab {...defaultProps} />);
 
     expect(screen.getByTestId("alert")).toBeInTheDocument();
-    expect(screen.getByTestId("alert-circle-icon")).toBeInTheDocument();
     expect(
       screen.getByText("environments.surveys.summary.personal_links_work_with_segments")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.surveys.summary.to_create_personal_links_segment_required")
     ).toBeInTheDocument();
     expect(screen.getByTestId("link")).toHaveAttribute(
       "href",
