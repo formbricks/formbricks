@@ -3,8 +3,8 @@
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -39,12 +39,9 @@ export const AlertDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg" hideCloseButton={true}>
         <DialogHeader>
-          <DialogTitle className="text-primary text-lg font-medium">{headerText}</DialogTitle>
-          <DialogDescription>
-            {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
-          </DialogDescription>
+          <DialogTitle>{headerText}</DialogTitle>
         </DialogHeader>
-
+        <DialogBody>{mainText}</DialogBody>
         <DialogFooter>
           {declineBtnLabel && onDecline && (
             <Button variant={declineBtnVariant} onClick={onDecline}>
