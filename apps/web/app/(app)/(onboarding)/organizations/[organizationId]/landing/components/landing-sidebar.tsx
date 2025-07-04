@@ -130,6 +130,7 @@ export const LandingSidebar = ({
                   organizationId: organization.id,
                   redirect: true,
                   callbackUrl: "/auth/login",
+                  clearEnvironmentId: true,
                 });
               }}
               icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
