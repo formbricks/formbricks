@@ -1,9 +1,13 @@
 import "server-only";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
+import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -14,6 +18,76 @@ import {
   ZContactCSVUploadResponse,
 } from "../types/contact";
 import { transformPrismaContact } from "./utils";
+
+export const getContactsInSegment = reactCache(async (segmentId: string) => {
+  try {
+    const segment = await getSegment(segmentId);
+
+    if (!segment) {
+      return null;
+    }
+
+    const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
+      segment.id,
+      segment.filters,
+      segment.environmentId
+    );
+
+    if (!segmentFilterToPrismaQueryResult.ok) {
+      return null;
+    }
+
+    const { whereClause } = segmentFilterToPrismaQueryResult.data;
+
+    const requiredAttributes = ["userId", "firstName", "lastName", "email"];
+
+    const contacts = await prisma.contact.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        attributes: {
+          where: {
+            attributeKey: {
+              key: {
+                in: requiredAttributes,
+              },
+            },
+          },
+          select: {
+            attributeKey: {
+              select: {
+                key: true,
+              },
+            },
+            value: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const contactsWithAttributes = contacts.map((contact) => {
+      const attributes = contact.attributes.reduce(
+        (acc, attr) => {
+          acc[attr.attributeKey.key] = attr.value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+      return {
+        contactId: contact.id,
+        attributes,
+      };
+    });
+
+    return contactsWithAttributes;
+  } catch (error) {
+    logger.error(error, "Failed to get contacts in segment");
+    return null;
+  }
+});
 
 const selectContact = {
   id: true,
@@ -417,4 +491,38 @@ export const createContactsFromCSV = async (
     }
     throw error;
   }
+};
+
+export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
+  const contactsResult = await getContactsInSegment(segmentId);
+
+  if (!contactsResult) {
+    return null;
+  }
+
+  // Generate survey links for each contact
+  const contactLinks = contactsResult
+    .map((contact) => {
+      const { contactId, attributes } = contact;
+
+      const surveyUrlResult = getContactSurveyLink(contactId, surveyId, expirationDays);
+
+      if (!surveyUrlResult.ok) {
+        logger.error(
+          { error: surveyUrlResult.error, contactId: contactId, surveyId: surveyId },
+          "Failed to generate survey URL for contact"
+        );
+        return null;
+      }
+
+      return {
+        contactId,
+        attributes,
+        surveyUrl: surveyUrlResult.data,
+        expirationDays,
+      };
+    })
+    .filter(Boolean);
+
+  return contactLinks;
 };
