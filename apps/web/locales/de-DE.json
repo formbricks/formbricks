@@ -139,7 +139,6 @@
     "app_survey": "App-Umfrage",
     "apply_filters": "Filter anwenden",
     "are_you_sure": "Bist Du sicher?",
-    "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "attributes": "Attribute",
     "avatar": "Avatar",
     "back": "Zurück",
@@ -417,7 +416,6 @@
     "website_survey": "Website-Umfrage",
     "weekly_summary": "Wöchentliche Zusammenfassung",
     "welcome_card": "Willkommenskarte",
-    "yes": "Ja",
     "you": "Du",
     "you_are_downgraded_to_the_community_edition": "Du wurdest auf die Community Edition herabgestuft.",
     "you_are_not_authorised_to_perform_this_action": "Du bist nicht berechtigt, diese Aktion auszuführen.",
@@ -707,7 +705,6 @@
         "select_a_database": "Datenbank auswählen",
         "select_a_field_to_map": "Wähle ein Feld zum Zuordnen aus",
         "select_a_survey_question": "Wähle eine Umfragefrage aus",
-        "sync_responses_with_a_notion_database": "Antworten mit einer Datenbank in Notion synchronisieren",
         "update_connection": "Notion erneut verbinden",
         "update_connection_tooltip": "Verbinde die Integration erneut, um neu hinzugefügte Datenbanken einzuschließen. Deine bestehenden Integrationen bleiben erhalten."
       },

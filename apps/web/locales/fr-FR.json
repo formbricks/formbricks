@@ -139,7 +139,6 @@
     "app_survey": "Sondage d'application",
     "apply_filters": "Appliquer des filtres",
     "are_you_sure": "Es-tu sûr ?",
-    "are_you_sure_this_action_cannot_be_undone": "Êtes-vous sûr ? Cette action ne peut pas être annulée.",
     "attributes": "Attributs",
     "avatar": "Avatar",
     "back": "Retour",
@@ -417,7 +416,6 @@
     "website_survey": "Sondage de site web",
     "weekly_summary": "Résumé hebdomadaire",
     "welcome_card": "Carte de bienvenue",
-    "yes": "Oui",
     "you": "Vous",
     "you_are_downgraded_to_the_community_edition": "Vous êtes rétrogradé à l'édition communautaire.",
     "you_are_not_authorised_to_perform_this_action": "Vous n'êtes pas autorisé à effectuer cette action.",
@@ -707,7 +705,6 @@
         "select_a_database": "Sélectionner la base de données",
         "select_a_field_to_map": "Sélectionnez un champ à mapper",
         "select_a_survey_question": "Sélectionnez une question d'enquête",
-        "sync_responses_with_a_notion_database": "Synchroniser les réponses avec une base de données Notion",
         "update_connection": "Reconnecter Notion",
         "update_connection_tooltip": "Reconnectez l'intégration pour inclure les nouvelles bases de données ajoutées. Vos intégrations existantes resteront intactes."
       },

@@ -139,7 +139,6 @@
     "app_survey": "Inquérito da Aplicação",
     "apply_filters": "Aplicar filtros",
     "are_you_sure": "Tem a certeza?",
-    "are_you_sure_this_action_cannot_be_undone": "Tem a certeza? Esta ação não pode ser desfeita.",
     "attributes": "Atributos",
     "avatar": "Avatar",
     "back": "Voltar",
@@ -417,7 +416,6 @@
     "website_survey": "Inquérito do Website",
     "weekly_summary": "Resumo semanal",
     "welcome_card": "Cartão de boas-vindas",
-    "yes": "Sim",
     "you": "Você",
     "you_are_downgraded_to_the_community_edition": "Foi rebaixado para a Edição Comunitária.",
     "you_are_not_authorised_to_perform_this_action": "Não está autorizado para realizar esta ação.",
@@ -707,7 +705,6 @@
         "select_a_database": "Selecionar Base de Dados",
         "select_a_field_to_map": "Selecione um campo para mapear",
         "select_a_survey_question": "Selecione uma pergunta do inquérito",
-        "sync_responses_with_a_notion_database": "Sincronizar respostas com uma Base de Dados do Notion",
         "update_connection": "Reconectar Notion",
         "update_connection_tooltip": "Restabeleça a integração para incluir as bases de dados recentemente adicionadas. As suas integrações existentes permanecerão intactas."
       },

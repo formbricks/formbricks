@@ -139,7 +139,6 @@
     "app_survey": "應用程式問卷",
     "apply_filters": "套用篩選器",
     "are_you_sure": "您確定嗎？",
-    "are_you_sure_this_action_cannot_be_undone": "您確定嗎？此操作無法復原。",
     "attributes": "屬性",
     "avatar": "頭像",
     "back": "返回",
@@ -417,7 +416,6 @@
     "website_survey": "網站問卷",
     "weekly_summary": "每週摘要",
     "welcome_card": "歡迎卡片",
-    "yes": "是",
     "you": "您",
     "you_are_downgraded_to_the_community_edition": "您已降級至社群版。",
     "you_are_not_authorised_to_perform_this_action": "您未獲授權執行此操作。",
@@ -707,7 +705,6 @@
         "select_a_database": "選取資料庫",
         "select_a_field_to_map": "選取要對應的欄位",
         "select_a_survey_question": "選取問卷問題",
-        "sync_responses_with_a_notion_database": "與 Notion 資料庫同步回應",
         "update_connection": "重新連線 Notion",
         "update_connection_tooltip": "重新連接整合以包含新添加的資料庫。您現有的整合將保持不變。"
       },

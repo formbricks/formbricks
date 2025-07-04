@@ -15,9 +15,10 @@ icon: "link"
 
 - Description: 1 concise sentence to describe WHEN the feature is being used and FOR WHAT BENEFIT.
 - Make ample use of the Mintlify components you can find here https://mintlify.com/docs/llms.txt
-- In all Headlines, only capitalize the current feature and nothing else, to Camel Case
+- In all headlines, only capitalize the current feature and nothing else, NO Camel Case
+- Update the mint.json file and add the nav item at the correct position corresponding to where the MDX file is located
 - If a feature is part of the Enterprise Edition, use this note:
 
 <Note>
-  FEATURE NAME is part of the @Enterprise Edition. 
+  FEATURE NAME is part of the [Enterprise Edition](/self-hosting/advanced/license).
 </Note>
