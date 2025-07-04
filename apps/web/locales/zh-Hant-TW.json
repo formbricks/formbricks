@@ -634,6 +634,7 @@
         "airtable_integration": "Airtable 整合",
         "airtable_integration_description": "直接與 Airtable 同步回應。",
         "airtable_integration_is_not_configured": "尚未設定 Airtable 整合",
+        "airtable_logo": "Airtable 標誌",
         "connect_with_airtable": "連線 Airtable",
         "link_airtable_table": "連結 Airtable 表格",
         "link_new_table": "連結新表格",
@@ -723,6 +724,7 @@
         "slack_integration": "Slack 整合",
         "slack_integration_description": "直接將回應傳送至 Slack。",
         "slack_integration_is_not_configured": "您的 Formbricks 執行個體中尚未設定 Slack 整合。",
+        "slack_logo": "Slack 標誌",
         "slack_reconnect_button": "重新連線",
         "slack_reconnect_button_description": "<b>注意：</b>我們最近變更了我們的 Slack 整合以支援私人頻道。請重新連線您的 Slack 工作區。"
       },

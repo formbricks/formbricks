@@ -301,7 +301,7 @@ export const AddIntegrationModal = ({
                 fill
                 className="object-contain object-center"
                 src={AirtableLogo}
-                alt={t("environments.integrations.notion.notion_logo")}
+                alt={t("environments.integrations.airtable.airtable_logo")}
               />
             </div>
             <div className="space-y-0.5">

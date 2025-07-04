@@ -634,6 +634,7 @@
         "airtable_integration": "Integração com o Airtable",
         "airtable_integration_description": "Sincronize respostas diretamente com o Airtable.",
         "airtable_integration_is_not_configured": "A integração com o Airtable não está configurada",
+        "airtable_logo": "logotipo Airtable",
         "connect_with_airtable": "Ligar ao Airtable",
         "link_airtable_table": "Ligar Tabela Airtable",
         "link_new_table": "Ligar nova tabela",
@@ -723,6 +724,7 @@
         "slack_integration": "Integração com Slack",
         "slack_integration_description": "Enviar respostas diretamente para o Slack.",
         "slack_integration_is_not_configured": "A integração com o Slack não está configurada na sua instância do Formbricks.",
+        "slack_logo": "Logótipo Slack",
         "slack_reconnect_button": "Reconectar",
         "slack_reconnect_button_description": "<b>Nota:</b> Recentemente alterámos a nossa integração com o Slack para também suportar canais privados. Por favor, reconecte o seu espaço de trabalho do Slack."
       },

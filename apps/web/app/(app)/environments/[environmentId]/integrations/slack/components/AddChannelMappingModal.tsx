@@ -206,7 +206,7 @@ export const AddChannelMappingModal = ({
                 fill
                 className="object-contain object-center"
                 src={SlackLogo}
-                alt={t("environments.integrations.notion.notion_logo")}
+                alt={t("environments.integrations.slack.slack_logo")}
               />
             </div>
             <div className="space-y-0.5">
