@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -89,7 +89,7 @@ const renderQuestionSelection = ({
   includeCreatedAt,
   setIncludeCreatedAt,
 }: {
-  t: any;
+  t: TFnType;
   selectedSurvey: TSurvey;
   control: Control<IntegrationModalInputs>;
   includeVariables: boolean;
