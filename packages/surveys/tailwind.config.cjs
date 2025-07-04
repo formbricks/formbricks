@@ -28,7 +28,6 @@ module.exports = {
         "input-bg": "var(--fb-input-background-color)",
         "input-bg-selected": "var(--fb-input-background-color-selected)",
         placeholder: "var(--fb-placeholder-color)",
-        shadow: "var(--fb-shadow-color)",
         "rating-fill": "var(--fb-rating-fill)",
         "rating-focus": "var(--fb-rating-hover)",
         "rating-selected": "var(--fb-rating-selected)",
