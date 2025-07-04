@@ -179,7 +179,7 @@ export const ShareEmbedSurvey = ({
             <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
             <EmbedView
               handleInitialPageButton={handleInitialPageButton}
-              tabs={survey.type === "link" ? tabs : [tabs[3]]}
+              tabs={survey.type === "link" ? tabs : [tabs[4]]}
               disableBack={false}
               activeId={activeId}
               environmentId={environmentId}

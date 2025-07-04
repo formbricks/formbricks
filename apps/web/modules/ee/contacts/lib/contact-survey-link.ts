@@ -3,6 +3,7 @@ import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import jwt from "jsonwebtoken";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
@@ -73,7 +74,7 @@ export const verifyContactSurveyToken = (
       surveyId,
     });
   } catch (error) {
-    console.error("Error verifying contact survey token:", error);
+    logger.error("Error verifying contact survey token:", error);
 
     // Check if the error is specifically a JWT expiration error
     if (error instanceof jwt.TokenExpiredError) {

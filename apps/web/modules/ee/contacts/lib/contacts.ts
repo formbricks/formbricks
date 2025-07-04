@@ -1,10 +1,9 @@
 import "server-only";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
-import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
-import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -21,14 +20,12 @@ import {
 import { transformPrismaContact } from "./utils";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
-  validateInputs([segmentId, ZId]);
   try {
-    const segmentResult = await getSegment(segmentId);
-    if (!segmentResult.ok) {
+    const segment = await getSegment(segmentId);
+
+    if (!segment) {
       return null;
     }
-
-    const segment = segmentResult.data;
 
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
@@ -42,16 +39,20 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
 
     const { whereClause } = segmentFilterToPrismaQueryResult.data;
 
-    const contactAttributeKeysResult = await getContactAttributeKeys(segment.environmentId);
-    if (!contactAttributeKeysResult.ok) {
-      return null;
-    }
+    const requiredAttributes = ["userId", "firstName", "lastName", "email"];
 
     const contacts = await prisma.contact.findMany({
       where: whereClause,
       select: {
         id: true,
         attributes: {
+          where: {
+            attributeKey: {
+              key: {
+                in: requiredAttributes,
+              },
+            },
+          },
           select: {
             attributeKey: {
               select: {
@@ -493,7 +494,6 @@ export const createContactsFromCSV = async (
 };
 
 export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
-  validateInputs([surveyId, ZId], [segmentId, ZId], [expirationDays, ZOptionalNumber]);
   const contactsResult = await getContactsInSegment(segmentId);
 
   if (!contactsResult) {

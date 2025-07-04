@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, DownloadIcon } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +24,8 @@ interface PersonalLinksTabProps {
   environmentId: string;
   surveyId: string;
   segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 // Custom DatePicker component with date restrictions
@@ -52,7 +55,13 @@ const RestrictedDatePicker = ({
   );
 };
 
-export const PersonalLinksTab = ({ environmentId, segments, surveyId }: PersonalLinksTabProps) => {
+export const PersonalLinksTab = ({
+  environmentId,
+  segments,
+  surveyId,
+  isContactsEnabled,
+  isFormbricksCloud,
+}: PersonalLinksTabProps) => {
   const { t } = useTranslate();
   const [selectedSegment, setSelectedSegment] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
@@ -95,15 +104,14 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
         duration: 5000,
         id: "generating-links",
       });
-      setIsGenerating(false);
     } else {
       const errorMessage = getFormattedErrorMessage(result);
       toast.error(errorMessage, {
         duration: 5000,
         id: "generating-links",
       });
-      setIsGenerating(false);
     }
+    setIsGenerating(false);
   };
 
   // Button state logic
@@ -111,6 +119,29 @@ export const PersonalLinksTab = ({ environmentId, segments, surveyId }: Personal
   const buttonText = isGenerating
     ? t("environments.surveys.summary.generating_links")
     : t("environments.surveys.summary.generate_and_download_links");
+
+  if (!isContactsEnabled) {
+    return (
+      <UpgradePrompt
+        title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
+        description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
+        buttons={[
+          {
+            text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+            href: isFormbricksCloud
+              ? `/environments/${environmentId}/settings/billing`
+              : "https://formbricks.com/upgrade-self-hosting-license",
+          },
+          {
+            text: t("common.learn_more"),
+            href: isFormbricksCloud
+              ? `/environments/${environmentId}/settings/billing`
+              : "https://formbricks.com/learn-more-self-hosting-license",
+          },
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full grow flex-col gap-6">
