@@ -597,6 +597,7 @@
       "contact_not_found": "Nenhum contato encontrado",
       "contacts_table_refresh": "Atualizar contatos",
       "contacts_table_refresh_success": "Contatos atualizados com sucesso",
+      "delete_contact_confirmation": "Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos.",
       "first_name": "Primeiro Nome",
       "last_name": "Sobrenome",
       "no_responses_found": "Nenhuma resposta encontrada",
@@ -633,6 +634,7 @@
         "airtable_integration": "Integração com Airtable",
         "airtable_integration_description": "Sincronize respostas diretamente com o Airtable.",
         "airtable_integration_is_not_configured": "A integração com o Airtable não está configurada",
+        "airtable_logo": "Logo do Airtable",
         "connect_with_airtable": "Conectar com o Airtable",
         "link_airtable_table": "Vincular Tabela do Airtable",
         "link_new_table": "Vincular nova tabela",
@@ -722,6 +724,7 @@
         "slack_integration": "Integração com o Slack",
         "slack_integration_description": "Manda as respostas direto pro Slack.",
         "slack_integration_is_not_configured": "A integração do Slack não está configurada na sua instância do Formbricks.",
+        "slack_logo": "Logotipo do Slack",
         "slack_reconnect_button": "Reconectar",
         "slack_reconnect_button_description": "<b>Observação:</b> Recentemente, alteramos nossa integração com o Slack para também suportar canais privados. Por favor, reconecte seu workspace do Slack."
       },
@@ -906,8 +909,7 @@
         "tag_already_exists": "Tag já existe",
         "tag_deleted": "Tag apagada",
         "tag_updated": "Tag atualizada",
-        "tags_merged": "Tags mescladas",
-        "unique_constraint_failed_on_the_fields": "Falha na restrição única nos campos"
+        "tags_merged": "Tags mescladas"
       },
       "teams": {
         "manage_teams": "Gerenciar Equipes",
@@ -1065,6 +1067,7 @@
         "create_new_organization": "Criar nova organização",
         "create_new_organization_description": "Criar uma nova organização para lidar com um conjunto diferente de projetos.",
         "customize_email_with_a_higher_plan": "Personalize o email com um plano superior",
+        "delete_member_confirmation": "Membros apagados perderão acesso a todos os projetos e pesquisas da sua organização.",
         "delete_organization": "Excluir Organização",
         "delete_organization_description": "Excluir organização com todos os seus projetos, incluindo todas as pesquisas, respostas, pessoas, ações e atributos",
         "delete_organization_warning": "Antes de continuar com a exclusão desta organização, esteja ciente das seguintes consequências:",

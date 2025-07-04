@@ -597,6 +597,7 @@
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Rafraîchir les contacts",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
+      "delete_contact_confirmation": "Cela supprimera toutes les réponses aux enquêtes et les attributs de contact associés à ce contact. Toute la personnalisation et le ciblage basés sur les données de ce contact seront perdus.",
       "first_name": "Prénom",
       "last_name": "Nom de famille",
       "no_responses_found": "Aucune réponse trouvée",
@@ -633,6 +634,7 @@
         "airtable_integration": "Intégration Airtable",
         "airtable_integration_description": "Synchronisez les réponses directement avec Airtable.",
         "airtable_integration_is_not_configured": "L'intégration Airtable n'est pas configurée",
+        "airtable_logo": "Logo Airtable",
         "connect_with_airtable": "Se connecter à Airtable",
         "link_airtable_table": "Lier la table Airtable",
         "link_new_table": "Lier nouvelle table",
@@ -722,6 +724,7 @@
         "slack_integration": "Intégration Slack",
         "slack_integration_description": "Envoyez les réponses directement sur Slack.",
         "slack_integration_is_not_configured": "L'intégration Slack n'est pas configurée dans votre instance de Formbricks.",
+        "slack_logo": "logo Slack",
         "slack_reconnect_button": "Reconnecter",
         "slack_reconnect_button_description": "<b>Remarque :</b> Nous avons récemment modifié notre intégration Slack pour prendre en charge les canaux privés. Veuillez reconnecter votre espace de travail Slack."
       },
@@ -906,8 +909,7 @@
         "tag_already_exists": "Le tag existe déjà",
         "tag_deleted": "Tag supprimé",
         "tag_updated": "Étiquette mise à jour",
-        "tags_merged": "Étiquettes fusionnées",
-        "unique_constraint_failed_on_the_fields": "Échec de la contrainte unique sur les champs"
+        "tags_merged": "Étiquettes fusionnées"
       },
       "teams": {
         "manage_teams": "Gérer les équipes",
@@ -1065,6 +1067,7 @@
         "create_new_organization": "Créer une nouvelle organisation",
         "create_new_organization_description": "Créer une nouvelle organisation pour gérer un ensemble différent de projets.",
         "customize_email_with_a_higher_plan": "Personnalisez l'e-mail avec un plan supérieur",
+        "delete_member_confirmation": "Les membres supprimés perdront l'accès à tous les projets et enquêtes de votre organisation.",
         "delete_organization": "Supprimer l'organisation",
         "delete_organization_description": "Supprimer l'organisation avec tous ses projets, y compris toutes les enquêtes, réponses, personnes, actions et attributs.",
         "delete_organization_warning": "Avant de procéder à la suppression de cette organisation, veuillez prendre connaissance des conséquences suivantes :",

@@ -1,5 +1,13 @@
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 
 interface EditPublicSurveyAlertDialogProps {
@@ -34,7 +42,7 @@ export const EditPublicSurveyAlertDialog = ({
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
       disabled: isLoading,
-      variant: "outline",
+      variant: "secondary",
     });
   }
   if (primaryButtonAction) {
@@ -53,22 +61,31 @@ export const EditPublicSurveyAlertDialog = ({
     });
   }
   return (
-    <Modal open={open} setOpen={setOpen} title={t("environments.surveys.edit.caution_edit_published_survey")}>
-      <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-      <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-      <ul className="mt-3 list-disc space-y-0.5 pl-5">
-        <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-        <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-        <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-        <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-      </ul>
-      <div className="my-4 space-x-2 text-right">
-        {actions.map(({ label, onClick, loading, variant, disabled }) => (
-          <Button key={label} variant={variant} onClick={onClick} loading={loading} disabled={disabled}>
-            {label}
-          </Button>
-        ))}
-      </div>
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-[540px]">
+        <DialogHeader>
+          <DialogTitle>{t("environments.surveys.edit.caution_edit_published_survey")}</DialogTitle>
+          <DialogDescription>{t("environments.surveys.edit.caution_recommendation")}</DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          <p>{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <ul className="mt-3 list-disc space-y-0.5 pl-5">
+            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+          </ul>
+        </DialogBody>
+
+        <DialogFooter>
+          {actions.map(({ label, onClick, loading, variant, disabled }) => (
+            <Button key={label} variant={variant} onClick={onClick} loading={loading} disabled={disabled}>
+              {label}
+            </Button>
+          ))}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

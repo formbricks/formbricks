@@ -7,9 +7,17 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
@@ -189,24 +197,28 @@ export const AddChannelMappingModal = ({
   );
 
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image className="w-12" src={SlackLogo} alt="Slack logo" />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.slack.link_slack_channel")}
-                </div>
-              </div>
+    <Dialog open={open} onOpenChange={setOpenWithStates}>
+      <DialogContent>
+        <DialogHeader>
+          <div className="flex items-center space-x-2">
+            <div className="relative size-8">
+              <Image
+                fill
+                className="object-contain object-center"
+                src={SlackLogo}
+                alt={t("environments.integrations.slack.slack_logo")}
+              />
+            </div>
+            <div className="space-y-0.5">
+              <DialogTitle>{t("environments.integrations.slack.link_slack_channel")}</DialogTitle>
+              <DialogDescription>
+                {t("environments.integrations.slack.slack_integration_description")}
+              </DialogDescription>
             </div>
           </div>
-        </div>
-        <form onSubmit={handleSubmit(linkChannel)}>
-          <div className="flex justify-between rounded-lg p-6">
+        </DialogHeader>
+        <form className="space-y-4" onSubmit={handleSubmit(linkChannel)}>
+          <DialogBody>
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
@@ -289,31 +301,29 @@ export const AddChannelMappingModal = ({
                 </div>
               )}
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              {selectedIntegration ? (
-                <Button type="button" variant="destructive" loading={isDeleting} onClick={deleteLink}>
-                  {t("common.delete")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setOpen(false);
-                    resetForm();
-                  }}>
-                  {t("common.cancel")}
-                </Button>
-              )}
-              <Button type="submit" loading={isLinkingChannel}>
-                {selectedIntegration ? t("common.update") : t("environments.integrations.slack.link_channel")}
+          </DialogBody>
+          <DialogFooter>
+            {selectedIntegration ? (
+              <Button type="button" variant="destructive" loading={isDeleting} onClick={deleteLink}>
+                {t("common.delete")}
               </Button>
-            </div>
-          </div>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                }}>
+                {t("common.cancel")}
+              </Button>
+            )}
+            <Button type="submit" loading={isLinkingChannel}>
+              {selectedIntegration ? t("common.update") : t("environments.integrations.slack.link_channel")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };

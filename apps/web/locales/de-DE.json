@@ -597,6 +597,7 @@
       "contact_not_found": "Kein solcher Kontakt gefunden",
       "contacts_table_refresh": "Kontakte aktualisieren",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
+      "delete_contact_confirmation": "Dies wird alle Umfrageantworten und Kontaktattribute löschen, die mit diesem Kontakt verbunden sind. Jegliche zielgerichtete Kommunikation und Personalisierung basierend auf den Daten dieses Kontakts gehen verloren.",
       "first_name": "Vorname",
       "last_name": "Nachname",
       "no_responses_found": "Keine Antworten gefunden",
@@ -633,6 +634,7 @@
         "airtable_integration": "Airtable Integration",
         "airtable_integration_description": "Synchronisiere Antworten direkt mit Airtable.",
         "airtable_integration_is_not_configured": "Airtable Integration ist nicht konfiguriert",
+        "airtable_logo": "Airtable-Logo",
         "connect_with_airtable": "Mit Airtable verbinden",
         "link_airtable_table": "Airtable Tabelle verknüpfen",
         "link_new_table": "Neue Tabelle verknüpfen",
@@ -722,6 +724,7 @@
         "slack_integration": "Slack Integration",
         "slack_integration_description": "Sende Antworten direkt an Slack.",
         "slack_integration_is_not_configured": "Slack Integration ist in deiner Instanz von Formbricks nicht konfiguriert.",
+        "slack_logo": "Slack-Logo",
         "slack_reconnect_button": "Erneut verbinden",
         "slack_reconnect_button_description": "<b>Hinweis:</b> Wir haben kürzlich unsere Slack-Integration geändert, um auch private Kanäle zu unterstützen. Bitte verbinden Sie Ihren Slack-Workspace erneut."
       },
@@ -906,8 +909,7 @@
         "tag_already_exists": "Tag existiert bereits",
         "tag_deleted": "Tag gelöscht",
         "tag_updated": "Tag aktualisiert",
-        "tags_merged": "Tags zusammengeführt",
-        "unique_constraint_failed_on_the_fields": "Eindeutige Einschränkung für die Felder fehlgeschlagen"
+        "tags_merged": "Tags zusammengeführt"
       },
       "teams": {
         "manage_teams": "Teams verwalten",
@@ -1065,6 +1067,7 @@
         "create_new_organization": "Neue Organisation erstellen",
         "create_new_organization_description": "Erstelle eine neue Organisation, um weitere Projekte zu verwalten.",
         "customize_email_with_a_higher_plan": "E-Mail-Anpassung mit einem höheren Plan",
+        "delete_member_confirmation": "Gelöschte Mitglieder verlieren den Zugriff auf alle Projekte und Umfragen deiner Organisation.",
         "delete_organization": "Organisation löschen",
         "delete_organization_description": "Organisation mit allen Projekten einschließlich aller Umfragen, Antworten, Personen, Aktionen und Attribute löschen",
         "delete_organization_warning": "Bevor Du mit dem Löschen dieser Organisation fortfährst, sei dir bitte der folgenden Konsequenzen bewusst:",

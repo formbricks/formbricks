@@ -191,10 +191,8 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
 
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white p-4">
-        <div className="space-y-8 pb-12">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
+        <div className="flex-1 space-y-8 overflow-y-auto">
           {formFields.fields.map((field, projectIndex) => {
             const project = filteredProjects.find((project) => project.id === field.project);
             if (!project) return null;
@@ -211,13 +209,11 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
             );
           })}
         </div>
-        <div className="fixed bottom-0 left-0 right-0 z-10 flex w-full justify-end space-x-2 bg-white">
-          <div className="flex w-full justify-end pb-4 pr-4">
-            <Button type="button" onClick={onCancel} variant="ghost">
-              {t("common.cancel")}
-            </Button>
-            <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
-          </div>
+        <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
+          <Button type="button" onClick={onCancel} variant="secondary">
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
         </div>
       </form>
     </FormProvider>
