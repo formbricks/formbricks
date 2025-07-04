@@ -7,6 +7,7 @@ export const ZLinkSurveyEmailData = z.object({
   surveyName: z.string(),
   locale: z.string(),
   logoUrl: z.string().optional(),
+  isPreview: z.boolean().optional(),
 });
 
 export type TLinkSurveyEmailData = z.infer<typeof ZLinkSurveyEmailData>;

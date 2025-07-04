@@ -290,13 +290,18 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
   const logoUrl = data.logoUrl || "";
+  const isPreview = data.isPreview;
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate();
   const getSurveyLink = (): string => {
+    let baseSurveyLink = `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
     if (singleUseId) {
-      return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      baseSurveyLink = `${baseSurveyLink}&suId=${singleUseId}`;
     }
-    return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+    if (isPreview) {
+      baseSurveyLink = `${baseSurveyLink}&preview=true`;
+    }
+    return baseSurveyLink;
   };
   const surveyLink = getSurveyLink();
 
