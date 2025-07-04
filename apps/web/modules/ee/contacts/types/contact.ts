@@ -122,6 +122,68 @@ export const ZContactBulkUploadContact = z.object({
 
 export type TContactBulkUploadContact = z.infer<typeof ZContactBulkUploadContact>;
 
+// Helper functions for common validation logic
+export const validateEmailAttribute = (
+  attributes: (typeof ZContactBulkUploadAttribute._output)[],
+  ctx: z.RefinementCtx,
+  contactIndex?: number
+): { emailAttr?: typeof ZContactBulkUploadAttribute._output; isValid: boolean } => {
+  const emailAttr = attributes.find((attr) => attr.attributeKey.key === "email");
+  const indexSuffix = contactIndex !== undefined ? ` for contact at index ${contactIndex}` : "";
+
+  if (!emailAttr?.value) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Email attribute is required${indexSuffix}`,
+    });
+    return { isValid: false };
+  }
+
+  // Check email format
+  const parsedEmail = z.string().email().safeParse(emailAttr.value);
+  if (!parsedEmail.success) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid email format${indexSuffix}`,
+    });
+    return { emailAttr, isValid: false };
+  }
+
+  return { emailAttr, isValid: true };
+};
+
+export const validateUniqueAttributeKeys = (
+  attributes: (typeof ZContactBulkUploadAttribute._output)[],
+  ctx: z.RefinementCtx,
+  contactIndex?: number
+) => {
+  const keyOccurrences = new Map<string, number>();
+  const duplicateKeys: string[] = [];
+
+  attributes.forEach((attr) => {
+    const key = attr.attributeKey.key;
+    const count = (keyOccurrences.get(key) ?? 0) + 1;
+    keyOccurrences.set(key, count);
+
+    // If this is the second occurrence, add to duplicates
+    if (count === 2) {
+      duplicateKeys.push(key);
+    }
+  });
+
+  if (duplicateKeys.length > 0) {
+    const indexSuffix = contactIndex !== undefined ? ` for contact at index ${contactIndex}` : "";
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Duplicate attribute keys found${indexSuffix}. Please ensure each attribute key is unique`,
+      params: {
+        duplicateKeys,
+        ...(contactIndex !== undefined && { contactIndex }),
+      },
+    });
+  }
+};
+
 export const ZContactBulkUploadRequest = z.object({
   environmentId: z.string().cuid2(),
   contacts: z
@@ -133,28 +195,14 @@ export const ZContactBulkUploadRequest = z.object({
       const duplicateEmails = new Set<string>();
       const seenUserIds = new Set<string>();
       const duplicateUserIds = new Set<string>();
-      const contactsWithDuplicateKeys: { idx: number; duplicateKeys: string[] }[] = [];
 
       // Process each contact in a single pass
       contacts.forEach((contact, idx) => {
-        // 1. Check email existence and validity
-        const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === "email");
-        if (!emailAttr?.value) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Missing email attribute for contact at index ${idx}`,
-          });
-        } else {
-          // Check email format
-          const parsedEmail = z.string().email().safeParse(emailAttr.value);
-          if (!parsedEmail.success) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Invalid email for contact at index ${idx}`,
-            });
-          }
+        // 1. Check email existence and validity using helper function
+        const { emailAttr, isValid } = validateEmailAttribute(contact.attributes, ctx, idx);
 
-          // Check for duplicate emails
+        if (isValid && emailAttr) {
+          // Check for duplicate emails across contacts
           if (seenEmails.has(emailAttr.value)) {
             duplicateEmails.add(emailAttr.value);
           } else {
@@ -172,24 +220,8 @@ export const ZContactBulkUploadRequest = z.object({
           }
         }
 
-        // 3. Check for duplicate attribute keys within the same contact
-        const keyOccurrences = new Map<string, number>();
-        const duplicateKeysForContact: string[] = [];
-
-        contact.attributes.forEach((attr) => {
-          const key = attr.attributeKey.key;
-          const count = (keyOccurrences.get(key) || 0) + 1;
-          keyOccurrences.set(key, count);
-
-          // If this is the second occurrence, add to duplicates
-          if (count === 2) {
-            duplicateKeysForContact.push(key);
-          }
-        });
-
-        if (duplicateKeysForContact.length > 0) {
-          contactsWithDuplicateKeys.push({ idx, duplicateKeys: duplicateKeysForContact });
-        }
+        // 3. Check for duplicate attribute keys within the same contact using helper function
+        validateUniqueAttributeKeys(contact.attributes, ctx, idx);
       });
 
       // Report all validation issues after the single pass
@@ -209,17 +241,6 @@ export const ZContactBulkUploadRequest = z.object({
           message: "Duplicate userIds found in the records, please ensure each userId is unique.",
           params: {
             duplicateUserIds: Array.from(duplicateUserIds),
-          },
-        });
-      }
-
-      if (contactsWithDuplicateKeys.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Duplicate attribute keys found in the records, please ensure each attribute key is unique.",
-          params: {
-            contactsWithDuplicateKeys,
           },
         });
       }
@@ -243,3 +264,25 @@ export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase &
   processed: number;
   failed: number;
 };
+
+// Schema for single contact creation
+export const ZContactCreateRequest = z.object({
+  environmentId: z.string().cuid2(),
+  attributes: z.array(ZContactBulkUploadAttribute).superRefine((attributes, ctx) => {
+    // Use helper functions for validation
+    validateEmailAttribute(attributes, ctx);
+    validateUniqueAttributeKeys(attributes, ctx);
+  }),
+});
+
+export type TContactCreateRequest = z.infer<typeof ZContactCreateRequest>;
+
+// Type for contact response with flattened attributes
+export const ZContactResponse = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  environmentId: z.string().cuid2(),
+  attributes: z.record(z.string().nullable()),
+});
+
+export type TContactResponse = z.infer<typeof ZContactResponse>;
