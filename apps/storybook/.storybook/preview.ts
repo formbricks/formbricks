@@ -19,9 +19,6 @@ const withTolgee = (Story: any) => {
 
 const preview: Preview = {
   parameters: {
-    nextjs: {
-      appDirectory: false,
-    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
