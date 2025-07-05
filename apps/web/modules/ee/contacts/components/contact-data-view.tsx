@@ -116,7 +116,6 @@ export const ContactDataView = ({
 
   // Delete selected contacts
   const deleteContacts = async (contactIds: string[]) => {
-    await Promise.all(contactIds.map((contactId) => deleteContactAction({ contactId })));
     setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
 
     router.refresh();
