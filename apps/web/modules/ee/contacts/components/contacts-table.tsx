@@ -36,7 +36,7 @@ interface ContactsTableProps {
   data: TContactTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteContacts: (contactIds: string[]) => void;
+  deleteContacts: (contactIds: string[]) => Promise<void>;
   isDataLoaded: boolean;
   environmentId: string;
   searchValue: string;
@@ -236,7 +236,7 @@ export const ContactsTable = ({
           table={table}
           deleteRowsAction={deleteContacts}
           type="contact"
-          deleteAction={deleteContact}
+          deleteAction={(contactId) => deleteContact(contactId)}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
