@@ -61,14 +61,16 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
         "application/json": {
           schema: makePartialSchema(ZContactResponse),
           example: {
-            id: "ctc_01h2xce9q8p3w4x5y6z7a8b9c2",
-            createdAt: "2023-01-01T12:00:00.000Z",
-            environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
-            attributes: {
-              email: "john.doe@example.com",
-              firstName: "John",
-              lastName: "Doe",
-              userId: "h2xce9q8p3w4x5y6z7a8b9c1",
+            data: {
+              id: "ctc_01h2xce9q8p3w4x5y6z7a8b9c2",
+              createdAt: "2023-01-01T12:00:00.000Z",
+              environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+              attributes: {
+                email: "john.doe@example.com",
+                firstName: "John",
+                lastName: "Doe",
+                userId: "h2xce9q8p3w4x5y6z7a8b9c1",
+              },
             },
           },
         },
