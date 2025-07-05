@@ -12,6 +12,7 @@ import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
 import toast from "react-hot-toast";
+import { useRef } from "react";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
@@ -39,6 +40,27 @@ export const MatrixQuestionForm = ({
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
+  
+  // Stable keys for proper rendering
+  const rowKeysRef = useRef<string[]>([]);
+  const columnKeysRef = useRef<string[]>([]);
+  
+  // Ensure we have enough keys for current items
+  while (rowKeysRef.current.length < question.rows.length) {
+    rowKeysRef.current.push(`row-${questionIdx}-${Date.now()}-${Math.random()}`);
+  }
+  while (columnKeysRef.current.length < question.columns.length) {
+    columnKeysRef.current.push(`column-${questionIdx}-${Date.now()}-${Math.random()}`);
+  }
+  
+  // Trim excess keys if items were deleted
+  if (rowKeysRef.current.length > question.rows.length) {
+    rowKeysRef.current = rowKeysRef.current.slice(0, question.rows.length);
+  }
+  if (columnKeysRef.current.length > question.columns.length) {
+    columnKeysRef.current = columnKeysRef.current.slice(0, question.columns.length);
+  }
+  
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
@@ -80,8 +102,10 @@ export const MatrixQuestionForm = ({
 
     const updatedLabels = labels.filter((_, idx) => idx !== index);
     if (type === "row") {
+      rowKeysRef.current.splice(index, 1);
       updateQuestion(questionIdx, { rows: updatedLabels });
     } else {
+      columnKeysRef.current.splice(index, 1);
       updateQuestion(questionIdx, { columns: updatedLabels });
     }
   };
@@ -183,7 +207,7 @@ export const MatrixQuestionForm = ({
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
             {question.rows.map((row, index) => (
-              <div className="flex items-center" key={`${row}-${index}`}>
+              <div className="flex items-center" key={rowKeysRef.current[index]}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -233,7 +257,7 @@ export const MatrixQuestionForm = ({
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
             {question.columns.map((column, index) => (
-              <div className="flex items-center" key={`${column}-${index}`}>
+              <div className="flex items-center" key={columnKeysRef.current[index]}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}
