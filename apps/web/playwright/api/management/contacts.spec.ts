@@ -141,8 +141,9 @@ test.describe("API Tests for Single Contact Creation", () => {
       expect(secondResponse.status()).toBe(409);
 
       const errorData = await secondResponse.json();
-      expect(errorData.details[0].field).toBe("email");
-      expect(errorData.details[0].issue).toContain("already exists");
+
+      expect(errorData.error.details[0].field).toBe("email");
+      expect(errorData.error.details[0].issue).toContain("already exists");
     });
 
     await test.step("Prevent duplicate userId", async () => {
@@ -190,8 +191,8 @@ test.describe("API Tests for Single Contact Creation", () => {
       expect(secondResponse.status()).toBe(409);
 
       const errorData = await secondResponse.json();
-      expect(errorData.details[0].field).toBe("userId");
-      expect(errorData.details[0].issue).toContain("already exists");
+      expect(errorData.error.details[0].field).toBe("userId");
+      expect(errorData.error.details[0].issue).toContain("already exists");
     });
   });
 });
