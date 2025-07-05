@@ -124,10 +124,10 @@ export type TContactBulkUploadContact = z.infer<typeof ZContactBulkUploadContact
 
 // Helper functions for common validation logic
 export const validateEmailAttribute = (
-  attributes: (typeof ZContactBulkUploadAttribute._output)[],
+  attributes: z.infer<typeof ZContactBulkUploadAttribute>[],
   ctx: z.RefinementCtx,
   contactIndex?: number
-): { emailAttr?: typeof ZContactBulkUploadAttribute._output; isValid: boolean } => {
+): { emailAttr?: z.infer<typeof ZContactBulkUploadAttribute>; isValid: boolean } => {
   const emailAttr = attributes.find((attr) => attr.attributeKey.key === "email");
   const indexSuffix = contactIndex !== undefined ? ` for contact at index ${contactIndex}` : "";
 
@@ -153,7 +153,7 @@ export const validateEmailAttribute = (
 };
 
 export const validateUniqueAttributeKeys = (
-  attributes: (typeof ZContactBulkUploadAttribute._output)[],
+  attributes: z.infer<typeof ZContactBulkUploadAttribute>[],
   ctx: z.RefinementCtx,
   contactIndex?: number
 ) => {

@@ -16,17 +16,6 @@ export const POST = async (request: NextRequest) =>
 
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
-      if (!body) {
-        return handleApiError(
-          request,
-          {
-            type: "bad_request",
-            details: [{ field: "body", issue: "missing" }],
-          },
-          auditLog
-        );
-      }
-
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
         return handleApiError(

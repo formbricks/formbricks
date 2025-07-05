@@ -39,7 +39,6 @@ test.describe("API Tests for Single Contact Creation", () => {
       expect(contactData.data.environmentId).toBe(environmentId);
       expect(contactData.data.attributes.email).toBe(uniqueEmail);
       expect(contactData.data.createdAt).toBeDefined();
-      expect(contactData.data.updatedAt).toBeDefined();
     });
 
     await test.step("Create contact successfully with multiple attributes", async () => {

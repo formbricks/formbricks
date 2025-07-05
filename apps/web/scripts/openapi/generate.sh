@@ -23,6 +23,6 @@ npx esbuild modules/api/v2/openapi-document.ts \
 echo "Generating OpenAPI YAML..."
 
 # Run the built file and output to YAML
-dotenv -e ../../.env node dist/openapi-document.js > ../../docs/api-v2-reference/openapi.yml
+dotenv -e ../../.env -- node dist/openapi-document.js > ../../docs/api-v2-reference/openapi.yml
 
 echo "OpenAPI documentation generated successfully at docs/api-v2-reference/openapi.yml" 
