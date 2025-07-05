@@ -4,7 +4,7 @@ import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getMonthName, getOrdinalDate } from "@/lib/date-time";
+import { formatDate } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -126,12 +126,13 @@ export function DateQuestion({
   const formattedDate = useMemo(() => {
     if (!selectedDate) return "";
 
-    const day = selectedDate.getDate();
-    const monthIndex = selectedDate.getMonth();
-    const year = selectedDate.getFullYear();
-
-    return `${getOrdinalDate(day)} of ${getMonthName(monthIndex)}, ${year}`;
-  }, [selectedDate]);
+    try {
+      return formatDate(selectedDate, question.format);
+    } catch (error) {
+      console.error("Error formatting date", error);
+      return "";
+    }
+  }, [selectedDate, question.format]);
 
   return (
     <form

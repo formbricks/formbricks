@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString } from "./date-time";
+import {
+  formatDate,
+  formatDateWithOrdinal,
+  getMonthName,
+  getOrdinalDate,
+  isValidDateString,
+} from "./date-time";
 
 // Manually define getOrdinalSuffix for testing as it's not exported
 // Or, if preferred, we can test it implicitly via formatDateWithOrdinal and getOrdinalDate
@@ -179,5 +185,129 @@ describe("formatDateWithOrdinal", () => {
 
     const date4 = new Date(2024, 0, 4); // January 4th
     expect(formatDateWithOrdinal(date4, "fr-FR")).toBe("jeudi, janvier 4th, 2024");
+  });
+});
+
+describe("formatDate", () => {
+  test("should format date in M-d-y format", () => {
+    const date = new Date(2024, 0, 15); // January 15, 2024
+    expect(formatDate(date, "M-d-y")).toBe("01-15-2024");
+
+    const date2 = new Date(2023, 11, 31); // December 31, 2023
+    expect(formatDate(date2, "M-d-y")).toBe("12-31-2023");
+
+    const date3 = new Date(2025, 5, 5); // June 5, 2025
+    expect(formatDate(date3, "M-d-y")).toBe("06-05-2025");
+  });
+
+  test("should format date in d-M-y format", () => {
+    const date = new Date(2024, 0, 15); // January 15, 2024
+    expect(formatDate(date, "d-M-y")).toBe("15-01-2024");
+
+    const date2 = new Date(2023, 11, 31); // December 31, 2023
+    expect(formatDate(date2, "d-M-y")).toBe("31-12-2023");
+
+    const date3 = new Date(2025, 5, 5); // June 5, 2025
+    expect(formatDate(date3, "d-M-y")).toBe("05-06-2025");
+  });
+
+  test("should format date in y-M-d format", () => {
+    const date = new Date(2024, 0, 15); // January 15, 2024
+    expect(formatDate(date, "y-M-d")).toBe("2024-01-15");
+
+    const date2 = new Date(2023, 11, 31); // December 31, 2023
+    expect(formatDate(date2, "y-M-d")).toBe("2023-12-31");
+
+    const date3 = new Date(2025, 5, 5); // June 5, 2025
+    expect(formatDate(date3, "y-M-d")).toBe("2025-06-05");
+  });
+
+  test("should handle single digit months and days correctly", () => {
+    const date = new Date(2024, 0, 5); // January 5, 2024
+    expect(formatDate(date, "M-d-y")).toBe("01-05-2024");
+    expect(formatDate(date, "d-M-y")).toBe("05-01-2024");
+    expect(formatDate(date, "y-M-d")).toBe("2024-01-05");
+
+    const date2 = new Date(2024, 8, 9); // September 9, 2024
+    expect(formatDate(date2, "M-d-y")).toBe("09-09-2024");
+    expect(formatDate(date2, "d-M-y")).toBe("09-09-2024");
+    expect(formatDate(date2, "y-M-d")).toBe("2024-09-09");
+  });
+
+  test("should handle leap year dates", () => {
+    const leapYearDate = new Date(2024, 1, 29); // February 29, 2024 (leap year)
+    expect(formatDate(leapYearDate, "M-d-y")).toBe("02-29-2024");
+    expect(formatDate(leapYearDate, "d-M-y")).toBe("29-02-2024");
+    expect(formatDate(leapYearDate, "y-M-d")).toBe("2024-02-29");
+  });
+
+  test("should handle end of month dates", () => {
+    const endOfMonth = new Date(2024, 0, 31); // January 31, 2024
+    expect(formatDate(endOfMonth, "M-d-y")).toBe("01-31-2024");
+    expect(formatDate(endOfMonth, "d-M-y")).toBe("31-01-2024");
+    expect(formatDate(endOfMonth, "y-M-d")).toBe("2024-01-31");
+  });
+
+  test("should handle different years correctly", () => {
+    const pastDate = new Date(1999, 5, 15); // June 15, 1999
+    expect(formatDate(pastDate, "M-d-y")).toBe("06-15-1999");
+    expect(formatDate(pastDate, "d-M-y")).toBe("15-06-1999");
+    expect(formatDate(pastDate, "y-M-d")).toBe("1999-06-15");
+
+    const futureDate = new Date(2030, 11, 25); // December 25, 2030
+    expect(formatDate(futureDate, "M-d-y")).toBe("12-25-2030");
+    expect(formatDate(futureDate, "d-M-y")).toBe("25-12-2030");
+    expect(formatDate(futureDate, "y-M-d")).toBe("2030-12-25");
+  });
+
+  test("should handle edge case dates", () => {
+    // January 1st
+    const newYear = new Date(2024, 0, 1);
+    expect(formatDate(newYear, "M-d-y")).toBe("01-01-2024");
+    expect(formatDate(newYear, "d-M-y")).toBe("01-01-2024");
+    expect(formatDate(newYear, "y-M-d")).toBe("2024-01-01");
+
+    // December 31st
+    const yearEnd = new Date(2024, 11, 31);
+    expect(formatDate(yearEnd, "M-d-y")).toBe("12-31-2024");
+    expect(formatDate(yearEnd, "d-M-y")).toBe("31-12-2024");
+    expect(formatDate(yearEnd, "y-M-d")).toBe("2024-12-31");
+  });
+
+  test("should handle dates with leading zeros correctly", () => {
+    const date = new Date(2024, 0, 1); // January 1, 2024
+    expect(formatDate(date, "M-d-y")).toBe("01-01-2024");
+    expect(formatDate(date, "d-M-y")).toBe("01-01-2024");
+    expect(formatDate(date, "y-M-d")).toBe("2024-01-01");
+
+    const date2 = new Date(2024, 8, 9); // September 9, 2024
+    expect(formatDate(date2, "M-d-y")).toBe("09-09-2024");
+    expect(formatDate(date2, "d-M-y")).toBe("09-09-2024");
+    expect(formatDate(date2, "y-M-d")).toBe("2024-09-09");
+  });
+
+  test("should throw error for invalid date", () => {
+    const invalidDate = new Date("not a date");
+    expect(() => formatDate(invalidDate, "M-d-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(invalidDate, "d-M-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(invalidDate, "y-M-d")).toThrow("Invalid date provided");
+  });
+
+  test("should throw error for null date", () => {
+    expect(() => formatDate(null as any, "M-d-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(null as any, "d-M-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(null as any, "y-M-d")).toThrow("Invalid date provided");
+  });
+
+  test("should throw error for undefined date", () => {
+    expect(() => formatDate(undefined as any, "M-d-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(undefined as any, "d-M-y")).toThrow("Invalid date provided");
+    expect(() => formatDate(undefined as any, "y-M-d")).toThrow("Invalid date provided");
+  });
+
+  test("should use default format when invalid format is provided", () => {
+    const date = new Date(2024, 0, 15); // January 15, 2024
+    // Test with invalid format - should default to M-d-y
+    expect(formatDate(date, "invalid" as any)).toBe("01-15-2024");
   });
 });
