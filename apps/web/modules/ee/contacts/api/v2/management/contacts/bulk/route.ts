@@ -12,30 +12,48 @@ export const PUT = async (request: Request) =>
     schemas: {
       body: ZContactBulkUploadRequest,
     },
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [{ field: "error", issue: "Contacts are not enabled for this environment." }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "error", issue: "Contacts are not enabled for this environment." }],
+          },
+          auditLog
+        );
       }
 
       const environmentId = parsedInput.body?.environmentId;
 
       if (!environmentId) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "environmentId", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "environmentId", issue: "missing" }],
+          },
+          auditLog
+        );
       }
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
       if (!hasPermission(authentication.environmentPermissions, environmentId, "PUT")) {
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [
+              {
+                field: "environmentId",
+                issue: "insufficient permissions to create contact in this environment",
+              },
+            ],
+          },
+          auditLog
+        );
       }
 
       const emails = contacts.map(
@@ -45,7 +63,7 @@ export const PUT = async (request: Request) =>
       const upsertBulkContactsResult = await upsertBulkContacts(contacts, environmentId, emails);
 
       if (!upsertBulkContactsResult.ok) {
-        return handleApiError(request, upsertBulkContactsResult.error);
+        return handleApiError(request, upsertBulkContactsResult.error, auditLog);
       }
 
       const { contactIdxWithConflictingUserIds } = upsertBulkContactsResult.data;
@@ -73,4 +91,6 @@ export const PUT = async (request: Request) =>
         },
       });
     },
+    action: "bulkCreated",
+    targetType: "contact",
   });
