@@ -12,7 +12,7 @@ vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn(),
 }));
 
-vi.mock("@/lib/hashString", () => ({
+vi.mock("@/lib/hash-string", () => ({
   hashString: vi.fn(),
 }));
 
