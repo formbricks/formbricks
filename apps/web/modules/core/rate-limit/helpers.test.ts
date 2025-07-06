@@ -1,4 +1,4 @@
-import { hashString } from "@/lib/hashString";
+import { hashString } from "@/lib/hash-string";
 // Import modules after mocking
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { beforeEach, describe, expect, test, vi } from "vitest";
