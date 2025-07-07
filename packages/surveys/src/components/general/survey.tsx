@@ -698,7 +698,6 @@ export function Survey({
         <div
           className={cn(
             "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
-            cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
           <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">

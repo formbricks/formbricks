@@ -6,6 +6,41 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { LoadSegmentModal } from ".";
 
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: () => void;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={onOpenChange}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({ children, size }: { children: React.ReactNode; size?: string }) => (
+    <div data-testid="dialog-content" data-size={size}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+}));
+
 // Mock the nested SegmentDetail component
 vi.mock("lucide-react", async () => {
   const actual = await vi.importActual<typeof import("lucide-react")>("lucide-react");
@@ -20,8 +55,34 @@ vi.mock("lucide-react", async () => {
 vi.mock("react-hot-toast", () => ({
   default: {
     error: vi.fn(),
-    success: vi.fn(),
   },
+}));
+
+// Mock the useTranslate hook
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations = {
+        "environments.surveys.edit.load_segment": "Load Segment",
+        "environments.surveys.edit.you_have_not_created_a_segment_yet": "You have not created a segment yet",
+        "common.segment": "Segment",
+        "common.updated_at": "Updated At",
+        "common.created_at": "Created At",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
+// Mock time utilities
+vi.mock("@/lib/time", () => ({
+  timeSinceDate: vi.fn(() => "2 days ago"),
+  formatDate: vi.fn(() => "Jan 1, 2023"),
+}));
+
+// Mock cn utility
+vi.mock("@/lib/cn", () => ({
+  cn: vi.fn((...classes) => classes.filter(Boolean).join(" ")),
 }));
 
 describe("LoadSegmentModal", () => {
@@ -103,19 +164,29 @@ describe("LoadSegmentModal", () => {
   test("renders empty state when no segments are available", () => {
     render(<LoadSegmentModal {...defaultProps} segments={[]} />);
 
-    expect(
-      screen.getByText("environments.surveys.edit.you_have_not_created_a_segment_yet")
-    ).toBeInTheDocument();
-    expect(screen.queryByText("common.segment")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Load Segment");
+    expect(screen.getByText("You have not created a segment yet")).toBeInTheDocument();
+    expect(screen.queryByText("Segment")).not.toBeInTheDocument();
+  });
+
+  test("does not render when closed", () => {
+    render(<LoadSegmentModal {...defaultProps} open={false} />);
+
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   test("renders segments list correctly when segments are available", () => {
     render(<LoadSegmentModal {...defaultProps} />);
 
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Load Segment");
+
     // Headers
-    expect(screen.getByText("common.segment")).toBeInTheDocument();
-    expect(screen.getByText("common.updated_at")).toBeInTheDocument();
-    expect(screen.getByText("common.created_at")).toBeInTheDocument();
+    expect(screen.getByText("Segment")).toBeInTheDocument();
+    expect(screen.getByText("Updated At")).toBeInTheDocument();
+    expect(screen.getByText("Created At")).toBeInTheDocument();
 
     // Only non-private segments should be visible (2 out of 3)
     expect(screen.getByText("Segment 1")).toBeInTheDocument();
