@@ -45,13 +45,15 @@ vi.mock("@/lib/utils/recall", async () => {
 global.structuredClone = global.structuredClone || ((obj: any) => JSON.parse(JSON.stringify(obj)));
 
 vi.mock("@/modules/survey/components/question-form-input/components/fallback-input", () => ({
-  FallbackInput: vi.fn().mockImplementation(({ addFallback }) => (
-    <div data-testid="fallback-input">
-      <button data-testid="add-fallback-btn" onClick={addFallback}>
-        Add Fallback
-      </button>
-    </div>
-  )),
+  FallbackInput: vi.fn().mockImplementation(({ addFallback, open }) =>
+    open ? (
+      <div data-testid="fallback-input">
+        <button data-testid="add-fallback-btn" onClick={addFallback}>
+          Add Fallback
+        </button>
+      </div>
+    ) : null
+  ),
 }));
 
 vi.mock("@/modules/survey/components/question-form-input/components/recall-item-select", () => ({
@@ -204,10 +206,22 @@ describe("RecallWrapper", () => {
 
     const editButton = screen.getByText("Edit Recall");
 
-    // Test that clicking the button works (preventDefault should be called)
+    // Verify the edit button is functional and clickable
+    expect(editButton).toBeInTheDocument();
+    expect(editButton).toBeEnabled();
+
+    // Click the "Edit Recall" button - this should work without errors
     await userEvent.click(editButton);
 
-    // Verify the button is still there and clickable
+    // The button should still be present and functional after clicking
     expect(editButton).toBeInTheDocument();
+    expect(editButton).toBeEnabled();
+
+    // Click again to verify the button can be clicked multiple times
+    await userEvent.click(editButton);
+
+    // Button should still be functional
+    expect(editButton).toBeInTheDocument();
+    expect(editButton).toBeEnabled();
   });
 });
