@@ -41,6 +41,8 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
     },
   ];
 
+  const webhookName = webhook.name || t("common.webhook"); // NOSONAR // We want to check for empty strings
+
   const handleTabClick = (index: number) => {
     setActiveTab(index);
   };
@@ -56,8 +58,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
       <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <WebhookIcon />
-          <DialogTitle>{webhook.name || t("common.webhook")}</DialogTitle>{" "}
-          {/* NOSONAR // We want to check for empty strings */}
+          <DialogTitle>{webhookName}</DialogTitle> {/* NOSONAR // We want to check for empty strings */}
           <DialogDescription>{webhook.url}</DialogDescription>
         </DialogHeader>
         <DialogBody>
