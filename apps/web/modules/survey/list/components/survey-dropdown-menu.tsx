@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CopySurveyModal } from "./copy-survey-modal";
 
@@ -61,10 +61,22 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+  const [newSingleUseId, setNewSingleUseId] = useState<string | undefined>(undefined);
 
   const router = useRouter();
 
   const surveyLink = useMemo(() => publicDomain + "/s/" + survey.id, [survey.id, publicDomain]);
+
+  // Pre-fetch single-use ID when dropdown opens to avoid async delay during clipboard operation
+  // This ensures Safari's clipboard API works by maintaining the user gesture context
+  useEffect(() => {
+    if (!isDropDownOpen) return;
+    const fetchNewId = async () => {
+      const newId = await refreshSingleUseId();
+      setNewSingleUseId(newId ?? undefined);
+    };
+    fetchNewId();
+  }, [refreshSingleUseId, isDropDownOpen]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -84,12 +96,11 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      const newId = await refreshSingleUseId();
-      const copiedLink = copySurveyLink(surveyLink, newId);
+      const copiedLink = copySurveyLink(surveyLink, newSingleUseId);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error(t("environments.surveys.summary.failed_to_copy_link"));
     }
   };
