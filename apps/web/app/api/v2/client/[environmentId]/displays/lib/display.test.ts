@@ -2,7 +2,8 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { PrismaErrorType } from "@formbricks/database/types/error";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExist } from "./contact";
 import { createDisplay } from "./display";
@@ -43,12 +44,20 @@ const mockDisplay = {
   id: displayId,
   contactId,
   surveyId,
+  responseId: null,
+  status: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const mockDisplayWithoutContact = {
   id: displayId,
   contactId: null,
   surveyId,
+  responseId: null,
+  status: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 describe("createDisplay", () => {
@@ -119,7 +128,20 @@ describe("createDisplay", () => {
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
-  test("should throw DatabaseError on Prisma known request error", async () => {
+  test("should throw InvalidInputError when survey does not exist (P2025)", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Related record not found", {
+      code: PrismaErrorType.RelatedRecordDoesNotExist,
+      clientVersion: "2.0.0",
+    });
+    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(prisma.display.create).mockRejectedValue(prismaError);
+
+    await expect(createDisplay(displayInput)).rejects.toThrow(
+      new InvalidInputError(`The survey with id ${surveyId} does not exist.`)
+    );
+  });
+
+  test("should throw DatabaseError on other Prisma known request errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
       code: "P2002",
       clientVersion: "2.0.0",
