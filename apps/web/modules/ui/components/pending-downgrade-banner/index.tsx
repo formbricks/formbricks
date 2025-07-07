@@ -25,7 +25,11 @@ export const PendingDowngradeBanner = ({
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
-  const formattedDate = `${scheduledDowngradeDate.getMonth() + 1}/${scheduledDowngradeDate.getDate()}/${scheduledDowngradeDate.getFullYear()}`;
+  const formattedDate = scheduledDowngradeDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const [show, setShow] = useState(true);
 
