@@ -13,9 +13,31 @@ vi.mock("./bulk-invite-tab", () => ({
 vi.mock("./individual-invite-tab", () => ({
   IndividualInviteTab: () => <div data-testid="individual-invite-tab">IndividualInviteTab</div>,
 }));
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, children }: any) => (open ? <div data-testid="modal">{children}</div> : null),
+
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
 }));
+
 vi.mock("@/modules/ui/components/tab-toggle", () => ({
   TabToggle: ({ options, onChange, defaultSelected }: any) => (
     <select data-testid="tab-toggle" value={defaultSelected} onChange={(e) => onChange(e.target.value)}>
@@ -45,9 +67,14 @@ describe("InviteMemberModal", () => {
     vi.clearAllMocks();
   });
 
-  test("renders modal and individual tab by default", () => {
+  test("renders dialog and individual tab by default", () => {
     render(<InviteMemberModal {...defaultProps} />);
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
     expect(screen.getByTestId("individual-invite-tab")).toBeInTheDocument();
     expect(screen.getByTestId("tab-toggle")).toBeInTheDocument();
   });

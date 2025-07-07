@@ -1,5 +1,9 @@
+import { TagError } from "@/modules/projects/settings/types/tag";
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
+import { ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 import { deleteTag, mergeTags, updateTagName } from "./tag";
 
@@ -57,25 +61,88 @@ describe("tag lib", () => {
     test("deletes tag and revalidates cache", async () => {
       vi.mocked(prisma.tag.delete).mockResolvedValueOnce(baseTag);
       const result = await deleteTag(baseTag.id);
-      expect(result).toEqual(baseTag);
+      expect(result).toEqual(ok(baseTag));
       expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: baseTag.id } });
     });
+    test("returns tag_not_found on tag not found", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: PrismaErrorType.RecordDoesNotExist,
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.tag.delete).mockRejectedValueOnce(prismaError);
+
+      const result = await deleteTag(baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: TagError.TAG_NOT_FOUND,
+          message: "Tag not found",
+        });
+      }
+    });
+
     test("throws error on prisma error", async () => {
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(new Error("fail"));
-      await expect(deleteTag(baseTag.id)).rejects.toThrow("fail");
+      const result = await deleteTag(baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "unexpected_error",
+          message: "fail",
+        });
+      }
     });
   });
 
   describe("updateTagName", () => {
-    test("updates tag name and revalidates cache", async () => {
+    test("returns ok on successful update", async () => {
       vi.mocked(prisma.tag.update).mockResolvedValueOnce(baseTag);
+
       const result = await updateTagName(baseTag.id, "Tag1");
-      expect(result).toEqual(baseTag);
-      expect(prisma.tag.update).toHaveBeenCalledWith({ where: { id: baseTag.id }, data: { name: "Tag1" } });
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toEqual(baseTag);
+      }
+
+      expect(prisma.tag.update).toHaveBeenCalledWith({
+        where: { id: baseTag.id },
+        data: { name: "Tag1" },
+      });
     });
-    test("throws error on prisma error", async () => {
+
+    test("returns unique_constraint_failed on unique constraint violation", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.tag.update).mockRejectedValueOnce(prismaError);
+
+      const result = await updateTagName(baseTag.id, "Tag1");
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: TagError.TAG_NAME_ALREADY_EXISTS,
+          message: "Tag with this name already exists",
+        });
+      }
+    });
+
+    test("returns internal_server_error on unknown error", async () => {
       vi.mocked(prisma.tag.update).mockRejectedValueOnce(new Error("fail"));
-      await expect(updateTagName(baseTag.id, "Tag1")).rejects.toThrow("fail");
+
+      const result = await updateTagName(baseTag.id, "Tag1");
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "unexpected_error",
+          message: "fail",
+        });
+      }
     });
   });
 
@@ -87,7 +154,7 @@ describe("tag lib", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
-      expect(result).toEqual(newTag);
+      expect(result).toEqual(ok(newTag));
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: baseTag.id } });
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: newTag.id } });
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -100,21 +167,45 @@ describe("tag lib", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([] as any);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
-      expect(result).toEqual(newTag);
+      expect(result).toEqual(ok(newTag));
     });
     test("throws if original tag not found", async () => {
       vi.mocked(prisma.tag.findUnique).mockResolvedValueOnce(null);
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("Tag not found");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "tag_not_found",
+          message: "Tag not found",
+        });
+      }
     });
     test("throws if new tag not found", async () => {
       vi.mocked(prisma.tag.findUnique)
         .mockResolvedValueOnce(baseTag as any)
         .mockResolvedValueOnce(null);
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("Tag not found");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "tag_not_found",
+          message: "Tag not found",
+        });
+      }
     });
     test("throws on prisma error", async () => {
       vi.mocked(prisma.tag.findUnique).mockRejectedValueOnce(new Error("fail"));
-      await expect(mergeTags(baseTag.id, newTag.id)).rejects.toThrow("fail");
+      const result = await mergeTags(baseTag.id, newTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "unexpected_error",
+          message: "fail",
+        });
+      }
     });
   });
 });

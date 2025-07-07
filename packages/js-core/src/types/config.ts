@@ -100,7 +100,6 @@ export interface TBaseStyling {
   inputBorderColor?: TStylingColor | null;
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
-  cardShadowColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
   isDarkModeEnabled?: boolean | null;
   roundness?: number | null;

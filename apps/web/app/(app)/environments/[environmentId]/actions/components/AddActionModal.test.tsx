@@ -22,14 +22,29 @@ vi.mock("@/modules/ui/components/button", () => ({
   ),
 }));
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open, setOpen, ...props }: any) =>
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) =>
     open ? (
-      <div data-testid="modal" {...props}>
+      <div data-testid="dialog" role="dialog">
         {children}
-        <button onClick={() => setOpen(false)}>Close Modal</button>
+        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
       </div>
     ) : null,
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children, className }: any) => (
+    <h2 data-testid="dialog-title" className={className}>
+      {children}
+    </h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
 }));
 
 vi.mock("@tolgee/react", () => ({
@@ -70,17 +85,21 @@ describe("AddActionModal", () => {
     );
     expect(screen.getByRole("button", { name: "common.add_action" })).toBeInTheDocument();
     expect(screen.getByTestId("plus-icon")).toBeInTheDocument();
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  test("opens the modal when the 'Add Action' button is clicked", async () => {
+  test("opens the dialog when the 'Add Action' button is clicked", async () => {
     render(
       <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
     );
     const addButton = screen.getByRole("button", { name: "common.add_action" });
     await userEvent.click(addButton);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
     expect(screen.getByTestId("mouse-pointer-icon")).toBeInTheDocument();
     expect(screen.getByText("environments.actions.track_new_user_action")).toBeInTheDocument();
     expect(
@@ -108,35 +127,35 @@ describe("AddActionModal", () => {
     expect(props.setActionClasses).toBeInstanceOf(Function);
   });
 
-  test("closes the modal when the close button (simulated) is clicked", async () => {
+  test("closes the dialog when the close button (simulated) is clicked", async () => {
     render(
       <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
     );
     const addButton = screen.getByRole("button", { name: "common.add_action" });
     await userEvent.click(addButton);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
 
-    // Simulate closing via the mocked Modal's close button
-    const closeModalButton = screen.getByText("Close Modal");
-    await userEvent.click(closeModalButton);
+    // Simulate closing via the mocked Dialog's close button
+    const closeDialogButton = screen.getByText("Close Dialog");
+    await userEvent.click(closeDialogButton);
 
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  test("closes the modal when setOpen is called from CreateNewActionTab", async () => {
+  test("closes the dialog when setOpen is called from CreateNewActionTab", async () => {
     render(
       <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
     );
     const addButton = screen.getByRole("button", { name: "common.add_action" });
     await userEvent.click(addButton);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
 
     // Simulate closing via the mocked CreateNewActionTab's button
     const closeFromTabButton = screen.getByText("Close from Tab");
     await userEvent.click(closeFromTabButton);
 
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 });
