@@ -12,6 +12,12 @@ export const getContacts = reactCache(async (environmentIds: string[]): Promise<
   try {
     const contacts = await prisma.contact.findMany({
       where: { environmentId: { in: environmentIds } },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        environmentId: true,
+      },
     });
 
     return contacts;
