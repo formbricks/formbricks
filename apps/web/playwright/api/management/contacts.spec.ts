@@ -22,12 +22,9 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email Address" },
-              value: uniqueEmail,
-            },
-          ],
+          attributes: {
+            email: uniqueEmail,
+          },
         },
       });
 
@@ -49,24 +46,12 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email Address" },
-              value: uniqueEmail,
-            },
-            {
-              attributeKey: { key: "firstName", name: "First Name" },
-              value: "John",
-            },
-            {
-              attributeKey: { key: "lastName", name: "Last Name" },
-              value: "Doe",
-            },
-            {
-              attributeKey: { key: "userId", name: "User ID" },
-              value: uniqueUserId,
-            },
-          ],
+          attributes: {
+            email: uniqueEmail,
+            firstName: "John",
+            lastName: "Doe",
+            userId: uniqueUserId,
+          },
         },
       });
 
@@ -79,7 +64,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       expect(contactData.data.attributes.userId).toBe(uniqueUserId);
     });
 
-    await test.step("Auto-create missing attribute keys", async () => {
+    await test.step("Return error for missing attribute keys", async () => {
       const uniqueEmail = `${baseEmail}-newkey@example.com`;
       const customKey = `customAttribute_${Date.now()}`;
 
@@ -87,23 +72,19 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email Address" },
-              value: uniqueEmail,
-            },
-            {
-              attributeKey: { key: customKey, name: "Custom Attribute" },
-              value: "custom value",
-            },
-          ],
+          attributes: {
+            email: uniqueEmail,
+            [customKey]: "custom value",
+          },
         },
       });
 
-      expect(response.status()).toBe(201);
+      expect(response.status()).toBe(400);
 
-      const contactData = await response.json();
-      expect(contactData.data.attributes[customKey]).toBe("custom value");
+      const errorData = await response.json();
+      expect(errorData.error.details[0].field).toBe("attributes");
+      expect(errorData.error.details[0].issue).toContain("attribute keys not found");
+      expect(errorData.error.details[0].issue).toContain(customKey);
     });
 
     await test.step("Prevent duplicate email addresses", async () => {
@@ -114,12 +95,9 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email" },
-              value: duplicateEmail,
-            },
-          ],
+          attributes: {
+            email: duplicateEmail,
+          },
         },
       });
       expect(firstResponse.status()).toBe(201);
@@ -129,12 +107,9 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email" },
-              value: duplicateEmail,
-            },
-          ],
+          attributes: {
+            email: duplicateEmail,
+          },
         },
       });
 
@@ -156,16 +131,10 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email" },
-              value: email1,
-            },
-            {
-              attributeKey: { key: "userId", name: "User ID" },
-              value: duplicateUserId,
-            },
-          ],
+          attributes: {
+            email: email1,
+            userId: duplicateUserId,
+          },
         },
       });
       expect(firstResponse.status()).toBe(201);
@@ -175,16 +144,10 @@ test.describe("API Tests for Single Contact Creation", () => {
         headers: { "x-api-key": apiKey },
         data: {
           environmentId,
-          attributes: [
-            {
-              attributeKey: { key: "email", name: "Email" },
-              value: email2,
-            },
-            {
-              attributeKey: { key: "userId", name: "User ID" },
-              value: duplicateUserId,
-            },
-          ],
+          attributes: {
+            email: email2,
+            userId: duplicateUserId,
+          },
         },
       });
 

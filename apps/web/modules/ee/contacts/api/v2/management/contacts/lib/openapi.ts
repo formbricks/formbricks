@@ -7,48 +7,24 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContact",
   summary: "Create a contact",
   description:
-    "Creates a contact in the database. Each contact must have a valid email address in the attributes. The email is used as the unique identifier along with the environment.",
+    "Creates a contact in the database. Each contact must have a valid email address in the attributes. All attribute keys must already exist in the environment. The email is used as the unique identifier along with the environment.",
   tags: ["Management API - Contacts"],
 
   requestBody: {
     required: true,
     description:
-      "The contact to create. Must include an email attribute and all attributes must have unique keys.",
+      "The contact to create. Must include an email attribute and all attribute keys must already exist in the environment.",
     content: {
       "application/json": {
         schema: ZContactCreateRequest,
         example: {
           environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
-          attributes: [
-            {
-              attributeKey: {
-                key: "email",
-                name: "Email Address",
-              },
-              value: "john.doe@example.com",
-            },
-            {
-              attributeKey: {
-                key: "firstName",
-                name: "First Name",
-              },
-              value: "John",
-            },
-            {
-              attributeKey: {
-                key: "lastName",
-                name: "Last Name",
-              },
-              value: "Doe",
-            },
-            {
-              attributeKey: {
-                key: "userId",
-                name: "User ID",
-              },
-              value: "h2xce9q8p3w4x5y6z7a8b9c1",
-            },
-          ],
+          attributes: {
+            email: "john.doe@example.com",
+            firstName: "John",
+            lastName: "Doe",
+            userId: "h2xce9q8p3w4x5y6z7a8b9c1",
+          },
         },
       },
     },

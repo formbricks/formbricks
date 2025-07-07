@@ -265,13 +265,27 @@ export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase &
   failed: number;
 };
 
-// Schema for single contact creation
+// Schema for single contact creation - simplified with flat attributes
 export const ZContactCreateRequest = z.object({
   environmentId: z.string().cuid2(),
-  attributes: z.array(ZContactBulkUploadAttribute).superRefine((attributes, ctx) => {
-    // Use helper functions for validation
-    validateEmailAttribute(attributes, ctx);
-    validateUniqueAttributeKeys(attributes, ctx);
+  attributes: z.record(z.string(), z.string()).superRefine((attributes, ctx) => {
+    // Check if email attribute exists and is valid
+    const email = attributes.email;
+    if (!email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email attribute is required",
+      });
+    } else {
+      // Check email format
+      const parsedEmail = z.string().email().safeParse(email);
+      if (!parsedEmail.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid email format",
+        });
+      }
+    }
   }),
 });
 
@@ -282,7 +296,7 @@ export const ZContactResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   environmentId: z.string().cuid2(),
-  attributes: z.record(z.string().nullable()),
+  attributes: z.record(z.string(), z.string()),
 });
 
 export type TContactResponse = z.infer<typeof ZContactResponse>;

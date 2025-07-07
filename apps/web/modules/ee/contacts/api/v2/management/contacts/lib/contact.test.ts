@@ -14,7 +14,6 @@ vi.mock("@formbricks/database", () => ({
     },
     contactAttributeKey: {
       findMany: vi.fn(),
-      createManyAndReturn: vi.fn(),
     },
     contactAttribute: {
       createMany: vi.fn(),
@@ -32,12 +31,9 @@ describe("contact.ts", () => {
     test("returns bad_request error when email attribute is missing", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "firstName", name: "First Name" },
-            value: "John",
-          },
-        ],
+        attributes: {
+          firstName: "John",
+        },
       };
 
       const result = await createContact(contactData);
@@ -52,12 +48,9 @@ describe("contact.ts", () => {
     test("returns bad_request error when email attribute value is empty", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "",
-          },
-        ],
+        attributes: {
+          email: "",
+        },
       };
 
       const result = await createContact(contactData);
@@ -69,15 +62,36 @@ describe("contact.ts", () => {
       }
     });
 
+    test("returns bad_request error when attribute keys do not exist", async () => {
+      const contactData: TContactCreateRequest = {
+        environmentId: "env123",
+        attributes: {
+          email: "john@example.com",
+          nonExistentKey: "value",
+        },
+      };
+
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+      ] as TContactAttributeKey[]);
+
+      const result = await createContact(contactData);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("bad_request");
+        expect(result.error.details).toEqual([
+          { field: "attributes", issue: "attribute keys not found: nonExistentKey" },
+        ]);
+      }
+    });
+
     test("returns conflict error when contact with same email already exists", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+        },
       };
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({
@@ -102,16 +116,10 @@ describe("contact.ts", () => {
     test("returns conflict error when contact with same userId already exists", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-          {
-            attributeKey: { key: "userId", name: "User ID" },
-            value: "user123",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+          userId: "user123",
+        },
       };
 
       vi.mocked(prisma.contact.findFirst)
@@ -138,27 +146,20 @@ describe("contact.ts", () => {
     test("successfully creates contact with existing attribute keys", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-          {
-            attributeKey: { key: "firstName", name: "First Name" },
-            value: "John",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+          firstName: "John",
+        },
       };
 
       const existingAttributeKeys = [
         { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
         { id: "attr2", key: "firstName", name: "First Name", type: "custom", environmentId: "env123" },
-      ] as any;
+      ] as TContactAttributeKey[];
 
       const createdContact = {
         id: "contact123",
         environmentId: "env123",
-        userId: null,
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
       };
@@ -181,9 +182,6 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         return callback({
-          contactAttributeKey: {
-            createManyAndReturn: vi.fn(),
-          } as any,
           contact: {
             create: vi.fn().mockResolvedValue(createdContact),
             findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
@@ -210,97 +208,20 @@ describe("contact.ts", () => {
       }
     });
 
-    test("successfully creates contact with new attribute keys", async () => {
+    test("returns internal_server_error when transaction returns null", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-          {
-            attributeKey: { key: "customField", name: "Custom Field" },
-            value: "Custom Value",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+        },
       };
 
       const existingAttributeKeys = [
         { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
-      ] as any;
-
-      const newAttributeKeys = [
-        { id: "attr2", key: "customField", name: "Custom Field", type: "custom", environmentId: "env123" },
-      ] as any;
-
-      const createdContact = {
-        id: "contact123",
-        environmentId: "env123",
-        userId: null,
-        createdAt: new Date("2023-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2023-01-01T00:00:00.000Z"),
-      };
-
-      const contactWithAttributes = {
-        ...createdContact,
-        attributes: [
-          {
-            attributeKey: existingAttributeKeys[0],
-            value: "john@example.com",
-          },
-          {
-            attributeKey: newAttributeKeys[0],
-            value: "Custom Value",
-          },
-        ],
-      };
+      ] as TContactAttributeKey[];
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        return callback({
-          contactAttributeKey: {
-            createManyAndReturn: vi.fn().mockResolvedValue(newAttributeKeys),
-          } as any,
-          contact: {
-            create: vi.fn().mockResolvedValue(createdContact),
-            findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
-          } as any,
-          contactAttribute: {
-            createMany: vi.fn(),
-          } as any,
-        } as any);
-      });
-
-      const result = await createContact(contactData);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({
-          id: "contact123",
-          createdAt: new Date("2023-01-01T00:00:00.000Z"),
-          environmentId: "env123",
-          attributes: {
-            email: "john@example.com",
-            customField: "Custom Value",
-          },
-        });
-      }
-    });
-
-    test("returns internal_server_error when transaction returns null", async () => {
-      const contactData: TContactCreateRequest = {
-        environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-        ],
-      };
-
-      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
       vi.mocked(prisma.$transaction).mockResolvedValue(null);
 
       const result = await createContact(contactData);
@@ -312,57 +233,12 @@ describe("contact.ts", () => {
       }
     });
 
-    test("returns internal_server_error when attribute key is not found during transaction", async () => {
-      const contactData: TContactCreateRequest = {
-        environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-        ],
-      };
-
-      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        return callback({
-          contactAttributeKey: {
-            createManyAndReturn: vi.fn().mockResolvedValue([]),
-          } as any,
-          contact: {
-            create: vi.fn().mockResolvedValue({
-              id: "contact123",
-              environmentId: "env123",
-              userId: null,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
-          } as any,
-          contactAttribute: {
-            createMany: vi.fn(),
-          } as any,
-        } as any);
-      });
-
-      const result = await createContact(contactData);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
-        expect(result.error.details).toEqual([{ field: "contact", issue: "Attribute key email not found" }]);
-      }
-    });
-
     test("returns internal_server_error when database error occurs", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+        },
       };
 
       vi.mocked(prisma.contact.findFirst).mockRejectedValue(new Error("Database connection failed"));
@@ -379,12 +255,9 @@ describe("contact.ts", () => {
     test("does not check for userId conflict when userId is not provided", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
-        attributes: [
-          {
-            attributeKey: { key: "email", name: "Email" },
-            value: "john@example.com",
-          },
-        ],
+        attributes: {
+          email: "john@example.com",
+        },
       };
 
       const existingAttributeKeys = [
@@ -394,7 +267,6 @@ describe("contact.ts", () => {
       const createdContact = {
         id: "contact123",
         environmentId: "env123",
-        userId: null,
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
       };
@@ -413,9 +285,6 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         return callback({
-          contactAttributeKey: {
-            createManyAndReturn: vi.fn(),
-          } as any,
           contact: {
             create: vi.fn().mockResolvedValue(createdContact),
             findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
@@ -430,6 +299,84 @@ describe("contact.ts", () => {
 
       expect(result.ok).toBe(true);
       expect(prisma.contact.findFirst).toHaveBeenCalledTimes(1); // Only called once for email check
+    });
+
+    test("returns bad_request error when multiple attribute keys are missing", async () => {
+      const contactData: TContactCreateRequest = {
+        environmentId: "env123",
+        attributes: {
+          email: "john@example.com",
+          nonExistentKey1: "value1",
+          nonExistentKey2: "value2",
+        },
+      };
+
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+      ] as TContactAttributeKey[]);
+
+      const result = await createContact(contactData);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("bad_request");
+        expect(result.error.details).toEqual([
+          { field: "attributes", issue: "attribute keys not found: nonExistentKey1, nonExistentKey2" },
+        ]);
+      }
+    });
+
+    test("correctly handles userId extraction from attributes", async () => {
+      const contactData: TContactCreateRequest = {
+        environmentId: "env123",
+        attributes: {
+          email: "john@example.com",
+          userId: "user123",
+          firstName: "John",
+        },
+      };
+
+      const existingAttributeKeys = [
+        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+        { id: "attr2", key: "userId", name: "User ID", type: "default", environmentId: "env123" },
+        { id: "attr3", key: "firstName", name: "First Name", type: "custom", environmentId: "env123" },
+      ] as TContactAttributeKey[];
+
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
+
+      const createdContact = {
+        id: "contact123",
+        environmentId: "env123",
+        createdAt: new Date("2023-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2023-01-01T00:00:00.000Z"),
+      };
+
+      const contactWithAttributes = {
+        ...createdContact,
+        attributes: [
+          { attributeKey: existingAttributeKeys[0], value: "john@example.com" },
+          { attributeKey: existingAttributeKeys[1], value: "user123" },
+          { attributeKey: existingAttributeKeys[2], value: "John" },
+        ],
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+        return callback({
+          contact: {
+            create: vi.fn().mockResolvedValue(createdContact),
+            findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
+          } as any,
+          contactAttribute: {
+            createMany: vi.fn(),
+          } as any,
+        } as any);
+      });
+
+      const result = await createContact(contactData);
+
+      expect(result.ok).toBe(true);
+      expect(prisma.contact.findFirst).toHaveBeenCalledTimes(2); // Called once for email check and once for userId check
     });
   });
 });

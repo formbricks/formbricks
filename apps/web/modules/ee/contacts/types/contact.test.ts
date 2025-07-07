@@ -402,18 +402,25 @@ describe("ZContactBulkUploadRequest", () => {
 });
 
 describe("ZContactCreateRequest", () => {
-  test("should validate valid create request", () => {
+  test("should validate valid create request with simplified flat attributes", () => {
     const validRequest = {
       environmentId: "cld1234567890abcdef123456",
-      attributes: [
-        {
-          attributeKey: {
-            key: "email",
-            name: "Email",
-          },
-          value: "test@example.com",
-        },
-      ],
+      attributes: {
+        email: "test@example.com",
+        firstName: "John",
+        lastName: "Doe",
+      },
+    };
+    const result = ZContactCreateRequest.parse(validRequest);
+    expect(result).toEqual(validRequest);
+  });
+
+  test("should validate create request with only email attribute", () => {
+    const validRequest = {
+      environmentId: "cld1234567890abcdef123456",
+      attributes: {
+        email: "test@example.com",
+      },
     };
     const result = ZContactCreateRequest.parse(validRequest);
     expect(result).toEqual(validRequest);
@@ -422,46 +429,78 @@ describe("ZContactCreateRequest", () => {
   test("should reject create request without email attribute", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
-      attributes: [
-        {
-          attributeKey: {
-            key: "firstName",
-            name: "First Name",
-          },
-          value: "John",
-        },
-      ],
+      attributes: {
+        firstName: "John",
+        lastName: "Doe",
+      },
     };
     expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
-  test("should reject create request with duplicate attribute keys", () => {
+  test("should reject create request with invalid email format", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
-      attributes: [
-        {
-          attributeKey: {
-            key: "email",
-            name: "Email",
-          },
-          value: "test@example.com",
-        },
-        {
-          attributeKey: {
-            key: "email",
-            name: "Email Duplicate",
-          },
-          value: "test2@example.com",
-        },
-      ],
+      attributes: {
+        email: "invalid-email",
+        firstName: "John",
+      },
+    };
+    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+  });
+
+  test("should reject create request with empty email", () => {
+    const invalidRequest = {
+      environmentId: "cld1234567890abcdef123456",
+      attributes: {
+        email: "",
+        firstName: "John",
+      },
+    };
+    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+  });
+
+  test("should reject create request with invalid environmentId", () => {
+    const invalidRequest = {
+      environmentId: "invalid-id",
+      attributes: {
+        email: "test@example.com",
+      },
     };
     expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 });
 
 describe("ZContactResponse", () => {
-  test("should validate valid contact response", () => {
+  test("should validate valid contact response with flat string attributes", () => {
     const validResponse = {
+      id: "cld1234567890abcdef123456",
+      createdAt: new Date(),
+      environmentId: "cld1234567890abcdef123456",
+      attributes: {
+        email: "test@example.com",
+        firstName: "John",
+        lastName: "Doe",
+      },
+    };
+    const result = ZContactResponse.parse(validResponse);
+    expect(result).toEqual(validResponse);
+  });
+
+  test("should validate contact response with only email attribute", () => {
+    const validResponse = {
+      id: "cld1234567890abcdef123456",
+      createdAt: new Date(),
+      environmentId: "cld1234567890abcdef123456",
+      attributes: {
+        email: "test@example.com",
+      },
+    };
+    const result = ZContactResponse.parse(validResponse);
+    expect(result).toEqual(validResponse);
+  });
+
+  test("should reject contact response with null attribute values", () => {
+    const invalidResponse = {
       id: "cld1234567890abcdef123456",
       createdAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
@@ -471,8 +510,31 @@ describe("ZContactResponse", () => {
         lastName: null,
       },
     };
-    const result = ZContactResponse.parse(validResponse);
-    expect(result).toEqual(validResponse);
+    expect(() => ZContactResponse.parse(invalidResponse)).toThrow(ZodError);
+  });
+
+  test("should reject contact response with invalid id format", () => {
+    const invalidResponse = {
+      id: "invalid-id",
+      createdAt: new Date(),
+      environmentId: "cld1234567890abcdef123456",
+      attributes: {
+        email: "test@example.com",
+      },
+    };
+    expect(() => ZContactResponse.parse(invalidResponse)).toThrow(ZodError);
+  });
+
+  test("should reject contact response with invalid environmentId format", () => {
+    const invalidResponse = {
+      id: "cld1234567890abcdef123456",
+      createdAt: new Date(),
+      environmentId: "invalid-env-id",
+      attributes: {
+        email: "test@example.com",
+      },
+    };
+    expect(() => ZContactResponse.parse(invalidResponse)).toThrow(ZodError);
   });
 });
 

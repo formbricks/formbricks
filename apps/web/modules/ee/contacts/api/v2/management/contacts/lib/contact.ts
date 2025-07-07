@@ -9,8 +9,8 @@ export const createContact = async (
   const { environmentId, attributes } = contactData;
 
   try {
-    const emailAttr = attributes.find((attr) => attr.attributeKey.key === "email");
-    if (!emailAttr?.value) {
+    const emailValue = attributes.email;
+    if (!emailValue) {
       return err({
         type: "bad_request",
         details: [{ field: "attributes", issue: "email attribute is required" }],
@@ -18,8 +18,7 @@ export const createContact = async (
     }
 
     // Extract userId if present
-    const userIdAttr = attributes.find((attr) => attr.attributeKey.key === "userId");
-    const userId = userIdAttr?.value;
+    const userId = attributes.userId;
 
     // Check for existing contact with same email
     const existingContactByEmail = await prisma.contact.findFirst({
@@ -28,7 +27,7 @@ export const createContact = async (
         attributes: {
           some: {
             attributeKey: { key: "email" },
-            value: emailAttr.value,
+            value: emailValue,
           },
         },
       },
@@ -63,8 +62,8 @@ export const createContact = async (
       }
     }
 
-    // Get all attribute keys that need to be created
-    const attributeKeys = attributes.map((attr) => attr.attributeKey.key);
+    // Get all attribute keys that need to exist
+    const attributeKeys = Object.keys(attributes);
 
     // Check which attribute keys exist in the environment
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
@@ -77,27 +76,18 @@ export const createContact = async (
     const existingKeySet = new Set(existingAttributeKeys.map((key) => key.key));
 
     // Identify missing attribute keys
-    const attributeKeysToCreate = attributes
-      .filter((attr) => !existingKeySet.has(attr.attributeKey.key))
-      .map((attr) => ({
-        key: attr.attributeKey.key,
-        name: attr.attributeKey.name,
-        type: "custom" as const,
-        environmentId,
-      }));
+    const missingKeys = attributeKeys.filter((key) => !existingKeySet.has(key));
+
+    // If any keys are missing, return an error
+    if (missingKeys.length > 0) {
+      return err({
+        type: "bad_request",
+        details: [{ field: "attributes", issue: `attribute keys not found: ${missingKeys.join(", ")}` }],
+      });
+    }
 
     // Create the contact and attributes in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create missing attribute keys within the transaction
-      if (attributeKeysToCreate.length > 0) {
-        const newlyCreatedKeys = await tx.contactAttributeKey.createManyAndReturn({
-          data: attributeKeysToCreate,
-        });
-
-        // Add newly created keys to the existing array
-        existingAttributeKeys.push(...newlyCreatedKeys);
-      }
-
       // Create the contact
       const newContact = await tx.contact.create({
         data: {
@@ -106,15 +96,12 @@ export const createContact = async (
       });
 
       // Create all attributes for the contact
-      const attributeData = attributes.map((attr) => {
-        const attributeKey = existingAttributeKeys.find((key) => key.key === attr.attributeKey.key);
-        if (!attributeKey) {
-          throw new Error(`Attribute key ${attr.attributeKey.key} not found`);
-        }
+      const attributeData = Object.entries(attributes).map(([key, value]) => {
+        const attributeKey = existingAttributeKeys.find((ak) => ak.key === key)!;
         return {
           contactId: newContact.id,
           attributeKeyId: attributeKey.id,
-          value: attr.value,
+          value,
         };
       });
 
@@ -145,7 +132,7 @@ export const createContact = async (
     }
 
     // Format the response with flattened attributes
-    const flattenedAttributes: Record<string, string | null> = {};
+    const flattenedAttributes: Record<string, string> = {};
     result.attributes.forEach((attr) => {
       flattenedAttributes[attr.attributeKey.key] = attr.value;
     });
