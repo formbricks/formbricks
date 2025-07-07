@@ -1,7 +1,8 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { RefObject, useState } from "react";
+import { useTranslate } from "@tolgee/react";
+import { RefObject } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
@@ -11,6 +12,8 @@ interface FallbackInputProps {
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
   fallbackInputRef: RefObject<HTMLInputElement>;
   addFallback: () => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 export const FallbackInput = ({
@@ -19,21 +22,17 @@ export const FallbackInput = ({
   setFallbacks,
   fallbackInputRef,
   addFallback,
+  open,
+  setOpen,
 }: FallbackInputProps) => {
-  const [open, setOpen] = useState(true);
-
+  const { t } = useTranslate();
   const containsEmptyFallback = () => {
     const fallBacksList = Object.values(fallbacks);
     return fallBacksList.length === 0 || fallBacksList.map((value) => value.trim()).includes("");
   };
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen && containsEmptyFallback()) return;
-    setOpen(isOpen);
-  };
-
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open}>
       <PopoverTrigger asChild>
         <div className="z-10 h-0 w-full cursor-pointer" />
       </PopoverTrigger>
@@ -43,9 +42,9 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}>
-        <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
+        <p className="font-medium">{t("environments.surveys.edit.add_fallback_placeholder")}</p>
 
-        <div className="mt-2 space-y-2 pr-1">
+        <div className="mt-2 space-y-2">
           {filteredRecallItems.map((recallItem, idx) => {
             if (!recallItem) return null;
             return (
@@ -55,12 +54,12 @@ export const FallbackInput = ({
                   ref={idx === 0 ? fallbackInputRef : undefined}
                   id="fallback"
                   value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
-                  placeholder={"Fallback for " + recallItem.label}
+                  placeholder={`${t("environments.surveys.edit.fallback_for")} ${recallItem.label}`}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       if (containsEmptyFallback()) {
-                        toast.error("Fallback missing");
+                        toast.error(t("environments.surveys.edit.fallback_missing"));
                         return;
                       }
                       addFallback();
@@ -87,7 +86,7 @@ export const FallbackInput = ({
               addFallback();
               setOpen(false);
             }}>
-            Add
+            {t("environments.surveys.edit.add_fallback")}
           </Button>
         </div>
       </PopoverContent>
