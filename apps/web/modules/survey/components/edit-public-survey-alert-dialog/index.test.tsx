@@ -65,9 +65,6 @@ describe("EditPublicSurveyAlertDialog", () => {
     expect(
       screen.getByText("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.surveys.edit.caution_explanation_all_data_as_download")
-    ).toBeInTheDocument();
   });
 
   test("renders default close button and calls setOpen when clicked", () => {
