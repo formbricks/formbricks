@@ -217,14 +217,10 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
           />
         </div>
 
-        <div className="flex justify-between border-t border-slate-200 py-6">
-          <div>
+        <div className="flex justify-between space-x-2">
+          <div className="flex space-x-2">
             {!isReadOnly && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setOpenDeleteDialog(true)}
-                className="mr-3">
+              <Button type="button" variant="destructive" onClick={() => setOpenDeleteDialog(true)}>
                 <TrashIcon />
                 {t("common.delete")}
               </Button>

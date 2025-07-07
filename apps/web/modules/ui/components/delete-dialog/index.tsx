@@ -1,8 +1,17 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
+import { TrashIcon } from "lucide-react";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -33,25 +42,38 @@ export const DeleteDialog = ({
 }: DeleteDialogProps) => {
   const { t } = useTranslate();
   return (
-    <Modal open={open} setOpen={setOpen} title={`${t("common.delete")} ${deleteWhat}`}>
-      <p>{text || t("common.are_you_sure_this_action_cannot_be_undone")}</p>
-      <div>{children}</div>
-      <div className="mt-4 space-x-2 text-right">
-        <Button
-          loading={isSaving}
-          variant="secondary"
-          onClick={() => {
-            if (useSaveInsteadOfCancel && onSave) {
-              onSave();
-            }
-            setOpen(false);
-          }}>
-          {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
-        </Button>
-        <Button variant="destructive" onClick={onDelete} loading={isDeleting} disabled={disabled}>
-          {t("common.delete")}
-        </Button>
-      </div>
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
+        <DialogHeader>
+          <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
+          <DialogDescription>
+            {t("environments.project.general.this_action_cannot_be_undone")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          <p>{text}</p>
+          {children && <div>{children}</div>}
+        </DialogBody>
+
+        <DialogFooter>
+          <Button
+            loading={isSaving}
+            variant="secondary"
+            onClick={() => {
+              if (useSaveInsteadOfCancel && onSave) {
+                onSave();
+              }
+              setOpen(false);
+            }}>
+            {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
+          </Button>
+          <Button variant="destructive" onClick={onDelete} loading={isDeleting} disabled={disabled}>
+            <TrashIcon />
+            {t("common.delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

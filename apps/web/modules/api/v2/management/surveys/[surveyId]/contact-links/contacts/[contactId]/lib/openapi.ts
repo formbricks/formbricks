@@ -10,7 +10,7 @@ export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
   requestParams: {
     path: ZContactLinkParams,
   },
-  tags: ["Management API > Surveys > Contact Links"],
+  tags: ["Management API - Surveys - Contact Links"],
   responses: {
     "200": {
       description: "Personalized survey link retrieved successfully.",

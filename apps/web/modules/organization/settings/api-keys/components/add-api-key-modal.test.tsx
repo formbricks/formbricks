@@ -5,6 +5,44 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
+}));
+
 // Mock the translate hook
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
@@ -102,11 +140,9 @@ describe("AddApiKeyModal", () => {
 
   test("renders the modal with initial state", () => {
     render(<AddApiKeyModal {...defaultProps} />);
-    const modalTitle = screen.getByText("environments.project.api_keys.add_api_key", {
-      selector: "div.text-xl",
-    });
 
-    expect(modalTitle).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("environments.project.api_keys.add_api_key");
     expect(screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack")).toBeInTheDocument();
     expect(screen.getByText("environments.project.api_keys.project_access")).toBeInTheDocument();
   });

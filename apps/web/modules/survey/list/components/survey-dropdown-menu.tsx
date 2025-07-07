@@ -41,8 +41,8 @@ interface SurveyDropDownMenuProps {
   refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
-  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  onSurveysCopied?: () => void;
 }
 
 export const SurveyDropDownMenu = ({
@@ -53,7 +53,7 @@ export const SurveyDropDownMenu = ({
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
-  duplicateSurvey,
+  onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
   const { t } = useTranslate();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -102,13 +102,14 @@ export const SurveyDropDownMenu = ({
         surveyId,
         targetEnvironmentId: environmentId,
       });
-      router.refresh();
 
       if (duplicatedSurveyResponse?.data) {
         const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });
-        if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
+        if (transformedDuplicatedSurvey?.data) {
+          onSurveysCopied?.();
+        }
         toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
@@ -195,9 +196,8 @@ export const SurveyDropDownMenu = ({
                       e.preventDefault();
                       setIsDropDownOpen(false);
                       const newId = await refreshSingleUseId();
-                      const previewUrl = newId
-                        ? `/s/${survey.id}?suId=${newId}&preview=true`
-                        : `/s/${survey.id}?preview=true`;
+                      const previewUrl =
+                        surveyLink + (newId ? `?suId=${newId}&preview=true` : "?preview=true");
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />

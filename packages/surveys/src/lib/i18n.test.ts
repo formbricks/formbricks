@@ -7,6 +7,9 @@ describe("i18n", () => {
     test("should return empty string for undefined value", () => {
       expect(getLocalizedValue(undefined, "en")).toBe("");
     });
+    test("should return empty string for empty string", () => {
+      expect(getLocalizedValue({ default: "" }, "en")).toBe("");
+    });
 
     test("should return empty string for non-i18n string", () => {
       expect(getLocalizedValue("not an i18n string" as any, "en")).toBe("");
