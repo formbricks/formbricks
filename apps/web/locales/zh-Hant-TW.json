@@ -1305,7 +1305,6 @@
         "casual": "隨意",
         "caution_edit_duplicate": "複製 & 編輯",
         "caution_edit_published_survey": "編輯已發佈的調查？",
-        "caution_explanation_all_data_as_download": "所有數據，包括過去的回應，都可以下載。",
         "caution_explanation_intro": "我們了解您可能仍然想要進行更改。如果您這樣做，將會發生以下情況：",
         "caution_explanation_new_responses_separated": "更改前的回應可能未被納入或只有部分包含在調查摘要中。",
         "caution_explanation_only_new_responses_in_summary": "所有數據，包括過去的回應，仍可在調查摘要頁面下載。",

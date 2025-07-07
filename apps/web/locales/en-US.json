@@ -1305,7 +1305,6 @@
         "casual": "Casual",
         "caution_edit_duplicate": "Duplicate & edit",
         "caution_edit_published_survey": "Edit a published survey?",
-        "caution_explanation_all_data_as_download": "All data, including past responses are available as download.",
         "caution_explanation_intro": "We understand you might still want to make changes. Here’s what happens if you do: ",
         "caution_explanation_new_responses_separated": "Responses before the change may not or only partially be included in the survey summary.",
         "caution_explanation_only_new_responses_in_summary": "All data, including past responses, remain available as download on the survey summary page.",
