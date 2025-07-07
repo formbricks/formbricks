@@ -240,6 +240,9 @@
       "cache": false,
       "persistent": true
     },
+    "storybook#storybook": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "test": {
       "outputs": []
     },

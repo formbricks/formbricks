@@ -1,5 +1,4 @@
-import { TolgeeNextProvider } from "@/tolgee/client";
-import { Meta, StoryObj } from "@storybook/react";
+import { Meta, StoryObj } from "@storybook/react-vite";
 import { AlertDialog } from "./index";
 
 const meta: Meta<typeof AlertDialog> = {
@@ -42,13 +41,6 @@ const meta: Meta<typeof AlertDialog> = {
       description: "Function called when decline button is clicked",
     },
   },
-  decorators: [
-    (Story) => (
-      <TolgeeNextProvider language="en" staticData={{}}>
-        <Story />
-      </TolgeeNextProvider>
-    ),
-  ],
 };
 
 export default meta;
