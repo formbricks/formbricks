@@ -4,12 +4,14 @@ import { useTranslate } from "@tolgee/react";
 import { TriangleAlertIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface PendingDowngradeBannerProps {
   lastChecked: Date;
   active: boolean;
   isPendingDowngrade: boolean;
   environmentId: string;
+  locale: TUserLocale;
 }
 
 export const PendingDowngradeBanner = ({
@@ -17,6 +19,7 @@ export const PendingDowngradeBanner = ({
   active,
   isPendingDowngrade,
   environmentId,
+  locale,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslate();
@@ -25,7 +28,7 @@ export const PendingDowngradeBanner = ({
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
-  const formattedDate = scheduledDowngradeDate.toLocaleDateString("en-US", {
+  const formattedDate = scheduledDowngradeDate.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
