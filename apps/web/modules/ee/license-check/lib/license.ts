@@ -1,5 +1,5 @@
 import { env } from "@/lib/env";
-import { hashString } from "@/lib/hashString";
+import { hashString } from "@/lib/hash-string";
 import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { getCache } from "@/modules/cache/lib/service";
 import {

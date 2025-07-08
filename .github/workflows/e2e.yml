@@ -89,6 +89,7 @@ jobs:
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
+          sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
         shell: bash
@@ -101,6 +102,12 @@ jobs:
         run: |
           # pnpm prisma migrate deploy
           pnpm db:migrate:dev
+
+      - name: Run Rate Limiter Load Tests
+        run: |
+          echo "Running rate limiter load tests with Redis/Valkey..."
+          cd apps/web && pnpm vitest run modules/core/rate-limit/rate-limit-load.test.ts
+        shell: bash
 
       - name: Check for Enterprise License
         run: |
