@@ -134,7 +134,7 @@ export const middleware = async (originalRequest: NextRequest) => {
       await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
-      // NOSONAR - This is a catch all for rate limiting errors
+      logger.error(e, "Error applying rate limiting");
       const apiError: ApiErrorResponseV2 = {
         type: "too_many_requests",
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
