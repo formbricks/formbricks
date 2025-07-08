@@ -34,8 +34,6 @@ interface SurveyAnalysisCTAProps {
 interface ModalState {
   share: boolean;
   embed: boolean;
-  panel: boolean;
-  dropdown: boolean;
 }
 
 export const SurveyAnalysisCTA = ({
@@ -58,8 +56,6 @@ export const SurveyAnalysisCTA = ({
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
     embed: false,
-    panel: false,
-    dropdown: false,
   });
 
   const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
@@ -107,7 +103,7 @@ export const SurveyAnalysisCTA = ({
     return `${surveyUrl}${separator}preview=true`;
   };
 
-  const handleModalState = (modalView: keyof Omit<ModalState, "dropdown">) => {
+  const handleModalState = (modalView: keyof ModalState) => {
     return (open: boolean | ((prevState: boolean) => boolean)) => {
       const newValue = typeof open === "function" ? open(modalState[modalView]) : open;
       setModalState((prev) => ({ ...prev, [modalView]: newValue }));
@@ -117,7 +113,6 @@ export const SurveyAnalysisCTA = ({
   const shareEmbedViews = [
     { key: "share", modalView: "start" as const, setOpen: handleShareModalToggle },
     { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
-    { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
@@ -171,25 +166,22 @@ export const SurveyAnalysisCTA = ({
         {t("environments.surveys.summary.share_survey")}
       </Button>
 
-      {user && (
-        <>
-          {shareEmbedViews.map(({ key, modalView, setOpen }) => (
-            <ShareEmbedSurvey
-              key={key}
-              survey={survey}
-              publicDomain={publicDomain}
-              open={modalState[key as keyof ModalState]}
-              setOpen={setOpen}
-              user={user}
-              modalView={modalView}
-              segments={segments}
-              isContactsEnabled={isContactsEnabled}
-              isFormbricksCloud={isFormbricksCloud}
-            />
-          ))}
-          <SuccessMessage environment={environment} survey={survey} />
-        </>
-      )}
+      {user &&
+        shareEmbedViews.map(({ key, modalView, setOpen }) => (
+          <ShareEmbedSurvey
+            key={key}
+            survey={survey}
+            publicDomain={publicDomain}
+            open={modalState[key as keyof ModalState]}
+            setOpen={setOpen}
+            user={user}
+            modalView={modalView}
+            segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={isFormbricksCloud}
+          />
+        ))}
+      <SuccessMessage environment={environment} survey={survey} />
 
       {responseCount > 0 && (
         <EditPublicSurveyAlertDialog

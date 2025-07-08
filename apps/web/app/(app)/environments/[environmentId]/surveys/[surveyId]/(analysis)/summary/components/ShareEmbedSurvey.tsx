@@ -11,9 +11,9 @@ import {
   Code2Icon,
   LinkIcon,
   MailIcon,
+  Share2Icon,
   SmartphoneIcon,
   UserIcon,
-  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,7 +27,7 @@ interface ShareEmbedSurveyProps {
   survey: TSurvey;
   publicDomain: string;
   open: boolean;
-  modalView: "start" | "embed" | "panel";
+  modalView: "start" | "embed";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
   segments: TSegment[];
@@ -69,7 +69,7 @@ export const ShareEmbedSurvey = ({
   );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
-  const [showView, setShowView] = useState<"start" | "embed" | "panel" | "personal-links">("start");
+  const [showView, setShowView] = useState<"start" | "embed">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
@@ -138,8 +138,24 @@ export const ShareEmbedSurvey = ({
                   type="button"
                   onClick={() => setShowView("embed")}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <Code2Icon className="h-6 w-6 text-slate-700" />
-                  {t("environments.surveys.summary.embed_survey")}
+                  <Share2Icon className="h-6 w-6 text-slate-700" />
+                  {t("environments.surveys.summary.share_survey")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowView("embed");
+                    setActiveId(tabs[1].id);
+                  }}
+                  className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
+                  <UserIcon className="h-6 w-6 text-slate-700" />
+                  {t("environments.surveys.summary.use_personal_links")}
+                  <Badge
+                    size="tiny"
+                    type="success"
+                    className="absolute right-3 top-3"
+                    text={t("common.new")}
+                  />
                 </button>
                 <Link
                   href={`/environments/${environmentId}/settings/notifications`}
@@ -153,46 +169,26 @@ export const ShareEmbedSurvey = ({
                   <BlocksIcon className="h-6 w-6 text-slate-700" />
                   {t("environments.surveys.summary.setup_integrations")}
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowView("panel")}
-                  className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <UsersRound className="h-6 w-6 text-slate-700" />
-                  {t("environments.surveys.summary.send_to_panel")}
-                  <Badge
-                    size="tiny"
-                    type="success"
-                    className="absolute right-3 top-3"
-                    text={t("common.new")}
-                  />
-                </button>
               </div>
             </div>
           </div>
-        ) : showView === "embed" ? (
-          <>
-            <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
-            <EmbedView
-              tabs={survey.type === "link" ? tabs : [tabs[4]]}
-              activeId={activeId}
-              environmentId={environmentId}
-              setActiveId={setActiveId}
-              survey={survey}
-              email={email}
-              surveyUrl={surveyUrl}
-              publicDomain={publicDomain}
-              setSurveyUrl={setSurveyUrl}
-              locale={user.locale}
-              segments={segments}
-              isContactsEnabled={isContactsEnabled}
-              isFormbricksCloud={isFormbricksCloud}
-            />
-          </>
-        ) : showView === "panel" ? (
-          <>
-            <DialogTitle className="sr-only">{t("environments.surveys.summary.send_to_panel")}</DialogTitle>
-          </>
-        ) : null}
+        ) : (
+          <EmbedView
+            tabs={survey.type === "link" ? tabs : [tabs[4]]}
+            activeId={activeId}
+            environmentId={environmentId}
+            setActiveId={setActiveId}
+            survey={survey}
+            email={email}
+            surveyUrl={surveyUrl}
+            publicDomain={publicDomain}
+            setSurveyUrl={setSurveyUrl}
+            locale={user.locale}
+            segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={isFormbricksCloud}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

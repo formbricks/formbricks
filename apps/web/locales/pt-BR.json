@@ -1303,7 +1303,6 @@
         "casual": "Casual",
         "caution_edit_duplicate": "Duplicar e editar",
         "caution_edit_published_survey": "Editar uma pesquisa publicada?",
-        "caution_explanation_all_data_as_download": "Todos os dados, incluindo respostas anteriores, estão disponíveis para download.",
         "caution_explanation_intro": "Entendemos que você ainda pode querer fazer alterações. Aqui está o que acontece se você fizer:",
         "caution_explanation_new_responses_separated": "Respostas antes da mudança podem não ser ou apenas parcialmente incluídas no resumo da pesquisa.",
         "caution_explanation_only_new_responses_in_summary": "Todos os dados, incluindo respostas anteriores, permanecem disponíveis para download na página de resumo da pesquisa.",
