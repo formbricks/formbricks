@@ -20,7 +20,6 @@ const mockContact = {
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
-  userId: null,
 };
 
 describe("contact lib", () => {
