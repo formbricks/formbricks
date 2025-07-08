@@ -12,15 +12,16 @@ import {
   LinkIcon,
   MailIcon,
   SmartphoneIcon,
+  UserIcon,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
-import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
@@ -29,6 +30,9 @@ interface ShareEmbedSurveyProps {
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
+  segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export const ShareEmbedSurvey = ({
@@ -38,6 +42,9 @@ export const ShareEmbedSurvey = ({
   modalView,
   setOpen,
   user,
+  segments,
+  isContactsEnabled,
+  isFormbricksCloud,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
@@ -52,6 +59,7 @@ export const ShareEmbedSurvey = ({
           label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
           icon: LinkIcon,
         },
+        { id: "personal-links", label: t("environments.surveys.summary.personal_links"), icon: UserIcon },
         { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
         { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
 
@@ -60,8 +68,8 @@ export const ShareEmbedSurvey = ({
     [t, isSingleUseLinkSurvey, survey.type]
   );
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
-  const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
+  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
+  const [showView, setShowView] = useState<"start" | "embed" | "panel" | "personal-links">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
@@ -80,7 +88,7 @@ export const ShareEmbedSurvey = ({
 
   useEffect(() => {
     if (survey.type !== "link") {
-      setActiveId(tabs[3].id);
+      setActiveId(tabs[4].id);
     }
   }, [survey.type, tabs]);
 
@@ -93,16 +101,12 @@ export const ShareEmbedSurvey = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? tabs[0].id : tabs[3].id);
+    setActiveId(survey.type === "link" ? tabs[0].id : tabs[4].id);
     setOpen(open);
     if (!open) {
       setShowView("start");
     }
     router.refresh();
-  };
-
-  const handleInitialPageButton = () => {
-    setShowView("start");
   };
 
   return (
@@ -166,22 +170,28 @@ export const ShareEmbedSurvey = ({
             </div>
           </div>
         ) : showView === "embed" ? (
-          <EmbedView
-            handleInitialPageButton={handleInitialPageButton}
-            tabs={survey.type === "link" ? tabs : [tabs[3]]}
-            disableBack={false}
-            activeId={activeId}
-            environmentId={environmentId}
-            setActiveId={setActiveId}
-            survey={survey}
-            email={email}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={user.locale}
-          />
+          <>
+            <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
+            <EmbedView
+              tabs={survey.type === "link" ? tabs : [tabs[4]]}
+              activeId={activeId}
+              environmentId={environmentId}
+              setActiveId={setActiveId}
+              survey={survey}
+              email={email}
+              surveyUrl={surveyUrl}
+              publicDomain={publicDomain}
+              setSurveyUrl={setSurveyUrl}
+              locale={user.locale}
+              segments={segments}
+              isContactsEnabled={isContactsEnabled}
+              isFormbricksCloud={isFormbricksCloud}
+            />
+          </>
         ) : showView === "panel" ? (
-          <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />
+          <>
+            <DialogTitle className="sr-only">{t("environments.surveys.summary.send_to_panel")}</DialogTitle>
+          </>
         ) : null}
       </DialogContent>
     </Dialog>

@@ -32,3 +32,25 @@ jobs:
     with:
       VERSION: v${{ needs.docker-build.outputs.VERSION }}
       ENVIRONMENT: "prod"
+
+  upload-sentry-sourcemaps:
+    name: Upload Sentry Sourcemaps
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs:
+      - docker-build
+      - deploy-formbricks-cloud
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Upload Sentry Sourcemaps
+        uses: ./.github/actions/upload-sentry-sourcemaps
+        continue-on-error: true
+        with:
+          docker_image: ghcr.io/formbricks/formbricks:v${{ needs.docker-build.outputs.VERSION }}
+          release_version: v${{ needs.docker-build.outputs.VERSION }}
+          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}

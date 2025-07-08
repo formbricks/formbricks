@@ -162,28 +162,7 @@ export const CardStylingSettings = ({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="cardShadowColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-4">
-                <div>
-                  <FormLabel>{t("environments.surveys.edit.card_shadow_color")}</FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.edit.change_the_shadow_color_of_the_card")}
-                  </FormDescription>
-                </div>
 
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || COLOR_DEFAULTS.cardShadowColor}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}

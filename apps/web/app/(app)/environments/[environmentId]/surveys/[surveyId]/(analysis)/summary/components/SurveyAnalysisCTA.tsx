@@ -15,6 +15,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 
@@ -25,6 +26,9 @@ interface SurveyAnalysisCTAProps {
   user: TUser;
   publicDomain: string;
   responseCount: number;
+  segments: TSegment[];
+  isContactsEnabled: boolean;
+  isFormbricksCloud: boolean;
 }
 
 interface ModalState {
@@ -41,6 +45,9 @@ export const SurveyAnalysisCTA = ({
   user,
   publicDomain,
   responseCount,
+  segments,
+  isContactsEnabled,
+  isFormbricksCloud,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
@@ -175,6 +182,9 @@ export const SurveyAnalysisCTA = ({
               setOpen={setOpen}
               user={user}
               modalView={modalView}
+              segments={segments}
+              isContactsEnabled={isContactsEnabled}
+              isFormbricksCloud={isFormbricksCloud}
             />
           ))}
           <SuccessMessage environment={environment} survey={survey} />

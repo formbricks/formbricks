@@ -133,7 +133,7 @@ export const IndividualInviteTab = ({
                     onChange={(val) => field.onChange(val)}
                   />
                   {!teamOptions.length && (
-                    <Small className="italic">
+                    <Small className="font-normal text-amber-600">
                       {t("environments.settings.teams.create_first_team_message")}
                     </Small>
                   )}
@@ -161,11 +161,11 @@ export const IndividualInviteTab = ({
           </Alert>
         )}
 
-        <div className="flex justify-between">
+        <div className="flex items-end justify-end gap-x-2">
           <Button
             size="default"
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => {
               setOpen(false);
             }}>
