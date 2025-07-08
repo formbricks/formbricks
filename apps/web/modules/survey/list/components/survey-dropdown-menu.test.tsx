@@ -70,6 +70,14 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
+// Mock clipboard API
+Object.defineProperty(navigator, "clipboard", {
+  value: {
+    writeText: vi.fn(),
+  },
+  writable: true,
+});
+
 describe("SurveyDropDownMenu", () => {
   afterEach(() => {
     cleanup();
@@ -78,7 +86,6 @@ describe("SurveyDropDownMenu", () => {
   test("calls copySurveyLink when copy link is clicked", async () => {
     const mockRefresh = vi.fn().mockResolvedValue("fakeSingleUseId");
     const mockDeleteSurvey = vi.fn();
-    const mockDuplicateSurvey = vi.fn();
 
     render(
       <SurveyDropDownMenu
@@ -148,6 +155,135 @@ describe("SurveyDropDownMenu", () => {
     type: "link",
     responseCount: 5,
   } as unknown as TSurvey;
+
+  describe("clipboard functionality", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    test("pre-fetches single-use ID when dropdown opens", async () => {
+      const mockRefreshSingleUseId = vi.fn().mockResolvedValue("test-single-use-id");
+
+      render(
+        <SurveyDropDownMenu
+          environmentId="env123"
+          survey={{ ...fakeSurvey, status: "completed" }}
+          publicDomain="http://survey.test"
+          refreshSingleUseId={mockRefreshSingleUseId}
+          deleteSurvey={vi.fn()}
+        />
+      );
+
+      const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+      const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+
+      // Initially, refreshSingleUseId should not have been called
+      expect(mockRefreshSingleUseId).not.toHaveBeenCalled();
+
+      // Open dropdown
+      await userEvent.click(triggerElement);
+
+      // Now it should have been called
+      await waitFor(() => {
+        expect(mockRefreshSingleUseId).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    test("does not pre-fetch single-use ID when dropdown is closed", async () => {
+      const mockRefreshSingleUseId = vi.fn().mockResolvedValue("test-single-use-id");
+
+      render(
+        <SurveyDropDownMenu
+          environmentId="env123"
+          survey={{ ...fakeSurvey, status: "completed" }}
+          publicDomain="http://survey.test"
+          refreshSingleUseId={mockRefreshSingleUseId}
+          deleteSurvey={vi.fn()}
+        />
+      );
+
+      // Don't open dropdown
+
+      // Wait a bit to ensure useEffect doesn't run
+      await waitFor(() => {
+        expect(mockRefreshSingleUseId).not.toHaveBeenCalled();
+      });
+    });
+
+    test("copies link with pre-fetched single-use ID", async () => {
+      const mockRefreshSingleUseId = vi.fn().mockResolvedValue("test-single-use-id");
+      const mockWriteText = vi.fn().mockResolvedValue(undefined);
+      navigator.clipboard.writeText = mockWriteText;
+
+      render(
+        <SurveyDropDownMenu
+          environmentId="env123"
+          survey={{ ...fakeSurvey, status: "completed" }}
+          publicDomain="http://survey.test"
+          refreshSingleUseId={mockRefreshSingleUseId}
+          deleteSurvey={vi.fn()}
+        />
+      );
+
+      const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+      const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+
+      // Open dropdown to trigger pre-fetch
+      await userEvent.click(triggerElement);
+
+      // Wait for pre-fetch to complete
+      await waitFor(() => {
+        expect(mockRefreshSingleUseId).toHaveBeenCalled();
+      });
+
+      // Click copy link
+      const copyLinkButton = screen.getByTestId("copy-link");
+      await userEvent.click(copyLinkButton);
+
+      // Verify clipboard was called with the correct URL including single-use ID
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith("http://survey.test/s/testSurvey?suId=test-single-use-id");
+        expect(mockToast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
+      });
+    });
+
+    test("handles copy link with undefined single-use ID", async () => {
+      const mockRefreshSingleUseId = vi.fn().mockResolvedValue(undefined);
+      const mockWriteText = vi.fn().mockResolvedValue(undefined);
+      navigator.clipboard.writeText = mockWriteText;
+
+      render(
+        <SurveyDropDownMenu
+          environmentId="env123"
+          survey={{ ...fakeSurvey, status: "completed" }}
+          publicDomain="http://survey.test"
+          refreshSingleUseId={mockRefreshSingleUseId}
+          deleteSurvey={vi.fn()}
+        />
+      );
+
+      const menuWrapper = screen.getByTestId("survey-dropdown-menu");
+      const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
+
+      // Open dropdown to trigger pre-fetch
+      await userEvent.click(triggerElement);
+
+      // Wait for pre-fetch to complete
+      await waitFor(() => {
+        expect(mockRefreshSingleUseId).toHaveBeenCalled();
+      });
+
+      // Click copy link
+      const copyLinkButton = screen.getByTestId("copy-link");
+      await userEvent.click(copyLinkButton);
+
+      // Verify clipboard was called with base URL (no single-use ID)
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith("http://survey.test/s/testSurvey");
+        expect(mockToast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
+      });
+    });
+  });
 
   test("handleEditforActiveSurvey opens EditPublicSurveyAlertDialog for active surveys", async () => {
     render(
@@ -285,7 +421,6 @@ describe("SurveyDropDownMenu", () => {
         expect(mockDeleteSurveyAction).toHaveBeenCalledWith({ surveyId: "testSurvey" });
         expect(mockDeleteSurvey).toHaveBeenCalledWith("testSurvey");
         expect(mockToast.success).toHaveBeenCalledWith("environments.surveys.survey_deleted_successfully");
-        expect(mockRouterRefresh).toHaveBeenCalled();
       });
     });
 
@@ -396,7 +531,6 @@ describe("SurveyDropDownMenu", () => {
 
       // Verify that deleteSurvey callback was not called due to error
       expect(mockDeleteSurvey).not.toHaveBeenCalled();
-      expect(mockRouterRefresh).not.toHaveBeenCalled();
     });
 
     test("does not call router.refresh or success toast when deleteSurveyAction throws", async () => {
@@ -480,7 +614,7 @@ describe("SurveyDropDownMenu", () => {
       await userEvent.click(confirmDeleteButton);
 
       await waitFor(() => {
-        expect(callOrder).toEqual(["deleteSurveyAction", "deleteSurvey", "toast.success", "router.refresh"]);
+        expect(callOrder).toEqual(["deleteSurveyAction", "deleteSurvey", "toast.success"]);
       });
     });
   });
