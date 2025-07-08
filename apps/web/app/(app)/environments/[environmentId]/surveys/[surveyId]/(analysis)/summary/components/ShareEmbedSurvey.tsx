@@ -115,9 +115,9 @@ export const ShareEmbedSurvey = ({
         {showView === "start" ? (
           <div className="flex h-full max-w-full flex-col overflow-hidden">
             {survey.type === "link" && (
-              <div className="flex h-2/5 w-full flex-col items-center justify-center space-y-6 p-8 text-center">
+              <div className="flex h-2/5 w-full flex-col items-center justify-center gap-8 py-[100px] text-center">
                 <DialogTitle>
-                  <p className="pt-2 text-xl font-semibold text-slate-800">
+                  <p className="text-xl font-semibold text-slate-900">
                     {t("environments.surveys.summary.your_survey_is_public")} 🎉
                   </p>
                 </DialogTitle>
@@ -131,14 +131,16 @@ export const ShareEmbedSurvey = ({
                 />
               </div>
             )}
-            <div className="flex h-full flex-col items-center justify-center gap-4 rounded-b-lg bg-slate-50 px-8">
-              <p className="text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
+            <div className="flex h-full flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8">
+              <p className="text-sm font-medium text-slate-900">
+                {t("environments.surveys.summary.whats_next")}
+              </p>
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => setShowView("embed")}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <Share2Icon className="h-6 w-6 text-slate-700" />
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+                  <Share2Icon className="h-8 w-8 text-slate-700" />
                   {t("environments.surveys.summary.share_survey")}
                 </button>
                 <button
@@ -147,11 +149,11 @@ export const ShareEmbedSurvey = ({
                     setShowView("embed");
                     setActiveId(tabs[1].id);
                   }}
-                  className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <UserIcon className="h-6 w-6 text-slate-700" />
+                  className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+                  <UserIcon className="h-8 w-8 text-slate-700" />
                   {t("environments.surveys.summary.use_personal_links")}
                   <Badge
-                    size="tiny"
+                    size="normal"
                     type="success"
                     className="absolute right-3 top-3"
                     text={t("common.new")}
@@ -159,14 +161,14 @@ export const ShareEmbedSurvey = ({
                 </button>
                 <Link
                   href={`/environments/${environmentId}/settings/notifications`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <BellRing className="h-6 w-6 text-slate-700" />
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+                  <BellRing className="h-8 w-8 text-slate-700" />
                   {t("environments.surveys.summary.configure_alerts")}
                 </Link>
                 <Link
                   href={`/environments/${environmentId}/integrations`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <BlocksIcon className="h-6 w-6 text-slate-700" />
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+                  <BlocksIcon className="h-8 w-8 text-slate-700" />
                   {t("environments.surveys.summary.setup_integrations")}
                 </Link>
               </div>

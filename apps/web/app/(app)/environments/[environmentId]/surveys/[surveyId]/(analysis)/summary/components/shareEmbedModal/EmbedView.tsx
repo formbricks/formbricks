@@ -97,24 +97,24 @@ export const EmbedView = ({
               variant="inset"
               collapsible="none">
               <SidebarContent className="border-r border-slate-200 bg-white p-4">
-                <SidebarGroup>
+                <SidebarGroup className="p-0">
                   <SidebarGroupLabel>
-                    <Small className="text-slate-500">Share via</Small>
+                    <Small className="text-xs text-slate-500">Share via</Small>
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
-                    <SidebarMenu className="flex flex-col gap-3">
+                    <SidebarMenu className="flex flex-col gap-1">
                       {tabs.map((tab) => (
                         <SidebarMenuItem key={tab.id}>
                           <SidebarMenuButton
                             onClick={() => setActiveId(tab.id)}
                             className={cn(
-                              "flex w-full justify-start rounded-md border px-4 py-2 text-slate-600",
+                              "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                               tab.id === activeId
-                                ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"
-                                : "border-transparent text-slate-500 hover:text-slate-700"
+                                ? "bg-slate-100 font-medium text-slate-900"
+                                : "text-slate-700"
                             )}
                             isActive={tab.id === activeId}>
-                            <tab.icon className="h-4 w-4" />
+                            <tab.icon className="h-4 w-4 text-slate-700" />
                             <span>{tab.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
