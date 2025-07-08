@@ -4,7 +4,7 @@ import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { applyRateLimit, getClientIdentifier } from "./helpers";
+import { applyIPRateLimit, applyRateLimit, getClientIdentifier } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 
 // Mock all dependencies
@@ -139,6 +139,55 @@ describe("helpers", () => {
       }
 
       expect(checkRateLimit).toHaveBeenCalledTimes(identifiers.length);
+    });
+  });
+
+  describe("applyIPRateLimit", () => {
+    test("should be a convenience function that gets IP and applies rate limit", async () => {
+      // This is an integration test - the function calls getClientIdentifier internally
+      // and then calls applyRateLimit, which we've already tested extensively
+      const mockConfig = {
+        interval: 3600,
+        allowedPerInterval: 100,
+        namespace: "test:page",
+      };
+
+      // Mock the IP getting functions
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(applyIPRateLimit(mockConfig)).resolves.toBeUndefined();
+
+      expect(getClientIpFromHeaders).toHaveBeenCalledTimes(1);
+      expect(hashString).toHaveBeenCalledWith("192.168.1.1");
+      expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, "hashed-ip-123");
+    });
+
+    test("should propagate errors from getClientIdentifier", async () => {
+      const mockConfig = {
+        interval: 3600,
+        allowedPerInterval: 100,
+        namespace: "test:page",
+      };
+
+      (getClientIpFromHeaders as any).mockRejectedValue(new Error("IP fetch failed"));
+
+      await expect(applyIPRateLimit(mockConfig)).rejects.toThrow("IP fetch failed");
+    });
+
+    test("should propagate rate limit exceeded errors", async () => {
+      const mockConfig = {
+        interval: 3600,
+        allowedPerInterval: 100,
+        namespace: "test:page",
+      };
+
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
+
+      await expect(applyIPRateLimit(mockConfig)).rejects.toThrow("Rate limit exceeded");
     });
   });
 });

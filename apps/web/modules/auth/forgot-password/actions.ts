@@ -3,6 +3,8 @@
 import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { sendForgotPasswordEmail } from "@/modules/email";
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
@@ -15,6 +17,8 @@ const ZForgotPasswordAction = z.object({
 export const forgotPasswordAction = actionClient
   .schema(ZForgotPasswordAction)
   .action(async ({ parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
+
     if (PASSWORD_RESET_DISABLED) {
       throw new OperationNotAllowedError("Password reset is disabled");
     }

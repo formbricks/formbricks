@@ -38,3 +38,15 @@ export const applyRateLimit = async (config: TRateLimitConfig, identifier: strin
     throw new Error("Rate limit exceeded");
   }
 };
+
+/**
+ * Apply IP-based rate limiting for unauthenticated requests
+ * Generic function for IP-based rate limiting in authentication flows and public pages
+ *
+ * @param config - Rate limit configuration to apply
+ * @throws {Error} When rate limit is exceeded or IP hashing fails
+ */
+export const applyIPRateLimit = async (config: TRateLimitConfig): Promise<void> => {
+  const identifier = await getClientIdentifier();
+  await applyRateLimit(config, identifier);
+};
