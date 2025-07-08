@@ -20,18 +20,12 @@ const mockContacts = [
   {
     id: "contactId1",
     environmentId: mockEnvironmentId1,
-    name: "Contact 1",
-    email: "contact1@example.com",
-    attributes: {},
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "contactId2",
     environmentId: mockEnvironmentId2,
-    name: "Contact 2",
-    email: "contact2@example.com",
-    attributes: {},
     createdAt: new Date(),
     updatedAt: new Date(),
   },
