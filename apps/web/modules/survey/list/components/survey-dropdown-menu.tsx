@@ -32,6 +32,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
@@ -72,8 +73,12 @@ export const SurveyDropDownMenu = ({
   useEffect(() => {
     if (!isDropDownOpen) return;
     const fetchNewId = async () => {
-      const newId = await refreshSingleUseId();
-      setNewSingleUseId(newId ?? undefined);
+      try {
+        const newId = await refreshSingleUseId();
+        setNewSingleUseId(newId ?? undefined);
+      } catch (error) {
+        logger.error(error);
+      }
     };
     fetchNewId();
   }, [refreshSingleUseId, isDropDownOpen]);
@@ -84,7 +89,6 @@ export const SurveyDropDownMenu = ({
       await deleteSurveyAction({ surveyId });
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
-      router.refresh();
     } catch (error) {
       toast.error(t("environments.surveys.error_deleting_survey"));
     } finally {
@@ -99,8 +103,8 @@ export const SurveyDropDownMenu = ({
       const copiedLink = copySurveyLink(surveyLink, newSingleUseId);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
-      router.refresh();
-    } catch {
+    } catch (error) {
+      logger.error(error);
       toast.error(t("environments.surveys.summary.failed_to_copy_link"));
     }
   };
