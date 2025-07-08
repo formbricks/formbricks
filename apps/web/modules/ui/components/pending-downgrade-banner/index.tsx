@@ -54,8 +54,7 @@ export const PendingDowngradeBanner = ({
                     <p className="mt-1 text-sm text-slate-500">
                       {t(
                         "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable"
-                      )}
-                      .{" "}
+                      )}{" "}
                       {isLastCheckedWithin72Hours
                         ? t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
                             date: formattedDate,
