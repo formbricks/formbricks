@@ -145,7 +145,7 @@ export const EditProfileDetailsForm = ({
       });
     } else {
       const errorMessage = getFormattedErrorMessage(result);
-      toast.error(t(errorMessage));
+      toast.error(errorMessage);
     }
 
     setIsResettingPassword(false);
