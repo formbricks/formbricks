@@ -42,7 +42,7 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
 
   return (
     <>
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-row items-baseline space-x-2">
         <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
@@ -50,7 +50,6 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
           className="w-auto">
           <Button
             variant="destructive"
-            size="sm"
             type="button"
             id="deleteTeamButton"
             className="w-auto"

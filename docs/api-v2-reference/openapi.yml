@@ -4297,21 +4297,7 @@ components:
                   pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
               required:
                 - light
-            cardShadowColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
+
             highlightBorderColor:
               type:
                 - object

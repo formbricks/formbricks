@@ -27,7 +27,7 @@ const getBaseProjectStyling = (overrides: Partial<TProjectStyling> = {}): TProje
     brandColor: null,
     cardBackgroundColor: null,
     cardBorderColor: null,
-    cardShadowColor: null,
+
     questionColor: null,
     inputColor: null,
     inputBorderColor: null,
@@ -171,7 +171,7 @@ describe("addCustomThemeToDom", () => {
       inputBorderColor: { light: "#DDDDDD" },
       cardBackgroundColor: { light: "#EEEEEE" },
       cardBorderColor: { light: "#CCCCCC" },
-      cardShadowColor: { light: "#BBBBBB" },
+
       inputColor: { light: "#F0F0F0" },
       roundness: 12,
       hideProgressBar: false,
@@ -186,7 +186,6 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-brand-color"]).toBe("#112233");
     expect(variables["--fb-focus-color"]).toBe("#112233");
     expect(variables["--fb-brand-text-color"]).toBe("white");
-    expect(variables["--fb-survey-shadow-color"]).toBeDefined(); // Relies on mixColor
     expect(variables["--fb-heading-color"]).toBe("#AABBCC");
     expect(variables["--fb-subheading-color"]).toBe("#AABBCC");
     expect(variables["--fb-placeholder-color"]).toBeDefined(); // Relies on mixColor
@@ -280,7 +279,7 @@ describe("getBaseProjectStyling_Helper", () => {
     expect(baseStyling.brandColor).toBeNull();
     expect(baseStyling.cardBackgroundColor).toBeNull();
     expect(baseStyling.cardBorderColor).toBeNull();
-    expect(baseStyling.cardShadowColor).toBeNull();
+
     expect(baseStyling.questionColor).toBeNull();
     // Specifically testing lines highlighted by user
     expect(baseStyling.inputColor).toBeNull();
