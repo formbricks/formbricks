@@ -12,13 +12,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const contactSelect = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  environmentId: true,
-};
-
 const mockEnvironmentId1 = "ay70qluzic16hu8fu6xrqebq";
 const mockEnvironmentId2 = "raeeymwqrn9iqwe5rp13vwem";
 const mockEnvironmentIds = [mockEnvironmentId1, mockEnvironmentId2];
@@ -54,7 +47,6 @@ describe("getContacts", () => {
 
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { environmentId: { in: mockEnvironmentIds } },
-      select: contactSelect,
     });
     expect(result).toEqual(mockContacts);
   });
@@ -69,7 +61,6 @@ describe("getContacts", () => {
     await expect(getContacts(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { environmentId: { in: mockEnvironmentIds } },
-      select: contactSelect,
     });
   });
 
@@ -80,7 +71,6 @@ describe("getContacts", () => {
     await expect(getContacts(mockEnvironmentIds)).rejects.toThrow(genericError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { environmentId: { in: mockEnvironmentIds } },
-      select: contactSelect,
     });
   });
 

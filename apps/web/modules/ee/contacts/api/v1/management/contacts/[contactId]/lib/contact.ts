@@ -12,12 +12,6 @@ export const getContact = reactCache(async (contactId: string): Promise<TContact
   try {
     const contact = await prisma.contact.findUnique({
       where: { id: contactId },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        environmentId: true,
-      },
     });
 
     if (!contact) {

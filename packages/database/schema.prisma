@@ -119,7 +119,6 @@ model ContactAttributeKey {
 /// @property displays - Record of surveys shown to this contact
 model Contact {
   id            String             @id @default(cuid())
-  userId        String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)

@@ -40,12 +40,6 @@ describe("contact lib", () => {
       expect(result).toEqual(mockContact);
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({
         where: { id: mockContactId },
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          environmentId: true,
-        },
       });
     });
 
@@ -56,12 +50,6 @@ describe("contact lib", () => {
       expect(result).toBeNull();
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({
         where: { id: mockContactId },
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          environmentId: true,
-        },
       });
     });
 
