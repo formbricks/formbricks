@@ -1303,7 +1303,6 @@
         "casual": "Décontracté",
         "caution_edit_duplicate": "Dupliquer et modifier",
         "caution_edit_published_survey": "Modifier un sondage publié ?",
-        "caution_explanation_all_data_as_download": "Toutes les données, y compris les réponses passées, sont disponibles en téléchargement.",
         "caution_explanation_intro": "Nous comprenons que vous souhaitiez encore apporter des modifications. Voici ce qui se passe si vous le faites : ",
         "caution_explanation_new_responses_separated": "Les réponses avant le changement peuvent ne pas être ou ne faire partie que partiellement du résumé de l'enquête.",
         "caution_explanation_only_new_responses_in_summary": "Toutes les données, y compris les réponses passées, restent disponibles en téléchargement sur la page de résumé de l'enquête.",
