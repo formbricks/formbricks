@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/modules/ui/components/sidebar";
-import { Muted, Small } from "@/modules/ui/components/typography";
+import { Small } from "@/modules/ui/components/typography";
 import { TSegment } from "@formbricks/types/segment";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";

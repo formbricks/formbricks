@@ -19,9 +19,9 @@ describe("Badge", () => {
     expect(screen.getByText("Warning")).toHaveClass("text-amber-800");
 
     rerender(<Badge text="Success" type="success" size="normal" />);
-    expect(screen.getByText("Success")).toHaveClass("bg-emerald-100");
-    expect(screen.getByText("Success")).toHaveClass("border-emerald-200");
-    expect(screen.getByText("Success")).toHaveClass("text-emerald-800");
+    expect(screen.getByText("Success")).toHaveClass("bg-green-50");
+    expect(screen.getByText("Success")).toHaveClass("border-green-600");
+    expect(screen.getByText("Success")).toHaveClass("text-green-800");
 
     rerender(<Badge text="Error" type="error" size="normal" />);
     expect(screen.getByText("Error")).toHaveClass("bg-red-100");
@@ -64,9 +64,9 @@ describe("Badge", () => {
   test("combines all classes correctly", () => {
     render(<Badge text="Combined" type="success" size="large" className="custom-class" />);
     const badge = screen.getByText("Combined");
-    expect(badge).toHaveClass("bg-emerald-100");
-    expect(badge).toHaveClass("border-emerald-200");
-    expect(badge).toHaveClass("text-emerald-800");
+    expect(badge).toHaveClass("bg-green-50");
+    expect(badge).toHaveClass("border-green-600");
+    expect(badge).toHaveClass("text-green-800");
     expect(badge).toHaveClass("px-3.5");
     expect(badge).toHaveClass("py-1");
     expect(badge).toHaveClass("text-sm");

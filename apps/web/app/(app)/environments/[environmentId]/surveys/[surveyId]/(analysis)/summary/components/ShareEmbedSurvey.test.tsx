@@ -149,7 +149,7 @@ describe("ShareEmbedSurvey", () => {
     survey: mockSurveyWeb,
     publicDomain: "https://public-domain.com",
     open: true,
-    modalView: "start" as "start" | "embed" | "panel",
+    modalView: "start" as "start" | "embed",
     setOpen: mockSetOpen,
     user: mockUser,
     segments: [],
@@ -178,10 +178,10 @@ describe("ShareEmbedSurvey", () => {
     expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
     expect(screen.getByText("ShareSurveyLinkMock")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.use_personal_links")).toBeInTheDocument();
     expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
   });
 
@@ -190,27 +190,19 @@ describe("ShareEmbedSurvey", () => {
     // For app surveys, ShareSurveyLink should not be rendered
     expect(screen.queryByText("ShareSurveyLinkMock")).not.toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.use_personal_links")).toBeInTheDocument();
     expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
   });
 
   test("switches to 'embed' view when 'Embed survey' button is clicked", async () => {
     render(<ShareEmbedSurvey {...defaultProps} />);
-    const embedButton = screen.getByText("environments.surveys.summary.embed_survey");
+    const embedButton = screen.getByText("environments.surveys.summary.share_survey");
     await userEvent.click(embedButton);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
     expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument();
-  });
-
-  test("switches to 'panel' view when 'Send to panel' button is clicked", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} />);
-    const panelButton = screen.getByText("environments.surveys.summary.send_to_panel");
-    await userEvent.click(panelButton);
-    // Panel view currently just shows a title, no component is rendered
-    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
   });
 
   test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
@@ -269,9 +261,9 @@ describe("ShareEmbedSurvey", () => {
     expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument();
     cleanup();
 
-    render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="panel" />);
-    // Panel view currently just shows a title
-    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
+    render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="start" />);
+    // Start view shows the share survey button
+    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
   });
 
   test("useEffect sets showView to 'start' when open becomes false", () => {

@@ -164,10 +164,13 @@ describe("EmbedView", () => {
   test("applies active styles to the active tab (desktop)", () => {
     render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     const emailTabButton = screen.getAllByRole("button", { name: "Email" })[0];
-    expect(emailTabButton).toHaveClass("border-slate-200 bg-slate-100 font-semibold text-slate-900");
+    expect(emailTabButton).toHaveClass("bg-slate-100");
+    expect(emailTabButton).toHaveClass("font-medium");
+    expect(emailTabButton).toHaveClass("text-slate-900");
 
     const webpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[0];
-    expect(webpageTabButton).toHaveClass("border-transparent text-slate-500 hover:text-slate-700");
+    expect(webpageTabButton).not.toHaveClass("bg-slate-100");
+    expect(webpageTabButton).not.toHaveClass("font-medium");
   });
 
   test("applies active styles to the active tab (responsive)", () => {
