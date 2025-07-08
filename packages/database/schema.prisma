@@ -112,7 +112,6 @@ model ContactAttributeKey {
 /// Contacts are environment-specific and can have multiple attributes and responses.
 ///
 /// @property id - Unique identifier for the contact
-/// @property userId - Optional external user identifier
 /// @property environment - The environment this contact belongs to
 /// @property responses - Survey responses from this contact
 /// @property attributes - Custom attributes associated with this contact
