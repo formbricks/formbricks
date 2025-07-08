@@ -210,6 +210,36 @@ describe("SurveyContainer", () => {
         expect(onCloseMock).not.toHaveBeenCalled();
       });
 
+      test("triggers clickOutside logic if ignorePlacementForClickOutside is true and placement is not center", () => {
+        render(
+          <SurveyContainer
+            mode="modal"
+            placement="bottomRight"
+            clickOutside={true}
+            onClose={onCloseMock}
+            ignorePlacementForClickOutside={true}>
+            {(<TestChild />) as any}
+          </SurveyContainer>
+        );
+        fireEvent.mouseDown(document.body);
+        expect(onCloseMock).toHaveBeenCalled();
+      });
+
+      test("does not trigger clickOutside logic if ignorePlacementForClickOutside is true and placement is center", () => {
+        render(
+          <SurveyContainer
+            mode="modal"
+            placement="center"
+            clickOutside={false}
+            onClose={onCloseMock}
+            ignorePlacementForClickOutside={true}>
+            {(<TestChild />) as any}
+          </SurveyContainer>
+        );
+        fireEvent.mouseDown(document.body);
+        expect(onCloseMock).not.toHaveBeenCalled();
+      });
+
       test("does not trigger clickOutside logic if mode is not modal", () => {
         render(
           <SurveyContainer mode="inline" placement="center" clickOutside={true} onClose={onCloseMock}>
@@ -234,6 +264,7 @@ describe("SurveyContainer", () => {
         unmount();
         expect(removeEventListenerSpy).toHaveBeenCalledWith("mousedown", expect.any(Function));
       });
+
       test("does not call onClose when modal is not shown (show=false)", () => {
         render(
           <SurveyContainer
