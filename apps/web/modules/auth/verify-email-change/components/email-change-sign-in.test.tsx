@@ -48,7 +48,9 @@ describe("EmailChangeSignIn", () => {
       expect(screen.getByText("auth.email-change.email_change_success_description")).toBeInTheDocument();
     });
 
-    expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    await waitFor(() => {
+      expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    });
   });
 
   test("handles failed email change verification", async () => {

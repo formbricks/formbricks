@@ -10,7 +10,6 @@ import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyCard } from "./survey-card";
-import { SurveyFilters } from "./survey-filters";
 import { SurveysList, initialFilters as surveyFiltersInitialFiltersFromModule } from "./survey-list";
 import { SurveyLoading } from "./survey-loading";
 
@@ -324,24 +323,21 @@ describe("SurveysList", () => {
     expect(screen.getByText("Survey Two")).toBeInTheDocument();
   });
 
-  test("handleDuplicateSurvey adds the duplicated survey to the beginning of the list", async () => {
-    const initialSurvey = { ...surveyMock, id: "s1", name: "Original Survey" };
-    vi.mocked(getSurveysAction).mockResolvedValueOnce({ data: [initialSurvey] });
+  test("handleDeleteSurvey shows loading state when the last survey is deleted", async () => {
+    const surveysData = [{ ...surveyMock, id: "s1", name: "Last Survey" }];
+    vi.mocked(getSurveysAction).mockResolvedValueOnce({ data: surveysData });
     const user = userEvent.setup();
     render(<SurveysList {...defaultProps} />);
 
-    await waitFor(() => expect(screen.getByText("Original Survey")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Last Survey")).toBeInTheDocument());
+    expect(screen.queryByTestId("survey-loading")).not.toBeInTheDocument();
 
-    const duplicateButtonS1 = screen.getByTestId("duplicate-s1");
-    // The mock SurveyCard calls duplicateSurvey(survey) with the original survey object.
-    await user.click(duplicateButtonS1);
+    const deleteButtonS1 = screen.getByTestId("delete-s1");
+    await user.click(deleteButtonS1);
 
     await waitFor(() => {
-      const surveyCards = screen.getAllByTestId(/survey-card-/);
-      expect(surveyCards).toHaveLength(2);
-      // Both cards will show "Original Survey" as the object is prepended.
-      expect(surveyCards[0]).toHaveTextContent("Original Survey");
-      expect(surveyCards[1]).toHaveTextContent("Original Survey");
+      expect(screen.queryByText("Last Survey")).not.toBeInTheDocument();
+      expect(screen.getByTestId("survey-loading")).toBeInTheDocument();
     });
   });
 

@@ -46,7 +46,11 @@ export const deleteTagAction = authenticatedActionClient.schema(ZDeleteTagAction
       ctx.auditLoggingCtx.tagId = parsedInput.tagId;
 
       const result = await deleteTag(parsedInput.tagId);
-      ctx.auditLoggingCtx.oldObject = result;
+      if (result.ok) {
+        ctx.auditLoggingCtx.oldObject = result.data;
+      } else {
+        ctx.auditLoggingCtx.oldObject = null;
+      }
       return result;
     }
   )
@@ -85,7 +89,11 @@ export const updateTagNameAction = authenticatedActionClient.schema(ZUpdateTagNa
 
       const result = await updateTagName(parsedInput.tagId, parsedInput.name);
 
-      ctx.auditLoggingCtx.newObject = result;
+      if (result.ok) {
+        ctx.auditLoggingCtx.newObject = result.data;
+      } else {
+        ctx.auditLoggingCtx.newObject = null;
+      }
       return result;
     }
   )
@@ -130,7 +138,11 @@ export const mergeTagsAction = authenticatedActionClient.schema(ZMergeTagsAction
 
       const result = await mergeTags(parsedInput.originalTagId, parsedInput.newTagId);
 
-      ctx.auditLoggingCtx.newObject = result;
+      if (result.ok) {
+        ctx.auditLoggingCtx.newObject = result.data;
+      } else {
+        ctx.auditLoggingCtx.newObject = null;
+      }
       return result;
     }
   )

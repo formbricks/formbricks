@@ -248,7 +248,7 @@ describe("EndScreenForm", () => {
     // Mock focus method
     const mockFocus = vi.fn();
     if (buttonLinkInput) {
-      buttonLinkInput.focus = mockFocus;
+      vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(mockFocus);
       buttonLinkInput.focus();
 
       expect(mockFocus).toHaveBeenCalled();

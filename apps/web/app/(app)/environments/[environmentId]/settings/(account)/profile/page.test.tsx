@@ -12,7 +12,8 @@ import Page from "./page";
 
 // Mock services and utils
 vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: true,
+  IS_FORMBRICKS_CLOUD: 1,
+  PASSWORD_RESET_DISABLED: 1,
   EMAIL_VERIFICATION_DISABLED: true,
 }));
 vi.mock("@/lib/organization/service", () => ({

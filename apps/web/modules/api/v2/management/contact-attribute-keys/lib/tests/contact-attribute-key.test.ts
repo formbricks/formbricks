@@ -2,8 +2,7 @@ import {
   TContactAttributeKeyInput,
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
-import { ContactAttributeKey } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -106,7 +105,7 @@ describe("createContactAttributeKey", () => {
   });
 
   test("returns conflict error when key already exists", async () => {
-    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
+    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.UniqueConstraintViolation,
       clientVersion: "0.0.1",
     });
@@ -129,7 +128,7 @@ describe("createContactAttributeKey", () => {
   });
 
   test("returns not found error when related record does not exist", async () => {
-    const errToThrow = new PrismaClientKnownRequestError("Mock error message", {
+    const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.RelatedRecordDoesNotExist,
       clientVersion: "0.0.1",
     });

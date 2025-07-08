@@ -4,17 +4,40 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EnableTwoFactorModal } from "./enable-two-factor-modal";
 
-// Mock the Modal component to expose the close functionality
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open, setOpen }: { children: React.ReactNode; open: boolean; setOpen: () => void }) =>
+// Mock the Dialog component to expose the close functionality
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: () => void;
+  }) =>
     open ? (
-      <div data-testid="modal">
+      <div data-testid="dialog">
         {children}
-        <button data-testid="modal-close" onClick={setOpen}>
+        <button data-testid="dialog-close" onClick={onOpenChange}>
           Close
         </button>
       </div>
     ) : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
 }));
 
 // Mock the child components
@@ -94,6 +117,8 @@ describe("EnableTwoFactorModal", () => {
     const setOpen = vi.fn();
     render(<EnableTwoFactorModal open={true} setOpen={setOpen} />);
 
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
     expect(screen.getByTestId("confirm-password-form")).toBeInTheDocument();
   });
 
@@ -101,6 +126,7 @@ describe("EnableTwoFactorModal", () => {
     const setOpen = vi.fn();
     render(<EnableTwoFactorModal open={false} setOpen={setOpen} />);
 
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     expect(screen.queryByTestId("confirm-password-form")).not.toBeInTheDocument();
   });
 
@@ -127,7 +153,7 @@ describe("EnableTwoFactorModal", () => {
     expect(screen.getByTestId("display-backup-codes")).toBeInTheDocument();
   });
 
-  test("resets state when modal is closed", async () => {
+  test("resets state when dialog is closed", async () => {
     const setOpen = vi.fn();
     const user = userEvent.setup();
     const { rerender } = render(<EnableTwoFactorModal open={true} setOpen={setOpen} />);
@@ -136,13 +162,13 @@ describe("EnableTwoFactorModal", () => {
     await user.click(screen.getByText("Next"));
     expect(screen.getByTestId("scan-qr-code")).toBeInTheDocument();
 
-    // Close modal using the close button
-    await user.click(screen.getByTestId("modal-close"));
+    // Close dialog using the close button
+    await user.click(screen.getByTestId("dialog-close"));
 
     // Verify setOpen was called with false
     expect(setOpen).toHaveBeenCalledWith(false);
 
-    // Reopen modal
+    // Reopen dialog
     rerender(<EnableTwoFactorModal open={true} setOpen={setOpen} />);
 
     // Should be back at the first step

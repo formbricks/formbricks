@@ -178,7 +178,7 @@ export const CreateNewActionTab = ({
     <div>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(submitHandler)}>
-          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto pr-4">
+          <div className="w-full space-y-4">
             <div className="w-3/5">
               <FormField
                 name={`type`}
@@ -257,15 +257,13 @@ export const CreateNewActionTab = ({
               <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             )}
           </div>
-          <div className="flex justify-end pt-6">
-            <div className="flex space-x-2">
-              <Button type="button" variant="ghost" onClick={resetAllStates}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="submit" loading={isSubmitting}>
-                {t("environments.actions.create_action")}
-              </Button>
-            </div>
+          <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
+            <Button type="button" variant="secondary" onClick={resetAllStates}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" loading={isSubmitting}>
+              {t("environments.actions.create_action")}
+            </Button>
           </div>
         </form>
       </FormProvider>

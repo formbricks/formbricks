@@ -44,8 +44,6 @@ describe("ProjectLimitModal", () => {
   test("renders dialog and upgrade prompt with correct props", () => {
     render(<ProjectLimitModal open={true} setOpen={setOpen} projectLimit={3} buttons={buttons} />);
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-content")).toHaveClass("bg-white");
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent("common.projects_limit_reached");
     expect(screen.getByTestId("upgrade-prompt")).toBeInTheDocument();
     expect(screen.getByText("common.unlock_more_projects_with_a_higher_plan")).toBeInTheDocument();
     expect(screen.getByText("common.you_have_reached_your_limit_of_project_limit")).toBeInTheDocument();

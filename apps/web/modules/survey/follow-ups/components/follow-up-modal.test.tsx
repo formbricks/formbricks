@@ -20,6 +20,7 @@ vi.mock("react-hook-form", () => ({
     getValues: vi.fn(),
     setValue: vi.fn(),
     register: vi.fn(),
+    clearErrors: vi.fn(),
   }),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("react-hook-form", () => ({
 vi.mock("react-hot-toast", () => ({
   default: {
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
@@ -93,9 +95,35 @@ vi.mock("./follow-up-action-multi-email-input", () => ({
   ),
 }));
 
-// Mock the Modal component
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open }: any) => (open ? <div data-testid="modal">{children}</div> : null),
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-header" className={className}>
+      {children}
+    </div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
+  DialogFooter: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-footer" className={className}>
+      {children}
+    </div>
+  ),
 }));
 
 // Mock the Form components
@@ -165,6 +193,7 @@ describe("FollowUpModal", () => {
 
   test("renders modal with create heading when mode is create", () => {
     render(<FollowUpModal {...defaultProps} />);
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.follow_ups_modal_create_heading")).toBeInTheDocument();
   });
 
@@ -186,12 +215,14 @@ describe("FollowUpModal", () => {
       />
     );
 
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.follow_ups_modal_edit_heading")).toBeInTheDocument();
   });
 
   test("renders form fields in create mode", () => {
     render(<FollowUpModal {...defaultProps} />);
 
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.follow_ups_modal_trigger_label")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.follow_ups_modal_action_label")).toBeInTheDocument();
     expect(

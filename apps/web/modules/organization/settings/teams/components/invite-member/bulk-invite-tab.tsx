@@ -132,25 +132,25 @@ export const BulkInviteTab = ({
       </div>
 
       <div className="flex justify-between">
-        <Button
-          size="default"
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setOpen(false);
-          }}>
-          {t("common.cancel")}
-        </Button>
+        <Link
+          download
+          href="/sample-csv/formbricks-organization-members-template.csv"
+          target="_blank"
+          rel="noopener noreferrer">
+          <Button variant="secondary" size="default">
+            {t("common.download")} CSV template
+          </Button>
+        </Link>
         <div className="flex space-x-2">
-          <Link
-            download
-            href="/sample-csv/formbricks-organization-members-template.csv"
-            target="_blank"
-            rel="noopener noreferrer">
-            <Button variant="secondary" size="default">
-              {t("common.download")} CSV template
-            </Button>
-          </Link>
+          <Button
+            size="default"
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setOpen(false);
+            }}>
+            {t("common.cancel")}
+          </Button>
           <Button onClick={onImport} size="default" disabled={!csvFile}>
             {t("common.import")}
           </Button>

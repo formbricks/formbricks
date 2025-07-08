@@ -138,7 +138,7 @@ export function SegmentSettings({
   }, [segment]);
 
   return (
-    <div className="mb-4">
+    <div>
       <div className="rounded-lg bg-slate-50">
         <div className="flex flex-col overflow-auto rounded-lg bg-white">
           <div className="flex w-full items-center gap-4">
@@ -179,50 +179,51 @@ export function SegmentSettings({
             </div>
           </div>
 
-          <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
-          <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-            {segment.filters.length === 0 && (
-              <div className="-mb-2 flex items-center gap-1">
-                <FilterIcon className="h-5 w-5 text-slate-700" />
-                <h3 className="text-sm font-medium text-slate-700">
-                  {t("environments.segments.add_your_first_filter_to_get_started")}
-                </h3>
+          <div className="flex flex-col gap-y-2 pt-4">
+            <label className="text-sm font-medium text-slate-900">{t("common.targeting")}</label>
+            <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+              {segment.filters.length === 0 && (
+                <div className="-mb-2 flex items-center gap-1">
+                  <FilterIcon className="h-5 w-5 text-slate-700" />
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                  </h3>
+                </div>
+              )}
+
+              <SegmentEditor
+                contactAttributeKeys={contactAttributeKeys}
+                environmentId={environmentId}
+                group={segment.filters}
+                segment={segment}
+                segments={segments}
+                setSegment={setSegment}
+                viewOnly={isReadOnly}
+              />
+
+              <div>
+                <Button
+                  onClick={() => {
+                    setAddFilterModalOpen(true);
+                  }}
+                  size="sm"
+                  disabled={isReadOnly}
+                  variant="secondary">
+                  {t("common.add_filter")}
+                </Button>
               </div>
-            )}
 
-            <SegmentEditor
-              contactAttributeKeys={contactAttributeKeys}
-              environmentId={environmentId}
-              group={segment.filters}
-              segment={segment}
-              segments={segments}
-              setSegment={setSegment}
-              viewOnly={isReadOnly}
-            />
-
-            <div>
-              <Button
-                onClick={() => {
-                  setAddFilterModalOpen(true);
+              <AddFilterModal
+                contactAttributeKeys={contactAttributeKeys}
+                onAddFilter={(filter) => {
+                  handleAddFilterInGroup(filter);
                 }}
-                size="sm"
-                disabled={isReadOnly}
-                variant="secondary">
-                {t("common.add_filter")}
-              </Button>
+                open={addFilterModalOpen}
+                segments={segments}
+                setOpen={setAddFilterModalOpen}
+              />
             </div>
-
-            <AddFilterModal
-              contactAttributeKeys={contactAttributeKeys}
-              onAddFilter={(filter) => {
-                handleAddFilterInGroup(filter);
-              }}
-              open={addFilterModalOpen}
-              segments={segments}
-              setOpen={setAddFilterModalOpen}
-            />
           </div>
-
           <div className="flex w-full items-center justify-between pt-4">
             {!isReadOnly && (
               <>
