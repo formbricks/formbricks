@@ -90,9 +90,9 @@ export const EmbedView = ({
     <div className="m-0 h-full overflow-hidden">
       <div className="grid h-full grid-cols-4">
         {survey.type === "link" && (
-          <SidebarProvider defaultOpen={true}>
+          <SidebarProvider defaultOpen={true} className="hidden lg:flex">
             <Sidebar
-              className="col-span-1 hidden lg:flex"
+              className="col-span-1"
               style={{ width: "100%", position: "relative" }}
               variant="inset"
               collapsible="none">
