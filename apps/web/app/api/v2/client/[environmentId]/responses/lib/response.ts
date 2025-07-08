@@ -1,4 +1,5 @@
 import "server-only";
+import { getContactByEmail } from "@/app/api/v1/client/[environmentId]/responses/lib/contact";
 import { responseSelection } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -27,6 +28,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
     environmentId,
     language,
     contactId,
+    email,
     surveyId,
     displayId,
     endingId,
@@ -50,6 +52,8 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
 
     if (contactId) {
       contact = await getContact(contactId);
+    } else if (email) {
+      contact = await getContactByEmail(environmentId, email);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};

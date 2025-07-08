@@ -297,6 +297,8 @@ export const ZResponseInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),
+  email: z.string().email().optional(),
+  contactId: z.string().cuid2().nullable().optional(),
   displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),

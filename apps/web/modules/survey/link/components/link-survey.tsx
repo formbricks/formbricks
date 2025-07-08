@@ -106,6 +106,15 @@ export const LinkSurvey = ({
       }
     });
 
+    const email = searchParams.get("email");
+    const urlContactId = searchParams.get("contactId");
+    if (email) {
+      fieldsRecord["email"] = email;
+    }
+    if (urlContactId) {
+      fieldsRecord["contactId"] = urlContactId;
+    }
+
     return fieldsRecord;
   }, [searchParams, survey.hiddenFields.fieldIds]);
 

@@ -65,3 +65,58 @@ export const getContactByUserId = reactCache(
     };
   }
 );
+
+export const getContactByEmail = reactCache(
+  async (
+    environmentId: string,
+    email: string
+  ): Promise<{
+    id: string;
+    attributes: TContactAttributes;
+  } | null> => {
+    try {
+      const contact = await prisma.contact.findFirst({
+        where: {
+          environmentId,
+          attributes: {
+            some: {
+              attributeKey: {
+                key: "email",
+                environmentId,
+              },
+              value: email,
+            },
+          },
+        },
+        select: {
+          id: true,
+          attributes: {
+            select: {
+              attributeKey: { select: { key: true } },
+              value: true,
+            },
+          },
+        },
+      });
+
+      if (!contact) {
+        return null;
+      }
+
+      const contactAttributes = contact.attributes.reduce((acc, attr) => {
+        acc[attr.attributeKey.key] = attr.value;
+        return acc;
+      }, {}) as TContactAttributes;
+
+      return {
+        id: contact.id,
+        attributes: contactAttributes,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);

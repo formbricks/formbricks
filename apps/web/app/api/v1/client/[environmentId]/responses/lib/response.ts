@@ -1,4 +1,5 @@
 import "server-only";
+import { getContact } from "@/app/api/v2/client/[environmentId]/responses/lib/contact";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
@@ -15,7 +16,7 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { getContactByUserId } from "./contact";
+import { getContactByEmail, getContactByUserId } from "./contact";
 
 export const responseSelection = {
   id: true,
@@ -79,6 +80,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     environmentId,
     language,
     userId,
+    email,
+    contactId,
     surveyId,
     displayId,
     finished,
@@ -99,7 +102,11 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       throw new ResourceNotFoundError("Organization", environmentId);
     }
 
-    if (userId) {
+    if (contactId) {
+      contact = await getContact(contactId);
+    } else if (email) {
+      contact = await getContactByEmail(environmentId, email);
+    } else if (userId) {
       contact = await getContactByUserId(environmentId, userId);
     }
 

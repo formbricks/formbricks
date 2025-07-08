@@ -70,7 +70,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const responseInputData = responseInputValidation.data;
 
-  if (responseInputData.userId) {
+  if (responseInputData.userId || responseInputData.email || responseInputData.contactId) {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);

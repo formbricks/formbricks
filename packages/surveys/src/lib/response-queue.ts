@@ -108,8 +108,9 @@ export class ResponseQueue {
         const response = await this.api.createResponse({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
-          contactId: this.surveyState.contactId || null,
+          contactId: responseUpdate.hiddenFields?.contactId as string || this.surveyState.contactId || null,
           userId: this.surveyState.userId || null,
+          email: responseUpdate.hiddenFields?.email as string | undefined,
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
