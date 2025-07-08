@@ -20,9 +20,22 @@ vi.mock("@/modules/ui/components/button", () => ({
   }),
 }));
 
-// Mock Modal
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: vi.fn(({ children, open }) => (open ? <div data-testid="modal">{children}</div> : null)),
+// Mock Dialog
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: vi.fn(({ children, open, onOpenChange }) =>
+    open ? (
+      <div data-testid="dialog" role="dialog">
+        {children}
+        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
+      </div>
+    ) : null
+  ),
+  DialogContent: vi.fn(({ children, ...props }) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  )),
+  DialogBody: vi.fn(({ children }) => <div data-testid="dialog-body">{children}</div>),
 }));
 
 // Mock useTranslate
@@ -120,7 +133,7 @@ describe("ShareSurveyResults", () => {
 
   test("does not render content when modal is closed (open is false)", () => {
     render(<ShareSurveyResults {...defaultProps} open={false} />);
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("environments.surveys.summary.publish_to_web_warning")).not.toBeInTheDocument();
     expect(
       screen.queryByText("environments.surveys.summary.survey_results_are_public")

@@ -35,19 +35,45 @@ vi.mock("lucide-react", () => ({
   UsersIcon: () => <div data-testid="users-icon" />,
 }));
 
-// Mock Modal component
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, setOpen, noPadding, children }) => {
-    if (!open) return null;
-    return (
-      <div data-testid="modal" data-no-padding={noPadding}>
-        <button data-testid="modal-close" onClick={() => setOpen(false)}>
+// Mock Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
           Close
         </button>
-        {children}
       </div>
-    );
-  },
+    ) : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 // Mock Button component
@@ -115,10 +141,11 @@ describe("SaveAsNewSegmentModal", () => {
     onUpdateSegment: vi.fn().mockResolvedValue({ id: "updatedSegment" }),
   };
 
-  test("renders the modal when open is true", () => {
+  test("renders the dialog when open is true", () => {
     render(<SaveAsNewSegmentModal {...mockProps} />);
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
     expect(screen.getByText("Save as New Segment")).toBeInTheDocument();
     expect(screen.getByText("Save your filters as a segment to use it in other surveys")).toBeInTheDocument();
     expect(screen.getByTestId("users-icon")).toBeInTheDocument();
@@ -127,7 +154,7 @@ describe("SaveAsNewSegmentModal", () => {
   test("doesn't render when open is false", () => {
     render(<SaveAsNewSegmentModal {...mockProps} open={false} />);
 
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   test("renders form fields correctly", () => {
@@ -145,7 +172,7 @@ describe("SaveAsNewSegmentModal", () => {
     const user = userEvent.setup();
     render(<SaveAsNewSegmentModal {...mockProps} />);
 
-    await user.click(screen.getByTestId("modal-close"));
+    await user.click(screen.getByTestId("dialog-close"));
 
     expect(mockProps.setOpen).toHaveBeenCalledWith(false);
   });
