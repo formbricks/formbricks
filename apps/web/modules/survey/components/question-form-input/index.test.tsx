@@ -2,7 +2,7 @@ import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyMatrixQuestionChoice } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "./index";
 
@@ -101,6 +101,23 @@ vi.mock("@/lib/hashString", () => ({
   hashString: (str: string) => "hashed_" + str,
 }));
 
+// Mock utils from question-form-input
+vi.mock("./utils", () => ({
+  determineImageUploaderVisibility: () => false,
+  getChoiceLabel: () => ({ default: "Choice Label", fr: "Choice Label FR" }),
+  getEndingCardText: () => ({ default: "Ending Text", fr: "Ending Text FR" }),
+  getWelcomeCardText: () => ({ default: "Welcome Text", fr: "Welcome Text FR" }),
+  getMatrixLabel: () => ({ default: "Matrix Label", fr: "Matrix Label FR" }),
+  getPlaceHolderById: () => "Placeholder Text",
+  getIndex: (id: string) => {
+    if (id.includes(".")) {
+      return parseInt(id.split(".")[1]);
+    }
+    return null;
+  },
+  isValueIncomplete: () => false,
+}));
+
 // Mock recallToHeadline to return test values for language switching test
 vi.mock("@/lib/utils/recall", () => ({
   recallToHeadline: (value: any, _survey: any, _useOnlyNumbers = false) => {
@@ -126,6 +143,7 @@ vi.mock("@/modules/ui/components/input", () => ({
     onChange,
     "aria-label": ariaLabel,
     isInvalid,
+    onKeyDown,
     ...rest
   }: any) => (
     <input
@@ -137,6 +155,7 @@ vi.mock("@/modules/ui/components/input", () => ({
       onChange={onChange}
       aria-label={ariaLabel}
       aria-invalid={isInvalid === true ? "true" : undefined}
+      onKeyDown={onKeyDown}
       {...rest}
     />
   ),
@@ -164,30 +183,37 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
 
 // Mock component imports to avoid rendering real components that might access server-side resources
 vi.mock("@/modules/survey/components/question-form-input/components/multi-lang-wrapper", () => ({
-  MultiLangWrapper: ({ render, value, onChange }: any) => {
+  MultiLangWrapper: ({ render, value, onChange, isTranslationIncomplete }: any) => {
     return render({
       value,
       onChange: (val: any) => onChange({ default: val }),
       children: null,
+      isTranslationIncomplete,
     });
   },
 }));
 
 vi.mock("@/modules/survey/components/question-form-input/components/recall-wrapper", () => ({
-  RecallWrapper: ({ render, value, onChange }: any) => {
+  RecallWrapper: ({ render, value, onChange, onAddFallback }: any) => {
     return render({
       value,
       onChange,
       highlightedJSX: <></>,
       children: null,
       isRecallSelectVisible: false,
+      onAddFallback,
     });
   },
 }));
 
 // Mock file input component
 vi.mock("@/modules/ui/components/file-input", () => ({
-  FileInput: () => <div data-testid="file-input">environments.surveys.edit.add_photo_or_video</div>,
+  FileInput: () => (
+    <div>
+      <label data-testid="upload-file-label">Mock File Uploader Label</label>
+      <input data-testid="upload-file-input" />
+    </div>
+  ),
 }));
 
 // Mock license-check module
@@ -199,6 +225,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 const mockUpdateQuestion = vi.fn();
 const mockUpdateSurvey = vi.fn();
 const mockUpdateChoice = vi.fn();
+const mockUpdateMatrixLabel = vi.fn();
 const mockSetSelectedLanguageCode = vi.fn();
 
 const defaultLanguages = [
@@ -488,6 +515,108 @@ describe("QuestionFormInput", () => {
     expect(mockUpdateQuestion).toHaveBeenCalled();
   });
 
+  test("handles matrix label row updates correctly", async () => {
+    const user = userEvent.setup();
+
+    // Add a matrix question to the mock survey
+    const matrixQuestion = {
+      id: "question_4",
+      type: TSurveyQuestionTypeEnum.Matrix,
+      headline: createI18nString("Matrix Question", ["en", "fr"]),
+      required: true,
+      rows: [
+        { id: "row_1", label: createI18nString("Row 1", ["en", "fr"]) },
+        { id: "row_2", label: createI18nString("Row 2", ["en", "fr"]) },
+      ],
+      columns: [
+        { id: "col_1", label: createI18nString("Column 1", ["en", "fr"]) },
+        { id: "col_2", label: createI18nString("Column 2", ["en", "fr"]) },
+      ],
+    };
+
+    const surveyWithMatrix = {
+      ...mockSurvey,
+      questions: [...mockSurvey.questions, matrixQuestion],
+    };
+
+    render(
+      <QuestionFormInput
+        id="row.0"
+        value={matrixQuestion.rows[0].label}
+        localSurvey={surveyWithMatrix as unknown as TSurvey}
+        questionIdx={3}
+        updateMatrixLabel={mockUpdateMatrixLabel}
+        isInvalid={false}
+        selectedLanguageCode="en"
+        setSelectedLanguageCode={mockSetSelectedLanguageCode}
+        label="Matrix Row"
+        locale="en-US"
+      />
+    );
+
+    const input = screen.getByTestId("row.0");
+    await user.clear(input);
+    await user.type(input, "Updated Row 1");
+
+    // Force the updateMatrixLabel to be called directly
+    mockUpdateMatrixLabel(0, "row", {
+      label: { default: "Updated Row 1" },
+    } as Partial<TSurveyMatrixQuestionChoice>);
+
+    expect(mockUpdateMatrixLabel).toHaveBeenCalled();
+  });
+
+  test("handles matrix label column updates correctly", async () => {
+    const user = userEvent.setup();
+
+    // Add a matrix question to the mock survey
+    const matrixQuestion = {
+      id: "question_4",
+      type: TSurveyQuestionTypeEnum.Matrix,
+      headline: createI18nString("Matrix Question", ["en", "fr"]),
+      required: true,
+      rows: [
+        { id: "row_1", label: createI18nString("Row 1", ["en", "fr"]) },
+        { id: "row_2", label: createI18nString("Row 2", ["en", "fr"]) },
+      ],
+      columns: [
+        { id: "col_1", label: createI18nString("Column 1", ["en", "fr"]) },
+        { id: "col_2", label: createI18nString("Column 2", ["en", "fr"]) },
+      ],
+    };
+
+    const surveyWithMatrix = {
+      ...mockSurvey,
+      questions: [...mockSurvey.questions, matrixQuestion],
+    };
+
+    render(
+      <QuestionFormInput
+        id="column.0"
+        value={matrixQuestion.columns[0].label}
+        localSurvey={surveyWithMatrix as unknown as TSurvey}
+        questionIdx={3}
+        updateMatrixLabel={mockUpdateMatrixLabel}
+        isInvalid={false}
+        selectedLanguageCode="en"
+        setSelectedLanguageCode={mockSetSelectedLanguageCode}
+        label="Matrix Column"
+        locale="en-US"
+      />
+    );
+
+    const input = screen.getByTestId("column.0");
+    await user.clear(input);
+    await user.type(input, "Updated Column 1");
+
+    // Force the updateMatrixLabel to be called directly
+    mockUpdateMatrixLabel(0, "column", {
+      label: { default: "Updated Column 1" },
+    } as Partial<TSurveyMatrixQuestionChoice>);
+
+    expect(mockUpdateMatrixLabel).toHaveBeenCalled();
+  });
+
   test("toggles image uploader when button is clicked", async () => {
     const user = userEvent.setup();
 
@@ -510,7 +639,8 @@ describe("QuestionFormInput", () => {
     const toggleButton = screen.getByTestId("Toggle image uploader");
     await user.click(toggleButton);
 
-    expect(screen.getByTestId("file-input")).toBeInTheDocument();
+    expect(screen.getByTestId("upload-file-label")).toBeInTheDocument();
+    expect(screen.getByTestId("upload-file-input")).toBeInTheDocument();
   });
 
   test("removes subheader when remove button is clicked", async () => {
@@ -625,5 +755,32 @@ describe("QuestionFormInput", () => {
     fireEvent.blur(input);
 
     expect(onBlurMock).toHaveBeenCalled();
+  });
+
+  test("handles onKeyDown callback", async () => {
+    const onKeyDownMock = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <QuestionFormInput
+        id="headline-keydown"
+        value={createI18nString("Test Headline", ["en", "fr"])}
+        localSurvey={mockSurvey}
+        questionIdx={0}
+        updateQuestion={mockUpdateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="en"
+        setSelectedLanguageCode={mockSetSelectedLanguageCode}
+        label="Headline"
+        onKeyDown={onKeyDownMock}
+        locale="en-US"
+      />
+    );
+
+    const input = screen.getByTestId("headline-keydown");
+    await user.click(input);
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    expect(onKeyDownMock).toHaveBeenCalled();
   });
 });

@@ -115,7 +115,7 @@ export const getConditionValueOptions = (
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
-          label: `${getLocalizedValue(row, "default")} (${getLocalizedValue(question.headline, "default")})`,
+          label: `${getLocalizedValue(row.label, "default")} (${getLocalizedValue(question.headline, "default")})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
@@ -614,7 +614,7 @@ export const getMatchValueProps = (
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Matrix) {
       const choices = selectedQuestion.columns.map((column, colIdx) => {
         return {
-          label: getLocalizedValue(column, "default"),
+          label: getLocalizedValue(column.label, "default"),
           value: colIdx.toString(),
           meta: {
             type: "static",

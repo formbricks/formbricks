@@ -87,12 +87,12 @@ describe("utils", () => {
         headline: createI18nString("Matrix Question", surveyLanguageCodes),
         required: true,
         rows: [
-          createI18nString("Row 1", surveyLanguageCodes),
-          createI18nString("Row 2", surveyLanguageCodes),
+          { id: "r1", label: createI18nString("Row 1", surveyLanguageCodes) },
+          { id: "r2", label: createI18nString("Row 2", surveyLanguageCodes) },
         ],
         columns: [
-          createI18nString("Column 1", surveyLanguageCodes),
-          createI18nString("Column 2", surveyLanguageCodes),
+          { id: "c1", label: createI18nString("Column 1", surveyLanguageCodes) },
+          { id: "c2", label: createI18nString("Column 2", surveyLanguageCodes) },
         ],
       } as unknown as TSurveyQuestion;
 
@@ -108,12 +108,12 @@ describe("utils", () => {
         headline: createI18nString("Matrix Question", surveyLanguageCodes),
         required: true,
         rows: [
-          createI18nString("Row 1", surveyLanguageCodes),
-          createI18nString("Row 2", surveyLanguageCodes),
+          { id: "r1", label: createI18nString("Row 1", surveyLanguageCodes) },
+          { id: "r2", label: createI18nString("Row 2", surveyLanguageCodes) },
         ],
         columns: [
-          createI18nString("Column 1", surveyLanguageCodes),
-          createI18nString("Column 2", surveyLanguageCodes),
+          { id: "c1", label: createI18nString("Column 1", surveyLanguageCodes) },
+          { id: "c2", label: createI18nString("Column 2", surveyLanguageCodes) },
         ],
       } as unknown as TSurveyQuestion;
 

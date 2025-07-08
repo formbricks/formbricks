@@ -1,7 +1,6 @@
 import * as recallUtils from "@/lib/utils/recall";
 import { cleanup } from "@testing-library/react";
 import { TFnType } from "@tolgee/react";
-import { JSX } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   TSingleCondition,
@@ -18,7 +17,6 @@ import {
   findOptionUsedInLogic,
   findQuestionUsedInLogic,
   findVariableUsedInLogic,
-  formatTextWithSlashes,
   getActionObjectiveOptions,
   getActionOperatorOptions,
   getActionTargetOptions,
@@ -80,7 +78,6 @@ vi.mock("react", async () => {
     ...actual,
     // Mock the JSX.Element type
     JSX: {
-      ...actual.JSX,
       Element: {},
     },
   };
@@ -232,190 +229,190 @@ const mockFormatTextWithSlashes = vi.fn((text, prefix = "", classNames = ["text-
 const mockT: TFnType = (key) => key as string;
 
 // Create mock survey data
-const createMockSurvey = (): TSurvey => ({
-  id: "survey123",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "Test Survey",
-  status: "draft",
-  environmentId: "env123",
-  type: "app",
-  responsive: true,
-  welcomeCard: {
-    enabled: true,
-    timeToFinish: false,
-    headline: { default: "Welcome" },
-    buttonLabel: { default: "Start" },
-    showResponseCount: false,
-  },
-  autoClose: null,
-  closeOnDate: null,
-  delay: 0,
-  displayOption: "displayOnce",
-  recontactDays: null,
-  displayLimit: null,
-  runOnDate: null,
-  thankYouCard: {
-    enabled: true,
-    title: { default: "Thank you" },
-    buttonLabel: { default: "Close" },
-    buttonLink: "",
-  },
-  questions: [
-    {
-      id: "question1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Open Text Question" },
-      subheader: { default: "" },
-      required: false,
-      inputType: "text",
-      placeholder: { default: "Enter text" },
-      longAnswer: false,
-      logic: [],
-      charLimit: {
-        enabled: false,
+const createMockSurvey = (): TSurvey =>
+  ({
+    id: "survey123",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Test Survey",
+    status: "draft",
+    environmentId: "env123",
+    type: "app",
+    welcomeCard: {
+      enabled: true,
+      timeToFinish: false,
+      headline: { default: "Welcome" },
+      buttonLabel: { default: "Start" },
+      showResponseCount: false,
+    },
+    autoClose: null,
+    closeOnDate: null,
+    delay: 0,
+    displayOption: "displayOnce",
+    recontactDays: null,
+    displayLimit: null,
+    runOnDate: null,
+    questions: [
+      {
+        id: "question1",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        headline: { default: "Open Text Question" },
+        subheader: { default: "" },
+        required: false,
+        inputType: "text",
+        placeholder: { default: "Enter text" },
+        longAnswer: false,
+        logic: [],
+        charLimit: {
+          enabled: false,
+        },
       },
-    },
-    {
-      id: "question2",
-      type: TSurveyQuestionTypeEnum.Rating,
-      headline: { default: "Rating Question" },
-      subheader: { default: "" },
-      required: true,
-      range: 5,
-      scale: "number",
-      logic: [],
-      isColorCodingEnabled: false,
-    },
-    {
-      id: "question3",
-      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-      headline: { default: "Multiple Choice Question" },
-      subheader: { default: "" },
-      required: false,
-      choices: [
-        { id: "choice1", label: { default: "Choice 1" } },
-        { id: "choice2", label: { default: "Choice 2" } },
-      ],
-      shuffleOption: "none",
-      logic: [],
-    },
-    {
-      id: "question4",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Open Text Question (Number)" },
-      subheader: { default: "" },
-      required: false,
-      inputType: "number",
-      placeholder: { default: "Enter number" },
-      longAnswer: false,
-      logic: [],
-      charLimit: {
-        enabled: false,
+      {
+        id: "question2",
+        type: TSurveyQuestionTypeEnum.Rating,
+        headline: { default: "Rating Question" },
+        subheader: { default: "" },
+        required: true,
+        range: 5,
+        scale: "number",
+        logic: [],
+        isColorCodingEnabled: false,
       },
+      {
+        id: "question3",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Multiple Choice Question" },
+        subheader: { default: "" },
+        required: false,
+        choices: [
+          { id: "choice1", label: { default: "Choice 1" } },
+          { id: "choice2", label: { default: "Choice 2" } },
+        ],
+        shuffleOption: "none",
+        logic: [],
+      },
+      {
+        id: "question4",
+        type: TSurveyQuestionTypeEnum.OpenText,
+        headline: { default: "Open Text Question (Number)" },
+        subheader: { default: "" },
+        required: false,
+        inputType: "number",
+        placeholder: { default: "Enter number" },
+        longAnswer: false,
+        logic: [],
+        charLimit: {
+          enabled: false,
+        },
+      },
+      {
+        id: "question5",
+        type: TSurveyQuestionTypeEnum.Date,
+        headline: { default: "Date Question" },
+        subheader: { default: "" },
+        required: false,
+        logic: [],
+        format: "M-d-y",
+      },
+      {
+        id: "question6",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Multiple Choice Multi Question" },
+        subheader: { default: "" },
+        required: false,
+        choices: [
+          { id: "choice1", label: { default: "Choice 1" } },
+          { id: "choice2", label: { default: "Choice 2" } },
+        ],
+        shuffleOption: "none",
+        logic: [],
+      },
+      {
+        id: "question7",
+        type: TSurveyQuestionTypeEnum.NPS,
+        headline: { default: "NPS Question" },
+        subheader: { default: "" },
+        required: false,
+        lowerLabel: { default: "Not likely" },
+        upperLabel: { default: "Very likely" },
+        logic: [],
+        isColorCodingEnabled: false,
+      },
+      {
+        id: "question8",
+        type: TSurveyQuestionTypeEnum.CTA,
+        headline: { default: "CTA Question" },
+        subheader: { default: "" },
+        required: false,
+        buttonLabel: { default: "Click me" },
+        buttonUrl: "https://example.com",
+        buttonExternal: true,
+        logic: [],
+      },
+      {
+        id: "question9",
+        type: TSurveyQuestionTypeEnum.PictureSelection,
+        headline: { default: "Picture Selection" },
+        subheader: { default: "" },
+        required: false,
+        allowMulti: false,
+        choices: [
+          { id: "pic1", imageUrl: "https://example.com/pic1.jpg" },
+          { id: "pic2", imageUrl: "https://example.com/pic2.jpg" },
+        ],
+        logic: [],
+      },
+      {
+        id: "question10",
+        type: TSurveyQuestionTypeEnum.Matrix,
+        headline: { default: "Matrix Question" },
+        subheader: { default: "" },
+        required: false,
+        rows: [
+          { id: "row1", label: { default: "Row 1" } },
+          { id: "row2", label: { default: "Row 2" } },
+        ],
+        columns: [
+          { id: "col1", label: { default: "Column 1" } },
+          { id: "col2", label: { default: "Column 2" } },
+        ],
+        logic: [],
+        shuffleOption: "none",
+      },
+    ],
+    endings: [
+      {
+        id: "ending1",
+        type: "endScreen",
+        headline: { default: "End Screen" },
+        subheader: { default: "Thank you for completing the survey" },
+      },
+      {
+        id: "ending2",
+        type: "redirectToUrl",
+        label: "Redirect to website",
+        url: "https://example.com",
+      },
+    ],
+    hiddenFields: {
+      enabled: true,
+      fieldIds: ["field1", "field2"],
     },
-    {
-      id: "question5",
-      type: TSurveyQuestionTypeEnum.Date,
-      headline: { default: "Date Question" },
-      subheader: { default: "" },
-      required: false,
-      logic: [],
-      format: "M-d-y",
-    },
-    {
-      id: "question6",
-      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-      headline: { default: "Multiple Choice Multi Question" },
-      subheader: { default: "" },
-      required: false,
-      choices: [
-        { id: "choice1", label: { default: "Choice 1" } },
-        { id: "choice2", label: { default: "Choice 2" } },
-      ],
-      shuffleOption: "none",
-      logic: [],
-    },
-    {
-      id: "question7",
-      type: TSurveyQuestionTypeEnum.NPS,
-      headline: { default: "NPS Question" },
-      subheader: { default: "" },
-      required: false,
-      lowerLabel: { default: "Not likely" },
-      upperLabel: { default: "Very likely" },
-      logic: [],
-      isColorCodingEnabled: false,
-    },
-    {
-      id: "question8",
-      type: TSurveyQuestionTypeEnum.CTA,
-      headline: { default: "CTA Question" },
-      subheader: { default: "" },
-      required: false,
-      buttonLabel: { default: "Click me" },
-      buttonUrl: "https://example.com",
-      buttonExternal: true,
-      logic: [],
-    },
-    {
-      id: "question9",
-      type: TSurveyQuestionTypeEnum.PictureSelection,
-      headline: { default: "Picture Selection" },
-      subheader: { default: "" },
-      required: false,
-      allowMulti: false,
-      choices: [
-        { id: "pic1", imageUrl: "https://example.com/pic1.jpg" },
-        { id: "pic2", imageUrl: "https://example.com/pic2.jpg" },
-      ],
-      logic: [],
-    },
-    {
-      id: "question10",
-      type: TSurveyQuestionTypeEnum.Matrix,
-      headline: { default: "Matrix Question" },
-      subheader: { default: "" },
-      required: false,
-      rows: [{ default: "Row 1" }, { default: "Row 2" }],
-      columns: [{ default: "Column 1" }, { default: "Column 2" }],
-      logic: [],
-      shuffleOption: "none",
-    },
-  ],
-  endings: [
-    {
-      id: "ending1",
-      type: "endScreen",
-      headline: { default: "End Screen" },
-      subheader: { default: "Thank you for completing the survey" },
-    },
-    {
-      id: "ending2",
-      type: "redirectToUrl",
-      label: "Redirect to website",
-      url: "https://example.com",
-    },
-  ],
-  hiddenFields: {
-    enabled: true,
-    fieldIds: ["field1", "field2"],
-  },
-  variables: [
-    {
-      id: "var1",
-      name: "textVar",
-      type: "text",
-      value: "default text",
-    },
-    {
-      id: "var2",
-      name: "numberVar",
-      type: "number",
-      value: 42,
-    },
-  ],
-});
+    variables: [
+      {
+        id: "var1",
+        name: "textVar",
+        type: "text",
+        value: "default text",
+      },
+      {
+        id: "var2",
+        name: "numberVar",
+        type: "number",
+        value: 42,
+      },
+    ],
+  }) as unknown as TSurvey;
 
 // Mock condition
 const createMockCondition = (leftOperandType: string): TSingleCondition => ({
@@ -497,6 +494,10 @@ describe("Survey Editor Utils", () => {
 
       // Should have 1 main option for the matrix and 2 additional options for rows
       expect(matrixOptions.length).toBeGreaterThan(1);
+
+      // Verify that the matrix rows are properly included
+      const rowOptions = matrixOptions.filter((option) => option.meta?.rowIdx !== undefined);
+      expect(rowOptions.length).toBe(2); // Two rows in our mock matrix question
     });
 
     test("filters questions correctly based on the current question index", () => {
@@ -662,6 +663,8 @@ describe("Survey Editor Utils", () => {
       const result = getConditionOperatorOptions(condition, survey, mockT);
 
       expect(result.length).toBeGreaterThan(0);
+      // Should use the matrix.row options when row is specified in meta
+      expect(result[0].value).toBe("selected");
     });
   });
 
@@ -774,6 +777,11 @@ describe("Survey Editor Utils", () => {
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
       expect(result.options[0].options).toHaveLength(2); // 2 columns in mock Matrix question
+
+      // Verify the column options have the correct structure
+      const columnOption = result.options[0].options[0];
+      expect(columnOption.value).toBe("0"); // First column index
+      expect(columnOption.label).toBe("Column 1"); // From the mock Matrix question
     });
 
     test("returns appropriate options for text variable", () => {
@@ -961,10 +969,16 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "variable", value: "var1" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "test" },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "variable", value: "var1" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "test" },
+              },
+            ],
           },
           actions: [
             {
@@ -1001,10 +1015,16 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "question", value: "question3" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "choice1" },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "question", value: "question3" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "choice1" },
+              },
+            ],
           },
           actions: [],
         },
@@ -1022,16 +1042,22 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: {
-              type: "question",
-              value: "question3",
-              meta: {
-                optionId: "choice1",
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: {
+                  type: "question",
+                  value: "question3",
+                  meta: {
+                    optionId: "choice1",
+                  },
+                },
+                operator: "equals",
+                rightOperand: { type: "static", value: "something" },
               },
-            },
-            operator: "equals",
-            rightOperand: { type: "static", value: "something" },
+            ],
           },
           actions: [],
         },
@@ -1056,10 +1082,16 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "variable", value: "var1" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "test" },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "variable", value: "var1" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "test" },
+              },
+            ],
           },
           actions: [],
         },
@@ -1076,10 +1108,16 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "question", value: "question3" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "test" },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "question", value: "question3" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "test" },
+              },
+            ],
           },
           actions: [
             {
@@ -1114,11 +1152,17 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "hiddenField", value: "field1" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "test" },
-          },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "hiddenField", value: "field1" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "test" },
+              },
+            ],
+          } as any,
           actions: [],
         },
       ];
@@ -1152,11 +1196,17 @@ describe("Survey Editor Utils", () => {
         {
           id: "logic1",
           conditions: {
-            id: "cond1",
-            leftOperand: { type: "question", value: "question3" },
-            operator: "equals",
-            rightOperand: { type: "static", value: "test" },
-          },
+            id: "condGroup1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cond1",
+                leftOperand: { type: "question", value: "question3" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "test" },
+              },
+            ],
+          } as any,
           actions: [
             {
               id: "action1",

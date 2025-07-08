@@ -61,14 +61,20 @@ const handleI18nCheckForMatrixLabels = (
 ): boolean => {
   const rowsAndColumns = [...question.rows, ...question.columns];
 
-  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
-  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(
+    question.rows.map((row) => row.label),
+    languages
+  );
+  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(
+    question.columns.map((column) => column.label),
+    languages
+  );
 
   if (invalidRowsLangCodes.length > 0 || invalidColumnsLangCodes.length > 0) {
     return false;
   }
 
-  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
+  return rowsAndColumns.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
 const handleI18nCheckForContactAndAddressFields = (

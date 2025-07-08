@@ -34,6 +34,10 @@ vi.mock("@/components/general/question-media", () => ({
     imgUrl ? <img src={imgUrl} alt="Question media" /> : videoUrl ? <video src={videoUrl}></video> : null, // NOSONAR
 }));
 
+vi.mock("@/components/wrappers/scrollable-container", () => ({
+  ScrollableContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 describe("MatrixQuestion", () => {
   afterEach(() => {
     cleanup();
@@ -48,8 +52,17 @@ describe("MatrixQuestion", () => {
       subheader: { default: "Please rate the following services" },
       required: true,
       shuffleOption: "none",
-      rows: ["Service 1", "Service 2", "Service 3"],
-      columns: ["Poor", "Fair", "Good", "Excellent"],
+      rows: [
+        { id: "row1", label: { default: "Service 1" } },
+        { id: "row2", label: { default: "Service 2" } },
+        { id: "row3", label: { default: "Service 3" } },
+      ],
+      columns: [
+        { id: "col1", label: { default: "Poor" } },
+        { id: "col2", label: { default: "Fair" } },
+        { id: "col3", label: { default: "Good" } },
+        { id: "col4", label: { default: "Excellent" } },
+      ],
       buttonLabel: { default: "Next" },
       backButtonLabel: { default: "Back" },
       imageUrl: "",
