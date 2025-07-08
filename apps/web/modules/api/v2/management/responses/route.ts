@@ -1,3 +1,4 @@
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
@@ -129,6 +130,22 @@ export const POST = async (request: Request) =>
       const createResponseResult = await createResponse(environmentId, body);
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
+      }
+
+      sendToPipeline({
+        event: "responseCreated",
+        environmentId,
+        surveyId: createResponseResult.data.surveyId,
+        response: createResponseResult.data,
+      });
+
+      if (body.finished) {
+        sendToPipeline({
+          event: "responseFinished",
+          environmentId,
+          surveyId: createResponseResult.data.surveyId,
+          response: createResponseResult.data,
+        });
       }
 
       if (auditLog) {
