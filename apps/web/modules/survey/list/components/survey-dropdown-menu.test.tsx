@@ -283,42 +283,6 @@ describe("SurveyDropDownMenu", () => {
         expect(mockToast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
       });
     });
-
-    test("refreshes router after successful copy", async () => {
-      const mockRefreshSingleUseId = vi.fn().mockResolvedValue("test-single-use-id");
-      const mockWriteText = vi.fn().mockResolvedValue(undefined);
-      navigator.clipboard.writeText = mockWriteText;
-
-      render(
-        <SurveyDropDownMenu
-          environmentId="env123"
-          survey={{ ...fakeSurvey, status: "completed" }}
-          publicDomain="http://survey.test"
-          refreshSingleUseId={mockRefreshSingleUseId}
-          deleteSurvey={vi.fn()}
-        />
-      );
-
-      const menuWrapper = screen.getByTestId("survey-dropdown-menu");
-      const triggerElement = menuWrapper.querySelector("[class*='p-2']") as HTMLElement;
-
-      // Open dropdown
-      await userEvent.click(triggerElement);
-
-      // Wait for pre-fetch
-      await waitFor(() => {
-        expect(mockRefreshSingleUseId).toHaveBeenCalled();
-      });
-
-      // Click copy link
-      const copyLinkButton = screen.getByTestId("copy-link");
-      await userEvent.click(copyLinkButton);
-
-      // Verify router refresh was called
-      await waitFor(() => {
-        expect(mockRouterRefresh).toHaveBeenCalled();
-      });
-    });
   });
 
   test("handleEditforActiveSurvey opens EditPublicSurveyAlertDialog for active surveys", async () => {
@@ -457,7 +421,6 @@ describe("SurveyDropDownMenu", () => {
         expect(mockDeleteSurveyAction).toHaveBeenCalledWith({ surveyId: "testSurvey" });
         expect(mockDeleteSurvey).toHaveBeenCalledWith("testSurvey");
         expect(mockToast.success).toHaveBeenCalledWith("environments.surveys.survey_deleted_successfully");
-        expect(mockRouterRefresh).toHaveBeenCalled();
       });
     });
 
@@ -568,7 +531,6 @@ describe("SurveyDropDownMenu", () => {
 
       // Verify that deleteSurvey callback was not called due to error
       expect(mockDeleteSurvey).not.toHaveBeenCalled();
-      expect(mockRouterRefresh).not.toHaveBeenCalled();
     });
 
     test("does not call router.refresh or success toast when deleteSurveyAction throws", async () => {
@@ -652,7 +614,7 @@ describe("SurveyDropDownMenu", () => {
       await userEvent.click(confirmDeleteButton);
 
       await waitFor(() => {
-        expect(callOrder).toEqual(["deleteSurveyAction", "deleteSurvey", "toast.success", "router.refresh"]);
+        expect(callOrder).toEqual(["deleteSurveyAction", "deleteSurvey", "toast.success"]);
       });
     });
   });
