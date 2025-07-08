@@ -9,6 +9,7 @@ interface SurveyContainerProps {
   children: React.ReactNode;
   onClose?: () => void;
   clickOutside?: boolean;
+  ignorePlacementForClickOutside?: boolean;
   isOpen?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function SurveyContainer({
   children,
   onClose,
   clickOutside,
+  ignorePlacementForClickOutside,
   isOpen = true,
 }: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -27,7 +29,11 @@ export function SurveyContainer({
 
   useEffect(() => {
     if (!isModal) return;
-    if (!isCenter) return;
+
+    // If the placement is not center and we don't want to ignore center placement for click outside, we will return early
+    if (!ignorePlacementForClickOutside && !isCenter) {
+      return;
+    }
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -44,7 +50,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutside, onClose, isCenter, isModal, isOpen]);
+  }, [clickOutside, onClose, isCenter, isModal, isOpen, ignorePlacementForClickOutside]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
