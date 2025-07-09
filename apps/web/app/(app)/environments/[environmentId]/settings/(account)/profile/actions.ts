@@ -169,7 +169,7 @@ export const resetPasswordAction = authenticatedActionClient.action(
     "user",
     async ({ ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: undefined }) => {
       if (ctx.user.identityProvider !== "email") {
-        throw new OperationNotAllowedError("auth.reset-password.not-allowed");
+        throw new OperationNotAllowedError("Password reset is not allowed for this user.");
       }
 
       await sendForgotPasswordEmail(ctx.user);
