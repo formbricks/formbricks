@@ -10,15 +10,8 @@ echo "Building OpenAPI document generator..."
 # Ensure dist directory exists
 mkdir -p dist
 
-# Build the TypeScript file using esbuild
-npx esbuild modules/api/v2/openapi-document.ts \
-  --bundle \
-  --platform=node \
-  --outfile=dist/openapi-document.js \
-  --external:@prisma/client \
-  --external:yaml \
-  --external:zod \
-  --external:zod-openapi
+# Build using the permanent vite config
+vite build --config scripts/openapi/vite.config.ts
 
 echo "Generating OpenAPI YAML..."
 

@@ -82,46 +82,37 @@ export const createContact = async (
     if (missingKeys.length > 0) {
       return err({
         type: "bad_request",
-        details: [{ field: "attributes", issue: `attribute keys not found: ${missingKeys.join(", ")}` }],
+        details: [{ field: "attributes", issue: `attribute keys not found: ${missingKeys.join(", ")}. ` }],
       });
     }
 
-    // Create the contact and attributes in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create the contact
-      const newContact = await tx.contact.create({
-        data: {
-          environmentId,
-        },
-      });
+    const attributeData = Object.entries(attributes).map(([key, value]) => {
+      const attributeKey = existingAttributeKeys.find((ak) => ak.key === key)!;
+      return {
+        attributeKeyId: attributeKey.id,
+        value,
+      };
+    });
 
-      // Create all attributes for the contact
-      const attributeData = Object.entries(attributes).map(([key, value]) => {
-        const attributeKey = existingAttributeKeys.find((ak) => ak.key === key)!;
-        return {
-          contactId: newContact.id,
-          attributeKeyId: attributeKey.id,
-          value,
-        };
-      });
-
-      await tx.contactAttribute.createMany({
-        data: attributeData,
-      });
-
-      // Fetch the created contact with attributes
-      const contactWithAttributes = await tx.contact.findUnique({
-        where: { id: newContact.id },
-        include: {
-          attributes: {
-            include: {
-              attributeKey: true,
-            },
+    const result = await prisma.contact.create({
+      data: {
+        environmentId,
+        attributes: {
+          createMany: {
+            data: attributeData,
           },
         },
-      });
-
-      return contactWithAttributes;
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        environmentId: true,
+        attributes: {
+          include: {
+            attributeKey: true,
+          },
+        },
+      },
     });
 
     if (!result) {
