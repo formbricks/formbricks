@@ -35,7 +35,7 @@ export const ZUser = z.object({
     example: true,
   }),
   name: ZUserName.openapi({
-    description: "The name of the user",
+    description: "The full name of the user",
     example: "John Doe",
   }),
   email: ZUserEmail.openapi({

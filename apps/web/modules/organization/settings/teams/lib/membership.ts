@@ -20,7 +20,8 @@ export const getMembershipByOrganizationId = reactCache(
         select: {
           user: {
             select: {
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
               isActive: true,
             },
@@ -35,7 +36,7 @@ export const getMembershipByOrganizationId = reactCache(
 
       const members = membersData.map((member) => {
         return {
-          name: member.user?.name || "",
+          name: member.user ? `${member.user.firstName} ${member.user.lastName}` : "",
           email: member.user?.email || "",
           userId: member.userId,
           accepted: member.accepted,
@@ -162,7 +163,8 @@ export const getMembersByOrganizationId = reactCache(
         select: {
           user: {
             select: {
-              name: true,
+              firstName: true,
+              lastName: true,
             },
           },
           role: true,
@@ -173,7 +175,7 @@ export const getMembersByOrganizationId = reactCache(
       const members = membersData.map((member) => {
         return {
           id: member.userId,
-          name: member.user?.name || "",
+          name: member.user ? `${member.user.firstName} ${member.user.lastName}` : "",
           role: member.role,
         };
       });

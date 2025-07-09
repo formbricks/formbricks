@@ -63,7 +63,7 @@ export const setupTwoFactorAuth = async (
     },
   });
 
-  const name = user.email || user.name || user.id.toString();
+  const name = user.email || `${user.firstName} ${user.lastName}` || user.id.toString();
   const keyUri = authenticator.keyuri(name, "Formbricks", secret);
   const dataUri = await qrcode.toDataURL(keyUri);
 

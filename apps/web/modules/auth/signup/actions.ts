@@ -19,7 +19,8 @@ import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreatedUser = ZUser.pick({
-  name: true,
+  firstName: true,
+  lastName: true,
   email: true,
   locale: true,
   id: true,
@@ -29,7 +30,8 @@ const ZCreatedUser = ZUser.pick({
 type TCreatedUser = z.infer<typeof ZCreatedUser>;
 
 const ZCreateUserAction = z.object({
-  name: ZUserName,
+  firstName: ZUserName,
+  lastName: ZUserName,
   email: ZUserEmail,
   password: ZUserPassword,
   inviteToken: z.string().optional(),
@@ -47,25 +49,27 @@ const ZCreateUserAction = z.object({
 async function verifyTurnstileIfConfigured(
   turnstileToken: string | undefined,
   email: string,
-  name: string
+  firstName: string,
+  lastName: string
 ): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;
 
   if (!turnstileToken || !TURNSTILE_SECRET_KEY) {
-    captureFailedSignup(email, name);
+    captureFailedSignup(email, `${firstName} ${lastName}`);
     throw new UnknownError("Server configuration error");
   }
 
   const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, turnstileToken);
   if (!isHuman) {
-    captureFailedSignup(email, name);
+    captureFailedSignup(email, `${firstName} ${lastName}`);
     throw new UnknownError("reCAPTCHA verification failed");
   }
 }
 
 async function createUserSafely(
   email: string,
-  name: string,
+  firstName: string,
+  lastName: string,
   hashedPassword: string,
   userLocale: z.infer<typeof ZUserLocale> | undefined
 ): Promise<{ user: TCreatedUser | undefined; userAlreadyExisted: boolean }> {
@@ -75,7 +79,8 @@ async function createUserSafely(
   try {
     user = await createUser({
       email: email.toLowerCase(),
-      name,
+      firstName,
+      lastName,
       password: hashedPassword,
       locale: userLocale,
     });
@@ -127,7 +132,7 @@ async function handleInviteAcceptance(
     },
   });
 
-  await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
+  await sendInviteAcceptedEmail(invite.creator.name ?? "", `${user.firstName} ${user.lastName}`, invite.creator.email);
   await deleteInvite(invite.id);
 }
 
@@ -135,7 +140,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   if (!isMultiOrgEnabled) return;
 
-  const organization = await createOrganization({ name: `${user.name}'s Organization` });
+  const organization = await createOrganization({ name: `${user.firstName} ${user.lastName}'s Organization` });
   ctx.auditLoggingCtx.organizationId = organization.id;
 
   await createMembership(organization.id, user.id, {
@@ -177,12 +182,13 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(
     "created",
     "user",
     async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
-      await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.name);
+      await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.firstName, parsedInput.lastName);
 
       const hashedPassword = await hashPassword(parsedInput.password);
       const { user, userAlreadyExisted } = await createUserSafely(
         parsedInput.email,
-        parsedInput.name,
+        parsedInput.firstName,
+        parsedInput.lastName,
         hashedPassword,
         parsedInput.userLocale
       );

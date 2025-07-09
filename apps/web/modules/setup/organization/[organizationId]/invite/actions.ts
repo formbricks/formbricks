@@ -60,7 +60,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         await sendInviteMemberEmail(
           invitedUserId,
           parsedInput.email,
-          ctx.user.name,
+          `${ctx.user.firstName} ${ctx.user.lastName}`,
           "",
           false, // is onboarding invite
           undefined

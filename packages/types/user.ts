@@ -46,7 +46,8 @@ const ZUserIdentityProvider = z.enum(["email", "google", "github", "azuread", "o
 
 export const ZUser = z.object({
   id: z.string(),
-  name: ZUserName,
+  firstName: ZUserName,
+  lastName: ZUserName,
   email: ZUserEmail,
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
@@ -65,7 +66,8 @@ export const ZUser = z.object({
 export type TUser = z.infer<typeof ZUser>;
 
 export const ZUserUpdateInput = z.object({
-  name: ZUserName.optional(),
+  firstName: ZUserName.optional(),
+  lastName: ZUserName.optional(),
   email: ZUserEmail.optional(),
   emailVerified: z.date().nullish(),
   password: ZUserPassword.optional(),
@@ -81,7 +83,8 @@ export const ZUserUpdateInput = z.object({
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
 
 export const ZUserCreateInput = z.object({
-  name: ZUserName,
+  firstName: ZUserName,
+  lastName: ZUserName,
   email: ZUserEmail,
   password: ZUserPassword.optional(),
   emailVerified: z.date().optional(),

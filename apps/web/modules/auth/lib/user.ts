@@ -124,7 +124,8 @@ export const createUser = async (data: TUserCreateInput) => {
     const user = await prisma.user.create({
       data: data,
       select: {
-        name: true,
+        firstName: true,
+        lastName: true,
         notificationSettings: true,
         id: true,
         email: true,

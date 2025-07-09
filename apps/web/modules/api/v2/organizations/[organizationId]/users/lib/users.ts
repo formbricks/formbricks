@@ -48,7 +48,7 @@ export const getUsers = async (
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
           email: user.email,
-          name: user.name,
+          name: `${user.firstName} ${user.lastName}`,
           lastLoginAt: user.lastLoginAt,
           isActive: user.isActive,
           role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
@@ -93,8 +93,14 @@ export const createUser = async (
       }));
     }
 
+    // Split name into firstName and lastName
+    const nameParts = name.split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
     const prismaData: Prisma.UserCreateInput = {
-      name,
+      firstName,
+      lastName,
       email,
       isActive: isActive,
       memberships: {
@@ -133,7 +139,7 @@ export const createUser = async (
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       email: user.email,
-      name: user.name,
+      name: `${user.firstName} ${user.lastName}`,
       lastLoginAt: user.lastLoginAt,
       isActive: user.isActive,
       role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
@@ -240,8 +246,18 @@ export const updateUser = async (
       }
     });
 
+    // Split name into firstName and lastName if provided
+    let firstName: string | undefined;
+    let lastName: string | undefined;
+    if (name) {
+      const nameParts = name.split(" ");
+      firstName = nameParts[0] || "";
+      lastName = nameParts.slice(1).join(" ") || "";
+    }
+
     const prismaData: Prisma.UserUpdateInput = {
-      name: name ?? undefined,
+      firstName: firstName ?? undefined,
+      lastName: lastName ?? undefined,
       email: email ?? undefined,
       isActive: isActive ?? undefined,
       memberships: {
@@ -281,7 +297,7 @@ export const updateUser = async (
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
       email: updatedUser.email,
-      name: updatedUser.name,
+      name: `${updatedUser.firstName} ${updatedUser.lastName}`,
       lastLoginAt: updatedUser.lastLoginAt,
       isActive: updatedUser.isActive,
       role: updatedUser.memberships.find(

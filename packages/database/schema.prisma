@@ -833,7 +833,8 @@ enum Intention {
 /// Central model for user authentication and profile management.
 ///
 /// @property id - Unique identifier for the user
-/// @property name - Display name of the user
+/// @property firstName - User's first name
+/// @property lastName - User's last name
 /// @property email - User's email address
 /// @property role - User's professional role
 /// @property objective - User's main goal with Formbricks
@@ -844,7 +845,8 @@ model User {
   id            String    @id @default(cuid())
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  name          String
+  firstName     String
+  lastName      String
   email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
 

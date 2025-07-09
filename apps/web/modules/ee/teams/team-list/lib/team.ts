@@ -219,7 +219,8 @@ export const getTeamDetails = reactCache(async (teamId: string): Promise<TTeamDe
             role: true,
             user: {
               select: {
-                name: true,
+                firstName: true,
+                lastName: true,
               },
             },
           },
@@ -248,7 +249,7 @@ export const getTeamDetails = reactCache(async (teamId: string): Promise<TTeamDe
       organizationId: team.organizationId,
       members: team.teamUsers.map((teamUser) => ({
         userId: teamUser.userId,
-        name: teamUser.user.name,
+        name: `${teamUser.user.firstName} ${teamUser.user.lastName}`,
         role: teamUser.role,
       })),
       projects: team.projectTeams.map((projectTeam) => ({

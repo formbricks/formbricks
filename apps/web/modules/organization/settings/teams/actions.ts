@@ -187,7 +187,7 @@ export const resendInviteAction = authenticatedActionClient.schema(ZResendInvite
       await sendInviteMemberEmail(
         parsedInput.inviteId,
         updatedInvite.email,
-        invite?.creator?.name ?? "",
+        invite?.creator ? `${invite.creator.firstName} ${invite.creator.lastName}` : "",
         updatedInvite.name ?? "",
         undefined,
         ctx.user.locale
@@ -269,7 +269,7 @@ export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserActi
         await sendInviteMemberEmail(
           inviteId,
           parsedInput.email,
-          ctx.user.name ?? "",
+          `${ctx.user.firstName} ${ctx.user.lastName}`,
           parsedInput.name ?? "",
           false,
           undefined

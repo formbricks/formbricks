@@ -120,7 +120,7 @@ export const sendTestEmailAction = authenticatedActionClient
 
     await sendEmailCustomizationPreviewEmail(
       ctx.user.email,
-      ctx.user.name,
+      `${ctx.user.firstName} ${ctx.user.lastName}`,
       organization?.whitelabel?.logoUrl || ""
     );
 
