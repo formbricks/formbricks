@@ -1,7 +1,6 @@
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { getContactByUserId } from "./contact";
@@ -32,6 +31,18 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       }
     }
 
+    const survey = await prisma.survey.findUnique({
+      where: {
+        id: surveyId,
+        environmentId,
+      },
+    });
+    if (!survey) {
+      throw new InvalidInputError(
+        `The survey with id ${surveyId} and environmentId ${environmentId} does not exist.`
+      );
+    }
+
     const display = await prisma.display.create({
       data: {
         survey: {
@@ -54,9 +65,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
-        throw new InvalidInputError(`The survey with id ${surveyId} does not exist.`);
-      }
       throw new DatabaseError(error.message);
     }
 

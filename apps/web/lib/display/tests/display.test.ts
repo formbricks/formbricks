@@ -5,6 +5,8 @@ import {
   mockDisplayInputWithUserId,
   mockDisplayWithPersonId,
   mockEnvironment,
+  mockEnvironmentId,
+  mockSurveyId,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
 import { createDisplay } from "@/app/api/v1/client/[environmentId]/displays/lib/display";
@@ -26,20 +28,25 @@ afterEach(() => {
 
 beforeEach(() => {
   prisma.contact.findFirst.mockResolvedValue(mockContact);
+  prisma.survey.findUnique.mockResolvedValue({
+    id: mockSurveyId,
+    name: "Test Survey",
+    environmentId: mockEnvironmentId,
+  } as any);
 });
 
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
     test("Creates a new display when a userId exists", async () => {
-      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
-      prisma.display.create.mockResolvedValue(mockDisplayWithPersonId);
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment as any);
+      prisma.display.create.mockResolvedValue(mockDisplayWithPersonId as any);
 
       const display = await createDisplay(mockDisplayInputWithUserId);
       expect(display).toEqual(mockDisplayWithPersonId);
     });
 
     test("Creates a new display when a userId does not exists", async () => {
-      prisma.display.create.mockResolvedValue(mockDisplay);
+      prisma.display.create.mockResolvedValue(mockDisplay as any);
 
       const display = await createDisplay(mockDisplayInput);
       expect(display).toEqual(mockDisplay);
@@ -51,7 +58,7 @@ describe("Tests for createDisplay service", () => {
 
     test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
-      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment as any);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
@@ -74,7 +81,7 @@ describe("Tests for createDisplay service", () => {
 describe("Tests for delete display service", () => {
   describe("Happy Path", () => {
     test("Deletes a display", async () => {
-      prisma.display.delete.mockResolvedValue(mockDisplay);
+      prisma.display.delete.mockResolvedValue(mockDisplay as any);
 
       const display = await deleteDisplay(mockDisplay.id);
       expect(display).toEqual(mockDisplay);
