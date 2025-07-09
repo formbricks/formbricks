@@ -35,7 +35,7 @@ export const applyRateLimit = async (config: TRateLimitConfig, identifier: strin
   const result = await checkRateLimit(config, identifier);
 
   if (!result.ok || !result.data.allowed) {
-    throw new Error("Rate limit exceeded");
+    throw new Error("Maximum number of requests reached. Please try again later.");
   }
 };
 
