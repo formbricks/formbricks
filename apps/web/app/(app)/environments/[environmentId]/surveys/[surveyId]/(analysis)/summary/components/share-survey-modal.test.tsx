@@ -1,4 +1,4 @@
-import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
+import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LucideIcon } from "lucide-react";
@@ -90,14 +90,6 @@ const mockUser = {
   locale: "en-US",
 } as unknown as TUser;
 
-// Mocks
-const mockRouterRefresh = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: mockRouterRefresh,
-  }),
-}));
-
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
     t: (str: string) => str,
@@ -174,7 +166,7 @@ describe("ShareEmbedSurvey", () => {
   });
 
   test("renders initial 'start' view correctly when open and modalView is 'start' for link survey", () => {
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} />);
     expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
     expect(screen.getByText("ShareSurveyLinkMock")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
@@ -186,7 +178,7 @@ describe("ShareEmbedSurvey", () => {
   });
 
   test("renders initial 'start' view correctly when open and modalView is 'start' for app survey", () => {
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} />);
     // For app surveys, ShareSurveyLink should not be rendered
     expect(screen.queryByText("ShareSurveyLinkMock")).not.toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
@@ -198,7 +190,7 @@ describe("ShareEmbedSurvey", () => {
   });
 
   test("switches to 'embed' view when 'Embed survey' button is clicked", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} />);
+    render(<ShareSurveyModal {...defaultProps} />);
     const embedButton = screen.getByText("environments.surveys.summary.share_survey");
     await userEvent.click(embedButton);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
@@ -206,24 +198,21 @@ describe("ShareEmbedSurvey", () => {
   });
 
   test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
-    render(<ShareEmbedSurvey {...defaultProps} open={true} survey={mockSurveyWeb} />);
+    render(<ShareSurveyModal {...defaultProps} open={true} survey={mockSurveyWeb} />);
     expect(capturedDialogOnOpenChange).toBeDefined();
 
     // Simulate Dialog closing
     if (capturedDialogOnOpenChange) capturedDialogOnOpenChange(false);
     expect(mockSetOpen).toHaveBeenCalledWith(false);
-    expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
 
     // Simulate Dialog opening
-    mockRouterRefresh.mockClear();
     mockSetOpen.mockClear();
     if (capturedDialogOnOpenChange) capturedDialogOnOpenChange(true);
     expect(mockSetOpen).toHaveBeenCalledWith(true);
-    expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
   });
 
   test("correctly configures for 'link' survey type in embed view", () => {
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
     const embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
@@ -235,7 +224,7 @@ describe("ShareEmbedSurvey", () => {
   });
 
   test("correctly configures for 'web' survey type in embed view", () => {
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="embed" />);
     const embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
@@ -247,36 +236,36 @@ describe("ShareEmbedSurvey", () => {
 
   test("useEffect does not change activeId if survey.type changes from web to link (while in embed view)", () => {
     const { rerender } = render(
-      <ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />
+      <ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="embed" />
     );
     expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("app");
 
-    rerender(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
+    rerender(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
     expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("app"); // Current behavior
   });
 
   test("initial showView is set by modalView prop when open is true", () => {
-    render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="embed" />);
+    render(<ShareSurveyModal {...defaultProps} open={true} modalView="embed" />);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
     expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument();
     cleanup();
 
-    render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="start" />);
+    render(<ShareSurveyModal {...defaultProps} open={true} modalView="start" />);
     // Start view shows the share survey button
     expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
   });
 
   test("useEffect sets showView to 'start' when open becomes false", () => {
-    const { rerender } = render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="embed" />);
+    const { rerender } = render(<ShareSurveyModal {...defaultProps} open={true} modalView="embed" />);
     expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument(); // Starts in embed
 
-    rerender(<ShareEmbedSurvey {...defaultProps} open={false} modalView="embed" />);
+    rerender(<ShareSurveyModal {...defaultProps} open={false} modalView="embed" />);
     // Dialog mock returns null when open is false, so EmbedViewMockContent is not found
     expect(screen.queryByTestId("embedview-tabs")).not.toBeInTheDocument();
   });
 
   test("renders correct label for link tab based on singleUse survey property", () => {
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
     let embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string }[];
     };
@@ -289,7 +278,7 @@ describe("ShareEmbedSurvey", () => {
       ...mockSurveyLink,
       singleUse: { enabled: true, isEncrypted: true },
     };
-    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLinkSingleUse} modalView="embed" />);
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLinkSingleUse} modalView="embed" />);
     embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string }[];
     };

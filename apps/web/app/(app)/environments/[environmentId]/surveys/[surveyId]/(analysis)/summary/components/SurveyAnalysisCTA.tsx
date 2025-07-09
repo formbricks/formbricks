@@ -1,7 +1,7 @@
 "use client";
 
-import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -168,7 +168,7 @@ export const SurveyAnalysisCTA = ({
 
       {user &&
         shareEmbedViews.map(({ key, modalView, setOpen }) => (
-          <ShareEmbedSurvey
+          <ShareSurveyModal
             key={key}
             survey={survey}
             publicDomain={publicDomain}

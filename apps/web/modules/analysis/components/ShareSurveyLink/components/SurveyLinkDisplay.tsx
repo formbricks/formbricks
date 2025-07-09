@@ -19,7 +19,8 @@ export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
         //loading state
         <div
           data-testid="loading-div"
-          className="h-9 w-full min-w-96 animate-pulse rounded-lg bg-slate-100 px-3 py-1 text-slate-800 caret-transparent"></div>
+          className="h-9 w-full min-w-96 animate-pulse rounded-lg bg-slate-100 px-3 py-1 text-slate-800 caret-transparent"
+        />
       )}
     </>
   );

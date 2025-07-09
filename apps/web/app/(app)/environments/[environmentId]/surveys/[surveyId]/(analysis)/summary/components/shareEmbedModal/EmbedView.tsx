@@ -91,11 +91,7 @@ export const EmbedView = ({
       <div className="grid h-full grid-cols-4">
         {survey.type === "link" && (
           <SidebarProvider defaultOpen={true} className="hidden lg:flex">
-            <Sidebar
-              className="col-span-1"
-              style={{ width: "100%", position: "relative" }}
-              variant="inset"
-              collapsible="none">
+            <Sidebar className="relative col-span-1 w-full" variant="inset" collapsible="none">
               <SidebarContent className="border-r border-slate-200 bg-white p-4">
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel>

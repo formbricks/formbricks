@@ -16,18 +16,19 @@ import {
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 
+type ModalView = "start" | "embed";
+
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   publicDomain: string;
   open: boolean;
-  modalView: "start" | "embed";
+  modalView: ModalView;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
   segments: TSegment[];
@@ -35,7 +36,7 @@ interface ShareEmbedSurveyProps {
   isFormbricksCloud: boolean;
 }
 
-export const ShareEmbedSurvey = ({
+export const ShareSurveyModal = ({
   survey,
   publicDomain,
   open,
@@ -46,7 +47,6 @@ export const ShareEmbedSurvey = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: ShareEmbedSurveyProps) => {
-  const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
@@ -69,7 +69,7 @@ export const ShareEmbedSurvey = ({
   );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
-  const [showView, setShowView] = useState<"start" | "embed">("start");
+  const [showView, setShowView] = useState<ModalView>("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
@@ -85,13 +85,6 @@ export const ShareEmbedSurvey = ({
     };
     fetchSurveyUrl();
   }, [survey, publicDomain]);
-
-  useEffect(() => {
-    if (survey.type !== "link") {
-      setActiveId(tabs[4].id);
-    }
-  }, [survey.type, tabs]);
-
   useEffect(() => {
     if (open) {
       setShowView(modalView);
@@ -106,7 +99,6 @@ export const ShareEmbedSurvey = ({
     if (!open) {
       setShowView("start");
     }
-    router.refresh();
   };
 
   return (
@@ -131,7 +123,7 @@ export const ShareEmbedSurvey = ({
                 />
               </div>
             )}
-            <div className="flex h-full flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8">
+            <div className="flex h-full flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 py-4">
               <p className="text-sm font-medium text-slate-900">
                 {t("environments.surveys.summary.whats_next")}
               </p>
@@ -140,7 +132,7 @@ export const ShareEmbedSurvey = ({
                   type="button"
                   onClick={() => setShowView("embed")}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
-                  <Share2Icon className="h-8 w-8 text-slate-700" />
+                  <Share2Icon className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.share_survey")}
                 </button>
                 <button
@@ -150,7 +142,7 @@ export const ShareEmbedSurvey = ({
                     setActiveId(tabs[1].id);
                   }}
                   className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
-                  <UserIcon className="h-8 w-8 text-slate-700" />
+                  <UserIcon className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.use_personal_links")}
                   <Badge
                     size="normal"
@@ -162,13 +154,13 @@ export const ShareEmbedSurvey = ({
                 <Link
                   href={`/environments/${environmentId}/settings/notifications`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
-                  <BellRing className="h-8 w-8 text-slate-700" />
+                  <BellRing className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.configure_alerts")}
                 </Link>
                 <Link
                   href={`/environments/${environmentId}/integrations`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
-                  <BlocksIcon className="h-8 w-8 text-slate-700" />
+                  <BlocksIcon className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.setup_integrations")}
                 </Link>
               </div>
