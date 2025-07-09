@@ -536,7 +536,10 @@ describe("validation.isSurveyValid", () => {
     };
     expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses"
+      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      {
+        id: "response-limit-error",
+      }
     );
   });
 
