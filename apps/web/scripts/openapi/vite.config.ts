@@ -17,7 +17,7 @@ export default defineConfig({
       },
     },
     outDir: "dist",
-    emptyOutDir: false,
+    emptyOutDir: true,
   },
   plugins: [tsconfigPaths()],
 });
