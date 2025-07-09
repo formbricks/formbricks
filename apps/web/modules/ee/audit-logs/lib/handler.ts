@@ -199,21 +199,21 @@ export const queueAuditEvent = async ({
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
+export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult = unknown>(
   action: TAuditAction,
   targetType: TAuditTarget,
   handler: (args: {
     ctx: ActionClientCtx | AuthenticatedActionClientCtx;
     parsedInput: TParsedInput;
-  }) => Promise<unknown>
+  }) => Promise<TResult>
 ) => {
   return async function wrappedAction(args: {
     ctx: ActionClientCtx | AuthenticatedActionClientCtx;
     parsedInput: TParsedInput;
-  }) {
+  }): Promise<TResult> {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
-    let result: any;
+    let result: TResult | undefined;
     let status: TAuditStatus = "success";
     let error: any = undefined;
 
@@ -226,12 +226,12 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
 
     if (!AUDIT_LOG_ENABLED) {
       if (status === "failure") throw error;
-      return result;
+      return result as TResult;
     }
 
     if (!auditLoggingCtx) {
       logger.error("No audit logging context found");
-      return result;
+      return result as TResult;
     }
 
     setImmediate(async () => {
@@ -332,6 +332,6 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
     });
 
     if (status === "failure") throw error;
-    return result;
+    return result as TResult;
   };
 };
