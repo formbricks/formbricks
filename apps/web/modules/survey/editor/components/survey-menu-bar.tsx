@@ -29,6 +29,7 @@ import { isSurveyValid } from "../lib/validation";
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
+  setSurvey: (survey: TSurvey) => void;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
   activeId: TSurveyEditorTabs;
@@ -46,6 +47,7 @@ interface SurveyMenuBarProps {
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
+  setSurvey,
   environmentId,
   setLocalSurvey,
   activeId,
@@ -246,6 +248,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
+        setSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);

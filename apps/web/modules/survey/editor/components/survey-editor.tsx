@@ -50,7 +50,7 @@ interface SurveyEditorProps {
 }
 
 export const SurveyEditor = ({
-  survey,
+  survey: initialSurvey,
   project,
   projectLanguages,
   environment,
@@ -74,9 +74,10 @@ export const SurveyEditor = ({
   userEmail,
   teamMemberDetails,
 }: SurveyEditorProps) => {
+  const [survey, setSurvey] = useState<TSurvey>(() => structuredClone(initialSurvey));
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
+  const [localSurvey, setLocalSurvey] = useState<TSurvey>(() => structuredClone(initialSurvey));
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
@@ -155,6 +156,7 @@ export const SurveyEditor = ({
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         survey={survey}
+        setSurvey={setSurvey}
         environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
