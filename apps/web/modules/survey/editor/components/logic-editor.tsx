@@ -67,7 +67,7 @@ export function LogicEditor({
   }, [localSurvey.questions, localSurvey.endings, question.id, t]);
 
   return (
-    <div className="flex w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
+    <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}
@@ -84,8 +84,9 @@ export function LogicEditor({
         localSurvey={localSurvey}
         questionIdx={questionIdx}
       />
+
       {isLast ? (
-        <div className="flex items-center space-x-2">
+        <div className="ml-5 flex items-center space-x-2">
           <ArrowRightIcon className="h-4 w-4" />
           <p className="text-nowrap text-slate-700">
             {t("environments.surveys.edit.all_other_answers_will_continue_to")}

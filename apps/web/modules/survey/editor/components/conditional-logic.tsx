@@ -129,7 +129,7 @@ export function ConditionalLogic({
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
-              className="flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <LogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
@@ -141,10 +141,14 @@ export function ConditionalLogic({
               />
 
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                <DropdownMenuTrigger id={`logic-item-${logicItem.id}-dropdown`}>
+                  <Button
+                    variant="secondary"
+                    className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-md">
+                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent className="mt-10">
                   <DropdownMenuItem
                     onClick={() => {
                       duplicateLogic(logicItemIdx);
