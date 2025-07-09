@@ -213,7 +213,7 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
   }): Promise<TResult> {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
-    let result: TResult | undefined;
+    let result!: TResult;
     let status: TAuditStatus = "success";
     let error: any = undefined;
 
@@ -226,12 +226,12 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
 
     if (!AUDIT_LOG_ENABLED) {
       if (status === "failure") throw error;
-      return result as TResult;
+      return result;
     }
 
     if (!auditLoggingCtx) {
       logger.error("No audit logging context found");
-      return result as TResult;
+      return result;
     }
 
     setImmediate(async () => {
@@ -332,6 +332,6 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
     });
 
     if (status === "failure") throw error;
-    return result as TResult;
+    return result!;
   };
 };
