@@ -323,8 +323,10 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expect(successes).toBe(config.allowedPerInterval);
     expect(failures).toBe(concurrentRequests - config.allowedPerInterval);
 
-    // All failures should be "Rate limit exceeded"
-    const rateLimitErrors = results.filter((r) => r.error === "Rate limit exceeded").length;
+    // All failures should be "Maximum number of requests reached. Please try again later."
+    const rateLimitErrors = results.filter(
+      (r) => r.error === "Maximum number of requests reached. Please try again later."
+    ).length;
     expect(rateLimitErrors).toBe(failures);
   }, 15000);
 

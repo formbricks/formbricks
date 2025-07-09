@@ -19,4 +19,9 @@ export const rateLimitConfigs = {
     profileUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:profile" }, // 3 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
   },
+
+  // Share pages - moderate limits for public access
+  share: {
+    url: { interval: 60, allowedPerInterval: 30, namespace: "share:url" }, // 30 per minute
+  },
 };
