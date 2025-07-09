@@ -332,6 +332,6 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
     });
 
     if (status === "failure") throw error;
-    return result!;
+    return result;
   };
 };
