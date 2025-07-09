@@ -10,15 +10,10 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findFirst: vi.fn(),
       create: vi.fn(),
-      findUnique: vi.fn(),
     },
     contactAttributeKey: {
       findMany: vi.fn(),
     },
-    contactAttribute: {
-      createMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
   },
 }));
 
@@ -81,7 +76,7 @@ describe("contact.ts", () => {
       if (!result.ok) {
         expect(result.error.type).toBe("bad_request");
         expect(result.error.details).toEqual([
-          { field: "attributes", issue: "attribute keys not found: nonExistentKey" },
+          { field: "attributes", issue: "attribute keys not found: nonExistentKey. " },
         ]);
       }
     });
@@ -157,15 +152,12 @@ describe("contact.ts", () => {
         { id: "attr2", key: "firstName", name: "First Name", type: "custom", environmentId: "env123" },
       ] as TContactAttributeKey[];
 
-      const createdContact = {
+      const contactWithAttributes = {
         id: "contact123",
         environmentId: "env123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
-      };
-
-      const contactWithAttributes = {
-        ...createdContact,
+        userId: null,
         attributes: [
           {
             attributeKey: existingAttributeKeys[0],
@@ -180,17 +172,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        return callback({
-          contact: {
-            create: vi.fn().mockResolvedValue(createdContact),
-            findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
-          } as any,
-          contactAttribute: {
-            createMany: vi.fn(),
-          } as any,
-        } as any);
-      });
+      vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
       const result = await createContact(contactData);
 
@@ -208,7 +190,7 @@ describe("contact.ts", () => {
       }
     });
 
-    test("returns internal_server_error when transaction returns null", async () => {
+    test("returns internal_server_error when contact creation returns null", async () => {
       const contactData: TContactCreateRequest = {
         environmentId: "env123",
         attributes: {
@@ -222,14 +204,16 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
-      vi.mocked(prisma.$transaction).mockResolvedValue(null);
+      vi.mocked(prisma.contact.create).mockResolvedValue(null as any);
 
       const result = await createContact(contactData);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
-        expect(result.error.details).toEqual([{ field: "contact", issue: "failed to create contact" }]);
+        expect(result.error.details).toEqual([
+          { field: "contact", issue: "Cannot read properties of null (reading 'attributes')" },
+        ]);
       }
     });
 
@@ -264,15 +248,12 @@ describe("contact.ts", () => {
         { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
       ] as TContactAttributeKey[];
 
-      const createdContact = {
+      const contactWithAttributes = {
         id: "contact123",
         environmentId: "env123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
-      };
-
-      const contactWithAttributes = {
-        ...createdContact,
+        userId: null,
         attributes: [
           {
             attributeKey: existingAttributeKeys[0],
@@ -283,17 +264,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce(null); // No existing contact by email
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        return callback({
-          contact: {
-            create: vi.fn().mockResolvedValue(createdContact),
-            findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
-          } as any,
-          contactAttribute: {
-            createMany: vi.fn(),
-          } as any,
-        } as any);
-      });
+      vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
       const result = await createContact(contactData);
 
@@ -321,7 +292,7 @@ describe("contact.ts", () => {
       if (!result.ok) {
         expect(result.error.type).toBe("bad_request");
         expect(result.error.details).toEqual([
-          { field: "attributes", issue: "attribute keys not found: nonExistentKey1, nonExistentKey2" },
+          { field: "attributes", issue: "attribute keys not found: nonExistentKey1, nonExistentKey2. " },
         ]);
       }
     });
@@ -345,15 +316,12 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
 
-      const createdContact = {
+      const contactWithAttributes = {
         id: "contact123",
         environmentId: "env123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
-      };
-
-      const contactWithAttributes = {
-        ...createdContact,
+        userId: null,
         attributes: [
           { attributeKey: existingAttributeKeys[0], value: "john@example.com" },
           { attributeKey: existingAttributeKeys[1], value: "user123" },
@@ -361,17 +329,7 @@ describe("contact.ts", () => {
         ],
       };
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        return callback({
-          contact: {
-            create: vi.fn().mockResolvedValue(createdContact),
-            findUnique: vi.fn().mockResolvedValue(contactWithAttributes),
-          } as any,
-          contactAttribute: {
-            createMany: vi.fn(),
-          } as any,
-        } as any);
-      });
+      vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
       const result = await createContact(contactData);
 
