@@ -297,11 +297,6 @@ export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
 
-export const AUDIT_LOG_ENABLED =
-  env.AUDIT_LOG_ENABLED === "1" &&
-  env.REDIS_URL &&
-  env.REDIS_URL !== "" &&
-  env.ENCRYPTION_KEY &&
-  env.ENCRYPTION_KEY !== ""; // The audit log requires Redis to be configured
+export const AUDIT_LOG_ENABLED = env.AUDIT_LOG_ENABLED === "1";
 export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;
