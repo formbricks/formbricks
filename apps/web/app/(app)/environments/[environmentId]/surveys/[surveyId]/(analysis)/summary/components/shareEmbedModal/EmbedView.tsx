@@ -87,7 +87,7 @@ export const EmbedView = ({
   };
 
   return (
-    <div className="m-0 h-full overflow-hidden">
+    <div className="h-full overflow-hidden">
       <div className="grid h-full grid-cols-4">
         {survey.type === "link" && (
           <SidebarProvider defaultOpen={true} className="hidden lg:flex">
