@@ -140,13 +140,16 @@ const TestComponent = () => {
       <div data-testid="sidebar-open">{sidebar?.open?.toString() || "unknown"}</div>
       <div data-testid="sidebar-mobile">{sidebar?.isMobile?.toString() || "unknown"}</div>
       <div data-testid="sidebar-open-mobile">{sidebar?.openMobile?.toString() || "unknown"}</div>
-      <button data-testid="toggle-button" onClick={sidebar?.toggleSidebar}>
+      <button type="button" data-testid="toggle-button" onClick={sidebar?.toggleSidebar}>
         Toggle
       </button>
-      <button data-testid="set-open-button" onClick={() => sidebar?.setOpen?.(true)}>
+      <button type="button" data-testid="set-open-button" onClick={() => sidebar?.setOpen?.(true)}>
         Set Open
       </button>
-      <button data-testid="set-open-mobile-button" onClick={() => sidebar?.setOpenMobile?.(true)}>
+      <button
+        type="button"
+        data-testid="set-open-mobile-button"
+        onClick={() => sidebar?.setOpenMobile?.(true)}>
         Set Open Mobile
       </button>
     </div>
@@ -210,7 +213,7 @@ describe("Sidebar Components", () => {
       );
 
       expect(screen.getByTestId("sidebar-open")).toHaveTextContent("false");
-      fireEvent.click(screen.getByTestId("set-open-button"));
+      await user.click(screen.getByTestId("set-open-button"));
       expect(onOpenChange).toHaveBeenCalledWith(true);
 
       // Test mobile functionality
@@ -269,10 +272,9 @@ describe("Sidebar Components", () => {
         </SidebarProvider>
       );
 
-      // Test SidebarTrigger
       const trigger = screen.getByTestId("columns2-icon").closest("button");
-      expect(trigger).toBeInTheDocument();
-      await user.click(trigger!);
+      expect(trigger).not.toBeNull();
+      await user.click(trigger as HTMLButtonElement);
       expect(customOnClick).toHaveBeenCalled();
       expect(screen.getByTestId("sidebar-state")).toHaveTextContent("collapsed");
 
@@ -384,7 +386,7 @@ describe("Sidebar Components", () => {
             <h2>Group Label</h2>
           </SidebarGroupLabel>
           <SidebarGroupAction asChild>
-            <button>Action</button>
+            <button type="button">Action</button>
           </SidebarGroupAction>
         </SidebarProvider>
       );
@@ -475,7 +477,7 @@ describe("Sidebar Components", () => {
       rerender(
         <SidebarProvider>
           <SidebarMenuAction asChild>
-            <button>Action</button>
+            <button type="button">Action</button>
           </SidebarMenuAction>
         </SidebarProvider>
       );
@@ -533,7 +535,7 @@ describe("Sidebar Components", () => {
       rerender(
         <SidebarProvider>
           <SidebarMenuSubButton asChild>
-            <button>Sub Button</button>
+            <button type="button">Sub Button</button>
           </SidebarMenuSubButton>
         </SidebarProvider>
       );
@@ -563,7 +565,7 @@ describe("Sidebar Components", () => {
       const TestComponentWithCallback = () => {
         const { setOpen } = useSidebar();
         return (
-          <button data-testid="function-callback-button" onClick={() => setOpen(false)}>
+          <button type="button" data-testid="function-callback-button" onClick={() => setOpen(false)}>
             Set False
           </button>
         );

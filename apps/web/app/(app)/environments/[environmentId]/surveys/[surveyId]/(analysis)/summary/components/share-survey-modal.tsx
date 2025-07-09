@@ -69,7 +69,7 @@ export const ShareSurveyModal = ({
   );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
-  const [showView, setShowView] = useState<ModalView>("start");
+  const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
@@ -85,11 +85,10 @@ export const ShareSurveyModal = ({
     };
     fetchSurveyUrl();
   }, [survey, publicDomain]);
+
   useEffect(() => {
     if (open) {
       setShowView(modalView);
-    } else {
-      setShowView("start");
     }
   }, [open, modalView]);
 
@@ -99,6 +98,15 @@ export const ShareSurveyModal = ({
     if (!open) {
       setShowView("start");
     }
+  };
+
+  const handleViewChange = (view: ModalView) => {
+    setShowView(view);
+  };
+
+  const handleEmbedViewWithTab = (tabId: string) => {
+    setShowView("embed");
+    setActiveId(tabId);
   };
 
   return (
@@ -130,17 +138,14 @@ export const ShareSurveyModal = ({
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowView("embed")}
+                  onClick={() => handleViewChange("embed")}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
                   <Share2Icon className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.share_survey")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowView("embed");
-                    setActiveId(tabs[1].id);
-                  }}
+                  onClick={() => handleEmbedViewWithTab(tabs[1].id)}
                   className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
                   <UserIcon className="h-8 w-8 stroke-1 text-slate-900" />
                   {t("environments.surveys.summary.use_personal_links")}
