@@ -174,7 +174,6 @@ describe("CardStylingSettings", () => {
     // Check for color picker labels
     expect(screen.getByText("environments.surveys.edit.card_background_color")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.card_border_color")).toBeInTheDocument();
-
   });
 
   test("renders slider for roundness adjustment", () => {

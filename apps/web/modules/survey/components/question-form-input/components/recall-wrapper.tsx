@@ -258,7 +258,7 @@ export const RecallWrapper = ({
                 className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
-                  setShowFallbackInput(true);
+                  setShowFallbackInput(!showFallbackInput);
                 }}>
                 {t("environments.surveys.edit.edit_recall")}
                 <PencilIcon className="h-3 w-3" />
@@ -284,6 +284,8 @@ export const RecallWrapper = ({
                 setFallbacks={setFallbacks}
                 fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
                 addFallback={addFallback}
+                open={showFallbackInput}
+                setOpen={setShowFallbackInput}
               />
             )}
           </div>

@@ -53,8 +53,6 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
-
-
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
