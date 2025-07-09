@@ -115,13 +115,6 @@ export const createContact = async (
       },
     });
 
-    if (!result) {
-      return err({
-        type: "internal_server_error",
-        details: [{ field: "contact", issue: "failed to create contact" }],
-      });
-    }
-
     // Format the response with flattened attributes
     const flattenedAttributes: Record<string, string> = {};
     result.attributes.forEach((attr) => {

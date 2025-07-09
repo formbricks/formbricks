@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   build: {
@@ -18,9 +19,5 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: false,
   },
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "../../"),
-    },
-  },
+  plugins: [tsconfigPaths()],
 });
