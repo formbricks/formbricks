@@ -70,9 +70,13 @@ describe("Share Summary Page Rate Limiting", () => {
     });
 
     test("should throw rate limit error when limit exceeded", async () => {
-      vi.mocked(applyIPRateLimit).mockRejectedValue(new Error("Rate limit exceeded"));
+      vi.mocked(applyIPRateLimit).mockRejectedValue(
+        new Error("Maximum number of requests reached. Please try again later.")
+      );
 
-      await expect(applyIPRateLimit(rateLimitConfigs.share.url)).rejects.toThrow("Rate limit exceeded");
+      await expect(applyIPRateLimit(rateLimitConfigs.share.url)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
     });
   });
 
@@ -121,10 +125,12 @@ describe("Share Summary Page Rate Limiting", () => {
     });
 
     test("should not expose internal errors when rate limited", async () => {
-      const rateLimitError = new Error("Rate limit exceeded");
+      const rateLimitError = new Error("Maximum number of requests reached. Please try again later.");
       vi.mocked(applyIPRateLimit).mockRejectedValue(rateLimitError);
 
-      await expect(applyIPRateLimit(rateLimitConfigs.share.url)).rejects.toThrow("Rate limit exceeded");
+      await expect(applyIPRateLimit(rateLimitConfigs.share.url)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
 
       // Ensure no other operations are performed
       expect(getSurveyIdByResultShareKey).not.toHaveBeenCalled();

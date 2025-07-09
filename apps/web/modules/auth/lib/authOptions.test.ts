@@ -185,12 +185,14 @@ describe("authOptions", () => {
       });
 
       test("should block login when rate limit exceeded", async () => {
-        vi.mocked(applyIPRateLimit).mockRejectedValue(new Error("Rate limit exceeded"));
+        vi.mocked(applyIPRateLimit).mockRejectedValue(
+          new Error("Maximum number of requests reached. Please try again later.")
+        );
 
         const credentials = { email: mockUser.email, password: mockPassword };
 
         await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-          "Rate limit exceeded"
+          "Maximum number of requests reached. Please try again later."
         );
 
         expect(prisma.user.findUnique).not.toHaveBeenCalled();
@@ -311,11 +313,15 @@ describe("authOptions", () => {
       });
 
       test("should block verification when rate limit exceeded", async () => {
-        vi.mocked(applyIPRateLimit).mockRejectedValue(new Error("Rate limit exceeded"));
+        vi.mocked(applyIPRateLimit).mockRejectedValue(
+          new Error("Maximum number of requests reached. Please try again later.")
+        );
 
         const credentials = { token: createToken(mockUserId, mockUser.email) };
 
-        await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow("Rate limit exceeded");
+        await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
+          "Maximum number of requests reached. Please try again later."
+        );
 
         expect(prisma.user.findUnique).not.toHaveBeenCalled();
       });

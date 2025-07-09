@@ -68,10 +68,12 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should throw rate limit error when limit exceeded", async () => {
-      vi.mocked(applyIPRateLimit).mockRejectedValue(new Error("Rate limit exceeded"));
+      vi.mocked(applyIPRateLimit).mockRejectedValue(
+        new Error("Maximum number of requests reached. Please try again later.")
+      );
 
       await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
-        "Rate limit exceeded"
+        "Maximum number of requests reached. Please try again later."
       );
 
       expect(getUserByEmail).not.toHaveBeenCalled();
@@ -157,11 +159,11 @@ describe("forgotPasswordAction", () => {
 
   describe("Error Handling", () => {
     test("should propagate rate limiting errors", async () => {
-      const rateLimitError = new Error("Rate limit exceeded");
+      const rateLimitError = new Error("Maximum number of requests reached. Please try again later.");
       vi.mocked(applyIPRateLimit).mockRejectedValue(rateLimitError);
 
       await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
-        "Rate limit exceeded"
+        "Maximum number of requests reached. Please try again later."
       );
     });
 

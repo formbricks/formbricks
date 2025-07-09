@@ -92,7 +92,9 @@ describe("helpers", () => {
     test("should throw error when rate limit is exceeded", async () => {
       (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
 
-      await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow("Rate limit exceeded");
+      await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
 
       expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, mockIdentifier);
     });
@@ -100,7 +102,9 @@ describe("helpers", () => {
     test("should throw error when rate limit check fails", async () => {
       (checkRateLimit as any).mockResolvedValue(err("Redis connection failed"));
 
-      await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow("Rate limit exceeded");
+      await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
 
       expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, mockIdentifier);
     });
@@ -187,7 +191,9 @@ describe("helpers", () => {
       (hashString as any).mockReturnValue("hashed-ip-123");
       (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
 
-      await expect(applyIPRateLimit(mockConfig)).rejects.toThrow("Rate limit exceeded");
+      await expect(applyIPRateLimit(mockConfig)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
     });
   });
 });
