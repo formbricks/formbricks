@@ -58,7 +58,7 @@ export interface InputComboboxProps {
 export const InputCombobox = ({
   id = "temp",
   showSearch = true,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   options,
   inputProps,
   groupedOptions,
@@ -261,23 +261,24 @@ export const InputCombobox = ({
             )}
           </div>
         </PopoverTrigger>
-        <PopoverContent
-          className={cn("h-full w-auto max-w-[400px] truncate p-0", {
-            "px-2 pt-2": showSearch,
-          })}>
+        <PopoverContent className={cn("h-full w-auto max-w-[400px] truncate p-0")}>
           <Command className="h-full max-h-[400px] overflow-y-auto">
-            {showSearch && (
-              <CommandInput
-                placeholder={searchPlaceholder}
-                className="h-8 border-slate-400 bg-white placeholder-slate-300"
-              />
+            {showSearch ? (
+              <div className="border-b border-slate-100 px-3">
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  className="h-8 border-none bg-white placeholder-slate-300 outline-none"
+                />
+              </div>
+            ) : (
+              <button autoFocus aria-hidden="true" className="sr-only" />
             )}
-            <CommandList className="m-1">
+            <CommandList className="p-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ? t(emptyDropdownText) : t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>
               {options && options.length > 0 && (
-                <CommandGroup>
+                <CommandGroup className="p-0">
                   {options.map((option) => (
                     <CommandItem
                       key={option.value}
@@ -305,12 +306,13 @@ export const InputCombobox = ({
               {groupedOptions?.map((group, idx) => (
                 <div key={idx}>
                   {idx !== 0 && <CommandSeparator key={idx} className="bg-slate-300" />}
-                  <CommandGroup heading={group.label}>
+                  <CommandGroup className="p-0">
+                    <div className="px-2 pb-2 text-sm font-medium text-slate-500">{group.label}</div>
                     {group.options.map((option) => (
                       <CommandItem
                         key={option.value}
                         onSelect={() => handleSelect(option)}
-                        className="cursor-pointer truncate">
+                        className="cursor-pointer truncate px-2">
                         {showCheckIcon && isSelected(option) && (
                           <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                         )}

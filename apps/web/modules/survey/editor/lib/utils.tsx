@@ -432,7 +432,7 @@ export const getMatchValueProps = (
       const choices = selectedQuestion.choices.map((choice, idx) => {
         return {
           imgSrc: choice.imageUrl,
-          label: `${t("environments.surveys.edit.picture_idx")} ${idx + 1}`,
+          label: `${t("common.picture")} ${idx + 1}`,
           value: choice.id,
           meta: {
             type: "static",

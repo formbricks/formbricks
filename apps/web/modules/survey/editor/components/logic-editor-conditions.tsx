@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { cn } from "@/modules/ui/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
@@ -311,7 +312,7 @@ export function LogicEditorConditions({
             <InputCombobox
               id={`condition-${depth}-${index}-conditionValue`}
               key="conditionValue"
-              showSearch={false}
+              showSearch
               groupedOptions={conditionValueOptions}
               value={getLeftOperandValue(condition)}
               onChangeValue={(val: string, option) => {
@@ -319,7 +320,7 @@ export function LogicEditorConditions({
               }}
             />
           </div>
-          <div className="col-span-3">
+          <div className={cn(show && "col-span-3", !show && "col-span-7")}>
             <InputCombobox
               id={`condition-${depth}-${index}-conditionOperator`}
               key="conditionOperator"
