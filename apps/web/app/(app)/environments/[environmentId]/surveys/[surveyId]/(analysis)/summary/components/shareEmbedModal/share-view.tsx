@@ -15,6 +15,7 @@ import {
 } from "@/modules/ui/components/sidebar";
 import { Small } from "@/modules/ui/components/typography";
 import { TSegment } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
@@ -23,11 +24,11 @@ import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface ShareViewProps {
-  tabs: Array<{ id: string; label: string; icon: any }>;
+  tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
   activeId: string;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
   environmentId: string;
-  survey: any;
+  survey: TSurvey;
   email: string;
   surveyUrl: string;
   publicDomain: string;

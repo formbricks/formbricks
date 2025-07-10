@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -21,7 +22,7 @@ enum ShareViewType {
   APP = "app",
 }
 
-interface ShareEmbedSurveyProps {
+interface ShareSurveyModalProps {
   survey: TSurvey;
   publicDomain: string;
   open: boolean;
@@ -43,43 +44,44 @@ export const ShareSurveyModal = ({
   segments,
   isContactsEnabled,
   isFormbricksCloud,
-}: ShareEmbedSurveyProps) => {
+}: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
   const { t } = useTranslate();
-  const tabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
-    () =>
-      [
-        {
-          id: ShareViewType.LINK,
-          label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
-          icon: LinkIcon,
-        },
-        {
-          id: ShareViewType.PERSONAL_LINKS,
-          label: t("environments.surveys.summary.personal_links"),
-          icon: UserIcon,
-        },
-        {
-          id: ShareViewType.EMAIL,
-          label: t("environments.surveys.summary.embed_in_an_email"),
-          icon: MailIcon,
-        },
-        {
-          id: ShareViewType.WEBPAGE,
-          label: t("environments.surveys.summary.embed_on_website"),
-          icon: Code2Icon,
-        },
-
-        {
-          id: ShareViewType.APP,
-          label: t("environments.surveys.summary.embed_in_app"),
-          icon: SmartphoneIcon,
-        },
-      ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
-    [t, isSingleUseLinkSurvey, survey.type]
+  const linkTabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
+    () => [
+      {
+        id: ShareViewType.LINK,
+        label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
+        icon: LinkIcon,
+      },
+      {
+        id: ShareViewType.PERSONAL_LINKS,
+        label: t("environments.surveys.summary.personal_links"),
+        icon: UserIcon,
+      },
+      {
+        id: ShareViewType.EMAIL,
+        label: t("environments.surveys.summary.embed_in_an_email"),
+        icon: MailIcon,
+      },
+      {
+        id: ShareViewType.WEBPAGE,
+        label: t("environments.surveys.summary.embed_on_website"),
+        icon: Code2Icon,
+      },
+    ],
+    [t, isSingleUseLinkSurvey]
   );
+
+  const appTabs = [
+    {
+      id: ShareViewType.APP,
+      label: t("environments.surveys.summary.embed_in_app"),
+      icon: SmartphoneIcon,
+    },
+  ];
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
   const [showView, setShowView] = useState<ModalView>(modalView);
@@ -91,7 +93,7 @@ export const ShareSurveyModal = ({
         const url = await getSurveyUrl(survey, publicDomain, "default");
         setSurveyUrl(url);
       } catch (error) {
-        console.error("Failed to fetch survey URL:", error);
+        logger.error("Failed to fetch survey URL:", error);
         // Fallback to a default URL if fetching fails
         setSurveyUrl(`${publicDomain}/s/${survey.id}`);
       }
@@ -122,8 +124,6 @@ export const ShareSurveyModal = ({
     setActiveId(tabId);
   };
 
-  const appTabs = tabs.filter((tab) => tab.id === ShareViewType.APP);
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide">
@@ -134,13 +134,13 @@ export const ShareSurveyModal = ({
             publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
             user={user}
-            tabs={tabs}
+            tabs={linkTabs}
             handleViewChange={handleViewChange}
             handleEmbedViewWithTab={handleEmbedViewWithTab}
           />
         ) : (
           <ShareView
-            tabs={survey.type === "link" ? tabs : appTabs}
+            tabs={survey.type === "link" ? linkTabs : appTabs}
             activeId={activeId}
             environmentId={environmentId}
             setActiveId={setActiveId}
