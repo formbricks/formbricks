@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/modules/ui/components/sidebar";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
 import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
@@ -103,7 +104,7 @@ export const ShareView = ({
   };
 
   return (
-    <div className="h-full overflow-hidden">
+    <div className="h-full">
       <div className={`flex h-full ${survey.type === "link" ? "lg:grid lg:grid-cols-4" : ""}`}>
         {survey.type === "link" && (
           <SidebarProvider
@@ -149,20 +150,21 @@ export const ShareView = ({
         <div
           className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 ${survey.type === "link" ? "lg:col-span-3" : ""}`}>
           {renderActiveTab()}
-          <div className="mt-2 rounded-md p-3 text-center lg:hidden">
+          <div className="flex justify-center gap-2 rounded-md pt-6 text-center md:hidden">
             {tabs.map((tab) => (
-              <Button
-                variant="ghost"
-                key={tab.id}
-                onClick={() => setActiveId(tab.id)}
-                className={cn(
-                  "rounded-md px-4 py-2",
-                  tab.id === activeId
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "border-transparent text-slate-700 hover:text-slate-900"
-                )}>
-                {tab.label}
-              </Button>
+              <TooltipRenderer tooltipContent={tab.label} key={tab.id}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setActiveId(tab.id)}
+                  className={cn(
+                    "rounded-md px-4 py-2",
+                    tab.id === activeId
+                      ? "bg-white text-slate-900 shadow-sm hover:bg-white"
+                      : "border-transparent text-slate-700 hover:text-slate-900"
+                  )}>
+                  <tab.icon className="h-4 w-4 text-slate-700" />
+                </Button>
+              </TooltipRenderer>
             ))}
           </div>
         </div>
