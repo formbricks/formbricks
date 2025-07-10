@@ -220,6 +220,8 @@ describe("MainNavigation", () => {
     const mockSignOut = vi.fn().mockResolvedValue({ url: "/auth/login" });
     vi.mocked(useSignOut).mockReturnValue({ signOut: mockSignOut });
 
+    // Set up localStorage spy on the mocked localStorage
+
     render(<MainNavigation {...defaultProps} />);
 
     // Find the avatar and get its parent div which acts as the trigger
@@ -246,7 +248,9 @@ describe("MainNavigation", () => {
       organizationId: "org1",
       redirect: false,
       callbackUrl: "/auth/login",
+      clearEnvironmentId: true,
     });
+
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/auth/login");
     });

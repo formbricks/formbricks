@@ -19,7 +19,7 @@ import { SurveyLoading } from "./survey-loading";
 interface SurveysListProps {
   environmentId: string;
   isReadOnly: boolean;
-  surveyDomain: string;
+  publicDomain: string;
   userId: string;
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
@@ -37,7 +37,7 @@ export const initialFilters: TSurveyFilters = {
 export const SurveysList = ({
   environmentId,
   isReadOnly,
-  surveyDomain,
+  publicDomain,
   userId,
   surveysPerPage: surveysLimit,
   currentProjectChannel,
@@ -46,6 +46,7 @@ export const SurveysList = ({
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { t } = useTranslate();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
@@ -98,7 +99,7 @@ export const SurveysList = ({
       };
       fetchInitialSurveys();
     }
-  }, [environmentId, surveysLimit, filters, isFilterInitialized]);
+  }, [environmentId, surveysLimit, filters, isFilterInitialized, refreshTrigger]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
@@ -123,12 +124,12 @@ export const SurveysList = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
     setSurveys(newSurveys);
+    if (newSurveys.length === 0) setIsFetching(true);
   };
 
-  const handleDuplicateSurvey = async (survey: TSurvey) => {
-    const newSurveys = [survey, ...surveys];
-    setSurveys(newSurveys);
-  };
+  const triggerRefresh = useCallback(() => {
+    setRefreshTrigger((prev) => !prev);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -156,10 +157,10 @@ export const SurveysList = ({
                   survey={survey}
                   environmentId={environmentId}
                   isReadOnly={isReadOnly}
-                  surveyDomain={surveyDomain}
-                  duplicateSurvey={handleDuplicateSurvey}
+                  publicDomain={publicDomain}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}
+                  onSurveysCopied={triggerRefresh}
                 />
               );
             })}

@@ -13,7 +13,7 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
 
   const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
   const surveyName = getNameForURL(survey.name);
-  const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
+  const ogImgURL = `/api/v1/client/og?brandColor=${brandColor}&name=${surveyName}`;
 
   // Use the shared function for creating the base metadata but override with specific OpenGraph data
   const baseMetadata = getSurveyOpenGraphMetadata(survey.id, survey.name);

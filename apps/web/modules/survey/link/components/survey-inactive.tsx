@@ -1,6 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
-import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
+import { Project } from "@prisma/client";
+import { CalendarClockIcon, CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
@@ -9,9 +10,11 @@ import footerLogo from "../lib/footerlogo.svg";
 export const SurveyInactive = async ({
   status,
   surveyClosedMessage,
+  project,
 }: {
-  status: "paused" | "completed" | "link invalid" | "scheduled" | "response submitted";
+  status: "paused" | "completed" | "link invalid" | "scheduled" | "response submitted" | "link expired";
   surveyClosedMessage?: TSurveyClosedMessage | null;
+  project?: Pick<Project, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
   const icons = {
@@ -19,6 +22,7 @@ export const SurveyInactive = async ({
     completed: <CheckCircle2Icon className="h-20 w-20" />,
     "link invalid": <HelpCircleIcon className="h-20 w-20" />,
     "response submitted": <CheckCircle2Icon className="h-20 w-20" />,
+    "link expired": <CalendarClockIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
@@ -26,15 +30,22 @@ export const SurveyInactive = async ({
     completed: t("s.completed"),
     "link invalid": t("s.link_invalid"),
     "response submitted": t("s.response_submitted"),
+    "link expired": t("c.link_expired_description"),
   };
+
+  const showCTA =
+    status !== "link invalid" &&
+    status !== "link expired" &&
+    status !== "response submitted" &&
+    ((status !== "paused" && status !== "completed") || project?.linkSurveyBranding || !project) &&
+    !(status === "completed" && surveyClosedMessage);
 
   return (
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
-      <div></div>
-      <div className="flex flex-col items-center space-y-3 text-slate-300">
+      <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}
         <h1 className="text-4xl font-bold text-slate-800">
-          {status === "completed" && surveyClosedMessage
+          {(status === "completed" || status === "link expired") && surveyClosedMessage
             ? surveyClosedMessage.heading
             : `${t("common.survey")} ${status}.`}
         </h1>
@@ -43,19 +54,19 @@ export const SurveyInactive = async ({
             ? surveyClosedMessage.subheading
             : descriptions[status]}
         </p>
-        {!(status === "completed" && surveyClosedMessage) &&
-          status !== "link invalid" &&
-          status !== "response submitted" && (
-            <Button className="mt-2" asChild>
-              <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
-            </Button>
-          )}
+        {showCTA && (
+          <Button className="mt-2" asChild>
+            <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
+          </Button>
+        )}
       </div>
-      <div>
-        <Link href="https://formbricks.com">
-          <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
-        </Link>
-      </div>
+      {(!project || project.linkSurveyBranding) && (
+        <div>
+          <Link href="https://formbricks.com">
+            <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

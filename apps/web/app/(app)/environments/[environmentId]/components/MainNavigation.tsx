@@ -396,6 +396,7 @@ export const MainNavigation = ({
                         organizationId: organization.id,
                         redirect: false,
                         callbackUrl: "/auth/login",
+                        clearEnvironmentId: true,
                       });
                       router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
                     }}

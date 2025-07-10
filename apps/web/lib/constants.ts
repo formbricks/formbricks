@@ -13,8 +13,6 @@ export const E2E_TESTING = env.E2E_TESTING === "1";
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
-export const SURVEY_URL = env.SURVEY_URL;
-
 // encryption keys
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
@@ -235,8 +233,8 @@ export enum STRIPE_PROJECT_NAMES {
 }
 
 export enum STRIPE_PRICE_LOOKUP_KEYS {
-  STARTUP_MONTHLY = "formbricks_startup_monthly",
-  STARTUP_YEARLY = "formbricks_startup_yearly",
+  STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
+  STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
   SCALE_MONTHLY = "formbricks_scale_monthly",
   SCALE_YEARLY = "formbricks_scale_yearly",
 }
@@ -275,6 +273,24 @@ export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
 
+// Use the app version for Sentry release (updated during build in production)
+// Fallback to environment variable if package.json is not accessible
+export const SENTRY_RELEASE = (() => {
+  if (process.env.NODE_ENV !== "production") {
+    return undefined;
+  }
+
+  // Try to read from package.json with proper error handling
+  try {
+    const pkg = require("../package.json");
+    return pkg.version === "0.0.0" ? undefined : `v${pkg.version}`;
+  } catch {
+    // If package.json can't be read (e.g., in some deployment scenarios),
+    // return undefined and let Sentry work without release tracking
+    return undefined;
+  }
+})();
+export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";

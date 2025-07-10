@@ -39,6 +39,15 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: 587,
   SMTP_USERNAME: "user@example.com",
   SMTP_PASSWORD: "password",
+  REDIS_URL: "redis://localhost:6379",
+  AUDIT_LOG_ENABLED: false,
+  SESSION_MAX_AGE: 86400, // 24 hours in seconds
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    PUBLIC_URL: "https://public-domain.com",
+  },
 }));
 
 vi.mock("@/modules/ee/contacts/lib/contact-survey-link");
@@ -58,6 +67,12 @@ vi.mock("@/modules/survey/link/components/survey-inactive", () => ({
 vi.mock("@/modules/survey/link/components/survey-renderer", () => ({
   renderSurvey: vi.fn(() => <div>Rendered Survey</div>),
 }));
+vi.mock("@/tolgee/server", () => ({
+  getTranslate: vi.fn(() => Promise.resolve((key: string) => key)),
+}));
+vi.mock("@/modules/survey/link/lib/project", () => ({
+  getProjectByEnvironmentId: vi.fn(() => Promise.resolve(null)),
+}));
 
 describe("contact-survey page", () => {
   afterEach(() => {
@@ -66,7 +81,13 @@ describe("contact-survey page", () => {
   });
 
   test("generateMetadata returns default when token invalid", async () => {
-    vi.mocked(verifyContactSurveyToken).mockReturnValue({ ok: false } as any);
+    vi.mocked(verifyContactSurveyToken).mockReturnValue({
+      ok: false,
+      error: {
+        type: "invalid_token",
+        details: [],
+      },
+    } as any);
     const meta = await generateMetadata({
       params: Promise.resolve({ jwt: "token" }),
       searchParams: Promise.resolve({}),
@@ -96,7 +117,13 @@ describe("contact-survey page", () => {
   });
 
   test("ContactSurveyPage shows link invalid when token invalid", async () => {
-    vi.mocked(verifyContactSurveyToken).mockReturnValue({ ok: false } as any);
+    vi.mocked(verifyContactSurveyToken).mockReturnValue({
+      ok: false,
+      error: {
+        type: "invalid_token",
+        details: [],
+      },
+    } as any);
     render(
       await ContactSurveyPage({
         params: Promise.resolve({ jwt: "tk" }),

@@ -1,13 +1,15 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@/lib/constants";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -33,11 +35,14 @@ const Page = async (props) => {
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
+  const isContactsEnabled = await getIsContactsEnabled();
+  const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
+
   // Get response count for the CTA component
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const locale = await findMatchingLocale();
-  const surveyDomain = getSurveyDomain();
+  const publicDomain = getPublicDomain();
 
   return (
     <PageContentWrapper>
@@ -49,8 +54,11 @@ const Page = async (props) => {
             survey={survey}
             isReadOnly={isReadOnly}
             user={user}
-            surveyDomain={surveyDomain}
+            publicDomain={publicDomain}
             responseCount={responseCount}
+            segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />
         }>
         <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />
@@ -59,7 +67,7 @@ const Page = async (props) => {
         environment={environment}
         survey={survey}
         surveyId={params.surveyId}
-        webAppUrl={WEBAPP_URL}
+        publicDomain={publicDomain}
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}

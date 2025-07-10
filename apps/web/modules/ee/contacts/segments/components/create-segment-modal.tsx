@@ -4,8 +4,16 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -132,41 +140,30 @@ export function CreateSegmentModal({
         <PlusIcon />
       </Button>
 
-      <Modal
-        className="md:w-full"
-        closeOnOutsideClick={false}
-        noPadding
+      <Dialog
         open={open}
-        setOpen={() => {
-          handleResetState();
-        }}
-        size="lg">
-        <div className="rounded-lg bg-slate-50">
-          <div className="rounded-t-lg bg-slate-100">
-            <div className="flex w-full items-center gap-4 p-6">
-              <div className="flex items-center space-x-2">
-                <div className="mr-1.5 h-6 w-6 text-slate-500">
-                  <UsersIcon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-medium">{t("common.create_segment")}</h3>
-                  <p className="text-sm text-slate-600">
-                    {t(
-                      "environments.segments.segments_help_you_target_users_with_same_characteristics_easily"
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        onOpenChange={(open) => {
+          if (!open) {
+            handleResetState();
+          }
+        }}>
+        <DialogContent className="sm:max-w-4xl" disableCloseOnOutsideClick>
+          <DialogHeader>
+            <UsersIcon />
+            <DialogTitle>{t("common.create_segment")}</DialogTitle>
+            <DialogDescription>
+              {t("environments.segments.segments_help_you_target_users_with_same_characteristics_easily")}
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
+          <DialogBody>
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     className="w-auto"
+                    value={segment.title}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -181,6 +178,7 @@ export function CreateSegmentModal({
               <div className="flex w-1/2 flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <Input
+                  value={segment.description ?? ""}
                   onChange={(e) => {
                     setSegment((prev) => ({
                       ...prev,
@@ -191,72 +189,71 @@ export function CreateSegmentModal({
                 />
               </div>
             </div>
+            <div className="flex flex-col gap-y-2 pt-4">
+              <label className="text-sm font-medium text-slate-900">{t("common.targeting")}</label>
+              <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                {segment.filters.length === 0 && (
+                  <div className="-mb-2 flex items-center gap-1">
+                    <FilterIcon className="h-5 w-5 text-slate-700" />
+                    <h3 className="text-sm font-medium text-slate-700">
+                      {t("environments.segments.add_your_first_filter_to_get_started")}
+                    </h3>
+                  </div>
+                )}
 
-            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
-            <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-              {segment.filters.length === 0 && (
-                <div className="-mb-2 flex items-center gap-1">
-                  <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-sm font-medium text-slate-700">
-                    {t("environments.segments.add_your_first_filter_to_get_started")}
-                  </h3>
-                </div>
-              )}
+                <SegmentEditor
+                  contactAttributeKeys={contactAttributeKeys}
+                  environmentId={environmentId}
+                  group={segment.filters}
+                  segment={segment}
+                  segments={segments}
+                  setSegment={setSegment}
+                />
 
-              <SegmentEditor
-                contactAttributeKeys={contactAttributeKeys}
-                environmentId={environmentId}
-                group={segment.filters}
-                segment={segment}
-                segments={segments}
-                setSegment={setSegment}
-              />
-
-              <Button
-                className="w-fit"
-                onClick={() => {
-                  setAddFilterModalOpen(true);
-                }}
-                size="sm"
-                variant="secondary">
-                {t("common.add_filter")}
-              </Button>
-
-              <AddFilterModal
-                contactAttributeKeys={contactAttributeKeys}
-                onAddFilter={(filter) => {
-                  handleAddFilterInGroup(filter);
-                }}
-                open={addFilterModalOpen}
-                segments={segments}
-                setOpen={setAddFilterModalOpen}
-              />
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <div className="flex space-x-2">
                 <Button
+                  className="w-fit"
                   onClick={() => {
-                    handleResetState();
+                    setAddFilterModalOpen(true);
                   }}
-                  type="button"
-                  variant="ghost">
-                  {t("common.cancel")}
+                  size="sm"
+                  variant="secondary">
+                  {t("common.add_filter")}
                 </Button>
-                <Button
-                  disabled={isSaveDisabled}
-                  loading={isCreatingSegment}
-                  onClick={() => {
-                    handleCreateSegment();
+
+                <AddFilterModal
+                  contactAttributeKeys={contactAttributeKeys}
+                  onAddFilter={(filter) => {
+                    handleAddFilterInGroup(filter);
                   }}
-                  type="submit">
-                  {t("common.create_segment")}
-                </Button>
+                  open={addFilterModalOpen}
+                  segments={segments}
+                  setOpen={setAddFilterModalOpen}
+                />
               </div>
             </div>
-          </div>
-        </div>
-      </Modal>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                handleResetState();
+              }}
+              type="button"
+              variant="secondary">
+              {t("common.cancel")}
+            </Button>
+            <Button
+              disabled={isSaveDisabled}
+              loading={isCreatingSegment}
+              onClick={() => {
+                handleCreateSegment();
+              }}
+              type="submit">
+              {t("common.create_segment")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

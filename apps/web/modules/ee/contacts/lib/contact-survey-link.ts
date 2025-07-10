@@ -1,8 +1,9 @@
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { getSurveyDomain } from "@/lib/getSurveyUrl";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import jwt from "jsonwebtoken";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
@@ -42,7 +43,7 @@ export const getContactSurveyLink = (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return ok(`${getSurveyDomain()}/c/${token}`);
+  return ok(`${getPublicDomain()}/c/${token}`);
 };
 
 // Validates and decrypts a contact survey JWT token
@@ -73,11 +74,22 @@ export const verifyContactSurveyToken = (
       surveyId,
     });
   } catch (error) {
-    console.error("Error verifying contact survey token:", error);
+    logger.error("Error verifying contact survey token:", error);
+
+    // Check if the error is specifically a JWT expiration error
+    if (error instanceof jwt.TokenExpiredError) {
+      return err({
+        type: "bad_request",
+        message: "Survey link has expired",
+        details: [{ field: "token", issue: "token_expired" }],
+      });
+    }
+
+    // Handle other JWT errors or general validation errors
     return err({
       type: "bad_request",
-      message: "Invalid or expired survey token",
-      details: [{ field: "token", issue: "Invalid or expired survey token" }],
+      message: "Invalid survey token",
+      details: [{ field: "token", issue: "invalid_token" }],
     });
   }
 };

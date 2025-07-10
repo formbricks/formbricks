@@ -82,6 +82,11 @@ export const SelectedRowSettings = <T,>({
   // Helper component for the separator
   const Separator = () => <div>|</div>;
 
+  const deleteDialogText =
+    type === "response"
+      ? t("environments.surveys.responses.delete_response_confirmation")
+      : t("environments.contacts.delete_contact_confirmation");
+
   return (
     <>
       <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
@@ -144,6 +149,7 @@ export const SelectedRowSettings = <T,>({
         deleteWhat={t(`common.${type}`)}
         onDelete={handleDelete}
         isDeleting={isDeleting}
+        text={deleteDialogText}
       />
     </>
   );

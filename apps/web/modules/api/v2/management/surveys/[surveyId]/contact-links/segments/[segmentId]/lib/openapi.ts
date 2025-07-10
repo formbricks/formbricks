@@ -10,7 +10,7 @@ export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactLinksBySegment",
   summary: "Get survey links for contacts in a segment",
   description: "Generates personalized survey links for contacts in a segment.",
-  tags: ["Management API > Surveys > Contact Links"],
+  tags: ["Management API - Surveys - Contact Links"],
   requestParams: {
     path: ZContactLinksBySegmentParams,
     query: ZContactLinksBySegmentQuery,

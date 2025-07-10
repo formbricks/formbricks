@@ -78,6 +78,11 @@ describe("DeleteAccountModal", () => {
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
 
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
+
     // Mock window.location.replace
     Object.defineProperty(window, "location", {
       writable: true,
@@ -105,6 +110,7 @@ describe("DeleteAccountModal", () => {
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
+        clearEnvironmentId: true,
       });
       expect(window.location.replace).toHaveBeenCalledWith("/auth/login");
       expect(mockSetOpen).toHaveBeenCalledWith(false);
@@ -115,6 +121,11 @@ describe("DeleteAccountModal", () => {
     const deleteUserAction = vi
       .spyOn(actions, "deleteUserAction")
       .mockResolvedValue("deleted-user-id" as any); // the return doesn't matter here
+
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: { removeItem: vi.fn() },
+    });
 
     Object.defineProperty(window, "location", {
       writable: true,
@@ -142,6 +153,7 @@ describe("DeleteAccountModal", () => {
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
+        clearEnvironmentId: true,
       });
       expect(window.location.replace).toHaveBeenCalledWith(
         "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2"

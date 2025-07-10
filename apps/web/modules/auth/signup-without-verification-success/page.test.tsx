@@ -58,7 +58,6 @@ vi.mock("@/lib/jwt", () => ({
   getEmailFromEmailToken: vi.fn(),
 }));
 
-
 describe("SignupWithoutVerificationSuccessPage", () => {
   afterEach(() => {
     cleanup();
@@ -75,7 +74,9 @@ describe("SignupWithoutVerificationSuccessPage", () => {
       screen.getByText("auth.signup_without_verification_success.user_successfully_created")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("auth.signup_without_verification_success.user_successfully_created_info test@example.com")
+      screen.getByText(
+        "auth.signup_without_verification_success.user_successfully_created_info test@example.com"
+      )
     ).toBeInTheDocument();
     expect(screen.getByText("Mocked BackToLoginButton")).toBeInTheDocument();
   });

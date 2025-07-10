@@ -5,12 +5,14 @@ export const ZContactAttributeKeyCreateInput = z.object({
   description: z.string().optional(),
   type: z.enum(["custom"]),
   environmentId: z.string(),
+  name: z.string().optional(),
 });
 export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;
 
 export const ZContactAttributeKeyUpdateInput = z.object({
   description: z.string().optional(),
   name: z.string().optional(),
+  key: z.string().optional(),
 });
 
 export type TContactAttributeKeyUpdateInput = z.infer<typeof ZContactAttributeKeyUpdateInput>;

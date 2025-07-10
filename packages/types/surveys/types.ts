@@ -31,52 +31,16 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: getZSafeUrl("Invalid Button Url in Ending card").optional(),
+  buttonLink: getZSafeUrl.optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
-const validateUrlWithRecall = (url: string): string | null => {
-  try {
-    if (!url.startsWith("https://")) {
-      return "URL must start with https://";
-    }
-
-    if (url.includes(" ") && !url.endsWith(" ")) {
-      return "URL must not contain spaces";
-    }
-
-    new URL(url);
-
-    return null;
-  } catch {
-    const hostname = url.split("https://")[1];
-    if (hostname.includes("#recall:")) {
-      return "Recall information cannot be used in the hostname part of the URL";
-    }
-
-    return "Invalid Redirect URL";
-  }
-};
-
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z
-    .string()
-    .optional()
-    .superRefine((url, ctx) => {
-      if (!url) return;
-
-      const error = validateUrlWithRecall(url);
-      if (error) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: error,
-        });
-      }
-    }),
+  url: getZSafeUrl.optional(),
   label: z.string().optional(),
 });
 
@@ -581,7 +545,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
   html: ZI18nString.optional(),
   label: ZI18nString,
-  placeholder: z.string().optional(),
 });
 
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
@@ -2377,7 +2340,7 @@ const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLog
     ];
   });
 
-  return [...logicIssues.flat(), ...(logicFallbackIssue ? logicFallbackIssue : [])];
+  return [...logicIssues.flat(), ...(logicFallbackIssue ?? [])];
 };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.

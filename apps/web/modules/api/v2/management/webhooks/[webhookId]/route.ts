@@ -75,12 +75,13 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         );
       }
 
-      // get surveys environment
-      const surveysEnvironmentId = await getEnvironmentIdFromSurveyIds(body.surveyIds);
+      const surveysEnvironmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
 
-      if (!surveysEnvironmentId.ok) {
-        return handleApiError(request, surveysEnvironmentId.error, auditLog);
+      if (!surveysEnvironmentIdResult.ok) {
+        return handleApiError(request, surveysEnvironmentIdResult.error, auditLog);
       }
+
+      const surveysEnvironmentId = surveysEnvironmentIdResult.data;
 
       // get webhook environment
       const webhook = await getWebhook(params.webhookId);
@@ -101,7 +102,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       }
 
       // check if webhook environment matches the surveys environment
-      if (webhook.data.environmentId !== surveysEnvironmentId.data) {
+      if (surveysEnvironmentId && webhook.data.environmentId !== surveysEnvironmentId) {
         return handleApiError(
           request,
           {

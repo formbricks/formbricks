@@ -89,6 +89,31 @@ describe("RecallItemSelect", () => {
     expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
   });
 
+  test("do not render questions if questionId is 'start' (welcome card)", async () => {
+    render(
+      <RecallItemSelect
+        localSurvey={mockSurvey}
+        questionId="start"
+        addRecallItem={mockAddRecallItem}
+        setShowRecallItemSelect={mockSetShowRecallItemSelect}
+        recallItems={mockRecallItems}
+        selectedLanguageCode="en"
+        hiddenFields={mockSurvey.hiddenFields}
+      />
+    );
+
+    expect(screen.queryByText("_Question 1_")).not.toBeInTheDocument();
+    expect(screen.queryByText("_Question 2_")).not.toBeInTheDocument();
+
+    expect(screen.getByText("_hidden1_")).toBeInTheDocument();
+    expect(screen.getByText("_hidden2_")).toBeInTheDocument();
+    expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
+    expect(screen.getByText("_Variable 2_")).toBeInTheDocument();
+
+    expect(screen.queryByText("_Current Question_")).not.toBeInTheDocument();
+    expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
+  });
+
   test("filters recall items based on search input", async () => {
     const user = userEvent.setup();
     render(

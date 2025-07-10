@@ -13,13 +13,17 @@ vi.mock("next/link", () => ({
   default: vi.fn(({ children, href }) => <a href={href}>{children}</a>),
 }));
 
+const mockProject = {
+  linkSurveyBranding: true,
+};
+
 describe("SurveyLinkUsed", () => {
   afterEach(() => {
     cleanup();
   });
 
   test("renders with default values when singleUseMessage is null", () => {
-    render(<SurveyLinkUsed singleUseMessage={null} />);
+    render(<SurveyLinkUsed singleUseMessage={null} project={mockProject} />);
 
     expect(screen.getByText("s.survey_already_answered_heading")).toBeInTheDocument();
     expect(screen.getByText("s.survey_already_answered_subheading")).toBeInTheDocument();
@@ -31,17 +35,28 @@ describe("SurveyLinkUsed", () => {
       subheading: "Custom Subheading",
     } as any;
 
-    render(<SurveyLinkUsed singleUseMessage={singleUseMessage} />);
+    render(<SurveyLinkUsed singleUseMessage={singleUseMessage} project={mockProject} />);
 
     expect(screen.getByText("Custom Heading")).toBeInTheDocument();
     expect(screen.getByText("Custom Subheading")).toBeInTheDocument();
   });
 
-  test("renders footer with link to Formbricks", () => {
-    render(<SurveyLinkUsed singleUseMessage={null} />);
+  test("renders footer with link to Formbricks when branding is enabled", () => {
+    render(<SurveyLinkUsed singleUseMessage={null} project={mockProject} />);
 
     const link = document.querySelector('a[href="https://formbricks.com"]');
     expect(link).toBeInTheDocument();
     expect(vi.mocked(Image)).toHaveBeenCalled();
+  });
+
+  test("does not render footer when branding is disabled", () => {
+    const projectWithoutBranding = {
+      linkSurveyBranding: false,
+    };
+
+    render(<SurveyLinkUsed singleUseMessage={null} project={projectWithoutBranding} />);
+
+    const link = document.querySelector('a[href="https://formbricks.com"]');
+    expect(link).not.toBeInTheDocument();
   });
 });

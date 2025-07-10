@@ -3006,12 +3006,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
             t("templates.understand_low_engagement_question_1_choice_4"),
             t("templates.understand_low_engagement_question_1_choice_5"),
           ],
-          choiceIds: [
-            reusableOptionIds[0],
-            reusableOptionIds[1],
-            reusableOptionIds[2],
-            reusableOptionIds[3],
-          ],
+          choiceIds: [reusableOptionIds[0], reusableOptionIds[1], reusableOptionIds[2], reusableOptionIds[3]],
           headline: t("templates.understand_low_engagement_question_1_headline"),
           required: true,
           containsOther: true,

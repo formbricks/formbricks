@@ -25,7 +25,9 @@ export const getEnvironmentId = async (
  */
 export const getEnvironmentIdFromSurveyIds = async (
   surveyIds: string[]
-): Promise<Result<string, ApiErrorResponseV2>> => {
+): Promise<Result<string | null, ApiErrorResponseV2>> => {
+  if (surveyIds.length === 0) return ok(null);
+
   const result = await fetchEnvironmentIdFromSurveyIds(surveyIds);
 
   if (!result.ok) {
