@@ -21,6 +21,11 @@ vi.mock("./LinkTab", () => ({
     </div>
   ),
 }));
+vi.mock("./QRCodeTab", () => ({
+  QRCodeTab: (props: { surveyUrl: string }) => (
+    <div data-testid="qr-code-tab">QRCodeTab Content for {props.surveyUrl}</div>
+  ),
+}));
 vi.mock("./WebsiteTab", () => ({
   WebsiteTab: (props: { surveyUrl: string; environmentId: string }) => (
     <div data-testid="website-tab">
@@ -80,11 +85,52 @@ const mockTabs = [
   { id: "email", label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
   { id: "webpage", label: "Web Page", icon: () => <div data-testid="webpage-tab-icon" /> },
   { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
+  { id: "qr-code", label: "QR Code", icon: () => <div data-testid="qr-code-tab-icon" /> },
   { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
 
-const mockSurveyLink = { id: "survey1", type: "link" };
-const mockSurveyWeb = { id: "survey2", type: "web" };
+const mockSurveyLink = {
+  id: "survey1",
+  type: "link",
+  name: "Test Link Survey",
+  status: "inProgress",
+  environmentId: "env1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  questions: [],
+  displayOption: "displayOnce",
+  recontactDays: 0,
+  triggers: [],
+  languages: [],
+  autoClose: null,
+  delay: 0,
+  autoComplete: null,
+  runOnDate: null,
+  closeOnDate: null,
+  singleUse: { enabled: false, isEncrypted: false },
+  styling: null,
+} as any;
+const mockSurveyWeb = {
+  id: "survey2",
+  type: "app",
+  name: "Test Web Survey",
+  status: "inProgress",
+  environmentId: "env1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  questions: [],
+  displayOption: "displayOnce",
+  recontactDays: 0,
+  triggers: [],
+  languages: [],
+  autoClose: null,
+  delay: 0,
+  autoComplete: null,
+  runOnDate: null,
+  closeOnDate: null,
+  singleUse: { enabled: false, isEncrypted: false },
+  styling: null,
+} as any;
 
 const defaultProps = {
   tabs: mockTabs,
@@ -180,5 +226,29 @@ describe("EmbedView", () => {
 
     const responsiveWebpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[1];
     expect(responsiveWebpageTabButton).toHaveClass("border-transparent text-slate-700 hover:text-slate-900");
+  });
+
+  test("renders QRCodeTab when activeId is 'qr-code'", () => {
+    render(<ShareView {...defaultProps} activeId="qr-code" />);
+    expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
+    expect(screen.getByText(`QRCodeTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
+  });
+
+  test("calls setActiveId when QR code tab is clicked (desktop)", async () => {
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    const qrCodeTabButton = screen.getAllByRole("button", { name: "QR Code" })[0]; // First one is desktop
+    await userEvent.click(qrCodeTabButton);
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith("qr-code");
+  });
+
+  test("returns null for unknown activeId", () => {
+    render(<ShareView {...defaultProps} activeId="unknown" />);
+    // Should not render any specific tab component
+    expect(screen.queryByTestId("email-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("website-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("link-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("qr-code-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("app-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("personal-links-tab")).not.toBeInTheDocument();
   });
 });

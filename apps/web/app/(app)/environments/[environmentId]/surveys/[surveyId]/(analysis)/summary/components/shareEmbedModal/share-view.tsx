@@ -20,6 +20,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
+import { QRCodeTab } from "./QRCodeTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
@@ -70,6 +71,8 @@ export const ShareView = ({
             locale={locale}
           />
         );
+      case "qr-code":
+        return <QRCodeTab surveyUrl={surveyUrl} />;
       case "app":
         return <AppTab />;
       case "personal-links":
