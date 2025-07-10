@@ -32,8 +32,8 @@ interface SurveyAnalysisCTAProps {
 }
 
 interface ModalState {
+  start: boolean;
   share: boolean;
-  embed: boolean;
 }
 
 export const SurveyAnalysisCTA = ({
@@ -54,8 +54,8 @@ export const SurveyAnalysisCTA = ({
   const [loading, setLoading] = useState(false);
 
   const [modalState, setModalState] = useState<ModalState>({
-    share: searchParams.get("share") === "true",
-    embed: false,
+    start: searchParams.get("share") === "true",
+    share: false,
   });
 
   const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
@@ -65,7 +65,7 @@ export const SurveyAnalysisCTA = ({
   useEffect(() => {
     setModalState((prev) => ({
       ...prev,
-      share: searchParams.get("share") === "true",
+      start: searchParams.get("share") === "true",
     }));
   }, [searchParams]);
 
@@ -77,7 +77,7 @@ export const SurveyAnalysisCTA = ({
       params.delete("share");
     }
     router.push(`${pathname}?${params.toString()}`);
-    setModalState((prev) => ({ ...prev, share: open }));
+    setModalState((prev) => ({ ...prev, start: open }));
   };
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
@@ -111,8 +111,8 @@ export const SurveyAnalysisCTA = ({
   };
 
   const shareEmbedViews = [
-    { key: "share", modalView: "start" as const, setOpen: handleShareModalToggle },
-    { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
+    { key: "start", modalView: "start" as const, setOpen: handleShareModalToggle },
+    { key: "share", modalView: "share" as const, setOpen: handleModalState("share") },
   ];
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
@@ -161,7 +161,7 @@ export const SurveyAnalysisCTA = ({
       <Button
         className="h-10"
         onClick={() => {
-          setModalState((prev) => ({ ...prev, embed: true }));
+          setModalState((prev) => ({ ...prev, share: true }));
         }}>
         {t("environments.surveys.summary.share_survey")}
       </Button>
