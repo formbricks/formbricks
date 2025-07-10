@@ -14,6 +14,23 @@ vi.mock("@/modules/ee/two-factor-auth/actions", () => ({
   setupTwoFactorAuthAction: vi.fn(),
 }));
 
+// Mock the translation function
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "environments.settings.profile.two_factor_authentication": "Two-Factor Authentication",
+        "environments.settings.profile.confirm_your_current_password_to_get_started":
+          "Confirm your current password to get started",
+        "common.password": "Password",
+        "common.confirm": "Confirm",
+        "common.cancel": "Cancel",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
 describe("ConfirmPasswordForm", () => {
   afterEach(() => {
     cleanup();
@@ -31,13 +48,9 @@ describe("ConfirmPasswordForm", () => {
   test("renders the form with password input", () => {
     render(<ConfirmPasswordForm {...mockProps} />);
 
-    expect(screen.getByText("environments.settings.profile.two_factor_authentication")).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.settings.profile.confirm_your_current_password_to_get_started")
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("common.password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "common.confirm" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "common.cancel" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
   test("handles form submission successfully", async () => {
@@ -56,9 +69,9 @@ describe("ConfirmPasswordForm", () => {
 
     render(<ConfirmPasswordForm {...mockProps} />);
 
-    const passwordInput = screen.getByLabelText("common.password");
+    const passwordInput = screen.getByLabelText("Password");
     await user.type(passwordInput, "testPassword123!");
-    const submitButton = screen.getByRole("button", { name: "common.confirm" });
+    const submitButton = screen.getByRole("button", { name: "Confirm" });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -74,7 +87,7 @@ describe("ConfirmPasswordForm", () => {
     const user = userEvent.setup();
     render(<ConfirmPasswordForm {...mockProps} />);
 
-    await user.click(screen.getByRole("button", { name: "common.cancel" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(mockProps.setOpen).toHaveBeenCalledWith(false);
   });
 });

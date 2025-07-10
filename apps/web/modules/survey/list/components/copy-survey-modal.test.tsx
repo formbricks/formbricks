@@ -9,16 +9,26 @@ vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open, setOpen, noPadding, restrictOverflow }) =>
-    open ? (
-      <div data-testid="mock-modal" data-no-padding={noPadding} data-restrict-overflow={restrictOverflow}>
-        <button data-testid="modal-close-button" onClick={() => setOpen(false)}>
-          Close Modal
-        </button>
-        {children}
-      </div>
-    ) : null,
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
 }));
 
 // Mock SurveyCopyOptions component
@@ -53,24 +63,26 @@ describe("CopySurveyModal", () => {
     vi.clearAllMocks();
   });
 
-  test("renders modal when open is true", () => {
+  test("renders dialog when open is true", () => {
     render(<CopySurveyModal open={true} setOpen={mockSetOpen} survey={mockSurvey} />);
 
-    // Check if the modal is rendered with correct props
-    const modal = screen.getByTestId("mock-modal");
-    expect(modal).toBeInTheDocument();
-    expect(modal).toHaveAttribute("data-no-padding", "true");
-    expect(modal).toHaveAttribute("data-restrict-overflow", "true");
+    // Check if the dialog is rendered with correct structure
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
 
     // Check if the header content is rendered
     expect(screen.getByText("environments.surveys.copy_survey")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.copy_survey_description")).toBeInTheDocument();
   });
 
-  test("doesn't render modal when open is false", () => {
+  test("doesn't render dialog when open is false", () => {
     render(<CopySurveyModal open={false} setOpen={mockSetOpen} survey={mockSurvey} />);
 
-    expect(screen.queryByTestId("mock-modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("environments.surveys.copy_survey")).not.toBeInTheDocument();
   });
 
@@ -96,7 +108,7 @@ describe("CopySurveyModal", () => {
     expect(mockSetOpen).toHaveBeenCalledWith(false);
   });
 
-  test("passes onCancel function that closes the modal", async () => {
+  test("passes onCancel function that closes the dialog", async () => {
     const user = userEvent.setup();
 
     render(<CopySurveyModal open={true} setOpen={mockSetOpen} survey={mockSurvey} />);

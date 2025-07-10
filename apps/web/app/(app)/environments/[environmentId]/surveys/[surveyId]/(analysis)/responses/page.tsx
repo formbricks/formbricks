@@ -1,13 +1,15 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -33,6 +35,9 @@ const Page = async (props) => {
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
+  const isContactsEnabled = await getIsContactsEnabled();
+  const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
+
   // Get response count for the CTA component
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
 
@@ -51,6 +56,9 @@ const Page = async (props) => {
             user={user}
             publicDomain={publicDomain}
             responseCount={responseCount}
+            segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />
         }>
         <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />
