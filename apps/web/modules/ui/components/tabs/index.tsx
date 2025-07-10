@@ -73,8 +73,8 @@ function TabsList({ className, variant, size, ...props }: TabsListProps) {
 interface TabsTriggerProps
   extends React.ComponentProps<typeof TabsPrimitive.Trigger>,
     VariantProps<typeof tabsTriggerVariants> {
-  icon?: React.ReactNode;
-  showIcon?: boolean;
+  readonly icon?: React.ReactNode;
+  readonly showIcon?: boolean;
 }
 
 function TabsTrigger({
