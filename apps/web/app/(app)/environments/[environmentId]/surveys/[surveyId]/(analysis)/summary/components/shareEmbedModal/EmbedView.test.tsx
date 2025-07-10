@@ -21,10 +21,22 @@ vi.mock("./LinkTab", () => ({
     </div>
   ),
 }));
-vi.mock("./WebsiteTab", () => ({
-  WebsiteTab: (props: { surveyUrl: string; environmentId: string }) => (
-    <div data-testid="website-tab">
-      WebsiteTab Content for {props.surveyUrl} in {props.environmentId}
+vi.mock("./WebsiteEmbedTab", () => ({
+  WebsiteEmbedTab: (props: { surveyUrl: string }) => (
+    <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
+  ),
+}));
+vi.mock("./DynamicPopupTab", () => ({
+  DynamicPopupTab: (props: { environmentId: string }) => (
+    <div data-testid="dynamic-popup-tab">DynamicPopupTab Content for {props.environmentId}</div>
+  ),
+}));
+vi.mock("./TabContainer", () => ({
+  TabContainer: (props: { title: string; description: string; children: React.ReactNode }) => (
+    <div data-testid="tab-container">
+      <h2>{props.title}</h2>
+      <p>{props.description}</p>
+      {props.children}
     </div>
   ),
 }));
@@ -78,7 +90,8 @@ vi.mock("lucide-react", () => ({
 
 const mockTabs = [
   { id: "email", label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
-  { id: "webpage", label: "Web Page", icon: () => <div data-testid="webpage-tab-icon" /> },
+  { id: "website-embed", label: "Website Embed", icon: () => <div data-testid="website-embed-tab-icon" /> },
+  { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
   { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
   { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
@@ -119,9 +132,9 @@ describe("EmbedView", () => {
 
   test("calls setActiveId when a tab is clicked (desktop)", async () => {
     render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
-    const webpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[0]; // First one is desktop
-    await userEvent.click(webpageTabButton);
-    expect(defaultProps.setActiveId).toHaveBeenCalledWith("webpage");
+    const websiteEmbedTabButton = screen.getAllByRole("button", { name: "Website Embed" })[0]; // First one is desktop
+    await userEvent.click(websiteEmbedTabButton);
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
   });
 
   test("renders EmailTab when activeId is 'email'", () => {
@@ -132,12 +145,18 @@ describe("EmbedView", () => {
     ).toBeInTheDocument();
   });
 
-  test("renders WebsiteTab when activeId is 'webpage'", () => {
-    render(<EmbedView {...defaultProps} activeId="webpage" />);
-    expect(screen.getByTestId("website-tab")).toBeInTheDocument();
-    expect(
-      screen.getByText(`WebsiteTab Content for ${defaultProps.surveyUrl} in ${defaultProps.environmentId}`)
-    ).toBeInTheDocument();
+  test("renders WebsiteEmbedTab when activeId is 'website-embed'", () => {
+    render(<EmbedView {...defaultProps} activeId="website-embed" />);
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("website-embed-tab")).toBeInTheDocument();
+    expect(screen.getByText(`WebsiteEmbedTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
+  });
+
+  test("renders DynamicPopupTab when activeId is 'dynamic-popup'", () => {
+    render(<EmbedView {...defaultProps} activeId="dynamic-popup" />);
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("dynamic-popup-tab")).toBeInTheDocument();
+    expect(screen.getByText(`DynamicPopupTab Content for ${defaultProps.environmentId}`)).toBeInTheDocument();
   });
 
   test("renders LinkTab when activeId is 'link'", () => {
@@ -156,9 +175,9 @@ describe("EmbedView", () => {
   test("calls setActiveId when a responsive tab is clicked", async () => {
     render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     // Get the responsive tab button (second instance of the button with this name)
-    const responsiveWebpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[1];
-    await userEvent.click(responsiveWebpageTabButton);
-    expect(defaultProps.setActiveId).toHaveBeenCalledWith("webpage");
+    const responsiveWebsiteEmbedTabButton = screen.getAllByRole("button", { name: "Website Embed" })[1];
+    await userEvent.click(responsiveWebsiteEmbedTabButton);
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
   });
 
   test("applies active styles to the active tab (desktop)", () => {
@@ -166,8 +185,8 @@ describe("EmbedView", () => {
     const emailTabButton = screen.getAllByRole("button", { name: "Email" })[0];
     expect(emailTabButton).toHaveClass("border-slate-200 bg-slate-100 font-semibold text-slate-900");
 
-    const webpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[0];
-    expect(webpageTabButton).toHaveClass("border-transparent text-slate-500 hover:text-slate-700");
+    const websiteEmbedTabButton = screen.getAllByRole("button", { name: "Website Embed" })[0];
+    expect(websiteEmbedTabButton).toHaveClass("border-transparent text-slate-500 hover:text-slate-700");
   });
 
   test("applies active styles to the active tab (responsive)", () => {
@@ -175,7 +194,9 @@ describe("EmbedView", () => {
     const responsiveEmailTabButton = screen.getAllByRole("button", { name: "Email" })[1];
     expect(responsiveEmailTabButton).toHaveClass("bg-white text-slate-900 shadow-sm");
 
-    const responsiveWebpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[1];
-    expect(responsiveWebpageTabButton).toHaveClass("border-transparent text-slate-700 hover:text-slate-900");
+    const responsiveWebsiteEmbedTabButton = screen.getAllByRole("button", { name: "Website Embed" })[1];
+    expect(responsiveWebsiteEmbedTabButton).toHaveClass(
+      "border-transparent text-slate-700 hover:text-slate-900"
+    );
   });
 });

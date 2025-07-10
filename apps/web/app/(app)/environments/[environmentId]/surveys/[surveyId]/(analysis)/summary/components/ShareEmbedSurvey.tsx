@@ -6,12 +6,12 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import {
-  BellRing,
   BlocksIcon,
   Code2Icon,
   LinkIcon,
   MailIcon,
   SmartphoneIcon,
+  SquareStack,
   UserIcon,
   UsersRound,
 } from "lucide-react";
@@ -61,14 +61,18 @@ export const ShareEmbedSurvey = ({
         },
         { id: "personal-links", label: t("environments.surveys.summary.personal_links"), icon: UserIcon },
         { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
-        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
-
+        { id: "website-embed", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
+        { id: "dynamic-popup", label: t("environments.surveys.summary.dynamic_popup"), icon: SquareStack },
         { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
-      ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
+      ].filter((tab) => {
+        if (tab.id === "app" && survey.type === "link") return false;
+        if (tab.id === "dynamic-popup" && survey.type !== "link") return false;
+        return true;
+      }),
     [t, isSingleUseLinkSurvey, survey.type]
   );
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
+  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : "website-embed");
   const [showView, setShowView] = useState<"start" | "embed" | "panel" | "personal-links">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -77,8 +81,7 @@ export const ShareEmbedSurvey = ({
       try {
         const url = await getSurveyUrl(survey, publicDomain, "default");
         setSurveyUrl(url);
-      } catch (error) {
-        console.error("Failed to fetch survey URL:", error);
+      } catch {
         // Fallback to a default URL if fetching fails
         setSurveyUrl(`${publicDomain}/s/${survey.id}`);
       }
@@ -88,7 +91,7 @@ export const ShareEmbedSurvey = ({
 
   useEffect(() => {
     if (survey.type !== "link") {
-      setActiveId(tabs[4].id);
+      setActiveId("website-embed");
     }
   }, [survey.type, tabs]);
 
@@ -101,7 +104,7 @@ export const ShareEmbedSurvey = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? tabs[0].id : tabs[4].id);
+    setActiveId(survey.type === "link" ? tabs[0].id : "website-embed");
     setOpen(open);
     if (!open) {
       setShowView("start");
@@ -144,7 +147,7 @@ export const ShareEmbedSurvey = ({
                 <Link
                   href={`/environments/${environmentId}/settings/notifications`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <BellRing className="h-6 w-6 text-slate-700" />
+                  <SquareStack className="h-6 w-6 text-slate-700" />
                   {t("environments.surveys.summary.configure_alerts")}
                 </Link>
                 <Link
@@ -173,7 +176,7 @@ export const ShareEmbedSurvey = ({
           <>
             <DialogTitle className="sr-only">{t("environments.surveys.summary.embed_survey")}</DialogTitle>
             <EmbedView
-              tabs={survey.type === "link" ? tabs : [tabs[4]]}
+              tabs={tabs}
               activeId={activeId}
               environmentId={environmentId}
               setActiveId={setActiveId}

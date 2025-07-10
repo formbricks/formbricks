@@ -1,13 +1,16 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { TSegment } from "@formbricks/types/segment";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
+import { DynamicPopupTab } from "./DynamicPopupTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { WebsiteTab } from "./WebsiteTab";
+import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface EmbedViewProps {
@@ -41,12 +44,28 @@ export const EmbedView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: EmbedViewProps) => {
+  const { t } = useTranslate();
+
   const renderActiveTab = () => {
     switch (activeId) {
       case "email":
         return <EmailTab surveyId={survey.id} email={email} />;
-      case "webpage":
-        return <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />;
+      case "website-embed":
+        return (
+          <TabContainer
+            title={t("environments.surveys.share.embed_on_website.title")}
+            description={t("environments.surveys.share.embed_on_website.description")}>
+            <WebsiteEmbedTab surveyUrl={surveyUrl} />
+          </TabContainer>
+        );
+      case "dynamic-popup":
+        return (
+          <TabContainer
+            title={t("environments.surveys.share.dynamic_popup.title")}
+            description={t("environments.surveys.share.dynamic_popup.description")}>
+            <DynamicPopupTab environmentId={environmentId} />
+          </TabContainer>
+        );
       case "link":
         return (
           <LinkTab

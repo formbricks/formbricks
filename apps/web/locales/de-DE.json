@@ -1699,6 +1699,16 @@
       },
       "results_unpublished_successfully": "Ergebnisse wurden nicht erfolgreich veröffentlicht.",
       "search_by_survey_name": "Nach Umfragenamen suchen",
+      "share": {
+        "dynamic_popup": {
+          "description": "Formbricks Umfragen können als Pop-up eingebettet werden, basierend auf der Benutzerinteraktion.",
+          "title": "Nutzer im Ablauf abfangen, um kontextualisiertes Feedback zu sammeln"
+        },
+        "embed_on_website": {
+          "description": "Formbricks-Umfragen können als statisches Element eingebettet werden.",
+          "title": "Binden Sie die Umfrage auf Ihrer Webseite ein"
+        }
+      },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter hinzugefügt für Antworten, bei denen die Frage {questionIdx} übersprungen wurde",
@@ -1723,6 +1733,17 @@
         "drop_offs": "Drop-Off Rate",
         "drop_offs_tooltip": "So oft wurde die Umfrage gestartet, aber nicht abgeschlossen.",
         "dynamic_popup": "Dynamisch (Pop-up)",
+        "dynamic_popup.alert_button": "Umfrage bearbeiten",
+        "dynamic_popup.alert_description": "Diese Umfrage ist derzeit als Link-Umfrage konfiguriert, die dynamische Pop-ups nicht unterstützt. Sie können dies im Tab ‚Einstellungen‘ im Umfrage-Editor ändern.",
+        "dynamic_popup.alert_title": "Umfragen-Typ in In-App ändern",
+        "dynamic_popup.attribubte_description": "Attributbasiertes Targeting",
+        "dynamic_popup.attribute_based_targeting": "Attributbasiertes Targeting",
+        "dynamic_popup.code_no_code_description": "Code- und No-Code-Auslöser",
+        "dynamic_popup.code_no_code_triggers": "Code- und No-Code-Auslöser",
+        "dynamic_popup.read_documentation": "Dokumentation lesen",
+        "dynamic_popup.recontact_options": "Optionen zur erneuten Kontaktaufnahme",
+        "dynamic_popup.recontact_options_description": "Optionen zur erneuten Kontaktaufnahme",
+        "dynamic_popup.title": "Mehr mit Zwischenumfragen tun",
         "email_sent": "E-Mail gesendet!",
         "embed_code_copied_to_clipboard": "Einbettungscode in die Zwischenablage kopiert!",
         "embed_in_an_email": "In eine E-Mail einbetten",

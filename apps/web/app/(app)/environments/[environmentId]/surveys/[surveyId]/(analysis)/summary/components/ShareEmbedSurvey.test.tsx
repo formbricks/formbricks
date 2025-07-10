@@ -236,8 +236,10 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(4);
+    expect(embedViewProps.tabs.length).toBe(5);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
     expect(embedViewProps.activeId).toBe("link");
   });
@@ -248,19 +250,21 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs[0].id).toBe("app");
-    expect(embedViewProps.activeId).toBe("app");
+    expect(embedViewProps.tabs.length).toBe(5);
+    expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
+    expect(embedViewProps.activeId).toBe("website-embed");
   });
 
   test("useEffect does not change activeId if survey.type changes from web to link (while in embed view)", () => {
     const { rerender } = render(
       <ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />
     );
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("app");
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[0][0].activeId).toBe("website-embed");
 
     rerender(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
-    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("app"); // Current behavior
+    expect(vi.mocked(mockEmbedViewComponent).mock.calls[1][0].activeId).toBe("website-embed"); // Current behavior
   });
 
   test("initial showView is set by modalView prop when open is true", () => {
@@ -303,5 +307,33 @@ describe("ShareEmbedSurvey", () => {
     };
     linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
     expect(linkTab?.label).toBe("environments.surveys.summary.single_use_links");
+  });
+
+  test("dynamic popup tab is only visible for link surveys", () => {
+    // Test link survey includes dynamic popup tab
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
+    let embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    cleanup();
+    vi.mocked(mockEmbedViewComponent).mockClear();
+
+    // Test web survey excludes dynamic popup tab
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} modalView="embed" />);
+    embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
+  });
+
+  test("website-embed and dynamic-popup tabs replace old webpage tab", () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} modalView="embed" />);
+    const embedViewProps = vi.mocked(mockEmbedViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "webpage")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
   });
 });
