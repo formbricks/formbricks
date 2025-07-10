@@ -77,13 +77,7 @@ type Story = StoryObj<typeof TabNav> & { args: StoryOptions };
 
 // Create a render function to handle dynamic tab generation
 const renderTabNav = (args: StoryProps) => {
-  const {
-    showIcons = true,
-    numberOfTabs = 3,
-    tabTexts = "Home,Profile,Settings",
-    disabled = false,
-    activeTabClassName,
-  } = args;
+  const { showIcons = true, numberOfTabs = 3, tabTexts = "Home,Profile,Settings", activeTabClassName } = args;
 
   // Parse tab texts from comma-separated string
   const tabLabels = tabTexts
