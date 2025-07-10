@@ -6,6 +6,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import {
+  BellIcon,
   BlocksIcon,
   Code2Icon,
   LinkIcon,
@@ -147,7 +148,7 @@ export const ShareEmbedSurvey = ({
                 <Link
                   href={`/environments/${environmentId}/settings/notifications`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
-                  <SquareStack className="h-6 w-6 text-slate-700" />
+                  <BellIcon className="h-6 w-6 text-slate-700" />
                   {t("environments.surveys.summary.configure_alerts")}
                 </Link>
                 <Link

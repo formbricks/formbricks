@@ -27,7 +27,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
     <>
       <div className="prose prose-slate max-w-full">
         <CodeBlock
-          customCodeClass="text-sm h-48 overflow-y-scroll text-sm"
+          customCodeClass="text-sm h-48 overflow-y-scroll"
           language="html"
           showCopyToClipboard={false}
           noMargin>

@@ -7,7 +7,7 @@ const titleVariants = cva("font-medium leading-6 text-slate-900", {
     },
     size: {
       default: "text-lg",
-      md: "text-md",
+      md: "text-base",
     },
   },
 });

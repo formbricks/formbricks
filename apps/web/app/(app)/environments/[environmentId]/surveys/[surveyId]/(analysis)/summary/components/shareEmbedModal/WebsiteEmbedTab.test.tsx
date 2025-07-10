@@ -37,12 +37,14 @@ vi.mock("@/modules/ui/components/button", () => ({
     "aria-label"?: string;
     onClick?: () => void;
     children: React.ReactNode;
+    type?: "button" | "submit" | "reset";
   }) => (
     <button
       title={props.title}
       aria-label={props["aria-label"]}
       onClick={props.onClick}
-      data-testid="copy-button">
+      data-testid="copy-button"
+      type={props.type}>
       {props.children}
     </button>
   ),

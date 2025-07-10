@@ -20,7 +20,11 @@ interface DocumentationButtonProps {
 const DocumentationButton = ({ href, title, readDocsText }: DocumentationButtonProps) => {
   return (
     <Button variant="outline" asChild>
-      <Link href={href} target="_blank" className="flex w-full items-center justify-between p-4">
+      <Link
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex w-full items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <ExternalLinkIcon className="h-4 w-4 flex-shrink-0" />
           <span className="text-left text-sm">{title}</span>
