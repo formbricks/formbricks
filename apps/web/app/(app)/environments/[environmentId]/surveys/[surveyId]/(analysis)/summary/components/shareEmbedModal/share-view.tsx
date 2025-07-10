@@ -22,7 +22,7 @@ import { LinkTab } from "./LinkTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
-interface EmbedViewProps {
+interface ShareViewProps {
   tabs: Array<{ id: string; label: string; icon: any }>;
   activeId: string;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
@@ -38,7 +38,7 @@ interface EmbedViewProps {
   isFormbricksCloud: boolean;
 }
 
-export const EmbedView = ({
+export const ShareView = ({
   tabs,
   activeId,
   setActiveId,
@@ -52,7 +52,7 @@ export const EmbedView = ({
   segments,
   isContactsEnabled,
   isFormbricksCloud,
-}: EmbedViewProps) => {
+}: ShareViewProps) => {
   const renderActiveTab = () => {
     switch (activeId) {
       case "email":

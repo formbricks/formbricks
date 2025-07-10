@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { EmbedView } from "./EmbedView";
+import { ShareView } from "./share-view";
 
 // Mock child components
 vi.mock("./AppTab", () => ({
@@ -109,7 +109,7 @@ describe("EmbedView", () => {
   });
 
   test("does not render desktop tabs for non-link survey type", () => {
-    render(<EmbedView {...defaultProps} survey={mockSurveyWeb} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyWeb} />);
     // Desktop tabs container should not be present or not have lg:flex if it's a common parent
     const desktopTabsButtons = screen.queryAllByRole("button", { name: /Email|Web Page|Link|App/i });
     // Check if any of these buttons are part of a container that is only visible on large screens
@@ -118,14 +118,14 @@ describe("EmbedView", () => {
   });
 
   test("calls setActiveId when a tab is clicked (desktop)", async () => {
-    render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     const webpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[0]; // First one is desktop
     await userEvent.click(webpageTabButton);
     expect(defaultProps.setActiveId).toHaveBeenCalledWith("webpage");
   });
 
   test("renders EmailTab when activeId is 'email'", () => {
-    render(<EmbedView {...defaultProps} activeId="email" />);
+    render(<ShareView {...defaultProps} activeId="email" />);
     expect(screen.getByTestId("email-tab")).toBeInTheDocument();
     expect(
       screen.getByText(`EmailTab Content for ${defaultProps.survey.id} with ${defaultProps.email}`)
@@ -133,7 +133,7 @@ describe("EmbedView", () => {
   });
 
   test("renders WebsiteTab when activeId is 'webpage'", () => {
-    render(<EmbedView {...defaultProps} activeId="webpage" />);
+    render(<ShareView {...defaultProps} activeId="webpage" />);
     expect(screen.getByTestId("website-tab")).toBeInTheDocument();
     expect(
       screen.getByText(`WebsiteTab Content for ${defaultProps.surveyUrl} in ${defaultProps.environmentId}`)
@@ -141,7 +141,7 @@ describe("EmbedView", () => {
   });
 
   test("renders LinkTab when activeId is 'link'", () => {
-    render(<EmbedView {...defaultProps} activeId="link" />);
+    render(<ShareView {...defaultProps} activeId="link" />);
     expect(screen.getByTestId("link-tab")).toBeInTheDocument();
     expect(
       screen.getByText(`LinkTab Content for ${defaultProps.survey.id} at ${defaultProps.surveyUrl}`)
@@ -149,12 +149,12 @@ describe("EmbedView", () => {
   });
 
   test("renders AppTab when activeId is 'app'", () => {
-    render(<EmbedView {...defaultProps} activeId="app" />);
+    render(<ShareView {...defaultProps} activeId="app" />);
     expect(screen.getByTestId("app-tab")).toBeInTheDocument();
   });
 
   test("calls setActiveId when a responsive tab is clicked", async () => {
-    render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     // Get the responsive tab button (second instance of the button with this name)
     const responsiveWebpageTabButton = screen.getAllByRole("button", { name: "Web Page" })[1];
     await userEvent.click(responsiveWebpageTabButton);
@@ -162,7 +162,7 @@ describe("EmbedView", () => {
   });
 
   test("applies active styles to the active tab (desktop)", () => {
-    render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     const emailTabButton = screen.getAllByRole("button", { name: "Email" })[0];
     expect(emailTabButton).toHaveClass("bg-slate-100");
     expect(emailTabButton).toHaveClass("font-medium");
@@ -174,7 +174,7 @@ describe("EmbedView", () => {
   });
 
   test("applies active styles to the active tab (responsive)", () => {
-    render(<EmbedView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
     const responsiveEmailTabButton = screen.getAllByRole("button", { name: "Email" })[1];
     expect(responsiveEmailTabButton).toHaveClass("bg-white text-slate-900 shadow-sm");
 
