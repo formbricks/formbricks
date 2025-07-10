@@ -28,7 +28,7 @@ const tabsTriggerVariants = cva(
     variants: {
       variant: {
         default:
-          "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.06)] data-[state=inactive]:text-slate-500",
+          "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm data-[state=inactive]:text-slate-600",
         disabled: "opacity-50 pointer-events-none",
       },
       size: {
