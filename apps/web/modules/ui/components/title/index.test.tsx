@@ -31,8 +31,8 @@ describe("Title Component", () => {
     expect(titleElement).toHaveClass("capitalize");
   });
 
-  test("applies default size class when size is not specified", () => {
-    render(<Title>Test Title</Title>);
+  test("applies correct size class when size prop is 'default'", () => {
+    render(<Title size="default">Test Title</Title>);
     const titleElement = screen.getByText("Test Title");
     expect(titleElement).toHaveClass("text-lg");
   });
@@ -51,5 +51,29 @@ describe("Title Component", () => {
     );
     const titleElement = screen.getByText("test title");
     expect(titleElement).toHaveClass("capitalize", "text-base");
+  });
+
+  test("applies both capitalize and default size classes when both props are provided", () => {
+    render(
+      <Title capitalize={true} size="default">
+        test title
+      </Title>
+    );
+    const titleElement = screen.getByText("test title");
+    expect(titleElement).toHaveClass("capitalize", "text-lg");
+  });
+
+  test("does not apply text-base class when size is default", () => {
+    render(<Title size="default">Test Title</Title>);
+    const titleElement = screen.getByText("Test Title");
+    expect(titleElement).not.toHaveClass("text-base");
+    expect(titleElement).toHaveClass("text-lg");
+  });
+
+  test("does not apply text-lg class when size is md", () => {
+    render(<Title size="md">Test Title</Title>);
+    const titleElement = screen.getByText("Test Title");
+    expect(titleElement).not.toHaveClass("text-lg");
+    expect(titleElement).toHaveClass("text-base");
   });
 });
