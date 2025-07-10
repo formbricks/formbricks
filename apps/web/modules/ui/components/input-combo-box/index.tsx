@@ -236,6 +236,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 <CommandInput
                   placeholder={searchPlaceholder}
                   className="h-8 border-none placeholder-slate-300 outline-none"
+                  autoFocus
                 />
               </div>
             ) : (
@@ -277,50 +278,52 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                     <div className="px-2 pb-2 text-sm font-medium text-slate-500">{group.label}</div>
                     {group.options.map((opt) =>
                       opt.children ? (
-                        <DropdownMenuSub key={opt.value}>
-                          <DropdownMenuSubTrigger className="p-0">
-                            <CommandItem className="flex w-full justify-between truncate px-2">
-                              {showCheckIcon && isSelected(opt) && (
-                                <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
-                              )}
-                              {opt.icon && <opt.icon className="mr-2 h-5 w-5 text-slate-400" />}
-                              {opt.imgSrc && (
-                                <Image
-                                  src={opt.imgSrc}
-                                  alt={opt.label}
-                                  width={24}
-                                  height={24}
-                                  className="mr-2 shrink-0"
-                                />
-                              )}
-                              <span className="flex-1 truncate">{opt.label}</span>
-                            </CommandItem>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent alignOffset={4} className="w-48 p-1">
-                            {opt.children.map((child) => (
-                              <div className="flex flex-col">
-                                {child.children && child.children.length > 0 ? (
-                                  <p className="mb-2 px-2 text-sm font-medium text-slate-500">
-                                    {child.label}
-                                  </p>
-                                ) : (
-                                  <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
-                                    {child.label}
-                                  </DropdownMenuItem>
+                        <CommandItem key={opt.label} className="flex w-full items-center justify-center p-0">
+                          <DropdownMenuSub key={opt.value}>
+                            <DropdownMenuSubTrigger className="w-full p-0" tabIndex={-1}>
+                              <CommandItem className="flex w-full justify-between truncate px-2">
+                                {showCheckIcon && isSelected(opt) && (
+                                  <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                                 )}
-                                {child.children?.map((subChild) => (
-                                  <DropdownMenuItem
-                                    key={subChild.value}
-                                    onSelect={() => handleSelect(subChild)}>
-                                    {subChild.label}
-                                  </DropdownMenuItem>
-                                ))}
+                                {opt.icon && <opt.icon className="mr-2 h-5 w-5 text-slate-400" />}
+                                {opt.imgSrc && (
+                                  <Image
+                                    src={opt.imgSrc}
+                                    alt={opt.label}
+                                    width={24}
+                                    height={24}
+                                    className="mr-2 shrink-0"
+                                  />
+                                )}
+                                <span className="flex-1 truncate">{opt.label}</span>
+                              </CommandItem>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent alignOffset={4} className="w-48 p-1">
+                              {opt.children.map((child) => (
+                                <div className="flex flex-col">
+                                  {child.children && child.children.length > 0 ? (
+                                    <p className="mb-2 px-2 text-sm font-medium text-slate-500">
+                                      {child.label}
+                                    </p>
+                                  ) : (
+                                    <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
+                                      {child.label}
+                                    </DropdownMenuItem>
+                                  )}
+                                  {child.children?.map((subChild) => (
+                                    <DropdownMenuItem
+                                      key={subChild.value}
+                                      onSelect={() => handleSelect(subChild)}>
+                                      {subChild.label}
+                                    </DropdownMenuItem>
+                                  ))}
 
-                                {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
-                              </div>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
+                                  {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
+                                </div>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        </CommandItem>
                       ) : (
                         <CommandItem
                           key={opt.value}
