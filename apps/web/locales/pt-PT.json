@@ -1248,6 +1248,8 @@
         "add_description": "Adicionar descrição",
         "add_ending": "Adicionar encerramento",
         "add_ending_below": "Adicionar encerramento abaixo",
+        "add_fallback": "Adicionar",
+        "add_fallback_placeholder": "Adicionar um espaço reservado para mostrar se a pergunta for ignorada:",
         "add_hidden_field_id": "Adicionar ID do campo oculto",
         "add_highlight_border": "Adicionar borda de destaque",
         "add_highlight_border_description": "Adicione uma borda externa ao seu cartão de inquérito.",

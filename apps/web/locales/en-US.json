@@ -1248,6 +1248,8 @@
         "add_description": "Add description",
         "add_ending": "Add ending",
         "add_ending_below": "Add ending below",
+        "add_fallback": "Add",
+        "add_fallback_placeholder": "Add a placeholder to show if the question gets skipped:",
         "add_hidden_field_id": "Add hidden field ID",
         "add_highlight_border": "Add highlight border",
         "add_highlight_border_description": "Add an outer border to your survey card.",

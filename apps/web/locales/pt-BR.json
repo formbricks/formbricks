@@ -1248,6 +1248,8 @@
         "add_description": "Adicionar Descrição",
         "add_ending": "Adicionar final",
         "add_ending_below": "Adicione o final abaixo",
+        "add_fallback": "Adicionar",
+        "add_fallback_placeholder": "Adicionar um texto padrão para mostrar se a pergunta for ignorada:",
         "add_hidden_field_id": "Adicionar campo oculto ID",
         "add_highlight_border": "Adicionar borda de destaque",
         "add_highlight_border_description": "Adicione uma borda externa ao seu cartão de pesquisa.",

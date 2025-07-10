@@ -1248,6 +1248,8 @@
         "add_description": "新增描述",
         "add_ending": "新增結尾",
         "add_ending_below": "在下方新增結尾",
+        "add_fallback": "新增",
+        "add_fallback_placeholder": "新增用于顯示問題被跳過時的佔位符",
         "add_hidden_field_id": "新增隱藏欄位 ID",
         "add_highlight_border": "新增醒目提示邊框",
         "add_highlight_border_description": "在您的問卷卡片新增外邊框。",

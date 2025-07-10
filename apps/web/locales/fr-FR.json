@@ -1248,6 +1248,8 @@
         "add_description": "Ajouter une description",
         "add_ending": "Ajouter une fin",
         "add_ending_below": "Ajouter une fin ci-dessous",
+        "add_fallback": "Ajouter",
+        "add_fallback_placeholder": "Ajouter un espace réservé pour montrer si la question est ignorée :",
         "add_hidden_field_id": "Ajouter un champ caché ID",
         "add_highlight_border": "Ajouter une bordure de surlignage",
         "add_highlight_border_description": "Ajoutez une bordure extérieure à votre carte d'enquête.",
