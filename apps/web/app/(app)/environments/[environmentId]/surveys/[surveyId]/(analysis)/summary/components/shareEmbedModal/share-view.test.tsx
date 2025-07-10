@@ -46,13 +46,6 @@ vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   ),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
   ArrowLeftIcon: () => <div data-testid="arrow-left-icon">ArrowLeftIcon</div>,
@@ -98,7 +91,7 @@ vi.mock("@/modules/ui/components/sidebar", () => ({
     tooltip: string;
     className?: string;
   }) => (
-    <button onClick={onClick} className={className} aria-label={tooltip}>
+    <button type="button" onClick={onClick} className={className} aria-label={tooltip}>
       {children}
     </button>
   ),
@@ -126,7 +119,7 @@ vi.mock("@/modules/ui/components/button", () => ({
     className?: string;
     variant?: string;
   }) => (
-    <button onClick={onClick} className={className} data-variant={variant}>
+    <button type="button" onClick={onClick} className={className} data-variant={variant}>
       {children}
     </button>
   ),
@@ -145,7 +138,7 @@ const mockTabs = [
 ];
 
 // Create proper mock survey objects
-const createMockSurvey = (type: "link" | "app", id: string = "survey1"): TSurvey => ({
+const createMockSurvey = (type: "link" | "app", id = "survey1"): TSurvey => ({
   id,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -307,6 +300,16 @@ describe("ShareView", () => {
   test("renders AppTab when activeId is 'app'", () => {
     render(<ShareView {...defaultProps} activeId="app" />);
     expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+  });
+
+  test("renders PersonalLinksTab when activeId is 'personal-links'", () => {
+    render(<ShareView {...defaultProps} activeId="personal-links" />);
+    expect(screen.getByTestId("personal-links-tab")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        `PersonalLinksTab Content for ${defaultProps.survey.id} in ${defaultProps.environmentId}`
+      )
+    ).toBeInTheDocument();
   });
 
   test("calls setActiveId when a responsive tab is clicked", async () => {
