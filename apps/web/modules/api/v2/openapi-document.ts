@@ -1,6 +1,4 @@
 import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
-// import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
-// import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
@@ -11,6 +9,7 @@ import { teamPaths } from "@/modules/api/v2/organizations/[organizationId]/teams
 import { userPaths } from "@/modules/api/v2/organizations/[organizationId]/users/lib/openapi";
 import { rolePaths } from "@/modules/api/v2/roles/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
+import { contactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
@@ -40,8 +39,7 @@ const document = createDocument({
     ...mePaths,
     ...responsePaths,
     ...bulkContactPaths,
-    // ...contactPaths,
-    // ...contactAttributePaths,
+    ...contactPaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...surveyContactLinksBySegmentPaths,

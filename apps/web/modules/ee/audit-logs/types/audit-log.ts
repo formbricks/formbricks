@@ -51,6 +51,7 @@ export const ZAuditAction = z.enum([
   "emailVerificationAttempted",
   "userSignedOut",
   "passwordReset",
+  "bulkCreated",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);
