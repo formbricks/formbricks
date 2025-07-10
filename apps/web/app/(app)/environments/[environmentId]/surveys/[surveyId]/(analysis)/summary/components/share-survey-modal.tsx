@@ -13,6 +13,14 @@ import { SuccessView } from "./shareEmbedModal/success-view";
 
 type ModalView = "start" | "share";
 
+enum ShareViewType {
+  LINK = "link",
+  PERSONAL_LINKS = "personal-links",
+  EMAIL = "email",
+  WEBPAGE = "webpage",
+  APP = "app",
+}
+
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   publicDomain: string;
@@ -40,24 +48,40 @@ export const ShareSurveyModal = ({
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
   const { t } = useTranslate();
-  const tabs = useMemo(
+  const tabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
     () =>
       [
         {
-          id: "link",
+          id: ShareViewType.LINK,
           label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
           icon: LinkIcon,
         },
-        { id: "personal-links", label: t("environments.surveys.summary.personal_links"), icon: UserIcon },
-        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
-        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
+        {
+          id: ShareViewType.PERSONAL_LINKS,
+          label: t("environments.surveys.summary.personal_links"),
+          icon: UserIcon,
+        },
+        {
+          id: ShareViewType.EMAIL,
+          label: t("environments.surveys.summary.embed_in_an_email"),
+          icon: MailIcon,
+        },
+        {
+          id: ShareViewType.WEBPAGE,
+          label: t("environments.surveys.summary.embed_on_website"),
+          icon: Code2Icon,
+        },
 
-        { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
+        {
+          id: ShareViewType.APP,
+          label: t("environments.surveys.summary.embed_in_app"),
+          icon: SmartphoneIcon,
+        },
       ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
     [t, isSingleUseLinkSurvey, survey.type]
   );
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[4].id);
+  const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
   const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -82,7 +106,7 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? tabs[0].id : tabs[4].id);
+    setActiveId(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
@@ -93,10 +117,12 @@ export const ShareSurveyModal = ({
     setShowView(view);
   };
 
-  const handleEmbedViewWithTab = (tabId: string) => {
+  const handleEmbedViewWithTab = (tabId: ShareViewType) => {
     setShowView("share");
     setActiveId(tabId);
   };
+
+  const appTabs = tabs.filter((tab) => tab.id === ShareViewType.APP);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -114,7 +140,7 @@ export const ShareSurveyModal = ({
           />
         ) : (
           <ShareView
-            tabs={survey.type === "link" ? tabs : [tabs[4]]}
+            tabs={survey.type === "link" ? tabs : appTabs}
             activeId={activeId}
             environmentId={environmentId}
             setActiveId={setActiveId}
