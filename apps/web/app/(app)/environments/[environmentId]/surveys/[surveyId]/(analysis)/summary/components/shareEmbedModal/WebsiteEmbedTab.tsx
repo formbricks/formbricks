@@ -43,8 +43,8 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         customContainerClass="p-0"
       />
       <Button
-        title={t("environments.surveys.share.embed_on_website.copy_code")}
-        aria-label={t("environments.surveys.share.embed_on_website.copy_code")}
+        title={t("common.copy_code")}
+        aria-label={t("common.copy_code")}
         onClick={() => {
           navigator.clipboard.writeText(iframeCode);
           toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
