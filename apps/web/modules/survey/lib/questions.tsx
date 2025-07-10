@@ -7,6 +7,7 @@ import {
   CalendarDaysIcon,
   CheckIcon,
   ContactIcon,
+  CreditCardIcon,
   FileDigitIcon,
   FileType2Icon,
   Grid3X3Icon,
@@ -39,6 +40,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRankingQuestion,
   TSurveyRatingQuestion,
+  TSurveyPaymentQuestion,
 } from "@formbricks/types/surveys/types";
 
 export type TQuestion = {
@@ -283,6 +285,23 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
     } as Partial<TSurveyContactInfoQuestion>,
+  },
+  {
+    id: QuestionId.Payment,
+    label: t("templates.payment"),
+    description: t("templates.payment_description"),
+    icon: CreditCardIcon,
+    preset: {
+      headline: createI18nString("", []),
+      amount: 10.00,
+      currency: "USD",
+      paymentType: "one-time",
+      collectBillingAddress: false,
+      collectShippingAddress: false,
+      allowPromotionCodes: false,
+      buttonLabel: createI18nString(t("templates.pay_now"), []),
+      backButtonLabel: createI18nString(t("templates.back"), []),
+    } as Partial<TSurveyPaymentQuestion>,
   },
 ];
 

@@ -70,6 +70,7 @@ export enum TSurveyQuestionTypeEnum {
   Address = "address",
   Ranking = "ranking",
   ContactInfo = "contactInfo",
+  Payment = "payment",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -684,6 +685,25 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
 
+export const ZSurveyPaymentQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Payment),
+  amount: z.number().min(0.01, { message: "Amount must be at least $0.01" }),
+  currency: z.string().min(3).max(3).default("USD"),
+  paymentType: z.enum(["one-time", "subscription"]).default("one-time"),
+  collectBillingAddress: z.boolean().default(false),
+  collectShippingAddress: z.boolean().default(false),
+  allowPromotionCodes: z.boolean().default(false),
+  subscriptionData: z.object({
+    intervalCount: z.number().min(1).default(1),
+    interval: z.enum(["day", "week", "month", "year"]).default("month"),
+    trialPeriodDays: z.number().min(0).optional(),
+  }).optional(),
+  stripeProductId: z.string().optional(),
+  stripePriceId: z.string().optional(),
+});
+
+export type TSurveyPaymentQuestion = z.infer<typeof ZSurveyPaymentQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -699,6 +719,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
   ZSurveyContactInfoQuestion,
+  ZSurveyPaymentQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -723,6 +744,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
   TSurveyQuestionTypeEnum.ContactInfo,
+  TSurveyQuestionTypeEnum.Payment,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -2752,6 +2774,41 @@ export const ZSurveyQuestionSummaryRanking = z.object({
 });
 export type TSurveyQuestionSummaryRanking = z.infer<typeof ZSurveyQuestionSummaryRanking>;
 
+export const ZSurveyQuestionSummaryPayment = z.object({
+  type: z.literal("payment"),
+  question: ZSurveyPaymentQuestion,
+  responseCount: z.number(),
+  totalRevenue: z.number(),
+  successfulPayments: z.object({
+    count: z.number(),
+    percentage: z.number(),
+  }),
+  failedPayments: z.object({
+    count: z.number(),
+    percentage: z.number(),
+  }),
+  averageAmount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      paymentIntentId: z.string(),
+      amount: z.number(),
+      currency: z.string(),
+      status: z.string(),
+      contact: z
+        .object({
+          id: ZId,
+          userId: z.string().optional(),
+        })
+        .nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryPayment = z.infer<typeof ZSurveyQuestionSummaryPayment>;
+
 export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryOpenText,
   ZSurveyQuestionSummaryMultipleChoice,
@@ -2767,6 +2824,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryAddress,
   ZSurveyQuestionSummaryRanking,
   ZSurveyQuestionSummaryContactInfo,
+  ZSurveyQuestionSummaryPayment,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;

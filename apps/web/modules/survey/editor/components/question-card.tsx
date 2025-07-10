@@ -16,6 +16,7 @@ import { MatrixQuestionForm } from "@/modules/survey/editor/components/matrix-qu
 import { MultipleChoiceQuestionForm } from "@/modules/survey/editor/components/multiple-choice-question-form";
 import { NPSQuestionForm } from "@/modules/survey/editor/components/nps-question-form";
 import { OpenQuestionForm } from "@/modules/survey/editor/components/open-question-form";
+import { PaymentQuestionForm } from "@/modules/survey/editor/components/payment-question-form";
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
@@ -446,6 +447,18 @@ export const QuestionCard = ({
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
+              localSurvey={localSurvey}
+              question={question}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              lastQuestion={lastQuestion}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+              isInvalid={isInvalid}
+              locale={locale}
+            />
+          ) : question.type === TSurveyQuestionTypeEnum.Payment ? (
+            <PaymentQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}

@@ -10,6 +10,7 @@ import { MultipleChoiceMultiQuestion } from "@/components/questions/multiple-cho
 import { MultipleChoiceSingleQuestion } from "@/components/questions/multiple-choice-single-question";
 import { NPSQuestion } from "@/components/questions/nps-question";
 import { OpenTextQuestion } from "@/components/questions/open-text-question";
+import { PaymentQuestion } from "@/components/questions/payment-question";
 import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
@@ -338,6 +339,25 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       autoFocusEnabled={autoFocusEnabled}
       isBackButtonHidden={isBackButtonHidden}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Payment ? (
+    <PaymentQuestion
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
+      isBackButtonHidden={isBackButtonHidden}
+      environmentId=""
+      surveyId={surveyId}
+      stripePublishableKey=""
     />
   ) : null;
 }

@@ -34,6 +34,7 @@ const conditionOptions = {
   address: ["is"],
   contactInfo: ["is"],
   ranking: ["is"],
+  payment: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -45,6 +46,7 @@ const filterOptions = {
   address: ["Filled out", "Skipped"],
   contactInfo: ["Filled out", "Skipped"],
   ranking: ["Filled out", "Skipped"],
+  payment: ["Paid", "Failed", "Skipped"],
 };
 
 // creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
@@ -410,6 +412,22 @@ export const getFormattedFilters = (
             filters.data[questionType.id ?? ""] = {
               op: "matrix",
               value: { [filterType.filterValue]: filterType.filterComboBoxValue },
+            };
+          }
+          break;
+        }
+        case TSurveyQuestionTypeEnum.Payment: {
+          if (filterType.filterComboBoxValue === "Paid") {
+            filters.data[questionType.id ?? ""] = {
+              op: "paid",
+            };
+          } else if (filterType.filterComboBoxValue === "Failed") {
+            filters.data[questionType.id ?? ""] = {
+              op: "failed",
+            };
+          } else if (filterType.filterComboBoxValue === "Skipped") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
             };
           }
           break;
