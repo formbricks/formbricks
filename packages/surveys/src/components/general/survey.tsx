@@ -416,6 +416,18 @@ export function Survey({
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
 
+  const getWebSurveyMeta = useCallback(() => {
+    if (!isWebEnvironment) return {};
+
+    const url = new URL(window.location.href);
+    const source = url.searchParams.get("source");
+
+    return {
+      url: url.href,
+      ...(source ? { source } : {}),
+    };
+  }, [isWebEnvironment]);
+
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
@@ -459,7 +471,7 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            ...(isWebEnvironment && { url: window.location.href }),
+            ...getWebSurveyMeta(),
             action,
           },
           variables: responseUpdate.variables,
@@ -482,9 +494,9 @@ export function Survey({
       contactId,
       userId,
       survey,
-      isWebEnvironment,
       action,
       hiddenFieldsRecord,
+      getWebSurveyMeta,
     ]
   );
 
