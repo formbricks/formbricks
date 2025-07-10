@@ -71,6 +71,19 @@ const meta: Meta<StoryProps> = {
       },
       order: 2,
     },
+
+    // Component Props - Behaviour Category
+    variant: {
+      control: "select",
+      options: ["default", "disabled"],
+      description: "Variant of the tabs",
+      table: {
+        category: "Behaviour",
+        type: { summary: "string" },
+        defaultValue: { summary: "default" },
+      },
+      order: 1,
+    },
   },
 };
 
@@ -81,6 +94,7 @@ type Story = StoryObj<typeof Tabs> & { args: StoryOptions };
 // Create a render function to handle dynamic tab generation
 const renderTabs = (args: StoryProps) => {
   const {
+    variant = "default",
     size = "default",
     showIcons = true,
     numberOfTabs = 2,
@@ -106,7 +120,7 @@ const renderTabs = (args: StoryProps) => {
   return (
     <div className="w-[400px]">
       <Tabs defaultValue={defaultValue || tabValues[0]} {...tabsProps}>
-        <TabsList variant="default" size={size}>
+        <TabsList variant={variant} size={size}>
           {finalTabLabels.map((label, index) => {
             const IconComponent = availableIcons[index % availableIcons.length];
             return (
@@ -171,6 +185,24 @@ export const BigSize: Story = {
     docs: {
       description: {
         story: "Larger tabs with column layout, useful for more prominent navigation.",
+      },
+    },
+  },
+};
+
+export const Disabled: Story = {
+  render: renderTabs,
+  args: {
+    variant: "disabled",
+    size: "default",
+    showIcons: true,
+    numberOfTabs: 3,
+    tabTexts: "Account,Password,Settings",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Disabled tabs that cannot be interacted with.",
       },
     },
   },

@@ -32,8 +32,8 @@ const tabsTriggerVariants = cva(
         disabled: "opacity-50 pointer-events-none",
       },
       size: {
-        default: "px-3 py-1 [&_svg]:size-4",
-        big: "px-3 py-2 [&_svg]:size-8",
+        default: "px-3 py-1 [&_svg]:size-4 [&_svg]:stroke-2",
+        big: "px-3 py-2 [&_svg]:size-8 [&_svg]:stroke-[1.5]",
       },
       layout: {
         row: "flex-row gap-2",
@@ -92,7 +92,7 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(tabsTriggerVariants({ variant, size, layout }), "h-full min-w-0 flex-1", className)}
       {...props}>
-      {showIcon && icon && icon}
+      {showIcon && icon}
       <span className="text-center text-sm font-medium leading-5">{children}</span>
     </TabsPrimitive.Trigger>
   );
