@@ -14,6 +14,7 @@ import {
   SidebarProvider,
 } from "@/modules/ui/components/sidebar";
 import { Small } from "@/modules/ui/components/typography";
+import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -54,6 +55,23 @@ export const ShareView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: ShareViewProps) => {
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkScreenSize);
+
+    // Cleanup event listener on unmount
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
   const renderActiveTab = () => {
     switch (activeId) {
       case "email":
@@ -89,11 +107,18 @@ export const ShareView = ({
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="grid h-full grid-cols-4">
+      <div className={`flex h-full ${survey.type === "link" ? "lg:grid lg:grid-cols-4" : ""}`}>
         {survey.type === "link" && (
-          <SidebarProvider defaultOpen={true} className="hidden lg:flex">
-            <Sidebar className="relative col-span-1 w-full" variant="inset" collapsible="none">
-              <SidebarContent className="border-r border-slate-200 bg-white p-4">
+          <SidebarProvider
+            open={isLargeScreen}
+            className="flex min-h-0 w-auto lg:col-span-1"
+            style={
+              {
+                "--sidebar-width": "100%",
+              } as React.CSSProperties
+            }>
+            <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
+              <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel>
                     <Small className="text-xs text-slate-500">Share via</Small>
@@ -110,6 +135,7 @@ export const ShareView = ({
                                 ? "bg-slate-100 font-medium text-slate-900"
                                 : "text-slate-700"
                             )}
+                            tooltip={tab.label}
                             isActive={tab.id === activeId}>
                             <tab.icon className="h-4 w-4 text-slate-700" />
                             <span>{tab.label}</span>
@@ -124,7 +150,7 @@ export const ShareView = ({
           </SidebarProvider>
         )}
         <div
-          className={`col-span-4 h-full overflow-y-auto bg-slate-50 px-4 py-6 ${survey.type === "link" ? "lg:col-span-3" : ""} lg:p-6`}>
+          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 ${survey.type === "link" ? "lg:col-span-3" : ""}`}>
           {renderActiveTab()}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (
