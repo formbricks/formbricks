@@ -1388,6 +1388,7 @@
         "error_saving_changes": "Erro ao salvar alterações",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Mesmo depois de eles enviarem uma resposta (por exemplo, Caixa de Feedback)",
         "everyone": "Todo mundo",
+        "fallback_for": "Alternativa para",
         "fallback_missing": "Faltando alternativa",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} é usado na lógica da pergunta {questionIndex}. Por favor, remova-o da lógica primeiro.",
         "field_name_eg_score_price": "Nome do campo, por exemplo, pontuação, preço",

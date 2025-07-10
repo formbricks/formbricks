@@ -1388,6 +1388,7 @@
         "error_saving_changes": "Error saving changes",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Even after they submitted a response (e.g. Feedback Box)",
         "everyone": "Everyone",
+        "fallback_for": "Fallback for ",
         "fallback_missing": "Fallback missing",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} is used in logic of question {questionIndex}. Please remove it from logic first.",
         "field_name_eg_score_price": "Field name e.g, score, price",

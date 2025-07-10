@@ -1388,6 +1388,7 @@
         "error_saving_changes": "儲存變更時發生錯誤",
         "even_after_they_submitted_a_response_e_g_feedback_box": "即使他們提交回應之後（例如，意見反應方塊）",
         "everyone": "所有人",
+        "fallback_for": "備用 用於 ",
         "fallback_missing": "遺失的回退",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'fieldId'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",
         "field_name_eg_score_price": "欄位名稱，例如：分數、價格",

@@ -1388,6 +1388,7 @@
         "error_saving_changes": "Fehler beim Speichern der Änderungen",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Sogar nachdem sie eine Antwort eingereicht haben (z.B. Feedback-Box)",
         "everyone": "Jeder",
+        "fallback_for": "Ersatz für",
         "fallback_missing": "Fehlender Fallback",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} wird in der Logik der Frage {questionIndex} verwendet. Bitte entferne es zuerst aus der Logik.",
         "field_name_eg_score_price": "Feldname z.B. Punktzahl, Preis",
