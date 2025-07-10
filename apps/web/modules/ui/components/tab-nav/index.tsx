@@ -6,18 +6,11 @@ interface TabNavProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];
   activeId: string;
   setActiveId: (id: string) => void;
-  className?: string;
   activeTabClassName?: string;
   disabled?: boolean;
 }
 
-export const TabNav: React.FC<TabNavProps> = ({
-  tabs,
-  activeId,
-  setActiveId,
-  className = "",
-  activeTabClassName,
-}) => {
+export const TabNav: React.FC<TabNavProps> = ({ tabs, activeId, setActiveId, activeTabClassName }) => {
   const Nav = () => {
     return (
       <nav className="flex h-full items-center space-x-3" aria-label="Tabs">
@@ -41,7 +34,7 @@ export const TabNav: React.FC<TabNavProps> = ({
   };
 
   return (
-    <div className={cn("flex h-14 w-full items-center justify-center rounded-t-md", className)}>
+    <div className={cn("flex h-14 w-full items-center justify-center rounded-t-md")}>
       <Nav />
     </div>
   );
