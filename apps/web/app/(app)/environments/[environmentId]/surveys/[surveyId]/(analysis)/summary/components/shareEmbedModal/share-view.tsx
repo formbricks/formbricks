@@ -62,13 +62,10 @@ export const ShareView = ({
       setIsLargeScreen(window.innerWidth >= 1024);
     };
 
-    // Check on mount
     checkScreenSize();
 
-    // Add event listener for window resize
     window.addEventListener("resize", checkScreenSize);
 
-    // Cleanup event listener on unmount
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
@@ -153,7 +150,7 @@ export const ShareView = ({
           className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 ${survey.type === "link" ? "lg:col-span-3" : ""}`}>
           {renderActiveTab()}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
-            {tabs.slice(0, 2).map((tab) => (
+            {tabs.map((tab) => (
               <Button
                 variant="ghost"
                 key={tab.id}
