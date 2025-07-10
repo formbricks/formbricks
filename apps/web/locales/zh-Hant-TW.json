@@ -1156,6 +1156,7 @@
         "organizations_delete_message": "您是這些組織的唯一擁有者，因此它們也 <b>將被刪除。</b>",
         "permanent_removal_of_all_of_your_personal_information_and_data": "永久移除您的所有個人資訊和資料",
         "personal_information": "個人資訊",
+        "personal_information_updated": "個人資訊已更新",
         "please_enter_email_to_confirm_account_deletion": "請在以下欄位中輸入 '{'email'}' 以確認永久刪除您的帳戶：",
         "profile_updated_successfully": "您的個人資料已成功更新",
         "remove_image": "移除圖片",

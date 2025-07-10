@@ -1156,6 +1156,7 @@
         "organizations_delete_message": "Du bist der einzige Besitzer dieser Organisationen, also werden sie <b>auch gelöscht.</b>",
         "permanent_removal_of_all_of_your_personal_information_and_data": "Dauerhafte Entfernung all deiner persönlichen Informationen und Daten",
         "personal_information": "Persönliche Informationen",
+        "personal_information_updated": "Persönliche Informationen aktualisiert",
         "please_enter_email_to_confirm_account_deletion": "Bitte gib {email} in das folgende Feld ein, um die endgültige Löschung deines Kontos zu bestätigen:",
         "profile_updated_successfully": "Dein Profil wurde erfolgreich aktualisiert",
         "remove_image": "Bild entfernen",

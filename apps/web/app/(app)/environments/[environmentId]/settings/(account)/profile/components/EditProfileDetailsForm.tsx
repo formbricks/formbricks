@@ -88,6 +88,11 @@ export const EditProfileDetailsForm = ({
     const updatedUserResult = await updateUserAction(data);
 
     if (updatedUserResult?.data) {
+      // Show success toast for name/locale changes when email also changes
+      if (nameChanged || localeChanged) {
+        toast.success(t("environments.settings.profile.personal_information_updated"));
+      }
+
       if (!emailVerificationDisabled) {
         toast.success(t("auth.verification-requested.new_email_verification_success"));
       } else {
@@ -120,7 +125,7 @@ export const EditProfileDetailsForm = ({
           ...data,
           name: data.name.trim(),
         });
-        toast.success(t("environments.settings.profile.profile_updated_successfully"));
+        toast.success(t("environments.settings.profile.personal_information_updated"));
         window.location.reload();
         form.reset(data);
       } catch (error: any) {
