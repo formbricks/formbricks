@@ -51,6 +51,7 @@ export const ZAuditAction = z.enum([
   "emailVerificationAttempted",
   "userSignedOut",
   "passwordReset",
+  "bulkCreated",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);
@@ -78,9 +79,6 @@ export const ZAuditLogEventSchema = z.object({
   changes: z.record(z.any()).optional(),
   eventId: z.string().optional(),
   apiUrl: z.string().url().optional(),
-  integrityHash: z.string(),
-  previousHash: z.string().nullable(),
-  chainStart: z.boolean().optional(),
 });
 
 export type TAuditLogEvent = z.infer<typeof ZAuditLogEventSchema>;

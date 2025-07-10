@@ -3517,21 +3517,7 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     styling: null,
     segment: null,
     questions: [
-      {
-        ...buildRatingQuestion({
-          id: "lbdxozwikh838yc6a8vbwuju",
-          range: 5,
-          scale: "star",
-          headline: t("templates.preview_survey_question_1_headline", { projectName }),
-          required: true,
-          subheader: t("templates.preview_survey_question_1_subheader"),
-          lowerLabel: t("templates.preview_survey_question_1_lower_label"),
-          upperLabel: t("templates.preview_survey_question_1_upper_label"),
-          t,
-        }),
-        isDraft: true,
-      },
-      {
+       {
         ...buildMultipleChoiceQuestion({
           id: "rjpu42ps6dzirsn9ds6eydgt",
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -3544,6 +3530,20 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
           backButtonLabel: t("templates.preview_survey_question_2_back_button_label"),
           required: true,
           shuffleOption: "none",
+          t,
+        }),
+        isDraft: true,
+      },
+      {
+        ...buildRatingQuestion({
+          id: "lbdxozwikh838yc6a8vbwuju",
+          range: 5,
+          scale: "star",
+          headline: t("templates.preview_survey_question_1_headline", { projectName }),
+          required: true,
+          subheader: t("templates.preview_survey_question_1_subheader"),
+          lowerLabel: t("templates.preview_survey_question_1_lower_label"),
+          upperLabel: t("templates.preview_survey_question_1_upper_label"),
           t,
         }),
         isDraft: true,
