@@ -71,17 +71,6 @@ const meta: Meta<StoryProps> = {
       },
       order: 2,
     },
-
-    // Component Props - Behavior Category
-    defaultValue: {
-      control: "text",
-      description: "Default active tab value",
-      table: {
-        category: "Behavior",
-        type: { summary: "string" },
-      },
-      order: 1,
-    },
   },
 };
 
@@ -147,17 +136,17 @@ export const Default: Story = {
   render: renderTabs,
   args: {
     size: "default",
-    showIcons: true,
+    showIcons: false,
     numberOfTabs: 2,
     tabTexts: "Account,Password",
   },
 };
 
-export const WithoutIcons: Story = {
+export const WithIcons: Story = {
   render: renderTabs,
   args: {
     size: "default",
-    showIcons: false,
+    showIcons: true,
     numberOfTabs: 2,
     tabTexts: "Account,Password",
   },
@@ -182,40 +171,6 @@ export const BigSize: Story = {
     docs: {
       description: {
         story: "Larger tabs with column layout, useful for more prominent navigation.",
-      },
-    },
-  },
-};
-
-export const MultipleTabs: Story = {
-  render: renderTabs,
-  args: {
-    size: "default",
-    showIcons: true,
-    numberOfTabs: 4,
-    tabTexts: "Overview,Analytics,Reports,Settings",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "Example with multiple tabs demonstrating scalability.",
-      },
-    },
-  },
-};
-
-export const CustomTabTexts: Story = {
-  render: renderTabs,
-  args: {
-    size: "default",
-    showIcons: true,
-    numberOfTabs: 3,
-    tabTexts: "Dashboard,Profile,Configuration",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "Demonstration of custom tab labels using the text control.",
       },
     },
   },
