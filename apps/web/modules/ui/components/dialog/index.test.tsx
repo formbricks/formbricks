@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./index";
+} from ".";
 
 // Mock Radix UI Dialog components
 vi.mock("@radix-ui/react-dialog", () => {
@@ -120,7 +120,7 @@ describe("Dialog Components", () => {
       </DialogContent>
     );
 
-    expect(screen.queryByTestId("dialog-close")).toBeInTheDocument();
+    expect(screen.queryByTestId("dialog-close")).not.toBeInTheDocument();
     expect(screen.queryByTestId("x-icon")).not.toBeInTheDocument();
   });
 

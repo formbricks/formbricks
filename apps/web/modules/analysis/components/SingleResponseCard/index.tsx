@@ -150,9 +150,10 @@ export const SingleResponseCard = ({
         <DeleteDialog
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          deleteWhat="response"
+          deleteWhat={t("common.response")}
           onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
+          text={t("environments.surveys.responses.delete_response_confirmation")}
         />
       </div>
       {user && pageType === "response" && (

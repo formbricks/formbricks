@@ -46,6 +46,7 @@ export const SurveysList = ({
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { t } = useTranslate();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
@@ -98,7 +99,7 @@ export const SurveysList = ({
       };
       fetchInitialSurveys();
     }
-  }, [environmentId, surveysLimit, filters, isFilterInitialized]);
+  }, [environmentId, surveysLimit, filters, isFilterInitialized, refreshTrigger]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
@@ -123,12 +124,12 @@ export const SurveysList = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
     setSurveys(newSurveys);
+    if (newSurveys.length === 0) setIsFetching(true);
   };
 
-  const handleDuplicateSurvey = async (survey: TSurvey) => {
-    const newSurveys = [survey, ...surveys];
-    setSurveys(newSurveys);
-  };
+  const triggerRefresh = useCallback(() => {
+    setRefreshTrigger((prev) => !prev);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -157,9 +158,9 @@ export const SurveysList = ({
                   environmentId={environmentId}
                   isReadOnly={isReadOnly}
                   publicDomain={publicDomain}
-                  duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}
+                  onSurveysCopied={triggerRefresh}
                 />
               );
             })}

@@ -41,22 +41,21 @@ vi.mock("@/modules/organization/settings/teams/components/invite-member/invite-m
   }),
 }));
 
-// Mock the CustomDialog
-vi.mock("@/modules/ui/components/custom-dialog", () => ({
-  CustomDialog: vi.fn(({ children, open, setOpen, onOk }) => {
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: vi.fn(({ children, open, onOpenChange }) => {
     if (!open) return null;
     return (
-      <div data-testid="leave-org-modal">
+      <div data-testid="leave-org-modal" onClick={() => onOpenChange && onOpenChange(false)}>
         {children}
-        <button data-testid="leave-org-confirm-btn" onClick={onOk}>
-          Confirm
-        </button>
-        <button data-testid="leave-org-cancel-btn" onClick={() => setOpen(false)}>
-          Cancel
-        </button>
       </div>
     );
   }),
+  DialogContent: vi.fn(({ children }) => <div data-testid="dialog-content">{children}</div>),
+  DialogHeader: vi.fn(({ children }) => <div data-testid="dialog-header">{children}</div>),
+  DialogTitle: vi.fn(({ children }) => <div data-testid="dialog-title">{children}</div>),
+  DialogDescription: vi.fn(({ children }) => <div data-testid="dialog-description">{children}</div>),
+  DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
 }));
 
 // Mock react-hot-toast
@@ -90,6 +89,25 @@ vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
     t: (key) => key,
   }),
+}));
+
+// Mock Button component
+vi.mock("@/modules/ui/components/button", () => ({
+  Button: vi.fn(({ children, onClick, loading, disabled, ...props }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      data-testid={
+        props.variant === "destructive"
+          ? "leave-org-confirm-btn"
+          : props.variant === "secondary" && children === "common.cancel"
+            ? "leave-org-cancel-btn"
+            : undefined
+      }
+      {...props}>
+      {children}
+    </button>
+  )),
 }));
 
 describe("OrganizationActions Component", () => {

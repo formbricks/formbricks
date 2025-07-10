@@ -101,6 +101,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
         environmentId={environment.id}
+        locale={user.locale}
       />
 
       <div className="flex h-full">

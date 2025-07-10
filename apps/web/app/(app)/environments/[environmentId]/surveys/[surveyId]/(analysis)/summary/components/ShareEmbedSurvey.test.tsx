@@ -117,9 +117,9 @@ vi.mock("./shareEmbedModal/EmbedView", () => ({
   EmbedView: (props: any) => mockEmbedViewComponent(props),
 }));
 
-const mockPanelInfoViewComponent = vi.fn();
-vi.mock("./shareEmbedModal/PanelInfoView", () => ({
-  PanelInfoView: (props: any) => mockPanelInfoViewComponent(props),
+// Mock getSurveyUrl to return a predictable URL
+vi.mock("@/modules/analysis/utils", () => ({
+  getSurveyUrl: vi.fn().mockResolvedValue("https://public-domain.com/s/survey1"),
 }));
 
 let capturedDialogOnOpenChange: ((open: boolean) => void) | undefined;
@@ -133,8 +133,6 @@ vi.mock("@/modules/ui/components/dialog", async () => {
       capturedDialogOnOpenChange = props.onOpenChange;
       return <actual.Dialog {...props} />;
     },
-    // DialogTitle, DialogContent, DialogDescription will be the actual components
-    // due to ...actual spread and no specific mock for them here.
   };
 });
 
@@ -154,13 +152,15 @@ describe("ShareEmbedSurvey", () => {
     modalView: "start" as "start" | "embed" | "panel",
     setOpen: mockSetOpen,
     user: mockUser,
+    segments: [],
+    isContactsEnabled: true,
+    isFormbricksCloud: true,
   };
 
   beforeEach(() => {
     mockEmbedViewComponent.mockImplementation(
-      ({ handleInitialPageButton, tabs, activeId, survey, email, surveyUrl, publicDomain, locale }) => (
+      ({ tabs, activeId, survey, email, surveyUrl, publicDomain, locale }) => (
         <div>
-          <button onClick={() => handleInitialPageButton()}>EmbedViewMockContent</button>
           <div data-testid="embedview-tabs">{JSON.stringify(tabs)}</div>
           <div data-testid="embedview-activeid">{activeId}</div>
           <div data-testid="embedview-survey-id">{survey.id}</div>
@@ -171,15 +171,24 @@ describe("ShareEmbedSurvey", () => {
         </div>
       )
     );
-    mockPanelInfoViewComponent.mockImplementation(({ handleInitialPageButton }) => (
-      <button onClick={() => handleInitialPageButton()}>PanelInfoViewMockContent</button>
-    ));
   });
 
-  test("renders initial 'start' view correctly when open and modalView is 'start'", () => {
-    render(<ShareEmbedSurvey {...defaultProps} />);
+  test("renders initial 'start' view correctly when open and modalView is 'start' for link survey", () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyLink} />);
     expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
     expect(screen.getByText("ShareSurveyLinkMock")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
+    expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
+  });
+
+  test("renders initial 'start' view correctly when open and modalView is 'start' for app survey", () => {
+    render(<ShareEmbedSurvey {...defaultProps} survey={mockSurveyWeb} />);
+    // For app surveys, ShareSurveyLink should not be rendered
+    expect(screen.queryByText("ShareSurveyLinkMock")).not.toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.embed_survey")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
@@ -193,43 +202,15 @@ describe("ShareEmbedSurvey", () => {
     const embedButton = screen.getByText("environments.surveys.summary.embed_survey");
     await userEvent.click(embedButton);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument();
+    expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument();
   });
 
   test("switches to 'panel' view when 'Send to panel' button is clicked", async () => {
     render(<ShareEmbedSurvey {...defaultProps} />);
     const panelButton = screen.getByText("environments.surveys.summary.send_to_panel");
     await userEvent.click(panelButton);
-    expect(mockPanelInfoViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
-  });
-
-  test("returns to 'start' view when handleInitialPageButton is triggered from EmbedView", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} modalView="embed" />);
-    expect(mockEmbedViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument();
-
-    const embedViewButton = screen.getByText("EmbedViewMockContent");
-    await userEvent.click(embedViewButton);
-
-    // Should go back to start view, not close the modal
-    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
-    expect(screen.queryByText("EmbedViewMockContent")).not.toBeInTheDocument();
-    expect(mockSetOpen).not.toHaveBeenCalled();
-  });
-
-  test("returns to 'start' view when handleInitialPageButton is triggered from PanelInfoView", async () => {
-    render(<ShareEmbedSurvey {...defaultProps} modalView="panel" />);
-    expect(mockPanelInfoViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
-
-    const panelInfoViewButton = screen.getByText("PanelInfoViewMockContent");
-    await userEvent.click(panelInfoViewButton);
-
-    // Should go back to start view, not close the modal
-    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
-    expect(screen.queryByText("PanelInfoViewMockContent")).not.toBeInTheDocument();
-    expect(mockSetOpen).not.toHaveBeenCalled();
+    // Panel view currently just shows a title, no component is rendered
+    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
   });
 
   test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
@@ -255,10 +236,10 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(3);
+    expect(embedViewProps.tabs.length).toBe(4);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
-    expect(embedViewProps.tabs[0].id).toBe("email");
-    expect(embedViewProps.activeId).toBe("email");
+    expect(embedViewProps.tabs[0].id).toBe("link");
+    expect(embedViewProps.activeId).toBe("link");
   });
 
   test("correctly configures for 'web' survey type in embed view", () => {
@@ -285,24 +266,21 @@ describe("ShareEmbedSurvey", () => {
   test("initial showView is set by modalView prop when open is true", () => {
     render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="embed" />);
     expect(mockEmbedViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument();
+    expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument();
     cleanup();
 
     render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="panel" />);
-    expect(mockPanelInfoViewComponent).toHaveBeenCalled();
-    expect(screen.getByText("PanelInfoViewMockContent")).toBeInTheDocument();
+    // Panel view currently just shows a title
+    expect(screen.getByText("environments.surveys.summary.send_to_panel")).toBeInTheDocument();
   });
 
   test("useEffect sets showView to 'start' when open becomes false", () => {
     const { rerender } = render(<ShareEmbedSurvey {...defaultProps} open={true} modalView="embed" />);
-    expect(screen.getByText("EmbedViewMockContent")).toBeInTheDocument(); // Starts in embed
+    expect(screen.getByTestId("embedview-tabs")).toBeInTheDocument(); // Starts in embed
 
     rerender(<ShareEmbedSurvey {...defaultProps} open={false} modalView="embed" />);
     // Dialog mock returns null when open is false, so EmbedViewMockContent is not found
-    expect(screen.queryByText("EmbedViewMockContent")).not.toBeInTheDocument();
-    // To verify showView is 'start', we'd need to inspect internal state or render start view elements
-    // For now, we trust the useEffect sets showView, and if it were to re-open in 'start' mode, it would show.
-    // The main check is that the previous view ('embed') is gone.
+    expect(screen.queryByTestId("embedview-tabs")).not.toBeInTheDocument();
   });
 
   test("renders correct label for link tab based on singleUse survey property", () => {

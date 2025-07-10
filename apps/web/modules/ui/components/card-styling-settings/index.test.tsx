@@ -82,7 +82,6 @@ const TestWrapper = ({
     isLogoHidden: false,
     cardBackgroundColor: { light: "#ffffff" },
     cardBorderColor: { light: "#e2e8f0" },
-    cardShadowColor: { light: "#f1f5f9" },
   },
 }) => {
   const methods = useForm({ defaultValues });
@@ -109,7 +108,6 @@ const TestComponent = ({
       isLogoHidden: false,
       cardBackgroundColor: { light: "#ffffff" },
       cardBorderColor: { light: "#e2e8f0" },
-      cardShadowColor: { light: "#f1f5f9" },
     },
   });
 
@@ -176,7 +174,6 @@ describe("CardStylingSettings", () => {
     // Check for color picker labels
     expect(screen.getByText("environments.surveys.edit.card_background_color")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.card_border_color")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.edit.card_shadow_color")).toBeInTheDocument();
   });
 
   test("renders slider for roundness adjustment", () => {

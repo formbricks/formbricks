@@ -12,6 +12,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -176,6 +177,9 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
+        throw new DatabaseError("Display ID does not exist");
+      }
       throw new DatabaseError(error.message);
     }
 

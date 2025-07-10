@@ -9,21 +9,30 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, children, title, hideCloseButton, closeOnOutsideClick, setOpen }: any) => (
-    <div
-      data-testid="mock-modal"
-      data-open={open}
-      data-title={title}
-      data-hide-close-button={hideCloseButton}
-      data-close-on-outside-click={closeOnOutsideClick}>
-      <button data-testid="modal-close-button" onClick={() => setOpen(false)}>
-        Close
-      </button>
-      <div data-testid="modal-title">{title}</div>
-      <div data-testid="modal-content">{children}</div>
-    </div>
+// Mock Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: vi.fn(({ children, open, onOpenChange }) =>
+    open ? (
+      <div data-testid="dialog-component" data-open={open ? "true" : "false"}>
+        {children}
+        <button data-testid="close-dialog" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null
   ),
+  DialogContent: vi.fn(({ children, hideCloseButton, disableCloseOnOutsideClick }) => (
+    <div
+      data-testid="dialog-content"
+      data-hide-close-button={hideCloseButton ? "true" : "false"}
+      data-disable-close-outside={disableCloseOnOutsideClick ? "true" : "false"}>
+      {children}
+    </div>
+  )),
+  DialogHeader: vi.fn(({ children }) => <div data-testid="dialog-header">{children}</div>),
+  DialogTitle: vi.fn(({ children }) => <h2 data-testid="dialog-title">{children}</h2>),
+  DialogDescription: vi.fn(({ children }) => <div data-testid="dialog-description">{children}</div>),
+  DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
 }));
 
 vi.mock("@/modules/ui/components/button", () => ({
@@ -59,10 +68,10 @@ describe("ConfirmationModal", () => {
       />
     );
 
-    expect(screen.getByTestId("mock-modal")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-modal")).toHaveAttribute("data-open", "true");
-    expect(screen.getByTestId("mock-modal")).toHaveAttribute("data-title", "Test Title");
-    expect(screen.getByTestId("modal-content")).toContainHTML("Test confirmation text");
+    expect(screen.getByTestId("dialog-component")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-component")).toHaveAttribute("data-open", "true");
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Title");
+    expect(screen.getByTestId("dialog-description")).toContainHTML("Test confirmation text");
 
     // Check that buttons exist
     const buttons = screen.getAllByTestId("mock-button");
@@ -99,7 +108,7 @@ describe("ConfirmationModal", () => {
     expect(mockOnConfirm).not.toHaveBeenCalled();
   });
 
-  test("handles close modal button click correctly", async () => {
+  test("handles close dialog button click correctly", async () => {
     const user = userEvent.setup();
     const mockSetOpen = vi.fn();
     const mockOnConfirm = vi.fn();
@@ -115,7 +124,7 @@ describe("ConfirmationModal", () => {
       />
     );
 
-    await user.click(screen.getByTestId("modal-close-button"));
+    await user.click(screen.getByTestId("close-dialog"));
 
     expect(mockSetOpen).toHaveBeenCalledWith(false);
     expect(mockOnConfirm).not.toHaveBeenCalled();
@@ -207,7 +216,7 @@ describe("ConfirmationModal", () => {
     expect(buttons[1]).toHaveAttribute("data-loading", "true");
   });
 
-  test("passes correct modal props", () => {
+  test("passes correct dialog props", () => {
     const mockSetOpen = vi.fn();
     const mockOnConfirm = vi.fn();
 
@@ -224,8 +233,8 @@ describe("ConfirmationModal", () => {
       />
     );
 
-    expect(screen.getByTestId("mock-modal")).toHaveAttribute("data-hide-close-button", "true");
-    expect(screen.getByTestId("mock-modal")).toHaveAttribute("data-close-on-outside-click", "false");
+    expect(screen.getByTestId("dialog-content")).toHaveAttribute("data-hide-close-button", "true");
+    expect(screen.getByTestId("dialog-content")).toHaveAttribute("data-disable-close-outside", "true");
   });
 
   test("renders with default button variant", () => {
@@ -246,5 +255,23 @@ describe("ConfirmationModal", () => {
 
     const buttons = screen.getAllByTestId("mock-button");
     expect(buttons[1]).toHaveAttribute("data-variant", "default");
+  });
+
+  test("does not render when open is false", () => {
+    const mockSetOpen = vi.fn();
+    const mockOnConfirm = vi.fn();
+
+    render(
+      <ConfirmationModal
+        title="Test Title"
+        open={false}
+        setOpen={mockSetOpen}
+        onConfirm={mockOnConfirm}
+        text="Test confirmation text"
+        buttonText="Confirm Action"
+      />
+    );
+
+    expect(screen.queryByTestId("dialog-component")).not.toBeInTheDocument();
   });
 });
