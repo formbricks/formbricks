@@ -40,7 +40,7 @@ describe("Title Component", () => {
   test("applies correct size class when size prop is 'md'", () => {
     render(<Title size="md">Test Title</Title>);
     const titleElement = screen.getByText("Test Title");
-    expect(titleElement).toHaveClass("text-md");
+    expect(titleElement).toHaveClass("text-base");
   });
 
   test("applies both capitalize and size classes when both props are provided", () => {
@@ -50,6 +50,6 @@ describe("Title Component", () => {
       </Title>
     );
     const titleElement = screen.getByText("test title");
-    expect(titleElement).toHaveClass("capitalize", "text-md");
+    expect(titleElement).toHaveClass("capitalize", "text-base");
   });
 });
