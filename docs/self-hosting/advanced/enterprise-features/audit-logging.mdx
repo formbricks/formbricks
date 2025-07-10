@@ -1,7 +1,7 @@
 ---
 title: Audit Logging
 sidebarTitle: Audit Logging
-description: Enable and use tamper‑evident audit logs for your Formbricks instance.
+description: Enable comprehensive audit logs for your Formbricks instance.
 icon: file-shield
 ---
 
@@ -16,15 +16,7 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 - **Compliance readiness** — Many regulatory frameworks such as GDPR and SOC 2 require immutable records of user activity.
 - **Security investigation support** — Audit logs provide clear visibility into user and system actions, helping teams respond quickly and confidently during security incidents.
-- **Operational accountability** — Track changes across the system to answer common questions like "_who modified this?_” or "_when was this deleted?_".
-
----
-
-## Prerequisites
-
-| Requirement | Notes |
-|-------------|-------|
-| **`redis`** | Used internally to guarantee integrity under concurrency. |
+- **Operational accountability** — Track changes across the system to answer common questions like "_who modified this?_" or "_when was this deleted?_".
 
 ---
 
@@ -35,8 +27,6 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 ```bash title=".env"
 # --- Audit logging ---
 AUDIT_LOG_ENABLED=1
-ENCRYPTION_KEY=your_encryption_key_here        # required for integrity hashes and authentication logs
-REDIS_URL=redis://`redis`:6379                 # existing `redis` instance
 AUDIT_LOG_GET_USER_IP=1                        # set to 1 to include user IP address in audit logs, 0 to omit (default: 0)
 ```
 
@@ -52,7 +42,7 @@ Audit logs are printed to **stdout** as JSON Lines format, making them easily ac
 Audit logs are **JSON Lines** (one JSON object per line). A typical entry looks like this:
 
 ```json
-{"level":"audit","time":1749207302158,"pid":20023,"hostname":"Victors-MacBook-Pro.local","name":"formbricks","actor":{"id":"cm90t4t7l0000vrws5hpo5ta5","type":"api"},"action":"created","target":{"id":"cmbkov4dn0000vrg72i7oznqv","type":"webhook"},"timestamp":"2025-06-06T10:55:02.145Z","organizationId":"cm8zovtbm0001vr3efa4n03ms","status":"success","ipAddress":"unknown","apiUrl":"http://localhost:3000/api/v1/webhooks","changes":{"id":"cmbkov4dn0000vrg72i7oznqv","name":"********","createdAt":"2025-06-06T10:55:02.123Z","updatedAt":"2025-06-06T10:55:02.123Z","url":"https://eoy8o887lmsqmhz.m.pipedream.net","source":"user","environmentId":"cm8zowv0b0009vr3ec56w2qf3","triggers":["responseCreated","responseUpdated","responseFinished"],"surveyIds":[]},"integrityHash":"eefa760bf03572c32d8caf7d5012d305bcea321d08b1929781b8c7e537f22aed","previousHash":"f6bc014e835be5499f2b3a0475ed6ec8b97903085059ff8482b16ab5bfd34062"}
+{"level":"audit","time":1749207302158,"pid":20023,"hostname":"Victors-MacBook-Pro.local","name":"formbricks","actor":{"id":"cm90t4t7l0000vrws5hpo5ta5","type":"api"},"action":"created","target":{"id":"cmbkov4dn0000vrg72i7oznqv","type":"webhook"},"timestamp":"2025-06-06T10:55:02.145Z","organizationId":"cm8zovtbm0001vr3efa4n03ms","status":"success","ipAddress":"unknown","apiUrl":"http://localhost:3000/api/v1/webhooks","changes":{"id":"cmbkov4dn0000vrg72i7oznqv","name":"********","createdAt":"2025-06-06T10:55:02.123Z","updatedAt":"2025-06-06T10:55:02.123Z","url":"https://eoy8o887lmsqmhz.m.pipedream.net","source":"user","environmentId":"cm8zowv0b0009vr3ec56w2qf3","triggers":["responseCreated","responseUpdated","responseFinished"],"surveyIds":[]}}
 ```
 
 Key fields:
@@ -74,11 +64,17 @@ Key fields:
 | `apiUrl` | (Optional) API endpoint URL if the logs was generated through an API call |
 | `eventId` | (Optional) Available on error logs. You can use it to refer to the system log with this eventId for more details on the error |
 | `changes` | (Optional) Only the fields that actually changed (sensitive values redacted) |
-| `integrityHash` | SHA‑256 hash chaining the entry to the previous one |
-| `previousHash` | SHA‑256 hash of the previous audit log entry for chain integrity |
-| `chainStart` | (Optional) Boolean indicating if this is the start of a new audit chain |
 
 ---
+
+## Centralized logging and compliance
+
+Formbricks audit logs are designed to work with modern centralized logging architectures:
+
+- **Stdout delivery**: Logs are written to stdout for immediate collection by log forwarding agents
+- **Centralized integrity**: Log integrity and immutability are handled by your centralized logging platform (ELK Stack, Splunk, CloudWatch, etc.)
+- **Platform-level security**: Access controls and tamper detection are provided by your logging infrastructure
+- **SOC2 compliance**: Most SOC2 auditors accept centralized logging without application-level integrity mechanisms
 
 ## Additional details
 

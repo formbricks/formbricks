@@ -5,8 +5,6 @@ import * as OriginalHandler from "./handler";
 
 // Use 'var' for all mock handles used in vi.mock factories to avoid hoisting/TDZ issues
 var serviceLogAuditEventMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
-var cacheRunAuditLogHashTransactionMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
-var utilsComputeAuditLogHashMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 var loggerErrorMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 
 // Use 'var' for mutableConstants due to hoisting issues with vi.mock factories
@@ -23,7 +21,6 @@ vi.mock("@/lib/constants", () => ({
     return mutableConstants ? mutableConstants.AUDIT_LOG_ENABLED : true; // Default to true if somehow undefined
   },
   AUDIT_LOG_GET_USER_IP: true,
-  ENCRYPTION_KEY: "testsecret",
 }));
 vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn().mockResolvedValue("127.0.0.1"),
@@ -35,19 +32,10 @@ vi.mock("@/modules/ee/audit-logs/lib/service", () => {
   return { logAuditEvent: mock };
 });
 
-vi.mock("./cache", () => {
-  const mock = vi.fn((fn) => fn(null).then((res: any) => res.auditEvent())); // Keep original mock logic
-  cacheRunAuditLogHashTransactionMockHandle = mock;
-  return { runAuditLogHashTransaction: mock };
-});
-
 vi.mock("./utils", async () => {
   const actualUtils = await vi.importActual("./utils");
-  const mock = vi.fn();
-  utilsComputeAuditLogHashMockHandle = mock;
   return {
     ...(actualUtils as object),
-    computeAuditLogHash: mock, // This is the one we primarily care about controlling
     redactPII: vi.fn((obj) => obj), // Keep others as simple mocks or actuals if needed
     deepDiff: vi.fn((a, b) => ({ diff: true })),
   };
@@ -139,12 +127,6 @@ const mockCtxBase = {
 // Helper to clear all mock handles
 function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
-  if (cacheRunAuditLogHashTransactionMockHandle)
-    cacheRunAuditLogHashTransactionMockHandle
-      .mockClear()
-      .mockImplementation((fn) => fn(null).then((res: any) => res.auditEvent()));
-  if (utilsComputeAuditLogHashMockHandle)
-    utilsComputeAuditLogHashMockHandle.mockClear().mockReturnValue("testhash");
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
   if (mutableConstants) {
     // Check because it's a var and could be re-assigned (though not in this code)
@@ -164,25 +146,23 @@ describe("queueAuditEvent", () => {
     await OriginalHandler.queueAuditEvent(baseEventParams);
     // Now, OriginalHandler.queueAuditEvent will call the REAL OriginalHandler.buildAndLogAuditEvent
     // We expect the MOCKED dependencies of buildAndLogAuditEvent to be called.
-    expect(cacheRunAuditLogHashTransactionMockHandle).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     // Add more specific assertions on what serviceLogAuditEventMockHandle was called with if necessary
     // This would be similar to the direct tests for buildAndLogAuditEvent
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(logCall.action).toBe(baseEventParams.action);
-    expect(logCall.integrityHash).toBe("testhash");
   });
 
   test("handles errors from buildAndLogAuditEvent dependencies", async () => {
-    const testError = new Error("DB hash error in test");
-    cacheRunAuditLogHashTransactionMockHandle.mockImplementationOnce(() => {
+    const testError = new Error("Service error in test");
+    serviceLogAuditEventMockHandle.mockImplementationOnce(() => {
       throw testError;
     });
     await OriginalHandler.queueAuditEvent(baseEventParams);
     // queueAuditEvent should catch errors from buildAndLogAuditEvent and log them
     // buildAndLogAuditEvent in turn logs errors from its dependencies
     expect(loggerErrorMockHandle).toHaveBeenCalledWith(testError, "Failed to create audit log event");
-    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
   });
 });
 
@@ -197,11 +177,9 @@ describe("queueAuditEventBackground", () => {
   test("correctly processes event in background and dependencies are called", async () => {
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate); // Wait for setImmediate to run
-    expect(cacheRunAuditLogHashTransactionMockHandle).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(logCall.action).toBe(baseEventParams.action);
-    expect(logCall.integrityHash).toBe("testhash");
   });
 });
 
@@ -226,7 +204,6 @@ describe("withAuditLogging", () => {
     expect(callArgs.action).toBe("created");
     expect(callArgs.status).toBe("success");
     expect(callArgs.target.id).toBe("t1");
-    expect(callArgs.integrityHash).toBe("testhash");
   });
 
   test("logs audit event for failed handler and throws", async () => {

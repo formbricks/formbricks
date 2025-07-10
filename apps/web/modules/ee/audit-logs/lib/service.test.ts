@@ -19,9 +19,6 @@ const validEvent = {
   status: "success" as const,
   timestamp: new Date().toISOString(),
   organizationId: "org-1",
-  integrityHash: "hash",
-  previousHash: null,
-  chainStart: true,
 };
 
 describe("logAuditEvent", () => {
