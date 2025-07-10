@@ -169,12 +169,14 @@ export function LogicEditorConditions({
       }
     }
 
+    const operator = question ? getDefaultOperatorForQuestion(question, t) : "isSkipped";
+
     handleUpdateCondition(condition.id, {
       leftOperand: {
         value,
         type,
       },
-      operator: "isSkipped",
+      operator,
       rightOperand: undefined,
     });
   };
