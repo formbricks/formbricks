@@ -63,7 +63,7 @@ export const EmbedView = ({
           <TabContainer
             title={t("environments.surveys.share.dynamic_popup.title")}
             description={t("environments.surveys.share.dynamic_popup.description")}>
-            <DynamicPopupTab environmentId={environmentId} />
+            <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />
           </TabContainer>
         );
       case "link":

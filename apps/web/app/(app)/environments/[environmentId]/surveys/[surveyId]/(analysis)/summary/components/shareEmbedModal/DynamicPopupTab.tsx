@@ -2,13 +2,14 @@
 
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { Title } from "@/modules/ui/components/title";
+import { H4 } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 
 interface DynamicPopupTabProps {
   environmentId: string;
+  surveyId: string;
 }
 
 interface DocumentationButtonProps {
@@ -35,7 +36,7 @@ const DocumentationButton = ({ href, title, readDocsText }: DocumentationButtonP
   );
 };
 
-export const DynamicPopupTab = ({ environmentId }: DynamicPopupTabProps) => {
+export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProps) => {
   const { t } = useTranslate();
 
   return (
@@ -46,14 +47,14 @@ export const DynamicPopupTab = ({ environmentId }: DynamicPopupTabProps) => {
           {t("environments.surveys.summary.dynamic_popup.alert_description")}
         </AlertDescription>
         <AlertButton asChild>
-          <Link href={`/environments/${environmentId}/surveys`}>
+          <Link href={`/environments/${environmentId}/surveys/${surveyId}`}>
             {t("environments.surveys.summary.dynamic_popup.alert_button")}
           </Link>
         </AlertButton>
       </Alert>
 
       <div className="flex w-full flex-col space-y-4">
-        <Title size="md">{t("environments.surveys.summary.dynamic_popup.title")}</Title>
+        <H4>{t("environments.surveys.summary.dynamic_popup.title")}</H4>
         <DocumentationButton
           href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
           title={t("environments.surveys.summary.dynamic_popup.attribute_based_targeting")}
