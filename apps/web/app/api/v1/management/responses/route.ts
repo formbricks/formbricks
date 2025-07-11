@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -139,6 +140,23 @@ export const POST = withApiLogging(
 
       try {
         const response = await createResponse(responseInput);
+        
+        sendToPipeline({
+          event: "responseCreated",
+          environmentId: surveyResult.survey.environmentId,
+          surveyId: response.surveyId,
+          response: response,
+        });
+
+        if (responseInput.finished) {
+          sendToPipeline({
+            event: "responseFinished",
+            environmentId: surveyResult.survey.environmentId,
+            surveyId: response.surveyId,
+            response: response,
+          });
+        }
+        
         auditLog.targetId = response.id;
         auditLog.newObject = response;
         return {
