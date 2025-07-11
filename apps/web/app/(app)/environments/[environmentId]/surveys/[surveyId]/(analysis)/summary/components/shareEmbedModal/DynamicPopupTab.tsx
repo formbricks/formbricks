@@ -40,7 +40,7 @@ export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProp
   const { t } = useTranslate();
 
   return (
-    <div className="flex h-full flex-col justify-between">
+    <div className="flex h-full flex-col justify-between space-y-4">
       <Alert variant="info" size="default">
         <AlertTitle>{t("environments.surveys.summary.dynamic_popup.alert_title")}</AlertTitle>
         <AlertDescription>
