@@ -181,8 +181,26 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
     icon: Grid3X3Icon,
     preset: {
       headline: createI18nString("", []),
-      rows: [createI18nString("", []), createI18nString("", [])],
-      columns: [createI18nString("", []), createI18nString("", [])],
+      rows: [
+        {
+          id: createId(),
+          label: createI18nString("", []),
+        },
+        {
+          id: createId(),
+          label: createI18nString("", []),
+        },
+      ],
+      columns: [
+        {
+          id: createId(),
+          label: createI18nString("", []),
+        },
+        {
+          id: createId(),
+          label: createI18nString("", []),
+        },
+      ],
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
       shuffleOption: "none",
