@@ -3517,7 +3517,7 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     styling: null,
     segment: null,
     questions: [
-       {
+      {
         ...buildMultipleChoiceQuestion({
           id: "rjpu42ps6dzirsn9ds6eydgt",
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,

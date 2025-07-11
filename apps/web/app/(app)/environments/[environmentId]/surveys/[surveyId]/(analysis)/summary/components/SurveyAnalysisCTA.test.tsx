@@ -165,6 +165,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -186,6 +189,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={0}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -208,6 +214,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -230,6 +239,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -261,6 +273,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -286,6 +301,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -308,6 +326,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -328,6 +349,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -343,6 +367,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -359,6 +386,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
       expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
@@ -373,6 +403,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
 
@@ -389,6 +422,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
       expect(screen.getByRole("button", { name: "common.preview" })).toBeInTheDocument();
@@ -403,6 +439,9 @@ describe("SurveyAnalysisCTA", () => {
           publicDomain={mockPublicDomain}
           user={dummyUser}
           responseCount={5}
+          segments={[]}
+          isContactsEnabled={false}
+          isFormbricksCloud={false}
         />
       );
       expect(screen.queryByRole("button", { name: "common.preview" })).not.toBeInTheDocument();

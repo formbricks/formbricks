@@ -217,9 +217,13 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(4);
+    expect(embedViewProps.tabs.length).toBe(5);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
+    expect(embedViewProps.tabs[1].id).toBe("qr-code");
+    expect(embedViewProps.tabs[2].id).toBe("personal-links");
+    expect(embedViewProps.tabs[3].id).toBe("email");
+    expect(embedViewProps.tabs[4].id).toBe("webpage");
     expect(embedViewProps.activeId).toBe("link");
   });
 
@@ -284,5 +288,34 @@ describe("ShareEmbedSurvey", () => {
     };
     linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
     expect(linkTab?.label).toBe("environments.surveys.summary.single_use_links");
+  });
+
+  test("includes QR code tab for link surveys", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
+    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    const qrCodeTab = embedViewProps.tabs.find((tab) => tab.id === "qr-code");
+    expect(qrCodeTab).toBeDefined();
+    expect(qrCodeTab?.label).toBe("environments.surveys.summary.qr_code");
+  });
+
+  test("does not include QR code tab for app surveys", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
+    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    const qrCodeTab = embedViewProps.tabs.find((tab) => tab.id === "qr-code");
+    expect(qrCodeTab).toBeUndefined();
+  });
+
+  test("QR code tab appears after link tab in the tabs array", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
+    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    const linkTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "link");
+    const qrCodeTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "qr-code");
+    expect(qrCodeTabIndex).toBe(linkTabIndex + 1);
   });
 });
