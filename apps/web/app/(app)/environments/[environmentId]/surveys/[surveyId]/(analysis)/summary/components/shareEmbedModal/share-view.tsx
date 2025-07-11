@@ -22,6 +22,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
+import { SocialMediaTab } from "./SocialMediaTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
@@ -86,6 +87,8 @@ export const ShareView = ({
             locale={locale}
           />
         );
+      case "social-media":
+        return <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />;
       case "app":
         return <AppTab />;
       case "personal-links":

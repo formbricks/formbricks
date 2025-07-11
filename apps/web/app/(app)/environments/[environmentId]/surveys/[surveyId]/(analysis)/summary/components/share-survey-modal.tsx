@@ -3,7 +3,7 @@
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, UserIcon } from "lucide-react";
+import { Code2Icon, LinkIcon, MailIcon, Share2Icon, SmartphoneIcon, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
@@ -19,6 +19,7 @@ enum ShareViewType {
   PERSONAL_LINKS = "personal-links",
   EMAIL = "email",
   WEBPAGE = "webpage",
+  SOCIAL_MEDIA = "social-media",
   APP = "app",
 }
 
@@ -70,6 +71,11 @@ export const ShareSurveyModal = ({
         id: ShareViewType.WEBPAGE,
         label: t("environments.surveys.summary.embed_on_website"),
         icon: Code2Icon,
+      },
+      {
+        id: ShareViewType.SOCIAL_MEDIA,
+        label: t("environments.surveys.summary.social_media"),
+        icon: Share2Icon,
       },
     ],
     [t, isSingleUseLinkSurvey]
