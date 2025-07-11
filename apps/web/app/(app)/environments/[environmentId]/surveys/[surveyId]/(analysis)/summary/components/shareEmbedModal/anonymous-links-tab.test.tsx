@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { LinkTab } from "./LinkTab";
+import { AnonymousLinksTab } from "./anonymous-links-tab";
 
 // Mock ShareSurveyLink
 vi.mock("@/modules/analysis/components/ShareSurveyLink", () => ({
@@ -79,7 +79,7 @@ describe("LinkTab", () => {
 
   test("renders the main title", () => {
     render(
-      <LinkTab
+      <AnonymousLinksTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
         publicDomain={mockPublicDomain}
@@ -94,7 +94,7 @@ describe("LinkTab", () => {
 
   test("renders ShareSurveyLink with correct props", () => {
     render(
-      <LinkTab
+      <AnonymousLinksTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
         publicDomain={mockPublicDomain}
@@ -111,7 +111,7 @@ describe("LinkTab", () => {
 
   test("renders the promotional text for link surveys", () => {
     render(
-      <LinkTab
+      <AnonymousLinksTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
         publicDomain={mockPublicDomain}
@@ -126,7 +126,7 @@ describe("LinkTab", () => {
 
   test("renders all documentation links correctly", () => {
     render(
-      <LinkTab
+      <AnonymousLinksTab
         survey={mockSurvey}
         surveyUrl={mockSurveyUrl}
         publicDomain={mockPublicDomain}

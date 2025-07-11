@@ -313,3 +313,42 @@ export const generatePersonalLinksAction = authenticatedActionClient
       count: csvData.length,
     };
   });
+
+const ZUpdateSingleUseLinksAction = z.object({
+  surveyId: ZId,
+  environmentId: ZId,
+  isSingleUse: z.boolean(),
+  isSingleUseEncryption: z.boolean(),
+});
+
+export const updateSingleUseLinksAction = authenticatedActionClient
+  .schema(ZUpdateSingleUseLinksAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    const updatedSurvey = await updateSurvey({
+      ...survey,
+      singleUse: { enabled: parsedInput.isSingleUse, isEncrypted: parsedInput.isSingleUseEncryption },
+    });
+
+    return updatedSurvey;
+  });

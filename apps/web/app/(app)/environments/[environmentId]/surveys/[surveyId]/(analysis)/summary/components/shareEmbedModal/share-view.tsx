@@ -2,6 +2,7 @@
 
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -24,13 +25,13 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
-import { LinkTab } from "./LinkTab";
 import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
+import { AnonymousLinksTab } from "./anonymous-links-tab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface ShareViewProps {
   tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
-  activeId: string;
+  activeId: ShareViewType;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
   environmentId: string;
   survey: TSurvey;
@@ -76,9 +77,9 @@ export const ShareView = ({
 
   const renderActiveTab = () => {
     switch (activeId) {
-      case "email":
+      case ShareViewType.EMAIL:
         return <EmailTab surveyId={survey.id} email={email} />;
-      case "website-embed":
+      case ShareViewType.WEBSITE_EMBED:
         return (
           <TabContainer
             title={t("environments.surveys.share.embed_on_website.title")}
@@ -86,7 +87,7 @@ export const ShareView = ({
             <WebsiteEmbedTab surveyUrl={surveyUrl} />
           </TabContainer>
         );
-      case "dynamic-popup":
+      case ShareViewType.DYNAMIC_POPUP:
         return (
           <TabContainer
             title={t("environments.surveys.share.dynamic_popup.title")}
@@ -94,9 +95,9 @@ export const ShareView = ({
             <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />
           </TabContainer>
         );
-      case "link":
+      case ShareViewType.ANON_LINKS:
         return (
-          <LinkTab
+          <AnonymousLinksTab
             survey={survey}
             surveyUrl={surveyUrl}
             publicDomain={publicDomain}
@@ -104,9 +105,9 @@ export const ShareView = ({
             locale={locale}
           />
         );
-      case "app":
+      case ShareViewType.APP:
         return <AppTab />;
-      case "personal-links":
+      case ShareViewType.PERSONAL_LINKS:
         return (
           <PersonalLinksTab
             segments={segments}
