@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ShareView } from "./share-view";
 
 // Mock child components
@@ -216,7 +215,7 @@ describe("ShareView", () => {
   });
 
   test("does not render desktop tabs for non-link survey type", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyApp} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyWeb} />);
 
     // For non-link survey types, desktop sidebar should not be rendered
     // Check that SidebarProvider is not rendered by looking for sidebar-specific elements
@@ -262,6 +261,12 @@ describe("ShareView", () => {
     expect(
       screen.getByText(`LinkTab Content for ${defaultProps.survey.id} at ${defaultProps.surveyUrl}`)
     ).toBeInTheDocument();
+  });
+
+  test("renders QRCodeTab when activeId is 'qr-code'", () => {
+    render(<ShareView {...defaultProps} activeId="qr-code" />);
+    expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
+    expect(screen.getByText(`QRCodeTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
   });
 
   test("renders AppTab when activeId is 'app'", () => {
