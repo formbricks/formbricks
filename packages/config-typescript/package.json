@@ -2,8 +2,5 @@
   "name": "@formbricks/config-typescript",
   "version": "1.0.0",
   "main": "nextjs.json",
-  "files": [
-    "nextjs.json",
-    "base.json"
-  ]
+  "files": ["nextjs.json", "base.json"]
 }
