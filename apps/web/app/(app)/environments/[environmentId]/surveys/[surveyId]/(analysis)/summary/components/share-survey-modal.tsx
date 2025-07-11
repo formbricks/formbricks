@@ -63,7 +63,7 @@ export const ShareSurveyModal = ({
       },
       {
         id: ShareViewType.EMAIL,
-        label: t("environments.surveys.summary.embed_in_an_email"),
+        label: t("environments.surveys.summary.email_embed"),
         icon: MailIcon,
       },
       {
