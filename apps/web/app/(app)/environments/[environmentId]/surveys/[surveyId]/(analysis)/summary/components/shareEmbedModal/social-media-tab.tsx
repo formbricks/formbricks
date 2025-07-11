@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FacebookIcon } from "@/modules/ui/components/icons/facebook-icon";
 import { LinkedinIcon } from "@/modules/ui/components/icons/linkedin-icon";
@@ -8,7 +8,6 @@ import { RedditIcon } from "@/modules/ui/components/icons/reddit-icon";
 import { ThreadsIcon } from "@/modules/ui/components/icons/threads-icon";
 import { XIcon } from "@/modules/ui/components/icons/x-icon";
 import { useTranslate } from "@tolgee/react";
-import Link from "next/link";
 import { useMemo } from "react";
 
 interface SocialMediaTabProps {
@@ -106,16 +105,17 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
       <Alert>
         <AlertTitle>{t("environments.surveys.summary.source_tracking_enabled")}</AlertTitle>
         <AlertDescription>
-          {t(
-            "environments.surveys.summary.when_sharing_from_this_dialog_the_social_media_network_will_be_appended_to_the_survey_link_so_you_know_which_responses_came_via_each_network"
-          )}{" "}
-          <Link
-            href="https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking"
-            target="_blank"
-            className="underline">
-            {t("common.learn_more")}
-          </Link>
+          {t("environments.surveys.summary.source_tracking_enabled_alert_description")}
         </AlertDescription>
+        <AlertButton
+          onClick={() => {
+            window.open(
+              "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
+              "_blank"
+            );
+          }}>
+          {t("common.learn_more")}
+        </AlertButton>
       </Alert>
     </div>
   );

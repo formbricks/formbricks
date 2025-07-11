@@ -22,9 +22,9 @@ import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { SocialMediaTab } from "./SocialMediaTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
+import { SocialMediaTab } from "./social-media-tab";
 
 interface ShareViewProps {
   tabs: Array<{ id: string; label: string; icon: React.ElementType }>;

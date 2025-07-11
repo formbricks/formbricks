@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { SocialMediaTab } from "./SocialMediaTab";
+import { SocialMediaTab } from "./social-media-tab";
 
 // Mock useTranslate
 const mockTranslate = vi.fn((key) => key);
@@ -68,18 +68,12 @@ describe("SocialMediaTab", () => {
 
     expect(screen.getByText("environments.surveys.summary.source_tracking_enabled")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "environments.surveys.summary.when_sharing_from_this_dialog_the_social_media_network_will_be_appended_to_the_survey_link_so_you_know_which_responses_came_via_each_network"
-      )
+      screen.getByText("environments.surveys.summary.source_tracking_enabled_alert_description")
     ).toBeInTheDocument();
     expect(screen.getByText("common.learn_more")).toBeInTheDocument();
 
-    const learnMoreLink = screen.getByRole("link", { name: "common.learn_more" });
-    expect(learnMoreLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking"
-    );
-    expect(learnMoreLink).toHaveAttribute("target", "_blank");
+    const learnMoreButton = screen.getByRole("button", { name: "common.learn_more" });
+    expect(learnMoreButton).toBeInTheDocument();
   });
 
   test("renders platform buttons for all platforms", () => {

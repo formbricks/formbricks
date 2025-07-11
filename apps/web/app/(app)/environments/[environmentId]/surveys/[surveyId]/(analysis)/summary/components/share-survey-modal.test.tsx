@@ -217,7 +217,7 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(4);
+    expect(embedViewProps.tabs.length).toBe(5);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
     expect(embedViewProps.activeId).toBe("link");
