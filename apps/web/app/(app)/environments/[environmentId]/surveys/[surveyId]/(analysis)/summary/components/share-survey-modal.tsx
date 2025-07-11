@@ -1,10 +1,12 @@
 "use client";
 
+import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/AppTab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, SquareStack, UserIcon } from "lucide-react";
+import { Code2Icon, LinkIcon, MailIcon, SquareStack, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
@@ -82,14 +84,6 @@ export const ShareSurveyModal = ({
     [t, isSingleUseLinkSurvey]
   );
 
-  const appTabs = [
-    {
-      id: ShareViewType.APP,
-      label: t("environments.surveys.summary.embed_in_app"),
-      icon: SmartphoneIcon,
-    },
-  ];
-
   const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
   const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
@@ -131,40 +125,60 @@ export const ShareSurveyModal = ({
     setActiveId(tabId);
   };
 
+  const renderContent = () => {
+    if (showView === "start") {
+      return (
+        <SuccessView
+          survey={survey}
+          surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
+          setSurveyUrl={setSurveyUrl}
+          user={user}
+          tabs={linkTabs}
+          handleViewChange={handleViewChange}
+          handleEmbedViewWithTab={handleEmbedViewWithTab}
+        />
+      );
+    }
+
+    if (survey.type === "link") {
+      return (
+        <ShareView
+          tabs={linkTabs}
+          activeId={activeId}
+          setActiveId={setActiveId}
+          environmentId={environmentId}
+          survey={survey}
+          email={email}
+          surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
+          setSurveyUrl={setSurveyUrl}
+          locale={user.locale}
+          segments={segments}
+          isContactsEnabled={isContactsEnabled}
+          isFormbricksCloud={isFormbricksCloud}
+        />
+      );
+    }
+
+    return (
+      <div className={`h-full w-full bg-slate-50 p-6`}>
+        <TabContainer
+          title={t("environments.surveys.summary.in_app.title")}
+          description={t("environments.surveys.summary.in_app.description")}>
+          <AppTab />
+        </TabContainer>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
       <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
-        {showView === "start" ? (
-          <SuccessView
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            user={user}
-            tabs={linkTabs}
-            handleViewChange={handleViewChange}
-            handleEmbedViewWithTab={handleEmbedViewWithTab}
-          />
-        ) : (
-          <ShareView
-            tabs={survey.type === "link" ? linkTabs : appTabs}
-            activeId={activeId}
-            environmentId={environmentId}
-            setActiveId={setActiveId}
-            survey={survey}
-            email={email}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={user.locale}
-            segments={segments}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        )}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );

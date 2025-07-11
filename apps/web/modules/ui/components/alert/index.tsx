@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { VariantProps, cva } from "class-variance-authority";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { Button, ButtonProps } from "../button";
 
 // Create a context to share variant and size with child components
@@ -60,8 +60,10 @@ const Alert = React.forwardRef<
 >(({ className, variant, size, ...props }, ref) => {
   const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
+  const contextValue = useMemo(() => ({ variant, size }), [variant, size]);
+
   return (
-    <AlertContext.Provider value={{ variant, size }}>
+    <AlertContext.Provider value={contextValue}>
       <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
         {variantIcon}
         {props.children}

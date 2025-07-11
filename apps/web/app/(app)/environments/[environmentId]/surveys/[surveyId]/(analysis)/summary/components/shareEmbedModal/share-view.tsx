@@ -22,7 +22,6 @@ import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
 import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
@@ -104,8 +103,6 @@ export const ShareView = ({
             locale={locale}
           />
         );
-      case "app":
-        return <AppTab />;
       case "personal-links":
         return (
           <PersonalLinksTab
@@ -123,50 +120,45 @@ export const ShareView = ({
 
   return (
     <div className="h-full">
-      <div className={`flex h-full ${survey.type === "link" ? "lg:grid lg:grid-cols-4" : ""}`}>
-        {survey.type === "link" && (
-          <SidebarProvider
-            open={isLargeScreen}
-            className="flex min-h-0 w-auto lg:col-span-1"
-            style={
-              {
-                "--sidebar-width": "100%",
-              } as React.CSSProperties
-            }>
-            <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
-              <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
-                <SidebarGroup className="p-0">
-                  <SidebarGroupLabel>
-                    <Small className="text-xs text-slate-500">Share via</Small>
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="flex flex-col gap-1">
-                      {tabs.map((tab) => (
-                        <SidebarMenuItem key={tab.id}>
-                          <SidebarMenuButton
-                            onClick={() => setActiveId(tab.id)}
-                            className={cn(
-                              "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                              tab.id === activeId
-                                ? "bg-slate-100 font-medium text-slate-900"
-                                : "text-slate-700"
-                            )}
-                            tooltip={tab.label}
-                            isActive={tab.id === activeId}>
-                            <tab.icon className="h-4 w-4 text-slate-700" />
-                            <span>{tab.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              </SidebarContent>
-            </Sidebar>
-          </SidebarProvider>
-        )}
-        <div
-          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 ${survey.type === "link" ? "lg:col-span-3" : ""}`}>
+      <div className={`flex h-full lg:grid lg:grid-cols-4`}>
+        <SidebarProvider
+          open={isLargeScreen}
+          className="flex min-h-0 w-auto lg:col-span-1"
+          style={
+            {
+              "--sidebar-width": "100%",
+            } as React.CSSProperties
+          }>
+          <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
+            <SidebarContent className="h-full border-r border-slate-200 bg-white px-6 pb-6 pt-5">
+              <SidebarGroup className="p-0">
+                <SidebarGroupLabel>
+                  <Small className="text-xs text-slate-500">Share via</Small>
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="flex flex-col gap-1">
+                    {tabs.map((tab) => (
+                      <SidebarMenuItem key={tab.id}>
+                        <SidebarMenuButton
+                          onClick={() => setActiveId(tab.id)}
+                          className={cn(
+                            "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                            tab.id === activeId ? "bg-slate-100 font-medium text-slate-900" : "text-slate-700"
+                          )}
+                          tooltip={tab.label}
+                          isActive={tab.id === activeId}>
+                          <tab.icon className="h-4 w-4 text-slate-700" />
+                          <span>{tab.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+        </SidebarProvider>
+        <div className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:col-span-3 lg:p-6`}>
           {renderActiveTab()}
           <div className="flex justify-center gap-2 rounded-md pt-6 text-center md:hidden">
             {tabs.map((tab) => (
