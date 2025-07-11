@@ -74,22 +74,17 @@ export const TemplateList = ({
   };
 
   const filteredTemplates = () => {
-    return templates(t).filter((template) => {
-      if (templateSearch) {
-        return template.name.toLowerCase().includes(templateSearch.toLowerCase());
-      }
-
-      // Parse and validate the filters
+    const allTemplates = templates(t);
+    // Parse and validate the filters
+    const categoryFiltered = allTemplates.filter((template) => {
       const channelParseResult = ZProjectConfigChannel.nullable().safeParse(selectedFilter[0]);
       const industryParseResult = ZProjectConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
-
       // Ensure all validations are successful
       if (!channelParseResult.success || !industryParseResult.success || !roleParseResult.success) {
         // If any validation fails, skip this template
         return true;
       }
-
       // Access the validated data from the parse results
       const validatedChannel = channelParseResult.data;
       const validatedIndustry = industryParseResult.data;
@@ -102,6 +97,14 @@ export const TemplateList = ({
 
       return channelMatch && industryMatch && roleMatch;
     });
+
+    if (templateSearch) {
+      return categoryFiltered.filter((template) =>
+        template.name.toLowerCase().includes(templateSearch.toLowerCase())
+      );
+    }
+
+    return categoryFiltered;
   };
 
   return (
