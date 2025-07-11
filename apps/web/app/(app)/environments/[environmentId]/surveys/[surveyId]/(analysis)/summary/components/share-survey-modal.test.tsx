@@ -217,8 +217,10 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(4);
+    expect(embedViewProps.tabs.length).toBe(5);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
     expect(embedViewProps.activeId).toBe("link");
   });
@@ -230,7 +232,9 @@ describe("ShareEmbedSurvey", () => {
       activeId: string;
     };
     expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs[0].id).toBe("app");
+    expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
     expect(embedViewProps.activeId).toBe("app");
   });
 
@@ -284,5 +288,33 @@ describe("ShareEmbedSurvey", () => {
     };
     linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
     expect(linkTab?.label).toBe("environments.surveys.summary.single_use_links");
+  });
+
+  test("dynamic popup tab is only visible for link surveys", () => {
+    // Test link survey includes dynamic popup tab
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
+    let embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    cleanup();
+    vi.mocked(mockShareViewComponent).mockClear();
+
+    // Test web survey excludes dynamic popup tab
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
+    embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
+  });
+
+  test("website-embed and dynamic-popup tabs replace old webpage tab", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
+    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "webpage")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
   });
 });

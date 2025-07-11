@@ -15,6 +15,7 @@ interface CodeBlockProps {
   customCodeClass?: string;
   customEditorClass?: string;
   showCopyToClipboard?: boolean;
+  noMargin?: boolean;
 }
 
 export const CodeBlock = ({
@@ -23,6 +24,7 @@ export const CodeBlock = ({
   customEditorClass = "",
   customCodeClass = "",
   showCopyToClipboard = true,
+  noMargin = false,
 }: CodeBlockProps) => {
   const { t } = useTranslate();
   useEffect(() => {
@@ -30,7 +32,7 @@ export const CodeBlock = ({
   }, [children]);
 
   return (
-    <div className="group relative mt-4 rounded-md text-sm text-slate-200">
+    <div className={cn("group relative rounded-md text-sm text-slate-200", noMargin ? "" : "mt-4")}>
       {showCopyToClipboard && (
         <div className="absolute right-2 top-2 z-20 flex cursor-pointer items-center justify-center p-1.5 text-slate-500 hover:text-slate-900">
           <CopyIcon
