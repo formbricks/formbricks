@@ -79,6 +79,16 @@ vi.mock("lucide-react", () => ({
       Info
     </div>
   ),
+  CheckCircle2Icon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="check-circle-2-icon">
+      CheckCircle2Icon
+    </div>
+  ),
+  Download: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="download-icon">
+      Download
+    </div>
+  ),
 }));
 
 // Mock sidebar components
@@ -266,7 +276,6 @@ describe("ShareView", () => {
   test("renders QRCodeTab when activeId is 'qr-code'", () => {
     render(<ShareView {...defaultProps} activeId="qr-code" />);
     expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
-    expect(screen.getByText(`QRCodeTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
   });
 
   test("renders AppTab when activeId is 'app'", () => {

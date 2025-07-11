@@ -67,7 +67,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
   };
 
   return (
-    <div className="flex h-full grow flex-col gap-6">
+    <div className="flex h-full grow flex-col gap-6" data-testid="qr-code-tab">
       <div>
         <h2 className="text-lg font-semibold text-slate-800">
           {t("environments.surveys.summary.make_survey_accessible_via_qr_code")}
