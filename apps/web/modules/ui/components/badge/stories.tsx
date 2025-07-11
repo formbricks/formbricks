@@ -109,7 +109,7 @@ export const Success: Story = {
   },
 };
 
-export const Error: Story = {
+export const Destructive: Story = {
   args: {
     text: "Error",
     type: "error",

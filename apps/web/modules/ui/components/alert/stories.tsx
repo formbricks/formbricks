@@ -184,7 +184,7 @@ export const WithButtonAndIcon: Story = {
 };
 
 // Error variant
-export const Error: Story = {
+export const Destructive: Story = {
   render: renderAlert,
   args: {
     variant: "error",
