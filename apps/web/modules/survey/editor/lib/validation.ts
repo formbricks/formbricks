@@ -232,7 +232,12 @@ export const isEndingCardValid = (
   }
 };
 
-export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: TFnType) => {
+export const isSurveyValid = (
+  survey: TSurvey,
+  selectedLanguageCode: string,
+  t: TFnType,
+  responseCount?: number
+) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
     toast.error(t("environments.surveys.edit.fallback_missing"));
@@ -248,6 +253,26 @@ export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: 
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
         t("environments.surveys.edit.invalid_targeting");
       toast.error(errMsg);
+      return false;
+    }
+  }
+
+  // Response limit validation
+  if (survey.autoComplete !== null && responseCount !== undefined) {
+    if (survey.autoComplete === 0) {
+      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
+      return false;
+    }
+
+    if (survey.autoComplete <= responseCount) {
+      toast.error(
+        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+          responseCount,
+        }),
+        {
+          id: "response-limit-error",
+        }
+      );
       return false;
     }
   }
