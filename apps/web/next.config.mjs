@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-jiti("./lib/env");
 
 /** @type {import('next').NextConfig} */
 
