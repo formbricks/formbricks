@@ -8,6 +8,7 @@ import { RedditIcon } from "@/modules/ui/components/icons/reddit-icon";
 import { ThreadsIcon } from "@/modules/ui/components/icons/threads-icon";
 import { XIcon } from "@/modules/ui/components/icons/x-icon";
 import { useTranslate } from "@tolgee/react";
+import Link from "next/link";
 import { useMemo } from "react";
 
 interface SocialMediaTabProps {
@@ -20,60 +21,57 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
 
   const socialMediaPlatforms = useMemo(() => {
     const shareText = surveyTitle || "Check out this survey";
-    const encodedUrl = encodeURIComponent("https://app.formbricks.com/s/cmcef9woqklbptx01583mmwme");
-    const encodedTitle = encodeURIComponent(shareText);
+
+    // Add source tracking to the survey URL
+    const getTrackedUrl = (platform: string) => {
+      const sourceParam = `source=${platform.toLowerCase()}`;
+      const separator = surveyUrl.includes("?") ? "&" : "?";
+      return `${surveyUrl}${separator}${sourceParam}`;
+    };
 
     return [
       {
         id: "linkedin",
         name: "LinkedIn",
         icon: <LinkedinIcon />,
-        url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
+        url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(getTrackedUrl("linkedin"))}&title=${encodeURIComponent(shareText)}`,
         description: "Share on LinkedIn",
       },
       {
         id: "threads",
         name: "Threads",
         icon: <ThreadsIcon />,
-        url: `https://www.threads.net/intent/post?text=${encodedTitle}%20${encodedUrl}`,
+        url: `https://www.threads.net/intent/post?text=${encodeURIComponent(shareText)}%20${encodeURIComponent(getTrackedUrl("threads"))}`,
         description: "Share on Threads",
       },
       {
         id: "facebook",
         name: "Facebook",
         icon: <FacebookIcon />,
-        url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+        url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getTrackedUrl("facebook"))}`,
         description: "Share on Facebook",
       },
       {
         id: "reddit",
         name: "Reddit",
         icon: <RedditIcon />,
-        url: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+        url: `https://www.reddit.com/submit?url=${encodeURIComponent(getTrackedUrl("reddit"))}&title=${encodeURIComponent(shareText)}`,
         description: "Share on Reddit",
       },
       {
         id: "x",
-        name: "",
+        name: "X",
         icon: <XIcon />,
-        url: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+        url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(getTrackedUrl("x"))}`,
         description: "Share on X (formerly Twitter)",
       },
     ];
   }, [surveyUrl, surveyTitle]);
 
-  const handleSocialShare = (platform: string, url: string) => {
-    // Add source tracking to the survey URL
-    const sourceParam = `source=${platform.toLowerCase()}`;
-    const separator = surveyUrl.includes("?") ? "&" : "?";
-    const trackedUrl = `${surveyUrl}${separator}${sourceParam}`;
-
-    // Update the share URL with source tracking
-    const finalShareUrl = url.replace(encodeURIComponent(surveyUrl), encodeURIComponent(trackedUrl));
-
+  const handleSocialShare = (url: string) => {
     // Open sharing window
     window.open(
-      finalShareUrl,
+      url,
       "share-dialog",
       "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes"
     );
@@ -98,7 +96,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
             key={platform.name}
             variant="outline"
             className="w-fit"
-            onClick={() => handleSocialShare(platform.name, platform.url)}>
+            onClick={() => handleSocialShare(platform.url)}>
             {platform.name}
             {platform.icon}
           </Button>
@@ -108,19 +106,16 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
       <Alert>
         <AlertTitle>{t("environments.surveys.summary.source_tracking_enabled")}</AlertTitle>
         <AlertDescription>
-          {t("environments.surveys.summary.source_tracking_enabled_alert_description")}
+          {t(
+            "environments.surveys.summary.when_sharing_from_this_dialog_the_social_media_network_will_be_appended_to_the_survey_link_so_you_know_which_responses_came_via_each_network"
+          )}{" "}
+          <Link
+            href="https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking"
+            target="_blank"
+            className="underline">
+            {t("common.learn_more")}
+          </Link>
         </AlertDescription>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            window.open(
-              "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
-              "_blank"
-            );
-          }}>
-          <span>{t("common.learn_more")}</span>
-        </Button>
       </Alert>
     </div>
   );
