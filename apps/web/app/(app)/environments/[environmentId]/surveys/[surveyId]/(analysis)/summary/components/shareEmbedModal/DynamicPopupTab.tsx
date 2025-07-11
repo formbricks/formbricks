@@ -47,7 +47,7 @@ export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProp
           {t("environments.surveys.summary.dynamic_popup.alert_description")}
         </AlertDescription>
         <AlertButton asChild>
-          <Link href={`/environments/${environmentId}/surveys/${surveyId}`}>
+          <Link href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
             {t("environments.surveys.summary.dynamic_popup.alert_button")}
           </Link>
         </AlertButton>
