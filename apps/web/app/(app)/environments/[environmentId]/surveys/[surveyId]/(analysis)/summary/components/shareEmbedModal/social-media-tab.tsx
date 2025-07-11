@@ -72,7 +72,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
     window.open(
       url,
       "share-dialog",
-      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes"
+      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
   };
 
@@ -111,7 +111,8 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
           onClick={() => {
             window.open(
               "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
-              "_blank"
+              "_blank",
+              "noopener,noreferrer"
             );
           }}>
           {t("common.learn_more")}
