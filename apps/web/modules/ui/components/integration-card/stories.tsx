@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Meta, StoryObj } from "@storybook/react-vite";
 import { BellRing } from "lucide-react";
 import { Card } from "./index";
 
-const meta = {
-  title: "ui/IntegrationCard",
+const meta: Meta<typeof Card> = {
+  title: "UI/IntegrationCard",
   component: Card,
   tags: ["autodocs"],
   parameters: {
