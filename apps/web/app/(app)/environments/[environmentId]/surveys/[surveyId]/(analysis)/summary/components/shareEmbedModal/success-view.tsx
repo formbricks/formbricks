@@ -52,27 +52,27 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
           <button
             type="button"
             onClick={() => handleViewChange("share")}
-            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <Share2Icon className="h-8 w-8 stroke-1 text-slate-900" />
             {t("environments.surveys.summary.share_survey")}
           </button>
           <button
             type="button"
             onClick={() => handleEmbedViewWithTab(tabs[1].id)}
-            className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+            className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <UserIcon className="h-8 w-8 stroke-1 text-slate-900" />
             {t("environments.surveys.summary.use_personal_links")}
             <Badge size="normal" type="success" className="absolute right-3 top-3" text={t("common.new")} />
           </button>
           <Link
             href={`/environments/${environmentId}/settings/notifications`}
-            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <BellRing className="h-8 w-8 stroke-1 text-slate-900" />
             {t("environments.surveys.summary.configure_alerts")}
           </Link>
           <Link
             href={`/environments/${environmentId}/integrations`}
-            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-900 hover:border-slate-200 md:p-8">
+            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <BlocksIcon className="h-8 w-8 stroke-1 text-slate-900" />
             {t("environments.surveys.summary.setup_integrations")}
           </Link>

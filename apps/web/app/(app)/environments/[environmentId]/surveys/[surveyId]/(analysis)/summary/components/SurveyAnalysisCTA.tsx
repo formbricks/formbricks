@@ -103,18 +103,6 @@ export const SurveyAnalysisCTA = ({
     return `${surveyUrl}${separator}preview=true`;
   };
 
-  const handleModalState = (modalView: keyof ModalState) => {
-    return (open: boolean | ((prevState: boolean) => boolean)) => {
-      const newValue = typeof open === "function" ? open(modalState[modalView]) : open;
-      setModalState((prev) => ({ ...prev, [modalView]: newValue }));
-    };
-  };
-
-  const shareEmbedViews = [
-    { key: "start", modalView: "start" as const, setOpen: handleShareModalToggle },
-    { key: "share", modalView: "share" as const, setOpen: handleModalState("share") },
-  ];
-
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   const iconActions = [
@@ -166,21 +154,24 @@ export const SurveyAnalysisCTA = ({
         {t("environments.surveys.summary.share_survey")}
       </Button>
 
-      {user &&
-        shareEmbedViews.map(({ key, modalView, setOpen }) => (
-          <ShareSurveyModal
-            key={key}
-            survey={survey}
-            publicDomain={publicDomain}
-            open={modalState[key as keyof ModalState]}
-            setOpen={setOpen}
-            user={user}
-            modalView={modalView}
-            segments={segments}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        ))}
+      {user && (
+        <ShareSurveyModal
+          survey={survey}
+          publicDomain={publicDomain}
+          open={modalState.start || modalState.share}
+          setOpen={(open) => {
+            if (!open) {
+              handleShareModalToggle(false);
+              setModalState((prev) => ({ ...prev, share: false }));
+            }
+          }}
+          user={user}
+          modalView={modalState.start ? "start" : "share"}
+          segments={segments}
+          isContactsEnabled={isContactsEnabled}
+          isFormbricksCloud={isFormbricksCloud}
+        />
+      )}
       <SuccessMessage environment={environment} survey={survey} />
 
       {responseCount > 0 && (

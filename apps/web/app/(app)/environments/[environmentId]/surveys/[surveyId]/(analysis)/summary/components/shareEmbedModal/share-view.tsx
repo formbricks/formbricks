@@ -1,5 +1,6 @@
 "use client";
 
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/QRCodeTab";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -13,14 +14,15 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/modules/ui/components/sidebar";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
+import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { QRCodeTab } from "./QRCodeTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
@@ -55,6 +57,20 @@ export const ShareView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: ShareViewProps) => {
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
   const renderActiveTab = () => {
     switch (activeId) {
       case "email":
@@ -91,12 +107,19 @@ export const ShareView = ({
   };
 
   return (
-    <div className="h-full overflow-hidden">
-      <div className="grid h-full grid-cols-4">
+    <div className="h-full">
+      <div className={`flex h-full ${survey.type === "link" ? "lg:grid lg:grid-cols-4" : ""}`}>
         {survey.type === "link" && (
-          <SidebarProvider defaultOpen={true} className="hidden lg:flex">
-            <Sidebar className="relative col-span-1 w-full" variant="inset" collapsible="none">
-              <SidebarContent className="border-r border-slate-200 bg-white p-4">
+          <SidebarProvider
+            open={isLargeScreen}
+            className="flex min-h-0 w-auto lg:col-span-1"
+            style={
+              {
+                "--sidebar-width": "100%",
+              } as React.CSSProperties
+            }>
+            <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
+              <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel>
                     <Small className="text-xs text-slate-500">Share via</Small>
@@ -113,6 +136,7 @@ export const ShareView = ({
                                 ? "bg-slate-100 font-medium text-slate-900"
                                 : "text-slate-700"
                             )}
+                            tooltip={tab.label}
                             isActive={tab.id === activeId}>
                             <tab.icon className="h-4 w-4 text-slate-700" />
                             <span>{tab.label}</span>
@@ -127,22 +151,23 @@ export const ShareView = ({
           </SidebarProvider>
         )}
         <div
-          className={`col-span-4 h-full overflow-y-auto bg-slate-50 px-4 py-6 ${survey.type === "link" ? "lg:col-span-3" : ""} lg:p-6`}>
+          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 ${survey.type === "link" ? "lg:col-span-3" : ""}`}>
           {renderActiveTab()}
-          <div className="mt-2 rounded-md p-3 text-center lg:hidden">
-            {tabs.slice(0, 2).map((tab) => (
-              <Button
-                variant="ghost"
-                key={tab.id}
-                onClick={() => setActiveId(tab.id)}
-                className={cn(
-                  "rounded-md px-4 py-2",
-                  tab.id === activeId
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "border-transparent text-slate-700 hover:text-slate-900"
-                )}>
-                {tab.label}
-              </Button>
+          <div className="flex justify-center gap-2 rounded-md pt-6 text-center md:hidden">
+            {tabs.map((tab) => (
+              <TooltipRenderer tooltipContent={tab.label} key={tab.id}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setActiveId(tab.id)}
+                  className={cn(
+                    "rounded-md px-4 py-2",
+                    tab.id === activeId
+                      ? "bg-white text-slate-900 shadow-sm hover:bg-white"
+                      : "border-transparent text-slate-700 hover:text-slate-900"
+                  )}>
+                  <tab.icon className="h-4 w-4 text-slate-700" />
+                </Button>
+              </TooltipRenderer>
             ))}
           </div>
         </div>

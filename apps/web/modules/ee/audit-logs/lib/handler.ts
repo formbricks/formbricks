@@ -13,12 +13,11 @@ import {
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
-import { runAuditLogHashTransaction } from "./cache";
-import { computeAuditLogHash, deepDiff, redactPII } from "./utils";
+import { deepDiff, redactPII } from "./utils";
 
 /**
  * Builds an audit event and logs it.
- * Redacts sensitive data from the old and new objects and computes the hash of the event before logging it.
+ * Redacts sensitive data from the old and new objects before logging.
  */
 export const buildAndLogAuditEvent = async ({
   action,
@@ -63,7 +62,7 @@ export const buildAndLogAuditEvent = async ({
       changes = redactPII(oldObject);
     }
 
-    const eventBase: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart"> = {
+    const auditEvent: TAuditLogEvent = {
       actor: { id: userId, type: userType },
       action,
       target: { id: targetId, type: targetType },
@@ -76,20 +75,7 @@ export const buildAndLogAuditEvent = async ({
       ...(status === "failure" && eventId ? { eventId } : {}),
     };
 
-    await runAuditLogHashTransaction(async (previousHash) => {
-      const isChainStart = !previousHash;
-      const integrityHash = computeAuditLogHash(eventBase, previousHash);
-      const auditEvent: TAuditLogEvent = {
-        ...eventBase,
-        integrityHash,
-        previousHash,
-        ...(isChainStart ? { chainStart: true } : {}),
-      };
-      return {
-        auditEvent: async () => await logAuditEvent(auditEvent),
-        integrityHash,
-      };
-    });
+    await logAuditEvent(auditEvent);
   } catch (logError) {
     logger.error(logError, "Failed to create audit log event");
   }
