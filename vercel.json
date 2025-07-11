@@ -1,5 +1,10 @@
 {
-  "buildCommand": "pnpm install && pnpm build",
-  "installCommand": "pnpm install",
-  "outputDirectory": "apps/web/.next"
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_APP_URL": "https://your-app-name.vercel.app",
+      "NEXT_PUBLIC_FORMBRICKS_URL": "https://formbricks.com"
+    }
+  },
+  "buildCommand": "cd apps/web && pnpm install && pnpm build",
+  "rootDirectory": "apps/web"
 }
