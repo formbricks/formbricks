@@ -29,12 +29,8 @@ vi.mock("@/modules/ui/components/button", () => ({
   ),
 }));
 
-vi.mock("@/modules/ui/components/title", () => ({
-  Title: (props: { size?: string; children: React.ReactNode }) => (
-    <div data-testid="title" data-size={props.size}>
-      {props.children}
-    </div>
-  ),
+vi.mock("@/modules/ui/components/typography", () => ({
+  H4: (props: { children: React.ReactNode }) => <div data-testid="h4">{props.children}</div>,
 }));
 
 vi.mock("@tolgee/react", () => ({
@@ -67,6 +63,7 @@ describe("DynamicPopupTab", () => {
 
   const defaultProps = {
     environmentId: "env-123",
+    surveyId: "survey-123",
   };
 
   test("renders alert with correct props", () => {
@@ -96,7 +93,7 @@ describe("DynamicPopupTab", () => {
     );
   });
 
-  test("renders alert button with link to surveys page", () => {
+  test("renders alert button with link to survey edit page", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
     const alertButton = screen.getByTestId("alert-button");
@@ -104,17 +101,16 @@ describe("DynamicPopupTab", () => {
     expect(alertButton).toHaveAttribute("data-as-child", "true");
 
     const link = screen.getAllByTestId("next-link")[0];
-    expect(link).toHaveAttribute("href", "/environments/env-123/surveys");
+    expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");
     expect(link).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_button");
   });
 
-  test("renders title with correct size and text", () => {
+  test("renders title with correct text", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const title = screen.getByTestId("title");
-    expect(title).toBeInTheDocument();
-    expect(title).toHaveAttribute("data-size", "md");
-    expect(title).toHaveTextContent("environments.surveys.summary.dynamic_popup.title");
+    const h4 = screen.getByTestId("h4");
+    expect(h4).toBeInTheDocument();
+    expect(h4).toHaveTextContent("environments.surveys.summary.dynamic_popup.title");
   });
 
   test("renders attribute-based targeting documentation button", () => {

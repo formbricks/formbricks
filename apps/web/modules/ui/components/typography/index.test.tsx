@@ -38,8 +38,8 @@ describe("Typography Components", () => {
 
     expect(h3Element).toBeInTheDocument();
     expect(h3Element).toHaveTextContent("Heading 3");
-    expect(h3Element?.className).toContain("text-2xl");
-    expect(h3Element?.className).toContain("font-semibold");
+    expect(h3Element?.className).toContain("text-lg");
+    expect(h3Element?.className).toContain("tracking-tight");
     expect(h3Element?.className).toContain("text-slate-800");
   });
 
@@ -49,8 +49,8 @@ describe("Typography Components", () => {
 
     expect(h4Element).toBeInTheDocument();
     expect(h4Element).toHaveTextContent("Heading 4");
-    expect(h4Element?.className).toContain("text-xl");
-    expect(h4Element?.className).toContain("font-semibold");
+    expect(h4Element?.className).toContain("text-base");
+    expect(h4Element?.className).toContain("tracking-tight");
     expect(h4Element?.className).toContain("text-slate-800");
   });
 
@@ -75,12 +75,11 @@ describe("Typography Components", () => {
 
   test("renders Large correctly", () => {
     const { container } = render(<Large>Large text</Large>);
-    const divElement = container.querySelector("div");
+    const pElement = container.querySelector("p");
 
-    expect(divElement).toBeInTheDocument();
-    expect(divElement).toHaveTextContent("Large text");
-    expect(divElement?.className).toContain("text-lg");
-    expect(divElement?.className).toContain("font-semibold");
+    expect(pElement).toBeInTheDocument();
+    expect(pElement).toHaveTextContent("Large text");
+    expect(pElement?.className).toContain("text-lg");
   });
 
   test("renders Small correctly", () => {
@@ -90,6 +89,8 @@ describe("Typography Components", () => {
     expect(pElement).toBeInTheDocument();
     expect(pElement).toHaveTextContent("Small text");
     expect(pElement?.className).toContain("text-sm");
+    expect(pElement?.className).toContain("leading-none");
+    expect(pElement?.className).toContain("text-slate-800");
     expect(pElement?.className).toContain("font-medium");
   });
 

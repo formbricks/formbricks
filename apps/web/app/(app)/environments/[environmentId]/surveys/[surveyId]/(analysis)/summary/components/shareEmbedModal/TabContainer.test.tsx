@@ -4,16 +4,13 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TabContainer } from "./TabContainer";
 
 // Mock components
-vi.mock("@/modules/ui/components/title", () => ({
-  Title: (props: { size?: string; children: React.ReactNode }) => (
-    <h2 data-testid="title" data-size={props.size}>
+vi.mock("@/modules/ui/components/typography", () => ({
+  H3: (props: { children: React.ReactNode }) => <h3 data-testid="h3">{props.children}</h3>,
+  Small: (props: { color?: string; margin?: string; children: React.ReactNode }) => (
+    <p data-testid="small" data-color={props.color} data-margin={props.margin}>
       {props.children}
-    </h2>
+    </p>
   ),
-}));
-
-vi.mock("@/modules/ui/components/description", () => ({
-  Description: (props: { children: React.ReactNode }) => <p data-testid="description">{props.children}</p>,
 }));
 
 describe("TabContainer", () => {
@@ -30,17 +27,19 @@ describe("TabContainer", () => {
   test("renders title with correct props", () => {
     render(<TabContainer {...defaultProps} />);
 
-    const title = screen.getByTestId("title");
+    const title = screen.getByTestId("h3");
     expect(title).toBeInTheDocument();
     expect(title).toHaveTextContent("Test Tab Title");
   });
 
-  test("renders description with correct text", () => {
+  test("renders description with correct text and props", () => {
     render(<TabContainer {...defaultProps} />);
 
-    const description = screen.getByTestId("description");
+    const description = screen.getByTestId("small");
     expect(description).toBeInTheDocument();
     expect(description).toHaveTextContent("Test tab description");
+    expect(description).toHaveAttribute("data-color", "muted");
+    expect(description).toHaveAttribute("data-margin", "headerDescription");
   });
 
   test("renders children content", () => {
@@ -54,23 +53,23 @@ describe("TabContainer", () => {
   test("renders with correct container structure", () => {
     render(<TabContainer {...defaultProps} />);
 
-    const container = screen.getByTestId("title").parentElement?.parentElement;
+    const container = screen.getByTestId("h3").parentElement?.parentElement;
     expect(container).toHaveClass("flex", "h-full", "grow", "flex-col", "items-start", "space-y-4");
   });
 
   test("renders header with correct structure", () => {
     render(<TabContainer {...defaultProps} />);
 
-    const header = screen.getByTestId("title").parentElement;
+    const header = screen.getByTestId("h3").parentElement;
     expect(header).toBeInTheDocument();
-    expect(header).toContainElement(screen.getByTestId("title"));
-    expect(header).toContainElement(screen.getByTestId("description"));
+    expect(header).toContainElement(screen.getByTestId("h3"));
+    expect(header).toContainElement(screen.getByTestId("small"));
   });
 
   test("renders children directly in container", () => {
     render(<TabContainer {...defaultProps} />);
 
-    const container = screen.getByTestId("title").parentElement?.parentElement;
+    const container = screen.getByTestId("h3").parentElement?.parentElement;
     expect(container).toContainElement(screen.getByTestId("tab-content"));
   });
 });
