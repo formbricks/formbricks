@@ -139,7 +139,6 @@
     "zod-openapi": "4.2.4"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@neshca/cache-handler": "1.9.0",
     "@testing-library/jest-dom": "6.6.3",
