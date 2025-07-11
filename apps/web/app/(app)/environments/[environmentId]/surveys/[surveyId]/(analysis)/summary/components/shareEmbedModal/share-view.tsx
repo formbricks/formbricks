@@ -24,6 +24,7 @@ import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
 import { WebsiteTab } from "./WebsiteTab";
 import { PersonalLinksTab } from "./personal-links-tab";
+import { SocialMediaTab } from "./social-media-tab";
 
 interface ShareViewProps {
   tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
@@ -86,6 +87,8 @@ export const ShareView = ({
             locale={locale}
           />
         );
+      case "social-media":
+        return <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />;
       case "app":
         return <AppTab />;
       case "personal-links":

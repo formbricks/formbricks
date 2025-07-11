@@ -68,6 +68,11 @@ vi.mock("lucide-react", () => ({
       Info
     </div>
   ),
+  CheckCircle2Icon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="check-circle-2-icon">
+      CheckCircle2Icon
+    </div>
+  ),
 }));
 
 // Mock sidebar components
