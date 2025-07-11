@@ -1,7 +1,7 @@
 {
   "build": {
     "env": {
-      "NEXT_PUBLIC_APP_URL": "https://your-app-name.vercel.app",
+      "NEXT_PUBLIC_APP_URL": "https://formbricks-web.vercel.app",
       "NEXT_PUBLIC_FORMBRICKS_URL": "https://formbricks.com"
     }
   },
