@@ -1699,6 +1699,16 @@
       },
       "results_unpublished_successfully": "結果已成功取消發布。",
       "search_by_survey_name": "依問卷名稱搜尋",
+      "share": {
+        "dynamic_popup": {
+          "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
+          "title": "攔截使用者於其流程中以收集具上下文的意見反饋"
+        },
+        "embed_on_website": {
+          "description": "Formbricks 調查可以 作為 靜態 元素 嵌入。",
+          "title": "嵌入 調查 在 您 的 網頁"
+        }
+      },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回應的篩選器，其中問題 '{'questionIdx'}' 的答案為 '{'filterComboBoxValue'}' - '{'filterValue'}'",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "已新增回應的篩選器，其中問題 '{'questionIdx'}' 的答案被跳過",
@@ -1723,6 +1733,17 @@
         "drop_offs": "放棄",
         "drop_offs_tooltip": "問卷已開始但未完成的次數。",
         "dynamic_popup": "動態（彈窗）",
+        "dynamic_popup.alert_button": "編輯 問卷",
+        "dynamic_popup.alert_description": "此 問卷 目前 被 設定 為 連結 問卷，不 支援 動態 彈出窗口。您 可 在 問卷 編輯器 的 設定 標籤 中 進行 更改。",
+        "dynamic_popup.alert_title": "更改問卷類型為 in-app",
+        "dynamic_popup.attribubte_description": "屬性 基於 的 定位",
+        "dynamic_popup.attribute_based_targeting": "屬性 基於 的 定位",
+        "dynamic_popup.code_no_code_description": "程式碼 及 無程式碼 觸發器",
+        "dynamic_popup.code_no_code_triggers": "程式碼 及 無程式碼 觸發器",
+        "dynamic_popup.read_documentation": "閱讀 文件",
+        "dynamic_popup.recontact_options": "重新聯絡選項",
+        "dynamic_popup.recontact_options_description": "重新聯絡選項",
+        "dynamic_popup.title": "使用 截圖 調查 來 完成 更多 工作",
         "email_sent": "已發送電子郵件！",
         "embed_code_copied_to_clipboard": "嵌入程式碼已複製到剪貼簿！",
         "embed_in_an_email": "嵌入電子郵件中",
@@ -1731,7 +1752,6 @@
         "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
         "embed_on_website": "嵌入網站",
         "embed_pop_up_survey_title": "如何在您的網站上嵌入彈出式問卷",
-        "embed_survey": "嵌入問卷",
         "expiry_date_description": "一旦連結過期，收件者將無法再回應 survey。",
         "expiry_date_optional": "到期日 （可選）",
         "failed_to_copy_link": "無法複製連結",
@@ -1785,7 +1805,6 @@
         "selected_responses_csv": "選擇的回應 (CSV)",
         "selected_responses_excel": "選擇的回應 (Excel)",
         "send_preview": "發送預覽",
-        "send_to_panel": "發送到小組",
         "setup_instructions": "設定說明",
         "setup_integrations": "設定整合",
         "share_results": "分享結果",

@@ -22,16 +22,30 @@ vi.mock("./LinkTab", () => ({
     </div>
   ),
 }));
-vi.mock("./WebsiteTab", () => ({
-  WebsiteTab: (props: { surveyUrl: string; environmentId: string }) => (
-    <div data-testid="website-tab">
-      WebsiteTab Content for {props.surveyUrl} in {props.environmentId}
+vi.mock("./WebsiteEmbedTab", () => ({
+  WebsiteEmbedTab: (props: { surveyUrl: string }) => (
+    <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
+  ),
+}));
+vi.mock("./DynamicPopupTab", () => ({
+  DynamicPopupTab: (props: { environmentId: string; surveyId: string }) => (
+    <div data-testid="dynamic-popup-tab">
+      DynamicPopupTab Content for {props.surveyId} in {props.environmentId}
+    </div>
+  ),
+}));
+vi.mock("./TabContainer", () => ({
+  TabContainer: (props: { children: React.ReactNode; title: string; description: string }) => (
+    <div data-testid="tab-container">
+      <div data-testid="tab-title">{props.title}</div>
+      <div data-testid="tab-description">{props.description}</div>
+      {props.children}
     </div>
   ),
 }));
 
 vi.mock("./personal-links-tab", () => ({
-  PersonalLinksTab: (props: { segments: any[]; surveyId: string; environmentId: string }) => (
+  PersonalLinksTab: (props: { surveyId: string; environmentId: string }) => (
     <div data-testid="personal-links-tab">
       PersonalLinksTab Content for {props.surveyId} in {props.environmentId}
     </div>
@@ -39,7 +53,7 @@ vi.mock("./personal-links-tab", () => ({
 }));
 
 vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
-  UpgradePrompt: (props: { title: string; description: string; buttons: any[] }) => (
+  UpgradePrompt: (props: { title: string; description: string }) => (
     <div data-testid="upgrade-prompt">
       {props.title} - {props.description}
     </div>
@@ -53,6 +67,7 @@ vi.mock("lucide-react", () => ({
   LinkIcon: () => <div data-testid="link-icon">LinkIcon</div>,
   GlobeIcon: () => <div data-testid="globe-icon">GlobeIcon</div>,
   SmartphoneIcon: () => <div data-testid="smartphone-icon">SmartphoneIcon</div>,
+  CheckCircle2Icon: () => <div data-testid="check-circle-2-icon">CheckCircle2Icon</div>,
   AlertCircle: ({ className }: { className?: string }) => (
     <div className={className} data-testid="alert-circle">
       AlertCircle
@@ -132,7 +147,8 @@ vi.mock("@/lib/cn", () => ({
 
 const mockTabs = [
   { id: "email", label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
-  { id: "webpage", label: "Web Page", icon: () => <div data-testid="webpage-tab-icon" /> },
+  { id: "website-embed", label: "Website Embed", icon: () => <div data-testid="website-embed-tab-icon" /> },
+  { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
   { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
   { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
@@ -268,9 +284,9 @@ describe("ShareView", () => {
   test("calls setActiveId when a tab is clicked (desktop)", async () => {
     render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
 
-    const webpageTabButton = screen.getByLabelText("Web Page");
-    await userEvent.click(webpageTabButton);
-    expect(defaultProps.setActiveId).toHaveBeenCalledWith("webpage");
+    const websiteEmbedTabButton = screen.getByLabelText("Website Embed");
+    await userEvent.click(websiteEmbedTabButton);
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
   });
 
   test("renders EmailTab when activeId is 'email'", () => {
@@ -281,11 +297,21 @@ describe("ShareView", () => {
     ).toBeInTheDocument();
   });
 
-  test("renders WebsiteTab when activeId is 'webpage'", () => {
-    render(<ShareView {...defaultProps} activeId="webpage" />);
-    expect(screen.getByTestId("website-tab")).toBeInTheDocument();
+  test("renders WebsiteEmbedTab when activeId is 'website-embed'", () => {
+    render(<ShareView {...defaultProps} activeId="website-embed" />);
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("website-embed-tab")).toBeInTheDocument();
+    expect(screen.getByText(`WebsiteEmbedTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
+  });
+
+  test("renders DynamicPopupTab when activeId is 'dynamic-popup'", () => {
+    render(<ShareView {...defaultProps} activeId="dynamic-popup" />);
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("dynamic-popup-tab")).toBeInTheDocument();
     expect(
-      screen.getByText(`WebsiteTab Content for ${defaultProps.surveyUrl} in ${defaultProps.environmentId}`)
+      screen.getByText(
+        `DynamicPopupTab Content for ${defaultProps.survey.id} in ${defaultProps.environmentId}`
+      )
     ).toBeInTheDocument();
   });
 
@@ -316,7 +342,7 @@ describe("ShareView", () => {
     render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
 
     // Get responsive buttons - these are Button components containing icons
-    const responsiveButtons = screen.getAllByTestId("webpage-tab-icon");
+    const responsiveButtons = screen.getAllByTestId("website-embed-tab-icon");
     // The responsive button should be the one inside the md:hidden container
     const responsiveButton = responsiveButtons
       .find((icon) => {
@@ -327,7 +353,7 @@ describe("ShareView", () => {
 
     if (responsiveButton) {
       await userEvent.click(responsiveButton);
-      expect(defaultProps.setActiveId).toHaveBeenCalledWith("webpage");
+      expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
     }
   });
 
@@ -339,9 +365,9 @@ describe("ShareView", () => {
     expect(emailTabButton).toHaveClass("font-medium");
     expect(emailTabButton).toHaveClass("text-slate-900");
 
-    const webpageTabButton = screen.getByLabelText("Web Page");
-    expect(webpageTabButton).not.toHaveClass("bg-slate-100");
-    expect(webpageTabButton).not.toHaveClass("font-medium");
+    const websiteEmbedTabButton = screen.getByLabelText("Website Embed");
+    expect(websiteEmbedTabButton).not.toHaveClass("bg-slate-100");
+    expect(websiteEmbedTabButton).not.toHaveClass("font-medium");
   });
 
   test("applies active styles to the active tab (responsive)", () => {
@@ -361,16 +387,18 @@ describe("ShareView", () => {
       expect(responsiveEmailButton).toHaveClass("bg-white text-slate-900 shadow-sm hover:bg-white");
     }
 
-    const responsiveWebpageButtons = screen.getAllByTestId("webpage-tab-icon");
-    const responsiveWebpageButton = responsiveWebpageButtons
+    const responsiveWebsiteEmbedButtons = screen.getAllByTestId("website-embed-tab-icon");
+    const responsiveWebsiteEmbedButton = responsiveWebsiteEmbedButtons
       .find((icon) => {
         const button = icon.closest("button");
         return button && button.getAttribute("data-variant") === "ghost";
       })
       ?.closest("button");
 
-    if (responsiveWebpageButton) {
-      expect(responsiveWebpageButton).toHaveClass("border-transparent text-slate-700 hover:text-slate-900");
+    if (responsiveWebsiteEmbedButton) {
+      expect(responsiveWebsiteEmbedButton).toHaveClass(
+        "border-transparent text-slate-700 hover:text-slate-900"
+      );
     }
   });
 });

@@ -1699,6 +1699,16 @@
       },
       "results_unpublished_successfully": "Resultados despublicados com sucesso.",
       "search_by_survey_name": "Pesquisar por nome do inquérito",
+      "share": {
+        "dynamic_popup": {
+          "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
+          "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"
+        },
+        "embed_on_website": {
+          "description": "Os inquéritos Formbricks podem ser incorporados como um elemento estático.",
+          "title": "Incorporar o questionário na sua página web"
+        }
+      },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é ignorada",
@@ -1723,6 +1733,17 @@
         "drop_offs": "Desistências",
         "drop_offs_tooltip": "Número de vezes que o inquérito foi iniciado mas não concluído.",
         "dynamic_popup": "Dinâmico (Pop-up)",
+        "dynamic_popup.alert_button": "Editar inquérito",
+        "dynamic_popup.alert_description": "Este questionário está atualmente configurado como um questionário de link, que não suporta pop-ups dinâmicos. Você pode alterar isso na aba de configurações do editor de questionários.",
+        "dynamic_popup.alert_title": "Mudar tipo de inquérito para in-app",
+        "dynamic_popup.attribubte_description": "Segmentação baseada em atributos",
+        "dynamic_popup.attribute_based_targeting": "Segmentação baseada em atributos",
+        "dynamic_popup.code_no_code_description": "Gatilhos com código e sem código",
+        "dynamic_popup.code_no_code_triggers": "Gatilhos com código e sem código",
+        "dynamic_popup.read_documentation": "Ler Documentação",
+        "dynamic_popup.recontact_options": "Opções de Recontacto",
+        "dynamic_popup.recontact_options_description": "Opções de Recontacto",
+        "dynamic_popup.title": "Faça mais com sondagens de interceptação",
         "email_sent": "Email enviado!",
         "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
         "embed_in_an_email": "Incorporar num email",
@@ -1731,7 +1752,6 @@
         "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
         "embed_on_website": "Incorporar no site",
         "embed_pop_up_survey_title": "Como incorporar um questionário pop-up no seu site",
-        "embed_survey": "Incorporar inquérito",
         "expiry_date_description": "Uma vez que o link expira, o destinatário não pode mais responder ao questionário.",
         "expiry_date_optional": "Data de expiração (opcional)",
         "failed_to_copy_link": "Falha ao copiar link",
@@ -1785,7 +1805,6 @@
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",
         "send_preview": "Enviar pré-visualização",
-        "send_to_panel": "Enviar para painel",
         "setup_instructions": "Instruções de configuração",
         "setup_integrations": "Configurar integrações",
         "share_results": "Partilhar resultados",

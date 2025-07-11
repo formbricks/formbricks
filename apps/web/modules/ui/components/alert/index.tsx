@@ -26,12 +26,12 @@ const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4", {
     variant: {
       default: "text-foreground border-border",
       error:
-        "text-error-foreground [&>svg]:text-error border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted",
+        "text-error-foreground [&>svg]:text-error border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted [&_a]:bg-error-background [&_a]:text-error-foreground [&_a:hover]:bg-error-background-muted",
       warning:
-        "text-warning-foreground [&>svg]:text-warning border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted",
-      info: "text-info-foreground [&>svg]:text-info border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted",
+        "text-warning-foreground [&>svg]:text-warning border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted [&_a]:bg-warning-background [&_a]:text-warning-foreground [&_a:hover]:bg-warning-background-muted",
+      info: "text-info-foreground [&>svg]:text-info border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted [&_a]:bg-info-background [&_a]:text-info-foreground [&_a:hover]:bg-info-background-muted",
       success:
-        "text-success-foreground [&>svg]:text-success border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted",
+        "text-success-foreground [&>svg]:text-success border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted [&_a]:bg-success-background [&_a]:text-success-foreground [&_a:hover]:bg-success-background-muted",
     },
     size: {
       default:

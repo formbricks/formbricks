@@ -1699,6 +1699,16 @@
       },
       "results_unpublished_successfully": "Résultats publiés avec succès.",
       "search_by_survey_name": "Recherche par nom d'enquête",
+      "share": {
+        "dynamic_popup": {
+          "description": "Les enquêtes Formbricks peuvent être intégrées sous forme de pop-up, en fonction de l'interaction de l'utilisateur.",
+          "title": "Interceptez les utilisateurs dans leur flux pour recueillir des retours contextualisés"
+        },
+        "embed_on_website": {
+          "description": "Les enquêtes Formbricks peuvent être intégrées comme élément statique.",
+          "title": "Intégrez le sondage sur votre page web"
+        }
+      },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est '{'filterComboBoxValue'}' - '{'filterValue'}' ",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est ignorée",
@@ -1723,6 +1733,17 @@
         "drop_offs": "Dépôts",
         "drop_offs_tooltip": "Nombre de fois que l'enquête a été commencée mais non terminée.",
         "dynamic_popup": "Dynamique (Pop-up)",
+        "dynamic_popup.alert_button": "Modifier enquête",
+        "dynamic_popup.alert_description": "Ce sondage est actuellement configuré comme un sondage de lien, qui ne prend pas en charge les pop-ups dynamiques. Vous pouvez le modifier dans l'onglet des paramètres de l'éditeur de sondage.",
+        "dynamic_popup.alert_title": "Changer le type d'enquête en application intégrée",
+        "dynamic_popup.attribubte_description": "Ciblage basé sur des attributs",
+        "dynamic_popup.attribute_based_targeting": "Ciblage basé sur des attributs",
+        "dynamic_popup.code_no_code_description": "Déclencheurs avec et sans code",
+        "dynamic_popup.code_no_code_triggers": "Déclencheurs avec et sans code",
+        "dynamic_popup.read_documentation": "Lire les documents",
+        "dynamic_popup.recontact_options": "Options de recontact",
+        "dynamic_popup.recontact_options_description": "Options de recontact",
+        "dynamic_popup.title": "Faites plus avec les enquêtes d'interception",
         "email_sent": "Email envoyé !",
         "embed_code_copied_to_clipboard": "Code d'intégration copié dans le presse-papiers !",
         "embed_in_an_email": "Inclure dans un e-mail",
@@ -1731,7 +1752,6 @@
         "embed_mode_description": "Intégrez votre enquête avec un design minimaliste, en supprimant les marges et l'arrière-plan.",
         "embed_on_website": "Incorporer sur le site web",
         "embed_pop_up_survey_title": "Comment intégrer une enquête pop-up sur votre site web",
-        "embed_survey": "Intégrer l'enquête",
         "expiry_date_description": "Une fois le lien expiré, le destinataire ne peut plus répondre au sondage.",
         "expiry_date_optional": "Date d'expiration (facultatif)",
         "failed_to_copy_link": "Échec de la copie du lien",
@@ -1785,7 +1805,6 @@
         "selected_responses_csv": "Réponses sélectionnées (CSV)",
         "selected_responses_excel": "Réponses sélectionnées (Excel)",
         "send_preview": "Envoyer un aperçu",
-        "send_to_panel": "Envoyer au panneau",
         "setup_instructions": "Instructions d'installation",
         "setup_integrations": "Configurer les intégrations",
         "share_results": "Partager les résultats",
