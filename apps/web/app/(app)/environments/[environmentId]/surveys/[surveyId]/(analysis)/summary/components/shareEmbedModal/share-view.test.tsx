@@ -85,13 +85,6 @@ vi.mock("lucide-react", () => ({
   ),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock sidebar components
 vi.mock("@/modules/ui/components/sidebar", () => ({
   SidebarProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
