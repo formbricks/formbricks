@@ -4,7 +4,7 @@ import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surve
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { Download, LoaderCircle, RefreshCw } from "lucide-react";
+import { Download, LoaderCircle } from "lucide-react";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -28,9 +28,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
         setIsLoading(true);
         setHasError(false);
 
-        if (!qrInstance.current) {
-          qrInstance.current = new QRCodeStyling(getQRCodeOptions(184, 184));
-        }
+        qrInstance.current ??= new QRCodeStyling(getQRCodeOptions(184, 184));
 
         if (surveyUrl && qrInstance.current) {
           qrInstance.current.update({ data: surveyUrl });
@@ -68,16 +66,6 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     }
   };
 
-  const retryQRCode = () => {
-    setHasError(false);
-    if (qrInstance.current) {
-      qrInstance.current = null;
-    }
-    // Trigger useEffect to regenerate QR code
-    const event = new Event("qr-retry");
-    window.dispatchEvent(event);
-  };
-
   return (
     <div className="flex h-full grow flex-col gap-6">
       <div>
@@ -89,27 +77,28 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
         </p>
       </div>
 
-      {isLoading ? (
+      {isLoading && (
         <div className="flex flex-col items-center gap-2">
           <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
           <p className="text-sm text-slate-500">{t("environments.surveys.summary.generating_qr_code")}</p>
         </div>
-      ) : hasError ? (
+      )}
+
+      {hasError && (
         <Alert variant="error">
           <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
           <AlertDescription>{t("environments.surveys.summary.qr_code_generation_failed")}</AlertDescription>
-          <Button variant="outline" size="sm" onClick={retryQRCode}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            {t("common.retry")}
-          </Button>
         </Alert>
-      ) : (
+      )}
+
+      {!isLoading && !hasError && (
         <div className="flex flex-col items-start justify-center gap-4">
           <div className="flex h-[184px] w-[184px] items-center justify-center overflow-hidden rounded-lg border bg-white">
             <div ref={qrCodeRef} className="h-full w-full" />
           </div>
           <Button
             onClick={downloadQRCode}
+            data-testid="button"
             disabled={!surveyUrl || isDownloading || hasError}
             className="flex items-center gap-2">
             {isDownloading

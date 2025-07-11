@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { QRCodeTab } from "./QRCodeTab";
+import { QRCodeTab } from "./qr-code-tab";
 
 // Mock the QR code options utility
 vi.mock(
@@ -137,12 +137,14 @@ const mockQRCodeStyling = {
   download: vi.fn(),
 };
 
-let shouldThrowError = false;
+// Simple boolean flag to control mock behavior
+let shouldMockThrowError = false;
 
 // @ts-ignore - Ignore TypeScript error for mock
 vi.mock("qr-code-styling", () => ({
-  default: vi.fn().mockImplementation(() => {
-    if (shouldThrowError) {
+  default: vi.fn(() => {
+    // Default to success, only throw error when explicitly requested
+    if (shouldMockThrowError) {
       throw new Error("QR code generation failed");
     }
     return mockQRCodeStyling;
@@ -155,7 +157,9 @@ describe("QRCodeTab", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.clearAllMocks();
-    shouldThrowError = false;
+
+    // Reset to success state by default
+    shouldMockThrowError = false;
 
     // Reset mock implementations
     mockQRCodeStyling.update.mockReset();
@@ -211,28 +215,26 @@ describe("QRCodeTab", () => {
     test("attempts to generate QR code when surveyUrl is provided", async () => {
       render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
 
-      // Component should render either success state or error state - both are valid
+      // Wait for either success or error state
       await waitFor(() => {
-        const hasContent = screen.queryByTestId("button") || screen.queryByTestId("alert");
-        expect(hasContent).toBeTruthy();
+        const hasButton = screen.queryByTestId("button");
+        const hasAlert = screen.queryByTestId("alert");
+        expect(hasButton || hasAlert).toBeTruthy();
       });
     });
 
-    test("shows interactive element after rendering", async () => {
+    test("shows download button when QR code generation succeeds", async () => {
       render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
 
       await waitFor(() => {
         expect(screen.getByTestId("button")).toBeInTheDocument();
       });
-
-      const button = screen.getByTestId("button");
-      expect(button).toBeInTheDocument();
     });
   });
 
   describe("Error handling", () => {
     test("shows error state when QR code generation fails", async () => {
-      shouldThrowError = true;
+      shouldMockThrowError = true;
 
       render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
 
@@ -244,37 +246,6 @@ describe("QRCodeTab", () => {
       expect(screen.getByTestId("alert-description")).toHaveTextContent(
         "environments.surveys.summary.qr_code_generation_failed"
       );
-    });
-
-    test("shows retry button in error state", async () => {
-      shouldThrowError = true;
-
-      render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
-
-      await waitFor(() => {
-        const retryButton = screen.getByRole("button", { name: /common.retry/i });
-        expect(retryButton).toBeInTheDocument();
-      });
-    });
-
-    test("can retry QR code generation", async () => {
-      shouldThrowError = true;
-
-      render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
-
-      await waitFor(() => {
-        expect(screen.getByTestId("alert")).toBeInTheDocument();
-      });
-
-      // Reset error state
-      shouldThrowError = false;
-
-      const retryButton = screen.getByRole("button", { name: /common.retry/i });
-      await userEvent.click(retryButton);
-
-      await waitFor(() => {
-        expect(screen.queryByTestId("alert")).not.toBeInTheDocument();
-      });
     });
   });
 
@@ -320,6 +291,12 @@ describe("QRCodeTab", () => {
         const content = screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code");
         expect(content).toBeInTheDocument();
       });
+
+      // Should show button (but disabled) when URL is empty, no alert
+      const button = screen.getByTestId("button");
+      expect(button).toBeInTheDocument();
+      expect(button).toBeDisabled();
+      expect(screen.queryByTestId("alert")).not.toBeInTheDocument();
     });
   });
 
@@ -327,19 +304,17 @@ describe("QRCodeTab", () => {
     test("responds to surveyUrl changes", async () => {
       const { rerender } = render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
 
-      // Initial render should show some content
+      // Initial render should show download button
       await waitFor(() => {
-        const content = screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code");
-        expect(content).toBeInTheDocument();
+        expect(screen.getByTestId("button")).toBeInTheDocument();
       });
 
       const newSurveyUrl = "https://example.com/survey/456";
       rerender(<QRCodeTab surveyUrl={newSurveyUrl} />);
 
-      // After rerender, content should still be present
+      // After rerender, button should still be present
       await waitFor(() => {
-        const content = screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code");
-        expect(content).toBeInTheDocument();
+        expect(screen.getByTestId("button")).toBeInTheDocument();
       });
     });
 
@@ -369,13 +344,14 @@ describe("QRCodeTab", () => {
       });
     });
 
-    test("shows appropriate loading or content state", async () => {
+    test("shows appropriate loading or success state", async () => {
       render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
 
-      // Component should show either loading or content - both are valid
+      // Component should show either loading or success content
       await waitFor(() => {
-        const hasContent = screen.queryByTestId("button") || screen.queryByTestId("loader-circle");
-        expect(hasContent).toBeTruthy();
+        const hasButton = screen.queryByTestId("button");
+        const hasLoader = screen.queryByTestId("loader-circle");
+        expect(hasButton || hasLoader).toBeTruthy();
       });
     });
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/QRCodeTab";
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
