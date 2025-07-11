@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -14,15 +15,6 @@ import { ShareView } from "./shareEmbedModal/share-view";
 import { SuccessView } from "./shareEmbedModal/success-view";
 
 type ModalView = "start" | "share";
-
-enum ShareViewType {
-  LINK = "link",
-  PERSONAL_LINKS = "personal-links",
-  EMAIL = "email",
-  WEBSITE_EMBED = "website-embed",
-  DYNAMIC_POPUP = "dynamic-popup",
-  APP = "app",
-}
 
 interface ShareSurveyModalProps {
   survey: TSurvey;
@@ -54,8 +46,8 @@ export const ShareSurveyModal = ({
   const linkTabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
     () => [
       {
-        id: ShareViewType.LINK,
-        label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
+        id: ShareViewType.ANON_LINKS,
+        label: t("environments.surveys.summary.anonymous_links"),
         icon: LinkIcon,
       },
       {
@@ -90,7 +82,9 @@ export const ShareSurveyModal = ({
     },
   ];
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
+  const [activeId, setActiveId] = useState(
+    survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
+  );
   const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -115,7 +109,7 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
+    setActiveId(survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");

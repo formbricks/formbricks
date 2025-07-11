@@ -1,40 +1,14 @@
 "use client";
 
+import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { H4 } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
-import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 
 interface DynamicPopupTabProps {
   environmentId: string;
   surveyId: string;
 }
-
-interface DocumentationButtonProps {
-  href: string;
-  title: string;
-  readDocsText: string;
-}
-
-const DocumentationButton = ({ href, title, readDocsText }: DocumentationButtonProps) => {
-  return (
-    <Button variant="outline" asChild>
-      <Link
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex w-full items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <ExternalLinkIcon className="h-4 w-4 flex-shrink-0" />
-          <span className="text-left text-sm">{title}</span>
-        </div>
-        <span>{readDocsText}</span>
-      </Link>
-    </Button>
-  );
-};
 
 export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProps) => {
   const { t } = useTranslate();
@@ -53,22 +27,26 @@ export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProp
         </AlertButton>
       </Alert>
 
-      <div className="flex w-full flex-col space-y-4">
-        <H4>{t("environments.surveys.summary.dynamic_popup.title")}</H4>
-        <DocumentationButton
-          href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
-          title={t("environments.surveys.summary.dynamic_popup.attribute_based_targeting")}
-          readDocsText={t("environments.surveys.summary.dynamic_popup.read_documentation")}
-        />
-        <DocumentationButton
-          href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
-          title={t("environments.surveys.summary.dynamic_popup.code_no_code_triggers")}
-          readDocsText={t("environments.surveys.summary.dynamic_popup.read_documentation")}
-        />
-        <DocumentationButton
-          href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
-          title={t("environments.surveys.summary.dynamic_popup.recontact_options")}
-          readDocsText={t("environments.surveys.summary.dynamic_popup.read_documentation")}
+      <div className="flex w-full flex-col gap-4">
+        <DocumentationLinks
+          headline={t("environments.surveys.summary.dynamic_popup.title")}
+          links={[
+            {
+              title: t("environments.surveys.summary.dynamic_popup.attribute_based_targeting"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+              readDocsText: t("environments.surveys.summary.dynamic_popup.read_documentation"),
+            },
+            {
+              title: t("environments.surveys.summary.dynamic_popup.code_no_code_triggers"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions",
+              readDocsText: t("environments.surveys.summary.dynamic_popup.read_documentation"),
+            },
+            {
+              title: t("environments.surveys.summary.dynamic_popup.recontact_options"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact",
+              readDocsText: t("environments.surveys.summary.dynamic_popup.read_documentation"),
+            },
+          ]}
         />
       </div>
     </div>

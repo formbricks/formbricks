@@ -1,7 +1,7 @@
 import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
-import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
+import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -87,7 +87,7 @@ describe("ShareSurveyLink", () => {
 
   test("calls getUrl on mount and sets surveyUrl accordingly with singleUse enabled and default language", async () => {
     // Inline mocks for this test
-    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn();
     render(
@@ -108,7 +108,7 @@ describe("ShareSurveyLink", () => {
   });
 
   test("appends language query when language is changed from default", async () => {
-    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn();
     const DummyWrapper = () => (
@@ -128,7 +128,7 @@ describe("ShareSurveyLink", () => {
   });
 
   test("preview button opens new window with preview query", async () => {
-    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn().mockReturnValue(`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`);
     render(
@@ -199,7 +199,7 @@ describe("ShareSurveyLink", () => {
   });
 
   test("renders regenerate button when survey.singleUse.enabled is true and calls generateNewSingleUseLink", async () => {
-    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: "dummySuId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValue({ data: "dummySuId" });
 
     const setSurveyUrl = vi.fn();
     render(
@@ -214,13 +214,13 @@ describe("ShareSurveyLink", () => {
     const regenButton = await screen.findByRole("button", { name: /Regenerate single use survey link/i });
     fireEvent.click(regenButton);
     await waitFor(() => {
-      expect(generateSingleUseIdAction).toHaveBeenCalled();
+      expect(generateSingleUseIdsAction).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("environments.surveys.new_single_use_link_generated");
     });
   });
 
   test("handles error when generating single-use link fails", async () => {
-    vi.mocked(generateSingleUseIdAction).mockResolvedValue({ data: undefined });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValue({ data: undefined });
     vi.mocked(getFormattedErrorMessage).mockReturnValue("Failed to generate link");
 
     const setSurveyUrl = vi.fn();
