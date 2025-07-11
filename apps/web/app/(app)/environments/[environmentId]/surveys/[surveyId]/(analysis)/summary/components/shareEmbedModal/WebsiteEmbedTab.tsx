@@ -24,7 +24,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
 </div>`;
 
   return (
-    <>
+    <div className="flex h-full flex-col space-y-4">
       <div className="prose prose-slate max-w-full">
         <CodeBlock
           customCodeClass="text-sm h-48 overflow-y-scroll"
@@ -43,6 +43,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         customContainerClass="p-0"
       />
       <Button
+        className="self-start"
         title={t("common.copy_code")}
         aria-label={t("common.copy_code")}
         onClick={() => {
@@ -52,6 +53,6 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         {t("common.copy_code")}
         <CopyIcon />
       </Button>
-    </>
+    </div>
   );
 };

@@ -71,12 +71,16 @@ export const SurveyAnalysisCTA = ({
 
   const handleShareModalToggle = (open: boolean) => {
     const params = new URLSearchParams(window.location.search);
-    if (open) {
+    const currentShareParam = params.get("share") === "true";
+
+    if (open && !currentShareParam) {
       params.set("share", "true");
-    } else {
+      router.push(`${pathname}?${params.toString()}`);
+    } else if (!open && currentShareParam) {
       params.delete("share");
+      router.push(`${pathname}?${params.toString()}`);
     }
-    router.push(`${pathname}?${params.toString()}`);
+
     setModalState((prev) => ({ ...prev, start: open }));
   };
 
