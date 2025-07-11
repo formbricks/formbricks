@@ -1699,6 +1699,16 @@
       },
       "results_unpublished_successfully": "Resultados não publicados com sucesso.",
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
+      "share": {
+        "dynamic_popup": {
+          "description": "\"As pesquisas do Formbricks podem ser integradas como um pop-up, baseado na interação do usuário.\"",
+          "title": "Intercepte os usuários em seu fluxo para coletar feedback contextualizado"
+        },
+        "embed_on_website": {
+          "description": "Os formulários Formbricks podem ser incorporados como um elemento estático.",
+          "title": "Incorporar a pesquisa na sua página da web"
+        }
+      },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} foi pulada",
@@ -1723,6 +1733,17 @@
         "drop_offs": "Pontos de Entrega",
         "drop_offs_tooltip": "Número de vezes que a pesquisa foi iniciada mas não concluída.",
         "dynamic_popup": "Dinâmico (Pop-up)",
+        "dynamic_popup.alert_button": "Editar pesquisa",
+        "dynamic_popup.alert_description": "Esta pesquisa está atualmente configurada como uma pesquisa de link, o que não suporta pop-ups dinâmicos. Você pode alterar isso na aba de configurações do editor de pesquisas.",
+        "dynamic_popup.alert_title": "Alterar o tipo de pesquisa para dentro do app",
+        "dynamic_popup.attribubte_description": "Segmentação baseada em atributos",
+        "dynamic_popup.attribute_based_targeting": "Segmentação baseada em atributos",
+        "dynamic_popup.code_no_code_description": "Gatilhos de código e sem código",
+        "dynamic_popup.code_no_code_triggers": "Gatilhos de código e sem código",
+        "dynamic_popup.read_documentation": "Leia Documentação",
+        "dynamic_popup.recontact_options": "Opções de Recontato",
+        "dynamic_popup.recontact_options_description": "Opções de Recontato",
+        "dynamic_popup.title": "Faça mais com pesquisas de interceptação",
         "email_sent": "Email enviado!",
         "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
         "embed_in_an_email": "Incorporar em um e-mail",
@@ -1731,7 +1752,6 @@
         "embed_mode_description": "Incorpore sua pesquisa com um design minimalista, sem preenchimento e fundo.",
         "embed_on_website": "Incorporar no site",
         "embed_pop_up_survey_title": "Como incorporar uma pesquisa pop-up no seu site",
-        "embed_survey": "Incorporar pesquisa",
         "expiry_date_description": "Quando o link expirar, o destinatário não poderá mais responder à pesquisa.",
         "expiry_date_optional": "Data de expiração (opcional)",
         "failed_to_copy_link": "Falha ao copiar link",
@@ -1785,7 +1805,6 @@
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",
         "send_preview": "Enviar prévia",
-        "send_to_panel": "Enviar para o painel",
         "setup_instructions": "Instruções de configuração",
         "setup_integrations": "Configurar integrações",
         "share_results": "Compartilhar resultados",

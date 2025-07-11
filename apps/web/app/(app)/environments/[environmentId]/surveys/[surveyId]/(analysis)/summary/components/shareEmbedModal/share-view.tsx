@@ -1,5 +1,7 @@
 "use client";
 
+import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -15,6 +17,7 @@ import {
 } from "@/modules/ui/components/sidebar";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -22,7 +25,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { WebsiteTab } from "./WebsiteTab";
+import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface ShareViewProps {
@@ -57,6 +60,7 @@ export const ShareView = ({
   isFormbricksCloud,
 }: ShareViewProps) => {
   const [isLargeScreen, setIsLargeScreen] = useState(true);
+  const { t } = useTranslate();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -74,8 +78,22 @@ export const ShareView = ({
     switch (activeId) {
       case "email":
         return <EmailTab surveyId={survey.id} email={email} />;
-      case "webpage":
-        return <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />;
+      case "website-embed":
+        return (
+          <TabContainer
+            title={t("environments.surveys.share.embed_on_website.title")}
+            description={t("environments.surveys.share.embed_on_website.description")}>
+            <WebsiteEmbedTab surveyUrl={surveyUrl} />
+          </TabContainer>
+        );
+      case "dynamic-popup":
+        return (
+          <TabContainer
+            title={t("environments.surveys.share.dynamic_popup.title")}
+            description={t("environments.surveys.share.dynamic_popup.description")}>
+            <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />
+          </TabContainer>
+        );
       case "link":
         return (
           <LinkTab
