@@ -56,7 +56,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.badRequestResponse(error.message);
     } else {
       logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/displays");
-      return responses.internalServerErrorResponse(error.message);
+      return responses.internalServerErrorResponse("Something went wrong. Please try again.");
     }
   }
 };
