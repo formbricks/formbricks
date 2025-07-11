@@ -4,6 +4,10 @@
   "main": "base.json",
   "exports": {
     "./base": "./base.json",
-    "./nextjs": "./nextjs.json"
+    "./nextjs": "./nextjs.json",
+    "./node16": "./node16.json",
+    "./js-library": "./js-library.json",
+    "./react-library": "./react-library.json",
+    "./react-native-library": "./react-native-library.json"
   }
 }
