@@ -1,11 +1,13 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
+import { Code2Icon, CopyIcon, EyeIcon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -17,7 +19,7 @@ interface EmailTabProps {
 }
 
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
-  const [showEmbed, setShowEmbed] = useState(false);
+  const [activeTab, setActiveTab] = useState("preview");
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
   const { t } = useTranslate();
   const emailHtml = useMemo(() => {
@@ -27,6 +29,19 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
       .replaceAll("?preview=true&;", "?")
       .replaceAll("?preview=true", "");
   }, [emailHtmlPreview]);
+
+  const tabs = [
+    {
+      id: "preview",
+      label: t("environments.surveys.share.send_email.email_preview_tab"),
+      icon: <EyeIcon className="h-4 w-4" />,
+    },
+    {
+      id: "embed",
+      label: t("environments.surveys.share.send_email.embed_code_tab"),
+      icon: <Code2Icon className="h-4 w-4" />,
+    },
+  ];
 
   useEffect(() => {
     const getData = async () => {
@@ -41,7 +56,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     try {
       const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
       if (val?.data) {
-        toast.success(t("environments.surveys.summary.email_sent"));
+        toast.success(t("environments.surveys.share.send_email.email_sent"));
       } else {
         const errorMessage = getFormattedErrorMessage(val);
         toast.error(errorMessage);
@@ -55,79 +70,88 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-end gap-4">
-        {showEmbed ? (
+  const renderTabContent = () => {
+    if (activeTab === "preview") {
+      return (
+        <div className="space-y-4 pb-4">
+          <div className="flex-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-6 flex gap-2">
+              <div className="h-3 w-3 rounded-full bg-red-500"></div>
+              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+            </div>
+            <div>
+              <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
+                {t("environments.surveys.share.send_email.email_to_label")} : {email || "user@mail.com"}
+              </div>
+              <div className="border-b border-slate-200 pb-2 text-sm">
+                {t("environments.surveys.share.send_email.email_subject_label")} :{" "}
+                {t("environments.surveys.share.send_email.formbricks_email_survey_preview")}
+              </div>
+              <div className="p-2">
+                {emailHtml ? (
+                  <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
+                ) : (
+                  <LoadingSpinner />
+                )}
+              </div>
+            </div>
+          </div>
           <Button
-            variant="secondary"
-            title="Embed survey in your website"
-            aria-label="Embed survey in your website"
+            title={t("environments.surveys.share.send_email.send_preview_email")}
+            aria-label={t("environments.surveys.share.send_email.send_preview_email")}
+            onClick={() => sendPreviewEmail()}
+            className="shrink-0">
+            {t("environments.surveys.share.send_email.send_preview")}
+            <SendIcon />
+          </Button>
+        </div>
+      );
+    }
+
+    if (activeTab === "embed") {
+      return (
+        <div className="space-y-4 pb-4">
+          <CodeBlock
+            customCodeClass="text-sm h-96 overflow-y-scroll"
+            language="html"
+            showCopyToClipboard
+            noMargin>
+            {emailHtml}
+          </CodeBlock>
+          <Button
+            title={t("environments.surveys.share.send_email.copy_embed_code")}
+            aria-label={t("environments.surveys.share.send_email.copy_embed_code")}
             onClick={() => {
-              toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
+              toast.success(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard"));
               navigator.clipboard.writeText(emailHtml);
             }}
             className="shrink-0">
             {t("common.copy_code")}
             <CopyIcon />
           </Button>
-        ) : (
-          <>
-            <Button
-              variant="secondary"
-              title="send preview email"
-              aria-label="send preview email"
-              onClick={() => sendPreviewEmail()}
-              className="shrink-0">
-              {t("environments.surveys.summary.send_preview")}
-              <MailIcon />
-            </Button>
-          </>
-        )}
-        <Button
-          title={t("environments.surveys.summary.view_embed_code_for_email")}
-          aria-label={t("environments.surveys.summary.view_embed_code_for_email")}
-          onClick={() => {
-            setShowEmbed(!showEmbed);
-          }}
-          className="shrink-0">
-          {showEmbed
-            ? t("environments.surveys.summary.hide_embed_code")
-            : t("environments.surveys.summary.view_embed_code")}
-          <Code2Icon />
-        </Button>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <TabContainer
+      title={t("environments.surveys.share.send_email.title")}
+      description={t("environments.surveys.share.send_email.description")}>
+      <div className="flex h-full w-full flex-col space-y-4">
+        <TabBar
+          tabs={tabs}
+          activeId={activeTab}
+          setActiveId={setActiveTab}
+          tabStyle="button"
+          className="border border-slate-200 bg-white"
+        />
+
+        <div className="flex-1">{renderTabContent()}</div>
       </div>
-      {showEmbed ? (
-        <div className="prose prose-slate -mt-4 max-w-full">
-          <CodeBlock
-            customCodeClass="text-sm h-48 overflow-y-scroll"
-            language="html"
-            showCopyToClipboard={false}>
-            {emailHtml}
-          </CodeBlock>
-        </div>
-      ) : (
-        <div className="mb-12 grow overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
-          <div className="mb-6 flex gap-2">
-            <div className="h-3 w-3 rounded-full bg-red-500"></div>
-            <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-            <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-          </div>
-          <div>
-            <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
-            <div className="border-b border-slate-200 pb-2 text-sm">
-              Subject : {t("environments.surveys.summary.formbricks_email_survey_preview")}
-            </div>
-            <div className="p-4">
-              {emailHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
-              ) : (
-                <LoadingSpinner />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </TabContainer>
   );
 };

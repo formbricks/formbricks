@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -118,13 +117,13 @@ export const SummaryMetadata = ({
                     )}
                   </span>
                   {!isLoading && (
-                    <Button variant="secondary" className="h-6 w-6">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100">
                       {showDropOffs ? (
                         <ChevronUpIcon className="h-4 w-4" />
                       ) : (
                         <ChevronDownIcon className="h-4 w-4" />
                       )}
-                    </Button>
+                    </div>
                   )}
                 </div>
               </div>

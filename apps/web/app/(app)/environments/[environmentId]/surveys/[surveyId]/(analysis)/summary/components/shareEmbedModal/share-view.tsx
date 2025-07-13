@@ -1,7 +1,6 @@
 "use client";
 
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -80,21 +79,9 @@ export const ShareView = ({
       case ShareViewType.EMAIL:
         return <EmailTab surveyId={survey.id} email={email} />;
       case ShareViewType.WEBSITE_EMBED:
-        return (
-          <TabContainer
-            title={t("environments.surveys.share.embed_on_website.title")}
-            description={t("environments.surveys.share.embed_on_website.description")}>
-            <WebsiteEmbedTab surveyUrl={surveyUrl} />
-          </TabContainer>
-        );
+        return <WebsiteEmbedTab surveyUrl={surveyUrl} />;
       case ShareViewType.DYNAMIC_POPUP:
-        return (
-          <TabContainer
-            title={t("environments.surveys.share.dynamic_popup.title")}
-            description={t("environments.surveys.share.dynamic_popup.description")}>
-            <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />
-          </TabContainer>
-        );
+        return <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />;
       case ShareViewType.ANON_LINKS:
         return (
           <AnonymousLinksTab
