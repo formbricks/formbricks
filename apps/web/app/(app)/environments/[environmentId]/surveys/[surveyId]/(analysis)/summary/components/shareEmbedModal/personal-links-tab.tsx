@@ -1,5 +1,6 @@
 "use client";
 
+import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -241,17 +242,15 @@ export const PersonalLinksTab = ({
         <hr />
 
         {/* Info Box */}
-        <Alert variant="outbound" size="small">
-          <AlertTitle>{t("environments.surveys.share.personal_links.work_with_segments")}</AlertTitle>
-          <AlertButton>
-            <Link
-              href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration"
-              target="_blank"
-              rel="noopener noreferrer">
-              {t("common.learn_more")}
-            </Link>
-          </AlertButton>
-        </Alert>
+        <DocumentationLinks
+          links={[
+            {
+              title: t("environments.surveys.share.personal_links.work_with_segments"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+              readDocsText: t("common.learn_more"),
+            },
+          ]}
+        />
       </TabContainer>
     </FormProvider>
   );

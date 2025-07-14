@@ -1701,6 +1701,8 @@
       "search_by_survey_name": "依問卷名稱搜尋",
       "share": {
         "anonymous_links": {
+          "custom_single_use_id_description": "如果您不加密 使用一次 的 ID，任何“ suid=...”的值都能用于 一次回應",
+          "custom_single_use_id_title": "您可以在 URL 中設置任何值 作為 一次性使用 ID",
           "custom_start_point": "自訂 開始 點",
           "data_prefilling": "資料預先填寫",
           "description": "從這些鏈接來的回應將是匿名的。",
@@ -1718,18 +1720,61 @@
           "url_encryption_label": "單次使用 ID 的 URL 加密"
         },
         "dynamic_popup": {
+          "alert_button": "編輯 問卷",
+          "alert_description": "此 問卷 目前 被 設定 為 連結 問卷，不 支援 動態 彈出窗口。您 可 在 問卷 編輯器 的 設定 標籤 中 進行 更改。",
+          "alert_title": "更改問卷類型為 in-app",
+          "attribute_based_targeting": "屬性 基於 的 定位",
+          "code_no_code_triggers": "程式碼 及 無程式碼 觸發器",
           "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
+          "docs_title": "使用 截圖 調查 來 完成 更多 工作",
+          "nav_title": "動態（彈窗）",
+          "read_documentation": "閱讀 文件",
+          "recontact_options": "重新聯絡選項",
           "title": "攔截使用者於其流程中以收集具上下文的意見反饋"
         },
         "embed_on_website": {
           "description": "Formbricks 調查可以 作為 靜態 元素 嵌入。",
+          "embed_code_copied_to_clipboard": "嵌入程式碼已複製到剪貼簿！",
+          "embed_in_an_email": "嵌入電子郵件中",
+          "embed_in_app": "嵌入應用程式",
+          "embed_mode": "嵌入模式",
+          "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
+          "nav_title": "嵌入網站",
           "title": "嵌入 調查 在 您 的 網頁"
         },
         "personal_links": {
-          "nav_title": "個人 連結"
+          "create_and_manage_segments": "在 聯絡人 > 分段 中建立和管理您的分段",
+          "create_single_use_links": "建立單次使用連結",
+          "create_single_use_links_description": "每個連結只接受一次提交。以下是如何操作。",
+          "description": "為 一個 群組 生成 個人 連結，並 將 調查 回應 對應 到 每個 聯絡人。",
+          "expiry_date_description": "一旦連結過期，收件者將無法再回應 survey。",
+          "expiry_date_optional": "到期日 （可選）",
+          "generate_and_download_links": "生成 & 下載 連結",
+          "generating_links": "生成 連結",
+          "generating_links_toast": "生成 連結，下載 將 會 很快 開始…",
+          "links_generated_success_toast": "連結 成功 生成，您的 下載 將 會 很快 開始。",
+          "nav_title": "個人 連結",
+          "no_segments_available": "沒有可用的區段",
+          "select_segment": "選擇 區隔",
+          "title": "透過個人化調查連結最大化洞察",
+          "upgrade_prompt_description": "為一個群組生成個人連結，並將調查回應連結到每個聯絡人。",
+          "upgrade_prompt_title": "使用 個人 連結 與 更高 的 計劃",
+          "work_with_segments": "個人 連結 可 與 分段 一起 使用"
         },
         "send_email": {
-          "nav_title": "電子郵件嵌入"
+          "copy_embed_code": "複製嵌入程式碼",
+          "description": "將 你的 調查 嵌入 在 電子郵件 中 以 獲得 觀眾 的 回應。",
+          "email_preview_tab": "電子郵件預覽",
+          "email_sent": "已發送電子郵件！",
+          "email_subject_label": "主旨",
+          "email_to_label": "收件者",
+          "embed_code_copied_to_clipboard": "嵌入程式碼已複製到剪貼簿！",
+          "embed_code_tab": "嵌入程式碼",
+          "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",
+          "nav_title": "電子郵件嵌入",
+          "send_preview": "發送預覽",
+          "send_preview_email": "發送預覽電子郵件",
+          "title": "嵌入 你的 調查 在 電子郵件 中"
         }
       },
       "summary": {

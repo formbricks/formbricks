@@ -1,6 +1,7 @@
 "use client";
 
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
@@ -30,39 +31,25 @@ export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProp
           </AlertButton>
         </Alert>
 
-        <div className="flex w-full flex-col gap-2">
-          {[
+        <DocumentationLinks
+          links={[
             {
               title: t("environments.surveys.share.dynamic_popup.attribute_based_targeting"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+              readDocsText: t("common.read_more"),
             },
             {
               title: t("environments.surveys.share.dynamic_popup.code_no_code_triggers"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions",
+              readDocsText: t("common.read_more"),
             },
             {
               title: t("environments.surveys.share.dynamic_popup.recontact_options"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact",
+              readDocsText: t("common.read_more"),
             },
-          ].map((link, index) => (
-            <Alert key={index} variant="outbound" size="small">
-              <AlertTitle>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-900 hover:underline">
-                  {link.title}
-                </a>
-              </AlertTitle>
-              <AlertButton asChild>
-                <a href={link.href} target="_blank" rel="noopener noreferrer">
-                  {t("environments.surveys.share.dynamic_popup.read_documentation")}
-                </a>
-              </AlertButton>
-            </Alert>
-          ))}
-        </div>
+          ]}
+        />
       </div>
     </TabContainer>
   );

@@ -3,6 +3,7 @@
 import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { DisableLinkModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
+import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
@@ -431,35 +432,30 @@ export const AnonymousLinksTab = ({
           )}
         </div>
 
-        <div className="flex w-full flex-col gap-2">
-          {[
+        <DocumentationLinks
+          links={[
             {
               title: t("environments.surveys.share.anonymous_links.single_use_links"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
+              readDocsText: t("common.read_more"),
             },
             {
               title: t("environments.surveys.share.anonymous_links.data_prefilling"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
+              readDocsText: t("common.read_more"),
             },
             {
               title: t("environments.surveys.share.anonymous_links.source_tracking"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
+              readDocsText: t("common.read_more"),
             },
             {
               title: t("environments.surveys.share.anonymous_links.custom_start_point"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
+              readDocsText: t("common.read_more"),
             },
-          ].map((link, index) => (
-            <Alert key={index} variant="outbound" size="small">
-              <AlertTitle>{link.title}</AlertTitle>
-              <AlertButton asChild>
-                <Link href={link.href} target="_blank" className="text-slate-900 hover:underline">
-                  {t("common.learn_more")}
-                </Link>
-              </AlertButton>
-            </Alert>
-          ))}
-        </div>
+          ]}
+        />
 
         {disableLinkModal && (
           <DisableLinkModal

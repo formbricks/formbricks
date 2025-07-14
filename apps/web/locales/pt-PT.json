@@ -1701,6 +1701,8 @@
       "search_by_survey_name": "Pesquisar por nome do inquérito",
       "share": {
         "anonymous_links": {
+          "custom_single_use_id_description": "Se não encriptar os IDs de uso único, qualquer valor para “suid=...” funciona para uma resposta",
+          "custom_single_use_id_title": "Pode definir qualquer valor como ID de uso único no URL.",
           "custom_start_point": "Ponto de início personalizado",
           "data_prefilling": "Pré-preenchimento de dados",
           "description": "Respostas provenientes destes links serão anónimas.",
@@ -1718,18 +1720,61 @@
           "url_encryption_label": "Encriptação do URL de ID de uso único"
         },
         "dynamic_popup": {
+          "alert_button": "Editar inquérito",
+          "alert_description": "Este questionário está atualmente configurado como um questionário de link, que não suporta pop-ups dinâmicos. Você pode alterar isso na aba de configurações do editor de questionários.",
+          "alert_title": "Mudar tipo de inquérito para in-app",
+          "attribute_based_targeting": "Segmentação baseada em atributos",
+          "code_no_code_triggers": "Gatilhos com código e sem código",
           "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
+          "docs_title": "Faça mais com sondagens de interceptação",
+          "nav_title": "Dinâmico (Pop-up)",
+          "read_documentation": "Ler Documentação",
+          "recontact_options": "Opções de Recontacto",
           "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"
         },
         "embed_on_website": {
           "description": "Os inquéritos Formbricks podem ser incorporados como um elemento estático.",
+          "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
+          "embed_in_an_email": "Incorporar num email",
+          "embed_in_app": "Incorporar na aplicação",
+          "embed_mode": "Modo de Incorporação",
+          "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
+          "nav_title": "Incorporar no site",
           "title": "Incorporar o questionário na sua página web"
         },
         "personal_links": {
-          "nav_title": "Links pessoais"
+          "create_and_manage_segments": "Crie e gere os seus Segmentos em Contactos > Segmentos",
+          "create_single_use_links": "Criar links de uso único",
+          "create_single_use_links_description": "Aceitar apenas uma submissão por link. Aqui está como.",
+          "description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
+          "expiry_date_description": "Uma vez que o link expira, o destinatário não pode mais responder ao questionário.",
+          "expiry_date_optional": "Data de expiração (opcional)",
+          "generate_and_download_links": "Gerar & descarregar links",
+          "generating_links": "Gerando links",
+          "generating_links_toast": "A gerar links, o download começará em breve…",
+          "links_generated_success_toast": "Links gerados com sucesso, o seu download começará em breve.",
+          "nav_title": "Links pessoais",
+          "no_segments_available": "Sem segmentos disponíveis",
+          "select_segment": "Selecionar segmento",
+          "title": "Maximize os insights com links pessoais de inquérito",
+          "upgrade_prompt_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
+          "upgrade_prompt_title": "Utilize links pessoais com um plano superior",
+          "work_with_segments": "Os links pessoais funcionam com segmentos."
         },
         "send_email": {
-          "nav_title": "Incorporação de Email"
+          "copy_embed_code": "Copiar código de incorporação",
+          "description": "Incorpora o teu inquérito num email para obter respostas do teu público.",
+          "email_preview_tab": "Pré-visualização de Email",
+          "email_sent": "Email enviado!",
+          "email_subject_label": "Assunto",
+          "email_to_label": "Para",
+          "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
+          "embed_code_tab": "Código de Incorporação",
+          "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
+          "nav_title": "Incorporação de Email",
+          "send_preview": "Enviar pré-visualização",
+          "send_preview_email": "Enviar pré-visualização de email",
+          "title": "Incorporar o seu inquérito num email"
         }
       },
       "summary": {
