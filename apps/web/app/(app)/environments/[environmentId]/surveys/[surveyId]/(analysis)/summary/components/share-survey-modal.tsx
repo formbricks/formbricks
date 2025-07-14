@@ -8,6 +8,7 @@ import {
   Code2Icon,
   LinkIcon,
   MailIcon,
+  QrCodeIcon,
   Share2Icon,
   SmartphoneIcon,
   SquareStack,
@@ -25,6 +26,7 @@ type ModalView = "start" | "share";
 
 enum ShareViewType {
   LINK = "link",
+  QR_CODE = "qr-code",
   PERSONAL_LINKS = "personal-links",
   EMAIL = "email",
   SOCIAL_MEDIA = "social-media",
@@ -66,6 +68,11 @@ export const ShareSurveyModal = ({
         id: ShareViewType.LINK,
         label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
         icon: LinkIcon,
+      },
+      {
+        id: ShareViewType.QR_CODE,
+        label: t("environments.surveys.summary.qr_code"),
+        icon: QrCodeIcon,
       },
       {
         id: ShareViewType.PERSONAL_LINKS,

@@ -2,6 +2,7 @@
 
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -113,6 +114,14 @@ export const ShareView = ({
               "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
             )}>
             <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />
+          </TabContainer>
+        );
+      case "qr-code":
+        return (
+          <TabContainer
+            title={t("environments.surveys.summary.make_survey_accessible_via_qr_code")}
+            description={t("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")}>
+            <QRCodeTab surveyUrl={surveyUrl} />
           </TabContainer>
         );
       case "app":
