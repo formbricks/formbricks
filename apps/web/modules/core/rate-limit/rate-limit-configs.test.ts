@@ -1,9 +1,15 @@
-import redis from "@/modules/cache/redis";
 import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
+
+const { mockEval, mockGetRedisClient } = vi.hoisted(() => {
+  const _mockEval = vi.fn();
+  const _mockRedisClient = { eval: _mockEval } as any;
+  const _mockGetRedisClient = vi.fn(() => Promise.resolve(_mockRedisClient));
+  return { mockEval: _mockEval, mockRedisClient: _mockRedisClient, mockGetRedisClient: _mockGetRedisClient };
+});
 
 // Mock dependencies for integration tests
 vi.mock("@/lib/constants", () => ({
@@ -13,9 +19,8 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/cache/redis", () => ({
-  default: {
-    eval: vi.fn(),
-  },
+  default: mockGetRedisClient,
+  getRedisClient: mockGetRedisClient,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -42,8 +47,6 @@ vi.mock("@/modules/cache/lib/cacheKeys", () => ({
 }));
 
 describe("rateLimitConfigs", () => {
-  const mockRedis = redis as any;
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -109,7 +112,7 @@ describe("rateLimitConfigs", () => {
 
   describe("Integration with Rate Limiting", () => {
     test("should work with checkRateLimit function", async () => {
-      mockRedis.eval.mockResolvedValue([1, 1]);
+      mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.auth.login;
       const result = await checkRateLimit(config, "test-identifier");
@@ -121,7 +124,7 @@ describe("rateLimitConfigs", () => {
     });
 
     test("should work with applyRateLimit helper", async () => {
-      mockRedis.eval.mockResolvedValue([1, 1]);
+      mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.api.v1;
       await expect(applyRateLimit(config, "api-key-123")).resolves.toBeUndefined();
@@ -138,14 +141,15 @@ describe("rateLimitConfigs", () => {
       ];
 
       const testAllowedRequest = async (config: any, identifier: string) => {
-        mockRedis.eval.mockResolvedValueOnce([1, 1]);
+        mockEval.mockResolvedValueOnce([1, 1]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(true);
       };
 
       const testExceededLimit = async (config: any, identifier: string) => {
-        mockRedis.eval.mockResolvedValueOnce([config.allowedPerInterval + 1, 0]);
+        // When limit is exceeded, remaining should be 0
+        mockEval.mockResolvedValueOnce([config.allowedPerInterval + 1, 0]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(false);

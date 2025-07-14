@@ -1,65 +1,85 @@
-import redis from "@/modules/cache/redis";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  AUDIT_LOG_HASH_KEY,
-  getPreviousAuditLogHash,
-  runAuditLogHashTransaction,
-  setPreviousAuditLogHash,
-} from "./cache";
+import { getPreviousAuditLogHash, runAuditLogHashTransaction, setPreviousAuditLogHash } from "./cache";
 
 // Mock redis module
+let mockStore: Record<string, string | null> = {};
+let mockRedisAvailable = true;
+
+const mockRedisClient = {
+  del: vi.fn(async (key: string) => {
+    delete mockStore[key];
+    return 1;
+  }),
+  quit: vi.fn(async () => {
+    return "OK";
+  }),
+  get: vi.fn(async (key: string) => {
+    return mockStore[key] ?? null;
+  }),
+  set: vi.fn(async (key: string, value: string) => {
+    mockStore[key] = value;
+    return "OK";
+  }),
+  watch: vi.fn(async (_key: string) => {
+    return "OK";
+  }),
+  unwatch: vi.fn(async () => {
+    return "OK";
+  }),
+  multi: vi.fn(() => {
+    return {
+      set: vi.fn(function (key: string, value: string) {
+        mockStore[key] = value;
+        return this;
+      }),
+      exec: vi.fn(async () => {
+        return [[null, "OK"]];
+      }),
+    } as unknown as import("ioredis").ChainableCommander;
+  }),
+};
+
 vi.mock("@/modules/cache/redis", () => {
-  let store: Record<string, string | null> = {};
   return {
-    default: {
-      del: vi.fn(async (key: string) => {
-        store[key] = null;
-        return 1;
-      }),
-      quit: vi.fn(async () => {
-        return "OK";
-      }),
-      get: vi.fn(async (key: string) => {
-        return store[key] ?? null;
-      }),
-      set: vi.fn(async (key: string, value: string) => {
-        store[key] = value;
-        return "OK";
-      }),
-      watch: vi.fn(async (_key: string) => {
-        return "OK";
-      }),
-      unwatch: vi.fn(async () => {
-        return "OK";
-      }),
-      multi: vi.fn(() => {
-        return {
-          set: vi.fn(function (key: string, value: string) {
-            store[key] = value;
-            return this;
-          }),
-          exec: vi.fn(async () => {
-            return [[null, "OK"]];
-          }),
-        } as unknown as import("ioredis").ChainableCommander;
-      }),
-    },
+    default: vi.fn(async () => {
+      if (!mockRedisAvailable) {
+        return null;
+      }
+      return mockRedisClient;
+    }),
   };
 });
 
 describe("audit log cache utils", () => {
   beforeEach(async () => {
-    await redis?.del(AUDIT_LOG_HASH_KEY);
+    // Reset the store for each test
+    mockStore = {};
+    mockRedisAvailable = true;
+    vi.clearAllMocks();
   });
 
   afterAll(async () => {
-    await redis?.quit();
+    if (mockRedisClient) {
+      await mockRedisClient.quit();
+    }
   });
 
   test("should get and set the previous audit log hash", async () => {
     expect(await getPreviousAuditLogHash()).toBeNull();
     await setPreviousAuditLogHash("testhash");
     expect(await getPreviousAuditLogHash()).toBe("testhash");
+  });
+
+  test("should return null when redis is not available", async () => {
+    mockRedisAvailable = false;
+    expect(await getPreviousAuditLogHash()).toBeNull();
+  });
+
+  test("should handle redis not available during set operation", async () => {
+    mockRedisAvailable = false;
+    // Should not throw an error, just return silently
+    await setPreviousAuditLogHash("testhash");
+    expect(mockRedisClient.set).not.toHaveBeenCalled();
   });
 
   test("should run a successful audit log hash transaction", async () => {
@@ -77,11 +97,28 @@ describe("audit log cache utils", () => {
     expect(logCalled).toBe(true);
   });
 
+  test("should throw error when redis is not available during transaction", async () => {
+    mockRedisAvailable = false;
+
+    let errorCaught = false;
+    try {
+      await runAuditLogHashTransaction(async () => {
+        return {
+          auditEvent: async () => {},
+          integrityHash: "hash1",
+        };
+      });
+    } catch (e) {
+      errorCaught = true;
+      expect((e as Error).message).toBe("Redis is not initialized");
+    }
+    expect(errorCaught).toBe(true);
+  });
+
   test("should retry and eventually throw if the hash keeps changing", async () => {
-    // Simulate another process changing the hash every time
+    // Simulate transaction failure by making exec return null
     let callCount = 0;
-    const originalMulti = redis?.multi;
-    (redis?.multi as any).mockImplementation(() => {
+    mockRedisClient.multi.mockImplementation(() => {
       return {
         set: vi.fn(function () {
           return this;
@@ -92,6 +129,7 @@ describe("audit log cache utils", () => {
         }),
       } as unknown as import("ioredis").ChainableCommander;
     });
+
     let errorCaught = false;
     try {
       await runAuditLogHashTransaction(async () => {
@@ -107,7 +145,5 @@ describe("audit log cache utils", () => {
     }
     expect(errorCaught).toBe(true);
     expect(callCount).toBe(5);
-    // Restore
-    (redis?.multi as any).mockImplementation(originalMulti);
   });
 });

@@ -1,6 +1,6 @@
 import { RATE_LIMITING_DISABLED, SENTRY_DSN } from "@/lib/constants";
 import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
-import redis from "@/modules/cache/redis";
+import getRedisClient from "@/modules/cache/redis";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 import { Result, ok } from "@formbricks/types/error-handlers";
@@ -14,15 +14,24 @@ export const checkRateLimit = async (
   config: TRateLimitConfig,
   identifier: string
 ): Promise<Result<TRateLimitResponse, string>> => {
-  // Skip rate limiting if disabled or Redis unavailable
-  if (RATE_LIMITING_DISABLED || !redis) {
-    logger.debug(`Rate limiting disabled or Redis unavailable`);
+  // Skip rate limiting if disabled
+  if (RATE_LIMITING_DISABLED) {
+    logger.debug(`Rate limiting disabled`);
     return ok({
       allowed: true,
     });
   }
 
   try {
+    // Get Redis client
+    const redis = await getRedisClient();
+    if (!redis) {
+      logger.debug(`Redis unavailable`);
+      return ok({
+        allowed: true,
+      });
+    }
+
     const now = Date.now();
     const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
     const key = createCacheKey.rateLimit.core(config.namespace, identifier, windowStart);

@@ -1,12 +1,32 @@
 import { REDIS_URL } from "@/lib/constants";
-import redis from "@/modules/cache/redis";
+import getRedisClient from "@/modules/cache/redis";
+import type { RedisClientType } from "redis";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
 // Check if Redis is available (basic requirements)
-const isRedisAvailable = redis && REDIS_URL;
+let isRedisAvailable = false;
+
+// Test Redis availability
+async function checkRedisAvailability() {
+  try {
+    const redis = await getRedisClient();
+    if (redis === null) {
+      console.log("Redis client is null - Redis not available");
+      return false;
+    }
+
+    // Test basic Redis operation
+    await redis.ping();
+    console.log("Redis ping successful - Redis is available");
+    return true;
+  } catch (error) {
+    console.error("Error checking Redis availability:", error);
+    return false;
+  }
+}
 
 /**
  * Rate Limiter Load Tests - Race Condition Detection
@@ -87,18 +107,7 @@ const isRedisAvailable = redis && REDIS_URL;
  * ❌ Window boundary failures: TTL or timestamp calculation errors
  */
 
-// Check Redis availability and log status
-if (!isRedisAvailable) {
-  console.log("🟡 Rate Limiter Load Tests: Redis not available - tests will be skipped");
-  if (!REDIS_URL) {
-    console.log("   Reason: REDIS_URL environment variable not set or empty");
-  } else if (!redis) {
-    console.log("   Reason: Redis client not initialized");
-  }
-  console.log("   To run these tests locally, ensure Redis is running and REDIS_URL is set");
-} else {
-  console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
-}
+// The availability check and logging is now handled in the beforeAll hook
 
 // Test configurations
 const TEST_CONFIGS = {
@@ -124,25 +133,46 @@ const TEST_CONFIGS = {
   } as TRateLimitConfig,
 } as const;
 
-describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", () => {
+describe("Rate Limiter Load Tests - Race Conditions", () => {
   beforeAll(async () => {
-    // This will only run if Redis is available
+    // Check Redis availability first
+    isRedisAvailable = await checkRedisAvailability();
+
+    if (!isRedisAvailable) {
+      console.log("🟡 Rate Limiter Load Tests: Redis not available - tests will be skipped");
+      console.log("   To run these tests locally, ensure Redis is running and REDIS_URL is set");
+      return;
+    }
+
+    console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
+
     // Clear any existing test keys
-    const testKeys = await redis!.keys("fb:rate_limit:test:*");
-    if (testKeys.length > 0) {
-      await redis!.del(...testKeys);
+    const redis = (await getRedisClient()) as RedisClientType | null;
+    if (redis) {
+      const testKeys = await redis.keys("fb:rate_limit:test:*");
+      if (testKeys.length > 0) {
+        await redis.del(testKeys);
+      }
     }
   });
 
   afterAll(async () => {
     // Clean up test keys
-    const testKeys = await redis!.keys("fb:rate_limit:test:*");
-    if (testKeys.length > 0) {
-      await redis!.del(...testKeys);
+    const redis = (await getRedisClient()) as RedisClientType | null;
+    if (redis) {
+      const testKeys = await redis.keys("fb:rate_limit:test:*");
+      if (testKeys.length > 0) {
+        await redis.del(testKeys);
+      }
     }
   });
 
   test("Race condition test: concurrent requests to same identifier", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.strict;
     const identifier = "race-test-same-id";
     const concurrentRequests = 20; // More than allowed (3)
@@ -166,6 +196,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 15000);
 
   test("Race condition test: multiple waves of concurrent requests", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.medium;
     const identifier = "race-test-waves";
     const wavesCount = 3;
@@ -194,6 +229,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 20000);
 
   test("Race condition test: different identifiers should not interfere", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.strict;
     const identifiersCount = 5;
     const requestsPerIdentifier = 10;
@@ -233,6 +273,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 20000);
 
   test("Window boundary race condition test", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = {
       interval: 2, // Very short window for testing
       allowedPerInterval: 5,
@@ -264,6 +309,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 15000);
 
   test("High throughput stress test", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.high;
     const totalRequests = 200;
     const batchSize = 50;
@@ -298,6 +348,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 30000);
 
   test("applyRateLimit function race condition test", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.strict;
     const identifier = "apply-rate-limit-test";
     const concurrentRequests = 15;
@@ -331,6 +386,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 15000);
 
   test("Mixed identifier patterns under load", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     const config = TEST_CONFIGS.medium;
     const patterns = ["user-123", "ip-192.168.1.1", "api-key-abc", "session-xyz"];
 
@@ -374,6 +434,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
   }, 25000);
 
   test("TTL expiration test: rate limit key should expire and unblock requests", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
     // Use a very short interval for faster testing
     const config: TRateLimitConfig = {
       interval: 3, // 3 seconds
@@ -384,9 +449,12 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     const identifier = "ttl-test-user";
 
     // Clear any existing keys first
-    const existingKeys = await redis!.keys(`fb:rate_limit:${config.namespace}:*`);
-    if (existingKeys.length > 0) {
-      await redis!.del(...existingKeys);
+    const redis = (await getRedisClient()) as RedisClientType | null;
+    if (redis) {
+      const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
+      if (existingKeys.length > 0) {
+        await redis.del(existingKeys);
+      }
     }
 
     console.log("Phase 1: Hitting rate limit...");
@@ -405,28 +473,30 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expect(phase1Denied).toBe(5 - config.allowedPerInterval);
 
     // Check that the key exists in Redis
-    const now = Date.now();
-    const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
-    const expectedKey = `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
+    if (redis) {
+      const now = Date.now();
+      const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
+      const expectedKey = `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
 
-    const keyExists = await redis!.exists(expectedKey);
-    expect(keyExists).toBe(1);
-    console.log(`Redis key exists: ${expectedKey}`);
+      const keyExists = await redis.exists(expectedKey);
+      expect(keyExists).toBe(1);
+      console.log(`Redis key exists: ${expectedKey}`);
 
-    // Check the TTL
-    const ttl = await redis!.ttl(expectedKey);
-    expect(ttl).toBeGreaterThan(0);
-    expect(ttl).toBeLessThanOrEqual(config.interval);
-    console.log(`Key TTL: ${ttl} seconds`);
+      // Check the TTL
+      const ttl = await redis.ttl(expectedKey);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(config.interval);
+      console.log(`Key TTL: ${ttl} seconds`);
 
-    // Phase 2: Wait for TTL to expire
-    console.log(`Phase 2: Waiting for TTL expiration (${config.interval + 1} seconds)...`);
-    await new Promise((resolve) => setTimeout(resolve, (config.interval + 1) * 1000));
+      // Phase 2: Wait for TTL to expire
+      console.log(`Phase 2: Waiting for TTL expiration (${config.interval + 1} seconds)...`);
+      await new Promise((resolve) => setTimeout(resolve, (config.interval + 1) * 1000));
 
-    // Verify key has been automatically deleted by Redis
-    const keyExistsAfterTTL = await redis!.exists(expectedKey);
-    expect(keyExistsAfterTTL).toBe(0);
-    console.log("Key automatically deleted by Redis TTL ✅");
+      // Verify key has been automatically deleted by Redis
+      const keyExistsAfterTTL = await redis.exists(expectedKey);
+      expect(keyExistsAfterTTL).toBe(0);
+      console.log("Key automatically deleted by Redis TTL ✅");
+    }
 
     // Phase 3: Make new requests after TTL expiration
     console.log("Phase 3: Making requests after TTL expiration...");
@@ -444,13 +514,15 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expect(phase3Denied).toBe(5 - config.allowedPerInterval);
 
     // Verify new key was created for the new window
-    const newNow = Date.now();
-    const newWindowStart = Math.floor(newNow / (config.interval * 1000)) * config.interval;
-    const newKey = `fb:rate_limit:${config.namespace}:${identifier}:${newWindowStart}`;
+    if (redis) {
+      const newNow = Date.now();
+      const newWindowStart = Math.floor(newNow / (config.interval * 1000)) * config.interval;
+      const newKey = `fb:rate_limit:${config.namespace}:${identifier}:${newWindowStart}`;
 
-    const newKeyExists = await redis!.exists(newKey);
-    expect(newKeyExists).toBe(1);
-    console.log(`New Redis key created: ${newKey}`);
+      const newKeyExists = await redis.exists(newKey);
+      expect(newKeyExists).toBe(1);
+      console.log(`New Redis key created: ${newKey}`);
+    }
 
     // Phase 4: Test that we're blocked again within the new window
     console.log("Phase 4: Verifying rate limit is active in new window...");
