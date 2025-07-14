@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
 import { KeyIcon } from "lucide-react";
 import { useState } from "react";
@@ -29,25 +29,21 @@ export const AddKeyModal = ({
   const setOpen = externalSetOpen || setInternalOpen;
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <KeyIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.plain.add_key")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.integrations.plain.add_key_description")}
-                </div>
-              </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <div className="mr-1.5 h-6 w-6 text-slate-500">
+              <KeyIcon className="h-5 w-5" />
             </div>
-          </div>
-        </div>
+            <div>
+              <span className="font-medium">{t("environments.integrations.plain.add_key")}</span>
+              <p className="text-sm font-normal text-slate-500">
+                {t("environments.integrations.plain.add_key_description")}
+              </p>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
         <div className="p-6">
           <div className="mb-4">
             <label htmlFor="keyLabel" className="mb-2 block text-sm font-medium text-slate-700">
@@ -79,7 +75,6 @@ export const AddKeyModal = ({
                   toast.success(t("environments.integrations.plain.connection_success"));
                   setOpen(false);
                 } catch (error) {
-                  console.error("Error connecting Plain integration:", error);
                   toast.error(t("environments.integrations.plain.connection_error"));
                 } finally {
                   setIsSubmitting(false);
@@ -89,7 +84,7 @@ export const AddKeyModal = ({
             </Button>
           </div>
         </div>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };

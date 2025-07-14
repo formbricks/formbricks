@@ -8,6 +8,8 @@ export type TIntegrationPlainCredential = z.infer<typeof ZIntegrationPlainCreden
 // Define Plain field types
 export const ZPlainFieldType = z.enum([
   "componentText",
+  "firstName",
+  "lastName",
   "title",
   "customerIdentifier",
   "threadField",
@@ -39,10 +41,9 @@ export const ZIntegrationPlainConfigData = z
   .object({
     // question -> plain thread mapping
     mapping: z.array(ZPlainMapping),
-    customerIdentifierField: z.enum(["emailAddress", "externalId", "customerId"]).default("emailAddress"),
+    labelId: z.string().optional(),
     includeCreatedAt: z.boolean().default(true),
     includeComponents: z.boolean().default(true),
-    titleTemplate: z.string().optional(),
   })
   .merge(
     ZIntegrationBaseSurveyData.omit({

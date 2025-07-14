@@ -112,7 +112,7 @@ export const handleIntegrations = async (
         }
         break;
       case "plain":
-        const plainResult = await handlePlainIntegration(integration as TIntegrationPlain, data, survey);
+        const plainResult = await handlePlainIntegration(integration as TIntegrationPlain, data);
         if (!plainResult.ok) {
           logger.error(plainResult.error, "Error in plain integration");
         }
@@ -445,76 +445,28 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
   }
 };
 
-const buildPlainPayloadProperties = (
-  mapping: TIntegrationPlainConfigData["mapping"],
-  data: TPipelineInput,
-  surveyData: TSurvey
-) => {
-  const properties: any = {};
-  const responses = data.response.data;
-
-  const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyQuestionTypeEnum.PictureSelection)
-    .map((m) => m.question.id);
-
-  Object.keys(responses).forEach((resp) => {
-    if (mappingQIds.find((qId) => qId === resp)) {
-      const selectedChoiceIds = responses[resp] as string[];
-      const pictureQuestion = surveyData.questions.find((q) => q.id === resp);
-
-      responses[resp] = (pictureQuestion as any)?.choices
-        .filter((choice) => selectedChoiceIds.includes(choice.id))
-        .map((choice) => choice.imageUrl);
-    }
-  });
-
-  mapping.forEach((map) => {
-    if (map.question.id === "metadata") {
-      properties[map.plainField.name] = {
-        [map.plainField.type]:
-          getValue(map.plainField.type, convertMetaObjectToString(data.response.meta)) || null,
-      };
-    } else if (map.question.id === "createdAt") {
-      properties[map.plainField.name] = {
-        [map.plainField.type]: getValue(map.plainField.type, data.response.createdAt) || null,
-      };
-    } else {
-      const value = responses[map.question.id];
-      properties[map.plainField.name] = {
-        [map.plainField.type]: getValue(map.plainField.type, value) || null,
-      };
-    }
-  });
-
-  return properties;
-};
-
 const handlePlainIntegration = async (
   integration: TIntegrationPlain,
-  data: TPipelineInput,
-  survey: TSurvey
+  data: TPipelineInput
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
         if (element.surveyId === data.surveyId) {
-          // Build properties for Plain thread from the mapping
-          const properties = buildPlainPayloadProperties(element.mapping, data, survey);
-
-          // Send data to Plain
-          const result = await writeData(element.surveyId, properties, integration.config, data, element);
-
-          if (!result.ok) {
-            logger.error("Error in Plain integration", { error: result.error });
-            return result;
-          }
+          const configData: TIntegrationPlainConfigData = element;
+          await writeDataToPlain(integration.config, data, configData);
         }
       }
     }
 
-    return ok(undefined);
+    return {
+      ok: true,
+      data: undefined,
+    };
   } catch (err) {
-    logger.error("Exception in Plain integration", { error: err });
-    return err(err instanceof Error ? err : new Error(String(err)));
+    return {
+      ok: false,
+      error: err instanceof Error ? err : new Error(String(err)),
+    };
   }
 };

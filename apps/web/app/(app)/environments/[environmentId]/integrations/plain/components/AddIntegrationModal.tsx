@@ -5,13 +5,20 @@ import PlainLogo from "@/images/plain.webp";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,86 +51,41 @@ export const AddIntegrationModal = ({
 }: AddIntegrationModalProps) => {
   const { t } = useTranslate();
   const { handleSubmit } = useForm();
-
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [customerIdentifierField, setCustomerIdentifierField] = useState<
-    "emailAddress" | "externalId" | "customerId"
-  >("emailAddress");
-  const [customerIdentifierQuestion, setCustomerIdentifierQuestion] = useState<{
-    id: string;
-    name: string;
-    type: string;
-  } | null>(null);
-  const [titleTemplate, setTitleTemplate] = useState<string>("");
-  const [titleQuestion, setTitleQuestion] = useState<{ id: string; name: string; type: string } | null>(null);
   const [mapping, setMapping] = useState<
     {
-      question: { id: string; name: string; type: string };
       plainField: { id: string; name: string; type: TPlainFieldType; config?: Record<string, any> };
+      question: { id: string; name: string; type: string };
       error?: {
         type: string;
         msg: React.ReactNode | string;
       } | null;
+      isMandatory?: boolean;
     }[]
   >([
     {
+      plainField: { id: "threadTitle", name: "Thread Title", type: "threadField" },
       question: { id: "", name: "", type: "" },
-      plainField: { id: "title", name: "Thread Title", type: "title" },
+      isMandatory: true,
     },
     {
+      plainField: { id: "componentText", name: "Component Text", type: "componentText" },
       question: { id: "", name: "", type: "" },
-      plainField: {
-        id: "customerIdentifier",
-        name: "Customer Identifier (Email)",
-        type: "customerIdentifier",
-        config: { identifierType: "emailAddress" },
-      },
-    },
-    {
-      question: { id: "", name: "", type: "" },
-      plainField: {
-        id: "componentText",
-        name: "Component Text",
-        type: "componentText",
-        config: { format: "text" },
-      },
+      isMandatory: true,
     },
   ]);
+
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [isLinkingDatabase, setIsLinkingDatabase] = useState(false);
-  const integrationData: TIntegrationPlainConfigData = {
-    surveyId: "",
-    surveyName: "",
-    mapping: [
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: { id: "title", name: "Thread Title", type: "title" },
-      },
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "customerIdentifier",
-          name: "Customer Identifier (Email)",
-          type: "customerIdentifier",
-          config: { identifierType: "emailAddress" },
-        },
-      },
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "componentText",
-          name: "Component Text",
-          type: "componentText",
-          config: { format: "text" },
-        },
-      },
-    ],
-    createdAt: new Date(),
-    customerIdentifierField: "emailAddress",
-    includeCreatedAt: true,
-    includeComponents: true,
-    titleTemplate: "",
-  };
+  const [isLinkingIntegration, setIsLinkingIntegration] = useState(false);
+
+  const plainFieldTypes = [
+    { id: "threadTitle", name: "Thread Title", type: "threadField" as TPlainFieldType },
+    { id: "componentText", name: "Component Text", type: "componentText" as TPlainFieldType },
+    { id: "labelTypeId", name: "Label ID", type: "labelTypeId" as TPlainFieldType },
+  ];
+
+  // State to track custom label ID values
+  const [labelIdValues, setLabelIdValues] = useState<Record<string, string>>({});
 
   const plainIntegrationData: TIntegrationInput = {
     type: "plain",
@@ -131,42 +93,6 @@ export const AddIntegrationModal = ({
       key: plainIntegration?.config?.key,
       data: plainIntegration.config?.data || [],
     },
-  };
-
-  const handleSurveySelect = (survey: TSurvey) => {
-    if (!survey) return;
-
-    setSelectedSurvey(survey);
-
-    // Reset mapping when survey changes but keep the essential fields
-    setMapping([
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: { id: "title", name: "Thread Title", type: "title" },
-      },
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "customerIdentifier",
-          name: "Customer Identifier (Email)",
-          type: "customerIdentifier",
-          config: { identifierType: "emailAddress" },
-        },
-      },
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "componentText",
-          name: "Component Text",
-          type: "componentText",
-          config: { format: "text" },
-        },
-      },
-    ]);
-
-    // Reset other fields
-    setCustomerIdentifierQuestion(null);
-    setTitleQuestion(null);
   };
 
   const questionItems = useMemo(() => {
@@ -208,8 +134,57 @@ export const AddIntegrationModal = ({
     ];
 
     return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
+
+  const checkContactInfoQuestion = (survey: TSurvey | null) => {
+    if (!survey) return { hasContactInfo: false, missingFields: [] };
+
+    // Find ContactInfo questions in the survey
+    const contactInfoQuestions = survey.questions.filter(
+      (q) => q.type === TSurveyQuestionTypeEnum.ContactInfo
+    );
+
+    if (contactInfoQuestions.length === 0) {
+      return { hasContactInfo: false, missingFields: [] };
+    }
+
+    // Check if any ContactInfo question has all required fields enabled
+    for (const question of contactInfoQuestions) {
+      const contactQuestion = question as any; // Type assertion to access fields
+      const missingFields: string[] = [];
+
+      if (!contactQuestion.firstName?.show) {
+        missingFields.push("firstName");
+      }
+
+      if (!contactQuestion.lastName?.show) {
+        missingFields.push("lastName");
+      }
+
+      if (!contactQuestion.email?.show) {
+        missingFields.push("email");
+      }
+
+      // If this question has all required fields, return success
+      if (missingFields.length === 0) {
+        return {
+          hasContactInfo: true,
+          missingFields: [],
+          questionId: question.id,
+          question: contactQuestion,
+        };
+      }
+
+      // Otherwise continue checking other questions
+    }
+
+    // If we get here, we found ContactInfo questions but none with all required fields
+    return {
+      hasContactInfo: true,
+      missingFields: ["firstName", "lastName", "email"],
+      partialMatch: true,
+    };
+  };
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -219,104 +194,102 @@ export const AddIntegrationModal = ({
         })!
       );
       setMapping(selectedIntegration.mapping);
-      setCustomerIdentifierField(selectedIntegration.customerIdentifierField || "emailAddress");
-      setTitleTemplate(selectedIntegration.titleTemplate || "");
+
+      // Initialize labelIdValues from existing mapping
+      const newLabelIdValues: Record<string, string> = {};
+      selectedIntegration.mapping.forEach((m, idx) => {
+        if (m.plainField.id === "labelTypeId") {
+          newLabelIdValues[idx] = m.question.id;
+        }
+      });
+      setLabelIdValues(newLabelIdValues);
+
       return;
     }
     resetForm();
   }, [selectedIntegration, surveys]);
 
-  const linkDatabase = async () => {
+  // State to track contact info validation results
+  const [contactInfoValidation, setContactInfoValidation] = useState<{
+    hasContactInfo: boolean;
+    missingFields: string[];
+    partialMatch?: boolean;
+    questionId?: string;
+    question?: any;
+  }>({ hasContactInfo: false, missingFields: [] });
+
+  // Check for ContactInfo question when survey is selected
+  useEffect(() => {
+    if (selectedSurvey) {
+      const contactCheck = checkContactInfoQuestion(selectedSurvey);
+      setContactInfoValidation(contactCheck);
+    } else {
+      setContactInfoValidation({ hasContactInfo: false, missingFields: [] });
+    }
+  }, [selectedSurvey]);
+
+  const linkIntegration = async () => {
     try {
       if (!selectedSurvey) {
         throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
-      if (mapping.length === 1 && !mapping[0].question.id) {
-        throw new Error(t("environments.integrations.plain.please_select_at_least_one_question"));
+      const contactCheck = checkContactInfoQuestion(selectedSurvey);
+      if (!contactCheck.hasContactInfo) {
+        toast.error(t("environments.integrations.plain.no_contact_info_question"));
+        return;
+      } else if (contactCheck.partialMatch || contactCheck.missingFields.length > 0) {
+        const missingFieldsFormatted = contactCheck.missingFields
+          .map((field) => {
+            switch (field) {
+              case "firstName":
+                return t("common.first_name");
+              case "lastName":
+                return t("common.last_name");
+              case "email":
+                return t("common.email");
+              default:
+                return field;
+            }
+          })
+          .join(", ");
+
+        toast.error(
+          `${t("environments.integrations.plain.contact_info_missing_fields")} ${missingFieldsFormatted}.`
+        );
+        return;
       }
 
-      // Validate mapping before proceeding
-      if (!validateMapping()) {
+      if (mapping.length === 0 || (mapping.length === 1 && !mapping[0].question.id)) {
+        throw new Error(t("environments.integrations.plain.please_select_at_least_one_mapping"));
+      }
+
+      if (mapping.filter((m) => m.error).length > 0) {
         throw new Error(t("environments.integrations.plain.please_resolve_mapping_errors"));
       }
 
-      setIsLinkingDatabase(true);
-
-      integrationData.surveyId = selectedSurvey.id;
-      integrationData.surveyName = selectedSurvey.name;
-
-      // Process mapping to ensure all fields have proper configuration
-      integrationData.mapping = mapping
-        .filter((m) => m.question.id && m.plainField.id) // Filter out incomplete mappings
-        .map((m) => {
-          // Create a new object without the error field
-          const { error, ...mappingWithoutError } = m;
-
-          // Ensure proper configuration for each field type
-          if (
-            mappingWithoutError.plainField.type === "threadField" &&
-            mappingWithoutError.plainField.config
-          ) {
-            // Validate thread field configuration
-            if (!mappingWithoutError.plainField.config.key) {
-              mappingWithoutError.plainField.config.key = mappingWithoutError.question.name;
-            }
-          } else if (
-            mappingWithoutError.plainField.type === "componentText" &&
-            !mappingWithoutError.plainField.config
-          ) {
-            // Default configuration for component text
-            mappingWithoutError.plainField.config = { format: "text" };
-          }
-
-          return mappingWithoutError;
-        });
-
-      integrationData.createdAt = new Date();
-      integrationData.customerIdentifierField = customerIdentifierField;
-      integrationData.titleTemplate = titleTemplate || undefined;
-
-      // Add customer identifier question to mapping if selected
-      if (customerIdentifierQuestion?.id) {
-        const customerIdentifierMapping = {
-          question: customerIdentifierQuestion,
-          plainField: {
-            id: "customerIdentifier",
-            name: "Customer Identifier",
-            type: "customerIdentifier" as TPlainFieldType,
-            config: {
-              identifierType: customerIdentifierField,
-            },
-          },
-        };
-
-        // Check if this question is already mapped
-        const existingMapping = integrationData.mapping.find(
-          (m) => m.question.id === customerIdentifierQuestion.id
-        );
-        if (!existingMapping) {
-          integrationData.mapping.push(customerIdentifierMapping);
-        }
+      if (mapping.filter((m) => !m.question.id).length >= 1) {
+        throw new Error(t("environments.integrations.plain.please_complete_mapping_fields"));
       }
 
-      // Add title question to mapping if selected
-      if (titleQuestion?.id) {
-        const titleMapping = {
-          question: titleQuestion,
-          plainField: {
-            id: "title",
-            name: "Thread Title",
-            type: "title" as TPlainFieldType,
-          },
-        };
+      setIsLinkingIntegration(true);
 
-        // Check if this question is already mapped
-        const existingMapping = integrationData.mapping.find((m) => m.question.id === titleQuestion.id);
-        if (!existingMapping) {
-          integrationData.mapping.push(titleMapping);
-        }
-      }
+      // Find Label ID mapping if it exists
+      const labelIdMapping = mapping.find((m) => m.plainField.id === "labelTypeId");
+      const labelId = labelIdMapping?.question.id || "";
+
+      const integrationData: TIntegrationPlainConfigData = {
+        surveyId: selectedSurvey.id,
+        surveyName: selectedSurvey.name,
+        mapping: mapping.map((m) => {
+          const { error, ...rest } = m;
+          return rest as TPlainMapping;
+        }),
+        includeCreatedAt: true,
+        includeComponents: true,
+        labelId: labelId, // Add the Label ID from the mapping
+        createdAt: new Date(),
+      };
 
       if (selectedIntegration) {
         // update action
@@ -337,7 +310,7 @@ export const AddIntegrationModal = ({
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setIsLinkingDatabase(false);
+      setIsLinkingIntegration(false);
     }
   };
 
@@ -355,96 +328,80 @@ export const AddIntegrationModal = ({
     }
   };
 
-  const validateMapping = () => {
-    let hasError = false;
-    const updatedMapping = mapping.map((m) => {
-      if (!m.question.id) {
-        m.error = { type: "question", msg: t("environments.integrations.plain.select_a_survey_question") };
-        hasError = true;
-      } else if (!m.plainField.id) {
-        m.error = { type: "field", msg: t("environments.integrations.plain.select_a_plain_field") };
-        hasError = true;
-      } else {
-        const plainFieldType = m.plainField.type;
-        const questionType = m.question.type as TSurveyQuestionTypeEnum;
-        if (
-          PLAIN_TYPE_MAPPING[plainFieldType] &&
-          !PLAIN_TYPE_MAPPING[plainFieldType].includes(questionType)
-        ) {
-          m.error = {
-            type: "compatibility",
-            msg: t("environments.integrations.plain.incompatible_field_type"),
-          };
-          hasError = true;
-        } else {
-          m.error = null;
-        }
-      }
-      return m;
-    });
-    setMapping(updatedMapping);
-    return !hasError;
-  };
-
   const resetForm = () => {
-    setIsLinkingDatabase(false);
+    setIsLinkingIntegration(false);
     setSelectedSurvey(null);
-    setCustomerIdentifierField("emailAddress");
-    setTitleTemplate("");
+    setLabelIdValues({});
     setMapping([
       {
+        plainField: { id: "threadTitle", name: "Thread Title", type: "threadField" },
         question: { id: "", name: "", type: "" },
-        plainField: { id: "title", name: "Thread Title", type: "title" },
+        isMandatory: true,
       },
       {
+        plainField: { id: "componentText", name: "Component Text", type: "componentText" },
         question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "customerIdentifier",
-          name: "Customer Identifier (Email)",
-          type: "customerIdentifier",
-          config: { identifierType: "emailAddress" },
-        },
-      },
-      {
-        question: { id: "", name: "", type: "" },
-        plainField: {
-          id: "componentText",
-          name: "Component Text",
-          type: "componentText",
-          config: { format: "text" },
-        },
+        isMandatory: true,
       },
     ]);
   };
 
   const getFilteredQuestionItems = (selectedIdx) => {
     const selectedQuestionIds = mapping.filter((_, idx) => idx !== selectedIdx).map((m) => m.question.id);
-
     return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
   };
 
   const createCopy = (item) => structuredClone(item);
 
+  const getFilteredPlainFieldTypes = (selectedIdx: number) => {
+    const selectedPlainFieldIds = mapping.filter((_, idx) => idx !== selectedIdx).map((m) => m.plainField.id);
+
+    return plainFieldTypes.filter((field) => !selectedPlainFieldIds.includes(field.id));
+  };
+
   const MappingRow = ({ idx }: { idx: number }) => {
     const filteredQuestionItems = getFilteredQuestionItems(idx);
+    const filteredPlainFields = getFilteredPlainFieldTypes(idx);
 
     const addRow = () => {
+      const usedFieldIds = mapping.map((m) => m.plainField.id);
+      const availableField = plainFieldTypes.find((field) => !usedFieldIds.includes(field.id)) || {
+        id: "threadField",
+        name: "Thread Field",
+        type: "threadField" as TPlainFieldType,
+      };
+
       setMapping((prev) => [
         ...prev,
         {
+          plainField: availableField,
           question: { id: "", name: "", type: "" },
-          plainField: { id: "componentText", name: "Component Text", type: "componentText" },
+          isMandatory: false,
         },
       ]);
     };
 
     const deleteRow = () => {
+      if (mapping[idx].isMandatory) return;
+
       setMapping((prev) => {
         return prev.filter((_, i) => i !== idx);
       });
     };
 
-    const ErrorMsg = ({ error }) => {
+    interface ErrorMsgProps {
+      error:
+        | {
+            type: string;
+            msg: React.ReactNode | string;
+          }
+        | null
+        | undefined;
+      field?: { id: string; name: string; type: TPlainFieldType; config?: Record<string, any> };
+      ques?: { id: string; name: string; type: string };
+    }
+
+    const ErrorMsg = ({ error }: ErrorMsgProps) => {
       if (!error) return null;
 
       return (
@@ -455,100 +412,79 @@ export const AddIntegrationModal = ({
       );
     };
 
-    // Get Plain field options, with special handling for customer identifier types
-    const getPlainFieldOptions = () => {
-      const baseOptions = [
-        { id: "componentText", name: "Component Text", type: "componentText" },
-        { id: "title", name: "Thread Title", type: "title" },
-        { id: "threadField", name: "Thread Field", type: "threadField" },
-        { id: "labelTypeId", name: "Label Type", type: "labelTypeId" },
-      ];
-
-      // Add customer identifier options with type information
-      const customerIdentifierOptions = [
-        {
-          id: "customerIdentifier",
-          name: "Customer Identifier (Email)",
-          type: "customerIdentifier",
-          identifierType: "emailAddress",
-        },
-        {
-          id: "customerIdentifier",
-          name: "Customer Identifier (External ID)",
-          type: "customerIdentifier",
-          identifierType: "externalId",
-        },
-        {
-          id: "customerIdentifier",
-          name: "Customer Identifier (User ID)",
-          type: "customerIdentifier",
-          identifierType: "customerId",
-        },
-      ];
-
-      return [...baseOptions, ...customerIdentifierOptions];
-    };
-
     return (
-      <div className="mb-4 w-full">
-        <ErrorMsg key={idx} error={mapping[idx]?.error} />
-        <div className="flex w-full items-center">
-          <div className="flex w-full items-center space-x-2">
-            {/* Survey Question Dropdown */}
-            <div className="w-[340px] max-w-full">
+      <div className="w-full">
+        <ErrorMsg
+          key={idx}
+          error={mapping[idx]?.error}
+          field={mapping[idx].plainField}
+          ques={mapping[idx].question}
+        />
+        <div className="flex w-full items-center space-x-2">
+          <div className="flex w-full items-center">
+            {mapping[idx].plainField.id === "labelTypeId" ? (
+              <div className="max-w-full flex-1">
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  placeholder={t("environments.integrations.plain.enter_label_id")}
+                  value={labelIdValues[idx] || ""}
+                  onChange={(e) => {
+                    setLabelIdValues((prev) => ({
+                      ...prev,
+                      [idx]: e.target.value,
+                    }));
+                    setMapping((prev) => {
+                      const copy = createCopy(prev);
+                      copy[idx] = {
+                        ...copy[idx],
+                        question: {
+                          id: e.target.value,
+                          name: "Label ID",
+                          type: "labelTypeId",
+                        },
+                        error: null,
+                      };
+                      return copy;
+                    });
+                  }}
+                />
+              </div>
+            ) : (
+              // Regular question dropdown for non-Label ID fields
+              <div className="max-w-full flex-1">
+                <DropdownSelector
+                  placeholder={t("environments.integrations.plain.select_a_survey_question")}
+                  items={filteredQuestionItems}
+                  selectedItem={mapping?.[idx]?.question}
+                  setSelectedItem={(item) => {
+                    setMapping((prev) => {
+                      const copy = createCopy(prev);
+                      copy[idx] = {
+                        ...copy[idx],
+                        question: item,
+                        error: null,
+                      };
+                      return copy;
+                    });
+                  }}
+                  disabled={questionItems.length === 0}
+                />
+              </div>
+            )}
+            <div className="h-px w-4 border-t border-t-slate-300" />
+            <div className="max-w-full flex-1">
               <DropdownSelector
-                placeholder={t("environments.integrations.plain.select_survey_question")}
-                items={filteredQuestionItems}
-                selectedItem={mapping?.[idx]?.question}
-                setSelectedItem={(item) => {
-                  setMapping((prev) => {
-                    const copy = createCopy(prev);
-                    copy[idx] = {
-                      ...copy[idx],
-                      question: item,
-                      error: null,
-                    };
-                    return copy;
-                  });
-                }}
-              />
-            </div>
-
-            {/* Plain Field Dropdown */}
-            <div className="w-[340px] max-w-full">
-              <DropdownSelector
-                placeholder={t("environments.integrations.plain.select_plain_field")}
-                items={getPlainFieldOptions()}
+                placeholder={t("environments.integrations.plain.select_a_field_to_map")}
+                items={filteredPlainFields}
                 selectedItem={mapping?.[idx]?.plainField}
+                disabled={filteredPlainFields.length === 0}
                 setSelectedItem={(item) => {
                   setMapping((prev) => {
                     const copy = createCopy(prev);
-                    let config = {};
-
-                    // Initialize appropriate config based on field type
-                    if (item.type === "threadField") {
-                      config = {
-                        key: "",
-                        fieldType: "String",
-                      };
-                    } else if (item.type === "componentText") {
-                      config = {
-                        format: "text",
-                      };
-                    } else if (item.type === "customerIdentifier") {
-                      config = {
-                        identifierType: item.identifierType || "emailAddress",
-                      };
-                    }
-
                     copy[idx] = {
                       ...copy[idx],
-                      plainField: {
-                        id: item.id,
-                        name: item.name,
-                        type: item.type as TPlainFieldType,
-                        config,
-                      },
+                      plainField: item,
                       error: null,
                     };
                     return copy;
@@ -557,204 +493,45 @@ export const AddIntegrationModal = ({
               />
             </div>
           </div>
-          {mapping[idx]?.plainField?.type === "threadField" && (
-            <div className="mt-2 flex w-full items-center space-x-2">
-              <div className="w-1/2">
-                <input
-                  type="text"
-                  className="block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm"
-                  placeholder="Thread field key"
-                  value={mapping[idx]?.plainField?.config?.key || ""}
-                  onChange={(e) => {
-                    setMapping((prev) => {
-                      const copy = createCopy(prev);
-                      if (!copy[idx].plainField.config) {
-                        copy[idx].plainField.config = {};
-                      }
-                      copy[idx].plainField.config.key = e.target.value;
-                      return copy;
-                    });
-                  }}
-                />
-              </div>
-              <div className="w-1/2">
-                <DropdownSelector
-                  placeholder="Field type"
-                  items={[
-                    { id: "String", name: "String" },
-                    { id: "Enum", name: "Enum" },
-                    { id: "Boolean", name: "Boolean" },
-                  ]}
-                  selectedItem={{
-                    id: mapping[idx]?.plainField?.config?.fieldType || "String",
-                    name: mapping[idx]?.plainField?.config?.fieldType || "String",
-                  }}
-                  setSelectedItem={(item) => {
-                    setMapping((prev) => {
-                      const copy = createCopy(prev);
-                      if (!copy[idx].plainField.config) {
-                        copy[idx].plainField.config = {};
-                      }
-                      copy[idx].plainField.config.fieldType = item.id;
-                      return copy;
-                    });
-                  }}
-                />
-              </div>
-            </div>
-          )}
-          {mapping[idx]?.plainField?.type === "labelTypeId" && (
-            <div className="mt-2 w-full">
-              <input
-                type="text"
-                className="block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-500 focus:outline-none focus:ring-slate-500 sm:text-sm"
-                placeholder="Label Type ID"
-                value={mapping[idx]?.plainField?.config?.labelId || ""}
-                onChange={(e) => {
-                  setMapping((prev) => {
-                    const copy = createCopy(prev);
-                    if (!copy[idx].plainField.config) {
-                      copy[idx].plainField.config = {};
-                    }
-                    copy[idx].plainField.config.labelId = e.target.value;
-                    return copy;
-                  });
-                }}
-              />
-            </div>
-          )}
-          <button
-            type="button"
-            className={`rounded-md p-1 hover:bg-slate-300 ${
-              idx === mapping.length - 1 ? "visible" : "invisible"
-            }`}
-            onClick={addRow}>
-            <PlusIcon className="h-5 w-5 font-bold text-slate-500" />
-          </button>
-          <button
-            type="button"
-            className={`flex-1 rounded-md p-1 hover:bg-red-100 ${
-              mapping.length > 1 ? "visible" : "invisible"
-            }`}
-            onClick={deleteRow}>
-            <XIcon className="h-5 w-5 text-red-500" />
-          </button>
+          <div className="flex space-x-2">
+            {!mapping[idx].isMandatory && (
+              <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
+                <TrashIcon />
+              </Button>
+            )}
+            <Button variant="secondary" size="icon" className="size-10" onClick={addRow}>
+              <PlusIcon />
+            </Button>
+          </div>
         </div>
       </div>
     );
   };
 
-  const PLAIN_TYPE_MAPPING: Record<TPlainFieldType, TSurveyQuestionTypeEnum[]> = {
-    componentText: [
-      "openText",
-      "multipleChoiceSingle",
-      "multipleChoiceMulti",
-      "rating",
-      "nps",
-      "cta",
-      "consent",
-      "email",
-      "fileUpload",
-      "pictureSelection",
-      "cal",
-      "date",
-      "address",
-      "number",
-      "url",
-      "phone",
-      "dropdown",
-      "matrix",
-      "rankingQuestion",
-      "textArea",
-      "longText",
-      "organization",
-      "website",
-      "boolean",
-    ],
-    title: [
-      "openText",
-      "multipleChoiceSingle",
-      "multipleChoiceMulti",
-      "rating",
-      "nps",
-      "cta",
-      "consent",
-      "email",
-      "fileUpload",
-      "pictureSelection",
-      "cal",
-      "date",
-      "address",
-      "number",
-      "url",
-      "phone",
-      "dropdown",
-      "matrix",
-      "rankingQuestion",
-      "textArea",
-      "longText",
-      "organization",
-      "website",
-      "boolean",
-    ],
-    customerIdentifier: ["email", "openText", "url", "phone"],
-    threadField: [
-      "openText",
-      "multipleChoiceSingle",
-      "multipleChoiceMulti",
-      "rating",
-      "nps",
-      "cta",
-      "consent",
-      "email",
-      "fileUpload",
-      "pictureSelection",
-      "cal",
-      "date",
-      "address",
-      "number",
-      "url",
-      "phone",
-      "dropdown",
-      "matrix",
-      "rankingQuestion",
-      "textArea",
-      "longText",
-      "organization",
-      "website",
-      "boolean",
-    ],
-    labelTypeId: ["openText", "multipleChoiceSingle"],
-    assignedTo: ["openText", "email"],
-    tenantId: ["openText"],
-  };
-
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} size="lg">
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image
-                  className="w-12"
-                  src={PlainLogo}
-                  alt={t("environments.integrations.plain.plain_logo")}
-                />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.plain.add_plain_integration")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.integrations.plain.sync_responses_with_plain")}
-                </div>
-              </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <div className="mb-4 flex items-start space-x-2">
+            <div className="relative size-8">
+              <Image
+                fill
+                className="object-contain object-center"
+                src={PlainLogo}
+                alt={t("environments.integrations.plain.plain_logo")}
+              />
+            </div>
+            <div className="space-y-0.5">
+              <DialogTitle>{t("environments.integrations.plain.configure_plain_integration")}</DialogTitle>
+              <DialogDescription>
+                {t("environments.integrations.plain.plain_integration_description")}
+              </DialogDescription>
             </div>
           </div>
-        </div>
-        <form onSubmit={handleSubmit(linkDatabase)} className="w-full">
-          <div className="flex justify-between rounded-lg p-6">
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(linkIntegration)} className="contents space-y-4">
+          <DialogBody>
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
@@ -768,55 +545,81 @@ export const AddIntegrationModal = ({
                   <p className="m-1 text-xs text-slate-500">
                     {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
                   </p>
+
+                  {/* Contact Info Warning */}
+                  {contactInfoValidation.hasContactInfo && contactInfoValidation.partialMatch && (
+                    <div className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-800">
+                      <p className="font-medium">
+                        {t("environments.integrations.plain.contact_info_warning")}
+                      </p>
+                      <p className="mt-1">
+                        {t("environments.integrations.plain.contact_info_missing_fields_description")}:
+                        {contactInfoValidation.missingFields
+                          .map((field) => {
+                            switch (field) {
+                              case "firstName":
+                                return t("common.first_name");
+                              case "lastName":
+                                return t("common.last_name");
+                              case "email":
+                                return t("common.email");
+                              default:
+                                return field;
+                            }
+                          })
+                          .join(", ")}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {selectedSurvey && (
-                  <div>
-                    <Label>{t("environments.integrations.plain.select_survey_questions_to_include")}</Label>
-                    <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
-                      {mapping.map((_, idx) => (
-                        <MappingRow idx={idx} key={idx} />
-                      ))}
+                  <div className="space-y-4">
+                    <div>
+                      <Label>{t("environments.integrations.plain.map_formbricks_fields_to_plain")}</Label>
+                      <div className="mt-1 space-y-2 overflow-y-auto">
+                        {mapping.map((_, idx) => (
+                          <MappingRow idx={idx} key={idx} />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              {selectedIntegration ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  loading={isDeleting}
-                  onClick={() => {
-                    deleteLink();
-                  }}>
-                  {t("common.delete")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setOpen(false);
-                    resetForm();
-                    setMapping([]);
-                  }}>
-                  {t("common.cancel")}
-                </Button>
-              )}
+          </DialogBody>
+
+          <DialogFooter>
+            {selectedIntegration ? (
               <Button
-                type="submit"
-                loading={isLinkingDatabase}
-                disabled={mapping.filter((m) => m.error).length > 0}>
-                {selectedIntegration ? t("common.update") : t("environments.integrations.plain.link_survey")}
+                type="button"
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  deleteLink();
+                }}>
+                {t("common.delete")}
               </Button>
-            </div>
-          </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                }}>
+                {t("common.cancel")}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              loading={isLinkingIntegration}
+              disabled={mapping.filter((m) => m.error).length > 0}>
+              {selectedIntegration ? t("common.update") : t("environments.integrations.plain.connect")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
