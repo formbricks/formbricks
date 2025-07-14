@@ -78,22 +78,28 @@ export const AppTab = () => {
     <div className="flex flex-col justify-between space-y-6 pb-4">
       <div className="flex flex-col space-y-6">
         <Alert variant={environment.appSetupCompleted ? "success" : "warning"} size="default">
-          <AlertTitle>{t("environments.surveys.summary.in_app.connection_title")}</AlertTitle>
+          <AlertTitle>
+            {environment.appSetupCompleted
+              ? t("environments.surveys.summary.in_app.connection_title")
+              : t("environments.surveys.summary.in_app.no_connection_title")}
+          </AlertTitle>
           <AlertDescription>
-            {t("environments.surveys.summary.in_app.connection_description")}
+            {environment.appSetupCompleted
+              ? t("environments.surveys.summary.in_app.connection_description")
+              : t("environments.surveys.summary.in_app.no_connection_description")}
           </AlertDescription>
           {!environment.appSetupCompleted && (
             <AlertButton asChild>
               <Link href={`/environments/${environment.id}/project/app-connection`}>
-                {t("environments.surveys.summary.in_app.connection_button")}
+                {t("common.connect_formbricks")}
               </Link>
             </AlertButton>
           )}
         </Alert>
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-3">
           <H4>{t("environments.surveys.summary.in_app.display_criteria")}</H4>
-          <div className={"w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm"}>
+          <div className={"w-full rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm"}>
             <div className="flex flex-col space-y-4">
               <div className="flex gap-2">
                 <ClockIcon className="h-4 w-4" />

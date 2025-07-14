@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { H4 } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
@@ -38,15 +39,25 @@ export const DocumentationLinksSection = ({ title, links }: DocumentationLinksSe
   const { t } = useTranslate();
 
   return (
-    <div className="flex w-full flex-col space-y-4">
+    <div className="flex w-full flex-col space-y-3">
       <H4>{title}</H4>
       {links.map((link, index) => (
-        <DocumentationButton
-          key={index}
-          href={link.href}
-          title={link.title}
-          readDocsText={t("common.read_docs")}
-        />
+        <>
+          <DocumentationButton
+            key={index}
+            href={link.href}
+            title={link.title}
+            readDocsText={t("common.read_docs")}
+          />
+          <Alert key={index} size="small" variant="link">
+            <AlertTitle>{link.title}</AlertTitle>
+            <AlertButton>
+              <Link href={link.href} target="_blank" rel="noopener noreferrer">
+                {t("common.read_docs")}
+              </Link>
+            </AlertButton>
+          </Alert>
+        </>
       ))}
     </div>
   );
