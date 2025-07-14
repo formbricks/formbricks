@@ -8,7 +8,6 @@ interface DocumentationLinksProps {
   links: {
     title: string;
     href: string;
-    readDocsText: string;
   }[];
 }
 

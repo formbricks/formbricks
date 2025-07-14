@@ -9,7 +9,7 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { generateSurveySingleUseId, generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
+import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
 import { getUserProjects } from "@/modules/survey/list/lib/project";

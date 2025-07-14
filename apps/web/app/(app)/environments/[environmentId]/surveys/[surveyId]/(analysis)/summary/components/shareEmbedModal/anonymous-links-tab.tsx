@@ -7,16 +7,16 @@ import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/sur
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { Switch } from "@/modules/ui/components/switch";
 import { cn } from "@/modules/ui/lib/utils";
 import { useTranslate } from "@tolgee/react";
 import { CirclePlayIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -49,6 +49,15 @@ export const AnonymousLinksTab = ({
     pendingAction: () => void;
   } | null>(null);
 
+  const resetState = () => {
+    const { singleUse } = survey;
+    const { enabled, isEncrypted } = singleUse ?? {};
+
+    setIsMultiUseLink(!enabled);
+    setIsSingleUseLink(enabled ?? false);
+    setSingleUseEncryption(isEncrypted ?? false);
+  };
+
   const handleMultiUseToggle = async (newValue: boolean) => {
     if (newValue) {
       // Turning multi-use on - show confirmation modal if single-use is currently enabled
@@ -60,17 +69,25 @@ export const AnonymousLinksTab = ({
             setIsMultiUseLink(true);
             setIsSingleUseLink(false);
             setSingleUseEncryption(false);
+
             try {
-              await updateSingleUseLinksAction({
+              const updatedSurveyResponse = await updateSingleUseLinksAction({
                 surveyId: survey.id,
                 environmentId: survey.environmentId,
                 isSingleUse: false,
                 isSingleUseEncryption: false,
               });
 
-              router.refresh();
-            } catch (error) {
-              console.error("Failed to update single use settings:", error);
+              if (updatedSurveyResponse?.data) {
+                router.refresh();
+                return;
+              }
+
+              toast.error(t("common.something_went_wrong_please_try_again"));
+              resetState();
+            } catch {
+              toast.error(t("common.something_went_wrong_please_try_again"));
+              resetState();
             }
           },
         });
@@ -80,16 +97,23 @@ export const AnonymousLinksTab = ({
         setIsSingleUseLink(false);
         setSingleUseEncryption(false);
         try {
-          await updateSingleUseLinksAction({
+          const updatedSurveyResponse = await updateSingleUseLinksAction({
             surveyId: survey.id,
             environmentId: survey.environmentId,
             isSingleUse: false,
             isSingleUseEncryption: false,
           });
 
-          router.refresh();
-        } catch (error) {
-          console.error("Failed to update single use settings:", error);
+          if (updatedSurveyResponse?.data) {
+            router.refresh();
+            return;
+          }
+
+          toast.error(t("common.something_went_wrong_please_try_again"));
+          resetState();
+        } catch {
+          toast.error(t("common.something_went_wrong_please_try_again"));
+          resetState();
         }
       }
     } else {
@@ -102,16 +126,23 @@ export const AnonymousLinksTab = ({
           setIsSingleUseLink(true);
           setSingleUseEncryption(true);
           try {
-            await updateSingleUseLinksAction({
+            const updatedSurveyResponse = await updateSingleUseLinksAction({
               surveyId: survey.id,
               environmentId: survey.environmentId,
               isSingleUse: true,
               isSingleUseEncryption: true,
             });
 
-            router.refresh();
-          } catch (error) {
-            console.error("Failed to update single use settings:", error);
+            if (updatedSurveyResponse?.data) {
+              router.refresh();
+              return;
+            }
+
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
+          } catch {
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
           }
         },
       });
@@ -129,16 +160,23 @@ export const AnonymousLinksTab = ({
           setIsSingleUseLink(true);
           setSingleUseEncryption(true);
           try {
-            await updateSingleUseLinksAction({
+            const updatedSurveyResponse = await updateSingleUseLinksAction({
               surveyId: survey.id,
               environmentId: survey.environmentId,
               isSingleUse: true,
               isSingleUseEncryption: true,
             });
 
-            router.refresh();
-          } catch (error) {
-            console.error("Failed to update single use settings:", error);
+            if (updatedSurveyResponse?.data) {
+              router.refresh();
+              return;
+            }
+
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
+          } catch {
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
           }
         },
       });
@@ -152,16 +190,23 @@ export const AnonymousLinksTab = ({
           setIsSingleUseLink(false);
           setSingleUseEncryption(false);
           try {
-            await updateSingleUseLinksAction({
+            const updatedSurveyResponse = await updateSingleUseLinksAction({
               surveyId: survey.id,
               environmentId: survey.environmentId,
               isSingleUse: false,
               isSingleUseEncryption: false,
             });
 
-            router.refresh();
-          } catch (error) {
-            console.error("Failed to update single use settings:", error);
+            if (updatedSurveyResponse?.data) {
+              router.refresh();
+              return;
+            }
+
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
+          } catch {
+            toast.error(t("common.something_went_wrong_please_try_again"));
+            resetState();
           }
         },
       });
@@ -171,41 +216,38 @@ export const AnonymousLinksTab = ({
   const handleSingleUseEncryptionToggle = async (newValue: boolean) => {
     setSingleUseEncryption(newValue);
     try {
-      await updateSingleUseLinksAction({
+      const updatedSurveyResponse = await updateSingleUseLinksAction({
         surveyId: survey.id,
         environmentId: survey.environmentId,
         isSingleUse: true,
         isSingleUseEncryption: newValue,
       });
 
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to update single use encryption settings:", error);
+      if (updatedSurveyResponse?.data) {
+        router.refresh();
+        return;
+      }
+
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      resetState();
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      resetState();
     }
   };
 
   const handleNumberOfLinksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    // Allow empty input for typing
+
     if (inputValue === "") {
       setNumberOfLinks("");
       return;
     }
 
     const value = Number(inputValue);
-    // Only update if it's a valid number
+
     if (!isNaN(value)) {
       setNumberOfLinks(value);
-    }
-  };
-
-  const handleNumberOfLinksBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-    // On blur, ensure we have a valid value
-    if (isNaN(value) || value < 1) {
-      setNumberOfLinks(1);
-    } else if (value > 5000) {
-      setNumberOfLinks(5000);
     }
   };
 
@@ -240,8 +282,10 @@ export const AnonymousLinksTab = ({
 
         return;
       }
+
+      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
     } catch (error) {
-      console.error("Failed to generate single use IDs:", error);
+      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
     }
   };
 
@@ -250,129 +294,106 @@ export const AnonymousLinksTab = ({
       title={t("environments.surveys.share.anonymous_links.title")}
       description={t("environments.surveys.share.anonymous_links.description")}>
       <div className="flex h-full w-full grow flex-col gap-6">
-        <div className="flex items-start gap-2 space-y-0">
-          <Switch
-            checked={isMultiUseLink}
-            onCheckedChange={handleMultiUseToggle}
-            id="multi-use-link-switch"
-          />
-          <div>
-            <label htmlFor="multi-use-link-switch" className="text-sm font-medium text-slate-900">
-              {t("environments.surveys.share.anonymous_links.multi_use_link")}
-            </label>
-            <p className="text-sm text-slate-600">
-              {t("environments.surveys.share.anonymous_links.multi_use_link_description")}
-            </p>
-          </div>
-        </div>
+        <AdvancedOptionToggle
+          htmlId="multi-use-link-switch"
+          isChecked={isMultiUseLink}
+          onToggle={handleMultiUseToggle}
+          title={t("environments.surveys.share.anonymous_links.multi_use_link")}
+          description={t("environments.surveys.share.anonymous_links.multi_use_link_description")}
+          customContainerClass="p-0"
+          childBorder>
+          <div className="flex w-full flex-col gap-4 bg-white p-4">
+            <div className={cn(!isMultiUseLink ? "pointer-events-none opacity-50" : "")}>
+              <ShareSurveyLink
+                survey={survey}
+                surveyUrl={surveyUrl}
+                publicDomain={publicDomain}
+                setSurveyUrl={setSurveyUrl}
+                locale={locale}
+              />
+            </div>
 
-        <div className={cn(!isMultiUseLink ? "pointer-events-none opacity-50" : "")}>
-          <ShareSurveyLink
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={locale}
-          />
-        </div>
-
-        {isMultiUseLink ? (
-          <div className="w-full bg-white">
-            <Alert variant="info" size="default">
-              <AlertTitle>
-                {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
-              </AlertTitle>
-              <AlertDescription>
-                {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description")}
-              </AlertDescription>
-            </Alert>
-          </div>
-        ) : null}
-
-        <div className="flex items-start gap-2 space-y-0">
-          <Switch
-            checked={isSingleUseLink}
-            onCheckedChange={handleSingleUseToggle}
-            id="single-use-link-switch"
-          />
-          <div>
-            <label htmlFor="single-use-link-switch" className="text-sm font-medium text-slate-900">
-              {t("environments.surveys.share.anonymous_links.single_use_link")}
-            </label>
-            <p className="text-sm text-slate-600">
-              {t("environments.surveys.share.anonymous_links.single_use_link_description")}
-            </p>
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "flex items-start gap-2 space-y-0",
-            !isSingleUseLink ? "pointer-events-none opacity-50" : ""
-          )}>
-          <Switch
-            checked={singleUseEncryption}
-            onCheckedChange={handleSingleUseEncryptionToggle}
-            id="single-use-encryption-switch"
-          />
-          <div>
-            <label htmlFor="single-use-encryption-switch" className="text-sm font-medium text-slate-900">
-              {t("environments.surveys.share.anonymous_links.url_encryption_label")}
-            </label>
-            <p className="text-sm text-slate-600">
-              {t("environments.surveys.share.anonymous_links.url_encryption_description")}
-            </p>
-          </div>
-        </div>
-
-        {isSingleUseLink && !singleUseEncryption ? (
-          <div className="w-full bg-white">
-            <Alert variant="info" size="default">
-              <AlertTitle>
-                {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
-              </AlertTitle>
-              <AlertDescription>
-                {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
-              </AlertDescription>
-            </Alert>
-          </div>
-        ) : null}
-
-        {isSingleUseLink && singleUseEncryption && (
-          <div className="flex w-full flex-col gap-2">
-            <h3 className="text-sm font-medium text-slate-900">
-              {t("environments.surveys.share.anonymous_links.number_of_links_label")}
-            </h3>
-
-            <div className="flex w-full items-center gap-2">
-              <div className="w-32">
-                <Input
-                  type="number"
-                  max={5000}
-                  min={1}
-                  className="bg-white focus:border focus:border-slate-900"
-                  value={numberOfLinks}
-                  onChange={handleNumberOfLinksChange}
-                  onBlur={handleNumberOfLinksBlur}
-                />
-              </div>
-
-              <Button
-                variant="default"
-                onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
-                // disabled={numberOfLinks < 1 || numberOfLinks > 5000}>
-              >
-                <div className="flex items-center gap-2">
-                  <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
-                </div>
-
-                <span className="text-sm text-slate-50">
-                  {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
-                </span>
-              </Button>
+            <div className="w-full">
+              <Alert variant="info" size="default">
+                <AlertTitle>
+                  {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
+                </AlertTitle>
+                <AlertDescription>
+                  {t(
+                    "environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description"
+                  )}
+                </AlertDescription>
+              </Alert>
             </div>
           </div>
-        )}
+        </AdvancedOptionToggle>
+
+        <AdvancedOptionToggle
+          htmlId="single-use-link-switch"
+          isChecked={isSingleUseLink}
+          onToggle={handleSingleUseToggle}
+          title={t("environments.surveys.share.anonymous_links.single_use_link")}
+          description={t("environments.surveys.share.anonymous_links.single_use_link_description")}
+          customContainerClass="p-0"
+          childBorder>
+          <div className="flex w-full flex-col gap-4 bg-white p-4">
+            <AdvancedOptionToggle
+              htmlId="single-use-encryption-switch"
+              isChecked={singleUseEncryption}
+              onToggle={handleSingleUseEncryptionToggle}
+              title={t("environments.surveys.share.anonymous_links.url_encryption_label")}
+              description={t("environments.surveys.share.anonymous_links.url_encryption_description")}
+              customContainerClass="p-0"
+            />
+
+            {!singleUseEncryption ? (
+              <Alert variant="info" size="default">
+                <AlertTitle>
+                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
+                </AlertTitle>
+                <AlertDescription>
+                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {singleUseEncryption && (
+              <div className="flex w-full flex-col gap-2">
+                <h3 className="text-sm font-medium text-slate-900">
+                  {t("environments.surveys.share.anonymous_links.number_of_links_label")}
+                </h3>
+
+                <div className="flex w-full flex-col gap-2">
+                  <div className="flex w-full items-center gap-2">
+                    <div className="w-32">
+                      <Input
+                        type="number"
+                        max={5000}
+                        min={1}
+                        className="bg-white focus:border focus:border-slate-900"
+                        value={numberOfLinks}
+                        onChange={handleNumberOfLinksChange}
+                      />
+                    </div>
+
+                    <Button
+                      variant="default"
+                      onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
+                      disabled={Number(numberOfLinks) < 1 || Number(numberOfLinks) > 5000}>
+                      <div className="flex items-center gap-2">
+                        <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                      </div>
+
+                      <span className="text-sm text-slate-50">
+                        {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </AdvancedOptionToggle>
       </div>
 
       <DocumentationLinks
@@ -380,22 +401,18 @@ export const AnonymousLinksTab = ({
           {
             title: t("environments.surveys.share.anonymous_links.single_use_links"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
-            readDocsText: t("common.read_more"),
           },
           {
             title: t("environments.surveys.share.anonymous_links.data_prefilling"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
-            readDocsText: t("common.read_more"),
           },
           {
             title: t("environments.surveys.share.anonymous_links.source_tracking"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
-            readDocsText: t("common.read_more"),
           },
           {
             title: t("environments.surveys.share.anonymous_links.custom_start_point"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
-            readDocsText: t("common.read_more"),
           },
         ]}
       />

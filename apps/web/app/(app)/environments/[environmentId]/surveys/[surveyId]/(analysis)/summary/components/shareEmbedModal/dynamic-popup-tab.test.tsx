@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { DynamicPopupTab } from "./DynamicPopupTab";
+import { DynamicPopupTab } from "./dynamic-popup-tab";
 
 // Mock components
 vi.mock("@/modules/ui/components/alert", () => ({

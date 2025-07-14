@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
-import { EmailTab } from "./EmailTab";
+import { EmailTab } from "./email-tab";
 
 // Mock actions
 vi.mock("../../actions", () => ({

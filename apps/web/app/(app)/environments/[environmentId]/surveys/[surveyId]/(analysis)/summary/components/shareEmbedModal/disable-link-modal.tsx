@@ -30,20 +30,20 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
         <DialogBody>
           {type === "multi-use" ? (
             <>
-              <p>Disabling the multi-use link will prevent anyone to submit a response via the link.</p>
+              <p>
+                {t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_description")}
+              </p>
 
               <br />
 
               <p>
-                This will also break any active embeds on Websites, Emails, Social Media and QR codes that use
-                this multi-use link.
+                {t(
+                  "environments.surveys.share.anonymous_links.disable_multi_use_link_modal_description_subtext"
+                )}
               </p>
             </>
           ) : (
-            <p>
-              If you shared single-use links, participants will not be able to respond to the survey any
-              longer.
-            </p>
+            <p>{t("environments.surveys.share.anonymous_links.disable_single_use_link_modal_description")}</p>
           )}
         </DialogBody>
 
@@ -55,7 +55,9 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
                 onDisable();
                 onOpenChange(false);
               }}>
-              {type === "multi-use" ? "Disable multi-use link" : "Disable single-use link"}
+              {type === "multi-use"
+                ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_button")
+                : t("environments.surveys.share.anonymous_links.disable_single_use_link_modal_button")}
             </Button>
 
             <Button variant="secondary" onClick={() => onOpenChange(false)}>

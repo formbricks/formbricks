@@ -14,7 +14,7 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 86400,
   NEXTAUTH_SECRET: "test-secret",
   WEBAPP_URL: "http://localhost:3000",
-  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
+  ENCRYPTION_KEY: "0".repeat(32),
   REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: false,
   AUDIT_LOG_GET_USER_IP: false,

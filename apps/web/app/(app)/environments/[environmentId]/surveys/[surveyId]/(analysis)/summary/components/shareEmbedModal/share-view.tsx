@@ -1,6 +1,6 @@
 "use client";
 
-import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
+import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -22,10 +22,10 @@ import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AppTab } from "./AppTab";
-import { EmailTab } from "./EmailTab";
 import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
 import { AnonymousLinksTab } from "./anonymous-links-tab";
+import { AppTab } from "./app-tab";
+import { EmailTab } from "./email-tab";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 interface ShareViewProps {
@@ -60,7 +60,6 @@ export const ShareView = ({
   isFormbricksCloud,
 }: ShareViewProps) => {
   const [isLargeScreen, setIsLargeScreen] = useState(true);
-  const { t } = useTranslate();
 
   useEffect(() => {
     const checkScreenSize = () => {
