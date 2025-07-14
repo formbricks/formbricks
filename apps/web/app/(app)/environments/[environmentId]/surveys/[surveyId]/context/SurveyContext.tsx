@@ -8,6 +8,7 @@ export interface SurveyContextType {
 }
 
 const SurveyContext = createContext<SurveyContextType | null>(null);
+SurveyContext.displayName = "SurveyContext";
 
 export const useSurvey = () => {
   const context = useContext(SurveyContext);

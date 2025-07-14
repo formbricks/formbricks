@@ -87,7 +87,9 @@ vi.mock(
     ShareSurveyModal: ({ survey, open, setOpen, modalView, user }: any) => (
       <div data-testid="share-survey-modal" data-open={open} data-modal-view={modalView}>
         Share Survey Modal for {survey.id} - User: {user.id}
-        <button onClick={() => setOpen(false)}>Close Modal</button>
+        <button type="button" onClick={() => setOpen(false)}>
+          Close Modal
+        </button>
       </div>
     ),
   })
@@ -115,13 +117,15 @@ vi.mock("@/modules/survey/components/edit-public-survey-alert-dialog", () => ({
     secondaryButtonText,
   }: any) => (
     <div data-testid="edit-public-survey-alert-dialog" data-open={open} data-loading={isLoading}>
-      <button onClick={primaryButtonAction} data-testid="primary-button">
+      <button type="button" onClick={primaryButtonAction} data-testid="primary-button">
         {primaryButtonText}
       </button>
-      <button onClick={secondaryButtonAction} data-testid="secondary-button">
+      <button type="button" onClick={secondaryButtonAction} data-testid="secondary-button">
         {secondaryButtonText}
       </button>
-      <button onClick={() => setOpen(false)}>Close Dialog</button>
+      <button type="button" onClick={() => setOpen(false)}>
+        Close Dialog
+      </button>
     </div>
   ),
 }));

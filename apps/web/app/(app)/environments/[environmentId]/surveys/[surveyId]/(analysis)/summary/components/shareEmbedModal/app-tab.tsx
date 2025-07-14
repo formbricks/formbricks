@@ -104,7 +104,17 @@ export const AppTab = () => {
         exitIntent: t("environments.actions.exit_intent"),
         fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
       };
-      triggerDescription += ` (${t("environments.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${noCodeConfigType[actionClass.noCodeConfig?.type as keyof typeof noCodeConfigType]})`;
+
+      const configType = actionClass.noCodeConfig?.type;
+      let configTypeLabel = "unknown";
+
+      if (configType && configType in noCodeConfigType) {
+        configTypeLabel = noCodeConfigType[configType as keyof typeof noCodeConfigType];
+      } else if (configType) {
+        configTypeLabel = configType;
+      }
+
+      triggerDescription += ` (${t("environments.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${configTypeLabel})`;
     }
 
     return triggerDescription;
