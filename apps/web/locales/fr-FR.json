@@ -1783,6 +1783,7 @@
           "email_subject_label": "Sujet",
           "email_to_label": "à",
           "embed_code_copied_to_clipboard": "Code d'intégration copié dans le presse-papiers !",
+          "embed_code_copied_to_clipboard_failed": "Échec de la copie, veuillez réessayer",
           "embed_code_tab": "Code d'intégration",
           "formbricks_email_survey_preview": "Aperçu de l'enquête par e-mail Formbricks",
           "nav_title": "Email intégré",

@@ -119,7 +119,7 @@ describe("EmailTab", () => {
       }).length
     ).toBeGreaterThan(0);
     await waitFor(() => {
-      expect(screen.getByText("Hello World ?preview=true&foo=bar")).toBeInTheDocument(); // Raw HTML content
+      expect(screen.getByText("Hello World ?foo=bar")).toBeInTheDocument(); // HTML content rendered as text (preview=true removed)
     });
     expect(screen.queryByTestId("code-block")).not.toBeInTheDocument();
   });

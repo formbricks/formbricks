@@ -57,6 +57,31 @@ export const AnonymousLinksTab = ({
     setSingleUseEncryption(isEncrypted ?? false);
   };
 
+  const updateSingleUseSettings = async (
+    isSingleUse: boolean,
+    isSingleUseEncryption: boolean
+  ): Promise<void> => {
+    try {
+      const updatedSurveyResponse = await updateSingleUseLinksAction({
+        surveyId: survey.id,
+        environmentId: survey.environmentId,
+        isSingleUse,
+        isSingleUseEncryption,
+      });
+
+      if (updatedSurveyResponse?.data) {
+        router.refresh();
+        return;
+      }
+
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      resetState();
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      resetState();
+    }
+  };
+
   const handleMultiUseToggle = async (newValue: boolean) => {
     if (newValue) {
       // Turning multi-use on - show confirmation modal if single-use is currently enabled
@@ -68,26 +93,7 @@ export const AnonymousLinksTab = ({
             setIsMultiUseLink(true);
             setIsSingleUseLink(false);
             setSingleUseEncryption(false);
-
-            try {
-              const updatedSurveyResponse = await updateSingleUseLinksAction({
-                surveyId: survey.id,
-                environmentId: survey.environmentId,
-                isSingleUse: false,
-                isSingleUseEncryption: false,
-              });
-
-              if (updatedSurveyResponse?.data) {
-                router.refresh();
-                return;
-              }
-
-              toast.error(t("common.something_went_wrong_please_try_again"));
-              resetState();
-            } catch {
-              toast.error(t("common.something_went_wrong_please_try_again"));
-              resetState();
-            }
+            await updateSingleUseSettings(false, false);
           },
         });
       } else {
@@ -95,25 +101,7 @@ export const AnonymousLinksTab = ({
         setIsMultiUseLink(true);
         setIsSingleUseLink(false);
         setSingleUseEncryption(false);
-        try {
-          const updatedSurveyResponse = await updateSingleUseLinksAction({
-            surveyId: survey.id,
-            environmentId: survey.environmentId,
-            isSingleUse: false,
-            isSingleUseEncryption: false,
-          });
-
-          if (updatedSurveyResponse?.data) {
-            router.refresh();
-            return;
-          }
-
-          toast.error(t("common.something_went_wrong_please_try_again"));
-          resetState();
-        } catch {
-          toast.error(t("common.something_went_wrong_please_try_again"));
-          resetState();
-        }
+        await updateSingleUseSettings(false, false);
       }
     } else {
       // Turning multi-use off - need confirmation and turn single-use on
@@ -124,25 +112,7 @@ export const AnonymousLinksTab = ({
           setIsMultiUseLink(false);
           setIsSingleUseLink(true);
           setSingleUseEncryption(true);
-          try {
-            const updatedSurveyResponse = await updateSingleUseLinksAction({
-              surveyId: survey.id,
-              environmentId: survey.environmentId,
-              isSingleUse: true,
-              isSingleUseEncryption: true,
-            });
-
-            if (updatedSurveyResponse?.data) {
-              router.refresh();
-              return;
-            }
-
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          } catch {
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          }
+          await updateSingleUseSettings(true, true);
         },
       });
     }
@@ -158,25 +128,7 @@ export const AnonymousLinksTab = ({
           setIsMultiUseLink(false);
           setIsSingleUseLink(true);
           setSingleUseEncryption(true);
-          try {
-            const updatedSurveyResponse = await updateSingleUseLinksAction({
-              surveyId: survey.id,
-              environmentId: survey.environmentId,
-              isSingleUse: true,
-              isSingleUseEncryption: true,
-            });
-
-            if (updatedSurveyResponse?.data) {
-              router.refresh();
-              return;
-            }
-
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          } catch {
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          }
+          await updateSingleUseSettings(true, true);
         },
       });
     } else {
@@ -188,25 +140,7 @@ export const AnonymousLinksTab = ({
           setIsMultiUseLink(true);
           setIsSingleUseLink(false);
           setSingleUseEncryption(false);
-          try {
-            const updatedSurveyResponse = await updateSingleUseLinksAction({
-              surveyId: survey.id,
-              environmentId: survey.environmentId,
-              isSingleUse: false,
-              isSingleUseEncryption: false,
-            });
-
-            if (updatedSurveyResponse?.data) {
-              router.refresh();
-              return;
-            }
-
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          } catch {
-            toast.error(t("common.something_went_wrong_please_try_again"));
-            resetState();
-          }
+          await updateSingleUseSettings(false, false);
         },
       });
     }
@@ -214,25 +148,7 @@ export const AnonymousLinksTab = ({
 
   const handleSingleUseEncryptionToggle = async (newValue: boolean) => {
     setSingleUseEncryption(newValue);
-    try {
-      const updatedSurveyResponse = await updateSingleUseLinksAction({
-        surveyId: survey.id,
-        environmentId: survey.environmentId,
-        isSingleUse: true,
-        isSingleUseEncryption: newValue,
-      });
-
-      if (updatedSurveyResponse?.data) {
-        router.refresh();
-        return;
-      }
-
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      resetState();
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      resetState();
-    }
+    await updateSingleUseSettings(true, newValue);
   };
 
   const handleNumberOfLinksChange = (e: React.ChangeEvent<HTMLInputElement>) => {

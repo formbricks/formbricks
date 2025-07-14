@@ -1783,6 +1783,7 @@
           "email_subject_label": "Assunto",
           "email_to_label": "Para",
           "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
+          "embed_code_copied_to_clipboard_failed": "A cópia falhou, por favor, tente novamente",
           "embed_code_tab": "Código de Incorporação",
           "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
           "nav_title": "Incorporação de Email",

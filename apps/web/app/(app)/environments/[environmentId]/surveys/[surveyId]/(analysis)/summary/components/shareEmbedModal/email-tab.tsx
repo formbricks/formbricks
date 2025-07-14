@@ -7,6 +7,7 @@ import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslate } from "@tolgee/react";
+import DOMPurify from "dompurify";
 import { CopyIcon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,6 +23,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [activeTab, setActiveTab] = useState("preview");
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
   const { t } = useTranslate();
+
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";
     return emailHtmlPreview
@@ -74,9 +76,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
         <div className="space-y-4 pb-4">
           <div className="flex-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
             <div className="mb-6 flex gap-2">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <div className="h-3 w-3 rounded-full bg-amber-500" />
+              <div className="h-3 w-3 rounded-full bg-emerald-500" />
             </div>
             <div>
               <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
@@ -88,7 +90,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               </div>
               <div className="p-2">
                 {emailHtml ? (
-                  <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
+                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(emailHtml) }} />
                 ) : (
                   <LoadingSpinner />
                 )}
@@ -121,8 +123,12 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             title={t("environments.surveys.share.send_email.copy_embed_code")}
             aria-label={t("environments.surveys.share.send_email.copy_embed_code")}
             onClick={() => {
-              toast.success(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard"));
-              navigator.clipboard.writeText(emailHtml);
+              try {
+                navigator.clipboard.writeText(emailHtml);
+                toast.success(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard"));
+              } catch {
+                toast.error(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard_failed"));
+              }
             }}
             className="shrink-0">
             {t("common.copy_code")}

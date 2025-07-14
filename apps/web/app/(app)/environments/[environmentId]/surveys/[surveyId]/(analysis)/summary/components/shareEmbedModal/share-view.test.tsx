@@ -30,14 +30,6 @@ vi.mock("./email-tab", () => ({
   ),
 }));
 
-vi.mock("./link-tab", () => ({
-  LinkTab: (props: { survey: any; surveyUrl: string }) => (
-    <div data-testid="link-tab">
-      LinkTab Content for {props.survey.id} at {props.surveyUrl}
-    </div>
-  ),
-}));
-
 vi.mock("./website-embed-tab", () => ({
   WebsiteEmbedTab: (props: { surveyUrl: string }) => (
     <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
@@ -179,12 +171,24 @@ vi.mock("@/lib/cn", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-const mockTabs = [
-  { id: "email", label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
-  { id: "website-embed", label: "Website Embed", icon: () => <div data-testid="website-embed-tab-icon" /> },
-  { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
-  { id: "anon-links", label: "Anonymous Links", icon: () => <div data-testid="anon-links-tab-icon" /> },
-  { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
+const mockTabs: Array<{ id: ShareViewType; label: string; icon: React.ElementType }> = [
+  { id: ShareViewType.EMAIL, label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
+  {
+    id: ShareViewType.WEBSITE_EMBED,
+    label: "Website Embed",
+    icon: () => <div data-testid="website-embed-tab-icon" />,
+  },
+  {
+    id: ShareViewType.DYNAMIC_POPUP,
+    label: "Dynamic Popup",
+    icon: () => <div data-testid="dynamic-popup-tab-icon" />,
+  },
+  {
+    id: ShareViewType.ANON_LINKS,
+    label: "Anonymous Links",
+    icon: () => <div data-testid="anon-links-tab-icon" />,
+  },
+  { id: ShareViewType.APP, label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
 
 // Create proper mock survey objects

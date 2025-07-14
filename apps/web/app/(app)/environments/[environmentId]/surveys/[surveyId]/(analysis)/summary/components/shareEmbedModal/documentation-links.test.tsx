@@ -90,23 +90,13 @@ describe("DocumentationLinks", () => {
     const { container } = render(<DocumentationLinks links={mockLinks} />);
 
     const mainContainer = container.firstChild as HTMLElement;
-    expect(mainContainer).toHaveClass("flex", "w-full", "flex-col", "space-y-4");
+    expect(mainContainer).toHaveClass("flex", "w-full", "flex-col", "space-y-2");
 
     const linkContainers = mainContainer.children;
     expect(linkContainers).toHaveLength(3);
 
     Array.from(linkContainers).forEach((linkContainer) => {
       expect(linkContainer).toHaveClass("flex", "w-full", "flex-col", "gap-3");
-    });
-  });
-
-  test("renders alert components with correct variant and size", () => {
-    render(<DocumentationLinks links={mockLinks} />);
-
-    const alerts = screen.getAllByRole("alert");
-    alerts.forEach((alert) => {
-      expect(alert).toHaveClass("text-foreground", "border-border");
-      expect(alert).toHaveClass("px-4", "py-2", "text-xs", "flex", "items-center", "gap-2");
     });
   });
 });

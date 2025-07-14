@@ -29,9 +29,9 @@ import { PersonalLinksTab } from "./personal-links-tab";
 import { WebsiteEmbedTab } from "./website-embed-tab";
 
 interface ShareViewProps {
-  tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
+  tabs: Array<{ id: ShareViewType; label: string; icon: React.ElementType }>;
   activeId: ShareViewType;
-  setActiveId: React.Dispatch<React.SetStateAction<string>>;
+  setActiveId: React.Dispatch<React.SetStateAction<ShareViewType>>;
   environmentId: string;
   survey: TSurvey;
   email: string;

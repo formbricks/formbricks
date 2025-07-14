@@ -40,7 +40,6 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
-  const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
   const { t } = useTranslate();
   const linkTabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
@@ -71,7 +70,7 @@ export const ShareSurveyModal = ({
         icon: SquareStack,
       },
     ],
-    [t, isSingleUseLinkSurvey]
+    [t]
   );
 
   const appTabs = [
