@@ -1,14 +1,7 @@
+import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SocialMediaTab } from "./social-media-tab";
-
-// Mock useTranslate
-const mockTranslate = vi.fn((key) => key);
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: mockTranslate,
-  }),
-}));
 
 // Mock next/link
 vi.mock("next/link", () => ({
@@ -124,15 +117,6 @@ describe("SocialMediaTab", () => {
       "share-dialog",
       "width=1024,height=768,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
-  });
-
-  test("handles default survey title when none provided", () => {
-    render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
-
-    // Should still render all platforms
-    expectedPlatforms.forEach((platform) => {
-      expect(screen.getByText(platform.name)).toBeInTheDocument();
-    });
   });
 
   test("encodes URLs and titles correctly for sharing", () => {
