@@ -18,7 +18,7 @@ export async function NotificationHeader({
   endYear,
 }: NotificationHeaderProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
-  const getNotificationHeaderimePeriod = (): React.JSX.Element => {
+  const getNotificationHeaderTimePeriod = (): React.JSX.Element => {
     if (startYear === endYear) {
       return (
         <Text className="m-0 text-right text-sm">
@@ -43,7 +43,7 @@ export async function NotificationHeader({
           <Text className="m-0 text-right text-sm font-medium">
             {t("emails.notification_header_weekly_report_for")} {projectName}
           </Text>
-          {getNotificationHeaderimePeriod()}
+          {getNotificationHeaderTimePeriod()}
         </div>
       </div>
     </Container>
