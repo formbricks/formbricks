@@ -8,7 +8,7 @@ import { useSingleUseId } from "./useSingleUseId";
 
 // Mock external functions
 vi.mock("@/modules/survey/list/actions", () => ({
-  generateSingleUseIdAction: vi.fn().mockResolvedValue({ data: "initialId" }),
+  generateSingleUseIdsAction: vi.fn().mockResolvedValue({ data: ["initialId"] }),
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -32,7 +32,7 @@ describe("useSingleUseId", () => {
   } as TSurvey;
 
   test("should initialize singleUseId to undefined", () => {
-    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: "mockSingleUseId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: ["mockSingleUseId"] });
 
     const { result } = renderHook(() => useSingleUseId(mockSurvey));
 
@@ -41,7 +41,7 @@ describe("useSingleUseId", () => {
   });
 
   test("should fetch and set singleUseId if singleUse is enabled", async () => {
-    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: "mockSingleUseId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: ["mockSingleUseId"] });
 
     const { result, rerender } = renderHook((props) => useSingleUseId(props), {
       initialProps: mockSurvey,
@@ -55,6 +55,7 @@ describe("useSingleUseId", () => {
     expect(generateSingleUseIdsAction).toHaveBeenCalledWith({
       surveyId: "survey123",
       isEncrypted: true,
+      count: 1,
     });
 
     // Re-render with the same props to ensure it doesn't break
@@ -98,7 +99,7 @@ describe("useSingleUseId", () => {
 
   test("should refreshSingleUseId on demand", async () => {
     // Set up the initial mock response
-    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: "initialId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: ["initialId"] });
 
     const { result } = renderHook(() => useSingleUseId(mockSurvey));
 
@@ -110,7 +111,7 @@ describe("useSingleUseId", () => {
 
     // Reset the mock and set up the next response for refreshSingleUseId call
     vi.mocked(generateSingleUseIdsAction).mockClear();
-    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: "refreshedId" });
+    vi.mocked(generateSingleUseIdsAction).mockResolvedValueOnce({ data: ["refreshedId"] });
 
     // Call refreshSingleUseId and wait for it to complete
     let refreshedValue;
@@ -128,6 +129,7 @@ describe("useSingleUseId", () => {
     expect(generateSingleUseIdsAction).toHaveBeenCalledWith({
       surveyId: "survey123",
       isEncrypted: true,
+      count: 1,
     });
   });
 });

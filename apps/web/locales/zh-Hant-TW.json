@@ -1789,7 +1789,8 @@
           "send_preview": "發送預覽",
           "send_preview_email": "發送預覽電子郵件",
           "title": "嵌入 你的 調查 在 電子郵件 中"
-        }
+        },
+        "share_view_title": "透過 分享"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回應的篩選器，其中問題 '{'questionIdx'}' 的答案為 '{'filterComboBoxValue'}' - '{'filterValue'}'",

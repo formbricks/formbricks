@@ -1789,7 +1789,8 @@
           "send_preview": "Vorschau senden",
           "send_preview_email": "Vorschau-E-Mail senden",
           "title": "Binden Sie Ihre Umfrage in eine E-Mail ein"
-        }
+        },
+        "share_view_title": "Teilen über"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",

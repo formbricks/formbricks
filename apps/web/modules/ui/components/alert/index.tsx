@@ -2,7 +2,13 @@
 
 import { cn } from "@/lib/cn";
 import { VariantProps, cva } from "class-variance-authority";
-import { AlertCircle, AlertTriangle, ArrowUpRight, CheckCircle2Icon, Info } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  ArrowUpRightIcon,
+  CheckCircle2Icon,
+  InfoIcon,
+} from "lucide-react";
 import * as React from "react";
 import { createContext, useContext } from "react";
 import { Button, ButtonProps } from "../button";
@@ -52,10 +58,10 @@ const alertVariantIcons: Record<
   React.ReactNode
 > = {
   default: null,
-  outbound: <ArrowUpRight className="size-4" />,
-  error: <AlertCircle className="size-4" />,
-  warning: <AlertTriangle className="size-4" />,
-  info: <Info className="size-4" />,
+  outbound: <ArrowUpRightIcon className="size-4" />,
+  error: <AlertCircleIcon className="size-4" />,
+  warning: <AlertTriangleIcon className="size-4" />,
+  info: <InfoIcon className="size-4" />,
   success: <CheckCircle2Icon className="size-4" />,
 };
 

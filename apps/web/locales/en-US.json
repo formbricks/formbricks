@@ -1789,7 +1789,8 @@
           "send_preview": "Send preview",
           "send_preview_email": "Send preview email",
           "title": "Embed your survey in an email"
-        }
+        },
+        "share_view_title": "Share via"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue} ",

@@ -1789,7 +1789,8 @@
           "send_preview": "Enviar prévia",
           "send_preview_email": "Enviar prévia de e-mail",
           "title": "Incorpore sua pesquisa em um e-mail"
-        }
+        },
+        "share_view_title": "Compartilhar via"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",

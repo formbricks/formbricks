@@ -1789,7 +1789,8 @@
           "send_preview": "Envoyer un aperçu",
           "send_preview_email": "Envoyer un e-mail d'aperçu",
           "title": "Intégrez votre sondage dans un e-mail"
-        }
+        },
+        "share_view_title": "Partager par"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est '{'filterComboBoxValue'}' - '{'filterValue'}' ",

@@ -26,7 +26,7 @@ vi.mock("@/modules/analysis/components/ShareSurveyLink", () => ({
 }));
 
 vi.mock("@/modules/ui/components/advanced-option-toggle", () => ({
-  AdvancedOptionToggle: ({ children, htmlId, isChecked, onToggle, title, description }: any) => (
+  AdvancedOptionToggle: ({ children, htmlId, isChecked, onToggle, title }: any) => (
     <div data-testid={`toggle-${htmlId}`} data-checked={isChecked}>
       <button data-testid={`toggle-button-${htmlId}`} onClick={() => onToggle(!isChecked)}>
         {title}
@@ -69,7 +69,7 @@ vi.mock("@/modules/ui/components/input", () => ({
 }));
 
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer",
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container",
   () => ({
     TabContainer: ({ children, title }: any) => (
       <div data-testid="tab-container">

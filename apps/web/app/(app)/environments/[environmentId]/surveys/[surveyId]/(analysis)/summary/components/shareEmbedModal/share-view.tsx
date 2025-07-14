@@ -22,11 +22,11 @@ import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
 import { AnonymousLinksTab } from "./anonymous-links-tab";
 import { AppTab } from "./app-tab";
 import { EmailTab } from "./email-tab";
 import { PersonalLinksTab } from "./personal-links-tab";
+import { WebsiteEmbedTab } from "./website-embed-tab";
 
 interface ShareViewProps {
   tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
@@ -59,6 +59,7 @@ export const ShareView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: ShareViewProps) => {
+  const { t } = useTranslate();
   const [isLargeScreen, setIsLargeScreen] = useState(true);
 
   useEffect(() => {
@@ -124,7 +125,9 @@ export const ShareView = ({
               <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel>
-                    <Small className="text-xs text-slate-500">Share via</Small>
+                    <Small className="text-xs text-slate-500">
+                      {t("environments.surveys.share.share_view_title")}
+                    </Small>
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="flex flex-col gap-1">

@@ -1,9 +1,9 @@
 "use client";
 
 import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { DisableLinkModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
@@ -11,7 +11,6 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { cn } from "@/modules/ui/lib/utils";
 import { useTranslate } from "@tolgee/react";
 import { CirclePlayIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -302,16 +301,14 @@ export const AnonymousLinksTab = ({
           description={t("environments.surveys.share.anonymous_links.multi_use_link_description")}
           customContainerClass="p-0"
           childBorder>
-          <div className="flex w-full flex-col gap-4 bg-white p-4">
-            <div className={cn(!isMultiUseLink ? "pointer-events-none opacity-50" : "")}>
-              <ShareSurveyLink
-                survey={survey}
-                surveyUrl={surveyUrl}
-                publicDomain={publicDomain}
-                setSurveyUrl={setSurveyUrl}
-                locale={locale}
-              />
-            </div>
+          <div className="flex w-full flex-col gap-4 overflow-hidden bg-white p-4">
+            <ShareSurveyLink
+              survey={survey}
+              surveyUrl={surveyUrl}
+              publicDomain={publicDomain}
+              setSurveyUrl={setSurveyUrl}
+              locale={locale}
+            />
 
             <div className="w-full">
               <Alert variant="info" size="default">

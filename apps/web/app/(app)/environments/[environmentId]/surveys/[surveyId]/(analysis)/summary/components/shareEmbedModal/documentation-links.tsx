@@ -21,7 +21,11 @@ export const DocumentationLinks = ({ links }: DocumentationLinksProps) => {
           <Alert variant="outbound" size="small">
             <AlertTitle>{link.title}</AlertTitle>
             <AlertButton asChild>
-              <Link href={link.href} target="_blank" className="text-slate-900 hover:underline">
+              <Link
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-900 hover:underline">
                 {t("common.learn_more")}
               </Link>
             </AlertButton>

@@ -221,8 +221,7 @@ describe("ShareEmbedSurvey", () => {
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
     expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
     expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
-    expect(embedViewProps.tabs[0].id).toBe("link");
-    expect(embedViewProps.activeId).toBe("link");
+    expect(embedViewProps.tabs[0].id).toBe("anon-links");
   });
 
   test("correctly configures for 'web' survey type in embed view", () => {
@@ -273,8 +272,8 @@ describe("ShareEmbedSurvey", () => {
     let embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string }[];
     };
-    let linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
-    expect(linkTab?.label).toBe("environments.surveys.summary.share_the_link");
+    let linkTab = embedViewProps.tabs.find((tab) => tab.id === "anon-links");
+    expect(linkTab?.label).toBe("environments.surveys.share.anonymous_links.nav_title");
     cleanup();
     vi.mocked(mockShareViewComponent).mockClear();
 
@@ -286,8 +285,8 @@ describe("ShareEmbedSurvey", () => {
     embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string }[];
     };
-    linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
-    expect(linkTab?.label).toBe("environments.surveys.summary.single_use_links");
+    linkTab = embedViewProps.tabs.find((tab) => tab.id === "anon-links");
+    expect(linkTab?.label).toBe("environments.surveys.share.anonymous_links.nav_title");
   });
 
   test("dynamic popup tab is only visible for link surveys", () => {

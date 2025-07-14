@@ -1789,7 +1789,8 @@
           "send_preview": "Enviar pré-visualização",
           "send_preview_email": "Enviar pré-visualização de email",
           "title": "Incorporar o seu inquérito num email"
-        }
+        },
+        "share_view_title": "Partilhar via"
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",

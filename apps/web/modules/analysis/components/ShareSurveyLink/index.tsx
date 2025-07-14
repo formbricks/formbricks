@@ -3,7 +3,6 @@
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Copy, SquareArrowOutUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -27,18 +26,17 @@ export const ShareSurveyLink = ({
   locale,
 }: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
-  const [language, setLanguage] = useState("default");
 
-  useEffect(() => {
+  const handleLanguageChange = (language: string) => {
     const url = getSurveyUrl(survey, publicDomain, language);
     setSurveyUrl(url);
-  }, [survey, language, publicDomain, setSurveyUrl]);
+  };
 
   return (
     <div className={"flex max-w-full flex-col items-center justify-center gap-2 md:flex-row"}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
       <div className="flex items-center justify-center space-x-2">
-        <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
+        <LanguageDropdown survey={survey} setLanguage={handleLanguageChange} locale={locale} />
         <Button
           disabled={!surveyUrl}
           variant="secondary"

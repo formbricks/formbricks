@@ -7,7 +7,7 @@ import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TabContainer } from "./TabContainer";
+import { TabContainer } from "./tab-container";
 
 interface WebsiteEmbedTabProps {
   surveyUrl: string;

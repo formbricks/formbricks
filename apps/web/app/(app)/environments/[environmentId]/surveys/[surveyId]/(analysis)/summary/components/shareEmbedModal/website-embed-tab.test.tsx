@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
+import { WebsiteEmbedTab } from "./website-embed-tab";
 
 // Mock components
 vi.mock("@/modules/ui/components/advanced-option-toggle", () => ({

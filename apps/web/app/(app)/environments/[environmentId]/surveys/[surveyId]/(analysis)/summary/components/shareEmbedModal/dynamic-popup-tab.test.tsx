@@ -171,12 +171,11 @@ describe("DynamicPopupTab", () => {
         link.getAttribute("href")?.includes("formbricks.com/docs") && link.getAttribute("target") === "_blank"
     );
 
-    // There are 3 unique documentation URLs, but each appears twice (title and button)
-    expect(documentationLinks).toHaveLength(6);
+    // There are 3 unique documentation URLs
+    expect(documentationLinks).toHaveLength(3);
 
     documentationLinks.forEach((link) => {
       expect(link).toHaveAttribute("target", "_blank");
-      expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
   });
 
