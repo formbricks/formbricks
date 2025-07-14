@@ -89,13 +89,6 @@ vi.mock("@/modules/ui/components/button", () => ({
   ),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
   Download: () => <div data-testid="download-icon">Download</div>,
@@ -109,18 +102,6 @@ vi.mock("lucide-react", () => ({
       RefreshCw
     </div>
   ),
-}));
-
-// Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
 }));
 
 // Mock logger

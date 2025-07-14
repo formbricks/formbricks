@@ -1,5 +1,6 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -49,6 +50,12 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     if (surveyUrl) {
       generateQRCode();
     }
+
+    return () => {
+      if (qrInstance.current) {
+        qrInstance.current = null;
+      }
+    };
   }, [surveyUrl]);
 
   const downloadQRCode = async () => {
@@ -67,51 +74,46 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
   };
 
   return (
-    <div className="flex h-full grow flex-col gap-6" data-testid="qr-code-tab">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-800">
-          {t("environments.surveys.summary.make_survey_accessible_via_qr_code")}
-        </h2>
-        <p className="text-sm text-slate-600">
-          {t("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")}
-        </p>
-      </div>
-
-      {isLoading && (
-        <div className="flex flex-col items-center gap-2">
-          <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
-          <p className="text-sm text-slate-500">{t("environments.surveys.summary.generating_qr_code")}</p>
-        </div>
-      )}
-
-      {hasError && (
-        <Alert variant="error">
-          <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
-          <AlertDescription>{t("environments.surveys.summary.qr_code_generation_failed")}</AlertDescription>
-        </Alert>
-      )}
-
-      {!isLoading && !hasError && (
-        <div className="flex flex-col items-start justify-center gap-4">
-          <div className="flex h-[184px] w-[184px] items-center justify-center overflow-hidden rounded-lg border bg-white">
-            <div ref={qrCodeRef} className="h-full w-full" />
+    <div data-testid="qr-code-tab">
+      <TabContainer
+        title={t("environments.surveys.summary.make_survey_accessible_via_qr_code")}
+        description={t("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")}>
+        {isLoading && (
+          <div className="flex flex-col items-center gap-2">
+            <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
+            <p className="text-sm text-slate-500">{t("environments.surveys.summary.generating_qr_code")}</p>
           </div>
-          <Button
-            onClick={downloadQRCode}
-            data-testid="button"
-            disabled={!surveyUrl || isDownloading || hasError}
-            className="flex items-center gap-2">
-            {isDownloading
-              ? t("environments.surveys.summary.downloading_qr_code")
-              : t("environments.surveys.summary.download_qr_code")}
-            {isDownloading ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      )}
+        )}
+
+        {hasError && (
+          <Alert variant="error">
+            <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
+            <AlertDescription>{t("environments.surveys.summary.qr_code_generation_failed")}</AlertDescription>
+          </Alert>
+        )}
+
+        {!isLoading && !hasError && (
+          <div className="flex flex-col items-start justify-center gap-4">
+            <div className="flex h-[184px] w-[184px] items-center justify-center overflow-hidden rounded-lg border bg-white">
+              <div ref={qrCodeRef} className="h-full w-full" />
+            </div>
+            <Button
+              onClick={downloadQRCode}
+              data-testid="download-qr-code-button"
+              disabled={!surveyUrl || isDownloading || hasError}
+              className="flex items-center gap-2">
+              {isDownloading
+                ? t("environments.surveys.summary.downloading_qr_code")
+                : t("environments.surveys.summary.download_qr_code")}
+              {isDownloading ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        )}
+      </TabContainer>
     </div>
   );
 };

@@ -217,7 +217,7 @@ describe("ShareEmbedSurvey", () => {
       tabs: { id: string; label: string; icon: LucideIcon }[];
       activeId: string;
     };
-    expect(embedViewProps.tabs.length).toBe(5);
+    expect(embedViewProps.tabs.length).toBe(6);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
     expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
     expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
@@ -225,7 +225,7 @@ describe("ShareEmbedSurvey", () => {
     expect(embedViewProps.tabs[1].id).toBe("qr-code");
     expect(embedViewProps.tabs[2].id).toBe("personal-links");
     expect(embedViewProps.tabs[3].id).toBe("email");
-    expect(embedViewProps.tabs[4].id).toBe("webpage");
+    expect(embedViewProps.tabs[4].id).toBe("website-embed");
     expect(embedViewProps.activeId).toBe("link");
   });
 
