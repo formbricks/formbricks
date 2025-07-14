@@ -1,283 +1,261 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock dependencies
-vi.mock("@/lib/constants");
-vi.mock("redis");
-vi.mock("@formbricks/logger");
-
-describe("redis module", () => {
-  const mockConnect = vi.fn();
-  const mockOn = vi.fn();
-  const mockCreateClient = vi.fn();
-  const mockLogger = {
+// Mock the logger
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    info: vi.fn(),
-  };
+  },
+}));
 
+// Mock the redis client
+const mockRedisClient = {
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  on: vi.fn(),
+  isReady: true,
+  get: vi.fn(),
+  set: vi.fn(),
+  del: vi.fn(),
+  exists: vi.fn(),
+  expire: vi.fn(),
+  ttl: vi.fn(),
+  keys: vi.fn(),
+  flushall: vi.fn(),
+};
+
+vi.mock("redis", () => ({
+  createClient: vi.fn(() => mockRedisClient),
+}));
+
+// Mock crypto for UUID generation
+vi.mock("crypto", () => ({
+  randomUUID: vi.fn(() => "test-uuid-123"),
+}));
+
+describe("Redis module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Reset environment variable
+    process.env.REDIS_URL = "redis://localhost:6379";
+
+    // Reset isReady state
+    mockRedisClient.isReady = true;
+
+    // Make connect resolve successfully
+    mockRedisClient.connect.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
     vi.resetModules();
-
-    // Create a mock client that supports method chaining
-    const mockClient = {
-      on: mockOn,
-      connect: mockConnect,
-    };
-
-    // Setup mocks for method chaining
-    mockOn.mockReturnValue(mockClient);
-    mockCreateClient.mockReturnValue(mockClient);
-    mockConnect.mockResolvedValue(undefined);
-
-    vi.doMock("redis", () => ({
-      createClient: mockCreateClient,
-    }));
-
-    vi.doMock("@formbricks/logger", () => ({
-      logger: mockLogger,
-    }));
+    delete process.env.REDIS_URL;
   });
 
-  test("should export getRedisClient function when REDIS_URL is provided", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
+  describe("Module initialization", () => {
+    it("should create Redis client when REDIS_URL is set", async () => {
+      const { createClient } = await import("redis");
 
-    const redis = await import("./redis");
+      // Re-import the module to trigger initialization
+      await import("./redis");
 
-    expect(mockCreateClient).toHaveBeenCalledWith({ url: "redis://localhost:6379" });
-    expect(mockOn).toHaveBeenCalledWith("error", expect.any(Function));
-    expect(mockOn).toHaveBeenCalledWith("disconnect", expect.any(Function));
-    expect(mockOn).toHaveBeenCalledWith("reconnecting", expect.any(Function));
-    expect(redis.default).toBeInstanceOf(Function);
-    expect(redis.getRedisClient).toBeInstanceOf(Function);
-  });
-
-  test("should return getRedisClient function when REDIS_URL is not provided", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: undefined,
-    }));
-
-    const redis = await import("./redis");
-
-    expect(mockCreateClient).not.toHaveBeenCalled();
-    expect(mockConnect).not.toHaveBeenCalled();
-    expect(mockLogger.warn).toHaveBeenCalledWith("REDIS_URL is not set");
-    expect(redis.default).toBeInstanceOf(Function);
-    expect(redis.getRedisClient).toBeInstanceOf(Function);
-
-    // Test that calling the function returns null
-    const client = await redis.default();
-    expect(client).toBeNull();
-  });
-
-  test("should return getRedisClient function when REDIS_URL is empty string", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "",
-    }));
-
-    const redis = await import("./redis");
-
-    expect(mockCreateClient).not.toHaveBeenCalled();
-    expect(mockConnect).not.toHaveBeenCalled();
-    expect(mockLogger.warn).toHaveBeenCalledWith("REDIS_URL is not set");
-    expect(redis.default).toBeInstanceOf(Function);
-
-    // Test that calling the function returns null
-    const client = await redis.default();
-    expect(client).toBeNull();
-  });
-
-  test("should handle Redis connection errors gracefully", async () => {
-    const testError = new Error("Redis connection failed");
-
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
-
-    await import("./redis");
-
-    // Simulate error handler being called
-    const errorHandler = mockOn.mock.calls.find((call) => call[0] === "error")?.[1];
-    expect(errorHandler).toBeDefined();
-    errorHandler(testError);
-
-    expect(mockLogger.error).toHaveBeenCalledWith("Redis client error", testError);
-  });
-
-  test("should handle Redis client creation failure gracefully", async () => {
-    const testError = new Error("Client creation failed");
-    mockCreateClient.mockImplementation(() => {
-      throw testError;
+      expect(createClient).toHaveBeenCalledWith({
+        url: "redis://localhost:6379",
+        socket: {
+          reconnectStrategy: expect.any(Function),
+        },
+      });
     });
 
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
+    it("should not create Redis client when REDIS_URL is not set", async () => {
+      delete process.env.REDIS_URL;
 
-    const redis = await import("./redis");
+      const { createClient } = await import("redis");
 
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Failed to connect to Redis - Redis will be unavailable",
-      testError
-    );
-    expect(redis.default).toBeInstanceOf(Function);
-
-    // Test that calling the function returns null
-    const client = await redis.default();
-    expect(client).toBeNull();
-  });
-
-  test("should handle Redis connection failure gracefully", async () => {
-    const testError = new Error("Connection failed");
-    mockConnect.mockRejectedValue(testError);
-
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
-
-    const redis = await import("./redis");
-
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Failed to connect to Redis - Redis will be unavailable",
-      testError
-    );
-    expect(redis.default).toBeInstanceOf(Function);
-
-    // Test that calling the function returns null
-    const client = await redis.default();
-    expect(client).toBeNull();
-  });
-
-  test("should handle connection timeout gracefully", async () => {
-    // Mock a slow connection that would timeout
-    mockConnect.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 10000)));
-
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
-
-    const redis = await import("./redis");
-
-    // Test that calling the function returns null due to timeout
-    const client = await redis.default();
-    expect(client).toBeNull();
-
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Failed to connect to Redis - Redis will be unavailable",
-      expect.objectContaining({ message: "Redis connection timeout" })
-    );
-  }, 10000); // Increase test timeout to 10 seconds
-
-  test("should log warning for null, undefined, or empty REDIS_URL values", async () => {
-    const testValues = [null, undefined, "", false, 0];
-
-    for (const value of testValues) {
-      vi.clearAllMocks();
+      // Clear the module cache and re-import
       vi.resetModules();
+      await import("./redis");
 
-      vi.doMock("@/lib/constants", () => ({
-        REDIS_URL: value,
-      }));
+      expect(createClient).not.toHaveBeenCalled();
+    });
 
-      vi.doMock("@formbricks/logger", () => ({
-        logger: mockLogger,
-      }));
+    it("should set up event listeners", async () => {
+      // Re-import the module to trigger initialization
+      await import("./redis");
 
-      const redis = await import("./redis");
+      expect(mockRedisClient.on).toHaveBeenCalledWith("error", expect.any(Function));
+      expect(mockRedisClient.on).toHaveBeenCalledWith("connect", expect.any(Function));
+      expect(mockRedisClient.on).toHaveBeenCalledWith("reconnecting", expect.any(Function));
+      expect(mockRedisClient.on).toHaveBeenCalledWith("ready", expect.any(Function));
+    });
 
-      expect(mockLogger.warn).toHaveBeenCalledWith("REDIS_URL is not set");
-      expect(redis.default).toBeInstanceOf(Function);
+    it("should attempt initial connection", async () => {
+      // Re-import the module to trigger initialization
+      await import("./redis");
 
-      // Test that calling the function returns null
-      const client = await redis.default();
+      expect(mockRedisClient.connect).toHaveBeenCalled();
+    });
+  });
+
+  describe("getRedisClient", () => {
+    it("should return client when ready", async () => {
+      mockRedisClient.isReady = true;
+
+      const { getRedisClient } = await import("./redis");
+      const client = getRedisClient();
+
+      expect(client).toBe(mockRedisClient);
+    });
+
+    it("should return null when client is not ready", async () => {
+      mockRedisClient.isReady = false;
+
+      const { getRedisClient } = await import("./redis");
+      const client = getRedisClient();
+
       expect(client).toBeNull();
-    }
+    });
+
+    it("should return null when no REDIS_URL is set", async () => {
+      delete process.env.REDIS_URL;
+
+      vi.resetModules();
+      const { getRedisClient } = await import("./redis");
+      const client = getRedisClient();
+
+      expect(client).toBeNull();
+    });
   });
 
-  test("should create Redis client with correct configuration", async () => {
-    const testUrl = "redis://user:pass@localhost:6380/1"; // NOSONAR // This is a test URL
+  describe("disconnectRedis", () => {
+    it("should disconnect the client", async () => {
+      const { disconnectRedis } = await import("./redis");
 
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: testUrl,
-    }));
+      await disconnectRedis();
 
-    await import("./redis");
+      expect(mockRedisClient.disconnect).toHaveBeenCalled();
+    });
 
-    expect(mockCreateClient).toHaveBeenCalledWith({ url: testUrl });
-    expect(mockCreateClient).toHaveBeenCalledTimes(1);
+    it("should handle case when client is null", async () => {
+      delete process.env.REDIS_URL;
+
+      vi.resetModules();
+      const { disconnectRedis } = await import("./redis");
+
+      await expect(disconnectRedis()).resolves.toBeUndefined();
+    });
   });
 
-  test("should set up all event handlers before connecting", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
+  describe("Reconnection strategy", () => {
+    it("should configure reconnection strategy properly", async () => {
+      const { createClient } = await import("redis");
 
-    await import("./redis");
+      // Re-import the module to trigger initialization
+      await import("./redis");
 
-    // Verify all event handlers are set up
-    expect(mockOn).toHaveBeenCalledWith("error", expect.any(Function));
-    expect(mockOn).toHaveBeenCalledWith("disconnect", expect.any(Function));
-    expect(mockOn).toHaveBeenCalledWith("reconnecting", expect.any(Function));
-    expect(mockOn).toHaveBeenCalledTimes(3);
+      const createClientCall = vi.mocked(createClient).mock.calls[0];
+      const config = createClientCall[0] as any;
+
+      expect(config.socket.reconnectStrategy).toBeDefined();
+      expect(typeof config.socket.reconnectStrategy).toBe("function");
+    });
   });
 
-  test("should log successful connection", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
+  describe("Event handlers", () => {
+    it("should log error events", async () => {
+      const { logger } = await import("@formbricks/logger");
 
-    const redis = await import("./redis");
+      // Re-import the module to trigger initialization
+      await import("./redis");
 
-    // Test that calling the function returns the client
-    const client = await redis.default();
-    expect(client).toBeDefined();
-    expect(client).not.toBeNull();
-    expect(mockLogger.info).toHaveBeenCalledWith("Redis connected successfully");
+      // Find the error event handler
+      const errorCall = vi.mocked(mockRedisClient.on).mock.calls.find((call) => call[0] === "error");
+      const errorHandler = errorCall?.[1];
+
+      const testError = new Error("Test error");
+      errorHandler?.(testError);
+
+      expect(logger.error).toHaveBeenCalledWith("Redis client error:", testError);
+    });
+
+    it("should log connect events", async () => {
+      const { logger } = await import("@formbricks/logger");
+
+      // Re-import the module to trigger initialization
+      await import("./redis");
+
+      // Find the connect event handler
+      const connectCall = vi.mocked(mockRedisClient.on).mock.calls.find((call) => call[0] === "connect");
+      const connectHandler = connectCall?.[1];
+
+      connectHandler?.();
+
+      expect(logger.info).toHaveBeenCalledWith("Redis client connected");
+    });
+
+    it("should log reconnecting events", async () => {
+      const { logger } = await import("@formbricks/logger");
+
+      // Re-import the module to trigger initialization
+      await import("./redis");
+
+      // Find the reconnecting event handler
+      const reconnectingCall = vi
+        .mocked(mockRedisClient.on)
+        .mock.calls.find((call) => call[0] === "reconnecting");
+      const reconnectingHandler = reconnectingCall?.[1];
+
+      reconnectingHandler?.();
+
+      expect(logger.info).toHaveBeenCalledWith("Redis client reconnecting");
+    });
+
+    it("should log ready events", async () => {
+      const { logger } = await import("@formbricks/logger");
+
+      // Re-import the module to trigger initialization
+      await import("./redis");
+
+      // Find the ready event handler
+      const readyCall = vi.mocked(mockRedisClient.on).mock.calls.find((call) => call[0] === "ready");
+      const readyHandler = readyCall?.[1];
+
+      readyHandler?.();
+
+      expect(logger.info).toHaveBeenCalledWith("Redis client ready");
+    });
+
+    it("should log end events", async () => {
+      const { logger } = await import("@formbricks/logger");
+
+      // Re-import the module to trigger initialization
+      await import("./redis");
+
+      // Find the end event handler
+      const endCall = vi.mocked(mockRedisClient.on).mock.calls.find((call) => call[0] === "end");
+      const endHandler = endCall?.[1];
+
+      endHandler?.();
+
+      expect(logger.info).toHaveBeenCalledWith("Redis client disconnected");
+    });
   });
 
-  test("should handle disconnect event", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
+  describe("Connection failure handling", () => {
+    it("should handle initial connection failure", async () => {
+      const { logger } = await import("@formbricks/logger");
 
-    await import("./redis");
+      const connectionError = new Error("Connection failed");
+      mockRedisClient.connect.mockRejectedValue(connectionError);
 
-    // Simulate disconnect handler being called
-    const disconnectHandler = mockOn.mock.calls.find((call) => call[0] === "disconnect")?.[1];
-    expect(disconnectHandler).toBeDefined();
-    disconnectHandler();
+      vi.resetModules();
+      await import("./redis");
 
-    expect(mockLogger.warn).toHaveBeenCalledWith("Redis client disconnected");
-  });
+      // Wait for the connection promise to resolve
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
-  test("should handle reconnecting event", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
-
-    await import("./redis");
-
-    // Simulate reconnecting handler being called
-    const reconnectingHandler = mockOn.mock.calls.find((call) => call[0] === "reconnecting")?.[1];
-    expect(reconnectingHandler).toBeDefined();
-    reconnectingHandler();
-
-    expect(mockLogger.info).toHaveBeenCalledWith("Redis client reconnecting");
-  });
-
-  test("should return same client instance on multiple calls", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      REDIS_URL: "redis://localhost:6379",
-    }));
-
-    const redis = await import("./redis");
-
-    const client1 = await redis.default();
-    const client2 = await redis.default();
-
-    expect(client1).toBe(client2);
-    expect(mockCreateClient).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith("Initial Redis connection failed:", connectionError);
+    });
   });
 });

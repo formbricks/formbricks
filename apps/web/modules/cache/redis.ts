@@ -1,54 +1,69 @@
-import { REDIS_URL } from "@/lib/constants";
 import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 
-let connectionPromise: Promise<any> | null = null;
+type RedisClient = ReturnType<typeof createClient>;
 
-const createRedisConnection = async () => {
-  if (!REDIS_URL) {
-    logger.warn("REDIS_URL is not set");
+const REDIS_URL = process.env.REDIS_URL;
+
+let client: RedisClient | null = null;
+
+if (REDIS_URL) {
+  client = createClient({
+    url: REDIS_URL,
+    socket: {
+      reconnectStrategy: (retries) => {
+        logger.info(`Redis reconnection attempt ${retries}`);
+
+        // For the first 5 attempts, use exponential backoff with max 5 second delay
+        if (retries <= 5) {
+          return Math.min(retries * 1000, 5000);
+        }
+
+        // After 5 attempts, use a longer delay but never give up
+        // This ensures the client keeps trying to reconnect when Redis comes back online
+        logger.info("Redis reconnection using extended delay (30 seconds)");
+        return 30000; // 30 second delay for persistent reconnection attempts
+      },
+    },
+  });
+
+  client.on("error", (err) => {
+    logger.error("Redis client error:", err);
+  });
+
+  client.on("connect", () => {
+    logger.info("Redis client connected");
+  });
+
+  client.on("reconnecting", () => {
+    logger.info("Redis client reconnecting");
+  });
+
+  client.on("ready", () => {
+    logger.info("Redis client ready");
+  });
+
+  client.on("end", () => {
+    logger.info("Redis client disconnected");
+  });
+
+  // Connect immediately
+  client.connect().catch((err) => {
+    logger.error("Initial Redis connection failed:", err);
+  });
+}
+
+export const getRedisClient = (): RedisClient | null => {
+  if (!client?.isReady) {
+    logger.warn("Redis client not ready, operations will be skipped");
     return null;
   }
+  return client;
+};
 
-  try {
-    const client = createClient({ url: REDIS_URL });
-
-    client.on("error", (err) => {
-      logger.error("Redis client error", err);
-    });
-
-    client.on("disconnect", () => {
-      logger.warn("Redis client disconnected");
-    });
-
-    client.on("reconnecting", () => {
-      logger.info("Redis client reconnecting");
-    });
-
-    // Connect with timeout to prevent hanging
-    const connectionTimeout = 5000; // 5 seconds
-    await Promise.race([
-      client.connect(),
-      new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Redis connection timeout")), connectionTimeout);
-      }),
-    ]);
-
-    logger.info("Redis connected successfully");
-    return client;
-  } catch (error) {
-    logger.error("Failed to connect to Redis - Redis will be unavailable", error);
-    return null;
+export const disconnectRedis = async (): Promise<void> => {
+  if (client) {
+    await client.disconnect();
+    client = null;
   }
 };
-
-// Initialize connection promise
-connectionPromise = createRedisConnection();
-
-// Export function to get Redis client
-export const getRedisClient = async () => {
-  return await connectionPromise;
-};
-
-// For backward compatibility, export default as the getRedisClient function
-export default getRedisClient;

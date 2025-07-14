@@ -6,6 +6,7 @@ let mockStore: Record<string, string | null> = {};
 let mockRedisAvailable = true;
 
 const mockRedisClient = {
+  isReady: true,
   del: vi.fn(async (key: string) => {
     delete mockStore[key];
     return 1;
@@ -41,7 +42,7 @@ const mockRedisClient = {
 
 vi.mock("@/modules/cache/redis", () => {
   return {
-    default: vi.fn(async () => {
+    getRedisClient: vi.fn(() => {
       if (!mockRedisAvailable) {
         return null;
       }

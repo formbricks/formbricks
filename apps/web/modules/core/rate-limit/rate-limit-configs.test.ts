@@ -4,10 +4,10 @@ import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
 
-const { mockEval, mockGetRedisClient } = vi.hoisted(() => {
+const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
   const _mockEval = vi.fn();
   const _mockRedisClient = { eval: _mockEval } as any;
-  const _mockGetRedisClient = vi.fn(() => Promise.resolve(_mockRedisClient));
+  const _mockGetRedisClient = vi.fn().mockReturnValue(_mockRedisClient);
   return { mockEval: _mockEval, mockRedisClient: _mockRedisClient, mockGetRedisClient: _mockGetRedisClient };
 });
 
@@ -19,7 +19,6 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/cache/redis", () => ({
-  default: mockGetRedisClient,
   getRedisClient: mockGetRedisClient,
 }));
 
@@ -49,6 +48,8 @@ vi.mock("@/modules/cache/lib/cacheKeys", () => ({
 describe("rateLimitConfigs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset the mock to return our mock client
+    mockGetRedisClient.mockReturnValue(mockRedisClient);
   });
 
   describe("Configuration Structure", () => {
@@ -141,7 +142,8 @@ describe("rateLimitConfigs", () => {
       ];
 
       const testAllowedRequest = async (config: any, identifier: string) => {
-        mockEval.mockResolvedValueOnce([1, 1]);
+        mockEval.mockClear();
+        mockEval.mockResolvedValue([1, 1]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(true);
@@ -149,7 +151,8 @@ describe("rateLimitConfigs", () => {
 
       const testExceededLimit = async (config: any, identifier: string) => {
         // When limit is exceeded, remaining should be 0
-        mockEval.mockResolvedValueOnce([config.allowedPerInterval + 1, 0]);
+        mockEval.mockClear();
+        mockEval.mockResolvedValue([config.allowedPerInterval + 1, 0]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(false);

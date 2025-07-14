@@ -10,7 +10,7 @@ const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
     eval: _mockEval,
   } as any;
 
-  const _mockGetRedisClient = vi.fn().mockResolvedValue(_mockRedisClient);
+  const _mockGetRedisClient = vi.fn().mockReturnValue(_mockRedisClient);
 
   return {
     mockEval: _mockEval,
@@ -21,7 +21,6 @@ const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
 
 // Mock all dependencies (will use the hoisted mocks above)
 vi.mock("@/modules/cache/redis", () => ({
-  default: mockGetRedisClient,
   getRedisClient: mockGetRedisClient,
 }));
 
@@ -53,7 +52,7 @@ describe("checkRateLimit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the mock to return our mock client
-    mockGetRedisClient.mockResolvedValue(mockRedisClient);
+    mockGetRedisClient.mockReturnValue(mockRedisClient);
   });
 
   afterEach(() => {
@@ -123,7 +122,7 @@ describe("checkRateLimit", () => {
   test("should fail open when Redis is not configured", async () => {
     vi.resetModules();
     vi.doMock("@/modules/cache/redis", () => ({
-      default: vi.fn().mockResolvedValue(null),
+      getRedisClient: vi.fn().mockReturnValue(null),
     }));
 
     // Dynamic import after mocking
@@ -224,7 +223,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/modules/cache/redis", () => ({
-      default: vi.fn().mockResolvedValue({
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockResolvedValue([6, 0]),
       }),
     }));
@@ -265,7 +264,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/modules/cache/redis", () => ({
-      default: vi.fn().mockResolvedValue({
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockResolvedValue([6, 0]),
       }),
     }));
@@ -316,7 +315,7 @@ describe("checkRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/modules/cache/redis", () => ({
-      default: vi.fn().mockResolvedValue({
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockRejectedValue(redisError),
       }),
     }));

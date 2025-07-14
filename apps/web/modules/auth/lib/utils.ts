@@ -1,5 +1,5 @@
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import getRedisClient from "@/modules/cache/redis";
+import { getRedisClient } from "@/modules/cache/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
@@ -230,7 +230,7 @@ export const shouldLogAuthFailure = async (
 
   try {
     // Get Redis client
-    const redis = await getRedisClient();
+    const redis = getRedisClient();
     if (!redis) {
       logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
       return false;

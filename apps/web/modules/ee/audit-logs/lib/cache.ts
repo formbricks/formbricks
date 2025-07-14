@@ -1,10 +1,10 @@
-import getRedisClient from "@/modules/cache/redis";
+import { getRedisClient } from "@/modules/cache/redis";
 import { logger } from "@formbricks/logger";
 
 export const AUDIT_LOG_HASH_KEY = "audit:lastHash";
 
 export async function getPreviousAuditLogHash(): Promise<string | null> {
-  const redis = await getRedisClient();
+  const redis = getRedisClient();
   if (!redis) {
     logger.error("Redis is not initialized");
     return null;
@@ -14,7 +14,7 @@ export async function getPreviousAuditLogHash(): Promise<string | null> {
 }
 
 export async function setPreviousAuditLogHash(hash: string): Promise<void> {
-  const redis = await getRedisClient();
+  const redis = getRedisClient();
   if (!redis) {
     logger.error("Redis is not initialized");
     return;
@@ -33,7 +33,7 @@ export async function runAuditLogHashTransaction(
 ): Promise<void> {
   let retry = 0;
   while (retry < 5) {
-    const redis = await getRedisClient();
+    const redis = getRedisClient();
     if (!redis) {
       logger.error("Redis is not initialized");
       throw new Error("Redis is not initialized");
