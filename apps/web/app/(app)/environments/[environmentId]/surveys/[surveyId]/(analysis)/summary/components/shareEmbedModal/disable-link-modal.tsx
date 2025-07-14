@@ -6,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/modules/ui/components/dialog";
+import { useTranslate } from "@tolgee/react";
 
 interface DisableLinkModalProps {
   open: boolean;
@@ -15,11 +16,15 @@ interface DisableLinkModalProps {
 }
 
 export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: DisableLinkModalProps) => {
+  const { t } = useTranslate();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-w-md flex-col" hideCloseButton disableCloseOnOutsideClick>
         <DialogHeader className="tex-sm font-medium text-slate-900">
-          {type === "multi-use" ? "Are you sure? This can break active embeddings" : "Are you sure?"}
+          {type === "multi-use"
+            ? t("environments.surveys.summary.anonymous_links.")
+            : t("common.are_you_sure")}
         </DialogHeader>
 
         <DialogBody>

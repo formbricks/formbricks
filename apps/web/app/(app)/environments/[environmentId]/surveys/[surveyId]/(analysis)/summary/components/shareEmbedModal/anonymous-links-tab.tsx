@@ -217,9 +217,11 @@ export const AnonymousLinksTab = ({
             />
             <Label htmlFor="multi-use-link-switch">
               <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-slate-900">Multi-use link</h3>
+                <h3 className="text-sm font-medium text-slate-900">
+                  {t("environments.surveys.summary.anonymous_links.multi_use_link")}
+                </h3>
                 <p className="text-sm text-slate-500">
-                  Collect multiple responses from anonymous respondents with one link.
+                  {t("environments.surveys.summary.anonymous_links.multi_use_link_description")}
                 </p>
               </div>
             </Label>
@@ -239,10 +241,10 @@ export const AnonymousLinksTab = ({
             <div className="w-full bg-white">
               <Alert variant="info" size="default">
                 <AlertTitle>
-                  This link powers Website embeds, Email embeds, Social media sharing and QR codes.
+                  {t("environments.surveys.summary.anonymous_links.multi_use_link_alert_title")}
                 </AlertTitle>
                 <AlertDescription>
-                  If you disable it, these other distribution channels will also get disabled.
+                  {t("environments.surveys.summary.anonymous_links.multi_use_link_alert_description")}
                 </AlertDescription>
               </Alert>
             </div>
@@ -256,8 +258,12 @@ export const AnonymousLinksTab = ({
             />
             <Label htmlFor="single-use-link-switch">
               <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-slate-900">Single-use link</h3>
-                <p className="text-sm text-slate-500">Allow only one response per survey link.</p>
+                <h3 className="text-sm font-medium text-slate-900">
+                  {t("environments.surveys.summary.anonymous_links.single_use_link")}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {t("environments.surveys.summary.anonymous_links.single_use_link_description")}
+                </p>
               </div>
             </Label>
           </div>
@@ -267,11 +273,13 @@ export const AnonymousLinksTab = ({
               <div className="flex w-full justify-between">
                 <div className="flex items-center gap-2">
                   <CircleHelpIcon className="h-3.5 w-3.5 shrink-0 text-slate-900" />
-                  <AlertTitle>Allow only 1 response per survey link</AlertTitle>
+                  <AlertTitle>
+                    {t("environments.surveys.summary.anonymous_links.single_use_link_description")}
+                  </AlertTitle>
                 </div>
 
                 <AlertButton variant="ghost" size="sm">
-                  Learn More
+                  {t("common.learn_more")}
                 </AlertButton>
               </div>
             </Alert>
@@ -303,9 +311,11 @@ export const AnonymousLinksTab = ({
             />
             <Label htmlFor="single-use-encryption-switch">
               <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-slate-900">URL encryption of single-use ID</h3>
+                <h3 className="text-sm font-medium text-slate-900">
+                  {t("environments.surveys.summary.anonymous_links.single_use_link_encryption")}
+                </h3>
                 <p className="text-sm text-slate-500">
-                  Only disable if you need to set a custom single-use ID.
+                  {t("environments.surveys.summary.anonymous_links.single_use_link_encryption_description")}
                 </p>
               </div>
             </Label>
@@ -314,51 +324,62 @@ export const AnonymousLinksTab = ({
           {isSingleUseLink && !singleUseEncryption ? (
             <div className="w-full bg-white">
               <Alert variant="info" size="default">
-                <AlertTitle>You can set any value as single-use ID in the URL.</AlertTitle>
+                <AlertTitle>
+                  {t("environments.surveys.summary.anonymous_links.single_use_link_encryption_alert_title")}
+                </AlertTitle>
                 <AlertDescription>
-                  If you don’t encrypt single-use ID’s, any value for “suid=...” works for one response.
+                  {t(
+                    "environments.surveys.summary.anonymous_links.single_use_link_encryption_alert_description"
+                  )}
                 </AlertDescription>
               </Alert>
             </div>
           ) : null}
 
-          <div className="flex w-full flex-col gap-2">
-            <h3 className="text-sm font-medium text-slate-900">Number of links (1 - 5,000)</h3>
+          {isSingleUseLink && singleUseEncryption ? (
+            <div className="flex w-full flex-col gap-2">
+              <h3 className="text-sm font-medium text-slate-900">
+                {t("environments.surveys.summary.anonymous_links.single_use_link_encryption_number_of_links")}
+              </h3>
 
-            <div
-              className={cn(
-                "flex w-2/3 items-center gap-2",
-                !isSingleUseLink ? "pointer-events-none opacity-50" : ""
-              )}>
-              <Input
-                type="number"
-                max={5000}
-                min={1}
-                className="focus:border focus:border-slate-900"
-                value={numberOfLinks}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value >= 1 && value <= 5000) {
-                    setNumberOfLinks(value);
-                  } else if (value === 0 || e.target.value === "") {
-                    setNumberOfLinks(1);
-                  }
-                }}
-              />
+              <div
+                className={cn(
+                  "flex w-2/3 items-center gap-2",
+                  !isSingleUseLink ? "pointer-events-none opacity-50" : ""
+                )}>
+                <Input
+                  type="number"
+                  max={5000}
+                  min={1}
+                  className="focus:border focus:border-slate-900"
+                  value={numberOfLinks}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value >= 1 && value <= 5000) {
+                      setNumberOfLinks(value);
+                    } else if (value === 0 || e.target.value === "") {
+                      setNumberOfLinks(1);
+                    }
+                  }}
+                />
 
-              <Button
-                variant="default"
-                onClick={() => handleGenerateLinks(numberOfLinks)}
-                // disabled={numberOfLinks < 1 || numberOfLinks > 5000}>
-              >
-                <div className="flex items-center gap-2">
-                  <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
-                </div>
+                <Button
+                  variant="default"
+                  onClick={() => handleGenerateLinks(numberOfLinks)}
+                  disabled={numberOfLinks < 1 || numberOfLinks > 5000}>
+                  <div className="flex items-center gap-2">
+                    <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                  </div>
 
-                <span className="text-sm text-slate-50">Generate & download links</span>
-              </Button>
+                  <span className="text-sm text-slate-50">
+                    {t(
+                      "environments.surveys.summary.anonymous_links.single_use_link_encryption_generate_and_download_links"
+                    )}
+                  </span>
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-4">
