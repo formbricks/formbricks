@@ -52,7 +52,8 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     }
 
     return () => {
-      if (qrInstance.current) {
+      const instance = qrInstance.current;
+      if (instance) {
         qrInstance.current = null;
       }
     };

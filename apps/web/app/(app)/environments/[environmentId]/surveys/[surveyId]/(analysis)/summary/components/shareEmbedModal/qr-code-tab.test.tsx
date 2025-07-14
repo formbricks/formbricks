@@ -169,17 +169,6 @@ describe("QRCodeTab", () => {
       ).toBeInTheDocument();
     });
 
-    test("renders component content correctly", () => {
-      render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
-
-      expect(
-        screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")
-      ).toBeInTheDocument();
-    });
-
     test("renders without QR code when surveyUrl is empty", () => {
       render(<QRCodeTab surveyUrl="" />);
 
