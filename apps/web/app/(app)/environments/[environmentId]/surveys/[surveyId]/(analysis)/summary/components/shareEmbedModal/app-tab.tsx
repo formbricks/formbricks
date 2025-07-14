@@ -11,7 +11,7 @@ import { ReactNode, useMemo } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { DocumentationLinksSection } from "./documentation-links-section";
 
-const createDocumentationLinks = (t: any) => [
+const createDocumentationLinks = (t: ReturnType<typeof useTranslate>["t"]) => [
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
     title: t("environments.surveys.summary.in_app.html_embed"),
@@ -33,6 +33,13 @@ const createDocumentationLinks = (t: any) => [
     title: t("environments.surveys.summary.in_app.react_native_sdk"),
   },
 ];
+
+const createNoCodeConfigType = (t: ReturnType<typeof useTranslate>["t"]) => ({
+  click: t("environments.actions.click"),
+  pageView: t("environments.actions.page_view"),
+  exitIntent: t("environments.actions.exit_intent"),
+  fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
+});
 
 interface DisplayCriteriaItemProps {
   icon: ReactNode;
@@ -60,6 +67,7 @@ export const AppTab = () => {
   const { survey } = useSurvey();
 
   const documentationLinks = useMemo(() => createDocumentationLinks(t), [t]);
+  const noCodeConfigType = useMemo(() => createNoCodeConfigType(t), [t]);
 
   const formatRecontactDaysString = (days: number) => {
     if (days === 0) {
@@ -92,26 +100,25 @@ export const AppTab = () => {
     } else if (survey.displayOption === "displaySome") {
       return t("environments.surveys.edit.show_multiple_times");
     }
+
+    // Default fallback for undefined or unexpected displayOption values
+    return t("environments.surveys.edit.show_only_once");
   };
 
-  const getTriggerDescription = (actionClass: TActionClass) => {
+  const getTriggerDescription = (
+    actionClass: TActionClass,
+    noCodeConfigTypeParam: ReturnType<typeof createNoCodeConfigType>
+  ) => {
     let triggerDescription = `${actionClass.name}`;
 
     if (actionClass.type === "code") {
       triggerDescription += ` (${t("environments.surveys.summary.in_app.display_criteria.code_trigger")})`;
     } else {
-      const noCodeConfigType = {
-        click: t("environments.actions.click"),
-        pageView: t("environments.actions.page_view"),
-        exitIntent: t("environments.actions.exit_intent"),
-        fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
-      };
-
       const configType = actionClass.noCodeConfig?.type;
       let configTypeLabel = "unknown";
 
-      if (configType && configType in noCodeConfigType) {
-        configTypeLabel = noCodeConfigType[configType];
+      if (configType && configType in noCodeConfigTypeParam) {
+        configTypeLabel = noCodeConfigTypeParam[configType];
       } else if (configType) {
         configTypeLabel = configType;
       }
@@ -169,7 +176,7 @@ export const AppTab = () => {
               <DisplayCriteriaItem
                 key={trigger.actionClass.id}
                 icon={<MousePointerClickIcon className="h-4 w-4" />}
-                title={getTriggerDescription(trigger.actionClass)}
+                title={getTriggerDescription(trigger.actionClass, noCodeConfigType)}
                 description={t("environments.surveys.summary.in_app.display_criteria.trigger_description")}
               />
             ))}
