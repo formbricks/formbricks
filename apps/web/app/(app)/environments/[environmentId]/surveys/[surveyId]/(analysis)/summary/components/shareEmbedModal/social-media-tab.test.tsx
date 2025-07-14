@@ -95,7 +95,7 @@ describe("SocialMediaTab", () => {
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("linkedin.com/shareArticle"),
       "share-dialog",
-      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
+      "width=1024,height=768,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
   });
 
@@ -121,7 +121,7 @@ describe("SocialMediaTab", () => {
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("facebook.com/sharer"),
       "share-dialog",
-      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
+      "width=1024,height=768,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
   });
 
@@ -135,12 +135,12 @@ describe("SocialMediaTab", () => {
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("twitter.com/intent/tweet"),
       "share-dialog",
-      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
+      "width=1024,height=768,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
   });
 
   test("handles default survey title when none provided", () => {
-    render(<SocialMediaTab surveyUrl={mockSurveyUrl} />);
+    render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
     // Should still render all platforms
     expectedPlatforms.forEach((platform) => {

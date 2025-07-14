@@ -1,5 +1,6 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FacebookIcon } from "@/modules/ui/components/icons/facebook-icon";
@@ -8,18 +9,19 @@ import { RedditIcon } from "@/modules/ui/components/icons/reddit-icon";
 import { ThreadsIcon } from "@/modules/ui/components/icons/threads-icon";
 import { XIcon } from "@/modules/ui/components/icons/x-icon";
 import { useTranslate } from "@tolgee/react";
+import { AlertCircleIcon } from "lucide-react";
 import { useMemo } from "react";
 
 interface SocialMediaTabProps {
   surveyUrl: string;
-  surveyTitle?: string;
+  surveyTitle: string;
 }
 
-export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surveyTitle = "" }) => {
+export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surveyTitle }) => {
   const { t } = useTranslate();
 
   const socialMediaPlatforms = useMemo(() => {
-    const shareText = surveyTitle || "Check out this survey";
+    const shareText = surveyTitle;
 
     // Add source tracking to the survey URL
     const getTrackedUrl = (platform: string) => {
@@ -72,29 +74,22 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
     window.open(
       url,
       "share-dialog",
-      "width=600,height=400,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
+      "width=1024,height=768,location=no,toolbar=no,status=no,menubar=no,scrollbars=yes,resizable=yes,noopener=yes,noreferrer=yes"
     );
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {t("environments.surveys.summary.share_your_survey_on_social_media")}
-        </h3>
-        <p className="text-sm text-slate-600">
-          {t(
-            "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
-          )}
-        </p>
-      </div>
-
+    <TabContainer
+      title={t("environments.surveys.summary.share_your_survey_on_social_media")}
+      description={t(
+        "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
+      )}>
       <div className="grid grid-cols-1 gap-4">
         {socialMediaPlatforms.map((platform) => (
           <Button
             key={platform.name}
             variant="outline"
-            className="w-fit"
+            className="w-fit bg-white"
             onClick={() => handleSocialShare(platform.url)}>
             {platform.name}
             {platform.icon}
@@ -103,6 +98,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
       </div>
 
       <Alert>
+        <AlertCircleIcon />
         <AlertTitle>{t("environments.surveys.summary.source_tracking_enabled")}</AlertTitle>
         <AlertDescription>
           {t("environments.surveys.summary.source_tracking_enabled_alert_description")}
@@ -118,6 +114,6 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
           {t("common.learn_more")}
         </AlertButton>
       </Alert>
-    </div>
+    </TabContainer>
   );
 };
