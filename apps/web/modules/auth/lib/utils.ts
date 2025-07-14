@@ -235,9 +235,9 @@ export const shouldLogAuthFailure = async (
       const windowStart = now - RATE_LIMIT_WINDOW;
 
       // Remove expired entries and count recent failures
-      multi.zremrangebyscore(rateLimitKey, 0, windowStart);
-      multi.zcard(rateLimitKey);
-      multi.zadd(rateLimitKey, now, `${now}:${randomUUID()}`);
+      multi.zRemRangeByScore(rateLimitKey, 0, windowStart);
+      multi.zCard(rateLimitKey);
+      multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
       multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
 
       const results = await multi.exec();
@@ -245,7 +245,7 @@ export const shouldLogAuthFailure = async (
         throw new Error("Redis transaction failed");
       }
 
-      const currentCount = results[1][1] as number;
+      const currentCount = results[1] as number;
 
       // Apply throttling logic
       if (currentCount <= AGGREGATION_THRESHOLD) {
@@ -253,7 +253,7 @@ export const shouldLogAuthFailure = async (
       }
 
       // Check if we should log (every 10th or after 1 minute gap)
-      const recentEntries = await redis.zrange(rateLimitKey, -10, -1);
+      const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
       if (recentEntries.length === 0) return true;
 
       const lastLogTime = parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);

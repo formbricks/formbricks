@@ -51,10 +51,10 @@ export const checkRateLimit = async (
       return {current, current <= limit and 1 or 0}
     `;
 
-    const result = (await redis.eval(luaScript, 1, key, config.allowedPerInterval, ttlSeconds)) as [
-      number,
-      number,
-    ];
+    const result = (await redis.eval(luaScript, {
+      keys: [key],
+      arguments: [config.allowedPerInterval.toString(), ttlSeconds.toString()],
+    })) as [number, number];
     const [currentCount, isAllowed] = result;
 
     // Log debug information for every Redis count increase

@@ -1,11 +1,13 @@
 import { REDIS_URL } from "@/lib/constants";
-import Redis from "ioredis";
+import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 
-const redis = REDIS_URL ? new Redis(REDIS_URL) : null;
-
-if (!redis) {
-  logger.info("REDIS_URL is not set");
+if (!REDIS_URL) {
+  throw new Error("REDIS_URL is not set");
 }
+
+const redis = await createClient({ url: REDIS_URL })
+  .on("error", (err) => logger.error("Error creating redis client", err))
+  .connect();
 
 export default redis;
