@@ -1723,6 +1723,11 @@
         },
         "embed_on_website": {
           "description": "Formbricks surveys can be embedded as a static element.",
+          "embed_in_an_email": "Embed in an email",
+          "embed_in_app": "Embed in app",
+          "embed_mode": "Embed Mode",
+          "embed_mode_description": "Embed your survey with a minimalist design, discarding padding and background.",
+          "nav_title": "Website embed",
           "title": "Embed the survey in your webpage"
         },
         "personal_links": {
