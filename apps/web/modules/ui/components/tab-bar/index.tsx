@@ -53,7 +53,7 @@ export const TabBar: React.FC<TabBarProps> = ({
           )}
           aria-label="Tabs">
           {tabs.map((tab) => (
-            <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
+            <div className="flex h-full flex-1 justify-center p-1" key={tab.id}>
               <button
                 onClick={() => !disabled && setActiveId(tab.id)}
                 type="button"
@@ -61,7 +61,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                   tab.id === activeId
                     ? `bg-white font-semibold text-slate-900 ${activeTabClassName}`
                     : "text-slate-500",
-                  "h-full w-full items-center rounded-lg text-center text-sm font-medium",
+                  "h-full w-full items-center rounded-md text-center text-sm font-medium",
                   disabled ? "cursor-not-allowed" : "hover:text-slate-700"
                 )}
                 aria-current={tab.id === activeId ? "page" : undefined}>

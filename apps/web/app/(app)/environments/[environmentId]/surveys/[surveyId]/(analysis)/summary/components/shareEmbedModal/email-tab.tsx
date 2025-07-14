@@ -7,7 +7,7 @@ import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, CopyIcon, EyeIcon, SendIcon } from "lucide-react";
+import { CopyIcon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -34,12 +34,10 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     {
       id: "preview",
       label: t("environments.surveys.share.send_email.email_preview_tab"),
-      icon: <EyeIcon className="h-4 w-4" />,
     },
     {
       id: "embed",
       label: t("environments.surveys.share.send_email.embed_code_tab"),
-      icon: <Code2Icon className="h-4 w-4" />,
     },
   ];
 
@@ -147,9 +145,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           activeId={activeTab}
           setActiveId={setActiveTab}
           tabStyle="button"
-          className="border border-slate-200 bg-white"
+          className="h-10 min-h-10 rounded-md border border-slate-200 bg-slate-100"
         />
-
         <div className="flex-1">{renderTabContent()}</div>
       </div>
     </TabContainer>
