@@ -4,7 +4,15 @@ import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, SquareStack, UserIcon } from "lucide-react";
+import {
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  QrCodeIcon,
+  SmartphoneIcon,
+  SquareStack,
+  UserIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
@@ -17,6 +25,7 @@ type ModalView = "start" | "share";
 
 enum ShareViewType {
   LINK = "link",
+  QR_CODE = "qr-code",
   PERSONAL_LINKS = "personal-links",
   EMAIL = "email",
   WEBSITE_EMBED = "website-embed",
@@ -57,6 +66,11 @@ export const ShareSurveyModal = ({
         id: ShareViewType.LINK,
         label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
         icon: LinkIcon,
+      },
+      {
+        id: ShareViewType.QR_CODE,
+        label: t("environments.surveys.summary.qr_code"),
+        icon: QrCodeIcon,
       },
       {
         id: ShareViewType.PERSONAL_LINKS,

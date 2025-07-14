@@ -2,6 +2,7 @@
 
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -104,6 +105,8 @@ export const ShareView = ({
             locale={locale}
           />
         );
+      case "qr-code":
+        return <QRCodeTab surveyUrl={surveyUrl} />;
       case "app":
         return <AppTab />;
       case "personal-links":
