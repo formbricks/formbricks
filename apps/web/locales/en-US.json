@@ -1707,6 +1707,7 @@
           "generate_and_download_links": "Generate & download links",
           "multi_use_link": "Multi-use link",
           "multi_use_link_description": "Collect multiple responses from anonymous respondents with one link.",
+          "nav_title": "Anonymous links",
           "number_of_links_label": "Number of links (1 - 5,000)",
           "single_use_link": "Single-use links",
           "single_use_link_description": "Allow only one response per survey link.",
@@ -1723,6 +1724,12 @@
         "embed_on_website": {
           "description": "Formbricks surveys can be embedded as a static element.",
           "title": "Embed the survey in your webpage"
+        },
+        "personal_links": {
+          "nav_title": "Personal links"
+        },
+        "send_email": {
+          "nav_title": "Email embed"
         }
       },
       "summary": {

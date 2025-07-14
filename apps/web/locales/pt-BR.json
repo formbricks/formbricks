@@ -1707,6 +1707,7 @@
           "generate_and_download_links": "Gerar & baixar links",
           "multi_use_link": "Link de uso múltiplo",
           "multi_use_link_description": "Coletar múltiplas respostas de respondentes anônimos com um link.",
+          "nav_title": "Links anônimos",
           "number_of_links_label": "Número de links (1 - 5.000)",
           "single_use_link": "Links de uso único",
           "single_use_link_description": "Permitir apenas uma resposta por link da pesquisa.",
@@ -1723,6 +1724,12 @@
         "embed_on_website": {
           "description": "Os formulários Formbricks podem ser incorporados como um elemento estático.",
           "title": "Incorporar a pesquisa na sua página da web"
+        },
+        "personal_links": {
+          "nav_title": "Links pessoais"
+        },
+        "send_email": {
+          "nav_title": "Incorporação de Email"
         }
       },
       "summary": {

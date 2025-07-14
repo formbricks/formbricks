@@ -1707,6 +1707,7 @@
           "generate_and_download_links": "Links generieren und herunterladen",
           "multi_use_link": "Mehrfach verwendet",
           "multi_use_link_description": "Sammle mehrere Antworten von anonymen Teilnehmern mit einem Link",
+          "nav_title": "Anonyme Links",
           "number_of_links_label": "Anzahl der Links (1 - 5.000)",
           "single_use_link": "Einmalige Links",
           "single_use_link_description": "Erlaube nur eine Antwort pro Umfragelink.",
@@ -1723,6 +1724,12 @@
         "embed_on_website": {
           "description": "Formbricks-Umfragen können als statisches Element eingebettet werden.",
           "title": "Binden Sie die Umfrage auf Ihrer Webseite ein"
+        },
+        "personal_links": {
+          "nav_title": "Persönliche Links"
+        },
+        "send_email": {
+          "nav_title": "E-Mail-Einbettung"
         }
       },
       "summary": {

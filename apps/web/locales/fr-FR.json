@@ -1707,6 +1707,7 @@
           "generate_and_download_links": "Générer et télécharger les liens",
           "multi_use_link": "Lien multi-usage",
           "multi_use_link_description": "Recueillir plusieurs réponses de répondants anonymes avec un seul lien.",
+          "nav_title": "Liens anonymes",
           "number_of_links_label": "Nombre de liens (1 - 5,000)",
           "single_use_link": "Liens à usage unique",
           "single_use_link_description": "Autoriser uniquement une réponse par lien d'enquête",
@@ -1723,6 +1724,12 @@
         "embed_on_website": {
           "description": "Les enquêtes Formbricks peuvent être intégrées comme élément statique.",
           "title": "Intégrez le sondage sur votre page web"
+        },
+        "personal_links": {
+          "nav_title": "Liens personnels"
+        },
+        "send_email": {
+          "nav_title": "Email intégré"
         }
       },
       "summary": {
