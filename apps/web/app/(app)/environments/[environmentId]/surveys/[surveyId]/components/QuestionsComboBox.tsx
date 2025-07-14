@@ -15,11 +15,13 @@ import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import {
   AirplayIcon,
+  ArrowUpFromDotIcon,
   CheckIcon,
   ChevronDown,
   ChevronUp,
   ContactIcon,
   EyeOff,
+  FlagIcon,
   GlobeIcon,
   GridIcon,
   HashIcon,
@@ -89,7 +91,8 @@ const questionIcons = {
   device: SmartphoneIcon,
   os: AirplayIcon,
   browser: GlobeIcon,
-  source: GlobeIcon,
+  source: ArrowUpFromDotIcon,
+  country: FlagIcon,
   action: MousePointerClickIcon,
 
   // others
