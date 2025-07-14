@@ -158,7 +158,7 @@ const mockProjectStyling: TProjectStyling = {
   cardBorderColor: { light: "#projCardBorder", dark: "#projCardBorder_dark" },
   brandColor: { light: "#brand", dark: "#brand_dark" },
   cardBackgroundColor: { light: "#projCardBg", dark: "#projCardBg_dark" },
-  cardShadowColor: { light: "#projCardShadow", dark: "#projCardShadow_dark" },
+
   questionColor: { light: "#projQ", dark: "#projQ_dark" },
   inputColor: { light: "#projInput", dark: "#projInput_dark" },
   inputBorderColor: { light: "#projInputBorder", dark: "#projInputBorder_dark" },

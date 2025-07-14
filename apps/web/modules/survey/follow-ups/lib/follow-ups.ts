@@ -144,7 +144,9 @@ const evaluateFollowUp = async (
  */
 export const sendFollowUpsForResponse = async (
   responseId: string
-): Promise<Result<FollowUpResult[], { code: FollowUpSendError; message: string; meta?: any }>> => {
+): Promise<
+  Result<FollowUpResult[], { code: FollowUpSendError; message: string; meta?: Record<string, string> }>
+> => {
   try {
     validateInputs([responseId, ZId]);
     // Get the response first to get the survey ID

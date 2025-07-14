@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
@@ -457,26 +457,31 @@ export function AddFilterModal({
   };
 
   return (
-    <Modal
-      className="sm:w-[650px] sm:max-w-full"
-      closeOnOutsideClick
-      hideCloseButton
-      open={open}
-      setOpen={setOpen}>
-      <div className="flex w-auto flex-col">
-        <Input
-          autoFocus
-          onChange={(e) => {
-            setSearchValue(e.target.value);
-          }}
-          placeholder="Browse filters..."
-        />
-        <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
-      </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent width="narrow" disableCloseOnOutsideClick>
+        <DialogHeader>
+          <DialogTitle>{t("common.add_filter")}</DialogTitle>
+        </DialogHeader>
 
-      <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
-        <TabContent />
-      </div>
-    </Modal>
+        <DialogBody>
+          <div className="flex flex-col">
+            <div className="flex w-auto flex-col">
+              <Input
+                autoFocus
+                onChange={(e) => {
+                  setSearchValue(e.target.value);
+                }}
+                placeholder="Browse filters..."
+              />
+              <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
+            </div>
+
+            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>
+              <TabContent />
+            </div>
+          </div>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

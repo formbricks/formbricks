@@ -6,8 +6,27 @@ import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { CreateOrganizationModal } from "./index";
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, children }) => (open ? <div data-testid="modal">{children}</div> : null),
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 vi.mock("lucide-react", () => ({
@@ -34,9 +53,14 @@ describe("CreateOrganizationModal", () => {
     cleanup();
   });
 
-  test("renders modal and form fields", () => {
+  test("renders dialog and form fields", () => {
     render(<CreateOrganizationModal open={true} setOpen={vi.fn()} />);
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("environments.settings.general.organization_name_placeholder")
     ).toBeInTheDocument();
@@ -61,7 +85,7 @@ describe("CreateOrganizationModal", () => {
     expect(submitBtn).not.toBeDisabled();
   });
 
-  test("calls createOrganizationAction and closes modal on success", async () => {
+  test("calls createOrganizationAction and closes dialog on success", async () => {
     const setOpen = vi.fn();
     vi.mocked(createOrganizationAction).mockResolvedValue({ data: { id: "org-1" } } as any);
     render(<CreateOrganizationModal open={true} setOpen={setOpen} />);

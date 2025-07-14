@@ -341,27 +341,6 @@ describe("SurveysList", () => {
     });
   });
 
-  test("handleDuplicateSurvey adds the duplicated survey to the beginning of the list", async () => {
-    const initialSurvey = { ...surveyMock, id: "s1", name: "Original Survey" };
-    vi.mocked(getSurveysAction).mockResolvedValueOnce({ data: [initialSurvey] });
-    const user = userEvent.setup();
-    render(<SurveysList {...defaultProps} />);
-
-    await waitFor(() => expect(screen.getByText("Original Survey")).toBeInTheDocument());
-
-    const duplicateButtonS1 = screen.getByTestId("duplicate-s1");
-    // The mock SurveyCard calls duplicateSurvey(survey) with the original survey object.
-    await user.click(duplicateButtonS1);
-
-    await waitFor(() => {
-      const surveyCards = screen.getAllByTestId(/survey-card-/);
-      expect(surveyCards).toHaveLength(2);
-      // Both cards will show "Original Survey" as the object is prepended.
-      expect(surveyCards[0]).toHaveTextContent("Original Survey");
-      expect(surveyCards[1]).toHaveTextContent("Original Survey");
-    });
-  });
-
   test("applies useAutoAnimate ref to the survey list container", async () => {
     const surveysData = [{ ...surveyMock, id: "s1" }];
     vi.mocked(getSurveysAction).mockResolvedValueOnce({ data: surveysData });

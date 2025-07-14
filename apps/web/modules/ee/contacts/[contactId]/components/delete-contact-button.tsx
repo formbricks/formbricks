@@ -2,6 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
@@ -48,18 +49,21 @@ export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: De
 
   return (
     <>
-      <button
+      <Button
+        variant="destructive"
+        size="icon"
         onClick={() => {
           setDeleteDialogOpen(true);
         }}>
-        <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-700" />
-      </button>
+        <TrashIcon />
+      </Button>
       <DeleteDialog
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         deleteWhat="person"
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
+        text={t("environments.contacts.delete_contact_confirmation")}
       />
     </>
   );

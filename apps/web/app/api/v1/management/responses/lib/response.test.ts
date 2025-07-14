@@ -186,6 +186,18 @@ describe("Response Lib Tests", () => {
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
     });
 
+    test("should handle RelatedRecordDoesNotExist error with specific message", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Related record does not exist", {
+        code: "P2025", // PrismaErrorType.RelatedRecordDoesNotExist
+        clientVersion: "2.0",
+      });
+      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
+
+      await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
+      await expect(createResponse(mockResponseInput)).rejects.toThrow("Display ID does not exist");
+    });
+
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);

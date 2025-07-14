@@ -192,7 +192,7 @@ Here are a few options:
 
 - Upvote issues with 👍 reaction so we know what the demand for a particular issue is to prioritize it within the roadmap.
 
-Please check out [our contribution guide](https://formbricks.com/docs/developer-docs/contributing/get-started) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
+- Note: For the time being, we can only facilitate code contributions as an exception.
 
 ## All Thanks To Our Contributors
 

@@ -210,14 +210,13 @@ export const ActionSettingsTab = ({
             )}
           </div>
 
-          <div className="flex justify-between border-t border-slate-200 py-6">
-            <div>
+          <div className="flex justify-between gap-x-2 border-slate-200 pt-4">
+            <div className="flex items-center gap-x-2">
               {!isReadOnly ? (
                 <Button
                   type="button"
                   variant="destructive"
                   onClick={() => setOpenDeleteDialog(true)}
-                  className="mr-3"
                   id="deleteActionModalTrigger">
                   <TrashIcon />
                   {t("common.delete")}

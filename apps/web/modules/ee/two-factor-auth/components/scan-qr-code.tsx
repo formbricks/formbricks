@@ -47,7 +47,7 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+      <div className="flex w-full items-center justify-end space-x-4">
         <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
           {t("common.cancel")}
         </Button>

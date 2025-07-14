@@ -8,8 +8,31 @@ import { ShareInviteModal } from "./share-invite-modal";
 const t = (k: string) => k;
 vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t }) }));
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, children }: any) => (open ? <div data-testid="modal">{children}</div> : null),
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-header" className={className}>
+      {children}
+    </div>
+  ),
+  DialogTitle: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-title" className={className}>
+      {children}
+    </div>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 const defaultProps = {
@@ -24,9 +47,15 @@ describe("ShareInviteModal", () => {
     vi.clearAllMocks();
   });
 
-  test("renders modal and invite link", () => {
+  test("renders dialog and invite link", () => {
     render(<ShareInviteModal {...defaultProps} />);
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
+
     expect(
       screen.getByText("environments.settings.general.organization_invite_link_ready")
     ).toBeInTheDocument();
@@ -38,8 +67,8 @@ describe("ShareInviteModal", () => {
     expect(screen.getByText("common.copy_link")).toBeInTheDocument();
   });
 
-  test("calls setOpen when modal is closed", () => {
+  test("calls setOpen when dialog is closed", () => {
     render(<ShareInviteModal {...defaultProps} open={false} />);
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 });

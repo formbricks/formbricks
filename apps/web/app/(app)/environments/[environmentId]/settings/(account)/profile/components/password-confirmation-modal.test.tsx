@@ -4,18 +4,27 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { PasswordConfirmationModal } from "./password-confirmation-modal";
 
-// Mock the Modal component
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open, setOpen, title }: any) =>
+// Mock the Dialog component
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) =>
     open ? (
-      <div data-testid="modal">
-        <div data-testid="modal-title">{title}</div>
+      <div data-testid="dialog" role="dialog">
         {children}
-        <button data-testid="modal-close" onClick={() => setOpen(false)}>
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
           Close
         </button>
       </div>
     ) : null,
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogDescription: ({ children }: any) => <p data-testid="dialog-description">{children}</p>,
+  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
+  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
 }));
 
 // Mock the PasswordInput component
@@ -54,13 +63,13 @@ describe("PasswordConfirmationModal", () => {
 
   test("renders nothing when open is false", () => {
     render(<PasswordConfirmationModal {...defaultProps} open={false} />);
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  test("renders modal content when open is true", () => {
+  test("renders dialog content when open is true", () => {
     render(<PasswordConfirmationModal {...defaultProps} />);
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
-    expect(screen.getByTestId("modal-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
   });
 
   test("displays old and new email addresses", () => {

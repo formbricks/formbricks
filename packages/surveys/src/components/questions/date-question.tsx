@@ -224,19 +224,11 @@ export function DateQuestion({
                 className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
                 calendarProps={{
                   className:
-                    "calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
+                    "calendar-root !fb-text-heading !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
                   tileClassName: ({ date }: { date: Date }) => {
                     const baseClass =
                       "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-                    // today's date class
-                    if (
-                      date.getDate() === new Date().getDate() &&
-                      date.getMonth() === new Date().getMonth() &&
-                      date.getFullYear() === new Date().getFullYear()
-                    ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
-                    }
-                    // active date class
+                    // active date class (check first to take precedence over today's date)
                     if (
                       selectedDate &&
                       date.getDate() === selectedDate?.getDate() &&
@@ -244,6 +236,14 @@ export function DateQuestion({
                       date.getFullYear() === selectedDate.getFullYear()
                     ) {
                       return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
+                    }
+                    // today's date class
+                    if (
+                      date.getDate() === new Date().getDate() &&
+                      date.getMonth() === new Date().getMonth() &&
+                      date.getFullYear() === new Date().getFullYear()
+                    ) {
+                      return `${baseClass} !fb-bg-brand !fb-opacity-50 !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
                     }
 
                     return `${baseClass} !fb-text-heading`;

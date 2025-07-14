@@ -94,6 +94,7 @@ describe("LandingSidebar component", () => {
       organizationId: "o1",
       redirect: true,
       callbackUrl: "/auth/login",
+      clearEnvironmentId: true,
     });
   });
 });

@@ -109,6 +109,9 @@ export const RecallItemSelect = ({
   }, [localSurvey.variables, recallItemIds]);
 
   const surveyQuestionRecallItems = useMemo(() => {
+    const isWelcomeCard = questionId === "start";
+    if (isWelcomeCard) return [];
+
     const isEndingCard = !localSurvey.questions.map((question) => question.id).includes(questionId);
     const idx = isEndingCard
       ? localSurvey.questions.length

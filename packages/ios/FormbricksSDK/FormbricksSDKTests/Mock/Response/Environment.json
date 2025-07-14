@@ -326,9 +326,6 @@
             "cardBorderColor": {
               "light": "#f8fafc"
             },
-            "cardShadowColor": {
-              "light": "#000000"
-            },
             "inputBorderColor": {
               "light": "#090e14"
             },

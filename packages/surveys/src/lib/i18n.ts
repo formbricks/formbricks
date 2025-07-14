@@ -10,7 +10,7 @@ export const getLocalizedValue = (value: TI18nString | undefined, languageId: st
     return "";
   }
   if (isI18nObject(value)) {
-    if (value[languageId]) {
+    if (typeof value[languageId] === "string") {
       return value[languageId];
     }
     return value.default;

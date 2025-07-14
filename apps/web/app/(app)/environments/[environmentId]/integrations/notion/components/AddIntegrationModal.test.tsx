@@ -74,13 +74,41 @@ vi.mock("@/modules/ui/components/dropdown-selector", () => ({
 vi.mock("@/modules/ui/components/label", () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
 }));
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
-    open ? <div data-testid="modal">{children}</div> : null,
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-header" className={className}>
+      {children}
+    </div>
+  ),
+  DialogDescription: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <p data-testid="dialog-description" className={className}>
+      {children}
+    </p>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogBody: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-body" className={className}>
+      {children}
+    </div>
+  ),
+  DialogFooter: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="dialog-footer" className={className}>
+      {children}
+    </div>
+  ),
 }));
 vi.mock("lucide-react", () => ({
   PlusIcon: () => <span data-testid="plus-icon">+</span>,
-  XIcon: () => <span data-testid="x-icon">x</span>,
+  TrashIcon: () => <span data-testid="trash-icon">🗑️</span>,
 }));
 vi.mock("next/image", () => ({
   // eslint-disable-next-line @next/next/no-img-element
@@ -334,7 +362,7 @@ describe("AddIntegrationModal (Notion)", () => {
       />
     );
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.integrations.notion.link_database")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-select-a-database")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-select-survey")).toBeInTheDocument();
@@ -359,7 +387,7 @@ describe("AddIntegrationModal (Notion)", () => {
       />
     );
 
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-select-a-database")).toHaveValue(databases[0].id);
     expect(screen.getByTestId("dropdown-select-survey")).toHaveValue(surveys[0].id);
     expect(screen.getByText("Map Formbricks fields to Notion property")).toBeInTheDocument();
@@ -381,7 +409,7 @@ describe("AddIntegrationModal (Notion)", () => {
       expect(columnDropdowns[1]).toHaveValue("p2");
 
       expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
-      expect(screen.getAllByTestId("x-icon").length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("trash-icon").length).toBeGreaterThan(0);
     });
 
     expect(screen.getByText("Delete")).toBeInTheDocument();
@@ -445,8 +473,8 @@ describe("AddIntegrationModal (Notion)", () => {
 
     expect(screen.getAllByTestId("dropdown-select-a-survey-question")).toHaveLength(2);
 
-    const xButton = screen.getAllByTestId("x-icon")[0]; // Get the first X button
-    await userEvent.click(xButton);
+    const trashButton = screen.getAllByTestId("trash-icon")[0]; // Get the first trash button
+    await userEvent.click(trashButton);
 
     expect(screen.getAllByTestId("dropdown-select-a-survey-question")).toHaveLength(1);
   });

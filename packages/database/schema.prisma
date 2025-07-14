@@ -112,14 +112,12 @@ model ContactAttributeKey {
 /// Contacts are environment-specific and can have multiple attributes and responses.
 ///
 /// @property id - Unique identifier for the contact
-/// @property userId - Optional external user identifier
 /// @property environment - The environment this contact belongs to
 /// @property responses - Survey responses from this contact
 /// @property attributes - Custom attributes associated with this contact
 /// @property displays - Record of surveys shown to this contact
 model Contact {
   id            String             @id @default(cuid())
-  userId        String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)

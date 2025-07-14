@@ -39,7 +39,7 @@ describe("updateProjectBranding", () => {
         inputBorderColor: { light: "#cbd5e1" },
         cardBackgroundColor: { light: "#ffffff" },
         cardBorderColor: { light: "#f8fafc" },
-        cardShadowColor: { light: "#000000" },
+
         isLogoHidden: false,
         isDarkModeEnabled: false,
         background: { bg: "#fff", bgType: "color" as const },

@@ -17,9 +17,9 @@ interface SurveyCardProps {
   environmentId: string;
   isReadOnly: boolean;
   publicDomain: string;
-  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   locale: TUserLocale;
+  onSurveysCopied?: () => void;
 }
 export const SurveyCard = ({
   survey,
@@ -27,8 +27,8 @@ export const SurveyCard = ({
   isReadOnly,
   publicDomain,
   deleteSurvey,
-  duplicateSurvey,
   locale,
+  onSurveysCopied,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
   const surveyStatusLabel = (() => {
@@ -106,8 +106,8 @@ export const SurveyCard = ({
           disabled={isDraftAndReadOnly}
           refreshSingleUseId={refreshSingleUseId}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
-          duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
+          onSurveysCopied={onSurveysCopied}
         />
       </button>
     </>

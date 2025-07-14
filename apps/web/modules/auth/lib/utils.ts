@@ -283,7 +283,13 @@ export const logSignOut = (
   userId: string,
   userEmail: string,
   context?: {
-    reason?: "user_initiated" | "account_deletion" | "email_change" | "session_timeout" | "forced_logout";
+    reason?:
+      | "user_initiated"
+      | "account_deletion"
+      | "email_change"
+      | "session_timeout"
+      | "forced_logout"
+      | "password_reset";
     redirectUrl?: string;
     organizationId?: string;
   }

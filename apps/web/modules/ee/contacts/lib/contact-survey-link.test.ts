@@ -10,6 +10,12 @@ vi.mock("jsonwebtoken", () => ({
   default: {
     sign: vi.fn(),
     verify: vi.fn(),
+    TokenExpiredError: class TokenExpiredError extends Error {
+      constructor(message: string) {
+        super(message);
+        this.name = "TokenExpiredError";
+      }
+    },
   },
 }));
 
@@ -145,8 +151,8 @@ describe("Contact Survey Link", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "bad_request",
-          message: "Invalid or expired survey token",
-          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+          message: "Invalid survey token",
+          details: [{ field: "token", issue: "invalid_token" }],
         });
       }
     });
@@ -166,8 +172,8 @@ describe("Contact Survey Link", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "bad_request",
-          message: "Invalid or expired survey token",
-          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+          message: "Invalid survey token",
+          details: [{ field: "token", issue: "invalid_token" }],
         });
       }
     });

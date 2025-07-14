@@ -1,32 +1,80 @@
 import { EditSegmentModal } from "@/modules/ee/contacts/segments/components/edit-segment-modal";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
 // Mock child components
 vi.mock("@/modules/ee/contacts/segments/components/segment-settings", () => ({
-  SegmentSettings: vi.fn(() => <div>SegmentSettingsMock</div>),
+  SegmentSettings: vi.fn(() => <div data-testid="segment-settings">SegmentSettingsMock</div>),
 }));
 vi.mock("@/modules/ee/contacts/segments/components/segment-activity-tab", () => ({
-  SegmentActivityTab: vi.fn(() => <div>SegmentActivityTabMock</div>),
+  SegmentActivityTab: vi.fn(() => <div data-testid="segment-activity-tab">SegmentActivityTabMock</div>),
 }));
-vi.mock("@/modules/ui/components/modal-with-tabs", () => ({
-  ModalWithTabs: vi.fn(({ open, label, description, tabs, icon }) =>
+
+// Mock the Dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
     open ? (
-      <div>
-        <h1>{label}</h1>
-        <p>{description}</p>
-        <div>{icon}</div>
-        <ul>
-          {tabs.map((tab) => (
-            <li key={tab.title}>
-              <h2>{tab.title}</h2>
-              <div>{tab.children}</div>
-            </li>
-          ))}
-        </ul>
+      <div data-testid="dialog">
+        {children}
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
       </div>
-    ) : null
+    ) : null,
+  DialogContent: ({
+    children,
+    disableCloseOnOutsideClick,
+  }: {
+    children: React.ReactNode;
+    disableCloseOnOutsideClick?: boolean;
+  }) => (
+    <div data-testid="dialog-content" data-disable-close-on-outside-click={disableCloseOnOutsideClick}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2 data-testid="dialog-title">{children}</h2>
+  ),
+  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid="dialog-description">{children}</p>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+}));
+
+// Mock useTranslate
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations = {
+        "common.activity": "Activity",
+        "common.settings": "Settings",
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
+// Mock lucide-react
+vi.mock("lucide-react", () => ({
+  UsersIcon: ({ className }: { className?: string }) => (
+    <span data-testid="users-icon" className={className}>
+      👥
+    </span>
   ),
 }));
 
@@ -62,77 +110,92 @@ describe("EditSegmentModal", () => {
     vi.clearAllMocks();
   });
 
-  test("renders correctly when open and contacts enabled", async () => {
+  test("renders correctly when open and contacts enabled", () => {
     render(<EditSegmentModal {...defaultProps} />);
 
-    expect(screen.getByText("Test Segment")).toBeInTheDocument();
-    expect(screen.getByText("This is a test segment")).toBeInTheDocument();
-    expect(screen.getByText("common.activity")).toBeInTheDocument();
-    expect(screen.getByText("common.settings")).toBeInTheDocument();
-    expect(screen.getByText("SegmentActivityTabMock")).toBeInTheDocument();
-    expect(screen.getByText("SegmentSettingsMock")).toBeInTheDocument();
-
-    const ModalWithTabsMock = vi.mocked(
-      await import("@/modules/ui/components/modal-with-tabs")
-    ).ModalWithTabs;
-
-    // Check that the mock was called
-    expect(ModalWithTabsMock).toHaveBeenCalled();
-
-    // Get the arguments of the first call
-    const callArgs = ModalWithTabsMock.mock.calls[0];
-    expect(callArgs).toBeDefined(); // Ensure the mock was called
-
-    const propsPassed = callArgs[0]; // The first argument is the props object
-
-    // Assert individual properties
-    expect(propsPassed.open).toBe(true);
-    expect(propsPassed.setOpen).toBe(defaultProps.setOpen);
-    expect(propsPassed.label).toBe("Test Segment");
-    expect(propsPassed.description).toBe("This is a test segment");
-    expect(propsPassed.closeOnOutsideClick).toBe(false);
-    expect(propsPassed.icon).toBeDefined(); // Check if icon exists
-    expect(propsPassed.tabs).toHaveLength(2); // Check number of tabs
-
-    // Check properties of the first tab
-    expect(propsPassed.tabs[0].title).toBe("common.activity");
-    expect(propsPassed.tabs[0].children).toBeDefined();
-
-    // Check properties of the second tab
-    expect(propsPassed.tabs[1].title).toBe("common.settings");
-    expect(propsPassed.tabs[1].children).toBeDefined();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Segment");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("This is a test segment");
+    expect(screen.getByTestId("users-icon")).toBeInTheDocument();
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    expect(screen.getByText("Settings")).toBeInTheDocument();
+    // Only the first tab (Activity) should be active initially
+    expect(screen.getByTestId("segment-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-settings")).not.toBeInTheDocument();
   });
 
-  test("renders correctly when open and contacts disabled", async () => {
+  test("renders correctly when open and contacts disabled", () => {
     render(<EditSegmentModal {...defaultProps} isContactsEnabled={false} />);
 
-    expect(screen.getByText("Test Segment")).toBeInTheDocument();
-    expect(screen.getByText("This is a test segment")).toBeInTheDocument();
-    expect(screen.getByText("common.activity")).toBeInTheDocument();
-    expect(screen.getByText("common.settings")).toBeInTheDocument(); // Tab title still exists
-    expect(screen.getByText("SegmentActivityTabMock")).toBeInTheDocument();
-    // Check that the settings content is not rendered, which is the key behavior
-    expect(screen.queryByText("SegmentSettingsMock")).not.toBeInTheDocument();
-
-    const ModalWithTabsMock = vi.mocked(
-      await import("@/modules/ui/components/modal-with-tabs")
-    ).ModalWithTabs;
-    const calls = ModalWithTabsMock.mock.calls;
-    const lastCallArgs = calls[calls.length - 1][0]; // Get the props of the last call
-
-    // Check that the Settings tab was passed in props
-    const settingsTab = lastCallArgs.tabs.find((tab) => tab.title === "common.settings");
-    expect(settingsTab).toBeDefined();
-    // The children prop will be <SettingsTab />, but its rendered output is null/empty.
-    // The check above (queryByText("SegmentSettingsMock")) already confirms this.
-    // No need to check settingsTab.children === null here.
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Segment");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("This is a test segment");
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    expect(screen.getByText("Settings")).toBeInTheDocument();
+    expect(screen.getByTestId("segment-activity-tab")).toBeInTheDocument();
+    // Settings tab content should not render when contacts are disabled
+    expect(screen.queryByTestId("segment-settings")).not.toBeInTheDocument();
   });
 
   test("does not render when open is false", () => {
     render(<EditSegmentModal {...defaultProps} open={false} />);
 
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("Test Segment")).not.toBeInTheDocument();
-    expect(screen.queryByText("common.activity")).not.toBeInTheDocument();
-    expect(screen.queryByText("common.settings")).not.toBeInTheDocument();
+    expect(screen.queryByText("Activity")).not.toBeInTheDocument();
+    expect(screen.queryByText("Settings")).not.toBeInTheDocument();
+  });
+
+  test("switches tabs correctly", async () => {
+    const user = userEvent.setup();
+    render(<EditSegmentModal {...defaultProps} />);
+
+    // Initially shows activity tab (first tab is active)
+    expect(screen.getByTestId("segment-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-settings")).not.toBeInTheDocument();
+
+    // Click settings tab
+    const settingsTab = screen.getByText("Settings");
+    await user.click(settingsTab);
+
+    // Now shows settings tab content
+    expect(screen.queryByTestId("segment-activity-tab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("segment-settings")).toBeInTheDocument();
+
+    // Click activity tab again
+    const activityTab = screen.getByText("Activity");
+    await user.click(activityTab);
+
+    // Back to activity tab content
+    expect(screen.getByTestId("segment-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-settings")).not.toBeInTheDocument();
+  });
+
+  test("resets to first tab when modal is reopened", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EditSegmentModal {...defaultProps} />);
+
+    // Switch to settings tab
+    const settingsTab = screen.getByText("Settings");
+    await user.click(settingsTab);
+    expect(screen.getByTestId("segment-settings")).toBeInTheDocument();
+
+    // Close modal
+    rerender(<EditSegmentModal {...defaultProps} open={false} />);
+
+    // Reopen modal
+    rerender(<EditSegmentModal {...defaultProps} open={true} />);
+
+    // Should be back to activity tab (first tab)
+    expect(screen.getByTestId("segment-activity-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-settings")).not.toBeInTheDocument();
+  });
+
+  test("handles segment without description", () => {
+    const segmentWithoutDescription = { ...mockSegment, description: "" };
+    render(<EditSegmentModal {...defaultProps} currentSegment={segmentWithoutDescription} />);
+
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Segment");
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent("");
   });
 });

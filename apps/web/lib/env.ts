@@ -127,6 +127,7 @@ export const env = createEnv({
       .string()
       .transform((val) => parseInt(val))
       .optional(),
+    SENTRY_ENVIRONMENT: z.string().optional(),
   },
 
   /*
@@ -225,5 +226,6 @@ export const env = createEnv({
     AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
     AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
+    SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
   },
 });

@@ -40,7 +40,7 @@ export const FormStylingSettings = ({
   const setInputBorderColor = (color: string) => form.setValue("inputBorderColor.light", color);
   const setCardBackgroundColor = (color: string) => form.setValue("cardBackgroundColor.light", color);
   const setCardBorderColor = (color: string) => form.setValue("cardBorderColor.light", color);
-  const setCardShadowColor = (color: string) => form.setValue("cardShadowColor.light", color);
+
   const setBackgroundColor = (color: string) => {
     form.setValue("background", {
       bg: color,
@@ -59,7 +59,6 @@ export const FormStylingSettings = ({
 
     setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
     setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
-    setCardShadowColor(brandColor);
 
     if (!background || background?.bgType === "color") {
       setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));

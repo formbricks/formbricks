@@ -21,15 +21,12 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   stripePriceLookupKeys: {
-    STARTUP_MONTHLY: string;
-    STARTUP_YEARLY: string;
-    SCALE_MONTHLY: string;
-    SCALE_YEARLY: string;
+    STARTUP_MAY25_MONTHLY: string;
+    STARTUP_MAY25_YEARLY: string;
   };
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    SCALE: string;
     ENTERPRISE: string;
   };
   hasBillingRights: boolean;
@@ -102,35 +99,32 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      }
     }
   };
 
   const onUpgrade = async (planId: string) => {
-    if (planId === "scale") {
-      await upgradePlan(
-        planPeriod === "monthly" ? stripePriceLookupKeys.SCALE_MONTHLY : stripePriceLookupKeys.SCALE_YEARLY
-      );
-      return;
-    }
-
     if (planId === "startup") {
       await upgradePlan(
         planPeriod === "monthly"
-          ? stripePriceLookupKeys.STARTUP_MONTHLY
-          : stripePriceLookupKeys.STARTUP_YEARLY
+          ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
+          : stripePriceLookupKeys.STARTUP_MAY25_YEARLY
       );
       return;
     }
 
-    if (planId === "enterprise") {
-      window.location.href = "https://cal.com/johannes/license";
+    if (planId === "custom") {
+      window.location.href =
+        "https://app.formbricks.com/s/cm7k8esy20001jp030fh8a9o5?source=billingView&delivery=cloud";
       return;
     }
 
     if (planId === "free") {
       toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
-      return;
     }
   };
 
@@ -233,7 +227,7 @@ export const PricingTable = ({
 
             <div
               className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-12",
+                "relative mx-8 flex flex-col gap-4 pb-6",
                 projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
@@ -282,7 +276,7 @@ export const PricingTable = ({
                   </span>
                 </button>
               </div>
-              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
+              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
                 <div
                   className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"

@@ -29,7 +29,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
           <FormItem>
             <FormControl>
               <div>
-                <Label className="font-semibold">{t("environments.actions.what_is_the_user_doing")}</Label>
+                <Label>{t("environments.actions.what_is_the_user_doing")}</Label>
                 <TabToggle
                   disabled={isReadOnly}
                   id="userAction"

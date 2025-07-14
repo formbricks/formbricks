@@ -3,14 +3,6 @@ import { render } from "@testing-library/react";
 import { type MockedFunction, beforeEach, describe, expect, test, vi } from "vitest";
 import { ClientLogout } from "./index";
 
-// Mock the localStorage
-const mockRemoveItem = vi.fn();
-Object.defineProperty(window, "localStorage", {
-  value: {
-    removeItem: mockRemoveItem,
-  },
-});
-
 // Mock next-auth/react
 const mockSignOut = vi.fn();
 vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
@@ -37,6 +29,7 @@ describe("ClientLogout", () => {
       redirectUrl: "/auth/login",
       redirect: false,
       callbackUrl: "/auth/login",
+      clearEnvironmentId: true,
     });
   });
 
@@ -50,12 +43,8 @@ describe("ClientLogout", () => {
       redirectUrl: "/auth/login",
       redirect: false,
       callbackUrl: "/auth/login",
+      clearEnvironmentId: true,
     });
-  });
-
-  test("removes environment ID from localStorage", () => {
-    render(<ClientLogout />);
-    expect(mockRemoveItem).toHaveBeenCalledWith("formbricks-environment-id");
   });
 
   test("renders null", () => {

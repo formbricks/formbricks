@@ -31,6 +31,8 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
+  SENTRY_RELEASE: "mock-sentry-release",
+  SENTRY_ENVIRONMENT: "mock-sentry-environment",
 }));
 
 vi.mock("@/tolgee/language", () => ({
@@ -59,9 +61,18 @@ vi.mock("@/tolgee/client", () => ({
 }));
 
 vi.mock("@/app/sentry/SentryProvider", () => ({
-  SentryProvider: ({ children, sentryDsn }: { children: React.ReactNode; sentryDsn?: string }) => (
+  SentryProvider: ({
+    children,
+    sentryDsn,
+    sentryRelease,
+  }: {
+    children: React.ReactNode;
+    sentryDsn?: string;
+    sentryRelease?: string;
+  }) => (
     <div data-testid="sentry-provider">
       SentryProvider: {sentryDsn}
+      {sentryRelease && ` - Release: ${sentryRelease}`}
       {children}
     </div>
   ),

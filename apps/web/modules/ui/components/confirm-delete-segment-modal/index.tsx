@@ -1,7 +1,15 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import React, { useMemo } from "react";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
@@ -29,36 +37,43 @@ export const ConfirmDeleteSegmentModal = ({
   }, [segment.activeSurveys.length, segment.inactiveSurveys.length]);
 
   return (
-    <Modal open={open} setOpen={setOpen} title={t("environments.segments.delete_segment")}>
-      <div className="text-slate-900">
-        {segmentHasSurveys && (
-          <div className="space-y-2">
-            <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
-            <ol className="my-2 ml-4 list-decimal">
-              {segment.activeSurveys.map((survey) => (
-                <li key={survey}>{survey}</li>
-              ))}
-              {segment.inactiveSurveys.map((survey) => (
-                <li key={survey}>{survey}</li>
-              ))}
-            </ol>
-          </div>
-        )}
-        <p className="mt-2">
-          {segmentHasSurveys
-            ? t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")
-            : t("common.are_you_sure_this_action_cannot_be_undone")}
-        </p>
-      </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t("environments.segments.delete_segment")}</DialogTitle>
+          <DialogDescription>
+            {t("environments.project.general.this_action_cannot_be_undone")}
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="mt-4 space-x-2 text-right">
-        <Button variant="ghost" onClick={() => setOpen(false)}>
-          {t("common.cancel")}
-        </Button>
-        <Button variant="destructive" onClick={handleDelete} disabled={segmentHasSurveys}>
-          {t("common.delete")}
-        </Button>
-      </div>
-    </Modal>
+        {segmentHasSurveys && (
+          <DialogBody>
+            <div className="space-y-2">
+              <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
+              <ol className="my-2 ml-4 list-decimal">
+                {segment.activeSurveys.map((survey) => (
+                  <li key={survey}>{survey}</li>
+                ))}
+                {segment.inactiveSurveys.map((survey) => (
+                  <li key={survey}>{survey}</li>
+                ))}
+              </ol>
+            </div>
+            <p className="mt-2">
+              {t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")}
+            </p>
+          </DialogBody>
+        )}
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={segmentHasSurveys}>
+            {t("common.delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

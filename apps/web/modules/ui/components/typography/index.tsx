@@ -1,4 +1,5 @@
 import { cn } from "@/modules/ui/lib/utils";
+import { cva } from "class-variance-authority";
 import React, { forwardRef } from "react";
 
 const H1 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>((props, ref) => {
@@ -40,7 +41,7 @@ const H3 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElemen
     <h3
       {...props}
       ref={ref}
-      className={cn("scroll-m-20 text-2xl font-semibold tracking-tight text-slate-800", props.className)}>
+      className={cn("scroll-m-20 text-lg tracking-tight text-slate-800", props.className)}>
       {props.children}
     </h3>
   );
@@ -54,7 +55,7 @@ const H4 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElemen
     <h4
       {...props}
       ref={ref}
-      className={cn("scroll-m-20 text-xl font-semibold tracking-tight text-slate-800", props.className)}>
+      className={cn("scroll-m-20 text-base tracking-tight text-slate-800", props.className)}>
       {props.children}
     </h4>
   );
@@ -87,18 +88,53 @@ export { P };
 
 const Large = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => {
   return (
-    <div {...props} ref={ref} className={cn("text-lg font-semibold", props.className)}>
+    <p {...props} ref={ref} className={cn("text-lg", props.className)}>
       {props.children}
-    </div>
+    </p>
   );
 });
 
 Large.displayName = "Large";
 export { Large };
 
-const Small = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>((props, ref) => {
+const Base = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => {
   return (
-    <p {...props} ref={ref} className={cn("text-sm font-medium leading-none", props.className)}>
+    <p {...props} ref={ref} className={cn("text-base", props.className)}>
+      {props.children}
+    </p>
+  );
+});
+
+Base.displayName = "Base";
+export { Base };
+
+const smallVariants = cva("text-sm leading-none", {
+  variants: {
+    color: {
+      default: "text-slate-800 font-medium",
+      muted: "text-slate-500",
+    },
+    margin: {
+      default: "mt-0",
+      headerDescription: "mt-1",
+    },
+  },
+});
+
+interface SmallProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  color?: "default" | "muted";
+  margin?: "default" | "headerDescription";
+}
+
+const Small = forwardRef<HTMLParagraphElement, SmallProps>((props, ref) => {
+  return (
+    <p
+      {...props}
+      ref={ref}
+      className={cn(
+        smallVariants({ color: props.color ?? "default", margin: props.margin ?? "default" }),
+        props.className
+      )}>
       {props.children}
     </p>
   );

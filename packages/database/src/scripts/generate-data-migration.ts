@@ -2,7 +2,11 @@ import { createId } from "@paralleldrive/cuid2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 import { logger } from "@formbricks/logger";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const rl = readline.createInterface({
   input: process.stdin,

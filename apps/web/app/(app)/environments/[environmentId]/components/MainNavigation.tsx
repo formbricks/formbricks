@@ -4,7 +4,6 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -391,14 +390,13 @@ export const MainNavigation = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
-                      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
-
                       const route = await signOutWithAudit({
                         reason: "user_initiated",
                         redirectUrl: "/auth/login",
                         organizationId: organization.id,
                         redirect: false,
                         callbackUrl: "/auth/login",
+                        clearEnvironmentId: true,
                       });
                       router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
                     }}

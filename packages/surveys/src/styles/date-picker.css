@@ -85,7 +85,7 @@
 }
 
 .react-calendar__month-view__weekdays__weekday {
-  color: rgb(100, 116, 139);
+  color: var(--fb-heading-color);
   font-weight: 400;
   text-transform: capitalize;
 }

@@ -325,9 +325,9 @@ export const ZResponseInput = z.object({
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
 export const ZResponseUpdateInput = z.object({
-  finished: z.boolean(),
+  finished: z.boolean().optional(),
   endingId: z.string().nullish(),
-  data: ZResponseData,
+  data: ZResponseData.optional(),
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
   language: z.string().optional(),

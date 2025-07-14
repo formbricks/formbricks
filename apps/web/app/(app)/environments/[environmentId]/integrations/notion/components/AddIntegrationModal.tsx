@@ -12,11 +12,19 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -336,9 +344,9 @@ export const AddIntegrationModal = ({
           col={mapping[idx].column}
           ques={mapping[idx].question}
         />
-        <div className="flex w-full items-center">
+        <div className="flex w-full items-center space-x-2">
           <div className="flex w-full items-center">
-            <div className="w-[340px] max-w-full">
+            <div className="max-w-full flex-1">
               <DropdownSelector
                 placeholder={t("environments.integrations.notion.select_a_survey_question")}
                 items={filteredQuestionItems}
@@ -384,7 +392,7 @@ export const AddIntegrationModal = ({
               />
             </div>
             <div className="h-px w-4 border-t border-t-slate-300" />
-            <div className="w-[340px] max-w-full">
+            <div className="max-w-full flex-1">
               <DropdownSelector
                 placeholder={t("environments.integrations.notion.select_a_field_to_map")}
                 items={getFilteredDbItems()}
@@ -430,53 +438,45 @@ export const AddIntegrationModal = ({
               />
             </div>
           </div>
-          <button
-            type="button"
-            className={`rounded-md p-1 hover:bg-slate-300 ${
-              idx === mapping.length - 1 ? "visible" : "invisible"
-            }`}
-            onClick={addRow}>
-            <PlusIcon className="h-5 w-5 font-bold text-slate-500" />
-          </button>
-          <button
-            type="button"
-            className={`flex-1 rounded-md p-1 hover:bg-red-100 ${
-              mapping.length > 1 ? "visible" : "invisible"
-            }`}
-            onClick={deleteRow}>
-            <XIcon className="h-5 w-5 text-red-500" />
-          </button>
+          <div className="flex space-x-2">
+            {mapping.length > 1 && (
+              <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow}>
+                <TrashIcon />
+              </Button>
+            )}
+            <Button variant="secondary" size="icon" className="size-10" onClick={addRow}>
+              <PlusIcon />
+            </Button>
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} size="lg">
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
-          <div className="flex w-full items-center justify-between p-6">
-            <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image
-                  className="w-12"
-                  src={NotionLogo}
-                  alt={t("environments.integrations.notion.notion_logo")}
-                />
-              </div>
-              <div>
-                <div className="text-xl font-medium text-slate-700">
-                  {t("environments.integrations.notion.link_notion_database")}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {t("environments.integrations.notion.sync_responses_with_a_notion_database")}
-                </div>
-              </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <div className="mb-4 flex items-start space-x-2">
+            <div className="relative size-8">
+              <Image
+                fill
+                className="object-contain object-center"
+                src={NotionLogo}
+                alt={t("environments.integrations.notion.notion_logo")}
+              />
+            </div>
+            <div className="space-y-0.5">
+              <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
+              <DialogDescription>
+                {t("environments.integrations.notion.notion_integration_description")}
+              </DialogDescription>
             </div>
           </div>
-        </div>
-        <form onSubmit={handleSubmit(linkDatabase)} className="w-full">
-          <div className="flex justify-between rounded-lg p-6">
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(linkDatabase)} className="contents space-y-4">
+          <DialogBody>
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
@@ -521,7 +521,7 @@ export const AddIntegrationModal = ({
                     <Label>
                       {t("environments.integrations.notion.map_formbricks_fields_to_notion_property")}
                     </Label>
-                    <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
+                    <div className="mt-1 space-y-2 overflow-y-auto">
                       {mapping.map((_, idx) => (
                         <MappingRow idx={idx} key={idx} />
                       ))}
@@ -530,43 +530,40 @@ export const AddIntegrationModal = ({
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
-            <div className="flex space-x-2">
-              {selectedIntegration ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  loading={isDeleting}
-                  onClick={() => {
-                    deleteLink();
-                  }}>
-                  {t("common.delete")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setOpen(false);
-                    resetForm();
-                    setMapping([]);
-                  }}>
-                  {t("common.cancel")}
-                </Button>
-              )}
+          </DialogBody>
+
+          <DialogFooter>
+            {selectedIntegration ? (
               <Button
-                type="submit"
-                loading={isLinkingDatabase}
-                disabled={mapping.filter((m) => m.error).length > 0}>
-                {selectedIntegration
-                  ? t("common.update")
-                  : t("environments.integrations.notion.link_database")}
+                type="button"
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  deleteLink();
+                }}>
+                {t("common.delete")}
               </Button>
-            </div>
-          </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setOpen(false);
+                  resetForm();
+                  setMapping([]);
+                }}>
+                {t("common.cancel")}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              loading={isLinkingDatabase}
+              disabled={mapping.filter((m) => m.error).length > 0}>
+              {selectedIntegration ? t("common.update") : t("environments.integrations.notion.link_database")}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };

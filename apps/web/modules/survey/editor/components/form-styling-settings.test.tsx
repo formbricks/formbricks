@@ -56,7 +56,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 
@@ -106,7 +105,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 
@@ -169,7 +167,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 
@@ -215,7 +212,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 
@@ -261,7 +257,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 
@@ -384,7 +379,6 @@ describe("FormStylingSettings Component", () => {
           inputBorderColor: { light: "#cccccc" },
           cardBackgroundColor: { light: "#ffffff" },
           cardBorderColor: { light: "#eeeeee" },
-          cardShadowColor: { light: "#dddddd" },
         },
       }) as UseFormReturn<TProjectStyling | TSurveyStyling>;
 

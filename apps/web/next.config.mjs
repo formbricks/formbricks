@@ -20,7 +20,7 @@ const nextConfig = {
   cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: true,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
@@ -425,6 +425,7 @@ const sentryOptions = {
 
   org: "formbricks",
   project: "formbricks-cloud",
+  environment: process.env.SENTRY_ENVIRONMENT,
 
   // Only print logs for uploading source maps in CI
   silent: true,
@@ -434,11 +435,23 @@ const sentryOptions = {
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
+
+  // Disable automatic release management
+  automaticVercelMonitors: false,
+  autoUploadSourceMaps: false,
+  hideSourceMaps: false,
+  
+  // Don't automatically create releases - we handle this in GitHub Actions
+  release: {
+    create: false,
+    deploy: false,
+    setCommits: false,
+  },
 };
 
 const exportConfig =
-  process.env.SENTRY_DSN && process.env.NODE_ENV === "production"
-    ? withSentryConfig(nextConfig, sentryOptions)
-    : nextConfig;
+  (process.env.SENTRY_DSN && process.env.NODE_ENV === "production")
+    ? withSentryConfig(nextConfig, sentryOptions) :
+    nextConfig;
 
 export default exportConfig;

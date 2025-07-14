@@ -1,7 +1,11 @@
 import "server-only";
+import { TagError } from "@/modules/projects/settings/types/tag";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -42,7 +46,10 @@ export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
   }
 });
 
-export const createTag = async (environmentId: string, name: string): Promise<TTag> => {
+export const createTag = async (
+  environmentId: string,
+  name: string
+): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   validateInputs([environmentId, ZId], [name, ZString]);
 
   try {
@@ -53,8 +60,19 @@ export const createTag = async (environmentId: string, name: string): Promise<TT
       },
     });
 
-    return tag;
+    return ok(tag);
   } catch (error) {
-    throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        return err({
+          code: TagError.TAG_NAME_ALREADY_EXISTS,
+          message: "Tag with this name already exists",
+        });
+      }
+    }
+    return err({
+      code: TagError.UNEXPECTED_ERROR,
+      message: error.message,
+    });
   }
 };

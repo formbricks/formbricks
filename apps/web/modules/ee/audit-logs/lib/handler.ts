@@ -13,12 +13,11 @@ import {
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
-import { runAuditLogHashTransaction } from "./cache";
-import { computeAuditLogHash, deepDiff, redactPII } from "./utils";
+import { deepDiff, redactPII } from "./utils";
 
 /**
  * Builds an audit event and logs it.
- * Redacts sensitive data from the old and new objects and computes the hash of the event before logging it.
+ * Redacts sensitive data from the old and new objects before logging.
  */
 export const buildAndLogAuditEvent = async ({
   action,
@@ -63,7 +62,7 @@ export const buildAndLogAuditEvent = async ({
       changes = redactPII(oldObject);
     }
 
-    const eventBase: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart"> = {
+    const auditEvent: TAuditLogEvent = {
       actor: { id: userId, type: userType },
       action,
       target: { id: targetId, type: targetType },
@@ -76,20 +75,7 @@ export const buildAndLogAuditEvent = async ({
       ...(status === "failure" && eventId ? { eventId } : {}),
     };
 
-    await runAuditLogHashTransaction(async (previousHash) => {
-      const isChainStart = !previousHash;
-      const integrityHash = computeAuditLogHash(eventBase, previousHash);
-      const auditEvent: TAuditLogEvent = {
-        ...eventBase,
-        integrityHash,
-        previousHash,
-        ...(isChainStart ? { chainStart: true } : {}),
-      };
-      return {
-        auditEvent: async () => await logAuditEvent(auditEvent),
-        integrityHash,
-      };
-    });
+    await logAuditEvent(auditEvent);
   } catch (logError) {
     logger.error(logError, "Failed to create audit log event");
   }
@@ -199,21 +185,21 @@ export const queueAuditEvent = async ({
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = <TParsedInput = Record<string, unknown>>(
+export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult = unknown>(
   action: TAuditAction,
   targetType: TAuditTarget,
   handler: (args: {
     ctx: ActionClientCtx | AuthenticatedActionClientCtx;
     parsedInput: TParsedInput;
-  }) => Promise<unknown>
+  }) => Promise<TResult>
 ) => {
   return async function wrappedAction(args: {
     ctx: ActionClientCtx | AuthenticatedActionClientCtx;
     parsedInput: TParsedInput;
-  }) {
+  }): Promise<TResult> {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
-    let result: any;
+    let result!: TResult;
     let status: TAuditStatus = "success";
     let error: any = undefined;
 

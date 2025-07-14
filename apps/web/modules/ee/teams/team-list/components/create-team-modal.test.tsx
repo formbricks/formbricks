@@ -6,8 +6,24 @@ import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { CreateTeamModal } from "./create-team-modal";
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children }: any) => <div data-testid="Modal">{children}</div>,
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-content">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-header">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-title">{children}</div>
+  ),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-body">{children}</div>
+  ),
+  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-footer">{children}</div>
+  ),
 }));
 
 vi.mock("@/modules/ee/teams/team-list/actions", () => ({
@@ -24,9 +40,13 @@ describe("CreateTeamModal", () => {
 
   const setOpen = vi.fn();
 
-  test("renders modal, form, and tolgee strings", () => {
+  test("renders dialog, form, and tolgee strings", () => {
     render(<CreateTeamModal open={true} setOpen={setOpen} organizationId="org-1" />);
-    expect(screen.getByTestId("Modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.create_new_team")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.team_name")).toBeInTheDocument();
     expect(screen.getByText("common.cancel")).toBeInTheDocument();
@@ -47,7 +67,7 @@ describe("CreateTeamModal", () => {
     expect(screen.getByText("environments.settings.teams.create")).toBeDisabled();
   });
 
-  test("calls createTeamAction, shows success toast, calls onCreate, refreshes and closes modal on success", async () => {
+  test("calls createTeamAction, shows success toast, calls onCreate, refreshes and closes dialog on success", async () => {
     vi.mocked(createTeamAction).mockResolvedValue({ data: "team-123" });
     const onCreate = vi.fn();
     render(<CreateTeamModal open={true} setOpen={setOpen} organizationId="org-1" onCreate={onCreate} />);

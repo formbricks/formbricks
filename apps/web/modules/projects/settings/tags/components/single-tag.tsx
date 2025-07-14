@@ -8,6 +8,7 @@ import {
   updateTagNameAction,
 } from "@/modules/projects/settings/tags/actions";
 import { MergeTagsCombobox } from "@/modules/projects/settings/tags/components/merge-tags-combobox";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
@@ -47,13 +48,62 @@ export const SingleTag: React.FC<SingleTagProps> = ({
   const confirmDeleteTag = async () => {
     const deleteTagResponse = await deleteTagAction({ tagId });
     if (deleteTagResponse?.data) {
-      toast.success(t("environments.project.tags.tag_deleted"));
-      updateTagsCount();
-      router.refresh();
+      if (deleteTagResponse.data.ok) {
+        toast.success(t("environments.project.tags.tag_deleted"));
+        updateTagsCount();
+        router.refresh();
+      } else {
+        const errorMessage = deleteTagResponse.data?.error?.message;
+        toast.error(errorMessage);
+      }
     } else {
       const errorMessage = getFormattedErrorMessage(deleteTagResponse);
       toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
     }
+  };
+
+  const handleUpdateTagName = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const result = await updateTagNameAction({ tagId, name: e.target.value.trim() });
+    if (result?.data) {
+      if (result.data.ok) {
+        setUpdateTagError(false);
+        toast.success(t("environments.project.tags.tag_updated"));
+      } else if (result.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
+        toast.error(t("environments.project.tags.tag_already_exists"), {
+          duration: 2000,
+          icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+        });
+        setUpdateTagError(true);
+      } else {
+        const errorMessage = result.data?.error?.message;
+        toast.error(errorMessage);
+        setUpdateTagError(true);
+      }
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+      setUpdateTagError(true);
+    }
+  };
+
+  const handleMergeTags = async (newTagId: string) => {
+    setIsMergingTags(true);
+    const mergeTagsResponse = await mergeTagsAction({ originalTagId: tagId, newTagId });
+
+    if (mergeTagsResponse?.data) {
+      if (mergeTagsResponse.data.ok) {
+        toast.success(t("environments.project.tags.tags_merged"));
+        updateTagsCount();
+        router.refresh();
+      } else {
+        const errorMessage = mergeTagsResponse.data?.error?.message;
+        toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+      }
+    } else {
+      const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
+      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+    }
+    setIsMergingTags(false);
   };
 
   return (
@@ -70,31 +120,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                   : "border-slate-200 focus:border-slate-500"
               )}
               defaultValue={tagName}
-              onBlur={(e) => {
-                updateTagNameAction({ tagId, name: e.target.value.trim() }).then((updateTagNameResponse) => {
-                  if (updateTagNameResponse?.data) {
-                    setUpdateTagError(false);
-                    toast.success(t("environments.project.tags.tag_updated"));
-                  } else {
-                    const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
-                    if (
-                      errorMessage?.includes(
-                        t("environments.project.tags.unique_constraint_failed_on_the_fields")
-                      )
-                    ) {
-                      toast.error(t("environments.project.tags.tag_already_exists"), {
-                        duration: 2000,
-                        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-                      });
-                    } else {
-                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
-                        duration: 2000,
-                      });
-                    }
-                    setUpdateTagError(true);
-                  }
-                });
-              }}
+              onBlur={handleUpdateTagName}
             />
           </div>
         </div>
@@ -117,20 +143,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                       ?.filter((tag) => tag.id !== tagId)
                       ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
                   }
-                  onSelect={(newTagId) => {
-                    setIsMergingTags(true);
-                    mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
-                      if (mergeTagsResponse?.data) {
-                        toast.success(t("environments.project.tags.tags_merged"));
-                        updateTagsCount();
-                        router.refresh();
-                      } else {
-                        const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
-                        toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
-                      }
-                      setIsMergingTags(false);
-                    });
-                  }}
+                  onSelect={handleMergeTags}
                 />
               )}
             </div>

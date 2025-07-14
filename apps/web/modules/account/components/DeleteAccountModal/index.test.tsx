@@ -1,4 +1,3 @@
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -100,8 +99,6 @@ describe("DeleteAccountModal", () => {
       />
     );
 
-    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
-
     const input = screen.getByTestId("deleteAccountConfirmation");
     fireEvent.change(input, { target: { value: mockUser.email } });
 
@@ -113,8 +110,8 @@ describe("DeleteAccountModal", () => {
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
+        clearEnvironmentId: true,
       });
-      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
       expect(window.location.replace).toHaveBeenCalledWith("/auth/login");
       expect(mockSetOpen).toHaveBeenCalledWith(false);
     });
@@ -151,15 +148,13 @@ describe("DeleteAccountModal", () => {
     const form = screen.getByTestId("deleteAccountForm");
     fireEvent.submit(form);
 
-    const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
-
     await waitFor(() => {
       expect(deleteUserAction).toHaveBeenCalled();
       expect(mockSignOut).toHaveBeenCalledWith({
         reason: "account_deletion",
         redirect: false, // Updated to match new implementation
+        clearEnvironmentId: true,
       });
-      expect(removeItemSpy).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
       expect(window.location.replace).toHaveBeenCalledWith(
         "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2"
       );

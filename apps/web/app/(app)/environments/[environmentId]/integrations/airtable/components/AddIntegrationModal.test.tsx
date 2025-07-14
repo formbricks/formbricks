@@ -92,14 +92,24 @@ vi.mock("@/modules/ui/components/additional-integration-settings", () => ({
     </div>
   ),
 }));
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: ({ children, open, setOpen }) =>
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) =>
     open ? (
-      <div data-testid="modal">
+      <div data-testid="dialog" role="dialog">
         {children}
-        <button onClick={() => setOpen(false)}>Close Modal</button>
+        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
       </div>
     ) : null,
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogDescription: ({ children }: any) => <p data-testid="dialog-description">{children}</p>,
+  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
+  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
 }));
 vi.mock("@/modules/ui/components/alert", () => ({
   Alert: ({ children }) => <div data-testid="alert">{children}</div>,

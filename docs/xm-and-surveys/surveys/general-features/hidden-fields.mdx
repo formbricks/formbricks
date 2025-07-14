@@ -20,22 +20,30 @@ icon: "eye-slash"
 
 ![Filled Hidden Fields](/images/xm-and-surveys/surveys/general-features/hidden-fields/filled-hidden-fields.webp)
 
-### Set Hidden Field in Link Surveys
+## Set Hidden Field via URL
 
 Single Hidden Field:
 
 ```
-  sh https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=pricing
+https://formbricks.com/s/clin34bjy?screen=pricing
 ```
 
 Multiple Hidden Fields:
 
 ```
-  sh https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
+https://formbricks.com/s/clin34bjy?screen=landing_page&job=Founder
 ```
 
-### Website & App Surveys
-We're reworking our approach to setting hidden fields in Website & App Surveys.
+## Set Hidden Fields via SDK
+
+<Note>
+  We are reworking how to add Hidden Fields via SDK moving away from binding them to Actions over to Context. Until then, we will **continue to support the current approach for the JS SDK**. However, we don't support Hidden Fields for the Android and iOS SDKs.
+</Note>
+
+```js
+formbricks.track("action_name", {hiddenFields: {myField: "value"}})
+```
+
 
 ## View Hidden Fields in Responses
 

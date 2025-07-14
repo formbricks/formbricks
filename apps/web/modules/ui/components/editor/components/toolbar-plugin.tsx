@@ -397,7 +397,10 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
 
         editor.registerUpdateListener(({ editorState, prevEditorState }) => {
           editorState.read(() => {
-            const textInHtml = $generateHtmlFromNodes(editor).replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+            const textInHtml = $generateHtmlFromNodes(editor)
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/white-space:\s*pre-wrap;?/g, "");
             setText.current(textInHtml);
           });
           if (!prevEditorState._selection) editor.blur();

@@ -6,7 +6,7 @@
       "outputs": ["dist/**"]
     },
     "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
@@ -29,6 +29,9 @@
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
+    },
+    "@formbricks/js-core#lint": {
+      "dependsOn": ["@formbricks/database#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
@@ -58,10 +61,10 @@
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -143,6 +146,7 @@
         "SAML_DATABASE_URL",
         "SESSION_MAX_AGE",
         "SENTRY_DSN",
+        "SENTRY_ENVIRONMENT",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
@@ -205,7 +209,7 @@
     },
     "db:setup": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"],
       "outputs": []
     },
     "db:start": {
@@ -235,6 +239,9 @@
     "storybook": {
       "cache": false,
       "persistent": true
+    },
+    "storybook#storybook": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "test": {
       "outputs": []

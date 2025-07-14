@@ -244,6 +244,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         deleteWhat={t("environments.project.api_keys.api_key")}
         onDelete={handleDeleteKey}
         isDeleting={isLoading}
+        text={t("environments.project.api_keys.delete_api_key_confirmation")}
       />
     </div>
   );

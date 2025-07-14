@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { Button } from "@/modules/ui/components/button";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
@@ -58,6 +59,60 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     return () => clearTimeout(timeoutId);
   }, [tagIdToHighlight]);
 
+  const handleCreateTag = async (tagName: string) => {
+    setOpen(false);
+
+    const createTagResponse = await createTagAction({
+      environmentId,
+      tagName: tagName?.trim() ?? "",
+    });
+
+    if (createTagResponse?.data?.ok) {
+      const tag = createTagResponse.data.data;
+      setTagsState((prevTags) => [
+        ...prevTags,
+        {
+          tagId: tag.id,
+          tagName: tag.name,
+        },
+      ]);
+
+      const createTagToResponseActionResponse = await createTagToResponseAction({
+        responseId,
+        tagId: tag.id,
+      });
+
+      if (createTagToResponseActionResponse?.data) {
+        updateFetchedResponses();
+        setSearchValue("");
+      } else {
+        const errorMessage = getFormattedErrorMessage(createTagToResponseActionResponse);
+        toast.error(errorMessage);
+      }
+
+      return;
+    }
+
+    if (
+      createTagResponse?.data?.ok === false &&
+      createTagResponse?.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS
+    ) {
+      toast.error(t("environments.surveys.responses.tag_already_exists"), {
+        duration: 2000,
+        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+      });
+
+      setSearchValue("");
+      return;
+    }
+
+    const errorMessage = getFormattedErrorMessage(createTagResponse);
+    toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
+      duration: 2000,
+    });
+    setSearchValue("");
+  };
+
   return (
     <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
       {!isReadOnly && (
@@ -93,46 +148,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             setSearchValue={setSearchValue}
             tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
             currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
-            createTag={async (tagName) => {
-              setOpen(false);
-
-              const createTagResponse = await createTagAction({
-                environmentId,
-                tagName: tagName?.trim() ?? "",
-              });
-              if (createTagResponse?.data) {
-                setTagsState((prevTags) => [
-                  ...prevTags,
-                  {
-                    tagId: createTagResponse.data?.id ?? "",
-                    tagName: createTagResponse.data?.name ?? "",
-                  },
-                ]);
-                const createTagToResponseActionResponse = await createTagToResponseAction({
-                  responseId,
-                  tagId: createTagResponse.data.id,
-                });
-
-                if (createTagToResponseActionResponse?.data) {
-                  updateFetchedResponses();
-                  setSearchValue("");
-                }
-              } else {
-                const errorMessage = getFormattedErrorMessage(createTagResponse);
-                if (errorMessage.includes("Unique constraint failed on the fields")) {
-                  toast.error(t("environments.surveys.responses.tag_already_exists"), {
-                    duration: 2000,
-                    icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-                  });
-                } else {
-                  toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
-                    duration: 2000,
-                  });
-                }
-
-                setSearchValue("");
-              }
-            }}
+            createTag={handleCreateTag}
             addTag={(tagId) => {
               setTagsState((prevTags) => [
                 ...prevTags,

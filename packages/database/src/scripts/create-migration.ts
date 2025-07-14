@@ -2,9 +2,13 @@ import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
 import { applyMigrations } from "./migration-runner";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const execAsync = promisify(exec);
 const rl = readline.createInterface({

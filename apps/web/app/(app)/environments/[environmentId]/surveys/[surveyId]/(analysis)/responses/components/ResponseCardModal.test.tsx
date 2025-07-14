@@ -26,8 +26,26 @@ vi.mock("@/modules/ui/components/button", () => ({
   )),
 }));
 
-vi.mock("@/modules/ui/components/modal", () => ({
-  Modal: vi.fn(({ children, open }) => (open ? <div data-testid="modal">{children}</div> : null)),
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: vi.fn(({ children, open, onOpenChange }) =>
+    open ? (
+      <div data-testid="dialog" role="dialog">
+        {children}
+        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
+      </div>
+    ) : null
+  ),
+  DialogContent: vi.fn(({ children, hideCloseButton, width, className }) => (
+    <div
+      data-testid="dialog-content"
+      data-hide-close-button={hideCloseButton}
+      data-width={width}
+      className={className}>
+      {children}
+    </div>
+  )),
+  DialogBody: vi.fn(({ children }) => <div data-testid="dialog-body">{children}</div>),
+  DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
 }));
 
 const mockResponses = [
@@ -163,12 +181,12 @@ describe("ResponseCardModal", () => {
   test("should not render if selectedResponseId is null", () => {
     const { container } = render(<ResponseCardModal {...defaultProps} selectedResponseId={null} />);
     expect(container.firstChild).toBeNull();
-    expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  test("should render the modal when a response is selected", () => {
+  test("should render the dialog when a response is selected", () => {
     render(<ResponseCardModal {...defaultProps} />);
-    expect(screen.getByTestId("modal")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("single-response-card")).toBeInTheDocument();
   });
 
@@ -204,14 +222,6 @@ describe("ResponseCardModal", () => {
     expect(nextButton).toBeDisabled();
   });
 
-  test("should call setSelectedResponseId with null when close button is clicked", async () => {
-    render(<ResponseCardModal {...defaultProps} />);
-    const buttons = screen.getAllByTestId("mock-button");
-    const closeButton = buttons.find((button) => button.querySelector("svg.lucide-x"));
-    if (closeButton) await userEvent.click(closeButton);
-    expect(mockSetSelectedResponseId).toHaveBeenCalledWith(null);
-  });
-
   test("useEffect should set open to true and currentIndex when selectedResponseId is provided", () => {
     render(<ResponseCardModal {...defaultProps} selectedResponseId={mockResponses[1].id} />);
     expect(mockSetOpen).toHaveBeenCalledWith(true);
@@ -229,11 +239,10 @@ describe("ResponseCardModal", () => {
     expect(mockSetOpen).toHaveBeenCalledWith(false);
   });
 
-  test("should render ChevronLeft, ChevronRight, and XIcon", () => {
+  test("should render ChevronLeft and ChevronRight icons", () => {
     render(<ResponseCardModal {...defaultProps} />);
     expect(document.querySelector(".lucide-chevron-left")).toBeInTheDocument();
     expect(document.querySelector(".lucide-chevron-right")).toBeInTheDocument();
-    expect(document.querySelector(".lucide-x")).toBeInTheDocument();
   });
 });
 

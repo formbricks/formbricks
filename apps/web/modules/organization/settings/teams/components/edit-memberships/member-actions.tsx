@@ -157,6 +157,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         deleteWhat={`${memberName} ${t("environments.settings.general.from_your_organization")}`}
         onDelete={handleDeleteMember}
         isDeleting={isDeleting}
+        text={t("environments.settings.general.delete_member_confirmation")}
       />
 
       {showShareInviteModal && (

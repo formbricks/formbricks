@@ -38,6 +38,9 @@ vi.mock("lucide-react", () => ({
   HelpCircleIcon: ({ className }: { className: string }) => (
     <div className={className} data-testid="help-icon" />
   ),
+  CalendarClockIcon: ({ className }: { className: string }) => (
+    <div className={className} data-testid="calendar-clock-icon" />
+  ),
 }));
 
 vi.mock("@/modules/ui/components/button", () => ({
