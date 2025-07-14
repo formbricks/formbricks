@@ -109,14 +109,14 @@ export function Survey({
             setErrorType(errorCode);
 
             if (getSetIsError) {
-              getSetIsError((_prev) => { });
+              getSetIsError((_prev) => {});
             }
           },
           onResponseSendingFinished: () => {
             setIsResponseSendingFinished(true);
 
             if (getSetIsResponseSendingFinished) {
-              getSetIsResponseSendingFinished((_prev) => { });
+              getSetIsResponseSendingFinished((_prev) => {});
             }
           },
         },

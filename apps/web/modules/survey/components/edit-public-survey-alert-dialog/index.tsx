@@ -74,7 +74,6 @@ export const EditPublicSurveyAlertDialog = ({
             <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
             <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
             <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
           </ul>
         </DialogBody>
 

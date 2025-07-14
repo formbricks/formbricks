@@ -245,13 +245,17 @@ describe("EndScreenForm", () => {
     const buttonLinkInput = container.querySelector("#buttonLink") as HTMLInputElement;
     expect(buttonLinkInput).toBeTruthy();
 
-    // Mock focus method
-    const mockFocus = vi.fn();
     if (buttonLinkInput) {
-      buttonLinkInput.focus = mockFocus;
+      // Use vi.spyOn to properly mock the focus method
+      const focusSpy = vi.spyOn(buttonLinkInput, "focus");
+
+      // Call focus to simulate the behavior
       buttonLinkInput.focus();
 
-      expect(mockFocus).toHaveBeenCalled();
+      expect(focusSpy).toHaveBeenCalled();
+
+      // Clean up the spy
+      focusSpy.mockRestore();
     }
   });
 

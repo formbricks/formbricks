@@ -1,5 +1,6 @@
-import { Meta, StoryObj } from "@storybook/react";
+import { Meta, StoryObj } from "@storybook/react-vite";
 import { LightbulbIcon } from "lucide-react";
+import type * as React from "react";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "./index";
 
 // We'll define the story options separately from the component props

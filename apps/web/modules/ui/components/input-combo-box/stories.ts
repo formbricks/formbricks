@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from "@storybook/react";
+import { Meta, StoryObj } from "@storybook/react-vite";
 import { FileIcon, FolderIcon, ImageIcon } from "lucide-react";
 import { logger } from "@formbricks/logger";
 import { InputCombobox } from "./index";

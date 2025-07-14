@@ -1,4 +1,3 @@
-import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
@@ -46,15 +45,6 @@ vi.mock("@/modules/survey/list/actions", () => ({
 vi.mock("@/modules/survey/lib/client-utils", () => ({
   copySurveyLink: vi.fn(),
 }));
-
-vi.mock(
-  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code",
-  () => ({
-    useSurveyQRCode: vi.fn(() => ({
-      downloadQRCode: vi.fn(),
-    })),
-  })
-);
 
 vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn((error: any) => error.message),
@@ -174,28 +164,6 @@ describe("ShareSurveyLink", () => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(surveyUrl);
       expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
     });
-  });
-
-  test("download QR code button calls downloadQRCode", async () => {
-    const dummyDownloadQRCode = vi.fn();
-    vi.mocked(getFormattedErrorMessage).mockReturnValue("common.copied_to_clipboard");
-    vi.mocked(useSurveyQRCode).mockReturnValue({ downloadQRCode: dummyDownloadQRCode } as any);
-
-    const setSurveyUrl = vi.fn();
-    render(
-      <ShareSurveyLink
-        survey={dummySurvey}
-        publicDomain={dummyPublicDomain}
-        surveyUrl={`${dummyPublicDomain}/s/${dummySurvey.id}?suId=dummySuId`}
-        setSurveyUrl={setSurveyUrl}
-        locale={dummyLocale}
-      />
-    );
-    const downloadButton = await screen.findByRole("button", {
-      name: /environments.surveys.summary.download_qr_code/i,
-    });
-    fireEvent.click(downloadButton);
-    expect(dummyDownloadQRCode).toHaveBeenCalled();
   });
 
   test("renders regenerate button when survey.singleUse.enabled is true and calls generateNewSingleUseLink", async () => {

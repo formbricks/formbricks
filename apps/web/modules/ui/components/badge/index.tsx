@@ -11,21 +11,21 @@ interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role }) => {
   const bgColor = {
     warning: "bg-amber-100",
-    success: "bg-emerald-100",
+    success: "bg-green-50",
     error: "bg-red-100",
     gray: "bg-slate-100",
   };
 
   const borderColor = {
     warning: "border-amber-200",
-    success: "border-emerald-200",
+    success: "border-green-600",
     error: "border-red-200",
     gray: "border-slate-200",
   };
 
   const textColor = {
     warning: "text-amber-800",
-    success: "text-emerald-800",
+    success: "text-green-800",
     error: "text-red-800",
     gray: "text-slate-600",
   };
