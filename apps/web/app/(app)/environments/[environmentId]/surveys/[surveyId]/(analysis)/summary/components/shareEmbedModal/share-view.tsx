@@ -106,7 +106,15 @@ export const ShareView = ({
           />
         );
       case "social-media":
-        return <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />;
+        return (
+          <TabContainer
+            title={t("environments.surveys.summary.share_your_survey_on_social_media")}
+            description={t(
+              "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
+            )}>
+            <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />
+          </TabContainer>
+        );
       case "app":
         return <AppTab />;
       case "personal-links":

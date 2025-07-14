@@ -42,19 +42,6 @@ describe("SocialMediaTab", () => {
     vi.clearAllMocks();
   });
 
-  test("renders the main heading and description", () => {
-    render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
-
-    expect(
-      screen.getByText("environments.surveys.summary.share_your_survey_on_social_media")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
-      )
-    ).toBeInTheDocument();
-  });
-
   test("renders all social media platforms with correct names", () => {
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 

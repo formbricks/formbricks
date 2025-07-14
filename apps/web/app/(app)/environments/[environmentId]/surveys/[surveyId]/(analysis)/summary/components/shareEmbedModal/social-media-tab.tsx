@@ -1,6 +1,5 @@
 "use client";
 
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FacebookIcon } from "@/modules/ui/components/icons/facebook-icon";
@@ -79,11 +78,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
   };
 
   return (
-    <TabContainer
-      title={t("environments.surveys.summary.share_your_survey_on_social_media")}
-      description={t(
-        "environments.surveys.summary.get_responses_from_your_contacts_on_various_social_media_networks"
-      )}>
+    <div>
       <div className="grid grid-cols-1 gap-4">
         {socialMediaPlatforms.map((platform) => (
           <Button
@@ -114,6 +109,6 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
           {t("common.learn_more")}
         </AlertButton>
       </Alert>
-    </TabContainer>
+    </div>
   );
 };
