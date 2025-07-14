@@ -1,9 +1,18 @@
 "use client";
 
 import { getSurveyUrl } from "@/modules/analysis/utils";
-import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, LinkIcon, MailIcon, QrCodeIcon, SmartphoneIcon, UserIcon } from "lucide-react";
+import {
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  QrCodeIcon,
+  SmartphoneIcon,
+  SquareStack,
+  UserIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
@@ -19,7 +28,8 @@ enum ShareViewType {
   QR_CODE = "qr-code",
   PERSONAL_LINKS = "personal-links",
   EMAIL = "email",
-  WEBPAGE = "webpage",
+  WEBSITE_EMBED = "website-embed",
+  DYNAMIC_POPUP = "dynamic-popup",
   APP = "app",
 }
 
@@ -73,9 +83,14 @@ export const ShareSurveyModal = ({
         icon: MailIcon,
       },
       {
-        id: ShareViewType.WEBPAGE,
+        id: ShareViewType.WEBSITE_EMBED,
         label: t("environments.surveys.summary.embed_on_website"),
         icon: Code2Icon,
+      },
+      {
+        id: ShareViewType.DYNAMIC_POPUP,
+        label: t("environments.surveys.summary.dynamic_popup"),
+        icon: SquareStack,
       },
     ],
     [t, isSingleUseLinkSurvey]
@@ -132,7 +147,10 @@ export const ShareSurveyModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide">
+      <VisuallyHidden asChild>
+        <DialogTitle />
+      </VisuallyHidden>
+      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
         {showView === "start" ? (
           <SuccessView
             survey={survey}

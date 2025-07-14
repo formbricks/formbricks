@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -131,5 +132,68 @@ describe("Alert Component", () => {
 
     const alertElement = screen.getByRole("alert");
     expect(alertElement).toHaveClass("my-custom-class");
+  });
+
+  test("applies correct styles to anchor tags inside alert variants", () => {
+    render(
+      <Alert variant="info">
+        <AlertTitle>Info Alert with Link</AlertTitle>
+        <AlertDescription>This alert has a link</AlertDescription>
+        <a href="/test" className="test-link">
+          Test Link
+        </a>
+      </Alert>
+    );
+
+    const alertElement = screen.getByRole("alert");
+    expect(alertElement).toHaveClass("text-info-foreground");
+    expect(alertElement).toHaveClass("border-info/50");
+
+    const linkElement = screen.getByRole("link", { name: "Test Link" });
+    expect(linkElement).toBeInTheDocument();
+  });
+
+  test("applies correct styles to anchor tags in AlertButton with asChild", () => {
+    render(
+      <Alert variant="error">
+        <AlertTitle>Error Alert</AlertTitle>
+        <AlertDescription>This alert has a button link</AlertDescription>
+        <AlertButton asChild>
+          <a href="/error-action">Take Action</a>
+        </AlertButton>
+      </Alert>
+    );
+
+    const alertElement = screen.getByRole("alert");
+    expect(alertElement).toHaveClass("text-error-foreground");
+    expect(alertElement).toHaveClass("border-error/50");
+
+    const linkElement = screen.getByRole("link", { name: "Take Action" });
+    expect(linkElement).toBeInTheDocument();
+  });
+
+  test("applies styles for all alert variants with anchor tags", () => {
+    const variants = ["error", "warning", "info", "success"] as const;
+
+    variants.forEach((variant) => {
+      const { unmount } = render(
+        <Alert variant={variant}>
+          <AlertTitle>{variant} Alert</AlertTitle>
+          <AlertDescription>Alert with anchor tag</AlertDescription>
+          <a href="/test" data-testid={`${variant}-link`}>
+            Link
+          </a>
+        </Alert>
+      );
+
+      const alertElement = screen.getByRole("alert");
+      expect(alertElement).toHaveClass(`text-${variant}-foreground`);
+      expect(alertElement).toHaveClass(`border-${variant}/50`);
+
+      const linkElement = screen.getByTestId(`${variant}-link`);
+      expect(linkElement).toBeInTheDocument();
+
+      unmount();
+    });
   });
 });

@@ -219,6 +219,8 @@ describe("ShareEmbedSurvey", () => {
     };
     expect(embedViewProps.tabs.length).toBe(5);
     expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
     expect(embedViewProps.tabs[0].id).toBe("link");
     expect(embedViewProps.tabs[1].id).toBe("qr-code");
     expect(embedViewProps.tabs[2].id).toBe("personal-links");
@@ -234,7 +236,9 @@ describe("ShareEmbedSurvey", () => {
       activeId: string;
     };
     expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs[0].id).toBe("app");
+    expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
     expect(embedViewProps.activeId).toBe("app");
   });
 
@@ -309,13 +313,36 @@ describe("ShareEmbedSurvey", () => {
     expect(qrCodeTab).toBeUndefined();
   });
 
-  test("QR code tab appears after link tab in the tabs array", () => {
+  test("dynamic popup tab is only visible for link surveys", () => {
+    // Test link survey includes dynamic popup tab
     render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+    let embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
       tabs: { id: string; label: string }[];
     };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+    cleanup();
+    vi.mocked(mockShareViewComponent).mockClear();
+
+    // Test web survey excludes dynamic popup tab
+    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
+    embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+      tabs: { id: string; label: string }[];
+    };
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
+  });
+
+  render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
+  const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
+    tabs: { id: string; label: string }[];
+  };
+  test("QR code tab appears after link tab in the tabs array", () => {
     const linkTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "link");
     const qrCodeTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "qr-code");
     expect(qrCodeTabIndex).toBe(linkTabIndex + 1);
+  });
+  test("website-embed and dynamic-popup tabs replace old webpage tab", () => {
+    expect(embedViewProps.tabs.find((tab) => tab.id === "webpage")).toBeUndefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
+    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
   });
 });
