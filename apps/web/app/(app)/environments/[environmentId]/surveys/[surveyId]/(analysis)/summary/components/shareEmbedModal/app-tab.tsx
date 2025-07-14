@@ -109,7 +109,7 @@ export const AppTab = () => {
       let configTypeLabel = "unknown";
 
       if (configType && configType in noCodeConfigType) {
-        configTypeLabel = noCodeConfigType[configType as keyof typeof noCodeConfigType];
+        configTypeLabel = noCodeConfigType[configType];
       } else if (configType) {
         configTypeLabel = configType;
       }
