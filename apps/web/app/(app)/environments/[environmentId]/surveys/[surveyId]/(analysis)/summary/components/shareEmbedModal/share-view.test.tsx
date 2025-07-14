@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ShareView } from "./share-view";
 
 // Mock child components
@@ -22,6 +21,19 @@ vi.mock("./LinkTab", () => ({
     </div>
   ),
 }));
+vi.mock("./QRCodeTab", () => ({
+  QRCodeTab: (props: { surveyUrl: string }) => (
+    <div data-testid="qr-code-tab">QRCodeTab Content for {props.surveyUrl}</div>
+  ),
+}));
+vi.mock("./WebsiteTab", () => ({
+  WebsiteTab: (props: { surveyUrl: string; environmentId: string }) => (
+    <div data-testid="website-tab">
+      WebsiteTab Content for {props.surveyUrl} in {props.environmentId}
+    </div>
+  ),
+}));
+
 vi.mock("./WebsiteEmbedTab", () => ({
   WebsiteEmbedTab: (props: { surveyUrl: string }) => (
     <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
@@ -60,6 +72,13 @@ vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   ),
 }));
 
+// Mock @tolgee/react
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
   ArrowLeftIcon: () => <div data-testid="arrow-left-icon">ArrowLeftIcon</div>,
@@ -81,6 +100,11 @@ vi.mock("lucide-react", () => ({
   Info: ({ className }: { className?: string }) => (
     <div className={className} data-testid="info">
       Info
+    </div>
+  ),
+  Download: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="download-icon">
+      Download
     </div>
   ),
 }));
@@ -150,97 +174,52 @@ const mockTabs = [
   { id: "website-embed", label: "Website Embed", icon: () => <div data-testid="website-embed-tab-icon" /> },
   { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
   { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
+  { id: "qr-code", label: "QR Code", icon: () => <div data-testid="qr-code-tab-icon" /> },
   { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
 
-// Create proper mock survey objects
-const createMockSurvey = (type: "link" | "app", id = "survey1"): TSurvey => ({
-  id,
+const mockSurveyLink = {
+  id: "survey1",
+  type: "link",
+  name: "Test Link Survey",
+  status: "inProgress",
+  environmentId: "env1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  name: `Test Survey ${id}`,
-  type,
-  environmentId: "env1",
-  createdBy: "user123",
-  status: "inProgress",
+  questions: [],
   displayOption: "displayOnce",
-  autoClose: null,
+  recontactDays: 0,
   triggers: [],
-  recontactDays: null,
-  displayLimit: null,
-  welcomeCard: {
-    enabled: false,
-    headline: { default: "" },
-    html: { default: "" },
-    fileUrl: undefined,
-    buttonLabel: { default: "" },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
-  questions: [
-    {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Test Question" },
-      subheader: { default: "" },
-      required: true,
-      inputType: "text",
-      placeholder: { default: "" },
-      longAnswer: false,
-      logic: [],
-      charLimit: { enabled: false },
-      buttonLabel: { default: "" },
-      backButtonLabel: { default: "" },
-    },
-  ],
-  endings: [
-    {
-      id: "end1",
-      type: "endScreen",
-      headline: { default: "Thank you!" },
-      subheader: { default: "" },
-      buttonLabel: { default: "" },
-      buttonLink: undefined,
-    },
-  ],
-  hiddenFields: { enabled: false, fieldIds: [] },
-  variables: [],
-  followUps: [],
+  languages: [],
+  autoClose: null,
   delay: 0,
   autoComplete: null,
   runOnDate: null,
   closeOnDate: null,
-  projectOverwrites: null,
+  singleUse: { enabled: false, isEncrypted: false },
   styling: null,
-  showLanguageSwitch: null,
-  surveyClosedMessage: null,
-  segment: null,
-  singleUse: null,
-  isVerifyEmailEnabled: false,
-  recaptcha: null,
-  isSingleResponsePerEmailEnabled: false,
-  isBackButtonHidden: false,
-  pin: null,
-  resultShareKey: null,
-  displayPercentage: null,
-  languages: [
-    {
-      enabled: true,
-      default: true,
-      language: {
-        id: "lang1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        code: "en",
-        alias: "English",
-        projectId: "project1",
-      },
-    },
-  ],
-});
-
-const mockSurveyLink = createMockSurvey("link", "survey1");
-const mockSurveyApp = createMockSurvey("app", "survey2");
+} as any;
+const mockSurveyWeb = {
+  id: "survey2",
+  type: "app",
+  name: "Test Web Survey",
+  status: "inProgress",
+  environmentId: "env1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  questions: [],
+  displayOption: "displayOnce",
+  recontactDays: 0,
+  triggers: [],
+  languages: [],
+  autoClose: null,
+  delay: 0,
+  autoComplete: null,
+  runOnDate: null,
+  closeOnDate: null,
+  singleUse: { enabled: false, isEncrypted: false },
+  styling: null,
+} as any;
 
 const defaultProps = {
   tabs: mockTabs,
@@ -265,7 +244,7 @@ describe("ShareView", () => {
   });
 
   test("does not render desktop tabs for non-link survey type", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyApp} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyWeb} />);
 
     // For non-link survey types, desktop sidebar should not be rendered
     // Check that SidebarProvider is not rendered by looking for sidebar-specific elements
@@ -321,6 +300,11 @@ describe("ShareView", () => {
     expect(
       screen.getByText(`LinkTab Content for ${defaultProps.survey.id} at ${defaultProps.surveyUrl}`)
     ).toBeInTheDocument();
+  });
+
+  test("renders QRCodeTab when activeId is 'qr-code'", () => {
+    render(<ShareView {...defaultProps} activeId="qr-code" />);
+    expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
   });
 
   test("renders AppTab when activeId is 'app'", () => {
