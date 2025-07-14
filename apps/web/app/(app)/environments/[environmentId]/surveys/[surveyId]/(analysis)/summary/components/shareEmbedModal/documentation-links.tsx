@@ -15,7 +15,7 @@ export const DocumentationLinks = ({ links }: DocumentationLinksProps) => {
   const { t } = useTranslate();
 
   return (
-    <div className="flex w-full flex-col space-y-4">
+    <div className="flex w-full flex-col space-y-2">
       {links.map((link) => (
         <div key={link.title} className="flex w-full flex-col gap-3">
           <Alert variant="outbound" size="small">
