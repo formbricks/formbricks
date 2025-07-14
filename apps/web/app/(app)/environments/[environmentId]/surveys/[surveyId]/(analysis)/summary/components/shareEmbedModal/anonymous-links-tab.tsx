@@ -9,14 +9,6 @@ import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Switch } from "@/modules/ui/components/switch";
 import { cn } from "@/modules/ui/lib/utils";
@@ -25,7 +17,6 @@ import { CirclePlayIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -35,13 +26,6 @@ interface AnonymousLinksTabProps {
   publicDomain: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
-}
-
-interface AnonymousLinksFormData {
-  isMultiUseLink: boolean;
-  isSingleUseLink: boolean;
-  singleUseEncryption: boolean;
-  numberOfLinks: number | string;
 }
 
 export const AnonymousLinksTab = ({
@@ -54,20 +38,10 @@ export const AnonymousLinksTab = ({
   const router = useRouter();
   const { t } = useTranslate();
 
-  const form = useForm<AnonymousLinksFormData>({
-    defaultValues: {
-      isMultiUseLink: !survey.singleUse?.enabled,
-      isSingleUseLink: survey.singleUse?.enabled ?? false,
-      singleUseEncryption: survey.singleUse?.isEncrypted ?? false,
-      numberOfLinks: 1,
-    },
-  });
-
-  const { watch } = form;
-  const isMultiUseLink = watch("isMultiUseLink");
-  const isSingleUseLink = watch("isSingleUseLink");
-  const singleUseEncryption = watch("singleUseEncryption");
-  const numberOfLinks = watch("numberOfLinks");
+  const [isMultiUseLink, setIsMultiUseLink] = useState(!survey.singleUse?.enabled);
+  const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);
+  const [singleUseEncryption, setSingleUseEncryption] = useState(survey.singleUse?.isEncrypted ?? false);
+  const [numberOfLinks, setNumberOfLinks] = useState<number | string>(1);
 
   const [disableLinkModal, setDisableLinkModal] = useState<{
     open: boolean;
@@ -83,9 +57,9 @@ export const AnonymousLinksTab = ({
           open: true,
           type: "single-use",
           pendingAction: async () => {
-            form.setValue("isMultiUseLink", true);
-            form.setValue("isSingleUseLink", false);
-            form.setValue("singleUseEncryption", false);
+            setIsMultiUseLink(true);
+            setIsSingleUseLink(false);
+            setSingleUseEncryption(false);
             try {
               await updateSingleUseLinksAction({
                 surveyId: survey.id,
@@ -102,9 +76,9 @@ export const AnonymousLinksTab = ({
         });
       } else {
         // Single-use is already off, just enable multi-use
-        form.setValue("isMultiUseLink", true);
-        form.setValue("isSingleUseLink", false);
-        form.setValue("singleUseEncryption", false);
+        setIsMultiUseLink(true);
+        setIsSingleUseLink(false);
+        setSingleUseEncryption(false);
         try {
           await updateSingleUseLinksAction({
             surveyId: survey.id,
@@ -124,9 +98,9 @@ export const AnonymousLinksTab = ({
         open: true,
         type: "multi-use",
         pendingAction: async () => {
-          form.setValue("isMultiUseLink", false);
-          form.setValue("isSingleUseLink", true);
-          form.setValue("singleUseEncryption", true);
+          setIsMultiUseLink(false);
+          setIsSingleUseLink(true);
+          setSingleUseEncryption(true);
           try {
             await updateSingleUseLinksAction({
               surveyId: survey.id,
@@ -151,9 +125,9 @@ export const AnonymousLinksTab = ({
         open: true,
         type: "multi-use",
         pendingAction: async () => {
-          form.setValue("isMultiUseLink", false);
-          form.setValue("isSingleUseLink", true);
-          form.setValue("singleUseEncryption", true);
+          setIsMultiUseLink(false);
+          setIsSingleUseLink(true);
+          setSingleUseEncryption(true);
           try {
             await updateSingleUseLinksAction({
               surveyId: survey.id,
@@ -174,9 +148,9 @@ export const AnonymousLinksTab = ({
         open: true,
         type: "single-use",
         pendingAction: async () => {
-          form.setValue("isMultiUseLink", true);
-          form.setValue("isSingleUseLink", false);
-          form.setValue("singleUseEncryption", false);
+          setIsMultiUseLink(true);
+          setIsSingleUseLink(false);
+          setSingleUseEncryption(false);
           try {
             await updateSingleUseLinksAction({
               surveyId: survey.id,
@@ -195,7 +169,7 @@ export const AnonymousLinksTab = ({
   };
 
   const handleSingleUseEncryptionToggle = async (newValue: boolean) => {
-    form.setValue("singleUseEncryption", newValue);
+    setSingleUseEncryption(newValue);
     try {
       await updateSingleUseLinksAction({
         surveyId: survey.id,
@@ -207,6 +181,31 @@ export const AnonymousLinksTab = ({
       router.refresh();
     } catch (error) {
       console.error("Failed to update single use encryption settings:", error);
+    }
+  };
+
+  const handleNumberOfLinksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    // Allow empty input for typing
+    if (inputValue === "") {
+      setNumberOfLinks("");
+      return;
+    }
+
+    const value = Number(inputValue);
+    // Only update if it's a valid number
+    if (!isNaN(value)) {
+      setNumberOfLinks(value);
+    }
+  };
+
+  const handleNumberOfLinksBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    // On blur, ensure we have a valid value
+    if (isNaN(value) || value < 1) {
+      setNumberOfLinks(1);
+    } else if (value > 5000) {
+      setNumberOfLinks(5000);
     }
   };
 
@@ -247,228 +246,171 @@ export const AnonymousLinksTab = ({
   };
 
   return (
-    <FormProvider {...form}>
-      <TabContainer
-        title={t("environments.surveys.share.anonymous_links.title")}
-        description={t("environments.surveys.share.anonymous_links.description")}>
-        <div className="flex h-full w-full grow flex-col gap-6">
-          <FormField
-            control={form.control}
-            name="isMultiUseLink"
-            render={({ field }) => (
-              <FormItem className="flex items-start gap-2 space-y-0">
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={handleMultiUseToggle}
-                    id="multi-use-link-switch"
-                  />
-                </FormControl>
-                <div>
-                  <FormLabel htmlFor="multi-use-link-switch">
-                    {t("environments.surveys.share.anonymous_links.multi_use_link")}
-                  </FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.share.anonymous_links.multi_use_link_description")}
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
+    <TabContainer
+      title={t("environments.surveys.share.anonymous_links.title")}
+      description={t("environments.surveys.share.anonymous_links.description")}>
+      <div className="flex h-full w-full grow flex-col gap-6">
+        <div className="flex items-start gap-2 space-y-0">
+          <Switch
+            checked={isMultiUseLink}
+            onCheckedChange={handleMultiUseToggle}
+            id="multi-use-link-switch"
           />
-
-          <div className={cn(!isMultiUseLink ? "pointer-events-none opacity-50" : "")}>
-            <ShareSurveyLink
-              survey={survey}
-              surveyUrl={surveyUrl}
-              publicDomain={publicDomain}
-              setSurveyUrl={setSurveyUrl}
-              locale={locale}
-            />
+          <div>
+            <label htmlFor="multi-use-link-switch" className="text-sm font-medium text-slate-900">
+              {t("environments.surveys.share.anonymous_links.multi_use_link")}
+            </label>
+            <p className="text-sm text-slate-600">
+              {t("environments.surveys.share.anonymous_links.multi_use_link_description")}
+            </p>
           </div>
-
-          {isMultiUseLink ? (
-            <div className="w-full bg-white">
-              <Alert variant="info" size="default">
-                <AlertTitle>
-                  {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
-                </AlertTitle>
-                <AlertDescription>
-                  {t(
-                    "environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description"
-                  )}
-                </AlertDescription>
-              </Alert>
-            </div>
-          ) : null}
-
-          <FormField
-            control={form.control}
-            name="isSingleUseLink"
-            render={({ field }) => (
-              <FormItem className="flex items-start gap-2 space-y-0">
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={handleSingleUseToggle}
-                    id="single-use-link-switch"
-                  />
-                </FormControl>
-                <div>
-                  <FormLabel htmlFor="single-use-link-switch">
-                    {t("environments.surveys.share.anonymous_links.single_use_link")}
-                  </FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.share.anonymous_links.single_use_link_description")}
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="singleUseEncryption"
-            render={({ field }) => (
-              <FormItem
-                className={cn(
-                  "flex items-start gap-2 space-y-0",
-                  !isSingleUseLink ? "pointer-events-none opacity-50" : ""
-                )}>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={handleSingleUseEncryptionToggle}
-                    id="single-use-encryption-switch"
-                  />
-                </FormControl>
-                <div>
-                  <FormLabel htmlFor="single-use-encryption-switch">
-                    {t("environments.surveys.share.anonymous_links.url_encryption_label")}
-                  </FormLabel>
-                  <FormDescription>
-                    {t("environments.surveys.share.anonymous_links.url_encryption_description")}
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          {isSingleUseLink && !singleUseEncryption ? (
-            <div className="w-full bg-white">
-              <Alert variant="info" size="default">
-                <AlertTitle>
-                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
-                </AlertTitle>
-                <AlertDescription>
-                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
-                </AlertDescription>
-              </Alert>
-            </div>
-          ) : null}
-
-          {isSingleUseLink && singleUseEncryption && (
-            <div className="flex w-full flex-col gap-2">
-              <h3 className="text-sm font-medium text-slate-900">
-                {t("environments.surveys.share.anonymous_links.number_of_links_label")}
-              </h3>
-
-              <div className="flex w-full items-center gap-2">
-                <FormField
-                  control={form.control}
-                  name="numberOfLinks"
-                  render={({ field }) => (
-                    <FormItem className="w-32">
-                      <FormControl>
-                        <Input
-                          type="number"
-                          max={5000}
-                          min={1}
-                          className="bg-white focus:border focus:border-slate-900"
-                          value={field.value}
-                          onChange={(e) => {
-                            const inputValue = e.target.value;
-                            // Allow empty input for typing
-                            if (inputValue === "") {
-                              field.onChange("");
-                              return;
-                            }
-
-                            const value = Number(inputValue);
-                            // Only update if it's a valid number
-                            if (!isNaN(value)) {
-                              field.onChange(value);
-                            }
-                          }}
-                          onBlur={(e) => {
-                            const value = Number(e.target.value);
-                            // On blur, ensure we have a valid value
-                            if (isNaN(value) || value < 1) {
-                              field.onChange(1);
-                            } else if (value > 5000) {
-                              field.onChange(5000);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  variant="default"
-                  onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
-                  // disabled={numberOfLinks < 1 || numberOfLinks > 5000}>
-                >
-                  <div className="flex items-center gap-2">
-                    <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
-                  </div>
-
-                  <span className="text-sm text-slate-50">
-                    {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
-                  </span>
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
 
-        <DocumentationLinks
-          links={[
-            {
-              title: t("environments.surveys.share.anonymous_links.single_use_links"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
-              readDocsText: t("common.read_more"),
-            },
-            {
-              title: t("environments.surveys.share.anonymous_links.data_prefilling"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
-              readDocsText: t("common.read_more"),
-            },
-            {
-              title: t("environments.surveys.share.anonymous_links.source_tracking"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
-              readDocsText: t("common.read_more"),
-            },
-            {
-              title: t("environments.surveys.share.anonymous_links.custom_start_point"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
-              readDocsText: t("common.read_more"),
-            },
-          ]}
-        />
-
-        {disableLinkModal && (
-          <DisableLinkModal
-            open={disableLinkModal.open}
-            onOpenChange={() => setDisableLinkModal(null)}
-            type={disableLinkModal.type}
-            onDisable={() => {
-              disableLinkModal.pendingAction();
-              setDisableLinkModal(null);
-            }}
+        <div className={cn(!isMultiUseLink ? "pointer-events-none opacity-50" : "")}>
+          <ShareSurveyLink
+            survey={survey}
+            surveyUrl={surveyUrl}
+            publicDomain={publicDomain}
+            setSurveyUrl={setSurveyUrl}
+            locale={locale}
           />
+        </div>
+
+        {isMultiUseLink ? (
+          <div className="w-full bg-white">
+            <Alert variant="info" size="default">
+              <AlertTitle>
+                {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
+              </AlertTitle>
+              <AlertDescription>
+                {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description")}
+              </AlertDescription>
+            </Alert>
+          </div>
+        ) : null}
+
+        <div className="flex items-start gap-2 space-y-0">
+          <Switch
+            checked={isSingleUseLink}
+            onCheckedChange={handleSingleUseToggle}
+            id="single-use-link-switch"
+          />
+          <div>
+            <label htmlFor="single-use-link-switch" className="text-sm font-medium text-slate-900">
+              {t("environments.surveys.share.anonymous_links.single_use_link")}
+            </label>
+            <p className="text-sm text-slate-600">
+              {t("environments.surveys.share.anonymous_links.single_use_link_description")}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "flex items-start gap-2 space-y-0",
+            !isSingleUseLink ? "pointer-events-none opacity-50" : ""
+          )}>
+          <Switch
+            checked={singleUseEncryption}
+            onCheckedChange={handleSingleUseEncryptionToggle}
+            id="single-use-encryption-switch"
+          />
+          <div>
+            <label htmlFor="single-use-encryption-switch" className="text-sm font-medium text-slate-900">
+              {t("environments.surveys.share.anonymous_links.url_encryption_label")}
+            </label>
+            <p className="text-sm text-slate-600">
+              {t("environments.surveys.share.anonymous_links.url_encryption_description")}
+            </p>
+          </div>
+        </div>
+
+        {isSingleUseLink && !singleUseEncryption ? (
+          <div className="w-full bg-white">
+            <Alert variant="info" size="default">
+              <AlertTitle>
+                {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
+              </AlertTitle>
+              <AlertDescription>
+                {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
+              </AlertDescription>
+            </Alert>
+          </div>
+        ) : null}
+
+        {isSingleUseLink && singleUseEncryption && (
+          <div className="flex w-full flex-col gap-2">
+            <h3 className="text-sm font-medium text-slate-900">
+              {t("environments.surveys.share.anonymous_links.number_of_links_label")}
+            </h3>
+
+            <div className="flex w-full items-center gap-2">
+              <div className="w-32">
+                <Input
+                  type="number"
+                  max={5000}
+                  min={1}
+                  className="bg-white focus:border focus:border-slate-900"
+                  value={numberOfLinks}
+                  onChange={handleNumberOfLinksChange}
+                  onBlur={handleNumberOfLinksBlur}
+                />
+              </div>
+
+              <Button
+                variant="default"
+                onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
+                // disabled={numberOfLinks < 1 || numberOfLinks > 5000}>
+              >
+                <div className="flex items-center gap-2">
+                  <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                </div>
+
+                <span className="text-sm text-slate-50">
+                  {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
+                </span>
+              </Button>
+            </div>
+          </div>
         )}
-      </TabContainer>
-    </FormProvider>
+      </div>
+
+      <DocumentationLinks
+        links={[
+          {
+            title: t("environments.surveys.share.anonymous_links.single_use_links"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
+            readDocsText: t("common.read_more"),
+          },
+          {
+            title: t("environments.surveys.share.anonymous_links.data_prefilling"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
+            readDocsText: t("common.read_more"),
+          },
+          {
+            title: t("environments.surveys.share.anonymous_links.source_tracking"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
+            readDocsText: t("common.read_more"),
+          },
+          {
+            title: t("environments.surveys.share.anonymous_links.custom_start_point"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
+            readDocsText: t("common.read_more"),
+          },
+        ]}
+      />
+
+      {disableLinkModal && (
+        <DisableLinkModal
+          open={disableLinkModal.open}
+          onOpenChange={() => setDisableLinkModal(null)}
+          type={disableLinkModal.type}
+          onDisable={() => {
+            disableLinkModal.pendingAction();
+            setDisableLinkModal(null);
+          }}
+        />
+      )}
+    </TabContainer>
   );
 };

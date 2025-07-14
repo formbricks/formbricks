@@ -23,7 +23,7 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
       <DialogContent className="flex max-w-md flex-col" hideCloseButton disableCloseOnOutsideClick>
         <DialogHeader className="tex-sm font-medium text-slate-900">
           {type === "multi-use"
-            ? t("environments.surveys.summary.anonymous_links.")
+            ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_title")
             : t("common.are_you_sure")}
         </DialogHeader>
 
