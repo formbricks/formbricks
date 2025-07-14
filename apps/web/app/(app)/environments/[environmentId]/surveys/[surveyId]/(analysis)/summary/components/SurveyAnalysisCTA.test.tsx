@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -141,7 +141,7 @@ vi.mock("@/modules/ui/components/badge", () => ({
 
 vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, onClick, className }: any) => (
-    <button data-testid="button" onClick={onClick} className={className}>
+    <button type="button" data-testid="button" onClick={onClick} className={className}>
       {children}
     </button>
   ),
@@ -154,7 +154,8 @@ vi.mock("@/modules/ui/components/iconbar", () => ({
         .filter((action: any) => action.isVisible)
         .map((action: any, index: number) => (
           <button
-            key={index}
+            type="button"
+            key={index} // NOSONAR // We don't need to check this in the test
             onClick={action.onClick}
             title={action.tooltip}
             data-testid={`icon-bar-action-${index}`}>
