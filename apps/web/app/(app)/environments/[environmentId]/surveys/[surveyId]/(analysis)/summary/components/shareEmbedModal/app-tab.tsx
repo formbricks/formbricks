@@ -59,27 +59,23 @@ export const AppTab = () => {
     },
   ];
 
+  const formatRecontactDaysString = (days: number) => {
+    if (days === 0) {
+      return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
+    } else if (days === 1) {
+      return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
+    } else {
+      return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
+    }
+  };
+
   const waitTime = () => {
     if (survey.recontactDays !== null) {
-      let waitingTime = "";
-
-      if (survey.recontactDays === 0) {
-        waitingTime = t("environments.surveys.summary.in_app.display_criteria.time_based_always");
-      } else if (survey.recontactDays === 1) {
-        waitingTime = `${survey.recontactDays} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
-      } else {
-        waitingTime = `${survey.recontactDays} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
-      }
+      const waitingTime = formatRecontactDaysString(survey.recontactDays);
       return `${waitingTime} ${t("environments.surveys.summary.in_app.display_criteria.overwritten")}`;
     }
     if (project.recontactDays !== null) {
-      if (project.recontactDays === 0) {
-        return `${project.recontactDays} ${t("environments.surveys.summary.in_app.display_criteria.time_based_always")}`;
-      } else if (project.recontactDays === 1) {
-        return `${project.recontactDays} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
-      } else {
-        return `${project.recontactDays} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
-      }
+      return formatRecontactDaysString(project.recontactDays);
     }
     return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
   };

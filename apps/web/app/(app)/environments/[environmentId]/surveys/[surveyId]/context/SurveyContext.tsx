@@ -12,7 +12,7 @@ const SurveyContext = createContext<SurveyContextType | null>(null);
 export const useSurvey = () => {
   const context = useContext(SurveyContext);
   if (!context) {
-    throw new Error("useSurvey must be used within a SurveyProvider");
+    throw new Error("useSurvey must be used within a SurveyContextWrapper");
   }
   return context;
 };

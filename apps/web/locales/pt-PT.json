@@ -1776,7 +1776,7 @@
           "display_criteria.everyone": "Todos",
           "display_criteria.no_code_trigger": "Sem código",
           "display_criteria.overwritten": "(Substituído)",
-          "display_criteria.randomizer": "{percentage}% Aleatorizador",
+          "display_criteria.randomizer": "Aleatorizador {percentage}%",
           "display_criteria.randomizer_description": "Apenas {percentage}% das pessoas que realizam a ação podem ser pesquisadas.",
           "display_criteria.recontact_description": "Opções de Recontacto",
           "display_criteria.targeted": "Alvo",

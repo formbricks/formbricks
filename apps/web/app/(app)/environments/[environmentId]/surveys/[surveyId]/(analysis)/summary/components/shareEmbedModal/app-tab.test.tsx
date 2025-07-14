@@ -270,7 +270,7 @@ describe("AppTab", () => {
 
   test("displays always when project has 0 recontact days", () => {
     renderWithProviders(true, { recontactDays: null }, { recontactDays: 0 });
-    expect(screen.getByText("0 always")).toBeInTheDocument();
+    expect(screen.getByText("always")).toBeInTheDocument();
   });
 
   test("displays always when both survey and project have null recontact days", () => {

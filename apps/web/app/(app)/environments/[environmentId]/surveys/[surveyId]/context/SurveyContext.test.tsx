@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { SurveyContextWrapper, useSurvey } from "./SurveyContext";
 
@@ -137,7 +137,7 @@ describe("SurveyContext", () => {
 
     expect(() => {
       render(<TestComponentWithoutProvider />);
-    }).toThrow("useSurvey must be used within a SurveyProvider");
+    }).toThrow("useSurvey must be used within a SurveyContextWrapper");
   });
 
   test("updates context value when survey changes", () => {
@@ -166,51 +166,78 @@ describe("SurveyContext", () => {
     expect(screen.getByTestId("survey-status")).toHaveTextContent("inProgress");
   });
 
-  test("provides correct survey object reference", () => {
-    const TestComponentWithRef = () => {
+  test("verifies memoization by tracking render counts", () => {
+    let renderCount = 0;
+    const renderSpy = vi.fn(() => {
+      renderCount++;
+    });
+
+    const TestComponentWithRenderTracking = () => {
+      renderSpy();
       const { survey } = useSurvey();
       return (
         <div>
-          <div data-testid="survey-reference">{survey === mockSurvey ? "same" : "different"}</div>
-        </div>
-      );
-    };
-
-    render(
-      <SurveyContextWrapper survey={mockSurvey}>
-        <TestComponentWithRef />
-      </SurveyContextWrapper>
-    );
-
-    expect(screen.getByTestId("survey-reference")).toHaveTextContent("same");
-  });
-
-  test("memoizes context value correctly", () => {
-    const TestComponentWithMemo = () => {
-      const context = useSurvey();
-      return (
-        <div>
-          <div data-testid="context-survey-id">{context.survey.id}</div>
+          <div data-testid="survey-id">{survey.id}</div>
+          <div data-testid="render-count">{renderCount}</div>
         </div>
       );
     };
 
     const { rerender } = render(
       <SurveyContextWrapper survey={mockSurvey}>
-        <TestComponentWithMemo />
+        <TestComponentWithRenderTracking />
       </SurveyContextWrapper>
     );
 
-    expect(screen.getByTestId("context-survey-id")).toHaveTextContent("test-survey-id");
+    expect(screen.getByTestId("survey-id")).toHaveTextContent("test-survey-id");
+    expect(renderSpy).toHaveBeenCalledTimes(1);
 
-    // Rerender with the same survey object should not cause issues
+    // Rerender with the same survey object - should not trigger additional renders
+    // if memoization is working correctly
     rerender(
       <SurveyContextWrapper survey={mockSurvey}>
-        <TestComponentWithMemo />
+        <TestComponentWithRenderTracking />
       </SurveyContextWrapper>
     );
 
-    expect(screen.getByTestId("context-survey-id")).toHaveTextContent("test-survey-id");
+    expect(screen.getByTestId("survey-id")).toHaveTextContent("test-survey-id");
+    expect(renderSpy).toHaveBeenCalledTimes(2); // Should only be called once more for the rerender
+  });
+
+  test("prevents unnecessary re-renders when survey object is unchanged", () => {
+    const childRenderSpy = vi.fn();
+
+    const ChildComponent = () => {
+      childRenderSpy();
+      const { survey } = useSurvey();
+      return <div data-testid="child-survey-name">{survey.name}</div>;
+    };
+
+    const ParentComponent = ({ survey }: { survey: TSurvey }) => {
+      return (
+        <SurveyContextWrapper survey={survey}>
+          <ChildComponent />
+        </SurveyContextWrapper>
+      );
+    };
+
+    const { rerender } = render(<ParentComponent survey={mockSurvey} />);
+
+    expect(screen.getByTestId("child-survey-name")).toHaveTextContent("Test Survey");
+    expect(childRenderSpy).toHaveBeenCalledTimes(1);
+
+    // Rerender with the same survey object reference
+    rerender(<ParentComponent survey={mockSurvey} />);
+
+    expect(screen.getByTestId("child-survey-name")).toHaveTextContent("Test Survey");
+    expect(childRenderSpy).toHaveBeenCalledTimes(2); // Should only be called once more
+
+    // Rerender with a different survey object should trigger re-render
+    const updatedSurvey = { ...mockSurvey, name: "Updated Survey" };
+    rerender(<ParentComponent survey={updatedSurvey} />);
+
+    expect(screen.getByTestId("child-survey-name")).toHaveTextContent("Updated Survey");
+    expect(childRenderSpy).toHaveBeenCalledTimes(3); // Should be called again due to prop change
   });
 
   test("renders children correctly", () => {

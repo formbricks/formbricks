@@ -25,7 +25,7 @@ export const getSyncSurveys = reactCache(
       const project = await getProjectByEnvironmentId(environmentId);
 
       if (!project) {
-        throw new Error("Product not found");
+        throw new Error("Project not found");
       }
 
       let surveys = await getSurveys(environmentId);
