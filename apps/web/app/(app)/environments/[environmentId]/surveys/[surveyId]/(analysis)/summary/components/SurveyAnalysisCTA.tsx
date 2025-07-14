@@ -147,7 +147,6 @@ export const SurveyAnalysisCTA = ({
 
       <IconBar actions={iconActions} />
       <Button
-        className="h-10"
         onClick={() => {
           setModalState((prev) => ({ ...prev, share: true }));
         }}>
