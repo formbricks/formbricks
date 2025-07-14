@@ -1,6 +1,7 @@
 import { hashString } from "@/lib/hash-string";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { checkRateLimit } from "./rate-limit";
 import { type TRateLimitConfig } from "./types/rate-limit";
 
@@ -35,7 +36,7 @@ export const applyRateLimit = async (config: TRateLimitConfig, identifier: strin
   const result = await checkRateLimit(config, identifier);
 
   if (!result.ok || !result.data.allowed) {
-    throw new Error("Maximum number of requests reached. Please try again later.");
+    throw new TooManyRequestsError("Maximum number of requests reached. Please try again later.");
   }
 };
 
