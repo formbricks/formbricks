@@ -110,7 +110,7 @@ export const ManageIntegration = ({
             <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-2 hidden text-center sm:block">{t("common.survey")}</div>
               <div className="col-span-2 hidden text-center sm:block">
-                {t("environments.integrations.plain.database_name")}
+                {t("environments.integrations.plain.survey_id")}
               </div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
             </div>
@@ -118,13 +118,13 @@ export const ManageIntegration = ({
               integrationArray.map((data, index) => {
                 return (
                   <button
-                    key={`${index}-${data.databaseId}`}
+                    key={`${index}-${data.surveyId}`}
                     className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
                     <div className="col-span-2 text-center">{data.surveyName}</div>
-                    <div className="col-span-2 text-center">{data.databaseName}</div>
+                    <div className="col-span-2 text-center">{data.surveyId}</div>
                     <div className="col-span-2 text-center">
                       {timeSince(data.createdAt.toString(), locale)}
                     </div>

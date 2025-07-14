@@ -26,7 +26,7 @@ export const PlainWrapper = ({
   plainIntegration,
   enabled,
   environment,
-  webAppUrl,
+
   surveys,
   locale,
 }: PlainWrapperProps) => {
@@ -41,9 +41,6 @@ export const PlainWrapper = ({
     setOpen(true);
   };
 
-  // Debug the plainIntegration object
-  console.log("Plain Integration:", plainIntegration);
-
   return (
     <>
       {isConnected && plainIntegration ? (
@@ -54,7 +51,6 @@ export const PlainWrapper = ({
             open={isModalOpen}
             setOpen={setModalOpen}
             plainIntegration={plainIntegration}
-            databases={[]}
             selectedIntegration={selectedIntegration}
           />
           <ManageIntegration

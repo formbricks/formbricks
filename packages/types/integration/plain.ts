@@ -81,3 +81,20 @@ export const ZIntegrationPlainDatabase = z.object({
 });
 
 export type TIntegrationPlainDatabase = z.infer<typeof ZIntegrationPlainDatabase>;
+
+export interface TPlainThreadComponent {
+  text: string;
+  format: "markdown";
+}
+
+export interface TPlainThreadInput {
+  customerIdentifier: {
+    [key: string]: string;
+  };
+  title: string;
+  components: TPlainThreadComponent[];
+  fields?: Record<string, string>;
+  labelIds?: string[];
+  assignedToUserId?: string;
+  tenantId?: string;
+}
