@@ -41,6 +41,16 @@ const createNoCodeConfigType = (t: ReturnType<typeof useTranslate>["t"]) => ({
   fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
 });
 
+const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslate>["t"]) => {
+  if (days === 0) {
+    return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
+  } else if (days === 1) {
+    return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
+  } else {
+    return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
+  }
+};
+
 interface DisplayCriteriaItemProps {
   icon: ReactNode;
   title: ReactNode;
@@ -69,23 +79,13 @@ export const AppTab = () => {
   const documentationLinks = useMemo(() => createDocumentationLinks(t), [t]);
   const noCodeConfigType = useMemo(() => createNoCodeConfigType(t), [t]);
 
-  const formatRecontactDaysString = (days: number) => {
-    if (days === 0) {
-      return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
-    } else if (days === 1) {
-      return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
-    } else {
-      return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
-    }
-  };
-
   const waitTime = () => {
     if (survey.recontactDays !== null) {
-      const waitingTime = formatRecontactDaysString(survey.recontactDays);
+      const waitingTime = formatRecontactDaysString(survey.recontactDays, t);
       return `${waitingTime} ${t("environments.surveys.summary.in_app.display_criteria.overwritten")}`;
     }
     if (project.recontactDays !== null) {
-      return formatRecontactDaysString(project.recontactDays);
+      return formatRecontactDaysString(project.recontactDays, t);
     }
     return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
   };
