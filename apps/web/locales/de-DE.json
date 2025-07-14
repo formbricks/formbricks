@@ -1700,13 +1700,38 @@
       "results_unpublished_successfully": "Ergebnisse wurden nicht erfolgreich veröffentlicht.",
       "search_by_survey_name": "Nach Umfragenamen suchen",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Benutzerdefinierter Startpunkt",
+          "data_prefilling": "Daten-Prefilling",
+          "description": "Antworten, die über diese Links eingehen, werden anonym.",
+          "generate_and_download_links": "Links generieren und herunterladen",
+          "multi_use_link": "Mehrfach verwendet",
+          "multi_use_link_description": "Sammle mehrere Antworten von anonymen Teilnehmern mit einem Link",
+          "nav_title": "Anonyme Links",
+          "number_of_links_label": "Anzahl der Links (1 - 5.000)",
+          "single_use_link": "Einmalige Links",
+          "single_use_link_description": "Erlaube nur eine Antwort pro Umfragelink.",
+          "single_use_links": "Einmalige Links",
+          "source_tracking": "Quellenverfolgung",
+          "title": "Teilen Sie Ihre Umfrage, um Antworten zu sammeln",
+          "url_encryption_description": "Nur deaktivieren, wenn Sie eine benutzerdefinierte Einmal-ID setzen müssen.",
+          "url_encryption_label": "Verschlüsselung der URL für einmalige Nutzung ID"
+        },
         "dynamic_popup": {
           "description": "Formbricks Umfragen können als Pop-up eingebettet werden, basierend auf der Benutzerinteraktion.",
           "title": "Nutzer im Ablauf abfangen, um kontextualisiertes Feedback zu sammeln"
         },
         "embed_on_website": {
           "description": "Formbricks-Umfragen können als statisches Element eingebettet werden.",
+          "embed_mode": "Einbettungsmodus",
+          "embed_mode_description": "Bette deine Umfrage mit einem minimalistischen Design ein, ohne Karten und Hintergrund.",
           "title": "Binden Sie die Umfrage auf Ihrer Webseite ein"
+        },
+        "personal_links": {
+          "nav_title": "Persönliche Links"
+        },
+        "send_email": {
+          "nav_title": "E-Mail-Einbettung"
         }
       },
       "summary": {
@@ -1720,6 +1745,17 @@
         "anonymous_links.custom_start_point": "Benutzerdefinierter Startpunkt",
         "anonymous_links.data_prefilling": "Daten-Prefilling",
         "anonymous_links.docs_title": "Mehr mit Link-Umfragen tun",
+        "anonymous_links.multi_use_link": "Mehrfach verwendet",
+        "anonymous_links.multi_use_link_alert_description": "Wenn du es deaktivierst, werden auch diese anderen Vertriebskanäle deaktiviert.",
+        "anonymous_links.multi_use_link_alert_title": "Dieser Link ermöglicht Einbettungen auf Websites, Einbettungen in E-Mails, Teilen in sozialen Medien und QR-Codes",
+        "anonymous_links.multi_use_link_description": "Sammle mehrere Antworten von anonymen Teilnehmern mit einem Link",
+        "anonymous_links.single_use_link": "Einmaliger Link",
+        "anonymous_links.single_use_link_description": "Erlaube nur eine Antwort pro Umfragelink.",
+        "anonymous_links.single_use_link_encryption": "Verschlüsselung der URL für einmalige Nutzung ID",
+        "anonymous_links.single_use_link_encryption_alert_description": "Wenn Sie die Einmal-ID's nicht verschlüsseln, funktioniert jeder Wert für „suid=...“ für eine Antwort.",
+        "anonymous_links.single_use_link_encryption_description": "Nur deaktivieren, wenn Sie eine benutzerdefinierte Einmal-ID setzen müssen",
+        "anonymous_links.single_use_link_encryption_generate_and_download_links": "Links generieren und herunterladen",
+        "anonymous_links.single_use_link_encryption_number_of_links": "Anzahl der Links (1 - 5.000)",
         "anonymous_links.source_tracking": "Quellenverfolgung",
         "average": "Durchschnittlich",
         "completed": "Abgeschlossen",

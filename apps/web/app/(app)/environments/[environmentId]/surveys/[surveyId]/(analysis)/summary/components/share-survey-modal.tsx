@@ -130,7 +130,11 @@ export const ShareSurveyModal = ({
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
-      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
+      <DialogContent
+        className="w-full overflow-y-auto bg-white p-0 lg:h-[700px]"
+        width="wide"
+        aria-describedby={undefined}
+        unconstrained>
         {showView === "start" ? (
           <SuccessView
             survey={survey}

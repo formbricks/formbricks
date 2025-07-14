@@ -1700,13 +1700,38 @@
       "results_unpublished_successfully": "Resultados despublicados com sucesso.",
       "search_by_survey_name": "Pesquisar por nome do inquérito",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Ponto de início personalizado",
+          "data_prefilling": "Pré-preenchimento de dados",
+          "description": "Respostas provenientes destes links serão anónimas.",
+          "generate_and_download_links": "Gerar & descarregar links",
+          "multi_use_link": "Link de uso múltiplo",
+          "multi_use_link_description": "Recolha múltiplas respostas de respondentes anónimos com um só link.",
+          "nav_title": "Links anónimos",
+          "number_of_links_label": "Número de links (1 - 5.000)",
+          "single_use_link": "Links de uso único",
+          "single_use_link_description": "Permitir apenas uma resposta por link de inquérito.",
+          "single_use_links": "Links de uso único",
+          "source_tracking": "Rastreamento de origem",
+          "title": "Partilhe o seu inquérito para recolher respostas",
+          "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado.",
+          "url_encryption_label": "Encriptação do URL de ID de uso único"
+        },
         "dynamic_popup": {
           "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
           "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"
         },
         "embed_on_website": {
           "description": "Os inquéritos Formbricks podem ser incorporados como um elemento estático.",
+          "embed_mode": "Modo de Incorporação",
+          "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
           "title": "Incorporar o questionário na sua página web"
+        },
+        "personal_links": {
+          "nav_title": "Links pessoais"
+        },
+        "send_email": {
+          "nav_title": "Incorporação de Email"
         }
       },
       "summary": {
@@ -1720,6 +1745,17 @@
         "anonymous_links.custom_start_point": "Ponto de início personalizado",
         "anonymous_links.data_prefilling": "Pré-preenchimento de dados",
         "anonymous_links.docs_title": "Faça mais com inquéritos de ligação",
+        "anonymous_links.multi_use_link": "Link de uso múltiplo",
+        "anonymous_links.multi_use_link_alert_description": "Se desativar, estes outros canais de distribuição também serão desativados",
+        "anonymous_links.multi_use_link_alert_title": "Este link alimenta incorporações em Websites, incorporações em Email, partilha em Redes Sociais e Códigos QR",
+        "anonymous_links.multi_use_link_description": "Recolha múltiplas respostas de respondentes anónimos com um só link",
+        "anonymous_links.single_use_link": "Link de uso único",
+        "anonymous_links.single_use_link_description": "Permitir apenas uma resposta por link de inquérito",
+        "anonymous_links.single_use_link_encryption": "Encriptação do URL de ID de uso único",
+        "anonymous_links.single_use_link_encryption_alert_description": "Se não encriptar os IDs de uso único, qualquer valor para 'suid=...' funciona para uma resposta",
+        "anonymous_links.single_use_link_encryption_description": "Desativar apenas se precisar definir um ID de uso único personalizado",
+        "anonymous_links.single_use_link_encryption_generate_and_download_links": "Gerar & descarregar links",
+        "anonymous_links.single_use_link_encryption_number_of_links": "Número de links (1 - 5.000)",
         "anonymous_links.source_tracking": "Rastreamento de origem",
         "average": "Média",
         "completed": "Concluído",

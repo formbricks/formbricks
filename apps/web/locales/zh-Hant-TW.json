@@ -1700,13 +1700,38 @@
       "results_unpublished_successfully": "結果已成功取消發布。",
       "search_by_survey_name": "依問卷名稱搜尋",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "自訂 開始 點",
+          "data_prefilling": "資料預先填寫",
+          "description": "從這些鏈接來的回應將是匿名的。",
+          "generate_and_download_links": "生成 & 下載 連結",
+          "multi_use_link": "多 重 使用 連結",
+          "multi_use_link_description": "收集 多位 匿名 受訪者 的 多次 回應 ， 使用 一個 連結",
+          "nav_title": "匿名 連結",
+          "number_of_links_label": "連結數量 (1 - 5,000)",
+          "single_use_link": "單次使用連結",
+          "single_use_link_description": "只允許 1 個回應每個問卷連結。",
+          "single_use_links": "單次使用連結",
+          "source_tracking": "來源追蹤",
+          "title": "分享 您 的 調查來 收集 回應",
+          "url_encryption_description": "僅在需要設定自訂一次性 ID 時停用",
+          "url_encryption_label": "單次使用 ID 的 URL 加密"
+        },
         "dynamic_popup": {
           "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
           "title": "攔截使用者於其流程中以收集具上下文的意見反饋"
         },
         "embed_on_website": {
           "description": "Formbricks 調查可以 作為 靜態 元素 嵌入。",
+          "embed_mode": "嵌入模式",
+          "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
           "title": "嵌入 調查 在 您 的 網頁"
+        },
+        "personal_links": {
+          "nav_title": "個人 連結"
+        },
+        "send_email": {
+          "nav_title": "電子郵件嵌入"
         }
       },
       "summary": {
@@ -1720,6 +1745,17 @@
         "anonymous_links.custom_start_point": "自訂 開始 點",
         "anonymous_links.data_prefilling": "資料預先填寫",
         "anonymous_links.docs_title": "使用 連結 問卷 來 完成 更多 事情",
+        "anonymous_links.multi_use_link": "多 重 使用 連結",
+        "anonymous_links.multi_use_link_alert_description": "如果您停用它，這些其他分發管道也會被停用",
+        "anonymous_links.multi_use_link_alert_title": "這個 連結 支援 網站 嵌入 、 電子郵件 嵌入 、 社交 媒體 分享 和 QR 碼",
+        "anonymous_links.multi_use_link_description": "收集 多位 匿名 受訪者 的 多次 回應 ， 使用 一個 連結",
+        "anonymous_links.single_use_link": "單次使用連結",
+        "anonymous_links.single_use_link_description": "只允許 1 個回應每個問卷連結。",
+        "anonymous_links.single_use_link_encryption": "單次使用 ID 的 URL 加密",
+        "anonymous_links.single_use_link_encryption_alert_description": "如果您不加密 使用一次 的 ID，任何“ suid=...”的值都能用于 一次回應",
+        "anonymous_links.single_use_link_encryption_description": "僅在需要設定自訂一次性 ID 時停用",
+        "anonymous_links.single_use_link_encryption_generate_and_download_links": "生成 & 下載 連結",
+        "anonymous_links.single_use_link_encryption_number_of_links": "連結數量 (1 - 5,000)",
         "anonymous_links.source_tracking": "來源追蹤",
         "average": "平均",
         "completed": "已完成",

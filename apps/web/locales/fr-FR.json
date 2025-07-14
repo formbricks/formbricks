@@ -1700,13 +1700,38 @@
       "results_unpublished_successfully": "Résultats publiés avec succès.",
       "search_by_survey_name": "Recherche par nom d'enquête",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Point de départ personnalisé",
+          "data_prefilling": "Préremplissage des données",
+          "description": "Les réponses provenant de ces liens seront anonymes.",
+          "generate_and_download_links": "Générer et télécharger les liens",
+          "multi_use_link": "Lien multi-usage",
+          "multi_use_link_description": "Recueillir plusieurs réponses de répondants anonymes avec un seul lien.",
+          "nav_title": "Liens anonymes",
+          "number_of_links_label": "Nombre de liens (1 - 5,000)",
+          "single_use_link": "Liens à usage unique",
+          "single_use_link_description": "Autoriser uniquement une réponse par lien d'enquête",
+          "single_use_links": "Liens à usage unique",
+          "source_tracking": "Suivi des sources",
+          "title": "Partagez votre enquête pour recueillir des réponses",
+          "url_encryption_description": "Désactiver seulement si vous devez définir un identifiant unique personnalisé",
+          "url_encryption_label": "Cryptage de l'identifiant à usage unique dans l'URL"
+        },
         "dynamic_popup": {
           "description": "Les enquêtes Formbricks peuvent être intégrées sous forme de pop-up, en fonction de l'interaction de l'utilisateur.",
           "title": "Interceptez les utilisateurs dans leur flux pour recueillir des retours contextualisés"
         },
         "embed_on_website": {
           "description": "Les enquêtes Formbricks peuvent être intégrées comme élément statique.",
+          "embed_mode": "Mode d'intégration",
+          "embed_mode_description": "Intégrez votre enquête avec un design minimaliste, en supprimant les marges et l'arrière-plan.",
           "title": "Intégrez le sondage sur votre page web"
+        },
+        "personal_links": {
+          "nav_title": "Liens personnels"
+        },
+        "send_email": {
+          "nav_title": "Email intégré"
         }
       },
       "summary": {
@@ -1720,6 +1745,17 @@
         "anonymous_links.custom_start_point": "Point de départ personnalisé",
         "anonymous_links.data_prefilling": "Préremplissage des données",
         "anonymous_links.docs_title": "Faites plus avec les sondages par lien",
+        "anonymous_links.multi_use_link": "Lien multi-usage",
+        "anonymous_links.multi_use_link_alert_description": "Si vous le désactivez, ces autres canaux de distribution seront également désactivés",
+        "anonymous_links.multi_use_link_alert_title": "Ce lien alimente les intégrations du site Web, les intégrations de courrier électronique, le partage sur les réseaux sociaux et les codes QR",
+        "anonymous_links.multi_use_link_description": "Recueillir plusieurs réponses de répondants anonymes avec un seul lien",
+        "anonymous_links.single_use_link": "Lien à usage unique",
+        "anonymous_links.single_use_link_description": "Autoriser uniquement une réponse par lien d'enquête",
+        "anonymous_links.single_use_link_encryption": "Cryptage de l'identifiant à usage unique dans l'URL",
+        "anonymous_links.single_use_link_encryption_alert_description": "Si vous n’encryptez pas les identifiants à usage unique, toute valeur pour « suid=... » fonctionne pour une seule réponse",
+        "anonymous_links.single_use_link_encryption_description": "Désactiver seulement si vous devez définir un identifiant unique personnalisé",
+        "anonymous_links.single_use_link_encryption_generate_and_download_links": "Générer et télécharger les liens",
+        "anonymous_links.single_use_link_encryption_number_of_links": "Nombre de liens (1 - 5,000)",
         "anonymous_links.source_tracking": "Suivi des sources",
         "average": "Moyenne",
         "completed": "Terminé",

@@ -315,7 +315,7 @@
     "question": "Pergunta",
     "question_id": "ID da Pergunta",
     "questions": "Perguntas",
-    "read_docs": "Ler Documentos",
+    "read_docs": "Ler Documentação",
     "recipients": "Destinatários",
     "remove": "remover",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
@@ -1700,13 +1700,38 @@
       "results_unpublished_successfully": "Resultados não publicados com sucesso.",
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Ponto de início personalizado",
+          "data_prefilling": "preenchimento automático de dados",
+          "description": "Respostas vindas desses links serão anônimas.",
+          "generate_and_download_links": "Gerar & baixar links",
+          "multi_use_link": "Link de uso múltiplo",
+          "multi_use_link_description": "Coletar múltiplas respostas de respondentes anônimos com um link.",
+          "nav_title": "Links anônimos",
+          "number_of_links_label": "Número de links (1 - 5.000)",
+          "single_use_link": "Links de uso único",
+          "single_use_link_description": "Permitir apenas uma resposta por link da pesquisa.",
+          "single_use_links": "Links de uso único",
+          "source_tracking": "rastreamento de origem",
+          "title": "Compartilhe sua pesquisa para coletar respostas",
+          "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado",
+          "url_encryption_label": "Criptografia de URL de ID de uso único"
+        },
         "dynamic_popup": {
           "description": "\"As pesquisas do Formbricks podem ser integradas como um pop-up, baseado na interação do usuário.\"",
           "title": "Intercepte os usuários em seu fluxo para coletar feedback contextualizado"
         },
         "embed_on_website": {
           "description": "Os formulários Formbricks podem ser incorporados como um elemento estático.",
+          "embed_mode": "Modo Embutido",
+          "embed_mode_description": "Incorpore sua pesquisa com um design minimalista, sem preenchimento e fundo.",
           "title": "Incorporar a pesquisa na sua página da web"
+        },
+        "personal_links": {
+          "nav_title": "Links pessoais"
+        },
+        "send_email": {
+          "nav_title": "Incorporação de Email"
         }
       },
       "summary": {
@@ -1720,6 +1745,17 @@
         "anonymous_links.custom_start_point": "Ponto de início personalizado",
         "anonymous_links.data_prefilling": "preenchimento automático de dados",
         "anonymous_links.docs_title": "Faça mais com pesquisas de links",
+        "anonymous_links.multi_use_link": "Link de uso múltiplo",
+        "anonymous_links.multi_use_link_alert_description": "Se você desativar, esses outros canais de distribuição também serão desativados",
+        "anonymous_links.multi_use_link_alert_title": "Este link permite a incorporação em sites, incorporações em e-mails, compartilhamento em redes sociais e códigos QR",
+        "anonymous_links.multi_use_link_description": "Coletar múltiplas respostas de respondentes anônimos com um link",
+        "anonymous_links.single_use_link": "Link de uso único",
+        "anonymous_links.single_use_link_description": "Permitir apenas uma resposta por link da pesquisa.",
+        "anonymous_links.single_use_link_encryption": "Criptografia de URL de ID de uso único",
+        "anonymous_links.single_use_link_encryption_alert_description": "Se você não criptografar ID’s de uso único, qualquer valor para “suid=...” funciona para uma resposta",
+        "anonymous_links.single_use_link_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado",
+        "anonymous_links.single_use_link_encryption_generate_and_download_links": "Gerar & baixar links",
+        "anonymous_links.single_use_link_encryption_number_of_links": "Número de links (1 - 5.000)",
         "anonymous_links.source_tracking": "rastreamento de origem",
         "average": "média",
         "completed": "Concluído",
