@@ -2,14 +2,14 @@
 
 import { cn } from "@/lib/cn";
 import { VariantProps, cva } from "class-variance-authority";
-import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowUpRight, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
 import { createContext, useContext } from "react";
 import { Button, ButtonProps } from "../button";
 
 // Create a context to share variant and size with child components
 interface AlertContextValue {
-  variant?: "default" | "error" | "warning" | "info" | "success" | null;
+  variant?: "default" | "error" | "warning" | "info" | "success" | "outbound" | null;
   size?: "default" | "small" | null;
 }
 
@@ -21,10 +21,11 @@ const AlertContext = createContext<AlertContextValue>({
 const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4", {
+const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 bg-white", {
   variants: {
     variant: {
       default: "text-foreground border-border",
+      outbound: "text-foreground border-border",
       error:
         "text-error-foreground [&>svg]:text-error border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted [&_a]:bg-error-background [&_a]:text-error-foreground [&_a:hover]:bg-error-background-muted",
       warning:
@@ -46,8 +47,12 @@ const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4", {
   },
 });
 
-const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
+const alertVariantIcons: Record<
+  "default" | "error" | "warning" | "info" | "success" | "outbound",
+  React.ReactNode
+> = {
   default: null,
+  outbound: <ArrowUpRight className="size-4" />,
   error: <AlertCircle className="size-4" />,
   warning: <AlertTriangle className="size-4" />,
   info: <Info className="size-4" />,
@@ -140,4 +145,4 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
 AlertButton.displayName = "AlertButton";
 
 // Export the new component
-export { Alert, AlertTitle, AlertDescription, AlertButton };
+export { Alert, AlertButton, AlertDescription, AlertTitle };

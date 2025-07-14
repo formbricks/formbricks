@@ -1700,6 +1700,22 @@
       "results_unpublished_successfully": "結果已成功取消發布。",
       "search_by_survey_name": "依問卷名稱搜尋",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "自訂 開始 點",
+          "data_prefilling": "資料預先填寫",
+          "description": "從這些鏈接來的回應將是匿名的。",
+          "generate_and_download_links": "生成 & 下載 連結",
+          "multi_use_link": "多 重 使用 連結",
+          "multi_use_link_description": "收集 多位 匿名 受訪者 的 多次 回應 ， 使用 一個 連結",
+          "number_of_links_label": "連結數量 (1 - 5,000)",
+          "single_use_link": "單次使用連結",
+          "single_use_link_description": "只允許 1 個回應每個問卷連結。",
+          "single_use_links": "單次使用連結",
+          "source_tracking": "來源追蹤",
+          "title": "分享 您 的 調查來 收集 回應",
+          "url_encryption_description": "僅在需要設定自訂一次性 ID 時停用",
+          "url_encryption_label": "單次使用 ID 的 URL 加密"
+        },
         "dynamic_popup": {
           "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
           "title": "攔截使用者於其流程中以收集具上下文的意見反饋"

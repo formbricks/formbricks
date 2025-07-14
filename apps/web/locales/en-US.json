@@ -1700,6 +1700,22 @@
       "results_unpublished_successfully": "Results unpublished successfully.",
       "search_by_survey_name": "Search by survey name",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Custom start point",
+          "data_prefilling": "Data prefilling",
+          "description": "Responses coming from these links will be anonymous.",
+          "generate_and_download_links": "Generate & download links",
+          "multi_use_link": "Multi-use link",
+          "multi_use_link_description": "Collect multiple responses from anonymous respondents with one link.",
+          "number_of_links_label": "Number of links (1 - 5,000)",
+          "single_use_link": "Single-use links",
+          "single_use_link_description": "Allow only one response per survey link.",
+          "single_use_links": "Single-use links",
+          "source_tracking": "Source tracking",
+          "title": "Share your survey to gather responses",
+          "url_encryption_description": "Only disable if you need to set a custom single-use ID.",
+          "url_encryption_label": "URL encryption of single-use ID"
+        },
         "dynamic_popup": {
           "description": "Formbricks surveys can be embedded as a pop up, based on user interaction.",
           "title": "Intercept users in their flow to gather contextualized feedback"

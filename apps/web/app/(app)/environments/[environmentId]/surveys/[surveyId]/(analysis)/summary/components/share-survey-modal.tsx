@@ -47,27 +47,27 @@ export const ShareSurveyModal = ({
     () => [
       {
         id: ShareViewType.ANON_LINKS,
-        label: t("environments.surveys.summary.anonymous_links"),
+        label: t("environments.surveys.share.anonymous_links.nav_title"),
         icon: LinkIcon,
       },
       {
         id: ShareViewType.PERSONAL_LINKS,
-        label: t("environments.surveys.summary.personal_links"),
+        label: t("environments.surveys.share.personal_links.nav_title"),
         icon: UserIcon,
       },
       {
         id: ShareViewType.EMAIL,
-        label: t("environments.surveys.summary.embed_in_an_email"),
+        label: t("environments.surveys.share.send_email.nav_title"),
         icon: MailIcon,
       },
       {
         id: ShareViewType.WEBSITE_EMBED,
-        label: t("environments.surveys.summary.embed_on_website"),
+        label: t("environments.surveys.share.embed_on_website.nav_title"),
         icon: Code2Icon,
       },
       {
         id: ShareViewType.DYNAMIC_POPUP,
-        label: t("environments.surveys.summary.dynamic_popup"),
+        label: t("environments.surveys.share.dynamic_popup.nav_title"),
         icon: SquareStack,
       },
     ],
@@ -77,7 +77,7 @@ export const ShareSurveyModal = ({
   const appTabs = [
     {
       id: ShareViewType.APP,
-      label: t("environments.surveys.summary.embed_in_app"),
+      label: t("environments.surveys.share.embed_on_website.embed_in_app"),
       icon: SmartphoneIcon,
     },
   ];

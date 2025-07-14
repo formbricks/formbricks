@@ -1700,6 +1700,22 @@
       "results_unpublished_successfully": "Resultados despublicados com sucesso.",
       "search_by_survey_name": "Pesquisar por nome do inquérito",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Ponto de início personalizado",
+          "data_prefilling": "Pré-preenchimento de dados",
+          "description": "Respostas provenientes destes links serão anónimas.",
+          "generate_and_download_links": "Gerar & descarregar links",
+          "multi_use_link": "Link de uso múltiplo",
+          "multi_use_link_description": "Recolha múltiplas respostas de respondentes anónimos com um só link.",
+          "number_of_links_label": "Número de links (1 - 5.000)",
+          "single_use_link": "Links de uso único",
+          "single_use_link_description": "Permitir apenas uma resposta por link de inquérito.",
+          "single_use_links": "Links de uso único",
+          "source_tracking": "Rastreamento de origem",
+          "title": "Partilhe o seu inquérito para recolher respostas",
+          "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado.",
+          "url_encryption_label": "Encriptação do URL de ID de uso único"
+        },
         "dynamic_popup": {
           "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
           "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"

@@ -1700,6 +1700,22 @@
       "results_unpublished_successfully": "Resultados não publicados com sucesso.",
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Ponto de início personalizado",
+          "data_prefilling": "preenchimento automático de dados",
+          "description": "Respostas vindas desses links serão anônimas.",
+          "generate_and_download_links": "Gerar & baixar links",
+          "multi_use_link": "Link de uso múltiplo",
+          "multi_use_link_description": "Coletar múltiplas respostas de respondentes anônimos com um link.",
+          "number_of_links_label": "Número de links (1 - 5.000)",
+          "single_use_link": "Links de uso único",
+          "single_use_link_description": "Permitir apenas uma resposta por link da pesquisa.",
+          "single_use_links": "Links de uso único",
+          "source_tracking": "rastreamento de origem",
+          "title": "Compartilhe sua pesquisa para coletar respostas",
+          "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado",
+          "url_encryption_label": "Criptografia de URL de ID de uso único"
+        },
         "dynamic_popup": {
           "description": "\"As pesquisas do Formbricks podem ser integradas como um pop-up, baseado na interação do usuário.\"",
           "title": "Intercepte os usuários em seu fluxo para coletar feedback contextualizado"

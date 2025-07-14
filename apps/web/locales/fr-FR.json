@@ -1700,6 +1700,22 @@
       "results_unpublished_successfully": "Résultats publiés avec succès.",
       "search_by_survey_name": "Recherche par nom d'enquête",
       "share": {
+        "anonymous_links": {
+          "custom_start_point": "Point de départ personnalisé",
+          "data_prefilling": "Préremplissage des données",
+          "description": "Les réponses provenant de ces liens seront anonymes.",
+          "generate_and_download_links": "Générer et télécharger les liens",
+          "multi_use_link": "Lien multi-usage",
+          "multi_use_link_description": "Recueillir plusieurs réponses de répondants anonymes avec un seul lien.",
+          "number_of_links_label": "Nombre de liens (1 - 5,000)",
+          "single_use_link": "Liens à usage unique",
+          "single_use_link_description": "Autoriser uniquement une réponse par lien d'enquête",
+          "single_use_links": "Liens à usage unique",
+          "source_tracking": "Suivi des sources",
+          "title": "Partagez votre enquête pour recueillir des réponses",
+          "url_encryption_description": "Désactiver seulement si vous devez définir un identifiant unique personnalisé",
+          "url_encryption_label": "Cryptage de l'identifiant à usage unique dans l'URL"
+        },
         "dynamic_popup": {
           "description": "Les enquêtes Formbricks peuvent être intégrées sous forme de pop-up, en fonction de l'interaction de l'utilisateur.",
           "title": "Interceptez les utilisateurs dans leur flux pour recueillir des retours contextualisés"
